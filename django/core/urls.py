@@ -11,7 +11,7 @@ from frontend.views import IndexView
 urlpatterns = [
     path('', IndexView.as_view()),
     path('favicon.ico', RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, 'favicon.ico'))),
-    path('djangoadmin', admin.site.urls),
+    path('djangoadmin/', admin.site.urls),
 ]
 
 if settings.DEBUG:

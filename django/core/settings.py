@@ -6,9 +6,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Application directories
 sys.path.append(os.path.join(BASE_DIR, "apps"))
 
-print(sys.path)
-print("###########")
-
 
 env = environ.Env(
     DEBUG=(bool, False),
@@ -45,6 +42,7 @@ INSTALLED_APPS = [
     # Own
     'core',
     'frontend',
+    'repository',
 ]
 
 MIDDLEWARE = [

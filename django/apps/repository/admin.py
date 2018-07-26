@@ -1,0 +1,39 @@
+from django.contrib import admin
+
+
+from repository.models import Package
+from repository.models import PackageVersion
+
+
+class PackageVersionInline(admin.StackedInline):
+    model = PackageVersion
+    readonly_fields = (
+        "website_url",
+        "date_created",
+        "name",
+        "version_number",
+        "website_url",
+        "file",
+        "icon",
+    )
+
+
+@admin.register(Package)
+class PackageAdmin(admin.ModelAdmin):
+    inlines = [
+        PackageVersionInline,
+    ]
+
+    readonly_fields = (
+        "name",
+        "owner",
+        "date_created",
+    )
+    list_display = (
+        "owner",
+        "name",
+        "is_active",
+    )
+    list_filter = (
+        "is_active",
+    )
