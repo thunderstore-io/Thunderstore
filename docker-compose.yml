@@ -1,0 +1,46 @@
+version: '3.7'
+
+x-nexus: &nexus
+  build:
+    context: .
+    dockerfile: Dockerfile-Nexus
+  restart: always
+
+services:
+
+  db:
+    image: postgres:10.4-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: django
+      POSTGRES_USER: django
+      POSTGRES_DB: django
+    container_name: nexus_db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  django:
+    <<: *nexus
+    container_name: nexus_django
+    command: bash -c 'cd /app/django && python /app/django/manage.py runserver 0.0.0.0:8000'
+    environment:
+      DATABASE_URL: psql://django:django@db/django
+      DEBUG: 'True'
+    volumes:
+      - ./django:/app/django
+    depends_on:
+      - db
+    ports:
+      - "80:8000"
+
+  # node:
+  #   <<: *nexus
+  #   container_name: nexus_node
+  #   command: bash -c 'cd /app/node && yarn watch'
+  #   volumes:
+  #     - ./node:/app/node
+  #   ports:
+  #     - "8080:8080"
+
+volumes:
+  db-data:

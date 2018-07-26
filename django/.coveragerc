@@ -1,0 +1,26 @@
+[run]
+branch = True
+omit =
+    *migrations/*
+    *settings*
+    *tests/*
+    */apps.py
+    */urls.py
+    */wsgi.py
+    */manage.py
+    */admin.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+
+
+[html]
+directory = htmlcov
