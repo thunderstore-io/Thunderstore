@@ -7,9 +7,16 @@ from django.urls import path
 
 from frontend.views import IndexView
 
+from repository.views import PackageListView
+from repository.views import PackageDetailView
+from repository.views import PackageCreateView
+
 
 urlpatterns = [
-    path('', IndexView.as_view()),
+    path('', IndexView.as_view(), name="index"),
+    path('list/', PackageListView.as_view(), name="packages.list"),
+    path('package/<int:pk>/', PackageDetailView.as_view(), name="packages.detail"),
+    path('package/create/', PackageCreateView.as_view(), name="packages.create"),
     path('favicon.ico', RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, 'favicon.ico'))),
     path('djangoadmin/', admin.site.urls),
 ]

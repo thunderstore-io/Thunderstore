@@ -4,7 +4,16 @@
         <title>Nexus</title>
     </head>
     <body>
-        {% block content %}
-        {% endblock %}
+        <div class="navigation">
+            <ul>
+                <li><a href="{% url 'index' %}">Front page</a></li>
+                <li><a href="{% url 'packages.list' %}">List packages</a></li>
+                <li><a href="{% url 'packages.create' %}">Create package</a></li>
+            </ul>
+        </div>
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
     </body>
 </html>
