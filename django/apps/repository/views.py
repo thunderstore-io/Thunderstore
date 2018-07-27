@@ -4,6 +4,7 @@ from django.views.generic.edit import CreateView
 
 from repository.models import Package
 from repository.models import PackageVersion
+from repository.ziptools import PackageVersionForm
 
 
 class PackageListView(ListView):
@@ -23,7 +24,8 @@ class PackageDetailView(DetailView):
 
 class PackageCreateView(CreateView):
     model = PackageVersion
-    template_name_suffix = "_create_form"
-    fields = (
-        "file",
-    )
+    form_class = PackageVersionForm
+    template_name = "repository/package_create.html"
+
+    def form_valid(self, form):
+        pass

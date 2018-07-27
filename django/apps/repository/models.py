@@ -57,7 +57,7 @@ class PackageVersion(models.Model):
 
     # manifest.json
     name = models.CharField(
-        max_length=128,
+        max_length=Package._meta.get_field("name").max_length,
     )
     version_number = models.CharField(
         max_length=16,
@@ -74,3 +74,6 @@ class PackageVersion(models.Model):
     icon = models.ImageField(
         upload_to=get_version_png_filepath,
     )
+
+    class Meta:
+        unique_together = ("package", "version_number")
