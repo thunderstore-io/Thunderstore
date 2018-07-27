@@ -16,6 +16,7 @@ class PackageVersionInline(admin.StackedInline):
         "file",
         "icon",
     )
+    extra = 0
 
 
 @admin.register(Package)

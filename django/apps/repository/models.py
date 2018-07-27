@@ -30,17 +30,24 @@ class Package(models.Model):
     def full_package_name(self):
         return f"{self.owner.username}-{self.name}"
 
+    @property
+    def newest(self):
+        # TODO: Return actually newest version number
+        return self.versions.last()
 
-def get_version_path(instance):
-    return f"{instance.package.full_package_name}-{instance.version_number}"
+    def get_absolute_url(self):
+        return reverse("packages.detail", kwargs={"pk": self.pk})
+
+    def __str__(self):
+        return self.full_package_name
 
 
 def get_version_zip_filepath(instance, filename):
-    return f"{get_version_path(instance)}.zip"
+    return f"{instance}.zip"
 
 
 def get_version_png_filepath(instance, filename):
-    return f"{get_version_path(instance)}.png"
+    return f"{instance}.png"
 
 
 class PackageVersion(models.Model):
@@ -80,4 +87,11 @@ class PackageVersion(models.Model):
         unique_together = ("package", "version_number")
 
     def get_absolute_url(self):
-        return reverse("packages.detail", kwargs={"pk": self.package.pk})
+        return self.package.get_absolute_url()
+
+    @property
+    def full_version_name(self):
+        return f"{self.package.full_package_name}-{self.version_number}"
+
+    def __str__(self):
+        return self.full_version_name

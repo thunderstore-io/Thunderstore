@@ -106,9 +106,9 @@ class PackageVersionForm(forms.ModelForm):
         self.instance.name = self.manifest["name"]
         self.instance.version_number = self.manifest["version_number"]
         self.instance.website_url = self.manifest["website_url"]
-        self.instance.icon = self.icon
         self.instance.package = Package.objects.get_or_create(
             owner=self.user,
             name=self.instance.name,
         )[0]
+        self.instance.icon.save("icon.png", self.icon)
         super(PackageVersionForm, self).save()

@@ -1,1 +1,15 @@
 {% extends 'base.html' %}
+
+{% block content %}
+<h1>Package list</h1>
+<ul>
+<table>
+{% for object in object_list %}
+    <tr>
+        <td><img src="{{ object.newest.icon.url }}"></td>
+        <td><a href="{{ object.get_absolute_url }}">{{ object }}</a></td>
+    </tr>
+{% endfor %}
+</table>
+</ul>
+{% endblock %}
