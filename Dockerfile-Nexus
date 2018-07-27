@@ -80,6 +80,7 @@ RUN set -ex; \
 		\) -exec rm -rf '{}' +; \
 	rm -f get-pip.py
 
+ENV PYTHONUNBUFFERED 1
 RUN npm --user root --unsafe-perm true install npm -g \
     && npm install -g --silent yarn
 

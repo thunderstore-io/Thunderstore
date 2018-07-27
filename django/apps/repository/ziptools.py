@@ -1,5 +1,8 @@
 import json
+import re
+import io
 from zipfile import ZipFile, BadZipFile
+from PIL import Image
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -7,6 +10,8 @@ from django.core.exceptions import ValidationError
 from repository.models import PackageVersion
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * 50
+NAME_PATTERN = re.compile(r"^[a-zA-Z0-9\_]+$")
+VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 
 class PackageVersionForm(forms.ModelForm):
@@ -22,14 +27,20 @@ class PackageVersionForm(forms.ModelForm):
             max_length = PackageVersion._meta.get_field("name").max_length
             if len(decoded["name"]) > max_length:
                 raise ValidationError(f"Package name is too long, max: {max_length}")
-            # TODO: allowed characters validation a-zA-Z0-9_
+            if not re.match(NAME_PATTERN, decoded["name"]):
+                raise ValidationError(
+                    f"Package names can only contain a-Z A-Z 0-9 and _ characers"
+                )
 
             if "version_number" not in decoded:
                 raise ValidationError("manifest.json must contain version")
             max_length = PackageVersion._meta.get_field("version_number").max_length
             if len(decoded["version_number"]) > max_length:
                 raise ValidationError(f"Package version number is too long, max: {max_length}")
-            # TODO: validate version number format
+            if not re.match(VERSION_PATTERN, decoded["version_number"]):
+                raise ValidationError(
+                    f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
+                )
 
             max_length = PackageVersion._meta.get_field("website_url").max_length
             if len(decoded.get("website_url", "")) > max_length:
@@ -38,9 +49,16 @@ class PackageVersionForm(forms.ModelForm):
             raise ValidationError("Package manifest.json is in invalid format")
 
     def validate_icon(self, icon):
-        pass
-        # TODO: Add icon validation
-        # raise ValidationError("Package contains invalid icon.png")
+        try:
+            image = Image.open(io.BytesIO(icon))
+        except:
+            raise ValidationError("Unsupported or corrupt icon, must be png")
+
+        if image.format != "PNG":
+            raise ValidationError("Icon must be in png format")
+
+        if not (image.size[0] == 512 and image.size[1] == 512):
+            raise ValidationError("Invalid icon dimensions, must be 512x512")
 
     def clean_file(self):
         file = self.cleaned_data.get("file", None)
