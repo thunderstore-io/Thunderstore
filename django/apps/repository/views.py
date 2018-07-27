@@ -6,6 +6,8 @@ from repository.models import Package
 from repository.models import PackageVersion
 from repository.ziptools import PackageVersionForm
 
+from django.shortcuts import redirect
+
 
 class PackageListView(ListView):
     model = Package
@@ -27,5 +29,11 @@ class PackageCreateView(CreateView):
     form_class = PackageVersionForm
     template_name = "repository/package_create.html"
 
+    def get_form_kwargs(self, *args, **kwargs):
+        kwargs = super(PackageCreateView, self).get_form_kwargs(*args, **kwargs)
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
-        pass
+        form.save()
+        return redirect(form.instance)

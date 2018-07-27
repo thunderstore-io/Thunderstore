@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 
 class Package(models.Model):
@@ -77,3 +78,6 @@ class PackageVersion(models.Model):
 
     class Meta:
         unique_together = ("package", "version_number")
+
+    def get_absolute_url(self):
+        return reverse("packages.detail", kwargs={"pk": self.package.pk})
