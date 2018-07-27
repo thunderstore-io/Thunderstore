@@ -6,9 +6,8 @@ atomicwrites==1.1.5       # via pytest
 attrs==18.1.0             # via pytest
 click==6.7                # via prequ
 coverage==4.5.1           # via pytest-cov
-django==2.0.7             # via model_mommy
+factory_boy==2.11.1
 faker==0.8.17
-model_mommy==1.6.0
 more-itertools==4.2.0     # via pytest
 pluggy==0.6.0             # via pytest
 prequ==1.4.2
@@ -17,8 +16,7 @@ pytest==3.6.3
 pytest-cov==2.5.1
 pytest-django==3.3.2
 python-dateutil==2.7.3    # via faker
-pytz==2018.5              # via django
-six==1.11.0               # via faker, model_mommy, more-itertools, pytest, python-dateutil
+six==1.11.0               # via faker, more-itertools, pytest, python-dateutil
 text-unidecode==1.2       # via faker
 
 # The following packages are considered to be unsafe in a requirements file:

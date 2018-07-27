@@ -1,17 +1,27 @@
 {% load static %}
-<html>
+<!doctype html>
+<html lang="en">
     <head>
         <title>Nexus</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        {# Bootstrap #}
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     </head>
     <body>
-        <div class="navigation">
-            <ul>
-                <li><a href="{% url 'index' %}">Front page</a></li>
-                <li><a href="{% url 'packages.list' %}">List packages</a></li>
-                <li><a href="{% url 'packages.create' %}">Upload package</a></li>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
+            <a class="navbar-brand" href="{% url 'index' %}">Nexus</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link"href="{% url 'packages.list' %}">Browse</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"href="{% url 'packages.create' %}">Upload</a>
+                </li>
             </ul>
-        </div>
-        <div class="content">
+        </nav>
+        <div class="container">
             {% block content %}
             {% endblock %}
         </div>

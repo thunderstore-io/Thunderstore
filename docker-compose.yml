@@ -33,14 +33,5 @@ services:
     ports:
       - "80:8000"
 
-  # node:
-  #   <<: *nexus
-  #   container_name: nexus_node
-  #   command: bash -c 'cd /app/node && yarn watch'
-  #   volumes:
-  #     - ./node:/app/node
-  #   ports:
-  #     - "8080:8080"
-
 volumes:
   db-data:

@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>{{ object }}</h1>
-<img src="{{ object.newest.icon.url }}">
+<img src="{{ object.latest.icon.url }}">
 <p>Versions:</p>
 <table>
     {% for version in object.versions.all %}

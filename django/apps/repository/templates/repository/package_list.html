@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
 
 {% block content %}
-<h1>Package list</h1>
-<ul>
-<table>
+<h1 class="mt-2">Package list</h1>
+
+<ul class="list-unstyled">
 {% for object in object_list %}
-    <tr>
-        <td><img src="{{ object.newest.icon.url }}"></td>
-        <td><a href="{{ object.get_absolute_url }}">{{ object }}</a></td>
-    </tr>
+    <li class="media my-3">
+        <img class="mr-3" src="{% thumbnail object.latest.icon 128x128 %}" alt="{{ object }}">
+        <div class="media-body">
+            <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object }}</a> v{{ object.latest.version_number }}</h5>
+            Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
+        </div>
+    </li>
 {% endfor %}
-</table>
 </ul>
+
 {% endblock %}

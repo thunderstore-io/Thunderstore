@@ -31,8 +31,8 @@ class Package(models.Model):
         return f"{self.owner.username}-{self.name}"
 
     @property
-    def newest(self):
-        # TODO: Return actually newest version number
+    def latest(self):
+        # TODO: Return actually latest version number
         return self.versions.last()
 
     def get_absolute_url(self):

@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Upload package</h1>
+<h1 class="mt-2">Upload package</h1>
+
 <form method="post" enctype="multipart/form-data">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Save" />
+    {% csrf_token %}
+    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file"></p>
+    <input type="submit" class="btn btn-primary btn-lg btn-block" value="Upload">
 </form>
 {% endblock %}
