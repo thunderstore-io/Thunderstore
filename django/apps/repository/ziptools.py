@@ -68,8 +68,8 @@ class PackageVersionForm(forms.ModelForm):
         if image.format != "PNG":
             raise ValidationError("Icon must be in png format")
 
-        if not (image.size[0] == 512 and image.size[1] == 512):
-            raise ValidationError("Invalid icon dimensions, must be 512x512")
+        if not (image.size[0] == 256 and image.size[1] == 256):
+            raise ValidationError("Invalid icon dimensions, must be 256x256")
 
     def clean_file(self):
         file = self.cleaned_data.get("file", None)
@@ -98,6 +98,8 @@ class PackageVersionForm(forms.ModelForm):
                     raise ValidationError("Package is missing icon.png")
         except (BadZipFile, NotImplementedError):
             raise ValidationError("Invalid zip file format")
+
+        # TODO: Add content validation later on
 
         return file
 
