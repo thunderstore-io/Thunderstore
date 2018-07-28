@@ -3,9 +3,61 @@
 {% block content %}
 <h1 class="mt-2">Upload package</h1>
 
-<form method="post" enctype="multipart/form-data">{% csrf_token %}
+<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+    <div class="text-danger">
+        {{ form.non_field_errors }}
+        {{ form.file.errors }}
+    </div>
     {% csrf_token %}
-    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file"></p>
+    <label for="id_file" class="btn btn-primary btn-lg btn-block" id="file_drop"></label>
+    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file" style="display:none;"></p>
     <input type="submit" class="btn btn-primary btn-lg btn-block" value="Upload">
 </form>
+
+<script type="text/javascript">
+var file_drop = document.getElementById("file_drop");
+var file_input = document.getElementById("id_file");
+var last_target;
+
+file_drop.ondragover = file_drop.ondragenter = function(evt) {
+    evt.preventDefault();
+};
+
+file_drop.ondrop = function(evt) {
+    file_input.files = evt.dataTransfer.files;
+    evt.preventDefault();
+};
+
+function reset_file_input() {
+    if (file_input.files.length > 0) {
+        file_drop.innerHTML = file_input.files[0].name;
+    } else {
+        file_drop.innerHTML = 'Choose file';
+    }
+    file_drop.style.height = "";
+    file_drop.style.border = "";
+}
+
+file_input.addEventListener("change", function(){
+    reset_file_input();
+})
+
+window.addEventListener("dragenter", function(e)
+{
+    last_target = e.target;
+    file_drop.style.height = "200px";
+    file_drop.style.border = "4px solid #fff";
+    file_drop.innerHTML = 'Drag file here';
+});
+
+window.addEventListener("dragleave", function(e)
+{
+    if(e.target === last_target || e.target === document)
+    {
+        reset_file_input();
+    }
+});
+
+reset_file_input();
+</script>
 {% endblock %}
