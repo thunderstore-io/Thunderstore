@@ -6,11 +6,17 @@
   <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
   <div class="media-body">
     <h1 class="mt-0">{{ object }}</h1>
-    <p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</p>
+    <p>{{ object.description }}</p>
     <p><a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
   </div>
 </div>
-<h2>Available versions</h2>
+<div class="card bg-light mb-3 mt-2">
+    <div class="card-header">README</div>
+    <div class="card-body">
+        <p class="card-text">{{ object.readme }}</p>
+    </div>
+</div>
+<h2 class="mt-2">Available versions</h2>
 <table class="table">
     <tr>
         <th>Upload date</th>

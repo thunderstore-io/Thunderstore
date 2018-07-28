@@ -56,6 +56,10 @@ class PackageVersionForm(forms.ModelForm):
             max_length = PackageVersion._meta.get_field("website_url").max_length
             if len(self.manifest.get("website_url", "")) > max_length:
                 raise ValidationError(f"Package website url is too long, max: {max_length}")
+
+            max_length = PackageVersion._meta.get_field("description").max_length
+            if len(self.manifest.get("description", "")) > max_length:
+                raise ValidationError(f"Package description is too long, max: {max_length}")
         except json.decoder.JSONDecodeError:
             raise ValidationError("Package manifest.json is in invalid format")
 
@@ -71,6 +75,9 @@ class PackageVersionForm(forms.ModelForm):
 
         if not (image.size[0] == 256 and image.size[1] == 256):
             raise ValidationError("Invalid icon dimensions, must be 256x256")
+
+    def validate_readme(self, readme):
+        self.readme = readme
 
     def clean_file(self):
         file = self.cleaned_data.get("file", None)
@@ -97,6 +104,13 @@ class PackageVersionForm(forms.ModelForm):
                     self.validate_icon(icon)
                 except KeyError:
                     raise ValidationError("Package is missing icon.png")
+
+                try:
+                    readme = unzip.read("README.md")
+                    self.validate_readme(readme)
+                except KeyError:
+                    raise ValidationError("Package is missing README.md")
+
         except (BadZipFile, NotImplementedError):
             raise ValidationError("Invalid zip file format")
 
@@ -109,6 +123,8 @@ class PackageVersionForm(forms.ModelForm):
         self.instance.name = self.manifest["name"]
         self.instance.version_number = self.manifest["version_number"]
         self.instance.website_url = self.manifest["website_url"]
+        self.instance.description = self.manifest["description"]
+        self.instance.readme = self.readme
         self.instance.package = Package.objects.get_or_create(
             owner=self.user,
             name=self.instance.name,

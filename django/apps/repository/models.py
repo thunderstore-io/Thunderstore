@@ -59,6 +59,14 @@ class Package(models.Model):
     def version_number(self):
         return self.latest.version_number
 
+    @property
+    def description(self):
+        return self.latest.description
+
+    @property
+    def readme(self):
+        return self.latest.readme
+
     def get_absolute_url(self):
         return reverse("packages.detail", kwargs={"pk": self.pk})
 
@@ -87,7 +95,6 @@ class PackageVersion(models.Model):
         auto_now_add=True,
     )
 
-    # manifest.json
     name = models.CharField(
         max_length=Package._meta.get_field("name").max_length,
     )
@@ -97,8 +104,10 @@ class PackageVersion(models.Model):
     website_url = models.CharField(
         max_length=1024,
     )
-    # TODO: Add description
-    # TODO: Add readme
+    description = models.CharField(
+        max_length=256
+    )
+    readme = models.TextField()
 
     # <packagename>.zip
     file = models.FileField(
