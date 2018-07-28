@@ -1,8 +1,9 @@
 import json
 import re
 import io
-from zipfile import ZipFile, BadZipFile
+from distutils.version import StrictVersion
 from PIL import Image
+from zipfile import ZipFile, BadZipFile
 
 from django import forms
 from django.db import transaction
@@ -40,7 +41,7 @@ class PackageVersionForm(forms.ModelForm):
 
             if "version_number" not in self.manifest:
                 raise ValidationError("manifest.json must contain version")
-            version = self.manifest["version_number"]
+            version = str(StrictVersion(self.manifest["version_number"]))
             max_length = PackageVersion._meta.get_field("version_number").max_length
             if len(version) > max_length:
                 raise ValidationError(f"Package version number is too long, max: {max_length}")
@@ -48,7 +49,6 @@ class PackageVersionForm(forms.ModelForm):
                 raise ValidationError(
                     f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
                 )
-            # TODO: Validate that numbers don't start with zero
 
             if Package.objects.filter(owner=self.user, versions__version_number=version).exists():
                 raise ValidationError("Package of the same name and version already exists")

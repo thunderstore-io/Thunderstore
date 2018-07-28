@@ -1,5 +1,8 @@
+from distutils.version import StrictVersion
+
 from django.conf import settings
 from django.db import models
+from django.db.models import Case, When
 from django.urls import reverse
 
 
@@ -32,16 +35,17 @@ class Package(models.Model):
 
     @property
     def latest(self):
-        # TODO: Return actually latest version number
         # TODO: Caching
-        # TODO: Order by version
-        return self.versions.last()
+        return self.available_versions.first()
 
     @property
     def available_versions(self):
         # TODO: Caching
-        # TODO: Order by version
-        return self.versions.filter(is_active=True)
+        versions = self.versions.filter(is_active=True).values_list("pk", "version_number")
+        ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
+        pk_list = [version[0] for version in reversed(ordered)]
+        preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
+        return self.versions.filter(pk__in=pk_list).order_by(preserved)
 
     @property
     def icon(self):
@@ -93,6 +97,8 @@ class PackageVersion(models.Model):
     website_url = models.CharField(
         max_length=1024,
     )
+    # TODO: Add description
+    # TODO: Add readme
 
     # <packagename>.zip
     file = models.FileField(
