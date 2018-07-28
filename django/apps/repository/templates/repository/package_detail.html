@@ -1,12 +1,28 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
 
 {% block content %}
-<h1>{{ object }}</h1>
-<img src="{{ object.latest.icon.url }}">
-<p>Versions:</p>
-<table>
-    {% for version in object.versions.all %}
-    <tr><td>{{ version }}</td></tr>
+<div class="media mt-4">
+  <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
+  <div class="media-body">
+    <h1 class="mt-0">{{ object }}</h1>
+    <p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</p>
+    <p><a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
+  </div>
+</div>
+<h2>Available versions</h2>
+<table class="table">
+    <tr>
+        <th>Upload date</th>
+        <th>Version number</th>
+        <th>Download link</th>
+    </tr>
+    {% for version in object.available_versions %}
+    <tr>
+        <td>{{ version.date_created|date:"Y-n-j" }}</td>
+        <td>{{ version.version_number }}</td>
+        <td><a href="{{ version.file.url }}">{{ version }}.zip</a></td>
+    </tr>
     {% endfor %}
 </table>
 {% endblock %}

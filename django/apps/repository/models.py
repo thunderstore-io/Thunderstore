@@ -33,7 +33,27 @@ class Package(models.Model):
     @property
     def latest(self):
         # TODO: Return actually latest version number
+        # TODO: Caching
+        # TODO: Order by version
         return self.versions.last()
+
+    @property
+    def available_versions(self):
+        # TODO: Caching
+        # TODO: Order by version
+        return self.versions.filter(is_active=True)
+
+    @property
+    def icon(self):
+        return self.latest.icon
+
+    @property
+    def website_url(self):
+        return self.latest.website_url
+
+    @property
+    def version_number(self):
+        return self.latest.version_number
 
     def get_absolute_url(self):
         return reverse("packages.detail", kwargs={"pk": self.pk})

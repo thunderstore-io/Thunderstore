@@ -48,6 +48,7 @@ class PackageVersionForm(forms.ModelForm):
                 raise ValidationError(
                     f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
                 )
+            # TODO: Validate that numbers don't start with zero
 
             if Package.objects.filter(owner=self.user, versions__version_number=version).exists():
                 raise ValidationError("Package of the same name and version already exists")

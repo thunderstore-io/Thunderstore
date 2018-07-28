@@ -14,14 +14,21 @@ class PackageListView(ListView):
     template_name = "repository/package_list.html"
     paginate_by = 50
 
-    def get_context_date(self, **kwargs):
-        context = super(PackageListView, self).get_context_date(**kwargs)
+    def get_queryset(self, *args, **kwargs):
+        return self.model.objects.filter(is_active=True)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(PackageListView, self).get_context_data(*args, **kwargs)
         return context
 
 
 class PackageDetailView(DetailView):
     model = Package
     template_name = "repository/package_detail.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(PackageDetailView, self).get_context_data(*args, **kwargs)
+        return context
 
 
 class PackageCreateView(CreateView):
