@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
+{% load markdownify %}
 
 {% block content %}
 <div class="media mt-4">
@@ -13,7 +14,7 @@
 <div class="card bg-light mb-3 mt-2">
     <div class="card-header">README</div>
     <div class="card-body">
-        <p class="card-text">{{ object.readme }}</p>
+        <p class="card-text">{{ object.readme|markdownify }}</p>
     </div>
 </div>
 <h2 class="mt-2">Available versions</h2>

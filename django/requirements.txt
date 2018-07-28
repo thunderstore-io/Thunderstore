@@ -5,6 +5,7 @@
 django==2.0.7
 django-environ==0.4.5
 easy-thumbnails==2.5.0
+markdown==2.6.11
 pillow==5.2.0
 psycopg2-binary==2.7.5
 pytz==2018.5              # via django

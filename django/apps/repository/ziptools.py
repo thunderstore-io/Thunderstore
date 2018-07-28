@@ -77,7 +77,7 @@ class PackageVersionForm(forms.ModelForm):
             raise ValidationError("Invalid icon dimensions, must be 256x256")
 
     def validate_readme(self, readme):
-        self.readme = readme
+        self.readme = readme.decode("utf-8")
 
     def clean_file(self):
         file = self.cleaned_data.get("file", None)
