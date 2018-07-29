@@ -23,7 +23,8 @@ services:
               bash -c '
               python manage.py migrate &&
               python manage.py collectstatic --noinput &&
-              gunicorn core.wsgi -b 0.0.0.0:8000'
+              python manage.py runserver 0.0.0.0:8000'
+    # gunicorn core.wsgi -b 0.0.0.0:8000
     environment:
       DATABASE_URL: psql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
@@ -35,6 +36,7 @@ services:
       - "8000:8000"
     volumes:
       - django-data:/app/var
+      - ./django:/app
 
   nginx:
     build:

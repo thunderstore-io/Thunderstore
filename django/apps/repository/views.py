@@ -12,7 +12,6 @@ from django.shortcuts import redirect, get_object_or_404
 
 class PackageListView(ListView):
     model = Package
-    template_name = "repository/package_list.html"
     paginate_by = 50
 
     def get_queryset(self, *args, **kwargs):
@@ -21,7 +20,6 @@ class PackageListView(ListView):
 
 class PackageDetailView(DetailView):
     model = Package
-    template_name = "repository/package_detail.html"
 
 
 class PackageCreateView(CreateView):
