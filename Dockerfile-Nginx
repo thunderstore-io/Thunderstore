@@ -1,0 +1,9 @@
+FROM nginx:1.15.2
+
+COPY ./nginx/conf.d /etc/nginx/conf.d
+
+EXPOSE 80
+
+STOPSIGNAL SIGTERM
+
+CMD ["nginx", "-g", "daemon off;"]

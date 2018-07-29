@@ -1,37 +1,63 @@
 version: '3.7'
 
-x-nexus: &nexus
-  build:
-    context: .
-    dockerfile: Dockerfile-Nexus
-  restart: always
-
 services:
 
   db:
     image: postgres:10.4-alpine
     restart: always
     environment:
-      POSTGRES_PASSWORD: django
-      POSTGRES_USER: django
-      POSTGRES_DB: django
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
     container_name: nexus_db
     volumes:
       - db-data:/var/lib/postgresql/data
 
   django:
-    <<: *nexus
+    build:
+      context: .
+      dockerfile: Dockerfile-Nexus
+    restart: always
     container_name: nexus_django
-    command: bash -c 'cd /app/django && python /app/django/manage.py runserver 0.0.0.0:8000'
+    command: >
+              bash -c '
+              python manage.py migrate &&
+              python manage.py collectstatic --noinput &&
+              gunicorn core.wsgi -b 0.0.0.0:8000'
     environment:
-      DATABASE_URL: psql://django:django@db/django
-      DEBUG: 'True'
-    volumes:
-      - ./django:/app/django
+      DATABASE_URL: psql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      DEBUG: ${DEBUG}
     depends_on:
       - db
     ports:
-      - "80:8000"
+      - "8000:8000"
+    volumes:
+      - django-data:/app/var
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile-Nginx
+    restart: always
+    container_name: nexus_nginx
+    command: >
+              /bin/bash -c "
+              envsubst
+              < /etc/nginx/conf.d/app.template
+              > /etc/nginx/conf.d/app.conf
+              && nginx -g 'daemon off;'"
+    environment:
+      SERVER_NAME: ${SERVER_NAME}
+    depends_on:
+      - django
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - django-data:/django-data
 
 volumes:
   db-data:
+  django-data:

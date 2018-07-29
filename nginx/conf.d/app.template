@@ -1,0 +1,23 @@
+
+upstream django {
+    server django:8000;
+}
+
+
+server {
+    server_name $SERVER_NAME;
+
+    location / {
+        proxy_pass http://django;
+    }
+
+    location /static {
+        autoindex on;
+        alias /django-data/static/;
+    }
+
+    location /media {
+        autoindex on;
+        alias /django-data/media/;
+    }
+}

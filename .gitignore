@@ -2,3 +2,4 @@
 node/
 .vscode/
 package/
+.env

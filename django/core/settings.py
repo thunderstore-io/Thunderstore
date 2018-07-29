@@ -20,8 +20,6 @@ assert os.path.exists(checkout_dir('manage.py'))
 DEBUG = env.bool('DEBUG')
 
 SECRET_KEY = env.str("SECRET_KEY")
-if DEBUG and not SECRET_KEY:
-    SECRET_KEY = 'xxx'
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 if DEBUG:
