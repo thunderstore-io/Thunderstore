@@ -2,7 +2,7 @@ from distutils.version import StrictVersion
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Case, When
+from django.db.models import Case, When, Sum
 from django.urls import reverse
 
 
@@ -46,6 +46,11 @@ class Package(models.Model):
         pk_list = [version[0] for version in reversed(ordered)]
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
         return self.versions.filter(pk__in=pk_list).order_by(preserved)
+
+    @property
+    def downloads(self):
+        # TODO: Caching
+        return self.versions.aggregate(downloads=Sum("downloads"))["downloads"]
 
     @property
     def icon(self):
@@ -94,6 +99,9 @@ class PackageVersion(models.Model):
     date_created = models.DateTimeField(
         auto_now_add=True,
     )
+    downloads = models.PositiveIntegerField(
+        default=0
+    )
 
     name = models.CharField(
         max_length=Package._meta.get_field("name").max_length,
@@ -127,6 +135,14 @@ class PackageVersion(models.Model):
     @property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"
+
+    @property
+    def download_url(self):
+        return reverse("packages.download", kwargs={
+            "owner": self.package.owner.username,
+            "name": self.package.name,
+            "version": self.version_number,
+        })
 
     def __str__(self):
         return self.full_version_name

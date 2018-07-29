@@ -2,13 +2,15 @@
 {% load thumbnail %}
 {% load markdownify %}
 
+{% block title %}{{ object }}{% endblock %}
+
 {% block content %}
 <div class="media mt-4">
   <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
   <div class="media-body">
     <h1 class="mt-0">{{ object }}</h1>
     <p>{{ object.description }}</p>
-    <p><a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
+    <p>{{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
   </div>
 </div>
 <div class="card bg-light mb-3 mt-2">
@@ -22,13 +24,15 @@
     <tr>
         <th>Upload date</th>
         <th>Version number</th>
+        <th>Downloads</th>
         <th>Download link</th>
     </tr>
     {% for version in object.available_versions %}
     <tr>
         <td>{{ version.date_created|date:"Y-n-j" }}</td>
         <td>{{ version.version_number }}</td>
-        <td><a href="{{ version.file.url }}">{{ version }}.zip</a></td>
+        <td>{{ version.downloads }}</td>
+        <td><a href="{{ version.download_url }}">{{ version }}.zip</a></td>
     </tr>
     {% endfor %}
 </table>

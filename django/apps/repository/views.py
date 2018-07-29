@@ -1,12 +1,13 @@
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
+from django.views.generic import View
 
 from repository.models import Package
 from repository.models import PackageVersion
 from repository.ziptools import PackageVersionForm
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 
 
 class PackageListView(ListView):
@@ -36,3 +37,17 @@ class PackageCreateView(CreateView):
     def form_valid(self, form):
         form.save()
         return redirect(form.instance)
+
+
+class PackageDownloadView(View):
+
+    def get(self, *args, **kwargs):
+        owner = kwargs["owner"]
+        name = kwargs["name"]
+        version = kwargs["version"]
+
+        package = get_object_or_404(Package, owner__username=owner, name=name)
+        version = get_object_or_404(PackageVersion, package=package, version_number=version)
+        version.downloads += 1
+        version.save(update_fields=("downloads",))
+        return redirect(self.request.build_absolute_uri(version.file.url))
