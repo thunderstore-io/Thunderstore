@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -12,10 +13,23 @@ from django.shortcuts import redirect, get_object_or_404
 
 class PackageListView(ListView):
     model = Package
-    paginate_by = 50
+    paginate_by = 10
 
     def get_queryset(self, *args, **kwargs):
         return self.model.objects.filter(is_active=True)
+
+
+class PackageListByOwnerView(ListView):
+    model = Package
+    paginate_by = 10
+
+    def get_queryset(self, *args, **kwargs):
+        owner = self.kwargs["owner"]
+        owner = get_object_or_404(get_user_model(), username=owner)
+        return self.model.objects.filter(
+            is_active=True,
+            owner=owner
+        )
 
 
 class PackageDetailView(DetailView):

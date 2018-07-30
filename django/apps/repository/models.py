@@ -69,6 +69,10 @@ class Package(models.Model):
         return self.latest.description
 
     @property
+    def owner_url(self):
+        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.username})
+
+    @property
     def readme(self):
         return self.latest.readme
 
