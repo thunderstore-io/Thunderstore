@@ -144,5 +144,14 @@ class PackageVersion(models.Model):
             "version": self.version_number,
         })
 
+    @property
+    def install_url(self):
+        return "lspm://%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
+            "hostname": settings.SERVER_NAME,
+            "owner": self.package.owner.username,
+            "name": self.package.name,
+            "version": self.version_number,
+        }
+
     def __str__(self):
         return self.full_version_name

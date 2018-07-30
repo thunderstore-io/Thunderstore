@@ -12,6 +12,7 @@ env = environ.Env(
     DATABASE_URL=(str, ''),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
+    SERVER_NAME=(str, ''),
     SOCIAL_AUTH_GITHUB_KEY=(str, ''),
     SOCIAL_AUTH_GITHUB_SECRET=(str, ''),
 )
@@ -24,8 +25,8 @@ DEBUG = env.bool('DEBUG')
 SECRET_KEY = env.str("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
-if DEBUG:
-    ALLOWED_HOSTS = ["*"]
+SERVER_NAME = env.str('SERVER_NAME')
+
 DATABASES = {'default': env.db()}
 
 # Application definition
