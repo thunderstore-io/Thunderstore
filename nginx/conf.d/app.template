@@ -3,9 +3,31 @@ upstream django {
     server django:8000;
 }
 
+server {
+    listen            80;
+    server_name *.$SERVER_NAME $SERVER_NAME;
+    return            301     https://$host$request_uri;
+
+    # Write Access and Error logs
+    access_log        /var/log/nginx/.access.log;
+    error_log         /var/log/nginx/error.log;
+
+    # CertBot needs either port 80 or 443 open to connect to the
+    location /.well-known/ {
+        alias           /var/www/letsencrypt;
+    }
+}
 
 server {
-    server_name $SERVER_NAME;
+    listen 443;
+    server_name *.$SERVER_NAME $SERVER_NAME;
+
+    ssl on;
+    ssl_certificate /etc/letsencrypt/leaguesandbox.gg.pem;
+    ssl_certificate_key /etc/letsencrypt/leaguesandbox.gg.key;
+
+    access_log /var/log/nginx/.access.log;
+    error_log /var/log/nginx/error.log;
 
     location / {
         proxy_pass http://django;

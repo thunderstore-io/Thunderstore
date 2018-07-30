@@ -30,11 +30,9 @@ services:
       SERVER_NAME: ${SERVER_NAME}
     depends_on:
       - db
-    ports:
-      - "8000:8000"
     volumes:
       - django-data:/app/var
-      - ./django:/app
+      - ./django:/app:ro
 
   nginx:
     build:
@@ -51,8 +49,12 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - django-data:/django-data
+      - django-data:/django-data:ro
+      - logs:/var/log
+      - certs:/etc/letsencrypt:ro
 
 volumes:
   db-data:
   django-data:
+  logs:
+  certs:
