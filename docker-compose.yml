@@ -19,17 +19,14 @@ services:
       dockerfile: Dockerfile-Nexus
     restart: always
     container_name: nexus_django
-    command: >
-              bash -c '
-              python manage.py migrate &&
-              python manage.py collectstatic --noinput &&
-              python manage.py runserver 0.0.0.0:8000'
-    # gunicorn core.wsgi -b 0.0.0.0:8000
+    command: /bin/bash /app/docker-entrypoint.sh
     environment:
       DATABASE_URL: psql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       DEBUG: ${DEBUG}
+      SOCIAL_AUTH_GITHUB_KEY: ${SOCIAL_AUTH_GITHUB_KEY}
+      SOCIAL_AUTH_GITHUB_SECRET: ${SOCIAL_AUTH_GITHUB_SECRET}
     depends_on:
       - db
     ports:
@@ -44,12 +41,7 @@ services:
       dockerfile: Dockerfile-Nginx
     restart: always
     container_name: nexus_nginx
-    command: >
-              /bin/bash -c "
-              envsubst
-              < /etc/nginx/conf.d/app.template
-              > /etc/nginx/conf.d/app.conf
-              && nginx -g 'daemon off;'"
+    command: /bin/bash -c "/bin/bash /root/reload.sh && nginx -g 'daemon off;'"
     environment:
       SERVER_NAME: ${SERVER_NAME}
     depends_on:

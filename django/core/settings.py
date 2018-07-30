@@ -12,6 +12,8 @@ env = environ.Env(
     DATABASE_URL=(str, ''),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
+    SOCIAL_AUTH_GITHUB_KEY=(str, ''),
+    SOCIAL_AUTH_GITHUB_SECRET=(str, ''),
 )
 
 checkout_dir = environ.Path(__file__) - 2
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
 
     # 3rd Party
     'easy_thumbnails',
+    'social_django',
 
     # Own
     'core',
@@ -67,6 +70,8 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -126,4 +131,32 @@ STATIC_URL = '/static/'
 
 # Custom settings
 
-LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
+
+# Social auth
+
+SOCIAL_AUTH_POSTGRES_JSONFIELD = True
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
+SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['username', 'first_name', 'email']
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GITHUB_KEY = env.str("SOCIAL_AUTH_GITHUB_KEY")
+SOCIAL_AUTH_GITHUB_SECRET = env.str("SOCIAL_AUTH_GITHUB_SECRET")
+SOCIAL_AUTH_GITHUB_SCOPE = ["user:email", "read:user"]
+SOCIAL_AUTH_GITHUB_PROFILE_EXTRA_PARAMS = {
+   'fields': 'email'
+}
+SOCIAL_AUTH_PIPELINE = (
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
+    'social_core.pipeline.user.create_user',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+)

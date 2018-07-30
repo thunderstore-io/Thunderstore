@@ -2,11 +2,24 @@
 #
 #   prequ update
 #
+certifi==2018.4.16        # via requests
+chardet==3.0.4            # via requests
+defusedxml==0.5.0         # via python3-openid, social-auth-core
 django==2.0.7
 django-environ==0.4.5
 easy-thumbnails==2.5.0
 gunicorn==19.9.0
+idna==2.7                 # via requests
 markdown==2.6.11
+oauthlib==2.1.0           # via requests-oauthlib, social-auth-core
 pillow==5.2.0
 psycopg2-binary==2.7.5
+pyjwt==1.6.4              # via social-auth-core
+python3-openid==3.1.0     # via social-auth-core
 pytz==2018.5              # via django
+requests==2.19.1          # via requests-oauthlib, social-auth-core
+requests-oauthlib==1.0.0  # via social-auth-core
+six==1.11.0               # via social-auth-app-django, social-auth-core
+social-auth-app-django==2.1.0
+social-auth-core==1.7.0   # via social-auth-app-django
+urllib3==1.23             # via requests

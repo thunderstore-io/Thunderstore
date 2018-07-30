@@ -9,6 +9,7 @@ server {
 
     location / {
         proxy_pass http://django;
+        proxy_set_header Host $host;
     }
 
     location /static {

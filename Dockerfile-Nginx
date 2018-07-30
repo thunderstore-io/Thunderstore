@@ -1,6 +1,7 @@
 FROM nginx:1.15.2
 
 COPY ./nginx/conf.d /etc/nginx/conf.d
+COPY ./nginx/root /root
 
 EXPOSE 80
 
