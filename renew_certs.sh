@@ -6,4 +6,4 @@ docker run -it --rm --name certbot \
   quay.io/letsencrypt/letsencrypt -t certonly \
   --agree-tos --renew-by-default \
   --webroot -w /var/www \
-  -d leaguesandbox.gg
+  -d nexus.leaguesandbox.gg

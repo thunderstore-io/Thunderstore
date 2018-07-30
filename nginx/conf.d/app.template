@@ -4,17 +4,21 @@ upstream django {
 }
 
 server {
-    listen            80;
+    listen 80;
     server_name *.$SERVER_NAME $SERVER_NAME;
-    return            301     https://$host$request_uri;
+
 
     # Write Access and Error logs
-    access_log        /var/log/nginx/.access.log;
-    error_log         /var/log/nginx/error.log;
+    access_log /var/log/nginx/.access.log;
+    error_log /var/log/nginx/error.log;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
 
     # CertBot needs either port 80 or 443 open to connect to the
     location /.well-known/ {
-        alias           /var/www/letsencrypt;
+        alias /var/www/letsencrypt;
     }
 }
 
