@@ -52,9 +52,11 @@ services:
       - django-data:/django-data:ro
       - logs:/var/log
       - certs:/etc/letsencrypt:ro
+      - letsencrypt:/var/www/letsencrypt
 
 volumes:
   db-data:
   django-data:
   logs:
   certs:
+  letsencrypt:
