@@ -50,7 +50,7 @@ services:
       - "443:443"
     volumes:
       - django-data:/django-data:ro
-      - logs:/var/log
+      - logs:/var/log/nginx
       - certs:/etc/letsencrypt:ro
       - letsencrypt:/var/www/letsencrypt
 
