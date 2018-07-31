@@ -16,7 +16,7 @@ class PackageListView(ListView):
     paginate_by = 10
 
     def get_queryset(self, *args, **kwargs):
-        return self.model.objects.filter(is_active=True)
+        return self.model.objects.filter(is_active=True).order_by("pk")
 
 
 class PackageListByOwnerView(ListView):
@@ -29,7 +29,7 @@ class PackageListByOwnerView(ListView):
         return self.model.objects.filter(
             is_active=True,
             owner=owner
-        )
+        ).order_by("pk")
 
 
 class PackageDetailView(DetailView):
