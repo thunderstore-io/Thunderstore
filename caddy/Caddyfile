@@ -1,0 +1,32 @@
+{$PROTOCOL}{$SERVER_NAME} {
+    tls {$TLS_PARAMETER}
+    root /var/www/app
+
+    proxy / django:8000 {
+        transparent
+        except /static
+        except /media
+    }
+
+    header / {
+        # Don't show Caddy/Gunicorn as server header.
+        -Server
+
+        # Enable HTTP Strict Transport Security (HSTS) to force clients to always connect via HTTPS (do not use if only testing)
+        # Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+        # Only send Referer header to same origin.
+        # Django CSRF protection is incompatible with referrer policy set to none.
+        Referrer-Policy "same-origin"
+
+        # Enable cross-site filter (XSS) and tell browser to block detected attacks.
+        X-XSS-Protection "1; mode=block"
+
+        # Prevent some browsers from MIME-sniffing a response away from the declared Content-Type
+        X-Content-Type-Options "nosniff"
+
+        # Don't allow resources to load within a frame/iframe.
+        # This is handled with frame-ancestors 'none' in the content security policy. But not yet supported by older browsers.
+        X-Frame-Options "DENY"
+    }
+}

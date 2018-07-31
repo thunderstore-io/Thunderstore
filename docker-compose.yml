@@ -34,29 +34,26 @@ services:
       - django-data:/app/var
       - ./django:/app:ro
 
-  nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile-Nginx
+  caddy:
+    image: abiosoft/caddy:0.11.0-no-stats
     restart: always
-    container_name: nexus_nginx
-    command: /bin/bash -c "/bin/bash /root/reload.sh && nginx -g 'daemon off;'"
+    container_name: nexus_caddy
     environment:
       SERVER_NAME: ${SERVER_NAME}
+      TLS_PARAMETER: ${TLS_PARAMETER}
+      PROTOCOL: ${PROTOCOL}
     depends_on:
       - django
     ports:
       - "80:80"
       - "443:443"
+      - "2015:2015"
     volumes:
-      - django-data:/django-data:ro
-      - logs:/var/log/nginx
-      - certs:/etc/letsencrypt:ro
-      - letsencrypt:/var/www/letsencrypt
+      - django-data:/var/www/app:ro
+      - caddycerts:/root/.caddy
+      - ./caddy/Caddyfile:/etc/Caddyfile:ro
 
 volumes:
   db-data:
   django-data:
-  logs:
-  certs:
-  letsencrypt:
+  caddycerts:
