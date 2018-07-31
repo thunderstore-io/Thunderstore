@@ -42,6 +42,7 @@ services:
       SERVER_NAME: ${SERVER_NAME}
       TLS_PARAMETER: ${TLS_PARAMETER}
       PROTOCOL: ${PROTOCOL}
+      ACME_AGREE: True
     depends_on:
       - django
     ports:
