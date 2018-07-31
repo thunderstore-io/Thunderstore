@@ -109,7 +109,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, "var/static/")
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.CachedStaticFilesStorage'
+
+# TODO: Figure out incompatibility with Caddy and enable
+# STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.CachedStaticFilesStorage'
 
 
 # Internationalization
