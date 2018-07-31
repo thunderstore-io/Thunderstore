@@ -4,7 +4,6 @@
 
     proxy / django:8000 {
         transparent
-        except /static
-        except /media
+        except /static /media
     }
 }
