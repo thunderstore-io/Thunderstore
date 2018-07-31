@@ -15,6 +15,7 @@ env = environ.Env(
     SERVER_NAME=(str, ''),
     SOCIAL_AUTH_GITHUB_KEY=(str, ''),
     SOCIAL_AUTH_GITHUB_SECRET=(str, ''),
+    PROTOCOL=(str, '')
 )
 
 checkout_dir = environ.Path(__file__) - 2
@@ -152,6 +153,12 @@ SOCIAL_AUTH_GITHUB_SCOPE = ["user:email", "read:user"]
 SOCIAL_AUTH_GITHUB_PROFILE_EXTRA_PARAMS = {
    'fields': 'email'
 }
+
+if env.str("PROTOCOL") == "https://":
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',

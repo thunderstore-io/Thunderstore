@@ -28,6 +28,7 @@ services:
       SOCIAL_AUTH_GITHUB_KEY: ${SOCIAL_AUTH_GITHUB_KEY}
       SOCIAL_AUTH_GITHUB_SECRET: ${SOCIAL_AUTH_GITHUB_SECRET}
       SERVER_NAME: ${SERVER_NAME}
+      PROTOCOL: ${PROTOCOL}
     depends_on:
       - db
     volumes:
