@@ -13,6 +13,7 @@ from django.core.files.base import ContentFile
 from repository.models import PackageVersion, Package
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * 50
+MAX_ICON_SIZE = 1024 * 1024 * 3
 NAME_PATTERN = re.compile(r"^[a-zA-Z0-9\_]+$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
@@ -66,6 +67,13 @@ class PackageVersionForm(forms.ModelForm):
     def validate_icon(self, icon):
         try:
             self.icon = ContentFile(icon)
+        except Exception:
+            raise ValidationError("Unknown error while processing icon.png")
+
+        if self.icon._size > MAX_ICON_SIZE:
+            raise ValidationError(f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes")
+
+        try:
             image = Image.open(io.BytesIO(icon))
         except Exception:
             raise ValidationError("Unsupported or corrupt icon, must be png")
