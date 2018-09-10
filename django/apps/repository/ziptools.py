@@ -14,6 +14,8 @@ from repository.models import PackageVersion, Package
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * 50
 MAX_ICON_SIZE = 1024 * 1024 * 3
+MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * 50
+
 NAME_PATTERN = re.compile(r"^[a-zA-Z0-9\_]+$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
@@ -98,6 +100,12 @@ class PackageVersionForm(forms.ModelForm):
 
         if file._size > MAX_PACKAGE_SIZE:
             raise ValidationError(f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes")
+
+        current_total = 0
+        for version in PackageVersion.objects.all():
+            current_total += version.file.size
+        if file._size + current_total > MAX_TOTAL_SIZE:
+            raise ValidationError(f"The server has reached maximum total storage used, and can't receive new uploads")
 
         try:
             with ZipFile(file) as unzip:
