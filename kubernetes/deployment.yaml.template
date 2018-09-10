@@ -53,7 +53,7 @@ spec:
           - name: GS_CREDENTIALS
             value: /secrets/cloud-storage/nexus-storage.service-account.json
           - name: GS_DEFAULT_ACL
-            value: public-read
+            value: publicRead
         volumeMounts:
           - name: cloud-storage-credentials
             mountPath: /secrets/cloud-storage
