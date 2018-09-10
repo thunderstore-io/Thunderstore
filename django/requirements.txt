@@ -2,25 +2,40 @@
 #
 #   prequ update
 #
+cachetools==2.1.0         # via google-auth
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
 defusedxml==0.5.0         # via python3-openid, social-auth-core
 django==2.0.7
 django-environ==0.4.5
+django-storages[google]==1.7.1
 easy-thumbnails==2.5.0
+google-api-core==1.3.0    # via google-cloud-core, google-cloud-storage
+google-auth==1.5.1        # via google-api-core
+google-cloud-core==0.28.1  # via google-cloud-storage
+google-cloud-storage==1.11.0  # via django-storages
+google-resumable-media==0.3.1  # via google-cloud-storage
+googleapis-common-protos==1.5.3  # via google-api-core
 gunicorn==19.9.0
 idna==2.7                 # via requests
 markdown==2.6.11
 oauthlib==2.1.0           # via requests-oauthlib, social-auth-core
 pillow==5.2.0
+protobuf==3.6.1           # via google-api-core, googleapis-common-protos
 psycopg2-binary==2.7.5
+pyasn1==0.4.4             # via pyasn1-modules, rsa
+pyasn1-modules==0.2.2     # via google-auth
 pyjwt==1.6.4              # via social-auth-core
 python3-openid==3.1.0     # via social-auth-core
-pytz==2018.5              # via django
-requests==2.19.1          # via requests-oauthlib, social-auth-core
+pytz==2018.5              # via django, google-api-core
+requests==2.19.1          # via google-api-core, requests-oauthlib, social-auth-core
 requests-oauthlib==1.0.0  # via social-auth-core
-six==1.11.0               # via social-auth-app-django, social-auth-core
+rsa==3.4.2                # via google-auth
+six==1.11.0               # via google-api-core, google-auth, google-resumable-media, protobuf, social-auth-app-django, social-auth-core
 social-auth-app-django==2.1.0
 social-auth-core==1.7.0   # via social-auth-app-django
 urllib3==1.23             # via requests
 whitenoise==3.3.1
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools                # via google-api-core, protobuf

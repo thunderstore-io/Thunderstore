@@ -29,6 +29,9 @@ services:
       SOCIAL_AUTH_GITHUB_SECRET: ${SOCIAL_AUTH_GITHUB_SECRET}
       SERVER_NAME: ${SERVER_NAME}
       PROTOCOL: ${PROTOCOL}
+      GS_BUCKET_NAME: ${GS_BUCKET_NAME}
+      GS_PROJECT_ID: ${GS_PROJECT_ID}
+      GS_CREDENTIALS: ${GS_CREDENTIALS}
     depends_on:
       - db
     volumes:

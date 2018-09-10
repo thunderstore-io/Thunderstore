@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.views.generic.base import RedirectView
 from django.urls import path, include
+from django.http import HttpResponse
 
 from frontend.views import IndexView
 
@@ -16,4 +17,5 @@ urlpatterns = [
     path('package/', include(repository_urls)),
     path('favicon.ico', RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, 'favicon.ico'))),
     path('djangoadmin/', admin.site.urls),
+    path('healthcheck/', lambda request: HttpResponse("OK"), name="healthcheck")
 ]
