@@ -9,3 +9,4 @@ RUN pip install -U pip --no-cache-dir && \
 
 COPY ./django /app
 
+ENTRYPOINT ["/bin/bash", "/app/docker-entrypoint.sh"]

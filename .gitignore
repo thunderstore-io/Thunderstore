@@ -3,3 +3,5 @@ node/
 .vscode/
 package/
 .env
+*.service-account.json
+kubernetes/deployment.yaml

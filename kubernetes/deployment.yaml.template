@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-deployment
+  namespace: nexus
+spec:
+  selector:
+    matchLabels:
+      app: nexus
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nexus
+        tier: web
+    spec:
+      containers:
+      - name: nexus
+        image: leaguesandbox/nexus:commit-${TRAVIS_COMMIT}
+        ports:
+        - containerPort: 8000
+        env:
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: database-credentials
+                key: url
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: django-conf
+                key: secret-key
+          - name: ALLOWED_HOSTS
+            value: nexus.leaguesandbox.gg
+          - name: SOCIAL_AUTH_GITHUB_KEY
+            valueFrom:
+              secretKeyRef:
+                name: github-oauth
+                key: key
+          - name: SOCIAL_AUTH_GITHUB_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: github-oauth
+                key: secret
+          - name: SERVER_NAME
+            value: nexus.leaguesandbox.gg
+          - name: PROTOCOL
+            value: https://
+          - name: GS_BUCKET_NAME
+            value: league-sandbox-nexus-storage
+          - name: GS_PROJECT_ID
+            value: league-sandbox
+          - name: GS_CREDENTIALS
+            value: /secrets/cloud-storage/nexus-storage.service-account.json
+        volumeMounts:
+          - name: cloud-storage-credentials
+            mountPath: /secrets/cloud-storage
+            readOnly: true
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        command: ["/cloud_sql_proxy",
+                  "-instances=league-sandbox:europe-north1:nexus-db=tcp:3306",
+                  "-credential_file=/secrets/cloudsql/nexus-db-proxy.service-account.json"]
+        securityContext:
+          runAsUser: 2
+          allowPrivilegeEscalation: false
+        volumeMounts:
+          - name: cloudsql-instance-credentials
+            mountPath: /secrets/cloudsql
+            readOnly: true
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+        - name: cloud-storage-credentials
+          secret:
+            secretName: cloud-storage-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-backend
+  namespace: nexus
+  labels:
+    app: nexus
+spec:
+  type: NodePort
+  selector:
+    app: nexus
+    tier: web
+  ports:
+  - port: 8000
+    targetPort: 8000
