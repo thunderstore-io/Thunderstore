@@ -6,7 +6,7 @@ cachetools==2.1.0         # via google-auth
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
 defusedxml==0.5.0         # via python3-openid, social-auth-core
-django==2.0.7
+django==2.1.2
 django-environ==0.4.5
 django-storages[google]==1.7.1
 easy-thumbnails==2.5.0
