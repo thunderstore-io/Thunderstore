@@ -16,7 +16,7 @@ services:
   django:
     build:
       context: .
-      dockerfile: Dockerfile-Nexus
+      dockerfile: Dockerfile
     restart: always
     container_name: nexus_django
     command: /bin/bash /app/docker-entrypoint.sh
