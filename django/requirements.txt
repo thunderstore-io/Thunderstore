@@ -28,7 +28,7 @@ pyasn1-modules==0.2.2     # via google-auth
 pyjwt==1.6.4              # via social-auth-core
 python3-openid==3.1.0     # via social-auth-core
 pytz==2018.5              # via django, google-api-core
-requests==2.19.1          # via google-api-core, requests-oauthlib, social-auth-core
+requests==2.20.0          # via google-api-core, requests-oauthlib, social-auth-core
 requests-oauthlib==1.0.0  # via social-auth-core
 rsa==3.4.2                # via google-auth
 six==1.11.0               # via google-api-core, google-auth, google-resumable-media, protobuf, social-auth-app-django, social-auth-core
