@@ -30,7 +30,8 @@ class Package(models.Model):
     )
     uuid4 = models.UUIDField(
         default=uuid.uuid4,
-        editable=False
+        editable=False,
+        unique=True,
     )
 
     class Meta:
@@ -84,7 +85,12 @@ class Package(models.Model):
         return self.latest.readme
 
     def get_absolute_url(self):
-        return reverse("packages.detail", kwargs={"pk": self.pk})
+        return reverse(
+            "packages.detail",
+            kwargs={
+                "owner": self.owner.username,
+                "name": self.name,
+        })
 
     def __str__(self):
         return self.full_package_name

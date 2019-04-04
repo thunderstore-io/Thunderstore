@@ -35,6 +35,17 @@ class PackageListByOwnerView(ListView):
 class PackageDetailView(DetailView):
     model = Package
 
+    def get_object(self, *args, **kwargs):
+        owner = self.kwargs["owner"]
+        owner = get_object_or_404(get_user_model(), username=owner)
+        name = self.kwargs["name"]
+        return get_object_or_404(
+            self.model,
+            is_active=True,
+            owner=owner,
+            name=name,
+        )
+
 
 class PackageCreateView(CreateView):
     model = PackageVersion

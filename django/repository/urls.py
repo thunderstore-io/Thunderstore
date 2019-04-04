@@ -9,17 +9,17 @@ from repository.views import PackageListByOwnerView
 
 urlpatterns = [
     path(
-        'list/',
+        '',
         PackageListView.as_view(),
         name="packages.list"
     ),
     path(
-        'view/<int:pk>/',
+        '<str:owner>/<str:name>/',
         PackageDetailView.as_view(),
         name="packages.detail"
     ),
     path(
-        'list-by-owner/<str:owner>/',
+        '<str:owner>/',
         PackageListByOwnerView.as_view(),
         name="packages.list_by_owner",
     ),

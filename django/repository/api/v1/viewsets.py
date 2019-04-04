@@ -9,3 +9,4 @@ from repository.api.v1.serializers import (
 class PackageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Package.objects.filter(is_active=True)
     serializer_class = PackageSerializer
+    lookup_field = "uuid4"
