@@ -5,23 +5,23 @@ Thunderstore is a mod database and API for downloading Risk of Rain 2 mods.
 
 ## Setup guide for development
 
-- Copy `.env.template` to `.env` and modify as you see fit
-- Run `docker-compose up`
+* Copy `.env.template` to `.env` and modify as you see fit
+* Run `docker-compose up`
 
 ## Mod package format
 
 Mod packages are `.zip` files, with at least the following contents:
 
-- `/icon.png` - A PNG icon for the mod, must be 256x256 resolution.
-- `/README.md` - A readme file to be rendered on the mod's page.
-- `/manifest.json` - A `.json` file with the mod's metadata. Required filds are:
- - `name` - Name of the mod. Allowed characters: `a-z A-Z 0-9 _`. No spaces.
- - `description` - A short description of the mod, shown on the mod list. Max
- 250 characters
- - `website_url` - URL of the mod's website (e.g. GitHub repo). Can be empty,
- but the key must still exists (use an empty string for example).
- - `version_number` - Version number of the mod, following the semantic version
- format `Major.Minor.Patch`. For example: `1.3.2`.
+* `/icon.png` - A PNG icon for the mod, must be 256x256 resolution.
+* `/README.md` - A readme file to be rendered on the mod's page.
+* `/manifest.json` - A `.json` file with the mod's metadata. Required filds are:
+    * `name` - Name of the mod. Allowed characters: `a-z A-Z 0-9 _`. No spaces.
+    * `description` - A short description of the mod, shown on the mod list. Max
+    250 characters
+    * `website_url` - URL of the mod's website (e.g. GitHub repo). Can be empty,
+    but the key must still exists (use an empty string for example).
+    * `version_number` - Version number of the mod, following the semantic version
+    format `Major.Minor.Patch`. For example: `1.3.2`.
 
 Example `manifest.json` contents:
 ```json
