@@ -30,6 +30,7 @@ services:
       GS_BUCKET_NAME: ${GS_BUCKET_NAME}
       GS_PROJECT_ID: ${GS_PROJECT_ID}
       GS_CREDENTIALS: ${GS_CREDENTIALS}
+      GS_LOCATION: ${GS_LOCATION}
     ports:
       - 127.0.0.1:80:8000
     depends_on:
@@ -41,4 +42,3 @@ services:
 volumes:
   db-data:
   django-data:
-  caddycerts:
