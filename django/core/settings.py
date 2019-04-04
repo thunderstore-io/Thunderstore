@@ -1,13 +1,11 @@
 import os
-import sys
 import environ
+import json
+import base64
 
 from google.oauth2 import service_account
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Application directories
-sys.path.append(os.path.join(BASE_DIR, "apps"))
-
 
 env = environ.Env(
     DEBUG=(bool, False),
@@ -23,8 +21,10 @@ env = environ.Env(
     GS_PROJECT_ID=(str, ''),
     GS_CREDENTIALS=(str, ''),
     GS_AUTO_CREATE_BUCKET=(bool, False),
-    GS_AUTO_CREATE_ACL=(str, ''),
-    GS_DEFAULT_ACL=(str, ''),
+    GS_AUTO_CREATE_ACL=(str, 'publicRead'),
+    GS_DEFAULT_ACL=(str, 'publicRead'),
+    GS_LOCATION=(str, ''),
+    GS_FILE_OVERWRITE=(bool, False)
 )
 
 checkout_dir = environ.Path(__file__) - 2
@@ -154,11 +154,14 @@ GS_PROJECT_ID = env.str("GS_PROJECT_ID")
 
 GS_CREDENTIALS = env.str("GS_CREDENTIALS")
 if GS_CREDENTIALS:
-    GS_CREDENTIALS = service_account.Credentials.from_service_account_file(GS_CREDENTIALS)
+    GS_CREDENTIALS = json.loads(base64.b64decode(GS_CREDENTIALS).decode("utf-8"))
+    GS_CREDENTIALS = service_account.Credentials.from_service_account_info(GS_CREDENTIALS)
 
 GS_AUTO_CREATE_BUCKET = env.str("GS_AUTO_CREATE_BUCKET")
 GS_AUTO_CREATE_ACL = env.str("GS_AUTO_CREATE_ACL")
 GS_DEFAULT_ACL = env.str("GS_DEFAULT_ACL")
+GS_LOCATION = env.str("GS_LOCATION")
+GS_FILE_OVERWRITE = env.bool("GS_FILE_OVERWRITE")
 
 if GS_CREDENTIALS and GS_PROJECT_ID and GS_BUCKET_NAME:
     DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"

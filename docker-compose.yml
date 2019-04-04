@@ -9,7 +9,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
-    container_name: nexus_db
     volumes:
       - db-data:/var/lib/postgresql/data
 
@@ -18,7 +17,6 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
-    container_name: nexus_django
     command: /bin/bash /app/docker-entrypoint.sh
     environment:
       DATABASE_URL: psql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
@@ -37,26 +35,6 @@ services:
     volumes:
       - django-data:/app/var
       - ./django:/app
-
-  caddy:
-    image: abiosoft/caddy:0.11.0-no-stats
-    restart: always
-    container_name: nexus_caddy
-    environment:
-      SERVER_NAME: ${SERVER_NAME}
-      TLS_PARAMETER: ${TLS_PARAMETER}
-      PROTOCOL: ${PROTOCOL}
-      ACME_AGREE: "True"
-    depends_on:
-      - django
-    ports:
-      - "80:80"
-      - "443:443"
-      - "2015:2015"
-    volumes:
-      - django-data:/var/www/app:ro
-      - caddycerts:/root/.caddy
-      - ./caddy/Caddyfile:/etc/Caddyfile:ro
 
 volumes:
   db-data:

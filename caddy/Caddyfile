@@ -1,9 +1,0 @@
-{$PROTOCOL}{$SERVER_NAME} {
-    tls {$TLS_PARAMETER}
-    root /var/www/app
-
-    proxy / django:8000 {
-        transparent
-        except /media
-    }
-}
