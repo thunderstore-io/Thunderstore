@@ -10,6 +10,7 @@ class Package(models.Model):
     maintainers = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="maintaned_packages",
+        blank=True,
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

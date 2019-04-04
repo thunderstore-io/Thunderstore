@@ -53,7 +53,14 @@ class PackageVersionForm(forms.ModelForm):
                     f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
                 )
 
-            if Package.objects.filter(owner=self.user, versions__version_number=version).exists():
+
+            same_version_exists = Package.objects.filter(
+                owner=self.user,
+                name=self.manifest["name"],
+                versions__version_number=version
+            ).exists()
+
+            if same_version_exists:
                 raise ValidationError("Package of the same name and version already exists")
 
             if "website_url" not in self.manifest:
