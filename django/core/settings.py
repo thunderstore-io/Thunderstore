@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'easy_thumbnails',
     'social_django',
     'rest_framework',
+    'rest_framework_swagger',
 
     # Own
     'core',
@@ -147,6 +148,17 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'index'
+
+# REST Framework
+
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+    ),
+    "DEFAULT_PARSER_CLASSES": (
+        "rest_framework.parsers.JSONParser",
+    )
+}
 
 # Cloud Storage
 

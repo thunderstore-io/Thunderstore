@@ -87,10 +87,8 @@ class Package(models.Model):
     def get_absolute_url(self):
         return reverse(
             "packages.detail",
-            kwargs={
-                "owner": self.owner.username,
-                "name": self.name,
-        })
+            kwargs={"owner": self.owner.username, "name": self.name}
+        )
 
     def __str__(self):
         return self.full_package_name
