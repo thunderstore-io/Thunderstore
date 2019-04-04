@@ -19,7 +19,7 @@ services:
     restart: always
     command: /bin/bash /app/docker-entrypoint.sh
     environment:
-      DATABASE_URL: psql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+      DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       DEBUG: ${DEBUG}
