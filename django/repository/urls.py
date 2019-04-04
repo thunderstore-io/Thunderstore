@@ -14,6 +14,16 @@ urlpatterns = [
         name="packages.list"
     ),
     path(
+        'create/',
+        PackageCreateView.as_view(),
+        name="packages.create"
+    ),
+    path(
+        'download/<str:owner>/<str:name>/<str:version>/',
+        PackageDownloadView.as_view(),
+        name="packages.download"
+    ),
+    path(
         '<str:owner>/<str:name>/',
         PackageDetailView.as_view(),
         name="packages.detail"
@@ -23,14 +33,4 @@ urlpatterns = [
         PackageListByOwnerView.as_view(),
         name="packages.list_by_owner",
     ),
-    path(
-        'create/',
-        PackageCreateView.as_view(),
-        name="packages.create"
-    ),
-    path(
-        'download/<str:owner>/<str:name>/<str:version>/',
-        PackageDownloadView.as_view(),
-        name="packages.download"
-    )
 ]
