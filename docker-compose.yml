@@ -31,6 +31,9 @@ services:
       GS_PROJECT_ID: ${GS_PROJECT_ID}
       GS_CREDENTIALS: ${GS_CREDENTIALS}
       GS_LOCATION: ${GS_LOCATION}
+      DB_CLIENT_CERT: ${DB_CLIENT_CERT}
+      DB_CLIENT_KEY: ${DB_CLIENT_KEY}
+      DB_SERVER_CA: ${DB_SERVER_CA}
     ports:
       - 127.0.0.1:80:8000
     depends_on:

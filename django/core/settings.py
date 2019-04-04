@@ -24,7 +24,11 @@ env = environ.Env(
     GS_AUTO_CREATE_ACL=(str, 'publicRead'),
     GS_DEFAULT_ACL=(str, 'publicRead'),
     GS_LOCATION=(str, ''),
-    GS_FILE_OVERWRITE=(bool, False)
+    GS_FILE_OVERWRITE=(bool, False),
+
+    DB_CLIENT_CERT=(str, ''),
+    DB_CLIENT_KEY=(str, ''),
+    DB_SERVER_CA=(str, ''),
 )
 
 checkout_dir = environ.Path(__file__) - 2
@@ -37,7 +41,43 @@ SECRET_KEY = env.str("SECRET_KEY")
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 SERVER_NAME = env.str('SERVER_NAME')
 
+
 DATABASES = {'default': env.db()}
+
+DB_CLIENT_CERT = env.str("DB_CLIENT_CERT")
+DB_CLIENT_KEY = env.str("DB_CLIENT_KEY")
+DB_SERVER_CA = env.str("DB_SERVER_CA")
+
+
+def load_db_certs():
+    cert_dir = "/etc/ssl/private/db-certs/"
+    if not os.path.exists(cert_dir):
+        os.makedirs(cert_dir)
+
+    mappings = {
+        "client-cert.pem": DB_CLIENT_CERT,
+        "client-key.pem": DB_CLIENT_KEY,
+        "server-ca.pem": DB_SERVER_CA,
+    }
+    for filename, cert_encoded in mappings.items():
+        target = os.path.join(cert_dir, filename)
+        cert = base64.b64decode(cert_encoded).decode("utf-8")
+        with open(os.open(target, os.O_CREAT | os.O_WRONLY, 0o600), "w") as certfile:
+            certfile.write(cert)
+
+    if "OPTIONS" not in DATABASES["default"]:
+        DATABASES["default"]["OPTIONS"] = {}
+
+    DATABASES["default"]["OPTIONS"].update({
+        "sslmode": "verify-ca",
+        "sslrootcert": f"{cert_dir}server-ca.pem",
+        "sslcert": f"{cert_dir}client-cert.pem",
+        "sslkey": f"{cert_dir}client-key.pem",
+    })
+
+
+if DB_CLIENT_CERT and DB_CLIENT_KEY and DB_SERVER_CA:
+    load_db_certs()
 
 # Application definition
 
