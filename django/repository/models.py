@@ -1,3 +1,5 @@
+import uuid
+
 from distutils.version import StrictVersion
 
 from django.conf import settings
@@ -25,6 +27,10 @@ class Package(models.Model):
     )
     date_created = models.DateTimeField(
         auto_now_add=True,
+    )
+    uuid4 = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False
     )
 
     class Meta:
@@ -129,6 +135,10 @@ class PackageVersion(models.Model):
     # <packagename>.png
     icon = models.ImageField(
         upload_to=get_version_png_filepath,
+    )
+    uuid4 = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False
     )
 
     class Meta:

@@ -19,7 +19,7 @@ urlpatterns = [
         name="packages.detail"
     ),
     path(
-        'list_by_owner/<str:owner>/',
+        'list-by-owner/<str:owner>/',
         PackageListByOwnerView.as_view(),
         name="packages.list_by_owner",
     ),

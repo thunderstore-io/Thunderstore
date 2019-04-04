@@ -53,7 +53,6 @@ class PackageVersionForm(forms.ModelForm):
                     f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
                 )
 
-
             same_version_exists = Package.objects.filter(
                 owner=self.user,
                 name=self.manifest["name"],
