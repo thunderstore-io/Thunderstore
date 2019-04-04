@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # 3rd Party
     'easy_thumbnails',
     'social_django',
+    'rest_framework',
 
     # Own
     'core',

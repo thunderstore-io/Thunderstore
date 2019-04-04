@@ -5,13 +5,12 @@ from django.views.generic.base import RedirectView
 from django.urls import path, include
 from django.http import HttpResponse
 
-from frontend.views import IndexView
-
 from repository.urls import urlpatterns as repository_urls
+from repository.views import PackageListView
 
 
 urlpatterns = [
-    path('', IndexView.as_view(), name="index"),
+    path('', PackageListView.as_view(), name="index"),
     path('auth/', include('social_django.urls', namespace='social')),
     path('logout/', LogoutView.as_view(), kwargs={'next_page': '/'}, name="logout"),
     path('package/', include(repository_urls)),

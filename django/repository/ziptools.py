@@ -12,9 +12,9 @@ from django.core.files.base import ContentFile
 
 from repository.models import PackageVersion, Package
 
-MAX_PACKAGE_SIZE = 1024 * 1024 * 50
-MAX_ICON_SIZE = 1024 * 1024 * 3
-MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * 50
+MAX_PACKAGE_SIZE = 1024 * 1024 * 500
+MAX_ICON_SIZE = 1024 * 1024 * 6
+MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * 500
 
 NAME_PATTERN = re.compile(r"^[a-zA-Z0-9\_]+$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
@@ -39,16 +39,16 @@ class PackageVersionForm(forms.ModelForm):
                 raise ValidationError(f"Package name is too long, max: {max_length}")
             if not re.match(NAME_PATTERN, self.manifest["name"]):
                 raise ValidationError(
-                    f"Package names can only contain a-Z A-Z 0-9 and _ characers"
+                    f"Package names can only contain a-Z A-Z 0-9 _ characers"
                 )
 
             if "version_number" not in self.manifest:
                 raise ValidationError("manifest.json must contain version")
-            version = str(StrictVersion(self.manifest["version_number"]))
+            version = self.manifest["version_number"]
             max_length = PackageVersion._meta.get_field("version_number").max_length
             if len(version) > max_length:
                 raise ValidationError(f"Package version number is too long, max: {max_length}")
-            if not re.match(VERSION_PATTERN, self.manifest["version_number"]):
+            if not re.match(VERSION_PATTERN, version):
                 raise ValidationError(
                     f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
                 )
@@ -56,10 +56,14 @@ class PackageVersionForm(forms.ModelForm):
             if Package.objects.filter(owner=self.user, versions__version_number=version).exists():
                 raise ValidationError("Package of the same name and version already exists")
 
+            if "website_url" not in self.manifest:
+                raise ValidationError("manifest.json must contain a website_url (Leave empty string if none)")
             max_length = PackageVersion._meta.get_field("website_url").max_length
             if len(self.manifest.get("website_url", "")) > max_length:
                 raise ValidationError(f"Package website url is too long, max: {max_length}")
 
+            if "description" not in self.manifest:
+                raise ValidationError("manifest.json must contain a description")
             max_length = PackageVersion._meta.get_field("description").max_length
             if len(self.manifest.get("description", "")) > max_length:
                 raise ValidationError(f"Package description is too long, max: {max_length}")
@@ -72,7 +76,7 @@ class PackageVersionForm(forms.ModelForm):
         except Exception:
             raise ValidationError("Unknown error while processing icon.png")
 
-        if self.icon._size > MAX_ICON_SIZE:
+        if self.icon.size > MAX_ICON_SIZE:
             raise ValidationError(f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes")
 
         try:
@@ -98,13 +102,13 @@ class PackageVersionForm(forms.ModelForm):
         if not file:
             raise ValidationError("Must upload a file")
 
-        if file._size > MAX_PACKAGE_SIZE:
+        if file.size > MAX_PACKAGE_SIZE:
             raise ValidationError(f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes")
 
         current_total = 0
         for version in PackageVersion.objects.all():
             current_total += version.file.size
-        if file._size + current_total > MAX_TOTAL_SIZE:
+        if file.size + current_total > MAX_TOTAL_SIZE:
             raise ValidationError(f"The server has reached maximum total storage used, and can't receive new uploads")
 
         try:
