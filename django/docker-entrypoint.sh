@@ -6,5 +6,6 @@ if [ "$DEBUG" = true ] || [ "$DEBUG" = 'True' ] || [ "$DEBUG" = 1 ]; then
     python manage.py runserver 0.0.0.0:8000
 else
     echo 'Launching in production mode'
+    python manage.py migrate
     gunicorn core.wsgi -b 0.0.0.0:8000
 fi
