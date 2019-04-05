@@ -4,6 +4,18 @@
 
 {% block title %}{{ object }}{% endblock %}
 
+{% block opengraph %}
+<meta property="og:title" content="{{ object }} v{{ object.version_number }}" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="{{ request.build_absolute_uri }}" />
+<meta property="og:image" content="{% thumbnail object.icon 256x256 %}" />
+<meta property="og:image:width" content="256" />
+<meta property="og:image:height" content="256" />
+
+<meta property="og:description" content="{{ object.description }}" />
+<meta property="og:site_name" content="Thunderstore" />
+{% endblock %}
+
 {% block content %}
 <div class="media mt-4">
   <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">

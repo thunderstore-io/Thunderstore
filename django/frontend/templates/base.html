@@ -4,6 +4,17 @@
     <head>
         <title>{% block title %}Index{% endblock %} | Thunderstore</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        {% block opengraph %}
+        <meta property="og:title" content="Thunderstore | Risk of Rain 2 Mod Database" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'icon.png' %}" />
+        <meta property="og:image:width" content="303" />
+        <meta property="og:image:height" content="303" />
+
+        <meta property="og:description" content="Thunderstore is a mod database and API for downloading Risk of Rain 2 mods" />
+        <meta property="og:site_name" content="Thunderstore" />
+        {% endblock %}
 
         {# Bootstrap #}
         <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
