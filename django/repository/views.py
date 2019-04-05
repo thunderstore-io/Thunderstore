@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -62,8 +63,10 @@ class PackageCreateView(CreateView):
         kwargs["user"] = self.request.user
         return kwargs
 
+    @transaction.atomic
     def form_valid(self, form):
-        form.save()
+        instance = form.save()
+        instance.announce_release()
         return redirect(form.instance)
 
 

@@ -1,12 +1,10 @@
 import json
 import re
 import io
-from distutils.version import StrictVersion
 from PIL import Image
 from zipfile import ZipFile, BadZipFile
 
 from django import forms
-from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 
@@ -148,7 +146,6 @@ class PackageVersionForm(forms.ModelForm):
 
         return file
 
-    @transaction.atomic
     def save(self):
         self.instance.name = self.manifest["name"]
         self.instance.version_number = self.manifest["version_number"]
@@ -160,4 +157,4 @@ class PackageVersionForm(forms.ModelForm):
             name=self.instance.name,
         )[0]
         self.instance.icon.save("icon.png", self.icon)
-        super(PackageVersionForm, self).save()
+        return super(PackageVersionForm, self).save()

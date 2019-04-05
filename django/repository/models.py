@@ -100,18 +100,6 @@ class Package(models.Model):
             "path": self.get_absolute_url()
         }
 
-    def announce_release(self):
-        webhooks = Webhook.objects.filter(webhook_type=WebhookType.mod_release)
-        webhook_data = {
-            "content": (
-                f"{self.owner.username} just uploaded a new version (v{self.version_number}) of {self.name},"
-                + f" Go check it out! {self.full_url}"
-            ),
-            "username": "Thunderstore API",
-        }
-        for webhook in webhooks:
-            webhook.call_with_json(webhook_data)
-
     def __str__(self):
         return self.full_package_name
 
@@ -193,6 +181,18 @@ class PackageVersion(models.Model):
             "name": self.package.name,
             "version": self.version_number,
         }
+
+    def announce_release(self):
+        webhooks = Webhook.objects.filter(webhook_type=WebhookType.mod_release)
+        webhook_data = {
+            "content": (
+                f"{self.package.owner.username} just uploaded a new version (v{self.version_number}) of {self.name},"
+                + f" Go check it out! {self.package.full_url}"
+            ),
+            "username": "Thunderstore API",
+        }
+        for webhook in webhooks:
+            webhook.call_with_json(webhook_data)
 
     def __str__(self):
         return self.full_version_name
