@@ -7,6 +7,8 @@ from django.db import models
 from django.db.models import Case, When, Sum
 from django.urls import reverse
 
+from webhooks.models import Webhook, WebhookType
+
 
 class Package(models.Model):
     maintainers = models.ManyToManyField(
@@ -89,6 +91,26 @@ class Package(models.Model):
             "packages.detail",
             kwargs={"owner": self.owner.username, "name": self.name}
         )
+
+    @property
+    def full_url(self):
+        return "%(protocol)s%(hostname)s%(path)s" % {
+            "protocol": settings.PROTOCOL,
+            "hostname": settings.SERVER_NAME,
+            "path": self.get_absolute_url()
+        }
+
+    def announce_release(self):
+        webhooks = Webhook.objects.filter(webhook_type=WebhookType.mod_release)
+        webhook_data = {
+            "content": (
+                f"{self.owner.username} just uploaded a new version (v{self.version_number}) of {self.name},"
+                + f" Go check it out! {self.full_url}"
+            ),
+            "username": "Thunderstore API",
+        }
+        for webhook in webhooks:
+            webhook.call_with_json(webhook_data)
 
     def __str__(self):
         return self.full_package_name

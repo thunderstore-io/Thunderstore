@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     'core',
     'frontend',
     'repository',
+    'webhooks',
 ]
 
 MIDDLEWARE = [
@@ -237,7 +238,8 @@ SOCIAL_AUTH_GITHUB_PROFILE_EXTRA_PARAMS = {
    'fields': 'email'
 }
 
-if env.str("PROTOCOL") == "https://":
+PROTOCOL = env.str("PROTOCOL")
+if PROTOCOL == "https://":
     SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
