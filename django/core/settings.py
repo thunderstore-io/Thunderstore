@@ -55,29 +55,32 @@ def load_db_certs():
         os.makedirs(cert_dir)
 
     mappings = {
-        "client-cert.pem": DB_CLIENT_CERT,
-        "client-key.pem": DB_CLIENT_KEY,
-        "server-ca.pem": DB_SERVER_CA,
+        "sslcert": ("client-cert.pem", DB_CLIENT_CERT),
+        "sslkey": ("client-key.pem", DB_CLIENT_KEY),
+        "sslrootcert": ("server-ca.pem", DB_SERVER_CA),
     }
-    for filename, cert_encoded in mappings.items():
+    cert_options = {}
+
+    for target_parameter, (filename, cert_encoded) in mappings.items():
+        if not cert_encoded:
+            continue
         target = os.path.join(cert_dir, filename)
         cert = base64.b64decode(cert_encoded).decode("utf-8")
         with open(os.open(target, os.O_CREAT | os.O_WRONLY, 0o600), "w") as certfile:
             certfile.write(cert)
 
+        cert_options[target_parameter] = target
+
     if "OPTIONS" not in DATABASES["default"]:
         DATABASES["default"]["OPTIONS"] = {}
 
-    DATABASES["default"]["OPTIONS"].update({
-        "sslmode": "verify-ca",
-        "sslrootcert": f"{cert_dir}server-ca.pem",
-        "sslcert": f"{cert_dir}client-cert.pem",
-        "sslkey": f"{cert_dir}client-key.pem",
-    })
+    if cert_options:
+        cert_options["sslmode"] = "verify-ca"
+
+    DATABASES["default"]["OPTIONS"].update(cert_options)
 
 
-if DB_CLIENT_CERT and DB_CLIENT_KEY and DB_SERVER_CA:
-    load_db_certs()
+load_db_certs()
 
 # Application definition
 
