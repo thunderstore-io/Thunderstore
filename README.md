@@ -54,3 +54,62 @@ docker-compose exec django python manage.py createsuperuser
 
 Do note that if you're running on Windows, you will need to use winpty for
 running that command.
+
+## Environment variable configuration for production
+
+### General variables
+
+- `DEBUG`: Should be either set to false or not at all for production
+- `SECRET_KEY`: A long and random string, used to hash passwords and other data.
+Should remain secret, as is implied by the name.
+- `ALLOWED_HOSTS`: Comma separated list of hostnames this server can be
+connected with. For example `thunderstore.mythic.dev`
+- `SERVER_NAME`: The public name of the server, such as
+`thunderstore.mythic.dev`
+- `PROTOCOL`: The protocol which to use to build URLs to the server. Either
+`https://` or `http://`.
+
+### GitHub OAuth
+
+To set up GitHub OAuth, head to settings on GitHub (either personal or
+organization settings), and from under `Developer Settings` select `OAuth Apps`.
+
+Create a new OAuth Application, and use `{server}/auth/complete/github/` as the
+Authorization callback URL, where `{server}` is replaced with the protocol and
+server name that is accessible. For example for local you could use
+`http://localhost/auth/complete/github/`, whereas for a live environment
+`https://thunderstore.mythic.dev/auth/complete/github/`
+
+After creating the OAuth application, you must also provide the following
+environment variables to the application:
+
+- `SOCIAL_AUTH_GITHUB_KEY`: The `Client ID` value of the OAuth application
+- `SOCIAL_AUTH_GITHUB_SECRET` The `Client Secret` value of the OAuth application
+
+### Google Cloud Media Storage
+
+You need to set up a google cloud storage bucket and create a service account
+that has access to the storage bucket.
+
+Set the following variables:
+
+- `GS_BUCKET_NAME`: The name/id of the storage bucket
+- `GS_PROJECT_ID`: The ID of the project the bucket resides in
+- `GS_LOCATION`: The subfolder under which the files should be stored in the
+bucket. Can be left empty or undefined.
+- `GS_CREDENTIALS`: Base64 encoded (with no newlines) string of the service
+account credentials json file, that can be downloaded from google cloud console.
+
+### Database
+
+Database configuration is pretty straight forward if using a local database
+where no SSL is required, but remote database via SSL connections is also
+supported.
+
+- `DATABASE_URL`: The database URL to use for a database connection
+- `DB_CLIENT_CERT`: Base64 encoded client certificate to use for the database
+connection. Will be placed to `client-cert.pem`
+- `DB_CLIENT_KEY`: Base64 encoded client key to use for the database connection.
+Will be placed to `client-key.pem`
+- `DB_SERVER_CA`: Base64 encoded server CA to use for the database connection.
+Will be placed to `server-ca.pem`
