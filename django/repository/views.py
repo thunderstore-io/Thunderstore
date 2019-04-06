@@ -79,6 +79,5 @@ class PackageDownloadView(View):
 
         package = get_object_or_404(Package, owner__username=owner, name=name)
         version = get_object_or_404(PackageVersion, package=package, version_number=version)
-        version.downloads += 1
-        version.save(update_fields=("downloads",))
+        version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))

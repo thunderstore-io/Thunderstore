@@ -1,11 +1,15 @@
 import uuid
 
+from datetime import timedelta
 from distutils.version import StrictVersion
+
+from ipware import get_client_ip
 
 from django.conf import settings
 from django.db import models
 from django.db.models import Case, When, Sum
 from django.urls import reverse
+from django.utils import timezone
 
 from webhooks.models import Webhook, WebhookType
 
@@ -194,5 +198,55 @@ class PackageVersion(models.Model):
         for webhook in webhooks:
             webhook.call_with_json(webhook_data)
 
+    def maybe_increase_download_counter(self, request):
+        client_ip, is_routable = get_client_ip(request)
+        if client_ip is None:
+            return
+
+        download_event, created = PackageVersionDownloadEvent.objects.get_or_create(
+            version=self,
+            source_ip=client_ip,
+        )
+
+        if created:
+            valid = True
+        else:
+            valid = download_event.count_downloads_and_return_validity()
+
+        if valid:
+            self.downloads += 1
+            self.save(update_fields=("downloads",))
+
     def __str__(self):
         return self.full_version_name
+
+
+class PackageVersionDownloadEvent(models.Model):
+    version = models.ForeignKey(
+        PackageVersion,
+        related_name="download_events",
+        on_delete=models.CASCADE,
+    )
+    source_ip = models.GenericIPAddressField()
+    last_download = models.DateTimeField(auto_now_add=True)
+    total_downloads = models.PositiveIntegerField(
+        default=1
+    )
+    counted_downloads = models.PositiveIntegerField(
+        default=1
+    )
+
+    def count_downloads_and_return_validity(self):
+        self.total_downloads += 1
+        is_valid = False
+
+        if self.last_download + timedelta(minutes=10) < timezone.now():
+            self.counted_downloads += 1
+            self.last_download = timezone.now()
+            is_valid = True
+
+        self.save(update_fields=("total_downloads", "counted_downloads", "last_download"))
+        return is_valid
+
+    class Meta:
+        unique_together = ("version", "source_ip")
