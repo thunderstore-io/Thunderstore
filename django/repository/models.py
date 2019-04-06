@@ -188,13 +188,34 @@ class PackageVersion(models.Model):
 
     def announce_release(self):
         webhooks = Webhook.objects.filter(webhook_type=WebhookType.mod_release)
+
         webhook_data = {
-            "content": (
-                f"{self.package.owner.username} just uploaded a new version (v{self.version_number}) of {self.name},"
-                + f" Go check it out! {self.package.full_url}"
-            ),
-            "username": "Thunderstore API",
+            "embeds": [{
+                "title": f"{self.name} v{self.version_number}",
+                "type": "rich",
+                "description": self.description,
+                "url": self.package.full_url,
+                "timestamp": timezone.now().isoformat(),
+                "color": 4474879,
+                "thumbnail": {
+                    "url": self.icon.url,
+                    "width": 256,
+                    "height": 256,
+                },
+                "provider": {
+                    "name": "Thunderstore",
+                    "url": f"{settings.PROTOCOL}{settings.SERVER_NAME}/"
+                },
+                "author": {
+                    "name": self.package.owner.username,
+                },
+                "fields": [{
+                    "name": "Total downloads across versions",
+                    "value": f"{self.package.downloads}",
+                }]
+            }]
         }
+
         for webhook in webhooks:
             webhook.call_with_json(webhook_data)
 
