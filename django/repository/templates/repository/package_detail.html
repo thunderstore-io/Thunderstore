@@ -20,11 +20,36 @@
 <div class="media mt-4">
     <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
     <div class="media-body">
-        <h1 class="mt-0">{{ object }}</h1>
+        <h1 class="mt-0">{{ object.display_name }}</h1>
         <p>{{ object.description }}</p>
-        <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a></h5>
+            {% if object.website_url %}
+            <a href="{{ object.website_url }}">{{ object.website_url }}</a>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<table class="table mt-2">
+    <tr>
+        <td>Last updated</td>
+        <td>{{ object.date_updated }}</td>
+    </tr>
+    <tr>
+        <td>Latest version</td>
+        <td><a href="{{ object.latest.download_url }}">{{ object.latest }}.zip</a></td>
+    </tr>
+    <tr>
+        <td>Total downloads</td>
+        <td>{{ object.downloads }}</td>
+    </tr>
+    <tr>
+        <td>Dependency string</td>
+        <td>{{ object.latest.full_version_name }}</td>
+    </tr>
+</table>
+
 <div class="card bg-light mb-3 mt-2">
     <div class="card-header">README</div>
     <div class="card-body">

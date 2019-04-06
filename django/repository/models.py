@@ -51,6 +51,10 @@ class Package(models.Model):
         return f"{self.owner.username}-{self.name}"
 
     @property
+    def display_name(self):
+        return self.name.replace("_", " ")
+
+    @property
     def latest(self):
         # TODO: Caching
         return self.available_versions.first()
