@@ -32,6 +32,8 @@
     </div>
 </div>
 <h2 class="mt-2">Available versions</h2>
+<p>Please note that the install buttons only work if you have compatible client
+software installed. Otherwise use the zip download links instead.</p>
 <table class="table">
     <tr>
         <th>Upload date</th>
@@ -46,7 +48,7 @@
         <td>{{ version.version_number }}</td>
         <td>{{ version.downloads }}</td>
         <td><a href="{{ version.download_url }}">{{ version }}.zip</a></td>
-        <td><a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</button></td>
+        <td><a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a></td>
     </tr>
     {% endfor %}
 </table>
