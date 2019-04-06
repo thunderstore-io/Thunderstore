@@ -83,6 +83,10 @@ class Package(models.Model):
         return self.latest.description
 
     @property
+    def dependencies(self):
+        return self.latest.dependencies.all()
+
+    @property
     def owner_url(self):
         return reverse("packages.list_by_owner", kwargs={"owner": self.owner.username})
 
@@ -143,6 +147,12 @@ class PackageVersion(models.Model):
     )
     description = models.CharField(
         max_length=256
+    )
+    dependencies = models.ManyToManyField(
+        "self",
+        related_name="dependants",
+        symmetrical=False,
+        blank=True,
     )
     readme = models.TextField()
 

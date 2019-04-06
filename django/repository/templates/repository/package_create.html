@@ -29,6 +29,10 @@
         <li><tt>description</tt> - A short description of the mod, shown on the mod list. Max 250 characters</li>
         <li><tt>website_url</tt> - URL of the mod's website (e.g. GitHub repo). Can be empty, but the key must still exists (use an empty string for example).</li>
         <li><tt>version_number</tt> - Version number of the mod, following the <a href="https://semver.org/">semantic version format</a> Major.Minor.Patch. For example: 1.3.2.</li>
+        <li>
+            <tt>dependencies</tt> - A list of package dependencies, such as a modloader or mod API. Can be an empty list, or
+            for example contain <tt>"Mattomanx77-SeikoML-0.2.1"</tt>.
+        </li>
     </ul>
     </li>
 </ul>
@@ -42,7 +46,10 @@
     "name": "TestMod",
     "version_number": "1.1.0",
     "website_url": "https://github.com/risk-of-thunder",
-    "description": "This is a description for a mod. Max length is 250 characters"
+    "description": "This is a description for a mod. Max length is 250 characters",
+    "dependencies": [
+        "MythicManiac-TestMod-1.1.0"
+    ]
 }</pre>
     </div>
 </div>

@@ -71,8 +71,57 @@ class PackageVersionForm(forms.ModelForm):
             max_length = PackageVersion._meta.get_field("description").max_length
             if len(self.manifest.get("description", "")) > max_length:
                 raise ValidationError(f"Package description is too long, max: {max_length}")
+
+            self.validate_manifest_dependencies(self.manifest)
+
         except json.decoder.JSONDecodeError:
             raise ValidationError("Package manifest.json is in invalid format")
+
+    def validate_manifest_dependencies(self, manifest):
+        if "dependencies" not in manifest:
+            raise ValidationError("manifest.json must contain a dependencies field")
+
+        dependency_strings = manifest["dependencies"]
+
+        if type(dependency_strings) is not list:
+            raise ValidationError("The dependencies manifest.json field should be a list")
+        if len(dependency_strings) > 100:
+            raise ValidationError("Currently only a maximum of 100 dependencies are supported")
+
+        self.dependencies = []
+        for dependency_string in dependency_strings:
+            dependency = self.resolve_dependency(dependency_string)
+            self.dependencies.append(dependency)
+
+        for dependency_a in self.dependencies:
+            for dependency_b in self.dependencies:
+                if dependency_a == dependency_b:
+                    continue
+                if dependency_a.package == dependency_b.package:
+                    raise ValidationError("Cannot depend on multiple versions of the same package")
+
+    def resolve_dependency(self, dependency_string):
+        dependency_parts = dependency_string.split("-")
+        if len(dependency_parts) != 3:
+            raise ValidationError(f"Dependency {dependency_string} is in invalid format")
+
+        owner_username = dependency_parts[0]
+        package_name = dependency_parts[1]
+        package_version = dependency_parts[2]
+
+        dependency = PackageVersion.objects.filter(
+            package__owner__username=owner_username,
+            package__name=package_name,
+            version_number=package_version,
+        ).first()
+
+        if not dependency:
+            raise ValidationError(f"Could not find a package matching the dependency {dependency_string}")
+
+        if dependency.package.owner == self.user and dependency.name == self.manifest["name"]:
+            raise ValidationError(f"Depending on self is not allowed. {dependency_string}")
+
+        return dependency
 
     def validate_icon(self, icon):
         try:
@@ -157,4 +206,7 @@ class PackageVersionForm(forms.ModelForm):
             name=self.instance.name,
         )[0]
         self.instance.icon.save("icon.png", self.icon)
-        return super(PackageVersionForm, self).save()
+        instance = super(PackageVersionForm, self).save()
+        for dependency in self.dependencies:
+            instance.dependencies.add(dependency)
+        return instance

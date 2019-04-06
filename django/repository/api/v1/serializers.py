@@ -6,6 +6,7 @@ from repository.models import Package, PackageVersion
 class PackageVersionSerializer(ModelSerializer):
     download_url = SerializerMethodField()
     full_name = SerializerMethodField()
+    dependencies = SerializerMethodField()
 
     def get_download_url(self, instance):
         url = instance.download_url
@@ -15,6 +16,11 @@ class PackageVersionSerializer(ModelSerializer):
 
     def get_full_name(self, instance):
         return instance.full_version_name
+
+    def get_dependencies(self, instance):
+        return [
+            dependency.full_version_name for dependency in instance.dependencies.all()
+        ]
 
     class Meta:
         model = PackageVersion

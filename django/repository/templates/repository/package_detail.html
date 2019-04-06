@@ -18,12 +18,12 @@
 
 {% block content %}
 <div class="media mt-4">
-  <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
-  <div class="media-body">
-    <h1 class="mt-0">{{ object }}</h1>
-    <p>{{ object.description }}</p>
-    <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
-  </div>
+    <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
+    <div class="media-body">
+        <h1 class="mt-0">{{ object }}</h1>
+        <p>{{ object.description }}</p>
+        <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
+    </div>
 </div>
 <div class="card bg-light mb-3 mt-2">
     <div class="card-header">README</div>
@@ -31,7 +31,28 @@
         <p class="card-text">{{ object.readme|markdownify }}</p>
     </div>
 </div>
-<h2 class="mt-2">Available versions</h2>
+
+{% if package.dependencies %}
+<div class="list-group">
+    <div class="list-group-item flex-column align-items-start active">
+        <h4>This mod requires the following mods to function</h4>
+    </div>
+    {% for dependency in package.dependencies %}
+    <div class="list-group-item flex-column align-items-start media">
+        <div class="media">
+            <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
+            <div class="media-body">
+                <h5 class="mt-0"><a href="{{ dependency.package.get_absolute_url }}">{{ dependency.package }}</a></h5>
+                <p class="mb-0">{{ dependency.description }}</p>
+                <small class="mb-0">Preferred version: {{ dependency.version_number }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="mt-4">Available versions</h2>
 <p>Please note that the install buttons only work if you have compatible client
 software installed. Otherwise use the zip download links instead.</p>
 <table class="table">
