@@ -17,7 +17,7 @@ class PackageListView(ListView):
     paginate_by = 10
 
     def get_queryset(self, *args, **kwargs):
-        return self.model.objects.filter(is_active=True).order_by("pk")
+        return self.model.objects.filter(is_active=True).order_by("-date_updated")
 
 
 class PackageListByOwnerView(ListView):
@@ -30,7 +30,7 @@ class PackageListByOwnerView(ListView):
         return self.model.objects.filter(
             is_active=True,
             owner=owner
-        ).order_by("pk")
+        ).order_by("-date_updated")
 
 
 class PackageDetailView(DetailView):
@@ -67,6 +67,7 @@ class PackageCreateView(CreateView):
     def form_valid(self, form):
         instance = form.save()
         instance.announce_release()
+        instance.package.refresh_update_date()
         return redirect(form.instance)
 
 

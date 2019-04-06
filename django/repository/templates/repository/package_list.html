@@ -7,16 +7,21 @@
 <h1 class="mt-4">Mod list</h1>
 <ul class="list-unstyled">
 {% if object_list %}
+    <div class="list-group">
     {% for object in object_list %}
-        <li class="media my-3">
-            <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
-            <div class="media-body">
-                <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object }}</a> v{{ object.version_number }}</h5>
-                <p>{{ object.description }}</p>
-                <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
-            </div>
-        </li>
+        <div class="list-group-item flex-column align-items-start media">
+            <li class="media my-3">
+                <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
+                <div class="media-body">
+                    <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object }}</a> v{{ object.version_number }}</h5>
+                    <p>{{ object.description }}</p>
+                    <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
+                    <small>Last updated: {{ object.date_updated }}</small>
+                </div>
+            </li>
+        </div>
     {% endfor %}
+    </div>
     {% if is_paginated %}
         <ul class="pagination mt-4">
             {% if page_obj.has_previous %}

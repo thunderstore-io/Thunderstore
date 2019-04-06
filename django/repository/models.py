@@ -34,6 +34,9 @@ class Package(models.Model):
     date_created = models.DateTimeField(
         auto_now_add=True,
     )
+    date_updated = models.DateTimeField(
+        auto_now_add=True,
+    )
     uuid4 = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
@@ -107,6 +110,10 @@ class Package(models.Model):
             "hostname": settings.SERVER_NAME,
             "path": self.get_absolute_url()
         }
+
+    def refresh_update_date(self):
+        self.date_updated = timezone.now()
+        self.save()
 
     def __str__(self):
         return self.full_package_name
