@@ -3,7 +3,7 @@
 {% block title %}Upload{% endblock %}
 
 {% block content %}
-<h1 class="mt-2">Upload package</h1>
+<h1 class="mt-4">Upload package</h1>
 
 <form class="mt-4" method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
     <div class="text-danger">
@@ -28,6 +28,7 @@ file_drop.ondragover = file_drop.ondragenter = function(evt) {
 file_drop.ondrop = function(evt) {
     file_input.files = evt.dataTransfer.files;
     evt.preventDefault();
+    reset_file_input();
 };
 
 function reset_file_input() {
