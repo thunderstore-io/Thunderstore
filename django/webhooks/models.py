@@ -54,7 +54,10 @@ class Webhook(models.Model):
         return self.name
 
     def call_with_json(self, webhook_data):
-        requests.post(
-            self.webhook_url, data=json.dumps(webhook_data),
-            headers={"Content-Type": "application/json"}
-        )
+        try:
+            requests.post(
+                self.webhook_url, data=json.dumps(webhook_data),
+                headers={"Content-Type": "application/json"}
+            )
+        except Exception:
+            pass
