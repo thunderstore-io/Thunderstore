@@ -54,6 +54,8 @@ class Webhook(models.Model):
         return self.name
 
     def call_with_json(self, webhook_data):
+        if not self.is_active:
+            return
         try:
             requests.post(
                 self.webhook_url, data=json.dumps(webhook_data),

@@ -204,7 +204,10 @@ class PackageVersion(models.Model):
         }
 
     def announce_release(self):
-        webhooks = Webhook.objects.filter(webhook_type=WebhookType.mod_release)
+        webhooks = Webhook.objects.filter(
+            webhook_type=WebhookType.mod_release,
+            is_active=True,
+        )
 
         webhook_data = {
             "embeds": [{
