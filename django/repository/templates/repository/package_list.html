@@ -37,7 +37,7 @@
             {% for i in paginator.page_range %}
                 {% if page_obj.number == i %}
                     <li class="page-item active disabled">
-                        <a class="page-link" href="#">1</a>
+                        <a class="page-link" href="#">{{ i }}</a>
                     </li>
                 {% else %}
                     <li class="page-item">
@@ -58,7 +58,7 @@
         </ul>
     {% endif %}
 {% else %}
-    <li>No packages found :(</li>
+    <li class="mt-4">No mods found :(</li>
 {% endif %}
 </ul>
 
