@@ -19,4 +19,10 @@ if __name__ == "__main__":
                 "forget to activate a virtual environment?"
             )
         raise
+
+    from django import setup
+    setup()
+
+    import monkeypatch  # noqa
+
     execute_from_command_line(sys.argv)

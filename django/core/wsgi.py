@@ -10,4 +10,6 @@ application = get_wsgi_application()
 
 from django.conf import settings  # noqa
 
+import monkeypatch  # noqa
+
 application = WhiteNoise(application, root=settings.STATIC_ROOT)
