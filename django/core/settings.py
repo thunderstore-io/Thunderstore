@@ -29,7 +29,18 @@ env = environ.Env(
     DB_CLIENT_CERT=(str, ''),
     DB_CLIENT_KEY=(str, ''),
     DB_SERVER_CA=(str, ''),
+
+    SENTRY_DSN=(str, ''),
 )
+
+SENTRY_DSN = env.str("SENTRY_DSN")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()]
+    )
 
 checkout_dir = environ.Path(__file__) - 2
 assert os.path.exists(checkout_dir('manage.py'))

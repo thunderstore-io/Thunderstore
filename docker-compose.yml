@@ -34,6 +34,7 @@ services:
       DB_CLIENT_CERT: ${DB_CLIENT_CERT}
       DB_CLIENT_KEY: ${DB_CLIENT_KEY}
       DB_SERVER_CA: ${DB_SERVER_CA}
+      SENTRY_DSN: ${SENTRY_DSN}
     ports:
       - 127.0.0.1:80:8000
     depends_on:

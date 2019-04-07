@@ -3,7 +3,7 @@
 #   prequ update
 #
 cachetools==2.1.0         # via google-auth
-certifi==2018.4.16        # via requests
+certifi==2018.4.16        # via requests, sentry-sdk
 chardet==3.0.4            # via requests
 coreapi==2.3.3            # via django-rest-swagger, openapi-codec
 coreschema==0.0.4         # via coreapi
@@ -40,12 +40,13 @@ pytz==2018.5              # via django, google-api-core
 requests==2.20.0          # via coreapi, google-api-core, requests-oauthlib, social-auth-core
 requests-oauthlib==1.0.0  # via social-auth-core
 rsa==3.4.2                # via google-auth
+sentry_sdk==0.7.9
 simplejson==3.16.0        # via django-rest-swagger
 six==1.11.0               # via google-api-core, google-auth, google-resumable-media, protobuf, social-auth-app-django, social-auth-core
 social-auth-app-django==2.1.0
 social-auth-core==1.7.0   # via social-auth-app-django
 uritemplate==3.0.0        # via coreapi
-urllib3==1.23             # via requests
+urllib3==1.23             # via requests, sentry-sdk
 whitenoise==3.3.1
 
 # The following packages are considered to be unsafe in a requirements file:
