@@ -7,7 +7,7 @@ from ipware import get_client_ip
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Case, When, Sum
+from django.db.models import Case, When, Sum, Q
 from django.urls import reverse
 from django.utils import timezone
 
@@ -94,8 +94,25 @@ class Package(models.Model):
         return self.latest.dependencies.all()
 
     @property
+    def dependants(self):
+        # TODO: Caching
+        return Package.objects.exclude(~Q(
+            versions__dependencies__package=self,
+        ))
+
+    @property
     def owner_url(self):
         return reverse("packages.list_by_owner", kwargs={"owner": self.owner.username})
+
+    @property
+    def dependants_url(self):
+        return reverse(
+            "packages.list_by_dependency",
+            kwargs={
+                "owner": self.owner.username,
+                "name": self.name,
+            }
+        )
 
     @property
     def readme(self):

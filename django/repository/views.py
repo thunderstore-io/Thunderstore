@@ -42,6 +42,28 @@ class PackageListByOwnerView(ListView):
         )
 
 
+class PackageListByDependencyView(ListView):
+    model = Package
+    paginate_by = MODS_PER_PAGE
+
+    def get_queryset(self, *args, **kwargs):
+        owner = self.kwargs["owner"]
+        owner = get_object_or_404(get_user_model(), username=owner)
+        name = self.kwargs["name"]
+        package = get_object_or_404(
+            self.model,
+            is_active=True,
+            owner=owner,
+            name=name,
+        )
+        return (
+            package.dependants
+            .filter(is_active=True)
+            .prefetch_related("versions")
+            .order_by("-date_updated")
+        )
+
+
 class PackageDetailView(DetailView):
     model = Package
 
@@ -55,6 +77,21 @@ class PackageDetailView(DetailView):
             owner=owner,
             name=name,
         )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(PackageDetailView, self).get_context_data(*args, **kwargs)
+
+        dependants_string = ""
+        package = context["object"]
+        dependant_count = package.dependants.filter(is_active=True).count()
+
+        if dependant_count == 1:
+            dependants_string = f"{dependant_count} other mod depends on this mod"
+        else:
+            dependants_string = f"{dependant_count} other mods depend on this mod"
+
+        context["dependants_string"] = dependants_string
+        return context
 
 
 class PackageCreateView(CreateView):
