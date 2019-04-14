@@ -11,10 +11,12 @@ from repository.ziptools import PackageVersionForm
 
 from django.shortcuts import redirect, get_object_or_404
 
+MODS_PER_PAGE = 20
+
 
 class PackageListView(ListView):
     model = Package
-    paginate_by = 10
+    paginate_by = MODS_PER_PAGE
 
     def get_queryset(self, *args, **kwargs):
         return self.model.objects.filter(is_active=True).order_by("-date_updated")
@@ -22,7 +24,7 @@ class PackageListView(ListView):
 
 class PackageListByOwnerView(ListView):
     model = Package
-    paginate_by = 10
+    paginate_by = MODS_PER_PAGE
 
     def get_queryset(self, *args, **kwargs):
         owner = self.kwargs["owner"]
