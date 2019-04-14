@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
 
-{% block title %}Mod List{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<h1 class="mt-4">Mod list</h1>
+<h2 class="mt-4">{{ page_title }}</h2>
 <ul class="list-unstyled">
 {% if object_list %}
     <div class="list-group">

@@ -26,27 +26,45 @@ class PackageListView(ListView):
             .order_by("-date_updated")
         )
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = f"All mods"
+        return context
+
 
 class PackageListByOwnerView(ListView):
     model = Package
     paginate_by = MODS_PER_PAGE
 
+    def cache_owner(self):
+        self.owner = get_object_or_404(
+            get_user_model(),
+            username=self.kwargs["owner"]
+        )
+
+    def dispatch(self, *args, **kwargs):
+        self.cache_owner()
+        return super().dispatch(*args, **kwargs)
+
     def get_queryset(self, *args, **kwargs):
-        owner = self.kwargs["owner"]
-        owner = get_object_or_404(get_user_model(), username=owner)
         return (
             self.model.objects
-            .filter(is_active=True, owner=owner)
+            .filter(is_active=True, owner=self.owner)
             .prefetch_related("versions")
             .order_by("-date_updated")
         )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = f"Mods uploaded by {self.owner.username}"
+        return context
 
 
 class PackageListByDependencyView(ListView):
     model = Package
     paginate_by = MODS_PER_PAGE
 
-    def get_queryset(self, *args, **kwargs):
+    def cache_package(self):
         owner = self.kwargs["owner"]
         owner = get_object_or_404(get_user_model(), username=owner)
         name = self.kwargs["name"]
@@ -56,12 +74,24 @@ class PackageListByDependencyView(ListView):
             owner=owner,
             name=name,
         )
+        self.package = package
+
+    def dispatch(self, *args, **kwargs):
+        self.cache_package()
+        return super().dispatch(*args, **kwargs)
+
+    def get_queryset(self, *args, **kwargs):
         return (
-            package.dependants
+            self.package.dependants
             .filter(is_active=True)
             .prefetch_related("versions")
             .order_by("-date_updated")
         )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["page_title"] = f"Mods that depend on {self.package.display_name}"
+        return context
 
 
 class PackageDetailView(DetailView):
@@ -79,7 +109,7 @@ class PackageDetailView(DetailView):
         )
 
     def get_context_data(self, *args, **kwargs):
-        context = super(PackageDetailView, self).get_context_data(*args, **kwargs)
+        context = super().get_context_data(*args, **kwargs)
 
         dependants_string = ""
         package = context["object"]
