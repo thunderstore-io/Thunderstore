@@ -10,7 +10,7 @@
     <div class="list-group">
     {% for object in object_list %}
         <div class="list-group-item flex-column align-items-start media">
-            <li class="media my-3">
+            <div class="media my-3">
                 <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
                 <div class="media-body">
                     <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object.display_name }}</a> v{{ object.version_number }}</h5>
@@ -18,7 +18,26 @@
                     <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
                     <small>Last updated: {{ object.date_updated }}</small>
                 </div>
-            </li>
+            </div>
+            {% if object.dependencies %}
+            <div class="list-group">
+                <div class="list-group-item flex-column align-items-start active">
+                    <h4>This mod requires the following mods to function</h4>
+                </div>
+                {% for dependency in object.dependencies %}
+                <div class="list-group-item flex-column align-items-start media">
+                    <div class="media">
+                        <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
+                        <div class="media-body">
+                            <h5 class="mt-0"><a href="{{ dependency.package.get_absolute_url }}">{{ dependency.package }}</a></h5>
+                            <p class="mb-0">{{ dependency.description }}</p>
+                            <small class="mb-0">Preferred version: {{ dependency.version_number }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
     {% endfor %}
     </div>
