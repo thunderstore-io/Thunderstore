@@ -7,6 +7,10 @@ from repository.api.v1.serializers import (
 
 
 class PackageViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Package.objects.filter(is_active=True)
+    queryset = (
+        Package.objects
+        .filter(is_active=True)
+        .prefetch_related("versions")
+    )
     serializer_class = PackageSerializer
     lookup_field = "uuid4"

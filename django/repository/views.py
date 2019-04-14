@@ -19,7 +19,12 @@ class PackageListView(ListView):
     paginate_by = MODS_PER_PAGE
 
     def get_queryset(self, *args, **kwargs):
-        return self.model.objects.filter(is_active=True).order_by("-date_updated")
+        return (
+            self.model.objects
+            .filter(is_active=True)
+            .prefetch_related("versions")
+            .order_by("-date_updated")
+        )
 
 
 class PackageListByOwnerView(ListView):
@@ -29,10 +34,12 @@ class PackageListByOwnerView(ListView):
     def get_queryset(self, *args, **kwargs):
         owner = self.kwargs["owner"]
         owner = get_object_or_404(get_user_model(), username=owner)
-        return self.model.objects.filter(
-            is_active=True,
-            owner=owner
-        ).order_by("-date_updated")
+        return (
+            self.model.objects
+            .filter(is_active=True, owner=owner)
+            .prefetch_related("versions")
+            .order_by("-date_updated")
+        )
 
 
 class PackageDetailView(DetailView):
