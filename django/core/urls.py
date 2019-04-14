@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.views.generic.base import RedirectView
@@ -31,3 +32,6 @@ urlpatterns = [
 
 swagger_view = get_swagger_view(title="Thunderstore API")
 urlpatterns += [path("api/docs/", lambda r: swagger_view(r), name="swagger")]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
