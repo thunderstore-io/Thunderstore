@@ -9,7 +9,7 @@
 {% if object_list %}
     <div class="list-group">
     {% for object in object_list %}
-        <div class="list-group-item flex-column align-items-start media">
+        <div class="list-group-item{% if object.pinned %} bg-secondary{% endif %} flex-column align-items-start media">
             <div class="media my-3">
                 <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
                 <div class="media-body">

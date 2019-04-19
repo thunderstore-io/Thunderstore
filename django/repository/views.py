@@ -24,6 +24,7 @@ class PackageListView(ListView):
             .filter(is_active=True)
             .prefetch_related("versions")
             .order_by("-date_updated")
+            .order_by("-pinned")
         )
 
     def get_context_data(self, *args, **kwargs):
