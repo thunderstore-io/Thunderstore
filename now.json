@@ -1,0 +1,33 @@
+{
+    "version": 2,
+    "name": "Thunderstore",
+    "builds": [{
+        "src": "django/**/*.py",
+        "use": "@now/python@canary",
+        "config": { "maxLambdaSize": "25mb" }
+    }],
+    "regions": ["bru"],
+    "routes": [{
+        "src": "/(.*)", "dest": "/django/index.py"
+    }],
+    "env": {
+        "DEBUG": "True",
+        "SECRET_KEY": "xxx",
+        "ALLOWED_HOSTS": "*",
+        "DATABASE_URL": "@thunderstore-test-database-url",
+
+        "SOCIAL_AUTH_GITHUB_KEY": "@thunderstore-test-github-key",
+        "SOCIAL_AUTH_GITHUB_SECRET": "@thunderstore-test-github-secret",
+
+        "GS_BUCKET_NAME": "thunderstore",
+        "GS_PROJECT_ID": "risk-of-thunder",
+        "GS_LOCATION": "test",
+        "GS_CREDENTIALS": "@thunderstore-test-cloudstorage-credentials",
+
+        "DB_SERVER_CA": "@thunderstore-test-database-ca",
+
+        "SENTRY_DSN": "@thunderstore-test-sentry-dsn",
+        "SERVER_NAME": "localhost",
+        "PROTOCOL": "http://"
+    }
+}
