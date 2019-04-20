@@ -4,40 +4,45 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
+
 <h2 class="mt-4">{{ page_title }}</h2>
-<ul class="list-unstyled">
+
 {% if object_list %}
-    <div class="list-group">
+    <div class="container">
     {% for object in object_list %}
-        <div class="list-group-item{% if object.pinned %} bg-secondary{% endif %} flex-column align-items-start media">
-            <div class="media my-3">
-                <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
-                <div class="media-body">
-                    <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object.display_name }}</a> v{{ object.version_number }}</h5>
-                    <p>{{ object.description }}</p>
-                    <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
-                    <small>Last updated: {{ object.date_updated }}</small>
-                </div>
-            </div>
-            {% if object.dependencies %}
-            <div class="list-group">
-                <div class="list-group-item flex-column align-items-start active">
-                    <h4>This mod requires the following mods to function</h4>
-                </div>
-                {% for dependency in object.dependencies %}
-                <div class="list-group-item flex-column align-items-start media">
-                    <div class="media">
-                        <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
-                        <div class="media-body">
-                            <h5 class="mt-0"><a href="{{ dependency.package.get_absolute_url }}">{{ dependency.package }}</a></h5>
-                            <p class="mb-0">{{ dependency.description }}</p>
-                            <small class="mb-0">Preferred version: {{ dependency.version_number }}</small>
-                        </div>
+        <div class="row border border-secondary p-2
+                    {% if object.is_pinned %}bg-secondary border-light border-left-0 border-right-0 border-bottom-0{% else %}bg-light{% endif %}
+                    {% if forloop.last %}rounded-bottom{% endif %}
+                    {% if forloop.first %}rounded-top{% endif %}
+                    {% if not forloop.first %}border-top-0{% endif %}">
+            <div class="col-8">
+                <div class="media my-3">
+                    <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
+                    <div class="media-body">
+                        <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object.display_name }}</a> v{{ object.version_number }}</h5>
+                        <p>{{ object.description }}</p>
+                        <p>By <a href="{{ object.owner_url }}">{{ object.owner.username }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
+                        <small>Last updated: {{ object.date_updated }}</small>
                     </div>
                 </div>
-                {% endfor %}
             </div>
-            {% endif %}
+            <div class="col-4 mb-2">
+                {% if object.sorted_dependencies %}
+                    <h5 class="my-3">Dependencies</h5>
+                    {% for dependency in object.sorted_dependencies|slice:":3" %}
+                        <a href="{{ dependency.package.get_absolute_url }}">
+                            <img
+                                class="align-self-center mr-2 mb-2"
+                                src="{% thumbnail dependency.icon 64x64 %}"
+                                title="{{ dependency.package.display_name }}"
+                                alt="{{ dependency.package.display_name }} icon">
+                        </a>
+                    {% endfor %}
+                    {% if object.sorted_dependencies.count > 3 %}
+                        <span class="h5 ml-2">+{{ object.sorted_dependencies.count|add:"-3" }}</span>
+                    {% endif %}
+                {% endif %}
+            </div>
         </div>
     {% endfor %}
     </div>
@@ -79,6 +84,5 @@
 {% else %}
     <li class="mt-4">No mods found :(</li>
 {% endif %}
-</ul>
 
 {% endblock %}
