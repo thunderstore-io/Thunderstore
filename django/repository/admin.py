@@ -8,15 +8,19 @@ from repository.models import PackageVersion
 class PackageVersionInline(admin.StackedInline):
     model = PackageVersion
     readonly_fields = (
-        "website_url",
         "date_created",
-        "name",
-        "version_number",
-        "website_url",
+        # "description",  # TODO: Add to package, and make that modifiable
+        "downloads",
         "file",
         "icon",
+        "name",
+        # "readme",  # TODO: Add to package, and amek that modifiable
+        "version_number",
+        "website_url",
+        "website_url",
     )
     extra = 0
+    filter_horizontal = ("dependencies",)
 
 
 @admin.register(Package)
@@ -26,9 +30,11 @@ class PackageAdmin(admin.ModelAdmin):
     ]
 
     readonly_fields = (
+        "date_created",
+        "downloads",
+        "maintainers",
         "name",
         "owner",
-        "date_created",
     )
     list_display = (
         "name",
