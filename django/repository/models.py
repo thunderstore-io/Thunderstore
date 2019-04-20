@@ -230,7 +230,7 @@ class PackageVersion(models.Model):
 
     @property
     def install_url(self):
-        return "ror2mm://%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
+        return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
             "hostname": settings.SERVER_NAME,
             "owner": self.package.owner.username,
             "name": self.package.name,
