@@ -1,8 +1,12 @@
 {% load static %}
+{% load google_analytics %}
+
 <!doctype html>
 <html lang="en">
     <head>
-        <title>{% block title %}Index{% endblock %} | Thunderstore - The Risk of Rain 2 Mod Database</title>
+        {% google_analytics %}
+
+        <title>{% block title %}Mod List{% endblock %} | Thunderstore - The Risk of Rain 2 Mod Database</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         {% block opengraph %}
         <meta property="og:title" content="Thunderstore | Risk of Rain 2 Mod Database" />

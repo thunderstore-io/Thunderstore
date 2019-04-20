@@ -17,6 +17,8 @@ env = environ.Env(
     SOCIAL_AUTH_GITHUB_SECRET=(str, ''),
     PROTOCOL=(str, ''),
 
+    GOOGLE_ANALYTICS_ID=(str, ''),
+
     GS_BUCKET_NAME=(str, ''),
     GS_PROJECT_ID=(str, ''),
     GS_CREDENTIALS=(str, ''),
@@ -215,6 +217,10 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.JSONParser",
     )
 }
+
+# Google Analytics
+
+GOOGLE_ANALYTICS_ID = env.str("GOOGLE_ANALYTICS_ID")
 
 # Cloud Storage
 
