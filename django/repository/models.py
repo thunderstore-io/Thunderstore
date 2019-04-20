@@ -42,7 +42,7 @@ class Package(models.Model):
         editable=False,
         unique=True,
     )
-    pinned = models.BooleanField(
+    is_pinned = models.BooleanField(
         default=False,
     )
 

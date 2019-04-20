@@ -23,7 +23,7 @@ class PackageListView(ListView):
             self.model.objects
             .filter(is_active=True)
             .prefetch_related("versions")
-            .order_by("-pinned", "-date_updated")
+            .order_by("-is_pinned", "-date_updated")
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -51,7 +51,7 @@ class PackageListByOwnerView(ListView):
             self.model.objects
             .filter(is_active=True, owner=self.owner)
             .prefetch_related("versions")
-            .order_by("-date_updated")
+            .order_by("-is_pinned", "-date_updated")
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -85,7 +85,7 @@ class PackageListByDependencyView(ListView):
             self.package.dependants
             .filter(is_active=True)
             .prefetch_related("versions")
-            .order_by("-date_updated")
+            .order_by("-is_pinned", "-date_updated")
         )
 
     def get_context_data(self, *args, **kwargs):
