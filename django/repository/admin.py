@@ -31,10 +31,12 @@ class PackageAdmin(admin.ModelAdmin):
         "date_created",
     )
     list_display = (
-        "owner",
         "name",
+        "owner",
         "is_active",
+        "is_pinned",
     )
     list_filter = (
         "is_active",
+        "is_pinned",
     )
