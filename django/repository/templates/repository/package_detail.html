@@ -2,10 +2,11 @@
 {% load thumbnail %}
 {% load markdownify %}
 
-{% block title %}{{ object }}{% endblock %}
+{% block title %}{{ object.display_name }}{% endblock %}
+{% block description %}{{ object.description }}{% endblock %}
 
 {% block opengraph %}
-<meta property="og:title" content="{{ object }} v{{ object.version_number }}" />
+<meta property="og:title" content="{{ object.display_name }} v{{ object.version_number }}" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="{{ request.build_absolute_uri }}" />
 <meta property="og:image" content="{% thumbnail object.icon 256x256 %}" />
