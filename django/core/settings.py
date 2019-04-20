@@ -92,6 +92,7 @@ def load_db_certs():
 
 
 load_db_certs()
+DATABASES["default"]["CONN_MAX_AGE"] = 600
 
 # Application definition
 
