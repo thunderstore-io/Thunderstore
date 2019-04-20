@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models import Case, When, Sum, Q
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 from webhooks.models import Webhook, WebhookType
 
@@ -57,7 +58,7 @@ class Package(models.Model):
     def display_name(self):
         return self.name.replace("_", " ")
 
-    @property
+    @cached_property
     def latest(self):
         # TODO: Caching
         return self.available_versions.first()
@@ -71,7 +72,7 @@ class Package(models.Model):
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
         return self.versions.filter(pk__in=pk_list).order_by(preserved)
 
-    @property
+    @cached_property
     def downloads(self):
         # TODO: Caching
         return self.versions.aggregate(downloads=Sum("downloads"))["downloads"]
@@ -96,7 +97,16 @@ class Package(models.Model):
     def dependencies(self):
         return self.latest.dependencies.all()
 
-    @property
+    @cached_property
+    def sorted_dependencies(self):
+        return (
+            self.latest.dependencies
+            .select_related("package")
+            .annotate(total_downloads=Sum("package__versions__downloads"))
+            .order_by("-package__is_pinned", "-total_downloads")
+        )
+
+    @cached_property
     def dependants(self):
         # TODO: Caching
         return Package.objects.exclude(~Q(
