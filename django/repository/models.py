@@ -42,6 +42,9 @@ class Package(models.Model):
         editable=False,
         unique=True,
     )
+    pinned = models.BooleanField(
+        default=False,
+    )
 
     class Meta:
         unique_together = ("owner", "name")

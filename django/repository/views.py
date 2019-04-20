@@ -23,7 +23,7 @@ class PackageListView(ListView):
             self.model.objects
             .filter(is_active=True)
             .prefetch_related("versions")
-            .order_by("-date_updated")
+            .order_by("-date_updated", "-pinned")
         )
 
     def get_context_data(self, *args, **kwargs):
