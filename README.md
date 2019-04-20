@@ -7,6 +7,7 @@ Thunderstore is a mod database and API for downloading Risk of Rain 2 mods.
 
 * Copy `.env.template` to `.env` and modify as you see fit
 * Run `docker-compose up`
+* Run `docker-compose exec django python manage.py migrate` in another terminal
 
 ## Mod package format
 
