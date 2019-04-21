@@ -251,6 +251,10 @@ class PackageVersion(models.Model):
             is_active=True,
         )
 
+        thumbnail_url = self.icon.url
+        if not (thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")):
+            thumbnail_url = f"{settings.PROTOCOL}{settings.SERVER_NAME}{thumbnail_url}"
+
         webhook_data = {
             "embeds": [{
                 "title": f"{self.name} v{self.version_number}",
@@ -260,7 +264,7 @@ class PackageVersion(models.Model):
                 "timestamp": timezone.now().isoformat(),
                 "color": 4474879,
                 "thumbnail": {
-                    "url": self.icon.url,
+                    "url": thumbnail_url,
                     "width": 256,
                     "height": 256,
                 },
