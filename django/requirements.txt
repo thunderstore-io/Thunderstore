@@ -11,6 +11,7 @@ defusedxml==0.5.0         # via python3-openid, social-auth-core
 django==2.1.2
 django-environ==0.4.5
 django-ipware==2.1.0
+django-redis==4.10.0
 django-rest-swagger==2.2.0
 django-storages[google]==1.7.1
 djangorestframework==3.9.2
@@ -39,6 +40,7 @@ pyasn1-modules==0.2.2     # via google-auth
 pyjwt==1.6.4              # via social-auth-core
 python3-openid==3.1.0     # via social-auth-core
 pytz==2018.5              # via django, google-api-core
+redis==3.2.1              # via django-redis
 requests==2.20.0          # via coreapi, google-api-core, requests-oauthlib, social-auth-core
 requests-oauthlib==1.0.0  # via social-auth-core
 rsa==3.4.2                # via google-auth
