@@ -9,12 +9,13 @@ class PackageVersionInline(admin.StackedInline):
     model = PackageVersion
     readonly_fields = (
         "date_created",
+        "dependencies",  # TODO: Add some way to manage dependencies that doesn't suck
         # "description",  # TODO: Add to package, and make that modifiable
         "downloads",
         "file",
         "icon",
         "name",
-        # "readme",  # TODO: Add to package, and amek that modifiable
+        # "readme",  # TODO: Add to package, and make that modifiable
         "version_number",
         "website_url",
         "website_url",
