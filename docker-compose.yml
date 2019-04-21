@@ -12,6 +12,11 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:5.0.4-alpine3.9
+    restart: always
+    command: --maxmemory 200mb --maxmemory-policy allkeys-lru
+
   django:
     build:
       context: .
@@ -32,6 +37,7 @@ services:
       GS_PROJECT_ID: ${GS_PROJECT_ID}
       GS_CREDENTIALS: ${GS_CREDENTIALS}
       GS_LOCATION: ${GS_LOCATION}
+      REDIS_URL: ${REDIS_URL}
       DB_CLIENT_CERT: ${DB_CLIENT_CERT}
       DB_CLIENT_KEY: ${DB_CLIENT_KEY}
       DB_SERVER_CA: ${DB_SERVER_CA}
@@ -40,6 +46,7 @@ services:
       - 127.0.0.1:80:8000
     depends_on:
       - db
+      - redis
     volumes:
       - django-data:/app/var
       - ./django:/app

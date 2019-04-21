@@ -28,6 +28,8 @@ env = environ.Env(
     GS_LOCATION=(str, ''),
     GS_FILE_OVERWRITE=(bool, False),
 
+    REDIS_URL=(str, ''),
+
     DB_CLIENT_CERT=(str, ''),
     DB_CLIENT_KEY=(str, ''),
     DB_SERVER_CA=(str, ''),
@@ -205,6 +207,25 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'index'
+
+
+# Caching
+
+REDIS_URL = env.str("REDIS_URL")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "TIMEOUT": 300,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+                "SOCKET_CONNECT_TIMEOUT": 0.5,
+                "SOCKET_TIMEOUT": 5,
+            }
+        }
+    }
 
 # REST Framework
 
