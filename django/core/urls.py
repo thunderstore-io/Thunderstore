@@ -16,7 +16,7 @@ from repository.api.v1.viewsets import PackageViewSet
 
 
 api_v1_router = routers.DefaultRouter()
-api_v1_router.register(r'package', PackageViewSet)
+api_v1_router.register(r'package', PackageViewSet, basename="package")
 
 
 urlpatterns = [

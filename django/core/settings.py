@@ -9,6 +9,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 env = environ.Env(
     DEBUG=(bool, False),
+    DEBUG_SIMULATED_LAG=(int, 0),
     DATABASE_URL=(str, ''),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
@@ -27,6 +28,8 @@ env = environ.Env(
     GS_DEFAULT_ACL=(str, 'publicRead'),
     GS_LOCATION=(str, ''),
     GS_FILE_OVERWRITE=(bool, False),
+
+    REDIS_URL=(str, ''),
 
     DB_CLIENT_CERT=(str, ''),
     DB_CLIENT_KEY=(str, ''),
@@ -48,6 +51,7 @@ checkout_dir = environ.Path(__file__) - 2
 assert os.path.exists(checkout_dir('manage.py'))
 
 DEBUG = env.bool('DEBUG')
+DEBUG_SIMULATED_LAG = env.int('DEBUG_SIMULATED_LAG')
 
 SECRET_KEY = env.str("SECRET_KEY")
 
@@ -205,6 +209,25 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'index'
+
+
+# Caching
+
+REDIS_URL = env.str("REDIS_URL")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "TIMEOUT": 300,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+                "SOCKET_CONNECT_TIMEOUT": 0.5,
+                "SOCKET_TIMEOUT": 5,
+            }
+        }
+    }
 
 # REST Framework
 

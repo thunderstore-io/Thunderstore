@@ -3,26 +3,11 @@ import json
 
 import requests
 
+from sentry_sdk import capture_exception
+
 from django.db import models
 
-
-class ChoiceEnum(object):
-
-    @classmethod
-    def as_choices(cls):
-        return [
-            (key, value)
-            for key, value in vars(cls).items()
-            if not key.startswith("_")
-        ]
-
-    @classmethod
-    def options(cls):
-        return [
-            value
-            for key, value in vars(cls).items()
-            if not key.startswith("_")
-        ]
+from core.utils import ChoiceEnum
 
 
 class WebhookType(ChoiceEnum):
@@ -57,9 +42,10 @@ class Webhook(models.Model):
         if not self.is_active:
             return
         try:
-            requests.post(
+            resp = requests.post(
                 self.webhook_url, data=json.dumps(webhook_data),
                 headers={"Content-Type": "application/json"}
             )
-        except Exception:
-            pass
+            resp.raise_for_status()
+        except Exception as e:
+            capture_exception(e)

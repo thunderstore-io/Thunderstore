@@ -6,8 +6,9 @@ from distutils.version import StrictVersion
 from ipware import get_client_ip
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
-from django.db.models import Case, When, Sum, Q
+from django.db.models import Case, When, Sum, Q, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -237,11 +238,22 @@ class PackageVersion(models.Model):
             "version": self.version_number,
         }
 
+    @staticmethod
+    def post_save(sender, instance, created, **kwargs):
+        if created:
+            instance.announce_release()
+            instance.package.refresh_update_date()
+        cache.delete("modlist-all")
+
     def announce_release(self):
         webhooks = Webhook.objects.filter(
             webhook_type=WebhookType.mod_release,
             is_active=True,
         )
+
+        thumbnail_url = self.icon.url
+        if not (thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")):
+            thumbnail_url = f"{settings.PROTOCOL}{settings.SERVER_NAME}{thumbnail_url}"
 
         webhook_data = {
             "embeds": [{
@@ -252,7 +264,7 @@ class PackageVersion(models.Model):
                 "timestamp": timezone.now().isoformat(),
                 "color": 4474879,
                 "thumbnail": {
-                    "url": self.icon.url,
+                    "url": thumbnail_url,
                     "width": 256,
                     "height": 256,
                 },
@@ -294,6 +306,9 @@ class PackageVersion(models.Model):
 
     def __str__(self):
         return self.full_version_name
+
+
+signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
 
 
 class PackageVersionDownloadEvent(models.Model):

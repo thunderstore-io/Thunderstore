@@ -5,6 +5,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic import View
 
+
+from repository.cache import get_mod_list_queryset
 from repository.models import Package
 from repository.models import PackageVersion
 from repository.ziptools import PackageVersionForm
@@ -18,13 +20,8 @@ class PackageListView(ListView):
     model = Package
     paginate_by = MODS_PER_PAGE
 
-    def get_queryset(self, *args, **kwargs):
-        return (
-            self.model.objects
-            .filter(is_active=True)
-            .prefetch_related("versions")
-            .order_by("-is_pinned", "-date_updated")
-        )
+    def get_queryset(self):
+        return get_mod_list_queryset()
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -46,7 +43,7 @@ class PackageListByOwnerView(ListView):
         self.cache_owner()
         return super().dispatch(*args, **kwargs)
 
-    def get_queryset(self, *args, **kwargs):
+    def get_queryset(self):
         return (
             self.model.objects
             .filter(is_active=True, owner=self.owner)
@@ -80,7 +77,7 @@ class PackageListByDependencyView(ListView):
         self.cache_package()
         return super().dispatch(*args, **kwargs)
 
-    def get_queryset(self, *args, **kwargs):
+    def get_queryset(self):
         return (
             self.package.dependants
             .filter(is_active=True)
@@ -142,9 +139,7 @@ class PackageCreateView(CreateView):
     @transaction.atomic
     def form_valid(self, form):
         instance = form.save()
-        instance.announce_release()
-        instance.package.refresh_update_date()
-        return redirect(form.instance)
+        return redirect(instance)
 
 
 class PackageDownloadView(View):
