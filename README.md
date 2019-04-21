@@ -122,3 +122,10 @@ connection. Will be placed to `client-cert.pem`
 Will be placed to `client-key.pem`
 - `DB_SERVER_CA`: Base64 encoded server CA to use for the database connection.
 Will be placed to `server-ca.pem`
+
+### Redis caching
+
+You can enable caching to the redis backend by supplying a redis URL
+
+- `REDIS_URL`: The redis database URL to use for caching, e.g.
+`redis://some-host:6379/0`
