@@ -1,5 +1,4 @@
 #!/bin/bash
-python manage.py collectstatic --noinput
 
 if [ "$DEBUG" = true ] || [ "$DEBUG" = 'True' ] || [ "$DEBUG" = 1 ]; then
     echo 'Launching in debug mode'
