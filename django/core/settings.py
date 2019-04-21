@@ -9,6 +9,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 env = environ.Env(
     DEBUG=(bool, False),
+    DEBUG_SIMULATED_LAG=(int, 0),
     DATABASE_URL=(str, ''),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
@@ -50,6 +51,7 @@ checkout_dir = environ.Path(__file__) - 2
 assert os.path.exists(checkout_dir('manage.py'))
 
 DEBUG = env.bool('DEBUG')
+DEBUG_SIMULATED_LAG = env.int('DEBUG_SIMULATED_LAG')
 
 SECRET_KEY = env.str("SECRET_KEY")
 

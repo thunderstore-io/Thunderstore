@@ -6,8 +6,9 @@ from distutils.version import StrictVersion
 from ipware import get_client_ip
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
-from django.db.models import Case, When, Sum, Q
+from django.db.models import Case, When, Sum, Q, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -237,6 +238,13 @@ class PackageVersion(models.Model):
             "version": self.version_number,
         }
 
+    @staticmethod
+    def post_save(sender, instance, created, **kwargs):
+        if created:
+            instance.announce_release()
+            instance.package.refresh_update_date()
+        cache.delete("modlist-all")
+
     def announce_release(self):
         webhooks = Webhook.objects.filter(
             webhook_type=WebhookType.mod_release,
@@ -294,6 +302,9 @@ class PackageVersion(models.Model):
 
     def __str__(self):
         return self.full_version_name
+
+
+signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
 
 
 class PackageVersionDownloadEvent(models.Model):
