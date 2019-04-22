@@ -24,7 +24,20 @@ class PackageVersionSerializer(ModelSerializer):
 
     class Meta:
         model = PackageVersion
-        exclude = ("file", "package", "id")
+        fields = (
+            "name",
+            "full_name",
+            "description",
+            "icon",
+            "version_number",
+            "dependencies",
+            "download_url",
+            "downloads",
+            "date_created",
+            "website_url",
+            "is_active",
+            "uuid4",
+        )
 
 
 class PackageSerializer(ModelSerializer):
@@ -32,6 +45,7 @@ class PackageSerializer(ModelSerializer):
     owner = SerializerMethodField()
     maintainers = SerializerMethodField()
     full_name = SerializerMethodField()
+    package_url = SerializerMethodField()
 
     def get_versions(self, instance):
         versions = instance.available_versions
@@ -48,7 +62,21 @@ class PackageSerializer(ModelSerializer):
     def get_full_name(self, instance):
         return instance.full_package_name
 
+    def get_package_url(self, instance):
+        return instance.full_url
+
     class Meta:
         model = Package
-        exclude = ("id",)
+        fields = (
+            "name",
+            "full_name",
+            "owner",
+            "package_url",
+            "maintainers",
+            "date_created",
+            "date_updated",
+            "uuid4",
+            "is_pinned",
+            "versions",
+        )
         depth = 0

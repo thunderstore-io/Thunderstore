@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
 {% load markdownify %}
+{% load cache_until %}
 
 {% block title %}{{ object.display_name }}{% endblock %}
 {% block description %}{{ object.description }}{% endblock %}
@@ -18,6 +19,8 @@
 {% endblock %}
 
 {% block content %}
+{% cache_until "any_package_version_created" "mod-detail" 300 object.pk %}
+
 <div class="media mt-4">
     <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
     <div class="media-body">
@@ -103,4 +106,6 @@ software installed. Otherwise use the zip download links instead.</p>
     </tr>
     {% endfor %}
 </table>
+
+{% endcache %}
 {% endblock %}

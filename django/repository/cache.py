@@ -1,9 +1,12 @@
-from core.cache import cache_function_result
-
 from repository.models import Package
 
+from core.cache import (
+    CacheBustCondition,
+    cache_function_result
+)
 
-@cache_function_result(cache_key="modlist-all")
+
+@cache_function_result(cache_until=CacheBustCondition.any_package_version_created)
 def get_mod_list_queryset():
     return (
         Package.objects
