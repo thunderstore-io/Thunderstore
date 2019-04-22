@@ -5,7 +5,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-{% cache_until "any_package_version_created" "mod-list" 300 page_obj.number %}
+{% cache_until "any_package_version_created" "mod-list" 300 page_obj.number cache_vary %}
 
 <h2 class="mt-4">{{ page_title }}</h2>
 

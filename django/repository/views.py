@@ -25,6 +25,7 @@ class PackageListView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["cache_vary"] = f"all"
         context["page_title"] = f"All mods"
         return context
 
@@ -53,6 +54,7 @@ class PackageListByOwnerView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["cache_vary"] = f"authorer-{self.owner.username}"
         context["page_title"] = f"Mods uploaded by {self.owner.username}"
         return context
 
@@ -87,6 +89,7 @@ class PackageListByDependencyView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["cache_vary"] = f"dependencies-{self.package.full_package_name}"
         context["page_title"] = f"Mods that depend on {self.package.display_name}"
         return context
 
