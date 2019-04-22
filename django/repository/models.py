@@ -6,12 +6,13 @@ from distutils.version import StrictVersion
 from ipware import get_client_ip
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import models
 from django.db.models import Case, When, Sum, Q, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
+
+from core.cache import CacheBustCondition, invalidate_cache
 
 from webhooks.models import Webhook, WebhookType
 
@@ -64,7 +65,7 @@ class Package(models.Model):
         # TODO: Caching
         return self.available_versions.first()
 
-    @property
+    @cached_property
     def available_versions(self):
         # TODO: Caching
         versions = self.versions.filter(is_active=True).values_list("pk", "version_number")
@@ -243,7 +244,8 @@ class PackageVersion(models.Model):
         if created:
             instance.announce_release()
             instance.package.refresh_update_date()
-        cache.delete("modlist-all")
+            invalidate_cache(CacheBustCondition.any_package_version_created)
+        invalidate_cache(CacheBustCondition.any_package_version_updated)
 
     def announce_release(self):
         webhooks = Webhook.objects.filter(

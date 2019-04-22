@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
+{% load cache_until %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
+{% cache_until "any_package_version_created" "mod-list" 300 page_obj.number %}
 
 <h2 class="mt-4">{{ page_title }}</h2>
 
@@ -85,4 +87,5 @@
     <li class="mt-4">No mods found :(</li>
 {% endif %}
 
+{% endcache %}
 {% endblock %}
