@@ -1,20 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic import View
 
-
-from repository.cache import get_mod_list_queryset
 from repository.models import Package
 from repository.models import PackageVersion
 from repository.ziptools import PackageVersionForm
 
 from django.shortcuts import redirect, get_object_or_404
 
-MODS_PER_PAGE = 20
+MODS_PER_PAGE = 3
 
 
 class PackageListSearchView(ListView):
@@ -28,20 +26,50 @@ class PackageListSearchView(ListView):
         return ""
 
     def get_cache_vary(self):
-        return ""
+        return f"{self.get_active_ordering()}.{self.get_cache_vary()}"
+
+    def get_full_cache_vary(self):
+        pass
+
+    def get_ordering_choices(self):
+        return (
+            ("last-updated", "Last updated"),
+            ("newest", "Newest"),
+            ("most-downloaded", "Most downloaded")
+        )
+
+    def get_active_ordering(self):
+        ordering = self.request.GET.get("ordering", "last-updated")
+        possibilities = [x[0] for x in self.get_ordering_choices()]
+        if ordering not in possibilities:
+            return possibilities[0]
+        return ordering
+
+    def order_queryset(self, queryset):
+        active_ordering = self.get_active_ordering()
+        if active_ordering == "newest":
+            return queryset.order_by("-is_pinned", "-date_created")
+        if active_ordering == "most-downloaded":
+            return (
+                queryset
+                .annotate(total_downloads=Sum("versions__downloads"))
+                .order_by("-is_pinned", "-total_downloads")
+            )
+        return queryset.order_by("-is_pinned", "-date_updated")
 
     def get_queryset(self):
-        return (
+        return self.order_queryset(
             self.get_base_queryset()
             .filter(is_active=True)
             .prefetch_related("versions")
-            .order_by("-is_pinned", "-date_updated")
         )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["cache_vary"] = self.get_cache_vary()
+        context["cache_vary"] = self.get_full_cache_vary()
         context["page_title"] = self.get_page_title()
+        context["ordering_modes"] = self.get_ordering_choices()
+        context["active_ordering"] = self.get_active_ordering()
         return context
 
 

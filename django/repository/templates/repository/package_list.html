@@ -13,9 +13,11 @@
     <div class="row">
         <div class="col-12 col-md-auto p-0 m-0 mb-2 mr-2">
             <div class="btn-group" role="group" aria-label="Result ordering">
-              <button type="button" class="btn btn-secondary active">Last updated</button>
-              <button type="button" class="btn btn-secondary">Newest</button>
-              <button type="button" class="btn btn-secondary">Most downloaded</button>
+                {% for entry in ordering_modes %}
+                    <a href="/package/?ordering={{ entry.0 }}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
+                        {{ entry.1 }}
+                    </a>
+                {% endfor %}
             </div>
         </div>
         <div class="col-9 col-md-4 p-0 m-0 ml-auto mb-2">
