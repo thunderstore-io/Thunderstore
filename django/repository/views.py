@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Q
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -16,23 +17,44 @@ from django.shortcuts import redirect, get_object_or_404
 MODS_PER_PAGE = 20
 
 
-class PackageListView(ListView):
+class PackageListSearchView(ListView):
     model = Package
     paginate_by = MODS_PER_PAGE
 
+    def get_base_queryset(self):
+        return Package.objects
+
+    def get_page_title(self):
+        return ""
+
+    def get_cache_vary(self):
+        return ""
+
     def get_queryset(self):
-        return get_mod_list_queryset()
+        return (
+            self.get_base_queryset()
+            .filter(is_active=True)
+            .prefetch_related("versions")
+            .order_by("-is_pinned", "-date_updated")
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["cache_vary"] = f"all"
-        context["page_title"] = f"All mods"
+        context["cache_vary"] = self.get_cache_vary()
+        context["page_title"] = self.get_page_title()
         return context
 
 
-class PackageListByOwnerView(ListView):
-    model = Package
-    paginate_by = MODS_PER_PAGE
+class PackageListView(PackageListSearchView):
+
+    def get_page_title(self):
+        return f"All mods"
+
+    def get_cache_vary(self):
+        return "all"
+
+
+class PackageListByOwnerView(PackageListSearchView):
 
     def cache_owner(self):
         self.owner = get_object_or_404(
@@ -44,22 +66,17 @@ class PackageListByOwnerView(ListView):
         self.cache_owner()
         return super().dispatch(*args, **kwargs)
 
-    def get_queryset(self):
-        return (
-            self.model.objects
-            .filter(is_active=True, owner=self.owner)
-            .prefetch_related("versions")
-            .order_by("-is_pinned", "-date_updated")
-        )
+    def get_base_queryset(self):
+        return self.model.objects.exclude(~Q(owner=self.owner))
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context["cache_vary"] = f"authorer-{self.owner.username}"
-        context["page_title"] = f"Mods uploaded by {self.owner.username}"
-        return context
+    def get_page_title(self):
+        return f"Mods uploaded by {self.owner.username}"
+
+    def get_cache_vary(self):
+        return f"authorer-{self.owner.username}"
 
 
-class PackageListByDependencyView(ListView):
+class PackageListByDependencyView(PackageListSearchView):
     model = Package
     paginate_by = MODS_PER_PAGE
 
@@ -79,19 +96,14 @@ class PackageListByDependencyView(ListView):
         self.cache_package()
         return super().dispatch(*args, **kwargs)
 
-    def get_queryset(self):
-        return (
-            self.package.dependants
-            .filter(is_active=True)
-            .prefetch_related("versions")
-            .order_by("-is_pinned", "-date_updated")
-        )
+    def get_base_queryset(self):
+        return self.package.dependants
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context["cache_vary"] = f"dependencies-{self.package.full_package_name}"
-        context["page_title"] = f"Mods that depend on {self.package.display_name}"
-        return context
+    def get_page_title(self):
+        return f"Mods that depend on {self.package.display_name}"
+
+    def get_cache_vary(self):
+        return f"dependencies-{self.package.id}"
 
 
 class PackageDetailView(DetailView):
