@@ -9,15 +9,37 @@
 
 <h2 class="mt-4">{{ page_title }}</h2>
 
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-md-auto p-0 m-0 mb-2 mr-2">
+            <div class="btn-group" role="group" aria-label="Result ordering">
+              <button type="button" class="btn btn-secondary active">Last updated</button>
+              <button type="button" class="btn btn-secondary">Newest</button>
+              <button type="button" class="btn btn-secondary">Most downloaded</button>
+            </div>
+        </div>
+        <div class="col-9 col-md-4 p-0 m-0 ml-auto mb-2">
+            <div class="col-12 m-0 p-0 pr-2">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+            </div>
+        </div>
+        <div class="col-3 col-md-auto p-0 m-0 mb-2">
+            <div class="col-12 m-0 p-0">
+                <button class="btn btn-outline-success my-sm-0 w-100" type="submit">Search</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% if object_list %}
-    <div class="container">
+    <div class="container mb-3">
     {% for object in object_list %}
         <div class="row border border-secondary p-2
                     {% if object.is_pinned %}bg-secondary border-light border-left-0 border-right-0 border-bottom-0{% else %}bg-light{% endif %}
                     {% if forloop.last %}rounded-bottom{% endif %}
                     {% if forloop.first %}rounded-top{% endif %}
                     {% if not forloop.first %}border-top-0{% endif %}">
-            <div class="col-8">
+            <div class="col-xs-12 col-md-8">
                 <div class="media my-3">
                     <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
                     <div class="media-body">
@@ -28,7 +50,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-4 mb-2">
+            <div class="col-xs-0 col-mb-4 mb-2 d-none d-md-block">
                 {% if object.sorted_dependencies %}
                     <h5 class="my-3">Dependencies</h5>
                     {% for dependency in object.sorted_dependencies|slice:":3" %}
@@ -49,7 +71,7 @@
     {% endfor %}
     </div>
     {% if is_paginated %}
-        <ul class="pagination mt-4">
+        <ul class="pagination my-3">
             {% if page_obj.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
@@ -84,7 +106,7 @@
         </ul>
     {% endif %}
 {% else %}
-    <li class="mt-4">No mods found :(</li>
+    <li class="my-4">No mods found :(</li>
 {% endif %}
 
 {% endcache %}
