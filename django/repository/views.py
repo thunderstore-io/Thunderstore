@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.search import TrigramSimilarity, SearchVector, SearchQuery
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.views.generic.list import ListView
@@ -29,7 +30,10 @@ class PackageListSearchView(ListView):
         return ""
 
     def get_full_cache_vary(self):
-        return f"{self.get_active_ordering()}.{self.get_cache_vary()}"
+        cache_vary = self.get_cache_vary()
+        cache_vary += f".{self.get_search_query()}"
+        cache_vary += f".{self.get_active_ordering()}"
+        return cache_vary
 
     def get_ordering_choices(self):
         return (
@@ -45,6 +49,9 @@ class PackageListSearchView(ListView):
             return possibilities[0]
         return ordering
 
+    def get_search_query(self):
+        return self.request.GET.get("q", "")
+
     def order_queryset(self, queryset):
         active_ordering = self.get_active_ordering()
         if active_ordering == "newest":
@@ -57,12 +64,30 @@ class PackageListSearchView(ListView):
             )
         return queryset.order_by("-is_pinned", "-date_updated")
 
+    def perform_search(self, queryset, search_query):
+        search_fields = ("name",  "owner__username")
+        # TODO: Add description once we can get the latest one from the db
+        return (
+            queryset
+            .annotate(name_search_score=TrigramSimilarity("name", search_query))
+            .annotate(search=SearchVector(*search_fields))
+            .exclude(
+                Q(name_search_score__lte=0.1) &
+                ~Q(search=SearchQuery(search_query))
+            )
+            .distinct()
+        )
+
     def get_queryset(self):
-        return self.order_queryset(
+        queryset = (
             self.get_base_queryset()
-            .filter(is_active=True)
+            .exclude(is_active=False)
             .prefetch_related("versions")
         )
+        search_query = self.get_search_query()
+        if search_query:
+            queryset = self.perform_search(queryset, search_query)
+        return self.order_queryset(queryset)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -70,6 +95,7 @@ class PackageListSearchView(ListView):
         context["page_title"] = self.get_page_title()
         context["ordering_modes"] = self.get_ordering_choices()
         context["active_ordering"] = self.get_active_ordering()
+        context["current_search"] = self.get_search_query()
         return context
 
 

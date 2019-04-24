@@ -21,17 +21,23 @@
                 {% endfor %}
             </div>
         </div>
-        {# Disabled until implemented #}
-        {# <div class="col-9 col-md-4 p-0 m-0 ml-auto mb-2"> #}
-            {# <div class="col-12 m-0 p-0 pr-2"> #}
-                {# <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search"> #}
-            {# </div> #}
-        {# </div> #}
-        {# <div class="col-3 col-md-auto p-0 m-0 mb-2"> #}
-            {# <div class="col-12 m-0 p-0"> #}
-                {# <button class="btn btn-outline-success my-sm-0 w-100" type="submit">Search</button> #}
-            {# </div> #}
-        {# </div> #}
+        <div class="col-12 col-md-6 col-lg-5 p-0 m-0 mb-2 ml-auto">
+            <form class="form-inline" method="get" action="{{ request.path }}">
+                <div class="row w-100 m-0 p-0">
+                    <div class="col-7 m-0 p-0 pr-2">
+                        <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
+                        <input type="hidden" name="page" value="{{ page_obj.number }}">
+                        <input type="hidden" name="ordering" value="{{ active_ordering }}">
+                    </div>
+                    <div class="col-3 m-0 p-0 pr-1">
+                        <button class="btn btn-outline-success w-100" type="submit">Search</button>
+                    </div>
+                    <div class="col-2 m-0 p-0">
+                        <a href="{% url 'packages.list' %}" class="btn btn-outline-success w-100">Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -54,7 +60,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xs-0 col-mb-4 mb-2 d-none d-md-block">
+            <div class="col-xs-0 col-md-4 mb-2 d-none d-md-block">
                 {% if object.sorted_dependencies %}
                     <h5 class="my-3">Dependencies</h5>
                     {% for dependency in object.sorted_dependencies|slice:":3" %}
