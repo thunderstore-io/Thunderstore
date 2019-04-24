@@ -26,10 +26,10 @@ class PackageListSearchView(ListView):
         return ""
 
     def get_cache_vary(self):
-        return f"{self.get_active_ordering()}.{self.get_cache_vary()}"
+        return ""
 
     def get_full_cache_vary(self):
-        pass
+        return f"{self.get_active_ordering()}.{self.get_cache_vary()}"
 
     def get_ordering_choices(self):
         return (

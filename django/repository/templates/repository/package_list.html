@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
 {% load cache_until %}
+{% load qurl %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
@@ -14,7 +15,7 @@
         <div class="col-12 col-md-auto p-0 m-0 mb-2 mr-2">
             <div class="btn-group" role="group" aria-label="Result ordering">
                 {% for entry in ordering_modes %}
-                    <a href="/package/?ordering={{ entry.0 }}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
+                    <a href="{% qurl ordering entry.0 %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
                         {{ entry.1 }}
                     </a>
                 {% endfor %}
@@ -76,7 +77,7 @@
         <ul class="pagination my-3">
             {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+                    <a class="page-link" href="{% qurl page page_obj.previous_page_number %}">&laquo;</a>
                 </li>
             {% else %}
                 <li class="page-item disabled">
@@ -91,14 +92,14 @@
                     </li>
                 {% else %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                        <a class="page-link" href="{% qurl page i %}">{{ i }}</a>
                     </li>
                 {% endif %}
             {% endfor %}
 
             {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+                    <a class="page-link" href="{% qurl page page_obj.next_page_number %}">&raquo;</a>
                 </li>
             {% else %}
                 <li class="page-item disabled">
