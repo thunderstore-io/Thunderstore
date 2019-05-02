@@ -1,10 +1,11 @@
 {% load static %}
-{% load google_analytics %}
+{% load google_analytics dynamic_html %}
 
 <!doctype html>
 <html lang="en">
     <head>
         {% google_analytics %}
+        {% dynamic_head %}
 
         <title>{% block title %}Mod List{% endblock %} | Thunderstore - The Risk of Rain 2 Mod Database</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -29,6 +30,7 @@
         <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
     </head>
     <body>
+        {% dynamic_body %}
         <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
             <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">Thunderstore</a>
             <ul class="navbar-nav">
