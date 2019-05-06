@@ -265,7 +265,7 @@ GOOGLE_ANALYTICS_ID = env.str("GOOGLE_ANALYTICS_ID")
 
 DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 THUMBNAIL_DEFAULT_STORAGE = "django.core.files.storage.FileSystemStorage"
-PACKAGE_STORAGE = "django.core.files.storage.FileSystemStorage"
+PACKAGE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
 # Google Cloud Storage
 
