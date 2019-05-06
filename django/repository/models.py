@@ -6,6 +6,7 @@ from distutils.version import StrictVersion
 from ipware import get_client_ip
 
 from django.conf import settings
+from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models import Case, When, Sum, Q, signals
 from django.urls import reverse
@@ -202,6 +203,7 @@ class PackageVersion(models.Model):
     # <packagename>.zip
     file = models.FileField(
         upload_to=get_version_zip_filepath,
+        storage=get_storage_class(settings.PACKAGE_FILE_STORAGE)(),
     )
     # <packagename>.png
     icon = models.ImageField(

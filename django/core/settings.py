@@ -29,6 +29,12 @@ env = environ.Env(
     GS_LOCATION=(str, ''),
     GS_FILE_OVERWRITE=(bool, False),
 
+    B2_KEY_ID=(str, ''),
+    B2_KEY=(str, ''),
+    B2_BUCKET_ID=(str, ''),
+    B2_LOCATION=(str, ''),
+    B2_FILE_OVERWRITE=(bool, True),
+
     REDIS_URL=(str, ''),
 
     DB_CLIENT_CERT=(str, ''),
@@ -122,6 +128,7 @@ INSTALLED_APPS = [
     'frontend',
     'repository',
     'webhooks',
+    'backblaze_b2',
 ]
 
 MIDDLEWARE = [
@@ -230,6 +237,13 @@ if REDIS_URL:
         }
     }
 
+if DEBUG and not DEBUG_SIMULATED_LAG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+
 # REST Framework
 
 REST_FRAMEWORK = {
@@ -245,7 +259,15 @@ REST_FRAMEWORK = {
 
 GOOGLE_ANALYTICS_ID = env.str("GOOGLE_ANALYTICS_ID")
 
-# Cloud Storage
+#######################################
+#               STORAGE               #
+#######################################
+
+DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+THUMBNAIL_DEFAULT_STORAGE = "django.core.files.storage.FileSystemStorage"
+PACKAGE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
+# Google Cloud Storage
 
 GS_BUCKET_NAME = env.str("GS_BUCKET_NAME")
 GS_PROJECT_ID = env.str("GS_PROJECT_ID")
@@ -264,6 +286,17 @@ GS_FILE_OVERWRITE = env.bool("GS_FILE_OVERWRITE")
 if GS_CREDENTIALS and GS_PROJECT_ID and GS_BUCKET_NAME:
     DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+
+# Backblaze B2 Cloud Storage for packages
+
+B2_KEY_ID = env.str("B2_KEY_ID")
+B2_KEY = env.str("B2_KEY")
+B2_BUCKET_ID = env.str("B2_BUCKET_ID")
+B2_LOCATION = env.str("B2_LOCATION")
+B2_FILE_OVERWRITE = env.str("B2_FILE_OVERWRITE")
+
+if B2_KEY_ID and B2_KEY and B2_BUCKET_ID:
+    PACKAGE_FILE_STORAGE = "backblaze_b2.storage.BackblazeB2Storage"
 
 # Social auth
 
