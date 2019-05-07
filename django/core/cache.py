@@ -32,7 +32,8 @@ def cache_get_or_set(key, default, default_args=(), default_kwargs={}, expiry=No
 
 
 def invalidate_cache(cache_bust_condition):
-    cache.delete_pattern(f"cache.{cache_bust_condition}.*")
+    if hasattr(cache, "delete_pattern"):
+        cache.delete_pattern(f"cache.{cache_bust_condition}.*")
 
 
 def get_cache_key(cache_bust_condition, cache_type, key, vary_on):

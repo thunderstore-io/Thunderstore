@@ -23,9 +23,9 @@ class PackageVersionForm(forms.ModelForm):
         model = PackageVersion
         fields = ["file"]
 
-    def __init__(self, user, *args, **kwargs):
+    def __init__(self, owner, *args, **kwargs):
         super(PackageVersionForm, self).__init__(*args, **kwargs)
-        self.user = user
+        self.owner = owner
 
     def validate_manifest(self, manifest):
         try:
@@ -52,7 +52,7 @@ class PackageVersionForm(forms.ModelForm):
                 )
 
             same_version_exists = Package.objects.filter(
-                owner=self.user,
+                owner=self.owner,
                 name=self.manifest["name"],
                 versions__version_number=version
             ).exists()
@@ -105,12 +105,12 @@ class PackageVersionForm(forms.ModelForm):
         if len(dependency_parts) != 3:
             raise ValidationError(f"Dependency {dependency_string} is in invalid format")
 
-        owner_username = dependency_parts[0]
+        owner_name = dependency_parts[0]
         package_name = dependency_parts[1]
         package_version = dependency_parts[2]
 
         dependency = PackageVersion.objects.filter(
-            package__owner__username=owner_username,
+            package__owner__name=owner_name,
             package__name=package_name,
             version_number=package_version,
         ).first()
@@ -118,7 +118,7 @@ class PackageVersionForm(forms.ModelForm):
         if not dependency:
             raise ValidationError(f"Could not find a package matching the dependency {dependency_string}")
 
-        if dependency.package.owner == self.user and dependency.name == self.manifest["name"]:
+        if dependency.package.owner == self.owner and dependency.name == self.manifest["name"]:
             raise ValidationError(f"Depending on self is not allowed. {dependency_string}")
 
         return dependency
@@ -202,7 +202,7 @@ class PackageVersionForm(forms.ModelForm):
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
         self.instance.package = Package.objects.get_or_create(
-            owner=self.user,
+            owner=self.owner,
             name=self.instance.name,
         )[0]
         self.instance.icon.save("icon.png", self.icon)

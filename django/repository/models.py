@@ -7,7 +7,7 @@ from ipware import get_client_ip
 
 from django.conf import settings
 from django.core.files.storage import get_storage_class
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, When, Sum, Q, signals
 from django.urls import reverse
 from django.utils import timezone
@@ -63,14 +63,28 @@ class UploaderIdentity(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    @transaction.atomic
+    def get_or_create_for_user(cls, user):
+        identity_membership = user.author_identities.first()
+        if identity_membership:
+            return identity_membership.identity
+
+        identity, created = cls.objects.get_or_create(
+            name=user.username,
+        )
+        if created:
+            UploaderIdentityMember.objects.create(
+                user=user,
+                identity=identity,
+                role=UploaderIdentityMemberRole.owner,
+            )
+        assert identity.members.filter(user=user).exists()
+        return identity
+
 
 class Package(models.Model):
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name="owned_packages",
-    )
-    uploader = models.ForeignKey(
         "repository.UploaderIdentity",
         on_delete=models.PROTECT,
         related_name="owned_packages",
@@ -101,7 +115,7 @@ class Package(models.Model):
 
     @property
     def full_package_name(self):
-        return f"{self.owner.username}-{self.name}"
+        return f"{self.owner.name}-{self.name}"
 
     @property
     def display_name(self):
@@ -164,14 +178,14 @@ class Package(models.Model):
 
     @property
     def owner_url(self):
-        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.username})
+        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
 
     @property
     def dependants_url(self):
         return reverse(
             "packages.list_by_dependency",
             kwargs={
-                "owner": self.owner.username,
+                "owner": self.owner.name,
                 "name": self.name,
             }
         )
@@ -183,7 +197,7 @@ class Package(models.Model):
     def get_absolute_url(self):
         return reverse(
             "packages.detail",
-            kwargs={"owner": self.owner.username, "name": self.name}
+            kwargs={"owner": self.owner.name, "name": self.name}
         )
 
     @property
@@ -273,7 +287,7 @@ class PackageVersion(models.Model):
     @property
     def download_url(self):
         return reverse("packages.download", kwargs={
-            "owner": self.package.owner.username,
+            "owner": self.package.owner.name,
             "name": self.package.name,
             "version": self.version_number,
         })
@@ -282,7 +296,7 @@ class PackageVersion(models.Model):
     def install_url(self):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
             "hostname": settings.SERVER_NAME,
-            "owner": self.package.owner.username,
+            "owner": self.package.owner.name,
             "name": self.package.name,
             "version": self.version_number,
         }
@@ -323,7 +337,7 @@ class PackageVersion(models.Model):
                     "url": f"{settings.PROTOCOL}{settings.SERVER_NAME}/"
                 },
                 "author": {
-                    "name": self.package.owner.username,
+                    "name": self.package.owner.name,
                 },
                 "fields": [{
                     "name": "Total downloads across versions",
