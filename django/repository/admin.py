@@ -67,10 +67,12 @@ class PackageAdmin(admin.ModelAdmin):
         "downloads",
         "name",
         "owner",
+        "uploader",
     )
     list_display = (
         "name",
         "owner",
+        "uploader",
         "is_active",
         "is_pinned",
     )

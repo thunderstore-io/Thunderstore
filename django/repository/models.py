@@ -70,6 +70,11 @@ class Package(models.Model):
         on_delete=models.PROTECT,
         related_name="owned_packages",
     )
+    uploader = models.ForeignKey(
+        "repository.UploaderIdentity",
+        on_delete=models.PROTECT,
+        related_name="owned_packages",
+    )
     name = models.CharField(
         max_length=128,
     )
