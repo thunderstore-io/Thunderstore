@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector, SearchQuery
 from django.db import transaction
 from django.db.models import Q, Sum
@@ -9,6 +8,9 @@ from django.views.generic import View
 
 from repository.models import Package
 from repository.models import PackageVersion
+from repository.models import UploaderIdentity
+from repository.models import UploaderIdentityMember
+from repository.models import UploaderIdentityMemberRole
 from repository.ziptools import PackageVersionForm
 
 from django.shortcuts import redirect, get_object_or_404
@@ -65,7 +67,7 @@ class PackageListSearchView(ListView):
         return queryset.order_by("-is_pinned", "-date_updated")
 
     def perform_search(self, queryset, search_query):
-        search_fields = ("name",  "owner__username")
+        search_fields = ("name",  "owner__name")
         # TODO: Add description once we can get the latest one from the db
         return (
             queryset
@@ -112,8 +114,8 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def cache_owner(self):
         self.owner = get_object_or_404(
-            get_user_model(),
-            username=self.kwargs["owner"]
+            UploaderIdentity,
+            name=self.kwargs["owner"]
         )
 
     def dispatch(self, *args, **kwargs):
@@ -124,10 +126,10 @@ class PackageListByOwnerView(PackageListSearchView):
         return self.model.objects.exclude(~Q(owner=self.owner))
 
     def get_page_title(self):
-        return f"Mods uploaded by {self.owner.username}"
+        return f"Mods uploaded by {self.owner.name}"
 
     def get_cache_vary(self):
-        return f"authorer-{self.owner.username}"
+        return f"authorer-{self.owner.name}"
 
 
 class PackageListByDependencyView(PackageListSearchView):
@@ -136,7 +138,7 @@ class PackageListByDependencyView(PackageListSearchView):
 
     def cache_package(self):
         owner = self.kwargs["owner"]
-        owner = get_object_or_404(get_user_model(), username=owner)
+        owner = get_object_or_404(UploaderIdentity, name=owner)
         name = self.kwargs["name"]
         package = get_object_or_404(
             self.model,
@@ -165,7 +167,7 @@ class PackageDetailView(DetailView):
 
     def get_object(self, *args, **kwargs):
         owner = self.kwargs["owner"]
-        owner = get_object_or_404(get_user_model(), username=owner)
+        owner = get_object_or_404(UploaderIdentity, name=owner)
         name = self.kwargs["name"]
         return get_object_or_404(
             self.model,
@@ -202,7 +204,9 @@ class PackageCreateView(CreateView):
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super(PackageCreateView, self).get_form_kwargs(*args, **kwargs)
-        kwargs["user"] = self.request.user
+        kwargs["owner"] = UploaderIdentity.get_or_create_for_user(
+            self.request.user
+        )
         return kwargs
 
     @transaction.atomic
@@ -218,7 +222,7 @@ class PackageDownloadView(View):
         name = kwargs["name"]
         version = kwargs["version"]
 
-        package = get_object_or_404(Package, owner__username=owner, name=name)
+        package = get_object_or_404(Package, owner__name=owner, name=name)
         version = get_object_or_404(PackageVersion, package=package, version_number=version)
         version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))

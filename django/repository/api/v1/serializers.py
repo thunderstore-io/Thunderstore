@@ -43,7 +43,6 @@ class PackageVersionSerializer(ModelSerializer):
 class PackageSerializer(ModelSerializer):
     versions = SerializerMethodField()
     owner = SerializerMethodField()
-    maintainers = SerializerMethodField()
     full_name = SerializerMethodField()
     package_url = SerializerMethodField()
 
@@ -52,12 +51,7 @@ class PackageSerializer(ModelSerializer):
         return PackageVersionSerializer(versions, many=True, context=self._context).data
 
     def get_owner(self, instance):
-        return instance.owner.username
-
-    def get_maintainers(self, instance):
-        return [
-            maintainer.username for maintainer in instance.maintainers.all()
-        ]
+        return instance.owner.name
 
     def get_full_name(self, instance):
         return instance.full_package_name
@@ -72,7 +66,6 @@ class PackageSerializer(ModelSerializer):
             "full_name",
             "owner",
             "package_url",
-            "maintainers",
             "date_created",
             "date_updated",
             "uuid4",

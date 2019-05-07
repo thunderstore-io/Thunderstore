@@ -143,12 +143,12 @@ def resolve_dependency(self, dependency_string):
     if len(dependency_parts) != 3:
         raise ValidationError(f"Dependency {dependency_string} is in invalid format")
 
-    owner_username = dependency_parts[0]
+    owner_name = dependency_parts[0]
     package_name = dependency_parts[1]
     package_version = dependency_parts[2]
 
     dependency = PackageVersion.objects.filter(
-        package__owner__username=owner_username,
+        package__owner__name=owner_name,
         package__name=package_name,
         version_number=package_version,
     ).first()
