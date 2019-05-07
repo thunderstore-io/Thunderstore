@@ -3,6 +3,38 @@ from django.contrib import admin
 
 from repository.models import Package
 from repository.models import PackageVersion
+from repository.models import UploaderIdentity
+from repository.models import UploaderIdentityMember
+
+
+class UploaderIdentityMemberAdmin(admin.StackedInline):
+    model = UploaderIdentityMember
+    extra = 0
+    list_display = (
+        "user",
+        "identity",
+        "role",
+    )
+
+
+@admin.register(UploaderIdentity)
+class UploaderIdentityAdmin(admin.ModelAdmin):
+    inlines = [
+        UploaderIdentityMemberAdmin,
+    ]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields
+        else:
+            return []
+
+    readonly_fields = (
+        "name",
+    )
+    list_display = (
+        "name",
+    )
 
 
 class PackageVersionInline(admin.StackedInline):

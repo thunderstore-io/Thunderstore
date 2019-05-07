@@ -43,6 +43,11 @@ class UploaderIdentityMember(models.Model):
 
     class Meta:
         unique_together = ("user", "identity")
+        verbose_name = "Uploader Identity Member"
+        verbose_name_plural = "Uploader Identy Members"
+
+    def __str__(self):
+        return f"{self.user.username} membership to {self.identity.name}"
 
 
 class UploaderIdentity(models.Model):
@@ -50,6 +55,13 @@ class UploaderIdentity(models.Model):
         max_length=64,
         unique=True,
     )
+
+    class Meta:
+        verbose_name = "Uploader Identity"
+        verbose_name_plural = "Uploader Identities"
+
+    def __str__(self):
+        return self.name
 
 
 class Package(models.Model):
