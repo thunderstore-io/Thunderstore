@@ -14,16 +14,45 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 
 from core.cache import CacheBustCondition, invalidate_cache
+from core.utils import ChoiceEnum
 
 from webhooks.models import Webhook, WebhookType
 
 
-class Package(models.Model):
-    maintainers = models.ManyToManyField(
+class UploaderIdentityMemberRole(ChoiceEnum):
+    owner = "owner"
+    member = "member"
+
+
+class UploaderIdentityMember(models.Model):
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        related_name="maintaned_packages",
-        blank=True,
+        related_name="author_identities",
+        on_delete=models.CASCADE,
     )
+    identity = models.ForeignKey(
+        "repository.UploaderIdentity",
+        related_name="members",
+        on_delete=models.CASCADE,
+    )
+    role = models.CharField(
+        max_length=64,
+        default=UploaderIdentityMemberRole.member,
+        choices=UploaderIdentityMemberRole.as_choices(),
+    )
+
+    class Meta:
+        unique_together = ("user", "identity")
+
+
+class UploaderIdentity(models.Model):
+    name = models.CharField(
+        max_length=64,
+        unique=True,
+    )
+
+
+class Package(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

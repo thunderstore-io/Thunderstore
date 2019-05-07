@@ -33,7 +33,6 @@ class PackageAdmin(admin.ModelAdmin):
     readonly_fields = (
         "date_created",
         "downloads",
-        "maintainers",
         "name",
         "owner",
     )
