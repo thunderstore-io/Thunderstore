@@ -16,6 +16,7 @@ DEFAULT_CACHE_EXPIRY = 60 * 5
 class CacheBustCondition(ChoiceEnum):
     any_package_version_created = "any_package_version_created"
     any_package_version_updated = "any_package_version_updated"
+    dynamic_html_updated = "dynamic_html_updated"
 
 
 def cache_get_or_set(key, default, default_args=(), default_kwargs={}, expiry=None):

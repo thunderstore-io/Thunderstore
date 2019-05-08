@@ -1,5 +1,7 @@
 from django.db import models
+from django.db.models import signals
 
+from core.cache import CacheBustCondition, invalidate_cache
 from core.utils import ChoiceEnum
 
 
@@ -40,3 +42,10 @@ class DynamicHTML(models.Model):
     class Meta:
         verbose_name = "Dynamic HTML"
         verbose_name_plural = "Dynamic HTML"
+
+    @staticmethod
+    def post_save(sender, instance, created, **kwargs):
+        invalidate_cache(CacheBustCondition.dynamic_html_updated)
+
+
+signals.post_save.connect(DynamicHTML.post_save, sender=DynamicHTML)
