@@ -12,10 +12,12 @@ class DynamicHTML(admin.ModelAdmin):
     )
     list_display = (
         "name",
+        "placement",
         "date_created",
         "date_modified",
         "is_active",
     )
     list_filter = (
         "is_active",
+        "placement",
     )
