@@ -8,20 +8,11 @@ register = template.Library()
 
 
 @register.simple_tag
-def dynamic_head():
-    dynamic_head = (
-        DynamicHTML.objects.filter(is_active=True)
-        .values_list("head_content", flat=True)
+def dynamic_html(placement):
+    dynamic_content = (
+        DynamicHTML.objects
+        .filter(is_active=True, placement=placement)
+        .values_list("content", flat=True)
     )
-    content = "".join(dynamic_head)
-    return mark_safe(content)
-
-
-@register.simple_tag
-def dynamic_body():
-    dynamic_head = (
-        DynamicHTML.objects.filter(is_active=True)
-        .values_list("body_content", flat=True)
-    )
-    content = "".join(dynamic_head)
+    content = "".join(dynamic_content)
     return mark_safe(content)
