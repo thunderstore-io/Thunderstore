@@ -10,38 +10,36 @@
 
 <h2 class="mt-4">{{ page_title }}</h2>
 
-<div class="container">
-    <div class="row">
-        <div class="col-12 col-md-auto p-0 m-0 mb-2 mr-2">
-            <div class="btn-group" role="group" aria-label="Result ordering">
-                {% for entry in ordering_modes %}
-                    <a href="{% qurl ordering entry.0 %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
-                        {{ entry.1 }}
-                    </a>
-                {% endfor %}
-            </div>
+<div class="row">
+    <div class="col-12 col-md-auto p-0 m-0 mb-2 mr-2">
+        <div class="btn-group" role="group" aria-label="Result ordering">
+            {% for entry in ordering_modes %}
+                <a href="{% qurl ordering entry.0 %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
+                    {{ entry.1 }}
+                </a>
+            {% endfor %}
         </div>
-        <div class="col-12 col-md-6 col-lg-5 p-0 m-0 mb-2 ml-auto">
-            <form class="form-inline" method="get" action="{{ request.path }}">
-                <div class="row w-100 m-0 p-0">
-                    <div class="col-7 m-0 p-0 pr-2">
-                        <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
-                        <input type="hidden" name="ordering" value="{{ active_ordering }}">
-                    </div>
-                    <div class="col-3 m-0 p-0 pr-1">
-                        <button class="btn btn-outline-success w-100" type="submit">Search</button>
-                    </div>
-                    <div class="col-2 m-0 p-0">
-                        <a href="{% url 'packages.list' %}" class="btn btn-outline-success w-100">Clear</a>
-                    </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-5 p-0 m-0 mb-2 ml-auto">
+        <form class="form-inline" method="get" action="{{ request.path }}">
+            <div class="row w-100 m-0 p-0">
+                <div class="col-7 m-0 p-0 pr-2">
+                    <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
+                    <input type="hidden" name="ordering" value="{{ active_ordering }}">
                 </div>
-            </form>
-        </div>
+                <div class="col-3 m-0 p-0 pr-1">
+                    <button class="btn btn-outline-success w-100" type="submit">Search</button>
+                </div>
+                <div class="col-2 m-0 p-0">
+                    <a href="{% url 'packages.list' %}" class="btn btn-outline-success w-100">Clear</a>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
 {% if object_list %}
-    <div class="container mb-3">
+    <div class="mb-3">
     {% for object in object_list %}
         <div class="row border border-secondary p-2
                     {% if object.is_pinned %}bg-secondary border-light border-left-0 border-right-0 border-bottom-0{% else %}bg-light{% endif %}

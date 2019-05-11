@@ -8,6 +8,8 @@ from core.utils import ChoiceEnum
 class DynamicPlacement(ChoiceEnum):
     html_head = "html_head"
     html_body_beginning = "html_body_beginning"
+    body_left_bar = "body_left_bar"
+    body_right_bar = "body_right_bar"
     content_beginning = "content_beginning"
     content_end = "content_end"
 

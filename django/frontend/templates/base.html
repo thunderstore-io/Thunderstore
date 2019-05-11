@@ -65,11 +65,21 @@
                 {% endif %}
             </ul>
         </nav>
-        <div class="container">
-            {% dynamic_html "content_beginning" %}
-            {% block content %}
-            {% endblock %}
-            {% dynamic_html "content_end" %}
+        <div class="container-fluid">
+            <div class="row">
+                <div class="d-none d-xl-block col-2">
+                    {% dynamic_html "body_left_bar" %}
+                </div>
+                <div class="col-12 col-xl-8 px-3">
+                    {% dynamic_html "content_beginning" %}
+                    {% block content %}
+                    {% endblock %}
+                    {% dynamic_html "content_end" %}
+                </div>
+                <div class="d-none d-xl-block col-2">
+                    {% dynamic_html "body_right_bar" %}
+                </div>
+            </div>
         </div>
     </body>
 </html>
