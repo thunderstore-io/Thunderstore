@@ -22,11 +22,9 @@
         <meta property="og:site_name" content="Thunderstore" />
         {% endblock %}
 
-        {# Bootstrap #}
-        <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
-        <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
-        <script src="{% static 'bootstrap/js/jquery-3.3.1.min.js' %}"></script>
-        <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+        {# CSS and JS #}
+        <link rel="stylesheet" href="{% static 'css/all.css' %}">
+        <script src="{% static 'js/all.js' %}"></script>
     </head>
     <body>
         {% dynamic_html "html_body_beginning" %}

@@ -1,3 +1,9 @@
+FROM node:12.2.0-alpine as builder
+
+WORKDIR /app
+COPY ./builder /app
+RUN rm -rf /app/node_modules && npm run build
+
 FROM python:3.7.0-slim-stretch
 ENV PYTHONUNBUFFERED 1
 WORKDIR /app
@@ -12,6 +18,7 @@ RUN pip install -U pip --no-cache-dir && \
     pip install -r requirements.txt -r requirements-dev.txt --no-cache-dir
 
 COPY ./django /app
+COPY --from=builder /app/build /app/static_built
 
 RUN SECRET_KEY=x python manage.py collectstatic --noinput
 

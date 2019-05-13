@@ -1,0 +1,7 @@
+// Bootstrap and theme
+@import "./theme/_variables";
+@import "node_modules/bootstrap/scss/bootstrap";
+@import "./theme/_bootswatch";
+
+// Font awesome
+@import "./vendor/fontawesome";

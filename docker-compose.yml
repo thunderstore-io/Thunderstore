@@ -20,7 +20,7 @@ services:
   django:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./docker/django.Dockerfile
     restart: always
     command: /bin/bash /app/docker-entrypoint.sh
     environment:
@@ -58,8 +58,19 @@ services:
       - redis
     volumes:
       - django-data:/app/var
-      - ./django:/app
+      # - ./django:/app
+      # - built-static:/app/static_built:ro
+
+  builder:
+    build:
+      context: .
+      dockerfile: ./docker/builder.Dockerfile
+    restart: always
+    volumes:
+      - ./builder:/app/
+      - built-static:/app/build/
 
 volumes:
   db-data:
   django-data:
+  built-static:
