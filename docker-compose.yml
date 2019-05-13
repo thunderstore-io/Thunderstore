@@ -58,8 +58,8 @@ services:
       - redis
     volumes:
       - django-data:/app/var
-      # - ./django:/app
-      # - built-static:/app/static_built:ro
+      - ./django:/app
+      - built-static:/app/static_built:ro
 
   builder:
     build:
