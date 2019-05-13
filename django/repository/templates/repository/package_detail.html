@@ -60,8 +60,8 @@
 
 <div class="card bg-light mb-3 mt-2">
     <div class="card-header">README</div>
-    <div class="card-body">
-        <p class="card-text">{{ object.readme|markdownify }}</p>
+    <div class="card-body markdown-body">
+        {{ object.readme|markdownify }}
     </div>
 </div>
 

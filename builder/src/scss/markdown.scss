@@ -1,0 +1,35 @@
+
+.markdown-body {
+    color: #ffffff;
+}
+
+.markdown-body a {
+  // TODO: Use the link color variable from _variables.scss.
+  //       didn't work for some reason so just copypasting for now.
+  color: #00bc8c;
+  text-decoration: none;
+}
+
+.markdown-body h6 {
+    color: inherit;
+}
+
+.markdown-body pre {
+    background-color: #191919;
+}
+
+.markdown-body table td, .markdown-body table th {
+    border-color: #1f1c1c;
+}
+
+.markdown-body table tr {
+    background-color: #252424;
+}
+
+.markdown-body table tr:nth-child(2n) {
+    background-color: #2f2e2e;
+}
+
+.markdown-body img {
+    background-color: inherit;
+}
