@@ -20,7 +20,7 @@ services:
   django:
     build:
       context: .
-      dockerfile: ./docker/django.Dockerfile
+      dockerfile: ./Dockerfile
     restart: always
     command: /bin/bash /app/docker-entrypoint.sh
     environment:
