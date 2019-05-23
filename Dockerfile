@@ -24,7 +24,7 @@ COPY --from=builder /app/build /app/static_built
 
 RUN SECRET_KEY=x python manage.py collectstatic --noinput
 
-HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
+HEALTHCHECK --interval=5s --timeout=8s --retries=3 \
     CMD curl --fail --header "Host: $SERVER_NAME" localhost:8000/healthcheck || exit 1
 
 ENTRYPOINT ["/bin/bash", "/app/docker-entrypoint.sh"]
