@@ -12,6 +12,7 @@ class DynamicHTML(admin.ModelAdmin):
     )
     list_display = (
         "name",
+        "ordering",
         "placement",
         "date_created",
         "date_modified",

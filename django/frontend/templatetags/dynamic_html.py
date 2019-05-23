@@ -16,6 +16,7 @@ def get_dynamic_html_content(placement):
     dynamic_content = (
         DynamicHTML.objects
         .filter(is_active=True, placement=placement)
+        .order_by("-ordering", "-pk")
         .values_list("content", flat=True)
     )
     return "".join(dynamic_content)

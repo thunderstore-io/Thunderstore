@@ -25,6 +25,9 @@ class DynamicHTML(models.Model):
         db_index=True,
         choices=DynamicPlacement.as_choices(),
     )
+    ordering = models.IntegerField(
+        default=0,
+    )
 
     is_active = models.BooleanField(
         default=True,
