@@ -48,8 +48,8 @@ rsa==3.4.2                # via google-auth
 sentry_sdk==0.7.9
 simplejson==3.16.0        # via django-rest-swagger
 six==1.11.0               # via google-api-core, google-auth, google-resumable-media, protobuf, social-auth-app-django, social-auth-core
-social-auth-app-django==2.1.0
-social-auth-core==1.7.0   # via social-auth-app-django
+social-auth-app-django==3.1.0
+social-auth-core==3.1.0
 uritemplate==3.0.0        # via coreapi
 urllib3==1.23             # via requests, sentry-sdk
 whitenoise==3.3.1

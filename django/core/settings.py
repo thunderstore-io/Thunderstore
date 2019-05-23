@@ -14,9 +14,12 @@ env = environ.Env(
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
     SERVER_NAME=(str, ''),
+    PROTOCOL=(str, ''),
+
+    SOCIAL_AUTH_DISCORD_KEY=(str, ''),
+    SOCIAL_AUTH_DISCORD_SECRET=(str, ''),
     SOCIAL_AUTH_GITHUB_KEY=(str, ''),
     SOCIAL_AUTH_GITHUB_SECRET=(str, ''),
-    PROTOCOL=(str, ''),
 
     GS_BUCKET_NAME=(str, ''),
     GS_PROJECT_ID=(str, ''),
@@ -300,15 +303,26 @@ SOCIAL_AUTH_URL_NAMESPACE = 'social'
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['username', 'first_name', 'email']
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',
+    'social_core.backends.discord.DiscordOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
+# Social auth - GitHub
 SOCIAL_AUTH_GITHUB_KEY = env.str("SOCIAL_AUTH_GITHUB_KEY")
 SOCIAL_AUTH_GITHUB_SECRET = env.str("SOCIAL_AUTH_GITHUB_SECRET")
 SOCIAL_AUTH_GITHUB_SCOPE = ["user:email", "read:user", "read:org"]
 SOCIAL_AUTH_GITHUB_PROFILE_EXTRA_PARAMS = {
    'fields': 'email'
 }
+
+# Social auth - Discord
+SOCIAL_AUTH_DISCORD_KEY = env.str("SOCIAL_AUTH_DISCORD_KEY")
+SOCIAL_AUTH_DISCORD_SECRET = env.str("SOCIAL_AUTH_DISCORD_SECRET")
+SOCIAL_AUTH_DISCORD_SCOPE = ["identify", "email"]
+SOCIAL_AUTH_DISCORD_PROFILE_EXTRA_PARAMS = {
+   'fields': 'email'
+}
+
 
 PROTOCOL = env.str("PROTOCOL")
 if PROTOCOL == "https://":
