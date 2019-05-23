@@ -79,24 +79,6 @@ class UploadSession:
             authorization_token=data["authorizationToken"],
         )
 
-    @classmethod
-    def new(cls, authorized_session, bucket_id):
-        url = authorized_session.get_api_url("/b2api/v2/b2_get_upload_url")
-        headers = {
-            "Authorization": authorized_session.authorization_token,
-        }
-        params = {
-            "bucketId": bucket_id,
-        }
-        response = requests.get(url, headers=headers, params=params)
-        # TODO: Handle 400 bad_request (invalid request data)
-        # TODO: Handle 401 unauthorized (valid auth token but no privileges)
-        # TODO: Handle 401 bad_auth_token (invalid auth token)
-        # TODO: Handle 401 expired_auth_token (expired auth token)
-        # TODO: Handle 503 service_unavailable
-        response.raise_for_status()
-        return cls.from_response(response)
-
 
 class BackblazeB2API:
 
@@ -121,10 +103,54 @@ class BackblazeB2API:
         )
         assert self._session.allowed["bucketId"] == self.bucket_id
 
-    def list_file_names(self, start_file_name="", prefix=""):
-        headers = {
-            "Authorization": self.session.authorization_token,
+    def _authorize_request_params(self, request_params):
+        headers = request_params.get("headers", {})
+        if "Authorization" not in headers:
+            headers.update({
+                "Authorization": self.session.authorization_token,
+            })
+        request_params["headers"] = headers
+        return request_params
+
+    def do_request(self, request_func, url, **params):
+        request_params = self._authorize_request_params(params)
+
+        # TODO: Add generic Backblaze error status code handling
+        # 503: Generic timeout or service failure, should retry
+        # 401: Invalid or expired auth token, should retry
+        retry_statuscodes = (503, 401)
+        attempts_left = 3
+        while attempts_left > 0:
+            response = request_func(url, **request_params)
+            if response.status_code == 401:
+                self.refresh_session()
+            if response.status_code not in retry_statuscodes:
+                break
+            attempts_left -= 1
+        response.raise_for_status()
+        return response
+
+    def do_get_request(self, url, **kwargs):
+        return self.do_request(requests.get, url, **kwargs)
+
+    def do_post_request(self, url, **kwargs):
+        return self.do_request(requests.post, url, **kwargs)
+
+    def create_upload_session(self):
+        url = self.session.get_api_url("/b2api/v2/b2_get_upload_url")
+        params = {
+            "bucketId": self.bucket_id,
         }
+        response = self.do_get_request(url, params=params)
+        # TODO: Handle 400 bad_request (invalid request data)
+        # TODO: Handle 401 unauthorized (valid auth token but no privileges)
+        # TODO: Handle 401 bad_auth_token (invalid auth token)
+        # TODO: Handle 401 expired_auth_token (expired auth token)
+        # TODO: Handle 503 service_unavailable
+        response.raise_for_status()
+        return UploadSession.from_response(response)
+
+    def list_file_names(self, start_file_name="", prefix=""):
         request_content = {
             "bucketId": self.bucket_id,
         }
@@ -133,9 +159,8 @@ class BackblazeB2API:
         if prefix:
             request_content["prefix"] = prefix
 
-        response = requests.post(
+        response = self.do_post_request(
             f"{self.session.api_url}/b2api/v2/b2_list_file_names",
-            headers=headers,
             data=json.dumps(request_content),
         )
         # TODO: Handle 400 bad_request (invalid request data)
@@ -178,16 +203,17 @@ class BackblazeB2API:
         # TODO: Handle 405 method_not_allowed (only post is supported)
         # TODO: Handle 408 request_timeout (service timeouted during upload)
         # TODO: Handle 503 service_unavailable (retry upload with a new session)
-        upload_session = UploadSession.new(self.session, self.bucket_id)
+        upload_session = self.create_upload_session()
         attempts_left = 3
         while attempts_left > 0:
             response = attempt_upload(upload_session.authorization_token)
             if response.status_code == 503:
-                upload_session = UploadSession.new(self.session, self.bucket_id)
+                upload_session = self.create_upload_session()
             if response.status_code == 401:
                 self.refresh_session()
             if response.status_code not in (503, 408, 401):
                 break
+            attempts_left -= 1
         response.raise_for_status()
         return response  # TODO: Return a python object of the data
 
@@ -196,10 +222,7 @@ class BackblazeB2API:
 
     def download_file(self, file_id):
         url = self.session.get_download_url(file_id)
-        headers = {
-            "Authorization": self.session.authorization_token,
-        }
-        response = requests.get(url, headers=headers)  # TODO: Use streaming
+        response = self.do_get_request(url)  # TODO: Use streaming
         # TODO: Handle 400 bad_request (invalid request data)
         # TODO: Handle 401 unauthorized (valid auth token but no privileges)
         # TODO: Handle 401 bad_auth_token (invalid auth token)
