@@ -6,24 +6,37 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('repository', '0001_initial'),
-    ]
+    dependencies = [("repository", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='PackageVersionDownloadEvent',
+            name="PackageVersionDownloadEvent",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('source_ip', models.GenericIPAddressField()),
-                ('last_download', models.DateTimeField(auto_now_add=True)),
-                ('total_downloads', models.PositiveIntegerField(default=1)),
-                ('counted_downloads', models.PositiveIntegerField(default=1)),
-                ('version', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='download_events', to='repository.PackageVersion')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("source_ip", models.GenericIPAddressField()),
+                ("last_download", models.DateTimeField(auto_now_add=True)),
+                ("total_downloads", models.PositiveIntegerField(default=1)),
+                ("counted_downloads", models.PositiveIntegerField(default=1)),
+                (
+                    "version",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="download_events",
+                        to="repository.PackageVersion",
+                    ),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='packageversiondownloadevent',
-            unique_together={('version', 'source_ip')},
+            name="packageversiondownloadevent",
+            unique_together={("version", "source_ip")},
         ),
     ]

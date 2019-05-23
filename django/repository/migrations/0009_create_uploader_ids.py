@@ -4,48 +4,25 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    UploaderIdentity = apps.get_model(
-        "repository",
-        "UploaderIdentity"
-    )
-    UploaderIdentityMember = apps.get_model(
-        "repository",
-        "UploaderIdentityMember"
-    )
-    User = apps.get_model(
-        "auth",
-        "User"
-    )
+    UploaderIdentity = apps.get_model("repository", "UploaderIdentity")
+    UploaderIdentityMember = apps.get_model("repository", "UploaderIdentityMember")
+    User = apps.get_model("auth", "User")
     for user in User.objects.all():
-        identity = UploaderIdentity.objects.create(
-            name=user.username
-        )
+        identity = UploaderIdentity.objects.create(name=user.username)
         UploaderIdentityMember.objects.create(
-            user=user,
-            identity=identity,
-            role="owner",
+            user=user, identity=identity, role="owner"
         )
 
 
 def backwards(apps, schema_editor):
-    UploaderIdentity = apps.get_model(
-        "repository",
-        "UploaderIdentity"
-    )
-    UploaderIdentityMember = apps.get_model(
-        "repository",
-        "UploaderIdentityMember"
-    )
+    UploaderIdentity = apps.get_model("repository", "UploaderIdentity")
+    UploaderIdentityMember = apps.get_model("repository", "UploaderIdentityMember")
     UploaderIdentity.objects.all().delete()
     UploaderIdentityMember.objects.all().delete()
 
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('repository', '0008_add_uploader_id'),
-    ]
+    dependencies = [("repository", "0008_add_uploader_id")]
 
-    operations = [
-        migrations.RunPython(forwards, backwards),
-    ]
+    operations = [migrations.RunPython(forwards, backwards)]

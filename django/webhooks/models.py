@@ -23,17 +23,9 @@ class Webhook(models.Model):
         choices=WebhookType.as_choices(),
     )
 
-    is_active = models.BooleanField(
-        default=True,
-    )
-    date_created = models.DateTimeField(
-        auto_now_add=True,
-    )
-    uuid4 = models.UUIDField(
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
-    )
+    is_active = models.BooleanField(default=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    uuid4 = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     def __str__(self):
         return self.name
@@ -43,8 +35,9 @@ class Webhook(models.Model):
             return
         try:
             resp = requests.post(
-                self.webhook_url, data=json.dumps(webhook_data),
-                headers={"Content-Type": "application/json"}
+                self.webhook_url,
+                data=json.dumps(webhook_data),
+                headers={"Content-Type": "application/json"},
             )
             resp.raise_for_status()
         except Exception as e:

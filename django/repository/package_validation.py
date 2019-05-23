@@ -10,8 +10,7 @@ NAME_PATTERN = re.compile(r"^[a-zA-Z0-9\_]+$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 
-class Manifest():
-
+class Manifest:
     def __init__(self, data_dict):
         self.data_dict = data_dict
 
@@ -43,7 +42,9 @@ def validate_field_name(name):
         errors.append(ValidationError("The manifest field 'name' is too long"))
 
     if not re.match(NAME_PATTERN, name):
-        errors.append(ValidationError("Package names can only contain a-Z A-Z 0-9 _ characers"))
+        errors.append(
+            ValidationError("Package names can only contain a-Z A-Z 0-9 _ characers")
+        )
 
     return errors
 
@@ -65,17 +66,23 @@ def validate_field_version_number(manifest):
 
     max_length = PackageVersion._meta.get_field("version_number").max_length
     if len(manifest.version_number) > max_length:
-        errors.append(ValidationError(f"The manifest field 'version_number' is too long"))
+        errors.append(
+            ValidationError(f"The manifest field 'version_number' is too long")
+        )
 
     if not re.match(VERSION_PATTERN, manifest.version_number):
-        errors.append(ValidationError(
-            "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
-        ))
+        errors.append(
+            ValidationError(
+                "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
+            )
+        )
 
 
 def validate_field_website_url(manifest):
     if "website_url" not in manifest:
-        raise ValidationError("manifest.json must contain a website_url (Leave empty string if none)")
+        raise ValidationError(
+            "manifest.json must contain a website_url (Leave empty string if none)"
+        )
     max_length = PackageVersion._meta.get_field("website_url").max_length
     if len(manifest.get("website_url", "")) > max_length:
         raise ValidationError(f"Package website url is too long, max: {max_length}")
@@ -106,10 +113,12 @@ def validate_generic(uploader, manifest):
     same_version_exists = Package.objects.filter(
         owner=uploader,
         name=manifest["name"],
-        versions__version_number=manifest.version_number
+        versions__version_number=manifest.version_number,
     ).exists()
     if same_version_exists:
-        errors.append(ValidationError("Package of the same name and version already exists"))
+        errors.append(
+            ValidationError("Package of the same name and version already exists")
+        )
 
     return errors
 
@@ -123,7 +132,9 @@ def validate_dependencies(manifest):
     if type(dependency_strings) is not list:
         raise ValidationError("The dependencies manifest.json field should be a list")
     if len(dependency_strings) > 100:
-        raise ValidationError("Currently only a maximum of 100 dependencies are supported")
+        raise ValidationError(
+            "Currently only a maximum of 100 dependencies are supported"
+        )
 
     dependencies = []
     for dependency_string in dependency_strings:
@@ -135,7 +146,9 @@ def validate_dependencies(manifest):
             if dependency_a == dependency_b:
                 continue
             if dependency_a.package == dependency_b.package:
-                raise ValidationError("Cannot depend on multiple versions of the same package")
+                raise ValidationError(
+                    "Cannot depend on multiple versions of the same package"
+                )
 
 
 def resolve_dependency(self, dependency_string):
@@ -154,9 +167,14 @@ def resolve_dependency(self, dependency_string):
     ).first()
 
     if not dependency:
-        raise ValidationError(f"Could not find a package matching the dependency {dependency_string}")
+        raise ValidationError(
+            f"Could not find a package matching the dependency {dependency_string}"
+        )
 
-    if dependency.package.owner == self.user and dependency.name == self.manifest["name"]:
+    if (
+        dependency.package.owner == self.user
+        and dependency.name == self.manifest["name"]
+    ):
         raise ValidationError(f"Depending on self is not allowed. {dependency_string}")
 
     return dependency

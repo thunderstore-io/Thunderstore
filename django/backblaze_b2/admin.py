@@ -16,11 +16,5 @@ class BackblazeB2FileAdmin(admin.ModelAdmin):
         "created_time",
         "modified_time",
     )
-    list_display = (
-        "name",
-        "created_time",
-        "modified_time",
-    )
-    list_filter = (
-        "bucket_id",
-    )
+    list_display = ("name", "created_time", "modified_time")
+    list_filter = ("bucket_id",)

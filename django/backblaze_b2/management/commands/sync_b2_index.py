@@ -21,23 +21,16 @@ class Command(BaseCommand):
             raise CommandError("No b2 storage is currently configured")
 
         self.api = BackblazeB2API(
-            application_key_id=key_id,
-            application_key=key,
-            bucket_id=bucket_id,
+            application_key_id=key_id, application_key=key, bucket_id=bucket_id
         )
         self.sync_b2_index(location=location)
 
     def sync_b2_index(self, location="", next_name=""):
-        files = self.api.list_file_names(
-            prefix=location,
-            start_file_name=next_name,
-        )
+        files = self.api.list_file_names(prefix=location, start_file_name=next_name)
         next_name = files.get("nextFileName", None)
 
         for file in files["files"]:
-            file_obj = BackblazeB2File.objects.filter(
-                name=file["fileName"]
-            ).first()
+            file_obj = BackblazeB2File.objects.filter(name=file["fileName"]).first()
             if not file_obj:
                 file_obj = BackblazeB2File(name=file["fileName"])
 

@@ -5,10 +5,16 @@ import requests
 
 
 class AuthorizedSession:
-
-    def __init__(self, account_id, api_url, download_url, authorization_token,
-                 absolute_minimum_part_size, recommended_part_size,
-                 allowed):
+    def __init__(
+        self,
+        account_id,
+        api_url,
+        download_url,
+        authorization_token,
+        absolute_minimum_part_size,
+        recommended_part_size,
+        allowed,
+    ):
         self.account_id = account_id
         self.api_url = api_url
         self.download_url = download_url
@@ -49,12 +55,9 @@ class AuthorizedSession:
         authorization_token = base64.b64encode(
             f"{application_key_id}:{application_key}".encode("utf-8")
         ).decode("utf-8")
-        headers = {
-            "Authorization": f"Basic: {authorization_token}",
-        }
+        headers = {"Authorization": f"Basic: {authorization_token}"}
         response = requests.get(
-            "https://api.backblazeb2.com/b2api/v2/b2_authorize_account",
-            headers=headers,
+            "https://api.backblazeb2.com/b2api/v2/b2_authorize_account", headers=headers
         )
         # TODO: Handle 400 bad_request (invalid request data)
         # TODO: Handle 401 unauthorized (key ID or key is wrong)
@@ -64,7 +67,6 @@ class AuthorizedSession:
 
 
 class UploadSession:
-
     def __init__(self, bucket_id, upload_url, authorization_token):
         self.bucket_id = bucket_id
         self.upload_url = upload_url
@@ -81,7 +83,6 @@ class UploadSession:
 
 
 class BackblazeB2API:
-
     def __init__(self, application_key_id, application_key, bucket_id):
         self.application_key_id = application_key_id
         self.application_key = application_key
@@ -106,9 +107,7 @@ class BackblazeB2API:
     def _authorize_request_params(self, request_params):
         headers = request_params.get("headers", {})
         if "Authorization" not in headers:
-            headers.update({
-                "Authorization": self.session.authorization_token,
-            })
+            headers.update({"Authorization": self.session.authorization_token})
         request_params["headers"] = headers
         return request_params
 
@@ -138,9 +137,7 @@ class BackblazeB2API:
 
     def create_upload_session(self):
         url = self.session.get_api_url("/b2api/v2/b2_get_upload_url")
-        params = {
-            "bucketId": self.bucket_id,
-        }
+        params = {"bucketId": self.bucket_id}
         response = self.do_get_request(url, params=params)
         # TODO: Handle 400 bad_request (invalid request data)
         # TODO: Handle 401 unauthorized (valid auth token but no privileges)
@@ -151,9 +148,7 @@ class BackblazeB2API:
         return UploadSession.from_response(response)
 
     def list_file_names(self, start_file_name="", prefix=""):
-        request_content = {
-            "bucketId": self.bucket_id,
-        }
+        request_content = {"bucketId": self.bucket_id}
         if start_file_name:
             request_content["startFileName"] = start_file_name
         if prefix:
@@ -190,9 +185,7 @@ class BackblazeB2API:
 
             content.seek(0)
             return requests.post(
-                upload_session.upload_url,
-                headers=headers,
-                data=content,
+                upload_session.upload_url, headers=headers, data=content
             )
 
         # TODO: Handle 400 bad_request (invalid request data)

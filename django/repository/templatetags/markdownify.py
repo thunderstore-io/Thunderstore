@@ -10,8 +10,7 @@ register = template.Library()
 
 def deduplicate_escape(text):
     return (
-        text
-        .replace("&amp;lt;", "&lt;")
+        text.replace("&amp;lt;", "&lt;")
         .replace("&amp;gt;", "&gt;")
         .replace("&amp;quot;", "&quot;")
         .replace("&amp;#39;", "&#39;")
@@ -22,22 +21,25 @@ def deduplicate_escape(text):
 @register.filter
 @stringfilter
 def markdownify(value):
-    return mark_safe(deduplicate_escape(markdown.markdown(
-        escape(value),
-        extensions=[
-            "markdown.extensions.abbr",
-            "markdown.extensions.def_list",
-            "markdown.extensions.fenced_code",
-            "markdown.extensions.footnotes",
-            "markdown.extensions.tables",
-            "markdown.extensions.admonition",
-            # "markdown.extensions.codehilite",  # TODO: Configure
-            "markdown.extensions.nl2br",
-            "markdown.extensions.sane_lists",
-            "markdown.extensions.toc",
-            "markdown.extensions.wikilinks",
-
-            "pymdownx.magiclink",
-            "pymdownx.tilde",
-        ]
-    )))
+    return mark_safe(
+        deduplicate_escape(
+            markdown.markdown(
+                escape(value),
+                extensions=[
+                    "markdown.extensions.abbr",
+                    "markdown.extensions.def_list",
+                    "markdown.extensions.fenced_code",
+                    "markdown.extensions.footnotes",
+                    "markdown.extensions.tables",
+                    "markdown.extensions.admonition",
+                    # "markdown.extensions.codehilite",  # TODO: Configure
+                    "markdown.extensions.nl2br",
+                    "markdown.extensions.sane_lists",
+                    "markdown.extensions.toc",
+                    "markdown.extensions.wikilinks",
+                    "pymdownx.magiclink",
+                    "pymdownx.tilde",
+                ],
+            )
+        )
+    )

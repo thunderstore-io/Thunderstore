@@ -45,7 +45,9 @@ class PackageVersionForm(forms.ModelForm):
             version = self.manifest["version_number"]
             max_length = PackageVersion._meta.get_field("version_number").max_length
             if len(version) > max_length:
-                raise ValidationError(f"Package version number is too long, max: {max_length}")
+                raise ValidationError(
+                    f"Package version number is too long, max: {max_length}"
+                )
             if not re.match(VERSION_PATTERN, version):
                 raise ValidationError(
                     f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"
@@ -54,23 +56,31 @@ class PackageVersionForm(forms.ModelForm):
             same_version_exists = Package.objects.filter(
                 owner=self.owner,
                 name=self.manifest["name"],
-                versions__version_number=version
+                versions__version_number=version,
             ).exists()
 
             if same_version_exists:
-                raise ValidationError("Package of the same name and version already exists")
+                raise ValidationError(
+                    "Package of the same name and version already exists"
+                )
 
             if "website_url" not in self.manifest:
-                raise ValidationError("manifest.json must contain a website_url (Leave empty string if none)")
+                raise ValidationError(
+                    "manifest.json must contain a website_url (Leave empty string if none)"
+                )
             max_length = PackageVersion._meta.get_field("website_url").max_length
             if len(self.manifest.get("website_url", "")) > max_length:
-                raise ValidationError(f"Package website url is too long, max: {max_length}")
+                raise ValidationError(
+                    f"Package website url is too long, max: {max_length}"
+                )
 
             if "description" not in self.manifest:
                 raise ValidationError("manifest.json must contain a description")
             max_length = PackageVersion._meta.get_field("description").max_length
             if len(self.manifest.get("description", "")) > max_length:
-                raise ValidationError(f"Package description is too long, max: {max_length}")
+                raise ValidationError(
+                    f"Package description is too long, max: {max_length}"
+                )
 
             self.validate_manifest_dependencies(self.manifest)
 
@@ -84,9 +94,13 @@ class PackageVersionForm(forms.ModelForm):
         dependency_strings = manifest["dependencies"]
 
         if type(dependency_strings) is not list:
-            raise ValidationError("The dependencies manifest.json field should be a list")
+            raise ValidationError(
+                "The dependencies manifest.json field should be a list"
+            )
         if len(dependency_strings) > 100:
-            raise ValidationError("Currently only a maximum of 100 dependencies are supported")
+            raise ValidationError(
+                "Currently only a maximum of 100 dependencies are supported"
+            )
 
         self.dependencies = []
         for dependency_string in dependency_strings:
@@ -98,12 +112,16 @@ class PackageVersionForm(forms.ModelForm):
                 if dependency_a == dependency_b:
                     continue
                 if dependency_a.package == dependency_b.package:
-                    raise ValidationError("Cannot depend on multiple versions of the same package")
+                    raise ValidationError(
+                        "Cannot depend on multiple versions of the same package"
+                    )
 
     def resolve_dependency(self, dependency_string):
         dependency_parts = dependency_string.split("-")
         if len(dependency_parts) != 3:
-            raise ValidationError(f"Dependency {dependency_string} is in invalid format")
+            raise ValidationError(
+                f"Dependency {dependency_string} is in invalid format"
+            )
 
         owner_name = dependency_parts[0]
         package_name = dependency_parts[1]
@@ -116,10 +134,17 @@ class PackageVersionForm(forms.ModelForm):
         ).first()
 
         if not dependency:
-            raise ValidationError(f"Could not find a package matching the dependency {dependency_string}")
+            raise ValidationError(
+                f"Could not find a package matching the dependency {dependency_string}"
+            )
 
-        if dependency.package.owner == self.owner and dependency.name == self.manifest["name"]:
-            raise ValidationError(f"Depending on self is not allowed. {dependency_string}")
+        if (
+            dependency.package.owner == self.owner
+            and dependency.name == self.manifest["name"]
+        ):
+            raise ValidationError(
+                f"Depending on self is not allowed. {dependency_string}"
+            )
 
         return dependency
 
@@ -130,7 +155,9 @@ class PackageVersionForm(forms.ModelForm):
             raise ValidationError("Unknown error while processing icon.png")
 
         if self.icon.size > MAX_ICON_SIZE:
-            raise ValidationError(f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes")
+            raise ValidationError(
+                f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes"
+            )
 
         try:
             image = Image.open(io.BytesIO(icon))
@@ -156,13 +183,17 @@ class PackageVersionForm(forms.ModelForm):
             raise ValidationError("Must upload a file")
 
         if file.size > MAX_PACKAGE_SIZE:
-            raise ValidationError(f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes")
+            raise ValidationError(
+                f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes"
+            )
 
         current_total = 0
         for version in PackageVersion.objects.all():
             current_total += version.file.size
         if file.size + current_total > MAX_TOTAL_SIZE:
-            raise ValidationError(f"The server has reached maximum total storage used, and can't receive new uploads")
+            raise ValidationError(
+                f"The server has reached maximum total storage used, and can't receive new uploads"
+            )
 
         try:
             with ZipFile(file) as unzip:
@@ -202,8 +233,7 @@ class PackageVersionForm(forms.ModelForm):
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
         self.instance.package = Package.objects.get_or_create(
-            owner=self.owner,
-            name=self.instance.name,
+            owner=self.owner, name=self.instance.name
         )[0]
         self.instance.icon.save("icon.png", self.icon)
         instance = super(PackageVersionForm, self).save()

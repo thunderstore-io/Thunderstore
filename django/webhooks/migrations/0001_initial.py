@@ -8,20 +8,37 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Webhook',
+            name="Webhook",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256)),
-                ('webhook_url', models.CharField(max_length=2083)),
-                ('webhook_type', models.CharField(choices=[('mod_release', 'mod_release')], default='mod_release', max_length=512)),
-                ('is_active', models.BooleanField(default=True)),
-                ('date_created', models.DateTimeField(auto_now_add=True)),
-                ('uuid4', models.UUIDField(default=uuid.uuid4, editable=False, unique=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=256)),
+                ("webhook_url", models.CharField(max_length=2083)),
+                (
+                    "webhook_type",
+                    models.CharField(
+                        choices=[("mod_release", "mod_release")],
+                        default="mod_release",
+                        max_length=512,
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=True)),
+                ("date_created", models.DateTimeField(auto_now_add=True)),
+                (
+                    "uuid4",
+                    models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
+                ),
             ],
-        ),
+        )
     ]

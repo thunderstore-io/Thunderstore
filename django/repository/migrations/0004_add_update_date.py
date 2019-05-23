@@ -6,15 +6,15 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('repository', '0003_add_dependencies'),
-    ]
+    dependencies = [("repository", "0003_add_dependencies")]
 
     operations = [
         migrations.AddField(
-            model_name='package',
-            name='date_updated',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="package",
+            name="date_updated",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
-        ),
+        )
     ]

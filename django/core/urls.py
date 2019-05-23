@@ -16,18 +16,21 @@ from repository.api.v1.viewsets import PackageViewSet
 
 
 api_v1_router = routers.DefaultRouter()
-api_v1_router.register(r'package', PackageViewSet, basename="package")
+api_v1_router.register(r"package", PackageViewSet, basename="package")
 
 
 urlpatterns = [
-    path('', PackageListView.as_view(), name="index"),
-    path('auth/', include('social_django.urls', namespace='social')),
-    path('logout/', LogoutView.as_view(), kwargs={'next_page': '/'}, name="logout"),
-    path('package/', include(repository_urls)),
-    path('favicon.ico', RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, 'favicon.ico'))),
-    path('djangoadmin/', admin.site.urls),
-    path('healthcheck/', lambda request: HttpResponse("OK"), name="healthcheck"),
-    path('api/v1/', include((api_v1_router.urls, "api-v1"), namespace="api-v1")),
+    path("", PackageListView.as_view(), name="index"),
+    path("auth/", include("social_django.urls", namespace="social")),
+    path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
+    path("package/", include(repository_urls)),
+    path(
+        "favicon.ico",
+        RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, "favicon.ico")),
+    ),
+    path("djangoadmin/", admin.site.urls),
+    path("healthcheck/", lambda request: HttpResponse("OK"), name="healthcheck"),
+    path("api/v1/", include((api_v1_router.urls, "api-v1"), namespace="api-v1")),
 ]
 
 swagger_view = get_swagger_view(title="Thunderstore API")

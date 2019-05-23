@@ -25,11 +25,7 @@ def cache_get_or_set(key, default, default_args=(), default_kwargs={}, expiry=No
             time.sleep(settings.DEBUG_SIMULATED_LAG)
         return default(*default_args, **default_kwargs)
 
-    return cache.get_or_set(
-        key=key,
-        default=call_default,
-        timeout=expiry,
-    )
+    return cache.get_or_set(key=key, default=call_default, timeout=expiry)
 
 
 def invalidate_cache(cache_bust_condition):
@@ -52,7 +48,6 @@ class ManualCacheMixin(object):
     cache_expiry = DEFAULT_CACHE_EXPIRY
 
     def dispatch(self, *args, **kwargs):
-
         def get_default(*a, **kw):
             return super(ManualCacheMixin, self).dispatch(*a, **kw).render()
 
@@ -88,5 +83,7 @@ def cache_function_result(cache_until, expiry=DEFAULT_CACHE_EXPIRY):
                 default_kwargs=kwargs,
                 expiry=expiry,
             )
+
         return wrapper
+
     return decorator

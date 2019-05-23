@@ -6,28 +6,17 @@ import django.db.models.deletion
 
 
 def forwards(apps, schema_editor):
-    UploaderIdentity = apps.get_model(
-        "repository",
-        "UploaderIdentity"
-    )
-    Package = apps.get_model(
-        "repository",
-        "Package"
-    )
+    UploaderIdentity = apps.get_model("repository", "UploaderIdentity")
+    Package = apps.get_model("repository", "Package")
 
     for package in Package.objects.all():
-        identity = UploaderIdentity.objects.get(
-            name=package.owner.username,
-        )
+        identity = UploaderIdentity.objects.get(name=package.owner.username)
         package.uploader = identity
         package.save()
 
 
 def backwards(apps, schema_editor):
-    Package = apps.get_model(
-        "repository",
-        "Package"
-    )
+    Package = apps.get_model("repository", "Package")
 
     for package in Package.objects.all():
         package.uploader = None
@@ -36,33 +25,51 @@ def backwards(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('repository', '0009_create_uploader_ids'),
-    ]
+    dependencies = [("repository", "0009_create_uploader_ids")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='uploaderidentity',
-            options={'verbose_name': 'Uploader Identity', 'verbose_name_plural': 'Uploader Identities'},
+            name="uploaderidentity",
+            options={
+                "verbose_name": "Uploader Identity",
+                "verbose_name_plural": "Uploader Identities",
+            },
         ),
         migrations.AlterModelOptions(
-            name='uploaderidentitymember',
-            options={'verbose_name': 'Uploader Identity Member', 'verbose_name_plural': 'Uploader Identy Members'},
+            name="uploaderidentitymember",
+            options={
+                "verbose_name": "Uploader Identity Member",
+                "verbose_name_plural": "Uploader Identy Members",
+            },
         ),
         migrations.AddField(
-            model_name='package',
-            name='uploader',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='owned_packages', to='repository.UploaderIdentity'),
+            model_name="package",
+            name="uploader",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="owned_packages",
+                to="repository.UploaderIdentity",
+            ),
         ),
         migrations.RunPython(forwards, backwards),
         migrations.AlterField(
-            model_name='package',
-            name='uploader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='owned_packages', to='repository.UploaderIdentity'),
+            model_name="package",
+            name="uploader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="owned_packages",
+                to="repository.UploaderIdentity",
+            ),
         ),
         migrations.AlterField(
-            model_name='package',
-            name='owner',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='owned_packages', to=settings.AUTH_USER_MODEL),
+            model_name="package",
+            name="owner",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="owned_packages",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

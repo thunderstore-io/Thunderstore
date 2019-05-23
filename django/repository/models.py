@@ -31,9 +31,7 @@ class UploaderIdentityMember(models.Model):
         on_delete=models.CASCADE,
     )
     identity = models.ForeignKey(
-        "repository.UploaderIdentity",
-        related_name="members",
-        on_delete=models.CASCADE,
+        "repository.UploaderIdentity", related_name="members", on_delete=models.CASCADE
     )
     role = models.CharField(
         max_length=64,
@@ -51,10 +49,7 @@ class UploaderIdentityMember(models.Model):
 
 
 class UploaderIdentity(models.Model):
-    name = models.CharField(
-        max_length=64,
-        unique=True,
-    )
+    name = models.CharField(max_length=64, unique=True)
 
     class Meta:
         verbose_name = "Uploader Identity"
@@ -70,14 +65,10 @@ class UploaderIdentity(models.Model):
         if identity_membership:
             return identity_membership.identity
 
-        identity, created = cls.objects.get_or_create(
-            name=user.username,
-        )
+        identity, created = cls.objects.get_or_create(name=user.username)
         if created:
             UploaderIdentityMember.objects.create(
-                user=user,
-                identity=identity,
-                role=UploaderIdentityMemberRole.owner,
+                user=user, identity=identity, role=UploaderIdentityMemberRole.owner
             )
         assert identity.members.filter(user=user).exists()
         return identity
@@ -89,26 +80,12 @@ class Package(models.Model):
         on_delete=models.PROTECT,
         related_name="owned_packages",
     )
-    name = models.CharField(
-        max_length=128,
-    )
-    is_active = models.BooleanField(
-        default=True,
-    )
-    date_created = models.DateTimeField(
-        auto_now_add=True,
-    )
-    date_updated = models.DateTimeField(
-        auto_now_add=True,
-    )
-    uuid4 = models.UUIDField(
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
-    )
-    is_pinned = models.BooleanField(
-        default=False,
-    )
+    name = models.CharField(max_length=128)
+    is_active = models.BooleanField(default=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now_add=True)
+    uuid4 = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    is_pinned = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ("owner", "name")
@@ -129,7 +106,9 @@ class Package(models.Model):
     @cached_property
     def available_versions(self):
         # TODO: Caching
-        versions = self.versions.filter(is_active=True).values_list("pk", "version_number")
+        versions = self.versions.filter(is_active=True).values_list(
+            "pk", "version_number"
+        )
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
@@ -163,8 +142,7 @@ class Package(models.Model):
     @cached_property
     def sorted_dependencies(self):
         return (
-            self.latest.dependencies
-            .select_related("package")
+            self.latest.dependencies.select_related("package")
             .annotate(total_downloads=Sum("package__versions__downloads"))
             .order_by("-package__is_pinned", "-total_downloads")
         )
@@ -172,9 +150,7 @@ class Package(models.Model):
     @cached_property
     def dependants(self):
         # TODO: Caching
-        return Package.objects.exclude(~Q(
-            versions__dependencies__package=self,
-        ))
+        return Package.objects.exclude(~Q(versions__dependencies__package=self))
 
     @property
     def owner_url(self):
@@ -184,10 +160,7 @@ class Package(models.Model):
     def dependants_url(self):
         return reverse(
             "packages.list_by_dependency",
-            kwargs={
-                "owner": self.owner.name,
-                "name": self.name,
-            }
+            kwargs={"owner": self.owner.name, "name": self.name},
         )
 
     @property
@@ -196,8 +169,7 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "packages.detail",
-            kwargs={"owner": self.owner.name, "name": self.name}
+            "packages.detail", kwargs={"owner": self.owner.name, "name": self.name}
         )
 
     @property
@@ -205,7 +177,7 @@ class Package(models.Model):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
             "hostname": settings.SERVER_NAME,
-            "path": self.get_absolute_url()
+            "path": self.get_absolute_url(),
         }
 
     def refresh_update_date(self):
@@ -226,37 +198,18 @@ def get_version_png_filepath(instance, filename):
 
 class PackageVersion(models.Model):
     package = models.ForeignKey(
-        Package,
-        related_name="versions",
-        on_delete=models.CASCADE,
+        Package, related_name="versions", on_delete=models.CASCADE
     )
-    is_active = models.BooleanField(
-        default=True,
-    )
-    date_created = models.DateTimeField(
-        auto_now_add=True,
-    )
-    downloads = models.PositiveIntegerField(
-        default=0
-    )
+    is_active = models.BooleanField(default=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    downloads = models.PositiveIntegerField(default=0)
 
-    name = models.CharField(
-        max_length=Package._meta.get_field("name").max_length,
-    )
-    version_number = models.CharField(
-        max_length=16,
-    )
-    website_url = models.CharField(
-        max_length=1024,
-    )
-    description = models.CharField(
-        max_length=256
-    )
+    name = models.CharField(max_length=Package._meta.get_field("name").max_length)
+    version_number = models.CharField(max_length=16)
+    website_url = models.CharField(max_length=1024)
+    description = models.CharField(max_length=256)
     dependencies = models.ManyToManyField(
-        "self",
-        related_name="dependants",
-        symmetrical=False,
-        blank=True,
+        "self", related_name="dependants", symmetrical=False, blank=True
     )
     readme = models.TextField()
 
@@ -266,13 +219,8 @@ class PackageVersion(models.Model):
         storage=get_storage_class(settings.PACKAGE_FILE_STORAGE)(),
     )
     # <packagename>.png
-    icon = models.ImageField(
-        upload_to=get_version_png_filepath,
-    )
-    uuid4 = models.UUIDField(
-        default=uuid.uuid4,
-        editable=False
-    )
+    icon = models.ImageField(upload_to=get_version_png_filepath)
+    uuid4 = models.UUIDField(default=uuid.uuid4, editable=False)
 
     class Meta:
         unique_together = ("package", "version_number")
@@ -286,11 +234,14 @@ class PackageVersion(models.Model):
 
     @property
     def download_url(self):
-        return reverse("packages.download", kwargs={
-            "owner": self.package.owner.name,
-            "name": self.package.name,
-            "version": self.version_number,
-        })
+        return reverse(
+            "packages.download",
+            kwargs={
+                "owner": self.package.owner.name,
+                "name": self.package.name,
+                "version": self.version_number,
+            },
+        )
 
     @property
     def install_url(self):
@@ -311,39 +262,38 @@ class PackageVersion(models.Model):
 
     def announce_release(self):
         webhooks = Webhook.objects.filter(
-            webhook_type=WebhookType.mod_release,
-            is_active=True,
+            webhook_type=WebhookType.mod_release, is_active=True
         )
 
         thumbnail_url = self.icon.url
-        if not (thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")):
+        if not (
+            thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")
+        ):
             thumbnail_url = f"{settings.PROTOCOL}{settings.SERVER_NAME}{thumbnail_url}"
 
         webhook_data = {
-            "embeds": [{
-                "title": f"{self.name} v{self.version_number}",
-                "type": "rich",
-                "description": self.description,
-                "url": self.package.full_url,
-                "timestamp": timezone.now().isoformat(),
-                "color": 4474879,
-                "thumbnail": {
-                    "url": thumbnail_url,
-                    "width": 256,
-                    "height": 256,
-                },
-                "provider": {
-                    "name": "Thunderstore",
-                    "url": f"{settings.PROTOCOL}{settings.SERVER_NAME}/"
-                },
-                "author": {
-                    "name": self.package.owner.name,
-                },
-                "fields": [{
-                    "name": "Total downloads across versions",
-                    "value": f"{self.package.downloads}",
-                }]
-            }]
+            "embeds": [
+                {
+                    "title": f"{self.name} v{self.version_number}",
+                    "type": "rich",
+                    "description": self.description,
+                    "url": self.package.full_url,
+                    "timestamp": timezone.now().isoformat(),
+                    "color": 4474879,
+                    "thumbnail": {"url": thumbnail_url, "width": 256, "height": 256},
+                    "provider": {
+                        "name": "Thunderstore",
+                        "url": f"{settings.PROTOCOL}{settings.SERVER_NAME}/",
+                    },
+                    "author": {"name": self.package.owner.name},
+                    "fields": [
+                        {
+                            "name": "Total downloads across versions",
+                            "value": f"{self.package.downloads}",
+                        }
+                    ],
+                }
+            ]
         }
 
         for webhook in webhooks:
@@ -355,8 +305,7 @@ class PackageVersion(models.Model):
             return
 
         download_event, created = PackageVersionDownloadEvent.objects.get_or_create(
-            version=self,
-            source_ip=client_ip,
+            version=self, source_ip=client_ip
         )
 
         if created:
@@ -377,18 +326,12 @@ signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
 
 class PackageVersionDownloadEvent(models.Model):
     version = models.ForeignKey(
-        PackageVersion,
-        related_name="download_events",
-        on_delete=models.CASCADE,
+        PackageVersion, related_name="download_events", on_delete=models.CASCADE
     )
     source_ip = models.GenericIPAddressField()
     last_download = models.DateTimeField(auto_now_add=True)
-    total_downloads = models.PositiveIntegerField(
-        default=1
-    )
-    counted_downloads = models.PositiveIntegerField(
-        default=1
-    )
+    total_downloads = models.PositiveIntegerField(default=1)
+    counted_downloads = models.PositiveIntegerField(default=1)
 
     def count_downloads_and_return_validity(self):
         self.total_downloads += 1
@@ -399,7 +342,9 @@ class PackageVersionDownloadEvent(models.Model):
             self.last_download = timezone.now()
             is_valid = True
 
-        self.save(update_fields=("total_downloads", "counted_downloads", "last_download"))
+        self.save(
+            update_fields=("total_downloads", "counted_downloads", "last_download")
+        )
         return is_valid
 
     class Meta:

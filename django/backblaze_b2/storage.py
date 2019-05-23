@@ -6,9 +6,7 @@ from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from django.core.exceptions import SuspiciousOperation
 
-from storages.utils import (
-    clean_name, get_available_overwrite_name, safe_join, setting
-)
+from storages.utils import clean_name, get_available_overwrite_name, safe_join, setting
 
 from .models import BackblazeB2File
 from .api import BackblazeB2API
@@ -50,9 +48,7 @@ class BackblazeB2Storage(Storage):
         response = self.b2api.upload_file(name, content)
         data = response.json()
         assert data["fileName"] == name
-        file_obj = BackblazeB2File.objects.filter(
-            name=name
-        ).first()
+        file_obj = BackblazeB2File.objects.filter(name=name).first()
         if not file_obj:
             file_obj = BackblazeB2File(name=name)
 
@@ -68,11 +64,7 @@ class BackblazeB2Storage(Storage):
     def get_b2_id(self, name):
         if name in self.cache:
             return self.cache[name]
-        return (
-            BackblazeB2File.objects
-            .values_list("b2_id", flat=True)
-            .get(name=name)
-        )
+        return BackblazeB2File.objects.values_list("b2_id", flat=True).get(name=name)
 
     def _normalize_name(self, name):
         """
@@ -92,11 +84,7 @@ class BackblazeB2Storage(Storage):
 
     def exists(self, name):
         name = self._normalize_name(clean_name(name))
-        return (
-            BackblazeB2File.objects
-            .filter(name=name)
-            .exists()
-        )
+        return BackblazeB2File.objects.filter(name=name).exists()
 
     def listdir(self, name):
         name = self._normalize_name(clean_name(name))
@@ -104,35 +92,29 @@ class BackblazeB2Storage(Storage):
 
     def size(self, name):
         name = self._normalize_name(clean_name(name))
-        return (
-            BackblazeB2File.objects
-            .values_list("content_length", flat=True)
-            .get(name=name)
+        return BackblazeB2File.objects.values_list("content_length", flat=True).get(
+            name=name
         )
 
     def modified_time(self, name):
         name = self._normalize_name(clean_name(name))
         return timezone.make_naive(
-            BackblazeB2File.objects
-            .values_list("modified_time", flat=True)
-            .get(name=name)
+            BackblazeB2File.objects.values_list("modified_time", flat=True).get(
+                name=name
+            )
         )
 
     def get_modified_time(self, name):
         name = self._normalize_name(clean_name(name))
-        modified = (
-            BackblazeB2File.objects
-            .values_list("created_time", flat=True)
-            .get(name=name)
+        modified = BackblazeB2File.objects.values_list("created_time", flat=True).get(
+            name=name
         )
         return modified if setting("USE_TZ") else timezone.make_naive(modified)
 
     def get_created_time(self, name):
         name = self._normalize_name(clean_name(name))
-        created = (
-            BackblazeB2File.objects
-            .values_list("created_time", flat=True)
-            .get(name=name)
+        created = BackblazeB2File.objects.values_list("created_time", flat=True).get(
+            name=name
         )
         return created if setting("USE_TZ") else timezone.make_naive(created)
 

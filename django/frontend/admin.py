@@ -6,10 +6,7 @@ from frontend.models import DynamicHTML
 
 @admin.register(DynamicHTML)
 class DynamicHTML(admin.ModelAdmin):
-    readonly_fields = (
-        "date_created",
-        "date_modified",
-    )
+    readonly_fields = ("date_created", "date_modified")
     list_display = (
         "name",
         "ordering",
@@ -18,7 +15,4 @@ class DynamicHTML(admin.ModelAdmin):
         "date_modified",
         "is_active",
     )
-    list_filter = (
-        "is_active",
-        "placement",
-    )
+    list_filter = ("is_active", "placement")

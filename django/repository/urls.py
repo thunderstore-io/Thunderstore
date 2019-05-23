@@ -9,34 +9,22 @@ from repository.views import PackageListByDependencyView
 
 
 urlpatterns = [
+    path("", PackageListView.as_view(), name="packages.list"),
+    path("create/", PackageCreateView.as_view(), name="packages.create"),
     path(
-        '',
-        PackageListView.as_view(),
-        name="packages.list"
-    ),
-    path(
-        'create/',
-        PackageCreateView.as_view(),
-        name="packages.create"
-    ),
-    path(
-        'download/<str:owner>/<str:name>/<str:version>/',
+        "download/<str:owner>/<str:name>/<str:version>/",
         PackageDownloadView.as_view(),
-        name="packages.download"
+        name="packages.download",
     ),
     path(
-        '<str:owner>/<str:name>/',
-        PackageDetailView.as_view(),
-        name="packages.detail"
+        "<str:owner>/<str:name>/", PackageDetailView.as_view(), name="packages.detail"
     ),
     path(
-        '<str:owner>/<str:name>/dependants/',
+        "<str:owner>/<str:name>/dependants/",
         PackageListByDependencyView.as_view(),
-        name="packages.list_by_dependency"
+        name="packages.list_by_dependency",
     ),
     path(
-        '<str:owner>/',
-        PackageListByOwnerView.as_view(),
-        name="packages.list_by_owner",
+        "<str:owner>/", PackageListByOwnerView.as_view(), name="packages.list_by_owner"
     ),
 ]

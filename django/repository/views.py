@@ -41,7 +41,7 @@ class PackageListSearchView(ListView):
         return (
             ("last-updated", "Last updated"),
             ("newest", "Newest"),
-            ("most-downloaded", "Most downloaded")
+            ("most-downloaded", "Most downloaded"),
         )
 
     def get_active_ordering(self):
@@ -59,23 +59,19 @@ class PackageListSearchView(ListView):
         if active_ordering == "newest":
             return queryset.order_by("-is_pinned", "-date_created")
         if active_ordering == "most-downloaded":
-            return (
-                queryset
-                .annotate(total_downloads=Sum("versions__downloads"))
-                .order_by("-is_pinned", "-total_downloads")
-            )
+            return queryset.annotate(
+                total_downloads=Sum("versions__downloads")
+            ).order_by("-is_pinned", "-total_downloads")
         return queryset.order_by("-is_pinned", "-date_updated")
 
     def perform_search(self, queryset, search_query):
-        search_fields = ("name",  "owner__name")
+        search_fields = ("name", "owner__name")
         # TODO: Add description once we can get the latest one from the db
         return (
-            queryset
-            .annotate(name_search_score=TrigramSimilarity("name", search_query))
+            queryset.annotate(name_search_score=TrigramSimilarity("name", search_query))
             .annotate(search=SearchVector(*search_fields))
             .exclude(
-                Q(name_search_score__lte=0.1) &
-                ~Q(search=SearchQuery(search_query))
+                Q(name_search_score__lte=0.1) & ~Q(search=SearchQuery(search_query))
             )
             .distinct()
         )
@@ -102,7 +98,6 @@ class PackageListSearchView(ListView):
 
 
 class PackageListView(PackageListSearchView):
-
     def get_page_title(self):
         return f"All mods"
 
@@ -111,12 +106,8 @@ class PackageListView(PackageListSearchView):
 
 
 class PackageListByOwnerView(PackageListSearchView):
-
     def cache_owner(self):
-        self.owner = get_object_or_404(
-            UploaderIdentity,
-            name=self.kwargs["owner"]
-        )
+        self.owner = get_object_or_404(UploaderIdentity, name=self.kwargs["owner"])
 
     def dispatch(self, *args, **kwargs):
         self.cache_owner()
@@ -140,12 +131,7 @@ class PackageListByDependencyView(PackageListSearchView):
         owner = self.kwargs["owner"]
         owner = get_object_or_404(UploaderIdentity, name=owner)
         name = self.kwargs["name"]
-        package = get_object_or_404(
-            self.model,
-            is_active=True,
-            owner=owner,
-            name=name,
-        )
+        package = get_object_or_404(self.model, is_active=True, owner=owner, name=name)
         self.package = package
 
     def dispatch(self, *args, **kwargs):
@@ -169,12 +155,7 @@ class PackageDetailView(DetailView):
         owner = self.kwargs["owner"]
         owner = get_object_or_404(UploaderIdentity, name=owner)
         name = self.kwargs["name"]
-        return get_object_or_404(
-            self.model,
-            is_active=True,
-            owner=owner,
-            name=name,
-        )
+        return get_object_or_404(self.model, is_active=True, owner=owner, name=name)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -204,9 +185,7 @@ class PackageCreateView(CreateView):
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super(PackageCreateView, self).get_form_kwargs(*args, **kwargs)
-        kwargs["owner"] = UploaderIdentity.get_or_create_for_user(
-            self.request.user
-        )
+        kwargs["owner"] = UploaderIdentity.get_or_create_for_user(self.request.user)
         return kwargs
 
     @transaction.atomic
@@ -216,13 +195,14 @@ class PackageCreateView(CreateView):
 
 
 class PackageDownloadView(View):
-
     def get(self, *args, **kwargs):
         owner = kwargs["owner"]
         name = kwargs["name"]
         version = kwargs["version"]
 
         package = get_object_or_404(Package, owner__name=owner, name=name)
-        version = get_object_or_404(PackageVersion, package=package, version_number=version)
+        version = get_object_or_404(
+            PackageVersion, package=package, version_number=version
+        )
         version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))

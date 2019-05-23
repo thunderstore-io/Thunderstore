@@ -5,14 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('repository', '0006_package_pinned'),
-    ]
+    dependencies = [("repository", "0006_package_pinned")]
 
     operations = [
         migrations.RenameField(
-            model_name='package',
-            old_name='pinned',
-            new_name='is_pinned',
-        ),
+            model_name="package", old_name="pinned", new_name="is_pinned"
+        )
     ]

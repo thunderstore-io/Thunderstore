@@ -10,18 +10,12 @@ from repository.models import UploaderIdentityMember
 class UploaderIdentityMemberAdmin(admin.StackedInline):
     model = UploaderIdentityMember
     extra = 0
-    list_display = (
-        "user",
-        "identity",
-        "role",
-    )
+    list_display = ("user", "identity", "role")
 
 
 @admin.register(UploaderIdentity)
 class UploaderIdentityAdmin(admin.ModelAdmin):
-    inlines = [
-        UploaderIdentityMemberAdmin,
-    ]
+    inlines = [UploaderIdentityMemberAdmin]
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -29,12 +23,8 @@ class UploaderIdentityAdmin(admin.ModelAdmin):
         else:
             return []
 
-    readonly_fields = (
-        "name",
-    )
-    list_display = (
-        "name",
-    )
+    readonly_fields = ("name",)
+    list_display = ("name",)
 
 
 class PackageVersionInline(admin.StackedInline):
@@ -58,23 +48,8 @@ class PackageVersionInline(admin.StackedInline):
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
-    inlines = [
-        PackageVersionInline,
-    ]
+    inlines = [PackageVersionInline]
 
-    readonly_fields = (
-        "date_created",
-        "downloads",
-        "name",
-        "owner",
-    )
-    list_display = (
-        "name",
-        "owner",
-        "is_active",
-        "is_pinned",
-    )
-    list_filter = (
-        "is_active",
-        "is_pinned",
-    )
+    readonly_fields = ("date_created", "downloads", "name", "owner")
+    list_display = ("name", "owner", "is_active", "is_pinned")
+    list_filter = ("is_active", "is_pinned")
