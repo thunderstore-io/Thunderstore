@@ -17,6 +17,10 @@ class AuthorizedSession:
         self.recommended_part_size = recommended_part_size
         self.allowed = allowed
 
+    @property
+    def bucket_name(self):
+        return self.allowed["bucketName"]
+
     def get_api_url(self, endpoint):
         return f"{self.api_url}{endpoint}"
 
@@ -24,8 +28,8 @@ class AuthorizedSession:
         endpoint = f"/b2api/v2/b2_download_file_by_id?fileId={file_id}"
         return f"{self.download_url}{endpoint}"
 
-    def get_download_url_by_name(self, bucket_name, file_name):
-        return f"{self.download_url}/file/{bucket_name}/{file_name}"
+    def get_download_url_by_name(self, file_name):
+        return f"{self.download_url}/file/{self.bucket_name}/{file_name}"
 
     @classmethod
     def from_response(cls, response):
@@ -99,18 +103,23 @@ class BackblazeB2API:
     def __init__(self, application_key_id, application_key, bucket_id):
         self.application_key_id = application_key_id
         self.application_key = application_key
+        self.bucket_id = bucket_id
         # TODO: Support bucket name by checking it from the authorized session's
         #       "allowed" field
-        self.refresh_session()
-        assert self.session.allowed["bucketId"] == bucket_id
-        self.bucket_id = bucket_id
-        self.bucket_name = self.session.allowed["bucketName"]
+        self._session = None
+
+    @property
+    def session(self):
+        if self._session is None:
+            self.refresh_session()
+        return self._session
 
     def refresh_session(self):
-        self.session = AuthorizedSession.authorize_account(
+        self._session = AuthorizedSession.authorize_account(
             application_key_id=self.application_key_id,
             application_key=self.application_key,
         )
+        assert self._session.allowed["bucketId"] == self.bucket_id
 
     def list_file_names(self, start_file_name="", prefix=""):
         headers = {
@@ -183,10 +192,7 @@ class BackblazeB2API:
         return response  # TODO: Return a python object of the data
 
     def get_file_url(self, file_name):
-        return self.session.get_download_url_by_name(
-            self.bucket_name,
-            file_name
-        )
+        return self.session.get_download_url_by_name(file_name)
 
     def download_file(self, file_id):
         url = self.session.get_download_url(file_id)
