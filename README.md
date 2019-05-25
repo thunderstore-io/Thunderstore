@@ -64,9 +64,9 @@ running that command.
 - `SECRET_KEY`: A long and random string, used to hash passwords and other data.
 Should remain secret, as is implied by the name.
 - `ALLOWED_HOSTS`: Comma separated list of hostnames this server can be
-connected with. For example `thunderstore.mythic.dev`
+connected with. For example `beta.thunderstore.io`
 - `SERVER_NAME`: The public name of the server, such as
-`thunderstore.mythic.dev`
+`beta.thunderstore.io`
 - `PROTOCOL`: The protocol which to use to build URLs to the server. Either
 `https://` or `http://`.
 
@@ -79,13 +79,26 @@ Create a new OAuth Application, and use `{server}/auth/complete/github/` as the
 Authorization callback URL, where `{server}` is replaced with the protocol and
 server name that is accessible. For example for local you could use
 `http://localhost/auth/complete/github/`, whereas for a live environment
-`https://thunderstore.mythic.dev/auth/complete/github/`
+`https://beta.thunderstore.io/auth/complete/github/`
 
 After creating the OAuth application, you must also provide the following
 environment variables to the application:
 
 - `SOCIAL_AUTH_GITHUB_KEY`: The `Client ID` value of the OAuth application
 - `SOCIAL_AUTH_GITHUB_SECRET` The `Client Secret` value of the OAuth application
+
+### Discord OAuth
+
+To set up a Discord OAuth, head to the Discord developer panel, and create a new
+OAuth application. Add a callback URL to `{server}/auth/complete/discord/`,
+where `{server}` is replaced with the protocol and server name that is
+accessible. For example for local you could use
+`http://localhost/auth/complete/discord/`, whereas for a live environment
+`https://beta.thunderstore.io/auth/complete/discord/`
+
+- `SOCIAL_AUTH_DISCORD_KEY`: The `Client ID` value of the OAuth application
+- `SOCIAL_AUTH_DISCORD_SECRET` The `Client Secret` value of the OAuth
+application
 
 ### Google Analytics
 
