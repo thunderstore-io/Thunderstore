@@ -1,53 +1,36 @@
-{% extends 'base.html' %}
+{% extends 'settings/base.html' %}
 {% load social %}
 
-{% block content %}
-    <div class="row">
-        <div class="col-3"></div>
-        <div class="col-9">
-            <h2>Linked Accounts</h2>
-            <hr class="border-white">
+{% block settings_content %}
+{% for entry in backends.associated %}
+    <div class="row text-large mb-2">
+        <div class="col-5">
+            <span class="fab fa-{{entry.provider}} mr-3"></span><span class="text-capitalize">{{ entry.provider }}</span>
         </div>
-    </div>
-    <div class="row">
         <div class="col-3">
-            <h5>Account settings</h5>
-            <ul>
-                <li><a href="{% url "settings.linked-accounts" %}">Linked Accounts</a></li>
-            </ul>
+            <form class="form-inline" method="post" action="{{ request.path }}">
+                {% csrf_token %}
+                <input type="hidden" name="provider" value="{{ entry.provider }}">
+                {% if can_disconnect %}
+                    <input type="submit" class="btn btn-outline-danger" value="Disconnect">
+                {% else %}
+                    <button class="btn btn-outline-danger disabled" disabled>Disconnect</button>
+                {% endif %}
+            </form>
         </div>
-        <div class="col-9">
-            {% for entry in backends.associated %}
-                <div class="row text-large mb-2">
-                    <div class="col-5">
-                        <span class="fab fa-{{entry.provider}} mr-3"></span><span class="text-capitalize">{{ entry.provider }}</span>
-                    </div>
-                    <div class="col-3">
-                        <form class="form-inline" method="post" action="{{ request.path }}">
-                            {% csrf_token %}
-                            <input type="hidden" name="provider" value="{{ entry.provider }}">
-                            {% if can_disconnect %}
-                                <input type="submit" class="btn btn-outline-danger" value="Disconnect">
-                            {% else %}
-                                <button class="btn btn-outline-danger disabled" disabled>Disconnect</button>
-                            {% endif %}
-                        </form>
-                    </div>
-                    <div class="col-4">
-                        <span class="text-white-50">{% social_username request.user entry.provider %}</span>
-                    </div>
-                </div>
-            {% endfor %}
-            {% for entry in backends.not_associated %}
-                <div class="row text-large mb-2">
-                    <div class="col-5">
-                        <span class="fab fa-{{entry}} mr-3"></span><span class="text-capitalize">{{ entry }}</span>
-                    </div>
-                    <div class="col-3">
-                        <a href="{% url "social:begin" entry %}" class="btn btn-outline-success">Connect</a>
-                    </div>
-                </div>
-            {% endfor %}
+        <div class="col-4">
+            <span class="text-white-50">{% social_username request.user entry.provider %}</span>
         </div>
     </div>
+{% endfor %}
+{% for entry in backends.not_associated %}
+    <div class="row text-large mb-2">
+        <div class="col-5">
+            <span class="fab fa-{{entry}} mr-3"></span><span class="text-capitalize">{{ entry }}</span>
+        </div>
+        <div class="col-3">
+            <a href="{% url "social:begin" entry %}" class="btn btn-outline-success">Connect</a>
+        </div>
+    </div>
+{% endfor %}
 {% endblock %}
