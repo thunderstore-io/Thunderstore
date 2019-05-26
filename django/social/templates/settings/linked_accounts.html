@@ -11,7 +11,7 @@
     </div>
     <div class="row">
         <div class="col-3">
-            <h5>Profile settings</h5>
+            <h5>Account settings</h5>
             <ul>
                 <li><a href="{% url "settings.linked-accounts" %}">Linked Accounts</a></li>
             </ul>
@@ -23,7 +23,15 @@
                         <span class="fab fa-{{entry.provider}} mr-3"></span><span class="text-capitalize">{{ entry.provider }}</span>
                     </div>
                     <div class="col-3">
-                        <a href="#" class="btn btn-outline-danger disabled">Disconnect</a>
+                        <form class="form-inline" method="post" action="{{ request.path }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="provider" value="{{ entry.provider }}">
+                            {% if can_disconnect %}
+                                <input type="submit" class="btn btn-outline-danger" value="Disconnect">
+                            {% else %}
+                                <button class="btn btn-outline-danger disabled" disabled>Disconnect</button>
+                            {% endif %}
+                        </form>
                     </div>
                     <div class="col-4">
                         <span class="text-white-50">{% social_username request.user entry.provider %}</span>
