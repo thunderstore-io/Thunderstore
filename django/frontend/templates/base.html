@@ -46,7 +46,7 @@
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <span class="navbar-text text-dark px-2">{{ request.user.username }}</span>
+                        <a href="{% url 'packages.list_by_owner' uploader_identity %}" class="nav-link text-dark">{{ request.user.username }}</a>
                     </li>
                     <li class="nav-item">
                         <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>

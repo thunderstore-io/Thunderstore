@@ -160,6 +160,7 @@ TEMPLATES = [
                 'social_django.context_processors.login_redirect',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'repository.context_processors.uploader_identity'
             ],
         },
     },
