@@ -1,5 +1,7 @@
 
 def uploader_identity(request):
+    if not request.user.is_authenticated:
+        return {}
     name = request.user.username
     membership = request.user.author_identities.first()
     if membership:
