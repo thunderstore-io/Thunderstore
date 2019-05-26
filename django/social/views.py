@@ -2,7 +2,7 @@ from django.conf import settings
 from django.views.generic.detail import DetailView
 
 
-class ProfileDetailView(DetailView):
+class LinkedAccountsView(DetailView):
     model = settings.AUTH_USER_MODEL
     template_name = "social/profile_detail.html"
 

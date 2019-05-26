@@ -14,7 +14,7 @@ from repository.urls import urlpatterns as repository_urls
 from repository.views import PackageListView
 from repository.api.v1.viewsets import PackageViewSet
 
-from social.views import ProfileDetailView
+from social.urls import settings_urls
 
 
 api_v1_router = routers.DefaultRouter()
@@ -28,11 +28,11 @@ urlpatterns = [
     path('auth/', include('social_django.urls', namespace='social')),
     path('logout/', LogoutView.as_view(), kwargs={'next_page': '/'}, name="logout"),
     path('package/', include(repository_urls)),
+    path('settings/', include(settings_urls)),
     path('favicon.ico', RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, 'favicon.ico'))),
     path('djangoadmin/', admin.site.urls),
     path('healthcheck/', lambda request: HttpResponse("OK"), name="healthcheck"),
     path('api/v1/', include((api_v1_router.urls, "api-v1"), namespace="api-v1")),
-    path('settings/linked-accounts/', ProfileDetailView.as_view(), name="settings-linked-accounts")
 ]
 
 swagger_view = get_swagger_view(title="Thunderstore API")
