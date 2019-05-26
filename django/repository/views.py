@@ -1,6 +1,7 @@
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector, SearchQuery
 from django.db import transaction
 from django.db.models import Q, Sum
+from django.http import Http404
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -21,7 +22,7 @@ class PackageListSearchView(ListView):
     paginate_by = MODS_PER_PAGE
 
     def get_base_queryset(self):
-        return Package.objects
+        return self.model.objects.active()
 
     def get_page_title(self):
         return ""
@@ -81,7 +82,6 @@ class PackageListSearchView(ListView):
     def get_queryset(self):
         queryset = (
             self.get_base_queryset()
-            .exclude(is_active=False)
             .prefetch_related("versions")
         )
         search_query = self.get_search_query()
@@ -121,7 +121,7 @@ class PackageListByOwnerView(PackageListSearchView):
         return super().dispatch(*args, **kwargs)
 
     def get_base_queryset(self):
-        return self.model.objects.exclude(~Q(owner=self.owner))
+        return self.model.objects.active().exclude(~Q(owner=self.owner))
 
     def get_page_title(self):
         return f"Mods uploaded by {self.owner.name}"
@@ -138,12 +138,13 @@ class PackageListByDependencyView(PackageListSearchView):
         owner = self.kwargs["owner"]
         owner = get_object_or_404(UploaderIdentity, name=owner)
         name = self.kwargs["name"]
-        package = get_object_or_404(
-            self.model,
-            is_active=True,
-            owner=owner,
-            name=name,
+        package = (
+            self.model.objects.active()
+            .filter(owner=owner, name=name)
+            .first()
         )
+        if not package:
+            raise Http404("No matching package found")
         self.package = package
 
     def dispatch(self, *args, **kwargs):
@@ -167,19 +168,21 @@ class PackageDetailView(DetailView):
         owner = self.kwargs["owner"]
         owner = get_object_or_404(UploaderIdentity, name=owner)
         name = self.kwargs["name"]
-        return get_object_or_404(
-            self.model,
-            is_active=True,
-            owner=owner,
-            name=name,
+        package = (
+            self.model.objects.active()
+            .filter(owner=owner, name=name)
+            .first()
         )
+        if not package:
+            raise Http404("No matching package found")
+        return package
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
         dependants_string = ""
         package = context["object"]
-        dependant_count = package.dependants.filter(is_active=True).count()
+        dependant_count = package.dependants.active().count()
 
         if dependant_count == 1:
             dependants_string = f"{dependant_count} other mod depends on this mod"

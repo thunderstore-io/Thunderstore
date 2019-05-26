@@ -83,7 +83,17 @@ class UploaderIdentity(models.Model):
         return identity
 
 
+class PackageQueryset(models.QuerySet):
+    def active(self):
+        return (
+            self
+            .exclude(is_active=False)
+            .exclude(~Q(versions__is_active=True))
+        )
+
+
 class Package(models.Model):
+    objects = PackageQueryset.as_manager()
     owner = models.ForeignKey(
         "repository.UploaderIdentity",
         on_delete=models.PROTECT,
@@ -174,7 +184,7 @@ class Package(models.Model):
         # TODO: Caching
         return Package.objects.exclude(~Q(
             versions__dependencies__package=self,
-        ))
+        )).active()
 
     @property
     def owner_url(self):

@@ -10,7 +10,7 @@ from core.cache import (
 def get_mod_list_queryset():
     return (
         Package.objects
-        .filter(is_active=True)
+        .active()
         .prefetch_related("versions")
         .order_by("-is_pinned", "-date_updated")
     )
