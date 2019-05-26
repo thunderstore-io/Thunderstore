@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="mt-1">Auth failed</h1>
+    <p>
+        The authentication failed for some reason, and this could be a
+        temporary problem. Please try again.
+    </p>
+    <a href="{% url "index" %}">Back to the main page</a>
+{% endblock %}
