@@ -1,7 +1,9 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from social_core.exceptions import AuthAlreadyAssociated, AuthFailed
+from social_core.exceptions import (
+    AuthAlreadyAssociated, AuthFailed, AuthCanceled
+)
 
 
 # TODO: Move to it's own auth module if more auth related things are needed
@@ -19,6 +21,8 @@ class SocialAuthExceptionHandlerMiddleware:
             template = "errors/auth_already_associated.html"
         elif isinstance(exception, AuthFailed):
             template = "errors/auth_failed.html"
+        elif isinstance(exception, AuthCanceled):
+            template = "errors/auth_canceled.html"
 
         if template:
             return HttpResponse(render(request, template))
