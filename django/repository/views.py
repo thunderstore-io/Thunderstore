@@ -9,8 +9,6 @@ from django.views.generic import View
 from repository.models import Package
 from repository.models import PackageVersion
 from repository.models import UploaderIdentity
-from repository.models import UploaderIdentityMember
-from repository.models import UploaderIdentityMemberRole
 from repository.ziptools import PackageVersionForm
 
 from django.shortcuts import redirect, get_object_or_404

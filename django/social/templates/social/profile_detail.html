@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load social %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-9">
+            <h2>Linked Accounts</h2>
+            <hr class="border-white">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3">
+            <h5>Profile settings</h5>
+            <ul>
+                <li><a href="{% url "settings-linked-accounts" %}">Linked Accounts</a></li>
+            </ul>
+        </div>
+        <div class="col-9">
+            {% for entry in backends.associated %}
+                <div class="row text-large mb-2">
+                    <div class="col-5">
+                        <span class="fab fa-{{entry.provider}} mr-3"></span><span class="text-capitalize">{{ entry.provider }}</span>
+                    </div>
+                    <div class="col-3">
+                        <a href="#" class="btn btn-outline-danger disabled">Disconnect</a>
+                    </div>
+                    <div class="col-4">
+                        <span class="text-white-50">{% social_username request.user entry.provider %}</span>
+                    </div>
+                </div>
+            {% endfor %}
+            {% for entry in backends.not_associated %}
+                <div class="row text-large mb-2">
+                    <div class="col-5">
+                        <span class="fab fa-{{entry}} mr-3"></span><span class="text-capitalize">{{ entry }}</span>
+                    </div>
+                    <div class="col-3">
+                        <a href="{% url "social:begin" entry %}" class="btn btn-outline-success">Connect</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

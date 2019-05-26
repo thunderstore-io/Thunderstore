@@ -46,22 +46,25 @@
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <span class="navbar-text text-white-50">{{ request.user.username }}</span>
+                        <span class="navbar-text text-dark px-2">{{ request.user.username }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url "settings-linked-accounts" %}" class="nav-link">Settings</a>
                     </li>
                     {% if request.user.is_staff %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url "admin:index" %}">Admin</a>
+                        <a href="{% url "admin:index" %}" class="nav-link">Admin</a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url "logout" %}">Logout</a>
+                        <a href="{% url "logout" %}" class="nav-link">Logout</a>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url "social:begin" "github" %}"><span class="fab fa-github"></span> Log in with GitHub</a>
+                        <a href="{% url "social:begin" "github" %}" class="nav-link"><span class="fab fa-github"></span> Log in with GitHub</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url "social:begin" "discord" %}"><span class="fab fa-discord"></span> Log in with Discord</a>
+                        <a href="{% url "social:begin" "discord" %}" class="nav-link"><span class="fab fa-discord"></span> Log in with Discord</a>
                     </li>
                 {% endif %}
             </ul>

@@ -128,6 +128,7 @@ INSTALLED_APPS = [
     'core',
     'frontend',
     'repository',
+    'social',
     'webhooks',
     'backblaze_b2',
 ]
@@ -315,14 +316,16 @@ SOCIAL_AUTH_GITHUB_SCOPE = ["user:email", "read:user", "read:org"]
 SOCIAL_AUTH_GITHUB_PROFILE_EXTRA_PARAMS = {
    'fields': 'email'
 }
+SOCIAL_AUTH_GITHUB_GET_ALL_EXTRA_DATA = True
 
 # Social auth - Discord
 SOCIAL_AUTH_DISCORD_KEY = env.str("SOCIAL_AUTH_DISCORD_KEY")
 SOCIAL_AUTH_DISCORD_SECRET = env.str("SOCIAL_AUTH_DISCORD_SECRET")
-SOCIAL_AUTH_DISCORD_SCOPE = ["identify", "email"]
+SOCIAL_AUTH_DISCORD_SCOPE = ["email"]
 SOCIAL_AUTH_DISCORD_PROFILE_EXTRA_PARAMS = {
    'fields': 'email'
 }
+SOCIAL_AUTH_DISCORD_GET_ALL_EXTRA_DATA = True
 
 
 PROTOCOL = env.str("PROTOCOL")

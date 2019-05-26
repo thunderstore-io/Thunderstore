@@ -14,6 +14,8 @@ from repository.urls import urlpatterns as repository_urls
 from repository.views import PackageListView
 from repository.api.v1.viewsets import PackageViewSet
 
+from social.views import ProfileDetailView
+
 
 api_v1_router = routers.DefaultRouter()
 api_v1_router.register(r'package', PackageViewSet, basename="package")
@@ -30,6 +32,7 @@ urlpatterns = [
     path('djangoadmin/', admin.site.urls),
     path('healthcheck/', lambda request: HttpResponse("OK"), name="healthcheck"),
     path('api/v1/', include((api_v1_router.urls, "api-v1"), namespace="api-v1")),
+    path('settings/linked-accounts/', ProfileDetailView.as_view(), name="settings-linked-accounts")
 ]
 
 swagger_view = get_swagger_view(title="Thunderstore API")
