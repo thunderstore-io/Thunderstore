@@ -18,6 +18,8 @@ from repository.api.v1.viewsets import PackageViewSet
 api_v1_router = routers.DefaultRouter()
 api_v1_router.register(r'package', PackageViewSet, basename="package")
 
+handler404 = "frontend.views.handle404"
+handler500 = "frontend.views.handle500"
 
 urlpatterns = [
     path('', PackageListView.as_view(), name="index"),
