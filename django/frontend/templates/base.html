@@ -70,10 +70,14 @@
             </ul>
         </nav>
         <div class="container">
-            {% dynamic_html "content_beginning" %}
+            {% block content_beginning %}
+                {% dynamic_html "content_beginning" %}
+            {% endblock %}
             {% block content %}
             {% endblock %}
-            {% dynamic_html "content_end" %}
+            {% block content_end %}
+                {% dynamic_html "content_end" %}
+            {% endblock %}
         </div>
     </body>
 </html>
