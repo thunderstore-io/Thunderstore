@@ -20,7 +20,7 @@
     {% csrf_token %}
     <div class="col-12 p-0 mb-2">
         <div class="text-danger">{{ form.verification.errors }}</div>
-        <input type="text" class="form-control" name="verification">
+        <input type="text" class="form-control" name="verification" placeholder="Verification">
     </div>
     <div class="col-12 p-0">
         <input type="submit" class="btn btn-outline-danger" value="I understand this action is irrevocable and want to continue">
