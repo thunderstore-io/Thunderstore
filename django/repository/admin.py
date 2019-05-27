@@ -80,3 +80,7 @@ class PackageAdmin(admin.ModelAdmin):
         "is_pinned",
         "is_deprecated",
     )
+    search_fields = (
+        "name",
+        "owner__name",
+    )
