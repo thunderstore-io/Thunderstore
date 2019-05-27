@@ -67,16 +67,25 @@ class PackageListSearchView(ListView):
         return queryset.order_by("-is_pinned", "is_deprecated", "-date_updated")
 
     def perform_search(self, queryset, search_query):
-        search_fields = ("name",  "owner__name")
-        # TODO: Add description once we can get the latest one from the db
+        search_fields = ("name", "owner__name", "latest__description")
+
+        icontains_query = Q()
+        parts = search_query.split(" ")
+        for part in parts:
+            for field in search_fields:
+                icontains_query &= ~Q(**{
+                    f"{field}__icontains": part
+                })
+
         return (
             queryset
-            .annotate(name_search_score=TrigramSimilarity("name", search_query))
-            .annotate(search=SearchVector(*search_fields))
-            .exclude(
-                Q(name_search_score__lte=0.1) &
-                ~Q(search=SearchQuery(search_query))
-            )
+            # .annotate(name_search_score=TrigramSimilarity("name", search_query))
+            # .annotate(search=SearchVector(*search_fields))
+            # .exclude(
+            #     Q(name_search_score__lte=1) &
+            #     ~Q(search=SearchQuery(search_query))
+            # )
+            .exclude(icontains_query)
             .distinct()
         )
 
