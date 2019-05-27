@@ -70,6 +70,7 @@ class PackageSerializer(ModelSerializer):
             "date_updated",
             "uuid4",
             "is_pinned",
+            "is_deprecated",
             "versions",
         )
         depth = 0
