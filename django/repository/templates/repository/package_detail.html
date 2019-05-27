@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
+{% load arrow %}
 {% load markdownify %}
 {% load cache_until %}
 
@@ -53,7 +54,7 @@
 <table class="table mt-2">
     <tr>
         <td>Last updated</td>
-        <td>{{ object.date_updated }}</td>
+        <td>{% humanize_timestamp object.date_updated %}</td>
     </tr>
     <tr>
         <td>Latest version</td>

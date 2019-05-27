@@ -2,6 +2,7 @@
 #
 #   prequ update
 #
+arrow==0.13.2
 cachetools==2.1.0         # via google-auth
 certifi==2018.4.16        # via requests, sentry-sdk
 chardet==3.0.4            # via requests
@@ -39,6 +40,7 @@ pyasn1==0.4.4             # via pyasn1-modules, rsa
 pyasn1-modules==0.2.2     # via google-auth
 pyjwt==1.6.4              # via social-auth-core
 pymdown-extensions==6.0
+python-dateutil==2.8.0    # via arrow
 python3-openid==3.1.0     # via social-auth-core
 pytz==2018.5              # via django, google-api-core
 redis==3.2.1              # via django-redis
@@ -47,7 +49,7 @@ requests-oauthlib==1.0.0  # via social-auth-core
 rsa==3.4.2                # via google-auth
 sentry_sdk==0.7.9
 simplejson==3.16.0        # via django-rest-swagger
-six==1.11.0               # via google-api-core, google-auth, google-resumable-media, protobuf, social-auth-app-django, social-auth-core
+six==1.11.0               # via google-api-core, google-auth, google-resumable-media, protobuf, python-dateutil, social-auth-app-django, social-auth-core
 social-auth-app-django==3.1.0
 social-auth-core==3.1.0
 uritemplate==3.0.0        # via coreapi

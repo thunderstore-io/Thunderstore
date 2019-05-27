@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
+{% load arrow %}
 {% load markdownify %}
 {% load cache_until %}
 
@@ -75,7 +76,7 @@
 <table class="table mt-2">
     <tr>
         <td>Date uploaded</td>
-        <td>{{ object.date_created }}</td>
+        <td>{% humanize_timestamp object.date_created %}</td>
     </tr>
     <tr>
         <td>Version</td>

@@ -15,7 +15,7 @@ py==1.5.4                 # via pytest
 pytest==4.4.1
 pytest-cov==2.6.1
 pytest-django==3.4.8
-python-dateutil==2.7.3    # via faker
+python-dateutil==2.8.0    # via faker
 six==1.11.0               # via faker, more-itertools, pytest, python-dateutil
 text-unidecode==1.2       # via faker
 

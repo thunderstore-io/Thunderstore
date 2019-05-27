@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
+{% load arrow %}
 {% load cache_until %}
 {% load qurl %}
 
@@ -71,7 +72,7 @@
                         <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object.display_name }}</a> v{{ object.version_number }}</h5>
                         <p>{{ object.description }}</p>
                         <p>By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
-                        <small>Last updated: {{ object.date_updated }}</small>
+                        <small>Last updated: {% humanize_timestamp object.date_updated %}</small>
                     </div>
                 </div>
             </div>
