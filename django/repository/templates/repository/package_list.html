@@ -8,7 +8,21 @@
 {% block content %}
 {% cache_until "any_package_version_created" "mod-list" 300 page_obj.number cache_vary %}
 
-<h2 class="mt-4">{{ page_title }}</h2>
+{% if breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    {% for breadcrumb in breadcrumbs %}
+        {% if forloop.last %}
+            <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb.name }}</li>
+        {% else %}
+            <li class="breadcrumb-item"><a href="{{ breadcrumb.url }}">{{ breadcrumb.name }}</a></li>
+        {% endif %}
+    {% endfor %}
+  </ol>
+</nav>
+{% endif %}
+
+<h3 class="mt-4">{{ page_title }}</h2>
 
 <div class="container">
     <div class="row">
@@ -63,12 +77,12 @@
                 {% if object.sorted_dependencies %}
                     <h5 class="my-3">Dependencies</h5>
                     {% for dependency in object.sorted_dependencies|slice:":3" %}
-                        <a href="{{ dependency.package.get_absolute_url }}">
+                        <a href="{{ dependency.get_absolute_url }}">
                             <img
                                 class="align-self-center mr-2 mb-2"
                                 src="{% thumbnail dependency.icon 64x64 %}"
-                                title="{{ dependency.package.display_name }}"
-                                alt="{{ dependency.package.display_name }} icon">
+                                title="{{ dependency.display_name }}"
+                                alt="{{ dependency.display_name }} icon">
                         </a>
                     {% endfor %}
                     {% if object.sorted_dependencies.count > 3 %}

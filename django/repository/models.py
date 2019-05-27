@@ -180,6 +180,13 @@ class Package(models.Model):
         )
 
     @cached_property
+    def is_effectively_active(self):
+        return (
+            self.is_active and
+            self.versions.filter(is_active=True).count() > 0
+        )
+
+    @cached_property
     def dependants(self):
         # TODO: Caching
         return Package.objects.exclude(~Q(
@@ -288,7 +295,26 @@ class PackageVersion(models.Model):
         unique_together = ("package", "version_number")
 
     def get_absolute_url(self):
-        return self.package.get_absolute_url()
+        return reverse(
+            "packages.version.detail",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "version": self.version_number
+            }
+        )
+
+    @property
+    def display_name(self):
+        return self.name.replace("_", " ")
+
+    @property
+    def owner_url(self):
+        return self.package.owner_url
+
+    @property
+    def owner(self):
+        return self.package.owner
 
     @property
     def full_version_name(self):

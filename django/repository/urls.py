@@ -6,6 +6,7 @@ from repository.views import PackageCreateView
 from repository.views import PackageDownloadView
 from repository.views import PackageListByOwnerView
 from repository.views import PackageListByDependencyView
+from repository.views import PackageVersionDetailView
 
 
 urlpatterns = [
@@ -33,6 +34,11 @@ urlpatterns = [
         '<str:owner>/<str:name>/dependants/',
         PackageListByDependencyView.as_view(),
         name="packages.list_by_dependency"
+    ),
+    path(
+        '<str:owner>/<str:name>/<str:version>/',
+        PackageVersionDetailView.as_view(),
+        name="packages.version.detail",
     ),
     path(
         '<str:owner>/',

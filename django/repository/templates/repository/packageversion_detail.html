@@ -19,15 +19,38 @@
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_version_created" "mod-detail" 300 object.pk %}
+{% cache_until "any_package_version_created" "mod-version-detail" 300 object.pk %}
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{% url "packages.list" %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% url "packages.list_by_owner" object.owner.name %}">{{ object.owner.name }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ object.display_name }}</li>
+    {% if object.package.is_effectively_active %}
+    <li class="breadcrumb-item"><a href="{{ object.package.get_absolute_url }}">{{ object.package.display_name }}</a></li>
+    {% else %}
+    <li class="breadcrumb-item text-dark">{{ object.package.display_name }}</li>
+    {% endif %}
+    <li class="breadcrumb-item active" aria-current="page">{{ object.version_number }}</li>
   </ol>
 </nav>
+
+{% if not object.package.is_effectively_active %}
+    <div class="alert alert-danger" role="alert">
+        This package has been disabled by the author, and is not recommended to
+        be used.
+    </div>
+{% else %}
+    {% if not object.is_active %}
+    <div class="alert alert-danger" role="alert">
+        This package version has been disabled by the author, and is not recommended
+        to be used. Use a newer version instead.
+    </div>
+    {% endif %}
+    <div class="alert alert-secondary">
+        You are viewing a potentially older version of this package.
+        <a href="{{ object.package.get_absolute_url }}">View all versions.</a>
+    </div>
+{% endif %}
 
 <div class="media mt-4">
     <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
@@ -45,24 +68,23 @@
 
 <table class="table mt-2">
     <tr>
-        <td>Last updated</td>
-        <td>{{ object.date_updated }}</td>
+        <td>Date uploaded</td>
+        <td>{{ object.date_created }}</td>
     </tr>
     <tr>
-        <td>Latest version</td>
-        <td><a href="{{ object.latest.download_url }}">{{ object.latest }}.zip</a></td>
+        <td>Version</td>
+        <td>{{ object.version_number }}</td>
+    <tr>
+        <td>Download link</td>
+        <td><a href="{{ object.download_url }}">{{ object.full_version_name }}.zip</a></td>
     </tr>
     <tr>
-        <td>Total downloads</td>
+        <td>Downloads</td>
         <td>{{ object.downloads }}</td>
     </tr>
     <tr>
         <td>Dependency string</td>
-        <td>{{ object.latest.full_version_name }}</td>
-    </tr>
-    <tr>
-        <td>Dependants</td>
-        <td><a href="{{ object.dependants_url }}">{{ dependants_string }}</a>
+        <td>{{ object.full_version_name }}</td>
     </tr>
 </table>
 
@@ -73,33 +95,11 @@
     </div>
 </div>
 
-{% with object.dependencies as dependencies %}
+{% with object.dependencies.all as dependencies %}
 {% if dependencies %}
     {% include "repository/includes/dependencies.html" with dependencies=dependencies %}
 {% endif %}
 {% endwith %}
-
-<h2 class="mt-4">Available versions</h2>
-<p>Please note that the install buttons only work if you have compatible client
-software installed. Otherwise use the zip download links instead.</p>
-<table class="table">
-    <tr>
-        <th>Upload date</th>
-        <th>Version number</th>
-        <th>Downloads</th>
-        <th>Download link</th>
-        <th>&nbsp;</th>
-    </tr>
-    {% for version in object.available_versions %}
-    <tr>
-        <td>{{ version.date_created|date:"Y-n-j" }}</td>
-        <td>{{ version.version_number }}</td>
-        <td>{{ version.downloads }}</td>
-        <td><a href="{{ version.download_url }}">{{ version }}.zip</a></td>
-        <td><a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a></td>
-    </tr>
-    {% endfor %}
-</table>
 
 {% endcache %}
 {% endblock %}

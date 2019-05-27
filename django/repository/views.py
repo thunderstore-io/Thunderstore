@@ -2,6 +2,7 @@ from django.contrib.postgres.search import TrigramSimilarity, SearchVector, Sear
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import Http404
+from django.urls import reverse_lazy
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -89,6 +90,12 @@ class PackageListSearchView(ListView):
             queryset = self.perform_search(queryset, search_query)
         return self.order_queryset(queryset)
 
+    def get_breadcrumbs(self):
+        return [{
+            "url": reverse_lazy("packages.list"),
+            "name": "Packages",
+        }]
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["cache_vary"] = self.get_full_cache_vary()
@@ -96,6 +103,9 @@ class PackageListSearchView(ListView):
         context["ordering_modes"] = self.get_ordering_choices()
         context["active_ordering"] = self.get_active_ordering()
         context["current_search"] = self.get_search_query()
+        breadcrumbs = self.get_breadcrumbs()
+        if len(breadcrumbs) > 1:
+            context["breadcrumbs"] = breadcrumbs
         return context
 
 
@@ -109,6 +119,13 @@ class PackageListView(PackageListSearchView):
 
 
 class PackageListByOwnerView(PackageListSearchView):
+
+    def get_breadcrumbs(self):
+        breadcrumbs = super().get_breadcrumbs()
+        return breadcrumbs + [{
+            "url": reverse_lazy("packages.list_by_owner", kwargs=self.kwargs),
+            "name": self.owner.name,
+        }]
 
     def cache_owner(self):
         self.owner = get_object_or_404(
@@ -191,6 +208,18 @@ class PackageDetailView(DetailView):
 
         context["dependants_string"] = dependants_string
         return context
+
+
+class PackageVersionDetailView(DetailView):
+    model = PackageVersion
+
+    def get_object(self):
+        owner = self.kwargs["owner"]
+        name = self.kwargs["name"]
+        version = self.kwargs["version"]
+        package = get_object_or_404(Package, owner__name=owner, name=name)
+        version = get_object_or_404(PackageVersion, package=package, version_number=version)
+        return version
 
 
 class PackageCreateView(CreateView):

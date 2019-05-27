@@ -1,0 +1,19 @@
+{% load thumbnail %}
+
+<div class="list-group">
+    <div class="list-group-item flex-column align-items-start active">
+        <h4>This mod requires the following mods to function</h4>
+    </div>
+    {% for dependency in object.dependencies.all %}
+    <div class="list-group-item flex-column align-items-start media">
+        <div class="media">
+            <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
+            <div class="media-body">
+                <h5 class="mt-0"><a href="{{ dependency.get_absolute_url }}">{{ dependency.package }}</a></h5>
+                <p class="mb-0">{{ dependency.description }}</p>
+                <small class="mb-0">Preferred version: {{ dependency.version_number }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
