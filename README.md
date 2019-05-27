@@ -100,14 +100,6 @@ accessible. For example for local you could use
 - `SOCIAL_AUTH_DISCORD_SECRET` The `Client Secret` value of the OAuth
 application
 
-### Google Analytics
-
-You can enable google analytics by supplying a google analytics tracking ID via
-environment variables.
-
-- `GOOGLE_ANALYTICS_ID`: The Google Analytics Tracking ID of your account
-
-
 ### Google Cloud Media Storage
 
 You need to set up a google cloud storage bucket and create a service account
