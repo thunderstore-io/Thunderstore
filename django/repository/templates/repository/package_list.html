@@ -63,8 +63,7 @@
                     {% if forloop.last %}rounded-bottom{% endif %}
                     {% if forloop.first %}rounded-top{% endif %}
                     {% if not forloop.first %}border-top-0{% endif %}
-                    {% if object.is_deprecated %}text-dark{% endif %}">
-            {% if object.is_deprecated %}<del>{% endif %}
+                    {% if object.is_deprecated %}text-dark deleted{% endif %}">
             <div class="col-xs-12 col-md-8">
                 <div class="media my-3">
                     <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
@@ -93,7 +92,6 @@
                     {% endif %}
                 {% endif %}
             </div>
-            {% if object.is_deprecated %}</del>{% endif %}
         </div>
     {% endfor %}
     </div>
