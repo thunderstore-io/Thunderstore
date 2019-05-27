@@ -11,7 +11,7 @@ from repository.cache import get_mod_list_queryset
 class PackageViewSet(ManualCacheMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = PackageSerializer
     lookup_field = "uuid4"
-    cache_until = CacheBustCondition.any_package_version_created
+    cache_until = CacheBustCondition.any_package_updated
 
     def get_queryset(self):
         return get_mod_list_queryset()

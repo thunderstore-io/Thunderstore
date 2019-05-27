@@ -122,6 +122,12 @@ class Package(models.Model):
     is_pinned = models.BooleanField(
         default=False,
     )
+    latest = models.ForeignKey(
+        "repository.PackageVersion",
+        on_delete=models.SET_NULL,
+        related_name="+",
+        null=True,
+    )
 
     class Meta:
         unique_together = ("owner", "name")
@@ -133,11 +139,6 @@ class Package(models.Model):
     @property
     def display_name(self):
         return self.name.replace("_", " ")
-
-    @cached_property
-    def latest(self):
-        # TODO: Caching
-        return self.available_versions.first()
 
     @cached_property
     def available_versions(self):
@@ -228,13 +229,39 @@ class Package(models.Model):
             "path": self.get_absolute_url()
         }
 
-    def handle_new_version(self, version):
+    def recache_latest(self):
+        self.latest = self.available_versions.first()
+        self.save()
+
+    def handle_created_version(self, version):
         self.date_updated = timezone.now()
         self.is_deprecated = False
+        if self.latest:
+            new_version = StrictVersion(version.version_number)
+            old_version = StrictVersion(self.latest.version_number)
+            if new_version > old_version:
+                self.latest = version
+        else:
+            self.latest = version
         self.save()
+
+    def handle_deleted_version(self, version):
+        self.recache_latest()
 
     def __str__(self):
         return self.full_package_name
+
+    @staticmethod
+    def post_save(sender, instance, created, **kwargs):
+        invalidate_cache(CacheBustCondition.any_package_updated)
+
+    @staticmethod
+    def post_delete(sender, instance, created, **kwargs):
+        invalidate_cache(CacheBustCondition.any_package_updated)
+
+
+signals.post_save.connect(Package.post_save, sender=Package)
+signals.post_delete.connect(Package.post_delete, sender=Package)
 
 
 def get_version_zip_filepath(instance, filename):
@@ -348,10 +375,12 @@ class PackageVersion(models.Model):
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
         if created:
-            instance.package.handle_new_version(instance)
+            instance.package.handle_created_version(instance)
             instance.announce_release()
-            invalidate_cache(CacheBustCondition.any_package_version_created)
-        invalidate_cache(CacheBustCondition.any_package_version_updated)
+
+    @staticmethod
+    def post_delete(sender, instance, **kwargs):
+        instance.package.handle_deleted_version(instance)
 
     def announce_release(self):
         webhooks = Webhook.objects.filter(
@@ -417,6 +446,7 @@ class PackageVersion(models.Model):
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
+signals.post_delete.connect(PackageVersion.post_delete, sender=PackageVersion)
 
 
 class PackageVersionDownloadEvent(models.Model):

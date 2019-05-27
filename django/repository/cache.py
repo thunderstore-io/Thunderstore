@@ -6,7 +6,7 @@ from core.cache import (
 )
 
 
-@cache_function_result(cache_until=CacheBustCondition.any_package_version_created)
+@cache_function_result(cache_until=CacheBustCondition.any_package_updated)
 def get_mod_list_queryset():
     return (
         Package.objects

@@ -6,7 +6,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-{% cache_until "any_package_version_created" "mod-list" 300 page_obj.number cache_vary %}
+{% cache_until "any_package_updated" "mod-list" 300 page_obj.number cache_vary %}
 
 {% if breadcrumbs %}
 <nav aria-label="breadcrumb">

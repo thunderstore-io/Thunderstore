@@ -14,8 +14,7 @@ DEFAULT_CACHE_EXPIRY = 60 * 5
 
 # TODO: Support parameters in cache bust conditions (e.g. specific package update)
 class CacheBustCondition(ChoiceEnum):
-    any_package_version_created = "any_package_version_created"
-    any_package_version_updated = "any_package_version_updated"
+    any_package_updated = "any_package_updated"
     dynamic_html_updated = "dynamic_html_updated"
 
 
