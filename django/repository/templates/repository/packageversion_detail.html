@@ -34,6 +34,12 @@
   </ol>
 </nav>
 
+{% if object.is_deprecated %}
+    <div class="alert alert-danger" role="alert">
+        This package has been marked as deprecated, and it's suggested another
+        alternative is used.
+    </div>
+{% endif %}
 {% if not object.package.is_effectively_active %}
     <div class="alert alert-danger" role="alert">
         This package has been disabled by the author, and is not recommended to

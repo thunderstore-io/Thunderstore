@@ -105,6 +105,9 @@ class Package(models.Model):
     is_active = models.BooleanField(
         default=True,
     )
+    is_deprecated = models.BooleanField(
+        default=False,
+    )
     date_created = models.DateTimeField(
         auto_now_add=True,
     )
@@ -225,8 +228,9 @@ class Package(models.Model):
             "path": self.get_absolute_url()
         }
 
-    def refresh_update_date(self):
+    def handle_new_version(self, version):
         self.date_updated = timezone.now()
+        self.is_deprecated = False
         self.save()
 
     def __str__(self):
@@ -317,6 +321,10 @@ class PackageVersion(models.Model):
         return self.package.owner
 
     @property
+    def is_deprecated(self):
+        return self.package.is_deprecated
+
+    @property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"
 
@@ -340,8 +348,8 @@ class PackageVersion(models.Model):
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
         if created:
+            instance.package.handle_new_version(instance)
             instance.announce_release()
-            instance.package.refresh_update_date()
             invalidate_cache(CacheBustCondition.any_package_version_created)
         invalidate_cache(CacheBustCondition.any_package_version_updated)
 

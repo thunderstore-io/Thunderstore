@@ -29,6 +29,13 @@
   </ol>
 </nav>
 
+{% if object.is_deprecated %}
+    <div class="alert alert-danger" role="alert">
+        This package has been marked as deprecated, and it's suggested another
+        alternative is used.
+    </div>
+{% endif %}
+
 <div class="media mt-4">
     <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
     <div class="media-body">

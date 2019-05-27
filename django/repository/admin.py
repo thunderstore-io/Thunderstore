@@ -72,9 +72,11 @@ class PackageAdmin(admin.ModelAdmin):
         "name",
         "owner",
         "is_active",
+        "is_deprecated",
         "is_pinned",
     )
     list_filter = (
         "is_active",
         "is_pinned",
+        "is_deprecated",
     )

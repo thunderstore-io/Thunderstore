@@ -57,14 +57,14 @@ class PackageListSearchView(ListView):
     def order_queryset(self, queryset):
         active_ordering = self.get_active_ordering()
         if active_ordering == "newest":
-            return queryset.order_by("-is_pinned", "-date_created")
+            return queryset.order_by("-is_pinned", "is_deprecated", "-date_created")
         if active_ordering == "most-downloaded":
             return (
                 queryset
                 .annotate(total_downloads=Sum("versions__downloads"))
-                .order_by("-is_pinned", "-total_downloads")
+                .order_by("-is_pinned", "is_deprecated", "-total_downloads")
             )
-        return queryset.order_by("-is_pinned", "-date_updated")
+        return queryset.order_by("-is_pinned", "is_deprecated", "-date_updated")
 
     def perform_search(self, queryset, search_query):
         search_fields = ("name",  "owner__name")
