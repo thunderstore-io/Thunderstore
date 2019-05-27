@@ -51,14 +51,22 @@
     </div>
 </div>
 
+<div class="row my-2 ">
+    <div class="col-12 col-sm-6 px-3 pl-sm-3 pr-sm-1">
+        <a href="{{ object.latest.install_url }}" type="button" class="btn btn-primary w-100 text-large">
+            <i class="fa fa-rocket mr-2" aria-hidden="true"></i>Install with Mod Manager
+        </a>
+    </div>
+    <div class="col-12 col-sm-6 px-3 pr-sm-3 pl-sm-1 mt-1 mt-sm-0">
+        <a href="{{ object.latest.download_url }}" type="button" class="btn btn-primary w-100 text-large">
+            <i class="fa fa-download mr-2" aria-hidden="true"></i>Manual Download
+        </a>
+    </div>
+</div>
 <table class="table mt-2">
     <tr>
         <td>Last updated</td>
         <td>{% humanize_timestamp object.date_updated %}</td>
-    </tr>
-    <tr>
-        <td>Latest version</td>
-        <td><a href="{{ object.latest.download_url }}">{{ object.latest }}.zip</a></td>
     </tr>
     <tr>
         <td>Total downloads</td>
