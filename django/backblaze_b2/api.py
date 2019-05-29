@@ -105,22 +105,20 @@ class BackblazeB2API:
 
     def _authorize_request_params(self, request_params):
         headers = request_params.get("headers", {})
-        if "Authorization" not in headers:
-            headers.update({
-                "Authorization": self.session.authorization_token,
-            })
+        headers.update({
+            "Authorization": self.session.authorization_token,
+        })
         request_params["headers"] = headers
         return request_params
 
     def do_request(self, request_func, url, **params):
-        request_params = self._authorize_request_params(params)
-
         # TODO: Add generic Backblaze error status code handling
         # 503: Generic timeout or service failure, should retry
         # 401: Invalid or expired auth token, should retry
         retry_statuscodes = (503, 401)
         attempts_left = 3
         while attempts_left > 0:
+            request_params = self._authorize_request_params(params)
             response = request_func(url, **request_params)
             if response.status_code == 401:
                 self.refresh_session()
