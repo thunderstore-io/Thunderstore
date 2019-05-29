@@ -27,7 +27,7 @@ class UploaderIdentityMemberRole(ChoiceEnum):
 class UploaderIdentityMember(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        related_name="author_identities",
+        related_name="uploader_identities",
         on_delete=models.CASCADE,
     )
     identity = models.ForeignKey(
@@ -66,7 +66,7 @@ class UploaderIdentity(models.Model):
     @classmethod
     @transaction.atomic
     def get_or_create_for_user(cls, user):
-        identity_membership = user.author_identities.first()
+        identity_membership = user.uploader_identities.first()
         if identity_membership:
             return identity_membership.identity
 
