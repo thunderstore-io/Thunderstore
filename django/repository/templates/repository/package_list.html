@@ -23,74 +23,74 @@
 </nav>
 {% endif %}
 
-<h3 class="mt-4">{{ page_title }}</h2>
+<div class="row">
+    <h3 class="col-12 mt-4">{{ page_title }}</h2>
+</div>
 
-<div class="container">
-    <div class="row">
-        <div class="col-12 col-md-auto p-0 m-0 mb-2 mr-2">
-            <div class="btn-group" role="group" aria-label="Result ordering">
-                {% for entry in ordering_modes %}
-                    <a href="{% qurl ordering entry.0 %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
-                        {{ entry.1 }}
-                    </a>
-                {% endfor %}
-            </div>
+<div class="row m-0">
+    <div class="col-12 col-md-auto m-0 mb-2 mr-2 p-0">
+        <div class="btn-group" role="group" aria-label="Result ordering">
+            {% for entry in ordering_modes %}
+                <a href="{% qurl ordering entry.0 %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
+                    {{ entry.1 }}
+                </a>
+            {% endfor %}
         </div>
-        <div class="col-12 col-md-6 col-lg-5 p-0 m-0 mb-2 ml-auto">
-            <form class="form-inline" method="get" action="{{ request.path }}">
-                <div class="row w-100 m-0 p-0">
-                    <div class="col-7 m-0 p-0 pr-2">
-                        <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
-                        <input type="hidden" name="ordering" value="{{ active_ordering }}">
-                    </div>
-                    <div class="col-3 m-0 p-0 pr-1">
-                        <button class="btn btn-outline-success w-100" type="submit">Search</button>
-                    </div>
-                    <div class="col-2 m-0 p-0">
-                        <a href="{% url 'packages.list' %}" class="btn btn-outline-success w-100">Clear</a>
-                    </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-5 m-0 mb-2 p-0 ml-auto">
+        <form class="form-inline" method="get" action="{{ request.path }}">
+            <div class="row w-100 m-0 p-0">
+                <div class="col-7 m-0 p-0 pr-2">
+                    <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
+                    <input type="hidden" name="ordering" value="{{ active_ordering }}">
                 </div>
-            </form>
-        </div>
+                <div class="col-3 m-0 p-0 pr-1">
+                    <button class="btn btn-outline-success w-100" type="submit">Search</button>
+                </div>
+                <div class="col-2 m-0 p-0">
+                    <a href="{% url 'packages.list' %}" class="btn btn-outline-success w-100">Clear</a>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
 {% if object_list %}
-    <div class="container mb-3">
+    <div class="d-flex flex-row flex-wrap mb-3 package-list">
     {% for object in object_list %}
-        <div class="row border border-secondary p-2
-                    {% if object.is_pinned %}bg-secondary border-light border-left-0 border-right-0 border-bottom-0{% else %}bg-light{% endif %}
-                    {% if forloop.last %}rounded-bottom{% endif %}
-                    {% if forloop.first %}rounded-top{% endif %}
-                    {% if not forloop.first %}border-top-0{% endif %}
+        <div class="col-6 col-md-4 col-lg-3 mb-2 p-1 d-flex flex-column
                     {% if object.is_deprecated %}text-dark deleted{% endif %}">
-            <div class="col-xs-12 col-md-8">
-                <div class="media my-3">
-                    <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
-                    <div class="media-body">
-                        <h5 class="mt-0"><a href="{{ object.get_absolute_url }}">{{ object.display_name }}</a> v{{ object.version_number }}</h5>
-                        <p>{{ object.description }}</p>
-                        <p>By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a> | {{ object.downloads }} total downloads | <a href="{{ object.website_url }}">{{ object.website_url }}</a></p>
-                        <small>Last updated: {% humanize_timestamp object.date_updated %}</small>
+            <div class="p-0 bg-light">
+                {% if object.is_pinned %}
+                <div class="pin w-100">
+                    <div class="mr-2 p-1 px-2 bg-primary w-auto w-fit-content">
+                        <span class="fa fa-thumbtack mr-2"></span> Pinned
                     </div>
                 </div>
-            </div>
-            <div class="col-xs-0 col-md-4 mb-2 d-none d-md-block">
-                {% if object.sorted_dependencies %}
-                    <h5 class="my-3">Dependencies</h5>
-                    {% for dependency in object.sorted_dependencies|slice:":3" %}
-                        <a href="{{ dependency.get_absolute_url }}">
-                            <img
-                                class="align-self-center mr-2 mb-2"
-                                src="{% thumbnail dependency.icon 64x64 %}"
-                                title="{{ dependency.display_name }}"
-                                alt="{{ dependency.display_name }} icon">
-                        </a>
-                    {% endfor %}
-                    {% if object.sorted_dependencies.count > 3 %}
-                        <span class="h5 ml-2">+{{ object.sorted_dependencies.count|add:"-3" }}</span>
-                    {% endif %}
                 {% endif %}
+                <a href="{{ object.get_absolute_url }}">
+                    <img class="w-100" src="{% thumbnail object.icon 256x256 crop %}" alt="{{ object }} icon">
+                </a>
+            </div>
+            <div class="bg-light p-2">
+                <div class="row mb-1">
+                    <div class="col-6" title="Downloads">
+                        <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ object.downloads }}
+                    </div>
+                    <div class="col-6 text-right" title="Likes">
+                        0&nbsp;<i class="fas fa-thumbs-up text-dark ml-1"></i>
+                    </div>
+                </div>
+                <h5 class="mb-0 overflow-hidden text-nowrap w-100">{{ object.display_name }}</h5>
+                <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></div>
+            </div>
+            <div class="bg-light px-2 flex-grow-1">
+                {{ object.description }}
+            </div>
+            <div class="bg-light p-2">
+                <div class="text-dark">
+                    <small>Last updated: {% humanize_timestamp object.date_updated %}</small>
+                </div>
             </div>
         </div>
     {% endfor %}

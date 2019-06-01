@@ -71,12 +71,16 @@
         </nav>
         <div class="container">
             {% block content_beginning %}
-                {% dynamic_html "content_beginning" %}
+                <div class="row">
+                    {% dynamic_html "content_beginning" %}
+                </div>
             {% endblock %}
             {% block content %}
             {% endblock %}
             {% block content_end %}
-                {% dynamic_html "content_end" %}
+                <div class="row">
+                    {% dynamic_html "content_end" %}
+                </div>
             {% endblock %}
         </div>
     </body>

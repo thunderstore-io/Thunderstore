@@ -2,3 +2,13 @@
 .deleted {
     text-decoration: line-through !important;
 }
+
+.text-nowrap {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.w-fit-content {
+    width: fit-content !important;
+}

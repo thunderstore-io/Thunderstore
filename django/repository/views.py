@@ -15,7 +15,8 @@ from repository.ziptools import PackageVersionForm
 
 from django.shortcuts import redirect, get_object_or_404
 
-MODS_PER_PAGE = 20
+# Should be divisible by 4 and 3
+MODS_PER_PAGE = 24
 
 
 class PackageListSearchView(ListView):

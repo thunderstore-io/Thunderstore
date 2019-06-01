@@ -1,0 +1,17 @@
+
+.package-list {
+    margin-left: -4px;
+    margin-right: -4px;
+}
+
+.pin {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+}
+
+
+.pin .fa-thumbtack {
+    transform: rotate(45deg);
+    transform-origin: center;
+}
