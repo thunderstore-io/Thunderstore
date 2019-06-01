@@ -77,9 +77,10 @@
                     <div class="col-6" title="Downloads">
                         <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ object.downloads }}
                     </div>
-                    <div class="col-6 text-right" title="Likes">
-                        0&nbsp;<i class="fas fa-thumbs-up text-dark ml-1"></i>
-                    </div>
+                    <div class="col-6">&nbsp;</div>
+                    {# <div class="col-6 text-right" title="Likes"> #}
+                        {# 0&nbsp;<i class="fas fa-thumbs-up text-dark ml-1"></i> #}
+                    {# </div> #}
                 </div>
                 <h5 class="mb-0 overflow-hidden text-nowrap w-100">{{ object.display_name }}</h5>
                 <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></div>
