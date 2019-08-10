@@ -69,6 +69,7 @@ class PackageSerializer(ModelSerializer):
             "date_created",
             "date_updated",
             "uuid4",
+            "rating_score",
             "is_pinned",
             "is_deprecated",
             "versions",

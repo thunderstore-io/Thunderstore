@@ -12,3 +12,21 @@
 .w-fit-content {
     width: fit-content !important;
 }
+
+.rated {
+    color: blue!important;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.rotate {
+  animation: rotate 1.5s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}

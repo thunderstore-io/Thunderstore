@@ -92,6 +92,28 @@ class PackageQueryset(models.QuerySet):
         )
 
 
+class PackageRating(models.Model):
+    rater = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="package_ratings",
+        on_delete=models.CASCADE,
+    )
+    package = models.ForeignKey(
+        "repository.Package",
+        on_delete=models.CASCADE,
+        related_name="package_ratings",
+    )
+    date_created = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        unique_together = ("rater", "package")
+
+    def __str__(self):
+        return f"{self.rater.username} rating on {self.package.full_package_name}"
+
+
 class Package(models.Model):
     objects = PackageQueryset.as_manager()
     owner = models.ForeignKey(
@@ -153,6 +175,10 @@ class Package(models.Model):
     def downloads(self):
         # TODO: Caching
         return self.versions.aggregate(downloads=Sum("downloads"))["downloads"]
+
+    @cached_property
+    def rating_score(self):
+        return self.package_ratings.count()
 
     @property
     def icon(self):

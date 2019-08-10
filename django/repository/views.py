@@ -1,6 +1,6 @@
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector, SearchQuery
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic.list import ListView
@@ -42,7 +42,8 @@ class PackageListSearchView(ListView):
         return (
             ("last-updated", "Last updated"),
             ("newest", "Newest"),
-            ("most-downloaded", "Most downloaded")
+            ("most-downloaded", "Most downloaded"),
+            ("top-rated", "Top rated"),
         )
 
     def get_active_ordering(self):
@@ -64,6 +65,12 @@ class PackageListSearchView(ListView):
                 queryset
                 .annotate(total_downloads=Sum("versions__downloads"))
                 .order_by("-is_pinned", "is_deprecated", "-total_downloads")
+            )
+        if active_ordering == "top-rated":
+            return (
+                queryset
+                .annotate(total_rating=Count("package_ratings"))
+                .order_by("-is_pinned", "is_deprecated", "-total_rating")
             )
         return queryset.order_by("-is_pinned", "is_deprecated", "-date_updated")
 

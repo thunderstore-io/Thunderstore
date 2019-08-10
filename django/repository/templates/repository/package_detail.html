@@ -61,6 +61,10 @@
         <td>{{ object.downloads }}</td>
     </tr>
     <tr>
+        <td>Total rating</td>
+        <td><span id="package-rating-{{ object.uuid4 }}">{{ object.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.uuid4 }}"></i></td>
+    </tr>
+    <tr>
         <td>Dependency string</td>
         <td>{{ object.latest.full_version_name }}</td>
     </tr>

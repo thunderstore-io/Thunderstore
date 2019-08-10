@@ -3,8 +3,19 @@ from django.contrib import admin
 
 from repository.models import Package
 from repository.models import PackageVersion
+from repository.models import PackageRating
 from repository.models import UploaderIdentity
 from repository.models import UploaderIdentityMember
+
+
+@admin.register(PackageRating)
+class PackageRatingAdmin(admin.ModelAdmin):
+    model = PackageRating
+    list_display = (
+        "rater",
+        "package",
+        "date_created",
+    )
 
 
 class UploaderIdentityMemberAdmin(admin.StackedInline):
