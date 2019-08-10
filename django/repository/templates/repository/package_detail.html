@@ -45,7 +45,9 @@
         <div class="d-flex w-100 justify-content-between">
             <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></h5>
             {% if object.website_url %}
-            <a class="text-nowrap" href="{{ object.website_url }}">{{ object.website_url }}</a>
+            <a class="text-nowrap" href="{{ object.website_url }}">
+              <span class="fa fa-globe fa-fw"></span>
+              {{ object.website_url }}</a>
             {% endif %}
         </div>
     </div>
