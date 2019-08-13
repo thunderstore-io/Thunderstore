@@ -40,7 +40,14 @@
                     </li>
                 {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'swagger' %}">API Docs</a>
+                    <div class="dropdown">
+                        <a href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" 
+                           aria-expanded="false" class="nav-link dropdown-toggle">Developers</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
+                            <a class="dropdown-item" href="https://github.com/risk-of-thunder/Thunderstore">GitHub Repo</a>
+                        </div>
+                    </div>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="https://discord.gg/5MbXZvd"><span class="fab fa-discord"></span> &nbsp;Join our Discord</a>
