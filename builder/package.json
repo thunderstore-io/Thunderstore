@@ -13,9 +13,9 @@
     "gulp-order": "^1.2.0"
   },
   "scripts": {
-    "watch": "npm ci && gulp watch",
-    "start": "npm ci && gulp",
-    "build": "npm ci && gulp"
+    "watch": "npm install && gulp watch",
+    "start": "npm install && gulp",
+    "build": "npm install && gulp"
   },
   "author": "",
   "devDependencies": {}
