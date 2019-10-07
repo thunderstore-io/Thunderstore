@@ -3,6 +3,8 @@
 #   prequ update
 #
 arrow==0.15.2
+boto3==1.9.244            # via django-storages
+botocore==1.12.244        # via boto3, s3transfer
 cachetools==2.1.0         # via google-auth
 certifi==2018.4.16        # via requests, sentry-sdk
 chardet==3.0.4            # via requests
@@ -13,8 +15,9 @@ django==2.2.6
 django-environ==0.4.5
 django-ipware==2.1.0
 django-redis==4.10.0
-django-storages[google]==1.7.2
+django-storages[boto3,google]==1.7.2
 djangorestframework==3.10.3
+docutils==0.15.2          # via botocore
 drf-yasg==1.17.0
 easy-thumbnails==2.6.0
 gevent==1.4.0             # via gunicorn
@@ -30,6 +33,7 @@ idna==2.7                 # via requests
 inflection==0.3.1         # via drf-yasg
 itypes==1.1.0             # via coreapi
 jinja2==2.10              # via coreschema
+jmespath==0.9.4           # via boto3, botocore
 markdown==3.1.1
 markupsafe==1.1.1         # via jinja2
 oauthlib==2.1.0           # via requests-oauthlib, social-auth-core
@@ -43,7 +47,7 @@ pyasn1-modules==0.2.2     # via google-auth
 pyjwt==1.6.4              # via social-auth-core
 pymdown-extensions==6.1
 pyparsing==2.4.2          # via packaging
-python-dateutil==2.8.0    # via arrow
+python-dateutil==2.8.0    # via arrow, botocore
 python3-openid==3.1.0     # via social-auth-core
 pytz==2018.5              # via django, google-api-core
 redis==3.2.1              # via django-redis
@@ -52,13 +56,14 @@ requests-oauthlib==1.0.0  # via social-auth-core
 rsa==3.4.2                # via google-auth
 ruamel.yaml==0.16.5       # via drf-yasg
 ruamel.yaml.clib==0.2.0   # via ruamel-yaml
+s3transfer==0.2.1         # via boto3
 sentry_sdk==0.12.3
 six==1.11.0               # via drf-yasg, google-api-core, google-auth, google-resumable-media, packaging, protobuf, python-dateutil, social-auth-app-django, social-auth-core
 social-auth-app-django==3.1.0
 social-auth-core==3.2.0
 sqlparse==0.3.0           # via django
 uritemplate==3.0.0        # via coreapi, drf-yasg
-urllib3==1.23             # via requests, sentry-sdk
+urllib3==1.23             # via botocore, requests, sentry-sdk
 whitenoise==4.1.4
 
 # The following packages are considered to be unsafe in a requirements file:

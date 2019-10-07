@@ -114,6 +114,47 @@ bucket. Can be left empty or undefined.
 - `GS_CREDENTIALS`: Base64 encoded (with no newlines) string of the service
 account credentials json file, that can be downloaded from google cloud console.
 
+_NOTE: Google Cloud Storage is currently configured to only store package icons_
+
+### Backblaze B2 Media Storage
+
+You need to set up a backblaze b2 account (and bucket) and create an auth key
+with access to it correspondingly.
+
+Set the following variables:
+
+- `B2_KEY_ID`: The id of the auth key
+- `B2_KEY`: The auth key secret
+- `B2_BUCKET_ID`: Backblaze b2 bucket ID
+- `B2_LOCATION`: Location inside the bucket where to upload files
+- `B2_FILE_OVERWRITE`: Allow file overwriting. True is recommended, backblaze b2
+retains all file versions regardless.
+
+_NOTE: Backblaze B2 is currently configured to only store package zips_
+
+### AWS S3 and other Boto3 compatible storages
+
+The AWS S3 / Boto3 protocol is supported by multiple vendors and services, and
+such the implementation may vary depending on the provider.
+
+Refer to
+https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html for
+more details on the implementation. Also see
+[core/settings.py](django/core/settings.py) for what environment variables are
+currently implemented.
+
+At the very least set the following variables:
+
+- `AWS_ACCESS_KEY_ID`: Auth key ID
+- `AWS_SECRET_ACCESS_KEY`: Auth key secret
+- `AWS_S3_REGION_NAME`: Storage bucket region
+- `AWS_S3_ENDPOINT_URL`: Storage service endpoint
+- `AWS_STORAGE_BUCKET_NAME`: Bucket name
+- `AWS_LOCATION`: Location inside the bucket where to upload files
+
+_NOTE: Enabling AWS S3 will currently override all other cloud storages and
+will be used for all media storage_
+
 ### Database
 
 Database configuration is pretty straight forward if using a local database
