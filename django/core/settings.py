@@ -37,6 +37,19 @@ env = environ.Env(
     B2_LOCATION=(str, ''),
     B2_FILE_OVERWRITE=(bool, True),
 
+    AWS_ACCESS_KEY_ID=(str, ''),
+    AWS_SECRET_ACCESS_KEY=(str, ''),
+    AWS_S3_REGION_NAME=(str, ''),
+    AWS_S3_ENDPOINT_URL=(str, ''),
+    AWS_S3_HOST=(str, ''),
+    AWS_S3_CUSTOM_DOMAIN=(str, ''),
+    AWS_STORAGE_BUCKET_NAME=(str, ''),
+    AWS_DEFAULT_ACL=(str, 'public-read'),
+    AWS_BUCKET_ACL=(str, 'public-read'),
+    AWS_AUTO_CREATE_BUCKET=(bool, False),
+    AWS_LOCATION=(str, ''),
+    AWS_QUERYSTRING_AUTH=(bool, False),
+
     REDIS_URL=(str, ''),
 
     DB_CLIENT_CERT=(str, ''),
@@ -299,6 +312,26 @@ B2_FILE_OVERWRITE = env.str("B2_FILE_OVERWRITE")
 
 if B2_KEY_ID and B2_KEY and B2_BUCKET_ID:
     PACKAGE_FILE_STORAGE = "backblaze_b2.storage.BackblazeB2Storage"
+
+# AWS S3 for everything, can be used with S3 compatible providers
+
+AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY")
+AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME")
+AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL")
+AWS_S3_HOST = env.str("AWS_S3_HOST")
+AWS_S3_CUSTOM_DOMAIN = env.str("AWS_S3_CUSTOM_DOMAIN")
+AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
+AWS_DEFAULT_ACL = env.str("AWS_DEFAULT_ACL")
+AWS_BUCKET_ACL = env.str("AWS_BUCKET_ACL")
+AWS_AUTO_CREATE_BUCKET = env.bool("AWS_AUTO_CREATE_BUCKET")
+AWS_LOCATION = env.str("AWS_LOCATION")
+AWS_QUERYSTRING_AUTH = env.bool("AWS_QUERYSTRING_AUTH")
+
+if all((AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # Social auth
 
