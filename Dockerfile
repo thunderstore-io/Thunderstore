@@ -2,7 +2,7 @@ FROM node:12.2.0-alpine as builder
 
 WORKDIR /app
 COPY ./builder/package.json /app/package.json
-RUN npm install
+RUN npm ci
 COPY ./builder /app
 RUN npm run build
 
