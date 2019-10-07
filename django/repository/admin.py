@@ -77,6 +77,7 @@ class PackageAdmin(admin.ModelAdmin):
         "downloads",
         "name",
         "owner",
+        "latest",
     )
     list_display = (
         "name",
