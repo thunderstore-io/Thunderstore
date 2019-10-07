@@ -6,7 +6,10 @@ from django.views.generic.base import RedirectView
 from django.urls import path, include
 from django.http import HttpResponse
 
-from rest_framework_swagger.views import get_swagger_view
+from rest_framework import permissions
+
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 from repository.urls import urlpatterns as repository_urls
 from repository.views import PackageListView
@@ -31,8 +34,20 @@ urlpatterns = [
     path('api/v1/', include((api_v1_urls, "api-v1"), namespace="api-v1")),
 ]
 
-swagger_view = get_swagger_view(title="Thunderstore API")
-urlpatterns += [path("api/docs/", lambda r: swagger_view(r), name="swagger")]
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Thunderstore API",
+      default_version="v1",
+      description="Schema is automatically generated and not completely accurate.",
+      contact=openapi.Contact(name="Mythic#0001", url="https://discord.gg/5MbXZvd"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
+
+urlpatterns += [
+    path("api/docs/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger"),
+]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

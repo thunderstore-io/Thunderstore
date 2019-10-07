@@ -1,3 +1,4 @@
+
 import os
 import environ
 import json
@@ -122,7 +123,7 @@ INSTALLED_APPS = [
     'easy_thumbnails',
     'social_django',
     'rest_framework',
-    'rest_framework_swagger',
+    'drf_yasg',
 
     # Own
     'core',

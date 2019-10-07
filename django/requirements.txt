@@ -6,16 +6,16 @@ arrow==0.15.2
 cachetools==2.1.0         # via google-auth
 certifi==2018.4.16        # via requests, sentry-sdk
 chardet==3.0.4            # via requests
-coreapi==2.3.3            # via django-rest-swagger, openapi-codec
-coreschema==0.0.4         # via coreapi
+coreapi==2.3.3            # via drf-yasg
+coreschema==0.0.4         # via coreapi, drf-yasg
 defusedxml==0.5.0         # via python3-openid, social-auth-core
 django==2.2.6
 django-environ==0.4.5
 django-ipware==2.1.0
 django-redis==4.10.0
-django-rest-swagger==2.2.0
 django-storages[google]==1.7.2
 djangorestframework==3.10.3
+drf-yasg==1.17.0
 easy-thumbnails==2.6.0
 gevent==1.4.0             # via gunicorn
 google-api-core==1.3.0    # via google-cloud-core, google-cloud-storage
@@ -27,12 +27,13 @@ googleapis-common-protos==1.5.3  # via google-api-core
 greenlet==0.4.15          # via gevent
 gunicorn[gevent]==19.9.0
 idna==2.7                 # via requests
+inflection==0.3.1         # via drf-yasg
 itypes==1.1.0             # via coreapi
 jinja2==2.10              # via coreschema
 markdown==3.1.1
 markupsafe==1.1.1         # via jinja2
 oauthlib==2.1.0           # via requests-oauthlib, social-auth-core
-openapi-codec==1.3.2      # via django-rest-swagger
+packaging==19.2           # via drf-yasg
 pep562==1.0               # via pymdown-extensions
 pillow==6.2.0
 protobuf==3.6.1           # via google-api-core, googleapis-common-protos
@@ -41,6 +42,7 @@ pyasn1==0.4.4             # via pyasn1-modules, rsa
 pyasn1-modules==0.2.2     # via google-auth
 pyjwt==1.6.4              # via social-auth-core
 pymdown-extensions==6.1
+pyparsing==2.4.2          # via packaging
 python-dateutil==2.8.0    # via arrow
 python3-openid==3.1.0     # via social-auth-core
 pytz==2018.5              # via django, google-api-core
@@ -48,13 +50,14 @@ redis==3.2.1              # via django-redis
 requests==2.20.0          # via coreapi, google-api-core, requests-oauthlib, social-auth-core
 requests-oauthlib==1.0.0  # via social-auth-core
 rsa==3.4.2                # via google-auth
+ruamel.yaml==0.16.5       # via drf-yasg
+ruamel.yaml.clib==0.2.0   # via ruamel-yaml
 sentry_sdk==0.12.3
-simplejson==3.16.0        # via django-rest-swagger
-six==1.11.0               # via google-api-core, google-auth, google-resumable-media, protobuf, python-dateutil, social-auth-app-django, social-auth-core
+six==1.11.0               # via drf-yasg, google-api-core, google-auth, google-resumable-media, packaging, protobuf, python-dateutil, social-auth-app-django, social-auth-core
 social-auth-app-django==3.1.0
 social-auth-core==3.2.0
 sqlparse==0.3.0           # via django
-uritemplate==3.0.0        # via coreapi
+uritemplate==3.0.0        # via coreapi, drf-yasg
 urllib3==1.23             # via requests, sentry-sdk
 whitenoise==4.1.4
 
