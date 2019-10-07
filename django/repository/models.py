@@ -289,11 +289,11 @@ signals.post_delete.connect(Package.post_delete, sender=Package)
 
 
 def get_version_zip_filepath(instance, filename):
-    return f"{instance}.zip"
+    return f"repository/packages/{instance}.zip"
 
 
 def get_version_png_filepath(instance, filename):
-    return f"{instance}.png"
+    return f"repository/icons/{instance}.png"
 
 
 class PackageVersion(models.Model):
