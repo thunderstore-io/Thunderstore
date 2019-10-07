@@ -256,20 +256,18 @@ class Package(models.Model):
         }
 
     def recache_latest(self):
+        if hasattr(self, "available_versions"):
+            del self.available_versions  # Bust the version cache
         self.latest = self.available_versions.first()
         self.save()
 
     def handle_created_version(self, version):
         self.date_updated = timezone.now()
         self.is_deprecated = False
-        if self.latest:
-            new_version = StrictVersion(version.version_number)
-            old_version = StrictVersion(self.latest.version_number)
-            if new_version > old_version:
-                self.latest = version
-        else:
-            self.latest = version
         self.save()
+
+    def handle_updated_version(self, version):
+        self.recache_latest()
 
     def handle_deleted_version(self, version):
         self.recache_latest()
@@ -403,6 +401,7 @@ class PackageVersion(models.Model):
         if created:
             instance.package.handle_created_version(instance)
             instance.announce_release()
+        instance.package.handle_updated_version(instance)
 
     @staticmethod
     def post_delete(sender, instance, **kwargs):
