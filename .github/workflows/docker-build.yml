@@ -1,0 +1,12 @@
+name: Docker Image CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag riskofthunder/thunderstore:$(date +%s)
