@@ -1,12 +1,14 @@
-name: Docker Image CI
+name: Build & Test
 
 on: [push, pull_request]
 
 jobs:
   build:
-    name: Build Docker Image
+    name: Build and test the application
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag riskofthunder/thunderstore:$(date +%s)
+      - uses: actions/checkout@v1
+      - name: Build the application Docker image
+        run: docker build . --file Dockerfile --tag riskofthunder/thunderstore:${GITHUB_SHA}
+      - name: Run tests on the Docker image
+        run: docker run --rm --entrypoint pytest -e SECRET_KEY=hunter2 riskofthunder/thunderstore:${GITHUB_SHA}
