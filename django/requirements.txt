@@ -63,7 +63,7 @@ social-auth-app-django==3.1.0
 social-auth-core==3.2.0
 sqlparse==0.3.0           # via django
 uritemplate==3.0.0        # via coreapi, drf-yasg
-urllib3==1.23             # via botocore, requests, sentry-sdk
+urllib3==1.24.2             # via botocore, requests, sentry-sdk
 whitenoise==4.1.4
 
 # The following packages are considered to be unsafe in a requirements file:
