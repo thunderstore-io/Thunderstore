@@ -7,9 +7,11 @@ boto3==1.9.244            # via django-storages
 botocore==1.12.244        # via boto3, s3transfer
 cachetools==2.1.0         # via google-auth
 certifi==2018.4.16        # via requests, sentry-sdk
+cffi==1.13.2              # via cryptography
 chardet==3.0.4            # via requests
 coreapi==2.3.3            # via drf-yasg
 coreschema==0.0.4         # via coreapi, drf-yasg
+cryptography==2.8         # via pyjwt
 defusedxml==0.5.0         # via python3-openid, social-auth-core
 django==2.2.6
 django-environ==0.4.5
@@ -44,7 +46,8 @@ protobuf==3.6.1           # via google-api-core, googleapis-common-protos
 psycopg2-binary==2.8.3
 pyasn1==0.4.4             # via pyasn1-modules, rsa
 pyasn1-modules==0.2.2     # via google-auth
-pyjwt==1.6.4              # via social-auth-core
+pycparser==2.19           # via cffi
+pyjwt[crypto]==1.7.1
 pymdown-extensions==6.1
 pyparsing==2.4.2          # via packaging
 python-dateutil==2.8.0    # via arrow, botocore
@@ -58,7 +61,7 @@ ruamel.yaml==0.16.5       # via drf-yasg
 ruamel.yaml.clib==0.2.0   # via ruamel-yaml
 s3transfer==0.2.1         # via boto3
 sentry_sdk==0.12.3
-six==1.11.0               # via drf-yasg, google-api-core, google-auth, google-resumable-media, packaging, protobuf, python-dateutil, social-auth-app-django, social-auth-core
+six==1.11.0               # via cryptography, drf-yasg, google-api-core, google-auth, google-resumable-media, packaging, protobuf, python-dateutil, social-auth-app-django, social-auth-core
 social-auth-app-django==3.1.0
 social-auth-core==3.2.0
 sqlparse==0.3.0           # via django

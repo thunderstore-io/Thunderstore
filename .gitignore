@@ -7,3 +7,4 @@ package/
 kubernetes/deployment.yaml
 package-example/
 **/node_modules/
+.idea/
