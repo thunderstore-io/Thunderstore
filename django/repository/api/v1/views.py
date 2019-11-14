@@ -31,7 +31,7 @@ class DeprecateModApiView(JWTApiView):
         discord_user = self.request.decoded.get("user")
 
         if not discord_user:
-            raise PermissionDenied()
+            raise PermissionDenied("Insufficient Discord user permissions")
 
         permissions = DiscordUserBotPermission.objects.filter(
             discord_user_id=discord_user,
@@ -39,10 +39,10 @@ class DeprecateModApiView(JWTApiView):
         ).first()
 
         if not permissions:
-            raise PermissionDenied()
+            raise PermissionDenied("Insufficient Discord user permissions")
 
         if not permissions.can_deprecate:
-            raise PermissionDenied()
+            raise PermissionDenied("Insufficient Discord user permissions")
 
     def post(self, request, format=None):
         package = self.get_package(request.decoded.get("package"))
