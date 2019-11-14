@@ -2,7 +2,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 
 from core.jwt_helpers import JWTApiView
-from repository.models import Package
+from repository.models import Package, DiscordUserBotPermission
 
 
 class DeprecateModApiView(JWTApiView):
@@ -27,11 +27,30 @@ class DeprecateModApiView(JWTApiView):
             raise NotFound()
         return package
 
+    def validate_permissions(self):
+        discord_user = self.request.decoded.get("user")
+
+        if not discord_user:
+            raise PermissionDenied()
+
+        permissions = DiscordUserBotPermission.objects.filter(
+            discord_user_id=discord_user,
+            thunderstore_user=self.request.user,
+        ).first()
+
+        if not permissions:
+            raise PermissionDenied()
+
+        if not permissions.can_deprecate:
+            raise PermissionDenied()
+
     def post(self, request, format=None):
         package = self.get_package(request.decoded.get("package"))
 
         if not request.user.has_perm("repository.change_package"):
             raise PermissionDenied()
+
+        self.validate_permissions()
 
         package.is_deprecated = True
         package.save()
