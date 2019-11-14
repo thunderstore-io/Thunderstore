@@ -3,6 +3,7 @@ from rest_framework import exceptions
 
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.parsers import BaseParser
+from rest_framework.views import APIView
 
 from core.models import IncomingJWTAuthConfiguration
 
@@ -36,3 +37,11 @@ class JWTParser(BaseParser):
         Parsing will be handled by the authentication part, so simply pass the content forward
         """
         return stream.read()
+
+
+class JWTApiView(APIView):
+    """
+    API View intended to be used for receiving JWT requets
+    """
+    authentication_classes = [JWTAuthentication]
+    parser_classes = [JWTParser]

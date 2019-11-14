@@ -2,7 +2,9 @@ import jwt
 import pytest
 
 from django.contrib.auth import get_user_model
+from rest_framework.response import Response
 
+from core.jwt_helpers import JWTApiView
 from core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
 
 User = get_user_model()
@@ -88,14 +90,26 @@ WVTLpLAg5LnuIgDbtht/PumggqzpAJXJtQIDAQAB
 """.strip()
 
 
-@pytest.mark.django_db
-def test_jwt_hs256_decode_incoming_valid():
-    jwt_secret = "superSecret"
-    user = User.objects.create_user(
+@pytest.fixture()
+def user():
+    return User.objects.create_user(
         username="Test",
         email="test@example.org",
         password="hunter2",
     )
+
+
+@pytest.fixture()
+def test_jwt_view():
+    class TestApiView(JWTApiView):
+        def post(self, request, format=None):
+            return Response("OK")
+    return TestApiView.as_view()
+
+
+@pytest.mark.django_db
+def test_jwt_hs256_decode_incoming_valid(user):
+    jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
         user=user,
@@ -112,12 +126,7 @@ def test_jwt_hs256_decode_incoming_valid():
 
 
 @pytest.mark.django_db
-def test_jwt_hs256_decode_incoming_invalid():
-    user = User.objects.create_user(
-        username="Test",
-        email="test@example.org",
-        password="hunter2",
-    )
+def test_jwt_hs256_decode_incoming_invalid(user):
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
         user=user,
@@ -132,12 +141,7 @@ def test_jwt_hs256_decode_incoming_invalid():
 
 
 @pytest.mark.django_db
-def test_jwt_rs256_decode_incoming_valid():
-    user = User.objects.create_user(
-        username="Test",
-        email="test@example.org",
-        password="hunter2",
-    )
+def test_jwt_rs256_decode_incoming_valid(user):
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
         user=user,
@@ -154,12 +158,7 @@ def test_jwt_rs256_decode_incoming_valid():
 
 
 @pytest.mark.django_db
-def test_jwt_rs256_decode_incoming_invalid():
-    user = User.objects.create_user(
-        username="Test",
-        email="test@example.org",
-        password="hunter2",
-    )
+def test_jwt_rs256_decode_incoming_invalid(user):
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
         user=user,
@@ -171,3 +170,80 @@ def test_jwt_rs256_decode_incoming_invalid():
     encoded = jwt.encode(payload, TEST_PRIVATE_KEY, algorithm=SecretTypeChoices.RS256)
     with pytest.raises(jwt.exceptions.InvalidTokenError):
         IncomingJWTAuthConfiguration.decode_incoming_data(encoded, auth.key_id)
+
+
+@pytest.mark.django_db
+def test_jwt_hs256_request_auth_valid(rf, test_jwt_view, user):
+    secret = "VALID"
+    auth = IncomingJWTAuthConfiguration.objects.create(
+        name="Test configuration",
+        user=user,
+        secret=secret,
+        secret_type=SecretTypeChoices.HS256,
+    )
+    data = jwt.encode(
+        payload={"test": "data"},
+        key=secret,
+        algorithm=SecretTypeChoices.HS256,
+        headers={"kid": str(auth.key_id)}
+    )
+    request = rf.post("/", data, content_type="application/jwt")
+    response = test_jwt_view(request)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_jwt_hs256_request_auth_invalid(rf, test_jwt_view, user):
+    auth = IncomingJWTAuthConfiguration.objects.create(
+        name="Test configuration",
+        user=user,
+        secret="VALID",
+        secret_type=SecretTypeChoices.HS256,
+    )
+    data = jwt.encode(
+        payload={"test": "data"},
+        key="INVALID",
+        algorithm=SecretTypeChoices.HS256,
+        headers={"kid": str(auth.key_id)}
+    )
+    request = rf.post("/", data, content_type="application/jwt")
+    response = test_jwt_view(request)
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_jwt_rs256_request_auth_valid(rf, test_jwt_view, user):
+    auth = IncomingJWTAuthConfiguration.objects.create(
+        name="Test configuration",
+        user=user,
+        secret=TEST_PUBLIC_KEY,
+        secret_type=SecretTypeChoices.RS256,
+    )
+    data = jwt.encode(
+        payload={"test": "data"},
+        key=TEST_PRIVATE_KEY,
+        algorithm=SecretTypeChoices.RS256,
+        headers={"kid": str(auth.key_id)}
+    )
+    request = rf.post("/", data, content_type="application/jwt")
+    response = test_jwt_view(request)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_jwt_rs256_request_auth_invalid(rf, test_jwt_view, user):
+    auth = IncomingJWTAuthConfiguration.objects.create(
+        name="Test configuration",
+        user=user,
+        secret=TEST_PUBLIC_KEY,
+        secret_type=SecretTypeChoices.RS256,
+    )
+    data = jwt.encode(
+        payload={"test": "data"},
+        key=TEST_PRIVATE_KEY_2,
+        algorithm=SecretTypeChoices.RS256,
+        headers={"kid": str(auth.key_id)}
+    )
+    request = rf.post("/", data, content_type="application/jwt")
+    response = test_jwt_view(request)
+    assert response.status_code == 403
