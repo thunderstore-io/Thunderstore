@@ -100,11 +100,11 @@ def test_jwt_hs256_decode_incoming_valid():
         name="Test configuration",
         user=user,
         secret=jwt_secret,
-        secret_type=SecretTypeChoices.hs256,
+        secret_type=SecretTypeChoices.HS256,
     )
 
     payload = {"test": "data"}
-    encoded = jwt.encode(payload, jwt_secret, algorithm=SecretTypeChoices.hs256)
+    encoded = jwt.encode(payload, jwt_secret, algorithm=SecretTypeChoices.HS256)
     result = IncomingJWTAuthConfiguration.decode_incoming_data(encoded, auth.key_id)
     assert len(result) == 2
     assert result["user"] == user
@@ -122,11 +122,11 @@ def test_jwt_hs256_decode_incoming_invalid():
         name="Test configuration",
         user=user,
         secret="superSecret",
-        secret_type=SecretTypeChoices.hs256,
+        secret_type=SecretTypeChoices.HS256,
     )
 
     payload = {"test": "data"}
-    encoded = jwt.encode(payload, "notCorrect", algorithm=SecretTypeChoices.hs256)
+    encoded = jwt.encode(payload, "notCorrect", algorithm=SecretTypeChoices.HS256)
     with pytest.raises(jwt.exceptions.InvalidTokenError):
         IncomingJWTAuthConfiguration.decode_incoming_data(encoded, auth.key_id)
 
@@ -142,11 +142,11 @@ def test_jwt_rs256_decode_incoming_valid():
         name="Test configuration",
         user=user,
         secret=TEST_PUBLIC_KEY,
-        secret_type=SecretTypeChoices.rs256,
+        secret_type=SecretTypeChoices.RS256,
     )
 
     payload = {"test": "data"}
-    encoded = jwt.encode(payload, TEST_PRIVATE_KEY, algorithm=SecretTypeChoices.rs256)
+    encoded = jwt.encode(payload, TEST_PRIVATE_KEY, algorithm=SecretTypeChoices.RS256)
     result = IncomingJWTAuthConfiguration.decode_incoming_data(encoded, auth.key_id)
     assert len(result) == 2
     assert result["user"] == user
@@ -164,10 +164,10 @@ def test_jwt_rs256_decode_incoming_invalid():
         name="Test configuration",
         user=user,
         secret=TEST_PUBLIC_KEY_2,
-        secret_type=SecretTypeChoices.rs256,
+        secret_type=SecretTypeChoices.RS256,
     )
 
     payload = {"test": "data"}
-    encoded = jwt.encode(payload, TEST_PRIVATE_KEY, algorithm=SecretTypeChoices.rs256)
+    encoded = jwt.encode(payload, TEST_PRIVATE_KEY, algorithm=SecretTypeChoices.RS256)
     with pytest.raises(jwt.exceptions.InvalidTokenError):
         IncomingJWTAuthConfiguration.decode_incoming_data(encoded, auth.key_id)

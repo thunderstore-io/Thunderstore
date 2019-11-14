@@ -9,8 +9,8 @@ from core.utils import ChoiceEnum
 
 
 class SecretTypeChoices(ChoiceEnum):
-    hs256 = "HS256"
-    rs256 = "RS256"
+    HS256 = "HS256"
+    RS256 = "RS256"
 
 
 class IncomingJWTAuthConfiguration(models.Model):
