@@ -91,15 +91,6 @@ WVTLpLAg5LnuIgDbtht/PumggqzpAJXJtQIDAQAB
 
 
 @pytest.fixture()
-def user():
-    return User.objects.create_user(
-        username="Test",
-        email="test@example.org",
-        password="hunter2",
-    )
-
-
-@pytest.fixture()
 def test_jwt_view():
     class TestApiView(JWTApiView):
         def post(self, request, format=None):
