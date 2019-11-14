@@ -20,5 +20,5 @@ class PackageAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "key_id",
-        "user__name",
+        "user__username",
     )

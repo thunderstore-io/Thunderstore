@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 
+from repository.models import DiscordUserBotPermission
 from repository.models import Package
 from repository.models import PackageVersion
 from repository.models import PackageRating
@@ -94,4 +95,21 @@ class PackageAdmin(admin.ModelAdmin):
     search_fields = (
         "name",
         "owner__name",
+    )
+
+
+@admin.register(DiscordUserBotPermission)
+class DiscordUserBotPermissionAdmin(admin.ModelAdmin):
+    list_display = (
+        "thunderstore_user",
+        "label",
+        "discord_user_id",
+        "can_deprecate",
+    )
+    list_filter = (
+        "can_deprecate",
+    )
+    search_fields = (
+        "label",
+        "thunderstore_user__username",
     )
