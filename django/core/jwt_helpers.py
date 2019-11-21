@@ -18,7 +18,7 @@ class JWTAuthentication(BaseAuthentication):
         try:
             header = jwt.get_unverified_header(jwt_data)
         except jwt.exceptions.InvalidTokenError:
-            raise exceptions.AuthenticationFailed("Invalid JWT tokoen format")
+            raise exceptions.AuthenticationFailed("Invalid JWT token format")
 
         key_id = header.get("kid")
 
