@@ -159,6 +159,14 @@ class Package(models.Model):
         return f"{self.owner.name}-{self.name}"
 
     @property
+    def reference(self):
+        from repository.package_reference import PackageReference
+        return PackageReference(
+            namespace=self.owner.name,
+            name=self.name,
+        )
+
+    @property
     def display_name(self):
         return self.name.replace("_", " ")
 
@@ -378,6 +386,15 @@ class PackageVersion(models.Model):
     @property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"
+
+    @property
+    def reference(self):
+        from repository.package_reference import PackageReference
+        return PackageReference(
+            namespace=self.owner.name,
+            name=self.name,
+            version=self.version_number,
+        )
 
     @property
     def download_url(self):
