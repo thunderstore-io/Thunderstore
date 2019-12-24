@@ -17,7 +17,7 @@ def test_package_list_view(client):
         )
         package = PackageFactory.create(
             owner=uploader,
-            name=f"test-{i}",
+            name=f"test_{i}",
             is_active=True,
             is_deprecated=False,
         )
@@ -30,7 +30,7 @@ def test_package_list_view(client):
     assert response.status_code == 200
 
     for i in range(4):
-        assert f"test-{i}".encode("utf-8") in response.content
+        assert f"test_{i}".encode("utf-8") in response.content
 
 
 @pytest.mark.django_db

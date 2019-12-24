@@ -1,8 +1,10 @@
+import re
 import uuid
 
 from datetime import timedelta
 from distutils.version import StrictVersion
 
+from django.core.exceptions import ValidationError
 from ipware import get_client_ip
 
 from django.conf import settings
@@ -15,6 +17,7 @@ from django.utils.functional import cached_property
 
 from core.cache import CacheBustCondition, invalidate_cache
 from core.utils import ChoiceEnum
+from repository.consts import PACKAGE_NAME_REGEX
 
 from webhooks.models import Webhook, WebhookType
 
@@ -153,6 +156,14 @@ class Package(models.Model):
 
     class Meta:
         unique_together = ("owner", "name")
+
+    def validate(self):
+        if not re.match(PACKAGE_NAME_REGEX, self.name):
+            raise ValidationError("Package names can only contain a-Z A-Z 0-9 _ characers")
+
+    def save(self, *args, **kwargs):
+        self.validate()
+        return super().save(*args, **kwargs)
 
     @property
     def full_package_name(self):
@@ -353,6 +364,14 @@ class PackageVersion(models.Model):
         default=uuid.uuid4,
         editable=False
     )
+
+    def validate(self):
+        if not re.match(PACKAGE_NAME_REGEX, self.name):
+            raise ValidationError("Package names can only contain a-Z A-Z 0-9 _ characers")
+
+    def save(self, *args, **kwargs):
+        self.validate()
+        return super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ("package", "version_number")
