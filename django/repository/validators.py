@@ -15,7 +15,10 @@ class PackageReferenceValidator:
         self.resolve = resolve
 
     def __call__(self, value):
-        reference = PackageReference.parse(str(value))
+        try:
+            reference = PackageReference.parse(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
         if reference.version is None and self.require_version:
             raise ValidationError(f"Package reference is missing version: {reference}")
         if self.resolve and reference.instance is None:

@@ -11,6 +11,7 @@ from ..package_reference import PackageReference
 @pytest.mark.parametrize(
     "to_parse, should_raise",
     [
+        [None, True],
         ["someUser-SomePackage", False],
         ["someUser-SomePackage-1.0.2", False],
         ["some-user-that-has-dashes-SomePackage-1.0.6", False],

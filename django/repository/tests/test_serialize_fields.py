@@ -1,7 +1,9 @@
 import pytest
+from rest_framework import serializers
 
 from rest_framework.exceptions import ValidationError as ValidationError
 
+from repository.factories import PackageVersionFactory
 from repository.models import PackageVersion
 from repository.package_reference import PackageReference
 from repository.serializer_fields import PackageNameField
@@ -11,7 +13,7 @@ from repository.serializer_fields import DependencyField
 
 def test_fields_dependency_invalid_reference():
     field = DependencyField()
-    with pytest.raises(ValueError) as exception:
+    with pytest.raises(ValidationError) as exception:
         field.run_validation("not a reference")
     assert "Invalid package reference string" in str(exception.value)
 
@@ -38,6 +40,28 @@ def test_fields_dependency_valid(package_version):
     result = field.run_validation(package_version.reference)
     assert isinstance(result, PackageReference)
     assert result == package_version.reference
+
+
+@pytest.mark.django_db
+def test_fields_list_dependency_field():
+    field = serializers.ListField(
+        child=DependencyField(),
+        max_length=100,
+        allow_empty=True,
+    )
+    versions = [
+        PackageVersionFactory.create(name=f"package_{i}") for i in range(10)
+    ]
+    references = [
+        x.reference for x in versions
+    ]
+    reference_strings = [
+        str(x) for x in references
+    ]
+    result = field.run_validation(reference_strings)
+    assert len(result) == 10
+    assert isinstance(result[0], PackageReference)
+    assert result == references
 
 
 @pytest.mark.parametrize(

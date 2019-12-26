@@ -1,5 +1,6 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from repository.consts import PACKAGE_NAME_REGEX, PACKAGE_VERSION_REGEX
 from repository.models import PackageVersion
@@ -16,7 +17,10 @@ class DependencyField(serializers.Field):
         )
 
     def to_internal_value(self, data):
-        return PackageReference.parse(str(data))
+        try:
+            return PackageReference.parse(str(data))
+        except ValueError as exc:
+            raise ValidationError(str(exc))
 
     def to_representation(self, value):
         return str(value)

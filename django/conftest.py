@@ -38,3 +38,14 @@ def package_version(package):
         description="Example mod",
         readme="# This is an example mod",
     )
+
+
+@pytest.fixture()
+def manifest_v1_data():
+    return {
+        "name": "name",
+        "version_number": "1.0.0",
+        "website_url": "",
+        "description": "",
+        "dependencies": [],
+    }

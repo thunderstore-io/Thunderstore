@@ -115,6 +115,9 @@ class PackageReference:
         if isinstance(unparsed, PackageReference):
             return unparsed
 
+        if unparsed is None:
+            raise ValueError("Unable to parse NoneType")
+
         version_string = unparsed.split("-")[-1]
         version = None
         if version_string.count(".") > 0:
