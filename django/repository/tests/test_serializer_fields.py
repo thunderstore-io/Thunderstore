@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from rest_framework.exceptions import ValidationError as ValidationError
 
-from repository.factories import PackageVersionFactory
+from repository.factories import PackageVersionFactory, UploaderIdentityFactory, PackageFactory
 from repository.models import PackageVersion
 from repository.package_reference import PackageReference
 from repository.serializer_fields import PackageNameField
@@ -40,6 +40,7 @@ def test_fields_dependency_valid(package_version):
     result = field.run_validation(package_version.reference)
     assert isinstance(result, PackageReference)
     assert result == package_version.reference
+    assert field.to_representation(result) == str(package_version.reference)
 
 
 @pytest.mark.django_db
@@ -49,8 +50,12 @@ def test_fields_list_dependency_field():
         max_length=100,
         allow_empty=True,
     )
+    identity = UploaderIdentityFactory.create(name="tester")
     versions = [
-        PackageVersionFactory.create(name=f"package_{i}") for i in range(10)
+        PackageVersionFactory.create(
+            package=PackageFactory.create(owner=identity, name=f"package_{i}"),
+            name=f"package_{i}",
+        ) for i in range(10)
     ]
     references = [
         x.reference for x in versions

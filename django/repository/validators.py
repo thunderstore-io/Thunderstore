@@ -28,7 +28,7 @@ class PackageReferenceValidator:
         return all((
             isinstance(other, self.__class__),
             self.require_version == other.require_version,
-            self.resolve == other.instance,
+            self.resolve == other.resolve,
         ))
 
 

@@ -10,7 +10,6 @@ from repository.utils import does_contain_package, has_duplicate_packages
 
 
 class ManifestV1Serializer(serializers.Serializer):
-    # TODO: Test required
 
     def __init__(self, *args, **kwargs):
         if "user" not in kwargs:
@@ -50,8 +49,8 @@ class ManifestV1Serializer(serializers.Serializer):
             raise ValidationError("Package depending on itself is not allowed")
         return result
 
-    def create(self, validated_data):
-        pass
-
     def update(self, instance, validated_data):
-        pass
+        raise NotImplementedError(".update() is not supported")
+
+    def create(self, validated_data):
+        raise NotImplementedError(".create() is not supported")

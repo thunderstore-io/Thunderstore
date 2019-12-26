@@ -276,6 +276,7 @@ def test_manifest_v1_serializer_description_validation(user, manifest_v1_data, d
         [["some not valid website URL"], "Invalid package reference string"],
         [[None], "This field may not be null."],
         [None, "This field may not be null."],
+        ["", 'Expected a list of items but got type "str".']
     ]
 )
 def test_manifest_v1_serializer_dependencies_invalid(user, manifest_v1_data, dependencies, error: str):
@@ -313,3 +314,140 @@ def test_manifest_v1_serializer_dependencies_valid(user, manifest_v1_data):
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field",
+    [
+        "name",
+        "version_number",
+        "website_url",
+        "description",
+        "dependencies",
+    ],
+)
+def test_manifest_v1_missing_fields(user, manifest_v1_data, field):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    del manifest_v1_data[field]
+    serializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid() is False
+    assert "This field is required." in str(serializer.errors[field][0])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field",
+    [
+        "name",
+        "version_number",
+        "website_url",
+        "description",
+        "dependencies",
+    ],
+)
+def test_manifest_v1_null_fields(user, manifest_v1_data, field):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    manifest_v1_data[field] = None
+    serializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid() is False
+    assert "This field may not be null." in str(serializer.errors[field][0])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field, empty_val, should_fail",
+    [
+        ["name", "", True],
+        ["version_number", "", True],
+        ["website_url", "", False],
+        ["description", "", False],
+        ["dependencies", [], False],
+    ],
+)
+def test_manifest_v1_blank_fields(user, manifest_v1_data, field, empty_val, should_fail):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    manifest_v1_data[field] = empty_val
+    serializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    if should_fail:
+        assert serializer.is_valid() is False
+        assert "This field may not be blank." in str(serializer.errors[field][0])
+    else:
+        assert serializer.is_valid() is True
+
+
+def test_manifest_v1_requires_user(manifest_v1_data):
+    with pytest.raises(AttributeError) as exc:
+        _ = ManifestV1Serializer(
+            data=manifest_v1_data,
+        )
+    assert "Missing required key word parameter: user" in str(exc.value)
+
+
+def test_manifest_v1_requires_uploader(user, manifest_v1_data):
+    with pytest.raises(AttributeError) as exc:
+        _ = ManifestV1Serializer(
+            data=manifest_v1_data,
+            user=user,
+        )
+    assert "Missing required key word parameter: uploader" in str(exc.value)
+
+
+def test_manifest_v1_create(user, manifest_v1_data):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    serializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid()
+    with pytest.raises(NotImplementedError) as exc:
+        serializer.create(serializer.validated_data)
+    assert ".create() is not supported" in str(exc.value)
+
+
+def test_manifest_v1_update(user, manifest_v1_data):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    serializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid()
+    with pytest.raises(NotImplementedError) as exc:
+        serializer.update({}, serializer.validated_data)
+    assert ".update() is not supported" in str(exc.value)
+
+
+def test_manifest_v1_deserialize_serialize(user, manifest_v1_data, package_version):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    manifest_v1_data["dependencies"] = [str(package_version.reference)]
+    deserializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    assert deserializer.is_valid()
+    validated_data = deserializer.validated_data
+    assert validated_data
+    assert isinstance(validated_data["dependencies"][0], PackageReference)
+    assert validated_data["dependencies"][0] == package_version.reference
+    serializer = ManifestV1Serializer(
+        instance=validated_data,
+        user=user,
+        uploader=identity,
+    )
+    serialized_data = serializer.data
+    assert serialized_data == manifest_v1_data
