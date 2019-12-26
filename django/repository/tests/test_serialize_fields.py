@@ -1,9 +1,43 @@
 import pytest
-from rest_framework.exceptions import ValidationError
+
+from rest_framework.exceptions import ValidationError as ValidationError
 
 from repository.models import PackageVersion
+from repository.package_reference import PackageReference
 from repository.serializer_fields import PackageNameField
 from repository.serializer_fields import PackageVersionField
+from repository.serializer_fields import DependencyField
+
+
+def test_fields_dependency_invalid_reference():
+    field = DependencyField()
+    with pytest.raises(ValueError) as exception:
+        field.run_validation("not a reference")
+    assert "Invalid package reference string" in str(exception.value)
+
+
+@pytest.mark.django_db
+def test_fields_dependency_missing_version():
+    field = DependencyField()
+    with pytest.raises(ValidationError) as exception:
+        field.run_validation("someUser-somePackage")
+    assert "Package reference is missing version" in str(exception.value)
+
+
+@pytest.mark.django_db
+def test_fields_dependency_nonexisting_reference():
+    field = DependencyField()
+    with pytest.raises(ValidationError) as exception:
+        field.run_validation("someUser-somePackage-1.0.0")
+    assert "No matching package found for reference" in str(exception.value)
+
+
+@pytest.mark.django_db
+def test_fields_dependency_valid(package_version):
+    field = DependencyField()
+    result = field.run_validation(package_version.reference)
+    assert isinstance(result, PackageReference)
+    assert result == package_version.reference
 
 
 @pytest.mark.parametrize(

@@ -3,7 +3,23 @@ from rest_framework import serializers
 
 from repository.consts import PACKAGE_NAME_REGEX, PACKAGE_VERSION_REGEX
 from repository.models import PackageVersion
-from repository.validators import VersionNumberValidator
+from repository.package_reference import PackageReference
+from repository.validators import PackageReferenceValidator, VersionNumberValidator
+
+
+class DependencyField(serializers.Field):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.validators.append(
+            PackageReferenceValidator(require_version=True, resolve=True)
+        )
+
+    def to_internal_value(self, data):
+        return PackageReference.parse(str(data))
+
+    def to_representation(self, value):
+        return str(value)
 
 
 class PackageNameField(serializers.CharField):
