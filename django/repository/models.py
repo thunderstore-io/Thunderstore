@@ -85,6 +85,15 @@ class UploaderIdentity(models.Model):
         assert identity.members.filter(user=user).exists()
         return identity
 
+    def can_user_upload(self, user):
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            return False
+        return membership.role in (
+            UploaderIdentityMemberRole.owner,
+            UploaderIdentityMemberRole.member,
+        )
+
 
 class PackageQueryset(models.QuerySet):
     def active(self):
