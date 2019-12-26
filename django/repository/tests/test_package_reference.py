@@ -1,3 +1,5 @@
+from typing import Union
+
 import pytest
 
 from distutils.version import StrictVersion
@@ -7,7 +9,7 @@ from ..package_reference import PackageReference
 
 
 @pytest.mark.parametrize(
-    "reference_string, should_raise",
+    "to_parse, should_raise",
     [
         ["someUser-SomePackage", False],
         ["someUser-SomePackage-1.0.2", False],
@@ -23,15 +25,16 @@ from ..package_reference import PackageReference
         ["a-b-0.0.1", False],
         ["fjwieojfoi wejoiof w", True],
         ["someUser-somePackage-1231203912.43.249234234", False],
+        [PackageReference("namespace", "name", "1.0.0"), False]
     ],
 )
-def test_parsing(reference_string, should_raise):
+def test_parsing(to_parse, should_raise):
     if should_raise:
         with pytest.raises(ValueError):
-            PackageReference.parse(reference_string)
+            PackageReference.parse(to_parse)
     else:
-        parsed = str(PackageReference.parse(reference_string))
-        assert parsed == reference_string
+        parsed = str(PackageReference.parse(to_parse))
+        assert parsed == str(to_parse)
 
 
 @pytest.mark.parametrize(
@@ -127,6 +130,27 @@ def test_without_version(inp, out):
 
 
 @pytest.mark.parametrize(
+    "inp, version, out, exc",
+    [
+        ["user-package", "1.0.0", "user-package-1.0.0", ""],
+        ["user-package", "2.0.0", "user-package-2.0.0", ""],
+        ["user-package", "2.6.0", "user-package-2.6.0", ""],
+        ["user-package", "asdasdasd", "user-package-2.6.0", "invalid version number"],
+    ],
+)
+def test_with_version(inp: str, version: Union[int, str], out: str, exc: str):
+    reference = PackageReference.parse(inp)
+    if exc:
+        with pytest.raises(ValueError) as exception:
+            reference.with_version(version)
+        assert exc in str(exception.value)
+    else:
+        versioned = reference.with_version(version)
+        assert versioned == PackageReference.parse(out)
+        assert versioned.without_version == reference
+
+
+@pytest.mark.parametrize(
     "a_str, b_str, should_equal",
     [
         ["package-user-1.0.0", "package-user-1.0.0", True],
@@ -162,6 +186,50 @@ def test_init_version_parsing(version_number: str, should_raise: bool):
         reference = PackageReference("User", "package", version_number)
         version = ".".join(str(x) for x in reference.version.version)
         assert version == version_number
+
+
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        ["user-pack-1.0.0", "user-pack-1.1.0", False],
+        ["user-pack-2.0.0", "user-pack-1.1.0", True],
+        ["user-pack-1.0.0", "user-another-1.1.0", "Unable to compare different packages"],
+        ["user-pack-1.0.0", "user-pack", "Unable to compare packages without version"],
+        ["user-pack", "user-pack-1.0.0", "Unable to compare packages without version"],
+        ["user-pack-1.0.0", 10, "Unable to make comparison"],
+    ]
+)
+def test_greater_than(a: str, b: str, expected: Union[bool, str]):
+    a = PackageReference.parse(a) if isinstance(a, str) else a
+    b = PackageReference.parse(b) if isinstance(b, str) else b
+    if isinstance(expected, bool):
+        assert (a > b) == expected
+    else:
+        with pytest.raises(TypeError) as exception:
+            _ = a > b
+        assert expected in str(exception.value)
+
+
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        ["user-pack-1.0.0", "user-pack-1.1.0", True],
+        ["user-pack-2.0.0", "user-pack-1.1.0", False],
+        ["user-pack-1.0.0", "user-another-1.1.0", "Unable to compare different packages"],
+        ["user-pack-1.0.0", "user-pack", "Unable to compare packages without version"],
+        ["user-pack", "user-pack-1.0.0", "Unable to compare packages without version"],
+        ["user-pack-1.0.0", 10, "Unable to make comparison"],
+    ]
+)
+def test_lesser_than(a: str, b: str, expected: Union[bool, str]):
+    a = PackageReference.parse(a) if isinstance(a, str) else a
+    b = PackageReference.parse(b) if isinstance(b, str) else b
+    if isinstance(expected, bool):
+        assert (a < b) == expected
+    else:
+        with pytest.raises(TypeError) as exception:
+            _ = a < b
+        assert expected in str(exception.value)
 
 
 @pytest.mark.parametrize(
@@ -217,3 +285,26 @@ def test_resolve(package_version: PackageVersion):
     invalid_reference = package_version.reference
     invalid_reference.name = invalid_reference.name + "invalid"
     assert invalid_reference.instance is None
+
+
+@pytest.mark.django_db
+def test_queryset(package_version: PackageVersion):
+    assert package_version.reference.queryset.exists()
+    assert package_version.reference.queryset.count() == 1
+    assert package_version.reference.queryset.first() == package_version
+    versionless = package_version.reference.without_version
+    assert versionless.queryset.exists()
+    assert versionless.queryset.count() == 1
+    assert versionless.queryset.first() == package_version.package
+    invalid = PackageReference("user", "name", "1.0.0")
+    assert invalid.queryset.count() == 0
+    assert invalid.without_version.queryset.count() == 0
+
+
+@pytest.mark.django_db
+def test_exists(package_version: PackageVersion):
+    assert package_version.reference.exists
+    assert package_version.reference.without_version.exists
+    invalid = PackageReference("user", "name", "1.0.0")
+    assert not invalid.exists
+    assert not invalid.without_version.exists

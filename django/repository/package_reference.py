@@ -3,6 +3,7 @@ from __future__ import annotations
 from distutils.version import StrictVersion
 from typing import Union
 
+from django.db.models import QuerySet
 from django.utils.functional import cached_property
 
 from repository.models import PackageVersion, Package
@@ -77,13 +78,21 @@ class PackageReference:
 
     def __gt__(self, other):
         if isinstance(other, PackageReference):
+            if not self.is_same_package(other):
+                raise TypeError("Unable to compare different packages")
+            if not all((self.version, other.version)):
+                raise TypeError("Unable to compare packages without version")
             return self.version > other.version
-        return super().__gt__(other)
+        raise TypeError("Unable to make comparison")
 
     def __lt__(self, other):
         if isinstance(other, PackageReference):
+            if not self.is_same_package(other):
+                raise TypeError("Unable to compare different packages")
+            if not all((self.version, other.version)):
+                raise TypeError("Unable to compare packages without version")
             return self.version < other.version
-        return super().__lt__(other)
+        raise TypeError("Unable to make comparison")
 
     def __hash__(self):
         return hash(str(self))
@@ -147,6 +156,27 @@ class PackageReference:
             namespace=self.namespace, name=self.name, version=version
         )
 
+    @property
+    def queryset(self) -> QuerySet:
+        """
+        Get the queryset filtering for the model instance this reference is
+        referring to.
+
+        :return: A PackageVersion or Package queryset filtering for this package
+        :rtype: QuerySet of PackageVersion or Package
+        """
+        if self.version:
+            return PackageVersion.objects.filter(
+                package__owner__name=self.namespace,
+                package__name=self.name,
+                version_number=self.version_str,
+            )
+        else:
+            return Package.objects.filter(
+                owner__name=self.namespace,
+                name=self.name,
+            )
+
     @cached_property
     def package_version(self) -> Union[PackageVersion, None]:
         """
@@ -157,11 +187,7 @@ class PackageReference:
         """
         if not self.version:
             raise TypeError("Unable to resolve package version from a versionless reference")
-        return PackageVersion.objects.filter(
-            package__owner__name=self.namespace,
-            package__name=self.name,
-            version_number=self.version_str,
-        ).first()
+        return self.queryset.first()
 
     @cached_property
     def package(self) -> Union[Package, None]:
@@ -171,10 +197,7 @@ class PackageReference:
         :return: A Package model instance matching this reference
         :rtype: Package or None
         """
-        return Package.objects.filter(
-            owner__name=self.namespace,
-            name=self.name,
-        ).first()
+        return self.without_version.instance
 
     @cached_property
     def instance(self) -> Union[Package, PackageVersion, None]:
@@ -186,7 +209,14 @@ class PackageReference:
         :return: This reference's closest matching model instance
         :rtype: Package or PackageVersion or None
         """
-        if self.version:
-            return self.package_version
-        else:
-            return self.package
+        return self.queryset.first()
+
+    @cached_property
+    def exists(self) -> bool:
+        """
+        Check if the package this reference is pointing to exists in the db
+
+        :return: True if the package exists, False otherwise
+        :rtype: bool
+        """
+        return self.queryset.exists()
