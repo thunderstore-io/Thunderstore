@@ -1,3 +1,5 @@
+from distutils.version import StrictVersion
+
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 
@@ -24,4 +26,20 @@ class PackageReferenceValidator:
             isinstance(other, self.__class__),
             self.require_version == other.require_version,
             self.resolve == other.instance,
+        ))
+
+
+@deconstructible
+class VersionNumberValidator:
+    """Validate that a version number string is valid."""
+
+    def __call__(self, value):
+        try:
+            StrictVersion(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
+
+    def __eq__(self, other):
+        return all((
+            isinstance(other, self.__class__),
         ))
