@@ -70,6 +70,11 @@ connected with. For example `beta.thunderstore.io`
 - `PROTOCOL`: The protocol which to use to build URLs to the server. Either
 `https://` or `http://`.
 
+### Gunicorn
+
+- `GUNICORN_WORKER_COUNT`: Used to control how many workers gunicorn will spawn
+- `GUNICORN_LOG_LEVEL`: Used to control gunicorn's logging level
+
 ### GitHub OAuth
 
 To set up GitHub OAuth, head to settings on GitHub (either personal or
