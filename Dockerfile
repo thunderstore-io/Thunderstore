@@ -6,12 +6,12 @@ RUN npm ci
 COPY ./builder /app
 RUN npm run build
 
-FROM python:3.7.0-slim-stretch
+FROM python:3.8.1-slim-buster
 ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-    curl \
+    curl build-essential \
  && rm -rf /var/lib/apt/lists/*
 
 COPY ./django/requirements.txt ./django/requirements-dev.txt /app/
