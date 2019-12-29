@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "Thunderstore"
+version = "0.0.0"
+description = "Thunderstore is a mod database and API for downloading Risk of Rain 2 mods"
+authors = ["Mythic <mythicmaniac@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Django = "^2.2"
+django-environ = "^0.4"
+arrow = "^0.15"
+Pillow = "^6.2"
+psycopg2-binary = "^2.8"
+easy-thumbnails = "^2.6"
+markdown = "^3.1"
+gunicorn = { version = "^19.9", extras = ["gevent"] }
+social-auth-app-django = "^3.1"
+social-auth-core = "^3.2"
+whitenoise = "^4.1"
+django-storages = { version = "^1.7", extras = ["google", "boto3"] }
+djangorestframework = "^3.10"
+drf-yasg = "^1.17"
+django-ipware = "^2.1"
+sentry_sdk = "^0.12"
+django-redis = "^4.10"
+pymdown-extensions = "^6.1"
+pyjwt = { version = "^1.7", extras = ["crypto"] }
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pytest-cov = "^2.8"
+pytest-django = "^3.5.1"
+factory_boy = "^2.12.0"
+faker = "^2.0.2"
+
+[build-system]
+requires = ["poetry>=1.0"]
+build-backend = "poetry.masonry.api"
