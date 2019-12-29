@@ -17,6 +17,11 @@ services:
     restart: always
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru
 
+  adminer:
+    image: adminer:4.7.5
+    ports:
+      - 127.0.0.1:8080:8080
+
   django:
     build:
       context: .
