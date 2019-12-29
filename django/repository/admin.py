@@ -57,6 +57,7 @@ class PackageVersionInline(admin.StackedInline):
         "description",
         "downloads",
         "file",
+        "file_size",
         "icon",
         "name",
         "readme",
