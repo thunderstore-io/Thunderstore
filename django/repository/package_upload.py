@@ -30,6 +30,7 @@ class PackageUploadForm(forms.ModelForm):
         self.manifest: Union[dict, None] = None
         self.icon: Union[ContentFile, None] = None
         self.readme: Union[str, None] = None
+        self.file_size: Union[int, None] = None
 
     def validate_manifest(self, manifest_str):
         try:
@@ -79,6 +80,7 @@ class PackageUploadForm(forms.ModelForm):
 
         if file.size > MAX_PACKAGE_SIZE:
             raise ValidationError(f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes")
+        self.file_size = file.size
 
         current_total = 0
         for version in PackageVersion.objects.all():
@@ -121,6 +123,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.website_url = self.manifest["website_url"]
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
+        self.instance.file_size = self.file_size
         self.instance.package = Package.objects.get_or_create(
             owner=self.identity,
             name=self.instance.name,

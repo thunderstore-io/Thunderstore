@@ -367,6 +367,8 @@ class PackageVersion(models.Model):
         upload_to=get_version_zip_filepath,
         storage=get_storage_class(settings.PACKAGE_FILE_STORAGE)(),
     )
+    file_size = models.PositiveIntegerField()
+
     # <packagename>.png
     icon = models.ImageField(
         upload_to=get_version_png_filepath,
