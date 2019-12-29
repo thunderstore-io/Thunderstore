@@ -121,7 +121,7 @@ class PackageReference:
         version_string = unparsed.split("-")[-1]
         version = None
         if version_string.count(".") > 0:
-            if unparsed.count(".") != 2:
+            if version_string.count(".") != 2:
                 raise ValueError(f"Invalid package reference string: {unparsed}")
             if unparsed.count("-") < 2:
                 raise ValueError(f"Invalid package reference string: {unparsed}")

@@ -26,7 +26,9 @@ from ..package_reference import PackageReference
         ["a-b-0.0.1", False],
         ["fjwieojfoi wejoiof w", True],
         ["someUser-somePackage-1231203912.43.249234234", False],
-        [PackageReference("namespace", "name", "1.0.0"), False]
+        [PackageReference("namespace", "name", "1.0.0"), False],
+        ["TheIllustriousMr.Judson-VindictiveRage-1.0.0", False],
+        ["ewfWJMPFK\"#=jf0p29j3fEWJDf+231'saf#¤)\"!%?I(!\")#(¤?)=\"#!%-VindictiveRage-1.0.0", False],
     ],
 )
 def test_parsing(to_parse, should_raise):
