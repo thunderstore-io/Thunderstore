@@ -451,3 +451,20 @@ def test_manifest_v1_deserialize_serialize(user, manifest_v1_data, package_versi
     )
     serialized_data = serializer.data
     assert serialized_data == manifest_v1_data
+
+
+def test_manifest_v1_invalid_key_formatting(user):
+    data = {
+        "name": "name",
+        "versionNumber": "1.0.0",
+        "websiteUrl": "",
+        "description": "",
+        "dependencies": [],
+    }
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    deserializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=data,
+    )
+    assert deserializer.is_valid() is False
