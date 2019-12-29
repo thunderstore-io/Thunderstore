@@ -456,6 +456,10 @@ class PackageVersion(models.Model):
     def post_delete(sender, instance, **kwargs):
         instance.package.handle_deleted_version(instance)
 
+    @classmethod
+    def get_total_used_disk_space(cls):
+        return cls.objects.aggregate(total=Sum("file_size"))["total"] or 0
+
     def announce_release(self):
         webhooks = Webhook.objects.filter(
             webhook_type=WebhookType.mod_release,

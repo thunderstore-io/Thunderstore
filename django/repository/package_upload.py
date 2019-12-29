@@ -82,10 +82,7 @@ class PackageUploadForm(forms.ModelForm):
             raise ValidationError(f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes")
         self.file_size = file.size
 
-        current_total = 0
-        for version in PackageVersion.objects.all():
-            current_total += version.file.size
-        if file.size + current_total > MAX_TOTAL_SIZE:
+        if file.size + PackageVersion.get_total_used_disk_space() > MAX_TOTAL_SIZE:
             raise ValidationError(f"The server has reached maximum total storage used, and can't receive new uploads")
 
         try:
