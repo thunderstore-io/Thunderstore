@@ -1,8 +1,10 @@
+import re
 import uuid
 
 from datetime import timedelta
 from distutils.version import StrictVersion
 
+from django.core.exceptions import ValidationError
 from ipware import get_client_ip
 
 from django.conf import settings
@@ -15,6 +17,7 @@ from django.utils.functional import cached_property
 
 from core.cache import CacheBustCondition, invalidate_cache
 from core.utils import ChoiceEnum
+from repository.consts import PACKAGE_NAME_REGEX
 
 from webhooks.models import Webhook, WebhookType
 
@@ -81,6 +84,15 @@ class UploaderIdentity(models.Model):
             )
         assert identity.members.filter(user=user).exists()
         return identity
+
+    def can_user_upload(self, user):
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            return False
+        return membership.role in (
+            UploaderIdentityMemberRole.owner,
+            UploaderIdentityMemberRole.member,
+        )
 
 
 class PackageQueryset(models.QuerySet):
@@ -154,9 +166,25 @@ class Package(models.Model):
     class Meta:
         unique_together = ("owner", "name")
 
+    def validate(self):
+        if not re.match(PACKAGE_NAME_REGEX, self.name):
+            raise ValidationError("Package names can only contain a-Z A-Z 0-9 _ characers")
+
+    def save(self, *args, **kwargs):
+        self.validate()
+        return super().save(*args, **kwargs)
+
     @property
     def full_package_name(self):
         return f"{self.owner.name}-{self.name}"
+
+    @property
+    def reference(self):
+        from repository.package_reference import PackageReference
+        return PackageReference(
+            namespace=self.owner.name,
+            name=self.name,
+        )
 
     @property
     def display_name(self):
@@ -315,6 +343,8 @@ class PackageVersion(models.Model):
     name = models.CharField(
         max_length=Package._meta.get_field("name").max_length,
     )
+
+    # TODO: Split to three fields for each number in the version for better querying performance
     version_number = models.CharField(
         max_length=16,
     )
@@ -337,6 +367,8 @@ class PackageVersion(models.Model):
         upload_to=get_version_zip_filepath,
         storage=get_storage_class(settings.PACKAGE_FILE_STORAGE)(),
     )
+    file_size = models.PositiveIntegerField()
+
     # <packagename>.png
     icon = models.ImageField(
         upload_to=get_version_png_filepath,
@@ -345,6 +377,14 @@ class PackageVersion(models.Model):
         default=uuid.uuid4,
         editable=False
     )
+
+    def validate(self):
+        if not re.match(PACKAGE_NAME_REGEX, self.name):
+            raise ValidationError("Package names can only contain a-Z A-Z 0-9 _ characers")
+
+    def save(self, *args, **kwargs):
+        self.validate()
+        return super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ("package", "version_number")
@@ -380,6 +420,15 @@ class PackageVersion(models.Model):
         return f"{self.package.full_package_name}-{self.version_number}"
 
     @property
+    def reference(self):
+        from repository.package_reference import PackageReference
+        return PackageReference(
+            namespace=self.owner.name,
+            name=self.name,
+            version=self.version_number,
+        )
+
+    @property
     def download_url(self):
         return reverse("packages.download", kwargs={
             "owner": self.package.owner.name,
@@ -406,6 +455,10 @@ class PackageVersion(models.Model):
     @staticmethod
     def post_delete(sender, instance, **kwargs):
         instance.package.handle_deleted_version(instance)
+
+    @classmethod
+    def get_total_used_disk_space(cls):
+        return cls.objects.aggregate(total=Sum("file_size"))["total"] or 0
 
     def announce_release(self):
         webhooks = Webhook.objects.filter(

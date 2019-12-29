@@ -3,6 +3,7 @@ from rest_framework.response import Response
 
 from core.jwt_helpers import JWTApiView
 from repository.models import Package, DiscordUserBotPermission
+from repository.package_reference import PackageReference
 
 
 class DeprecateModApiView(JWTApiView):
@@ -16,16 +17,10 @@ class DeprecateModApiView(JWTApiView):
     def get_package(self, package_name):
         if package_name is None:
             raise NotFound()
-        components = package_name.split("-")
-        if len(components) != 2:
+        reference = PackageReference.parse(package_name)
+        if not reference.instance:
             raise NotFound()
-        package = Package.objects.filter(
-            owner__name=components[0],
-            name=components[1],
-        ).first()
-        if not package:
-            raise NotFound()
-        return package
+        return reference.instance
 
     def validate_permissions(self):
         discord_user = self.request.decoded.get("user")

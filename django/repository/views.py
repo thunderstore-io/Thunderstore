@@ -11,7 +11,7 @@ from django.views.generic import View
 from repository.models import Package
 from repository.models import PackageVersion
 from repository.models import UploaderIdentity
-from repository.ziptools import PackageVersionForm
+from repository.package_upload import PackageUploadForm
 
 from django.shortcuts import redirect, get_object_or_404
 
@@ -241,7 +241,7 @@ class PackageVersionDetailView(DetailView):
 
 class PackageCreateView(CreateView):
     model = PackageVersion
-    form_class = PackageVersionForm
+    form_class = PackageUploadForm
     template_name = "repository/package_create.html"
 
     def dispatch(self, *args, **kwargs):
@@ -251,7 +251,8 @@ class PackageCreateView(CreateView):
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super(PackageCreateView, self).get_form_kwargs(*args, **kwargs)
-        kwargs["owner"] = UploaderIdentity.get_or_create_for_user(
+        kwargs["user"] = self.request.user
+        kwargs["identity"] = UploaderIdentity.get_or_create_for_user(
             self.request.user
         )
         return kwargs

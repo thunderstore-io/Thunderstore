@@ -36,10 +36,11 @@ class PackageVersionFactory(factory.DjangoModelFactory):
     class Meta:
         model = PackageVersion
 
-    package = factory.SubFactory(PackageFactory)
+    package = factory.lazy_attribute(lambda o: PackageFactory.create(name=o.name))
     icon = factory.django.ImageField(width=256, height=256)
     name = factory.Faker("first_name")
     version_number = "1.0.0"
+    file_size = 5242880
 
 
 class PackageVersionDownloadEventFactory(factory.DjangoModelFactory):

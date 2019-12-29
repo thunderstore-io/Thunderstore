@@ -41,9 +41,9 @@ markupsafe==1.1.1         # via jinja2
 oauthlib==2.1.0           # via requests-oauthlib, social-auth-core
 packaging==19.2           # via drf-yasg
 pep562==1.0               # via pymdown-extensions
-pillow==6.2.0
+pillow==6.2.1
 protobuf==3.6.1           # via google-api-core, googleapis-common-protos
-psycopg2-binary==2.8.3
+psycopg2-binary==2.8.4
 pyasn1==0.4.4             # via pyasn1-modules, rsa
 pyasn1-modules==0.2.2     # via google-auth
 pycparser==2.19           # via cffi
@@ -58,7 +58,6 @@ requests==2.20.0          # via coreapi, google-api-core, requests-oauthlib, soc
 requests-oauthlib==1.0.0  # via social-auth-core
 rsa==3.4.2                # via google-auth
 ruamel.yaml==0.16.5       # via drf-yasg
-ruamel.yaml.clib==0.2.0   # via ruamel-yaml
 s3transfer==0.2.1         # via boto3
 sentry_sdk==0.12.3
 six==1.11.0               # via cryptography, drf-yasg, google-api-core, google-auth, google-resumable-media, packaging, protobuf, python-dateutil, social-auth-app-django, social-auth-core
