@@ -265,16 +265,22 @@ def test_resolve_package_version(package_version: PackageVersion):
     with pytest.raises(TypeError):
         assert versionless_reference.package_version
     assert versionless_reference.package == package_version.package
-    invalid_reference = package_version.reference
-    invalid_reference.name = invalid_reference.name + "invalid"
+    invalid_reference = PackageReference(
+        namespace=package_version.reference.namespace,
+        name=package_version.reference.name + "invalid",
+        version=package_version.reference.version,
+    )
     assert invalid_reference.package is None
 
 
 @pytest.mark.django_db
 def test_resolve_package(package: Package):
     assert package.reference.package == package
-    invalid_reference = package.reference
-    invalid_reference.name = invalid_reference.name + "invalid"
+    invalid_reference = PackageReference(
+        namespace=package.reference.namespace,
+        name=package.reference.name + "invalid",
+        version=package.reference.version,
+    )
     assert invalid_reference.package is None
 
 
@@ -285,8 +291,11 @@ def test_resolve(package_version: PackageVersion):
     versionless_reference = package_version.reference.without_version
     assert versionless_reference.package == package_version.package
     assert versionless_reference.instance == package_version.package
-    invalid_reference = package_version.reference
-    invalid_reference.name = invalid_reference.name + "invalid"
+    invalid_reference = PackageReference(
+        namespace=package_version.reference.namespace,
+        name=package_version.reference.name + "invalid",
+        version=package_version.reference.version,
+    )
     assert invalid_reference.instance is None
 
 

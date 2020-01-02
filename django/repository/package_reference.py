@@ -17,11 +17,11 @@ class PackageReference:
         :param version: The version of the referenced package
         :type version: StrictVersion or str or None
         """
-        self.namespace: str = namespace
-        self.name: str = name
+        self._namespace: str = namespace
+        self._name: str = name
         if version is not None and not isinstance(version, StrictVersion):
             version = StrictVersion(version)
-        self.version: Union[StrictVersion, None] = version
+        self._version: Union[StrictVersion, None] = version
 
     def __str__(self) -> str:
         if self.version:
@@ -31,6 +31,18 @@ class PackageReference:
 
     def __repr__(self) -> str:
         return f"<PackageReference: {str(self)}>"
+
+    @property
+    def namespace(self) -> str:
+        return self._namespace
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def version(self) -> Union[StrictVersion, None]:
+        return self._version
 
     @property
     def version_str(self):
