@@ -32,6 +32,7 @@ pytest-cov = "^2.8"
 pytest-django = "^3.7"
 factory_boy = "^2.12"
 Faker = "^3"
+pytest-mock = "^1.13.0"
 
 [build-system]
 requires = ["poetry>=1.0"]
