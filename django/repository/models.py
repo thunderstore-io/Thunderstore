@@ -84,7 +84,8 @@ class UploaderIdentity(models.Model):
                 identity=identity,
                 role=UploaderIdentityMemberRole.owner,
             )
-        assert identity.members.filter(user=user).exists()
+        if not identity.members.filter(user=user).exists():
+            raise RuntimeError("User missing permissions")
         return identity
 
     def can_user_upload(self, user):

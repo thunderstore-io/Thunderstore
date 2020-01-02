@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -24,7 +25,8 @@ class PackageViewSet(ManualCacheMixin, viewsets.ReadOnlyModelViewSet):
     def rate(self, request, uuid4=None):
         package = self.get_object()
         user = request.user
-        assert user.is_authenticated
+        if not user.is_authenticated:
+            raise PermissionDenied("Must be logged in")
         target_state = request.data.get("target_state")
         result_state = ""
         if target_state == "rated":
