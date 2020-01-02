@@ -54,6 +54,8 @@ class UploaderIdentityMember(models.Model):
 
 
 class UploaderIdentity(models.Model):
+
+    # TODO: Restrict allowed characters
     name = models.CharField(
         max_length=64,
         unique=True,
@@ -284,10 +286,12 @@ class Package(models.Model):
         }
 
     def recache_latest(self):
+        old_latest = self.latest
         if hasattr(self, "available_versions"):
             del self.available_versions  # Bust the version cache
         self.latest = self.available_versions.first()
-        self.save()
+        if old_latest != self.latest:
+            self.save()
 
     def handle_created_version(self, version):
         self.date_updated = timezone.now()
@@ -516,8 +520,11 @@ class PackageVersion(models.Model):
             valid = download_event.count_downloads_and_return_validity()
 
         if valid:
-            self.downloads += 1
-            self.save(update_fields=("downloads",))
+            self._increase_download_counter()
+
+    def _increase_download_counter(self):
+        self.downloads += 1
+        self.save(update_fields=("downloads",))
 
     def __str__(self):
         return self.full_version_name
