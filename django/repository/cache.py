@@ -11,7 +11,10 @@ def get_mod_list_queryset():
     return (
         Package.objects
         .active()
-        .prefetch_related("versions")
-        .prefetch_related("versions__dependencies")
+        .select_related("owner")
+        .prefetch_related(
+            "versions",
+            "versions__dependencies",
+        )
         .order_by("-is_pinned", "is_deprecated", "-date_updated")
     )

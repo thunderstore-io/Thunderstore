@@ -199,7 +199,14 @@ class Package(models.Model):
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
-        return self.versions.filter(pk__in=pk_list).order_by(preserved)
+        return self.versions.filter(pk__in=pk_list).order_by(preserved).prefetch_related(
+            "dependencies",
+            "dependencies__package",
+            "dependencies__package__owner",
+        ).select_related(
+            "package",
+            "package__owner",
+        )
 
     @cached_property
     def downloads(self):
