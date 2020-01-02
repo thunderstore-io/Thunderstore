@@ -131,7 +131,6 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
         require_version=True,
         resolve=False  # Otherwise the same, but don't try to resolve the references
     )]
-    print(serializer.fields["dependencies"].child.validators)
     assert serializer.is_valid() is False
     assert len(serializer.errors["dependencies"]) == 1
     assert "Ensure this field has no more than 100 elements." in str(serializer.errors["dependencies"][0])
@@ -451,3 +450,20 @@ def test_manifest_v1_deserialize_serialize(user, manifest_v1_data, package_versi
     )
     serialized_data = serializer.data
     assert serialized_data == manifest_v1_data
+
+
+def test_manifest_v1_invalid_key_formatting(user):
+    data = {
+        "name": "name",
+        "versionNumber": "1.0.0",
+        "websiteUrl": "",
+        "description": "",
+        "dependencies": [],
+    }
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    deserializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=data,
+    )
+    assert deserializer.is_valid() is False

@@ -101,7 +101,8 @@ class BackblazeB2API:
             application_key_id=self.application_key_id,
             application_key=self.application_key,
         )
-        assert self._session.allowed["bucketId"] == self.bucket_id
+        if self._session.allowed["bucketId"] != self.bucket_id:
+            raise RuntimeError("Invalid bucket ID received")
 
     def _authorize_request_params(self, request_params):
         headers = request_params.get("headers", {})

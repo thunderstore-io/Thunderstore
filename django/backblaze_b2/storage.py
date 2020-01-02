@@ -49,7 +49,8 @@ class BackblazeB2Storage(Storage):
         name = self._normalize_name(cleaned_name)
         response = self.b2api.upload_file(name, content)
         data = response.json()
-        assert data["fileName"] == name
+        if data["fileName"] != name:
+            raise RuntimeError("Filename mismatch")
         file_obj = BackblazeB2File.objects.filter(
             name=name
         ).first()

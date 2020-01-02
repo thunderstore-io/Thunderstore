@@ -14,10 +14,12 @@ RUN apt-get update && apt-get install -y \
     curl build-essential \
  && rm -rf /var/lib/apt/lists/*
 
-COPY ./django/requirements.txt ./django/requirements-dev.txt /app/
+COPY ./django/pyproject.toml ./django/poetry.lock /app/
 
-RUN pip install -U pip --no-cache-dir && \
-    pip install -r requirements.txt -r requirements-dev.txt --no-cache-dir
+RUN pip install -U pip poetry==1.0.0 --no-cache-dir && \
+    poetry config virtualenvs.create false && \
+    poetry install && \
+    rm -rf ~/.cache
 
 COPY ./django /app
 COPY --from=builder /app/build /app/static_built
@@ -27,4 +29,4 @@ RUN SECRET_KEY=x python manage.py collectstatic --noinput
 HEALTHCHECK --interval=5s --timeout=8s --retries=3 \
     CMD curl --fail --header "Host: $SERVER_NAME" localhost:8000/healthcheck || exit 1
 
-ENTRYPOINT ["/bin/bash", "/app/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

@@ -54,6 +54,8 @@ class UploaderIdentityMember(models.Model):
 
 
 class UploaderIdentity(models.Model):
+
+    # TODO: Restrict allowed characters
     name = models.CharField(
         max_length=64,
         unique=True,
@@ -82,7 +84,8 @@ class UploaderIdentity(models.Model):
                 identity=identity,
                 role=UploaderIdentityMemberRole.owner,
             )
-        assert identity.members.filter(user=user).exists()
+        if not identity.members.filter(user=user).exists():
+            raise RuntimeError("User missing permissions")
         return identity
 
     def can_user_upload(self, user):
@@ -174,11 +177,11 @@ class Package(models.Model):
         self.validate()
         return super().save(*args, **kwargs)
 
-    @property
+    @cached_property
     def full_package_name(self):
         return f"{self.owner.name}-{self.name}"
 
-    @property
+    @cached_property
     def reference(self):
         from repository.package_reference import PackageReference
         return PackageReference(
@@ -186,7 +189,7 @@ class Package(models.Model):
             name=self.name,
         )
 
-    @property
+    @cached_property
     def display_name(self):
         return self.name.replace("_", " ")
 
@@ -197,7 +200,14 @@ class Package(models.Model):
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
-        return self.versions.filter(pk__in=pk_list).order_by(preserved)
+        return self.versions.filter(pk__in=pk_list).order_by(preserved).prefetch_related(
+            "dependencies",
+            "dependencies__package",
+            "dependencies__package__owner",
+        ).select_related(
+            "package",
+            "package__owner",
+        )
 
     @cached_property
     def downloads(self):
@@ -208,23 +218,23 @@ class Package(models.Model):
     def rating_score(self):
         return self.package_ratings.count()
 
-    @property
+    @cached_property
     def icon(self):
         return self.latest.icon
 
-    @property
+    @cached_property
     def website_url(self):
         return self.latest.website_url
 
-    @property
+    @cached_property
     def version_number(self):
         return self.latest.version_number
 
-    @property
+    @cached_property
     def description(self):
         return self.latest.description
 
-    @property
+    @cached_property
     def dependencies(self):
         return self.latest.dependencies.all()
 
@@ -251,11 +261,11 @@ class Package(models.Model):
             versions__dependencies__package=self,
         )).active()
 
-    @property
+    @cached_property
     def owner_url(self):
         return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
 
-    @property
+    @cached_property
     def dependants_url(self):
         return reverse(
             "packages.list_by_dependency",
@@ -265,7 +275,7 @@ class Package(models.Model):
             }
         )
 
-    @property
+    @cached_property
     def readme(self):
         return self.latest.readme
 
@@ -275,7 +285,7 @@ class Package(models.Model):
             kwargs={"owner": self.owner.name, "name": self.name}
         )
 
-    @property
+    @cached_property
     def full_url(self):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
@@ -284,10 +294,12 @@ class Package(models.Model):
         }
 
     def recache_latest(self):
+        old_latest = self.latest
         if hasattr(self, "available_versions"):
             del self.available_versions  # Bust the version cache
         self.latest = self.available_versions.first()
-        self.save()
+        if old_latest != self.latest:
+            self.save()
 
     def handle_created_version(self, version):
         self.date_updated = timezone.now()
@@ -399,27 +411,27 @@ class PackageVersion(models.Model):
             }
         )
 
-    @property
+    @cached_property
     def display_name(self):
         return self.name.replace("_", " ")
 
-    @property
+    @cached_property
     def owner_url(self):
         return self.package.owner_url
 
-    @property
+    @cached_property
     def owner(self):
         return self.package.owner
 
-    @property
+    @cached_property
     def is_deprecated(self):
         return self.package.is_deprecated
 
-    @property
+    @cached_property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"
 
-    @property
+    @cached_property
     def reference(self):
         from repository.package_reference import PackageReference
         return PackageReference(
@@ -428,7 +440,7 @@ class PackageVersion(models.Model):
             version=self.version_number,
         )
 
-    @property
+    @cached_property
     def download_url(self):
         return reverse("packages.download", kwargs={
             "owner": self.package.owner.name,
@@ -436,7 +448,7 @@ class PackageVersion(models.Model):
             "version": self.version_number,
         })
 
-    @property
+    @cached_property
     def install_url(self):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
             "hostname": settings.SERVER_NAME,
@@ -516,8 +528,11 @@ class PackageVersion(models.Model):
             valid = download_event.count_downloads_and_return_validity()
 
         if valid:
-            self.downloads += 1
-            self.save(update_fields=("downloads",))
+            self._increase_download_counter()
+
+    def _increase_download_counter(self):
+        self.downloads += 1
+        self.save(update_fields=("downloads",))
 
     def __str__(self):
         return self.full_version_name

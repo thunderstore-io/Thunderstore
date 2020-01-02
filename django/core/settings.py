@@ -69,7 +69,8 @@ if SENTRY_DSN:
     )
 
 checkout_dir = environ.Path(__file__) - 2
-assert os.path.exists(checkout_dir('manage.py'))
+if not os.path.exists(checkout_dir('manage.py')):
+    raise RuntimeError("Could not locate manage.py")
 
 DEBUG = env.bool('DEBUG')
 DEBUG_SIMULATED_LAG = env.int('DEBUG_SIMULATED_LAG')

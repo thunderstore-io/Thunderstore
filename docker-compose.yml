@@ -27,7 +27,6 @@ services:
       context: .
       dockerfile: ./Dockerfile
     restart: always
-    command: /bin/bash /app/docker-entrypoint.sh
     env_file:
       - .env
     ports:
