@@ -176,11 +176,11 @@ class Package(models.Model):
         self.validate()
         return super().save(*args, **kwargs)
 
-    @property
+    @cached_property
     def full_package_name(self):
         return f"{self.owner.name}-{self.name}"
 
-    @property
+    @cached_property
     def reference(self):
         from repository.package_reference import PackageReference
         return PackageReference(
@@ -188,7 +188,7 @@ class Package(models.Model):
             name=self.name,
         )
 
-    @property
+    @cached_property
     def display_name(self):
         return self.name.replace("_", " ")
 
@@ -210,23 +210,23 @@ class Package(models.Model):
     def rating_score(self):
         return self.package_ratings.count()
 
-    @property
+    @cached_property
     def icon(self):
         return self.latest.icon
 
-    @property
+    @cached_property
     def website_url(self):
         return self.latest.website_url
 
-    @property
+    @cached_property
     def version_number(self):
         return self.latest.version_number
 
-    @property
+    @cached_property
     def description(self):
         return self.latest.description
 
-    @property
+    @cached_property
     def dependencies(self):
         return self.latest.dependencies.all()
 
@@ -253,11 +253,11 @@ class Package(models.Model):
             versions__dependencies__package=self,
         )).active()
 
-    @property
+    @cached_property
     def owner_url(self):
         return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
 
-    @property
+    @cached_property
     def dependants_url(self):
         return reverse(
             "packages.list_by_dependency",
@@ -267,7 +267,7 @@ class Package(models.Model):
             }
         )
 
-    @property
+    @cached_property
     def readme(self):
         return self.latest.readme
 
@@ -277,7 +277,7 @@ class Package(models.Model):
             kwargs={"owner": self.owner.name, "name": self.name}
         )
 
-    @property
+    @cached_property
     def full_url(self):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
@@ -403,27 +403,27 @@ class PackageVersion(models.Model):
             }
         )
 
-    @property
+    @cached_property
     def display_name(self):
         return self.name.replace("_", " ")
 
-    @property
+    @cached_property
     def owner_url(self):
         return self.package.owner_url
 
-    @property
+    @cached_property
     def owner(self):
         return self.package.owner
 
-    @property
+    @cached_property
     def is_deprecated(self):
         return self.package.is_deprecated
 
-    @property
+    @cached_property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"
 
-    @property
+    @cached_property
     def reference(self):
         from repository.package_reference import PackageReference
         return PackageReference(
@@ -432,7 +432,7 @@ class PackageVersion(models.Model):
             version=self.version_number,
         )
 
-    @property
+    @cached_property
     def download_url(self):
         return reverse("packages.download", kwargs={
             "owner": self.package.owner.name,
@@ -440,7 +440,7 @@ class PackageVersion(models.Model):
             "version": self.version_number,
         })
 
-    @property
+    @cached_property
     def install_url(self):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
             "hostname": settings.SERVER_NAME,
