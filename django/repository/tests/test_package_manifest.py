@@ -131,7 +131,6 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
         require_version=True,
         resolve=False  # Otherwise the same, but don't try to resolve the references
     )]
-    print(serializer.fields["dependencies"].child.validators)
     assert serializer.is_valid() is False
     assert len(serializer.errors["dependencies"]) == 1
     assert "Ensure this field has no more than 100 elements." in str(serializer.errors["dependencies"][0])
