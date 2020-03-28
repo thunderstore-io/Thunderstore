@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from repository.factories import PackageVersionFactory
-from repository.models import UploaderIdentity
+from repository.models import UploaderIdentity, PackageVersion
 from repository.models import Package
 
 
@@ -11,15 +11,31 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("count", type=int, default=10)
+        parser.add_argument("--clear", default=False, action="store_true")
 
     def handle(self, *args, **kwargs):
         if not settings.DEBUG:
             raise CommandError("Only executable in debug environments")
+        if kwargs.get("clear", False):
+            self.clear()
         self.create_data(kwargs.get("count", 10))
+
+    def clear(self):
+        print("Deleting existing package versions...")
+        PackageVersion.objects.all().delete()
+        print("Deleting existing packages...")
+        Package.objects.all().delete()
+        print("Deleting existing uploader identities...")
+        UploaderIdentity.objects.all().delete()
 
     def create_data(self, count):
         print("Creating uploaders...")
-        last = UploaderIdentity.objects.order_by("-pk").first().pk
+
+        last = 0
+        last_identity = UploaderIdentity.objects.order_by("-pk").first()
+        if last_identity:
+            last = last_identity.pk
+
         uploaders = [
             UploaderIdentity.objects.create(name=f"Test-Identity-{last + i}")
             for i in range(count)
@@ -34,12 +50,13 @@ class Command(BaseCommand):
         ]
         print("Creating package versions...")
         for i, package in enumerate(packages):
-            PackageVersionFactory.create(
-                package=package,
-                name=package.name,
-                version_number="1.0.0",
-                website_url="https://example.org",
-                description=f"Example mod {i}",
-                readme=f"# This is an example mod number {i}",
-            )
+            for vernum in range(3):
+                PackageVersionFactory.create(
+                    package=package,
+                    name=package.name,
+                    version_number=f"{vernum}.0.0",
+                    website_url="https://example.org",
+                    description=f"Example mod {i}",
+                    readme=f"# This is an example mod number {i}",
+                )
         print("Done!")
