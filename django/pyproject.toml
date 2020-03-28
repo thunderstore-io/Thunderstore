@@ -12,27 +12,27 @@ arrow = "^0.15"
 Pillow = "^6.2"
 psycopg2-binary = "^2.8"
 easy-thumbnails = "^2.7"  # This has a monkeypatch and might be a difficult upgrade
-markdown = "^3.1"
+markdown = "^3.2"
 gunicorn = { version = "^20.0", extras = ["gevent"] }
 social-auth-app-django = "^3.1"
-social-auth-core = "^3.2"
+social-auth-core = "^3.3"
 whitenoise = "^5.0"
-django-storages = { version = "^1.8", extras = ["google", "boto3"] }
+django-storages = { version = "^1.9", extras = ["google", "boto3"] }
 djangorestframework = "^3.11"
 drf-yasg = "^1.17"
 django-ipware = "^2.1"
-sentry_sdk = "^0.13"
+sentry_sdk = "^0.14"
 django-redis = "^4.11"
-pymdown-extensions = "^6.2"
+pymdown-extensions = "^6.3"
 pyjwt = { version = "^1.7", extras = ["crypto"] }
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.3"
+pytest = "^5.4"
 pytest-cov = "^2.8"
-pytest-django = "^3.7"
+pytest-django = "^3.8"
 factory_boy = "^2.12"
-Faker = "^3"
-pytest-mock = "^1.13.0"
+Faker = "^4.0"
+pytest-mock = "^2.0"
 
 [build-system]
 requires = ["poetry>=1.0"]
