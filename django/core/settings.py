@@ -1,8 +1,13 @@
-
 import os
 import environ
 import json
 import base64
+
+try:
+    import debug_toolbar
+    DEBUG_TOOLBAR_AVAILABLE = True
+except ImportError:
+    DEBUG_TOOLBAR_AVAILABLE = False
 
 from google.oauth2 import service_account
 
@@ -11,6 +16,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env = environ.Env(
     DEBUG=(bool, False),
     DEBUG_SIMULATED_LAG=(int, 0),
+    DEBUG_TOOLBAR_ENABLED=(bool, False),
     DATABASE_URL=(str, 'sqlite:///database/default.db'),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
@@ -238,6 +244,26 @@ STATIC_URL = '/static/'
 LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'index'
 
+# Debug toolbar
+
+DEBUG_TOOLBAR_ENABLED = all((
+    DEBUG,
+    DEBUG_TOOLBAR_AVAILABLE,
+    env.bool("DEBUG_TOOLBAR_ENABLED"),
+))
+
+
+def show_debug_toolbar(request):
+    return DEBUG_TOOLBAR_ENABLED
+
+
+if DEBUG_TOOLBAR_ENABLED:
+    INSTALLED_APPS += ["debug_toolbar"]
+    MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+    DEBUG_TOOLBAR_CONFIG = {
+        "SHOW_TOOLBAR_CALLBACK": "core.settings.show_debug_toolbar",
+    }
+
 
 # Caching
 
@@ -254,13 +280,6 @@ if REDIS_URL:
                 "SOCKET_CONNECT_TIMEOUT": 0.5,
                 "SOCKET_TIMEOUT": 5,
             }
-        }
-    }
-
-if DEBUG and not DEBUG_SIMULATED_LAG:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
 
