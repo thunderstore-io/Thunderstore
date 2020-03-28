@@ -7,3 +7,7 @@ def handle404(request, exception):
 
 def handle500(request):
     return render(request, "errors/500.html", locals())
+
+
+def ads_txt_view(request):
+    return render(request, "ads.txt", locals())
