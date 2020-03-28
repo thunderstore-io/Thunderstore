@@ -12,6 +12,8 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from frontend.views import ads_txt_view
+from frontend.views import robots_txt_view
+
 from repository.urls import urlpatterns as repository_urls
 from repository.views import PackageListView
 
@@ -26,6 +28,7 @@ handler500 = "frontend.views.handle500"
 urlpatterns = [
     path('', PackageListView.as_view(), name="index"),
     path('ads.txt', ads_txt_view, name="ads.txt"),
+    path('robots.txt', robots_txt_view, name="robots.txt"),
     path('auth/', include('social_django.urls', namespace='social')),
     path('logout/', LogoutView.as_view(), kwargs={'next_page': '/'}, name="logout"),
     path('package/', include(repository_urls)),

@@ -11,3 +11,7 @@ def handle500(request):
 
 def ads_txt_view(request):
     return render(request, "ads.txt", locals())
+
+
+def robots_txt_view(request):
+    return render(request, "robots.txt", locals())

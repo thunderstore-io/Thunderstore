@@ -1,0 +1,2 @@
+{% load dynamic_html %}
+{% dynamic_html "robots_txt" %}
