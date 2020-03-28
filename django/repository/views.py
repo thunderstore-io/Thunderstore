@@ -94,6 +94,10 @@ class PackageListSearchView(ListView):
         queryset = (
             self.get_base_queryset()
             .prefetch_related("versions")
+            .select_related(
+                "latest",
+                "owner",
+            )
         )
         search_query = self.get_search_query()
         if search_query:
