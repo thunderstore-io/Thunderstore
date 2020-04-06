@@ -1,10 +1,14 @@
+import json
+
+from django.http import HttpResponse
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from core.cache import ManualCacheMixin, CacheBustCondition
+from core.cache import BackgroundUpdatedCacheMixin
 
 from repository.api.v1.serializers import (
     PackageSerializer,
@@ -13,10 +17,16 @@ from repository.models import PackageRating
 from repository.cache import get_mod_list_queryset
 
 
-class PackageViewSet(ManualCacheMixin, viewsets.ReadOnlyModelViewSet):
+class PackageViewSet(BackgroundUpdatedCacheMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = PackageSerializer
     lookup_field = "uuid4"
-    cache_until = CacheBustCondition.any_package_updated
+
+    @classmethod
+    def get_no_cache_response(cls):
+        return HttpResponse(
+            json.dumps({"error": "No cache available"}),
+            content_type="application/json"
+        )
 
     def get_queryset(self):
         return get_mod_list_queryset()
@@ -28,7 +38,6 @@ class PackageViewSet(ManualCacheMixin, viewsets.ReadOnlyModelViewSet):
         if not user.is_authenticated:
             raise PermissionDenied("Must be logged in")
         target_state = request.data.get("target_state")
-        result_state = ""
         if target_state == "rated":
             PackageRating.objects.get_or_create(rater=user, package=package)
             result_state = "rated"

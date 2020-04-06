@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import cache
+from django.http import HttpResponse
 
 from core.utils import ChoiceEnum
 
@@ -14,6 +15,7 @@ DEFAULT_CACHE_EXPIRY = 60 * 5
 
 # TODO: Support parameters in cache bust conditions (e.g. specific package update)
 class CacheBustCondition(ChoiceEnum):
+    background_update_only = "manual_update_only"
     any_package_updated = "any_package_updated"
     dynamic_html_updated = "dynamic_html_updated"
 
@@ -32,6 +34,8 @@ def cache_get_or_set(key, default, default_args=(), default_kwargs={}, expiry=No
 
 
 def invalidate_cache(cache_bust_condition):
+    if cache_bust_condition == CacheBustCondition.background_update_only:
+        raise AttributeError("Invalid cache bust condition")
     if hasattr(cache, "delete_pattern"):
         cache.delete_pattern(f"cache.{cache_bust_condition}.*")
 
@@ -69,6 +73,42 @@ class ManualCacheMixin(object):
             default_args=args,
             default_kwargs=kwargs,
             expiry=self.cache_expiry,
+        )
+
+
+class BackgroundUpdatedCacheMixin(object):
+
+    @classmethod
+    def get_no_cache_response(cls):
+        return HttpResponse("Cache missing")
+
+    @classmethod
+    def get_cache_key(cls, *args, **kwargs):
+        return get_cache_key(
+            cache_bust_condition=CacheBustCondition.background_update_only,
+            cache_type="view",
+            key=cls.__name__,
+            vary_on=args + tuple(kwargs.values()),
+        )
+
+    def dispatch(self, *args, **kwargs):
+        if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
+            return super(BackgroundUpdatedCacheMixin, self).dispatch(*args, **kwargs).render()
+
+        return cache.get(
+            self.get_cache_key(*args, **kwargs),
+            self.get_no_cache_response()
+        )
+
+    @classmethod
+    def update_cache(cls, view, *args, **kwargs):
+        kwargs.update({"skip_cache": True})
+        result = view(*args, **kwargs)
+        del kwargs["skip_cache"]
+        cache.set(
+            key=cls.get_cache_key(*args, **kwargs),
+            value=result,
+            timeout=None,
         )
 
 

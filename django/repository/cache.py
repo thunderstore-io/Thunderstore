@@ -11,7 +11,10 @@ def get_mod_list_queryset():
     return (
         Package.objects
         .active()
-        .select_related("owner")
+        .select_related(
+            "owner",
+            "latest",
+        )
         .prefetch_related(
             "versions",
             "versions__dependencies",

@@ -283,12 +283,12 @@ if REDIS_URL:
         }
     }
 
-if DEBUG and not DEBUG_SIMULATED_LAG:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-        }
-    }
+# if DEBUG and not DEBUG_SIMULATED_LAG:
+#     CACHES = {
+#         "default": {
+#             "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+#         }
+#     }
 
 # REST Framework
 
