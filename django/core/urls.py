@@ -19,7 +19,7 @@ from repository.views import PackageListView
 
 from social.urls import settings_urls
 
-from .api_urls import api_v1_urls
+from .api_urls import api_v1_urls, api_v2_urls
 
 
 handler404 = "frontend.views.handle404"
@@ -37,6 +37,7 @@ urlpatterns = [
     path('djangoadmin/', admin.site.urls),
     path('healthcheck/', lambda request: HttpResponse("OK"), name="healthcheck"),
     path('api/v1/', include((api_v1_urls, "api-v1"), namespace="api-v1")),
+    path('api/v2/', include((api_v2_urls, "api-v2"), namespace="api-v2")),
 ]
 
 schema_view = get_schema_view(
