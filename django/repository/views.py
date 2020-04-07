@@ -1,4 +1,3 @@
-from django.contrib.postgres.search import TrigramSimilarity, SearchVector, SearchQuery
 from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.http import Http404
@@ -87,12 +86,6 @@ class PackageListSearchView(ListView):
 
         return (
             queryset
-            # .annotate(name_search_score=TrigramSimilarity("name", search_query))
-            # .annotate(search=SearchVector(*search_fields))
-            # .exclude(
-            #     Q(name_search_score__lte=1) &
-            #     ~Q(search=SearchQuery(search_query))
-            # )
             .exclude(icontains_query)
             .distinct()
         )
@@ -101,6 +94,10 @@ class PackageListSearchView(ListView):
         queryset = (
             self.get_base_queryset()
             .prefetch_related("versions")
+            .select_related(
+                "latest",
+                "owner",
+            )
         )
         search_query = self.get_search_query()
         if search_query:

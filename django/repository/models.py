@@ -320,7 +320,7 @@ class Package(models.Model):
         invalidate_cache(CacheBustCondition.any_package_updated)
 
     @staticmethod
-    def post_delete(sender, instance, created, **kwargs):
+    def post_delete(sender, instance, **kwargs):
         invalidate_cache(CacheBustCondition.any_package_updated)
 
 

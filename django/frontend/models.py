@@ -6,6 +6,8 @@ from core.utils import ChoiceEnum
 
 
 class DynamicPlacement(ChoiceEnum):
+    ads_txt = "ads_txt"
+    robots_txt = "robots_txt"
     html_head = "html_head"
     html_body_beginning = "html_body_beginning"
     content_beginning = "content_beginning"

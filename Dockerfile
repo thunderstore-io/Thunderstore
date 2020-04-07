@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-    curl build-essential \
+    curl build-essential cron \
  && rm -rf /var/lib/apt/lists/*
 
 COPY ./django/pyproject.toml ./django/poetry.lock /app/
@@ -26,7 +26,10 @@ COPY --from=builder /app/build /app/static_built
 
 RUN SECRET_KEY=x python manage.py collectstatic --noinput
 
+COPY ./django/crontab /etc/cron.d/crontab
+RUN chmod 0644 /etc/cron.d/crontab
+
 HEALTHCHECK --interval=5s --timeout=8s --retries=3 \
-    CMD curl --fail --header "Host: $SERVER_NAME" localhost:8000/healthcheck || exit 1
+    CMD curl --fail --header "Host: $SERVER_NAME" localhost:8000/healthcheck/ || exit 1
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

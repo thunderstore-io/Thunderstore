@@ -1,0 +1,49 @@
+{% load qurl %}
+
+<ul class="pagination my-3">
+    {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="{% qurl page page_obj.previous_page_number %}"><i class="fa fa-chevron-left" aria-hidden="true"></i></a>
+        </li>
+    {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" href="#"><i class="fa fa-chevron-left" aria-hidden="true"></i></a>
+        </li>
+    {% endif %}
+
+    {% if page_obj.number|add:'-3' > 1 %}
+        <li><a class="page-link" href="{% qurl page 1 %}">1</a></li>
+    {% endif %}
+    {% if page_obj.number|add:'-4' > 1 %}
+        <li><a class="page-link" href="{% qurl page page_obj.number|add:'-4' %}">&hellip;</a></li>
+    {% endif %}
+
+    {% for i in paginator.page_range %}
+        {% if page_obj.number == i %}
+            <li class="page-item active disabled">
+                <a class="page-link" href="#">{{ i }}</a>
+            </li>
+        {% elif i > page_obj.number|add:'-4' and i < page_obj.number|add:'4' %}
+            <li class="page-item">
+                <a class="page-link" href="{% qurl page i %}">{{ i }}</a>
+            </li>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.paginator.num_pages > page_obj.number|add:'4' %}
+        <li><a class="page-link" href="{% qurl page page_obj.number|add:'4' %}">&hellip;</a></li>
+    {% endif %}
+    {% if page_obj.number|add:'3' < paginator.num_pages %}
+        <li><a class="page-link" href="{% qurl page paginator.num_pages %}">{{ paginator.num_pages }}</a></li>
+    {% endif %}
+
+    {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{% qurl page page_obj.next_page_number %}"><i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+        </li>
+    {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" href="#"><i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+        </li>
+    {% endif %}
+</ul>

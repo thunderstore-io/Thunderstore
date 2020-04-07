@@ -3,6 +3,9 @@
 workers=${GUNICORN_WORKER_COUNT:-2}
 loglevel=${GUNICORN_LOG_LEVEL:-info}
 
+export >> ~/.profile
+cron
+
 if [ "$DEBUG" = true ] || [ "$DEBUG" = 'True' ] || [ "$DEBUG" = 1 ]; then
     echo 'Launching in debug mode'
     python manage.py runserver 0.0.0.0:8000
