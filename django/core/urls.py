@@ -44,7 +44,11 @@ schema_view = get_schema_view(
    openapi.Info(
       title="Thunderstore API",
       default_version="v1",
-      description="Schema is automatically generated and not completely accurate.",
+      description=(
+          "Schema is automatically generated and not completely accurate."
+          "\n\n"
+          "API v2 is deprecated and will be disabled after August 2020"
+      ),
       contact=openapi.Contact(name="Mythic#0001", url="https://discord.gg/5MbXZvd"),
    ),
    public=True,
