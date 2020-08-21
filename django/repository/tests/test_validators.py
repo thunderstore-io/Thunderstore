@@ -71,6 +71,7 @@ def test_reference_validator_eq():
         ["asd.dsa.asd", True],
         ["0.0.0", False],
         ["1", True],
+        ["20.08.210338", True],
     ],
 )
 def test_version_number_validator(version_str, should_fail):

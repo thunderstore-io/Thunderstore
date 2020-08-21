@@ -40,7 +40,10 @@ class VersionNumberValidator:
 
     def __call__(self, value):
         try:
-            StrictVersion(value)
+            version = StrictVersion(value)
+            correct = ".".join(str(x) for x in version.version)
+            if correct != value:
+                raise ValidationError(f"Version {value} should be written as {correct}")
         except ValueError as exc:
             raise ValidationError(str(exc))
 
