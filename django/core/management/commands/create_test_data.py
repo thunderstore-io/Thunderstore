@@ -59,4 +59,12 @@ class Command(BaseCommand):
                     description=f"Example mod {i}",
                     readme=f"# This is an example mod number {i}",
                 )
+
+        print("Linking dependencies...")
+        dependency_count = int(count * 0.2)
+        dependencies = [x.latest.id for x in Package.objects.all()[:dependency_count]]
+        dependants = Package.objects.all()[dependency_count:]
+        for package in dependants:
+            package.latest.dependencies.set(dependencies)
+
         print("Done!")
