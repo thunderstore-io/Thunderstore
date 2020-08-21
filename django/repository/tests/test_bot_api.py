@@ -125,4 +125,3 @@ def test_bot_api_deprecate_mod_404(client, admin_user):
     response = client.post(reverse("api:v1:bot.deprecate-mod"), data=encoded, content_type="application/jwt")
     assert response.status_code == 404
     assert response.content == b'{"detail":"Not found."}'
-
