@@ -9,9 +9,9 @@
         <div class="media">
             <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
             <div class="media-body">
-                <h5 class="mt-0"><a href="{{ dependency.get_absolute_url }}">{{ dependency.package }}</a></h5>
+                <h5 class="mt-0"><a href="{{ dependency.package.get_absolute_url }}">{{ dependency.package }}</a></h5>
                 <p class="mb-0">{{ dependency.description }}</p>
-                <small class="mb-0">Preferred version: {{ dependency.version_number }}</small>
+                <small class="mb-0">Preferred version: <a href="{{ dependency.get_absolute_url }}">{{ dependency.version_number }}</a></small>
             </div>
         </div>
     </div>
