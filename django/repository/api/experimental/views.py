@@ -1,16 +1,13 @@
+import json
+
+from django.http import HttpResponse
 from rest_framework.generics import ListAPIView
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.schemas import AutoSchema
 
 from core.cache import CacheBustCondition, cache_function_result, BackgroundUpdatedCacheMixin
 from repository.models import Package
 
 from repository.api.experimental.serializers import PackageSerializerExperimental
-
-
-class PackagePaginator(PageNumberPagination):
-    page_size = 30
-    page_size_query_param = None
 
 
 @cache_function_result(cache_until=CacheBustCondition.any_package_updated)
@@ -39,8 +36,14 @@ class PackageListApiView(BackgroundUpdatedCacheMixin, ListAPIView):
     """
     cache_until = CacheBustCondition.any_package_updated
     serializer_class = PackageSerializerExperimental
-    pagination_class = PackagePaginator
     schema = PackageListSchema()
+
+    @classmethod
+    def get_no_cache_response(cls):
+        return HttpResponse(
+            json.dumps({"error": "No cache available"}),
+            content_type="application/json"
+        )
 
     def get_queryset(self):
         return get_mod_list_queryset()
