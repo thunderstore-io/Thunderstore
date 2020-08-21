@@ -3,7 +3,7 @@ import copy
 import pytest
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from repository.validators import PackageReferenceValidator, VersionNumberValidator
+from repository.validators import PackageReferenceValidator, VersionNumberValidator, AuthorNameRegexValidator
 
 
 @pytest.mark.django_db
@@ -86,3 +86,23 @@ def test_version_number_validator_eq():
     validator_1 = VersionNumberValidator()
     validator_2 = VersionNumberValidator()
     assert validator_1 == validator_2
+
+
+@pytest.mark.parametrize(
+    "author_name, should_fail",
+    (
+        ("SomeAuthor", False),
+        ("Some-Author", False),
+        ("Som3-Auth0r", False),
+        ("Som3_Auth0r", False),
+        ("Some.Author", False),
+        ("Some@Author", True),
+    )
+)
+def test_author_name_regex_validator(author_name, should_fail):
+    validator = AuthorNameRegexValidator
+    if should_fail:
+        with pytest.raises(DjangoValidationError):
+            validator(author_name)
+    else:
+        validator(author_name)

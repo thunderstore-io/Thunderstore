@@ -18,6 +18,7 @@ from django.utils.functional import cached_property
 from core.cache import CacheBustCondition, invalidate_cache
 from core.utils import ChoiceEnum
 from repository.consts import PACKAGE_NAME_REGEX
+from repository.validators import AuthorNameRegexValidator
 
 from webhooks.models import Webhook, WebhookType
 
@@ -55,10 +56,10 @@ class UploaderIdentityMember(models.Model):
 
 class UploaderIdentity(models.Model):
 
-    # TODO: Restrict allowed characters
     name = models.CharField(
         max_length=64,
         unique=True,
+        validators=[AuthorNameRegexValidator],
     )
 
     class Meta:
@@ -67,6 +68,14 @@ class UploaderIdentity(models.Model):
 
     def __str__(self):
         return self.name
+
+    def validate(self):
+        for validator in self._meta.get_field("name").validators:
+            validator(self.name)
+
+    def save(self, *args, **kwargs):
+        self.validate()
+        return super().save(*args, **kwargs)
 
     @classmethod
     @transaction.atomic
