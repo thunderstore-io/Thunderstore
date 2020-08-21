@@ -18,7 +18,7 @@ from repository.views import PackageListView
 
 from social.urls import settings_urls
 
-from .api_urls import api_v1_urls, api_v2_urls
+from .api_urls import api_urls
 from .healthcheck import healthcheck_view
 
 
@@ -36,8 +36,7 @@ urlpatterns = [
     path('favicon.ico', RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, 'favicon.ico'))),
     path('djangoadmin/', admin.site.urls),
     path('healthcheck/', healthcheck_view, name="healthcheck"),
-    path('api/v1/', include((api_v1_urls, "api-v1"), namespace="api-v1")),
-    path('api/v2/', include((api_v2_urls, "api-v2"), namespace="api-v2")),
+    path('api/', include((api_urls, "api"), namespace="api")),
 ]
 
 schema_view = get_schema_view(
