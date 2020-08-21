@@ -1,23 +1,17 @@
 from django.urls import path, include
 
-from rest_framework import routers
-from repository.api.v1.viewsets import PackageViewSet
 
-from social.api.v1.views.current_user import CurrentUserInfoView
-
-from repository.api.v1.views import DeprecateModApiView
-from repository.api.v2.views.package_list import PackageListApiView
+from repository.api.v1.urls import urls as v1_urls
+from repository.api.v2.urls import urls as v2_urls
+from repository.api.experimental.urls import urls as experimental_urls
 
 
-v1_router = routers.DefaultRouter()
-v1_router.register(r'package', PackageViewSet, basename="package")
-
-api_v1_urls = [
-    path('current-user/info/', CurrentUserInfoView.as_view(), name="current-user.info"),
-    path('bot/deprecate-mod/', DeprecateModApiView.as_view(), name="bot.deprecate-mod"),
-    path('', include(v1_router.urls)),
+api_experimental_urls = [
+    path('', include((experimental_urls, "api-experimental"), namespace="api-experimental")),
 ]
 
-api_v2_urls = [
-    path('package/', PackageListApiView.as_view(), name="package-list")
+api_urls = [
+    path('v1/', include((v1_urls, "v1"), namespace="v1")),
+    path('v2/', include((v2_urls, "v2"), namespace="v2")),
+    path('experimental/', include((api_experimental_urls, "experimental"), namespace="experimental")),
 ]

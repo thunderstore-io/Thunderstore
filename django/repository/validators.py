@@ -1,9 +1,10 @@
 from distutils.version import StrictVersion
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.utils.deconstruct import deconstructible
 
-from repository.package_reference import PackageReference
+from repository.consts import AUTHOR_NAME_REGEX
 
 
 @deconstructible
@@ -15,6 +16,7 @@ class PackageReferenceValidator:
         self.resolve = resolve
 
     def __call__(self, value):
+        from repository.package_reference import PackageReference
         try:
             reference = PackageReference.parse(value)
         except ValueError as exc:
@@ -38,7 +40,10 @@ class VersionNumberValidator:
 
     def __call__(self, value):
         try:
-            StrictVersion(value)
+            version = StrictVersion(value)
+            correct = ".".join(str(x) for x in version.version)
+            if correct != value:
+                raise ValidationError(f"Version {value} should be written as {correct}")
         except ValueError as exc:
             raise ValidationError(str(exc))
 
@@ -46,3 +51,9 @@ class VersionNumberValidator:
         return all((
             isinstance(other, self.__class__),
         ))
+
+
+AuthorNameRegexValidator = RegexValidator(
+    regex=AUTHOR_NAME_REGEX,
+    message="Author names can only contain a-Z A-Z 0-9 . _ - characers"
+)

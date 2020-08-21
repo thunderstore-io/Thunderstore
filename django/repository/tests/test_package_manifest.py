@@ -81,7 +81,7 @@ def test_manifest_v1_serializer_self_dependency(user, manifest_v1_data, package_
         role=UploaderIdentityMemberRole.owner,
     )
     manifest_v1_data["name"] = package_version.name
-    manifest_v1_data["version_number"] = package_version.version_number + "1"
+    manifest_v1_data["version_number"] = "1" + package_version.version_number
     manifest_v1_data["dependencies"] = [
         str(package_version.reference),
     ]
