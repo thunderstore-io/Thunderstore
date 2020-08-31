@@ -1,7 +1,7 @@
 import pytest
 
-from repository.factories import PackageVersionFactory
-from repository.models import Package, UploaderIdentity
+from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.models import Package, UploaderIdentity
 
 
 @pytest.fixture()
