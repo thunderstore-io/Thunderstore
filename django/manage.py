@@ -23,6 +23,6 @@ if __name__ == "__main__":
     from django import setup
     setup()
 
-    import monkeypatch  # noqa
+    import thunderstore.monkeypatch  # noqa
 
     execute_from_command_line(sys.argv)
