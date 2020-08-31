@@ -148,7 +148,7 @@ INSTALLED_APPS = [
     # Own
     'core',
     'frontend',
-    'repository',
+    'thunderstore.repository',
     'social',
     'webhooks',
     'backblaze_b2',
@@ -181,7 +181,7 @@ TEMPLATES = [
                 'social_django.context_processors.login_redirect',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'repository.context_processors.uploader_identity'
+                'thunderstore.repository.context_processors.uploader_identity'
             ],
         },
     },

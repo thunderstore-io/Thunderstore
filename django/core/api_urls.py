@@ -1,9 +1,9 @@
 from django.urls import path, include
 
 
-from repository.api.v1.urls import urls as v1_urls
-from repository.api.v2.urls import urls as v2_urls
-from repository.api.experimental.urls import urls as experimental_urls
+from thunderstore.repository.api.v1.urls import urls as v1_urls
+from thunderstore.repository.api.v2.urls import urls as v2_urls
+from thunderstore.repository.api.experimental.urls import urls as experimental_urls
 
 
 api_experimental_urls = [

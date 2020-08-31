@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from repository.factories import PackageVersionFactory
-from repository.models import UploaderIdentity, PackageVersion
-from repository.models import Package
+from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.models import UploaderIdentity, PackageVersion
+from thunderstore.repository.models import Package
 
 
 class Command(BaseCommand):

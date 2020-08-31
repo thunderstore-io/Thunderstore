@@ -13,8 +13,8 @@ from drf_yasg import openapi
 from frontend.views import ads_txt_view
 from frontend.views import robots_txt_view
 
-from repository.urls import urlpatterns as repository_urls
-from repository.views import PackageListView
+from thunderstore.repository.urls import urlpatterns as repository_urls
+from thunderstore.repository.views import PackageListView
 
 from social.urls import settings_urls
 
