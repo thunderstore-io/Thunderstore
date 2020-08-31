@@ -1,8 +1,8 @@
 from django.db import models
 from django.db.models import signals
 
-from core.cache import CacheBustCondition, invalidate_cache
-from core.utils import ChoiceEnum
+from thunderstore.core.cache import CacheBustCondition, invalidate_cache
+from thunderstore.core.utils import ChoiceEnum
 
 
 class DynamicPlacement(ChoiceEnum):

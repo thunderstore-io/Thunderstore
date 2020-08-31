@@ -145,7 +145,7 @@ such the implementation may vary depending on the provider.
 Refer to
 https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html for
 more details on the implementation. Also see
-[core/settings.py](django/core/settings.py) for what environment variables are
+[thunderstore/core/settings.py](django/thunderstore/core/settings.py) for what environment variables are
 currently implemented.
 
 At the very least set the following variables:

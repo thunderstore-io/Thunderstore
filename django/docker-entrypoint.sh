@@ -12,6 +12,6 @@ if [ "$DEBUG" = true ] || [ "$DEBUG" = 'True' ] || [ "$DEBUG" = 1 ]; then
 else
     echo 'Launching in production mode'
     python manage.py migrate
-    echo "gunicorn core.wsgi:application --log-level $loglevel -w $workers -k gevent -b 0.0.0.0:8000"
-    gunicorn core.wsgi:application --log-level $loglevel -w $workers -k gevent -b 0.0.0.0:8000
+    echo "gunicorn thunderstore.core.wsgi:application --log-level $loglevel -w $workers -k gevent -b 0.0.0.0:8000"
+    gunicorn thunderstore.core.wsgi:application --log-level $loglevel -w $workers -k gevent -b 0.0.0.0:8000
 fi

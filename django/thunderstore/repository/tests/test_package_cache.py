@@ -1,6 +1,6 @@
 import pytest
 
-from core.cache import CacheBustCondition
+from thunderstore.core.cache import CacheBustCondition
 
 
 @pytest.mark.django_db

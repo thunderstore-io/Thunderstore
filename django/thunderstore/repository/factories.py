@@ -1,6 +1,6 @@
 import factory
 
-from core.factories import UserFactory
+from thunderstore.core.factories import UserFactory
 
 from .models import UploaderIdentity
 from .models import UploaderIdentityMember

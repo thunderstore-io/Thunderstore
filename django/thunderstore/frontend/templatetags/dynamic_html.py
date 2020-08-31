@@ -3,7 +3,7 @@ from django.utils.safestring import mark_safe
 
 from thunderstore.frontend.models import DynamicHTML
 
-from core.cache import (
+from thunderstore.core.cache import (
     CacheBustCondition,
     cache_function_result
 )

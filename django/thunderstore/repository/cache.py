@@ -1,6 +1,6 @@
 from thunderstore.repository.models import Package
 
-from core.cache import (
+from thunderstore.core.cache import (
     CacheBustCondition,
     cache_function_result
 )

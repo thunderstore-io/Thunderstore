@@ -4,8 +4,8 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.response import Response
 
-from core.jwt_helpers import JWTApiView
-from core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
+from thunderstore.core.jwt_helpers import JWTApiView
+from thunderstore.core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
 
 User = get_user_model()
 

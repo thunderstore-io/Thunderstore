@@ -2,7 +2,7 @@ import jwt
 
 from django.urls import reverse
 
-from core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
+from thunderstore.core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
 from thunderstore.repository.models import DiscordUserBotPermission
 
 

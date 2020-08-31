@@ -11,7 +11,7 @@ except ImportError:
 
 from google.oauth2 import service_account
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 env = environ.Env(
     DEBUG=(bool, False),
@@ -74,7 +74,7 @@ if SENTRY_DSN:
         integrations=[DjangoIntegration()]
     )
 
-checkout_dir = environ.Path(__file__) - 2
+checkout_dir = environ.Path(__file__) - 3
 if not os.path.exists(checkout_dir('manage.py')):
     raise RuntimeError("Could not locate manage.py")
 
@@ -146,7 +146,7 @@ INSTALLED_APPS = [
     'drf_yasg',
 
     # Own
-    'core',
+    'thunderstore.core',
     'thunderstore.frontend',
     'thunderstore.repository',
     'thunderstore.webhooks',
@@ -166,7 +166,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = 'thunderstore.core.urls'
 
 TEMPLATES = [
     {
@@ -187,7 +187,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = 'thunderstore.core.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -261,7 +261,7 @@ if DEBUG_TOOLBAR_ENABLED:
     INSTALLED_APPS += ["debug_toolbar"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
     DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TOOLBAR_CALLBACK": "core.settings.show_debug_toolbar",
+        "SHOW_TOOLBAR_CALLBACK": "thunderstore.core.settings.show_debug_toolbar",
     }
 
 

@@ -2,7 +2,7 @@ import pytest
 
 from django.urls import reverse
 
-from core.factories import UserFactory
+from thunderstore.core.factories import UserFactory
 
 from ..factories import UploaderIdentityFactory
 from ..factories import PackageFactory

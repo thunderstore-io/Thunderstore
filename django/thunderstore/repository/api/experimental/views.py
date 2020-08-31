@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from rest_framework.generics import ListAPIView
 from rest_framework.schemas import AutoSchema
 
-from core.cache import CacheBustCondition, cache_function_result, BackgroundUpdatedCacheMixin
+from thunderstore.core.cache import CacheBustCondition, cache_function_result, BackgroundUpdatedCacheMixin
 from thunderstore.repository.models import Package
 
 from thunderstore.repository.api.experimental.serializers import PackageSerializerExperimental

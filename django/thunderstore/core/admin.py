@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 
-from core.models import IncomingJWTAuthConfiguration
+from thunderstore.core.models import IncomingJWTAuthConfiguration
 
 
 @admin.register(IncomingJWTAuthConfiguration)

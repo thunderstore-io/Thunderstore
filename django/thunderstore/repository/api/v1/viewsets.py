@@ -8,7 +8,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from core.cache import BackgroundUpdatedCacheMixin
+from thunderstore.core.cache import BackgroundUpdatedCacheMixin
 
 from thunderstore.repository.api.v1.serializers import (
     PackageSerializer,

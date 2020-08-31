@@ -7,7 +7,7 @@ from sentry_sdk import capture_exception
 
 from django.db import models
 
-from core.utils import ChoiceEnum
+from thunderstore.core.utils import ChoiceEnum
 
 
 class WebhookType(ChoiceEnum):

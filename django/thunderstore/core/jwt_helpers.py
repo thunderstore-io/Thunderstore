@@ -5,7 +5,7 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.parsers import BaseParser
 from rest_framework.views import APIView
 
-from core.models import IncomingJWTAuthConfiguration
+from thunderstore.core.models import IncomingJWTAuthConfiguration
 
 
 class JWTAuthentication(BaseAuthentication):

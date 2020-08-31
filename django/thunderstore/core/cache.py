@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 
-from core.utils import ChoiceEnum
+from thunderstore.core.utils import ChoiceEnum
 
 
 DEFAULT_CACHE_EXPIRY = 60 * 5

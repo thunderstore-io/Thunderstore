@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 
-from core.utils import ChoiceEnum
+from thunderstore.core.utils import ChoiceEnum
 
 
 class SecretTypeChoices(ChoiceEnum):

@@ -4,7 +4,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.schemas import AutoSchema
 from rest_framework.serializers import ModelSerializer
 
-from core.cache import CacheBustCondition, cache_function_result, ManualCacheMixin
+from thunderstore.core.cache import CacheBustCondition, cache_function_result, ManualCacheMixin
 from thunderstore.repository.models import Package, PackageVersion
 
 

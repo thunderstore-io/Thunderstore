@@ -2,7 +2,7 @@ from django.template import (
     Library, Node, TemplateSyntaxError, VariableDoesNotExist,
 )
 
-from core.cache import (
+from thunderstore.core.cache import (
     DEFAULT_CACHE_EXPIRY, get_cache_key, cache_get_or_set,
 )
 

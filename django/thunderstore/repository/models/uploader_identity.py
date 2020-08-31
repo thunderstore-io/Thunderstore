@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models, transaction
 
-from core.utils import ChoiceEnum
+from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.validators import AuthorNameRegexValidator
 
 
