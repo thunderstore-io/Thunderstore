@@ -150,7 +150,7 @@ INSTALLED_APPS = [
     'frontend',
     'thunderstore.repository',
     'thunderstore.webhooks',
-    'social',
+    'thunderstore.social',
     'backblaze_b2',
 ]
 

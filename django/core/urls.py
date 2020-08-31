@@ -16,7 +16,7 @@ from frontend.views import robots_txt_view
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
 
-from social.urls import settings_urls
+from thunderstore.social.urls import settings_urls
 
 from .api_urls import api_urls
 from .healthcheck import healthcheck_view
