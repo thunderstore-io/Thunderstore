@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 
-from webhooks.models import Webhook
+from thunderstore.webhooks.models import Webhook
 
 
 @admin.register(Webhook)

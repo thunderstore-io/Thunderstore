@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class WebhooksConfig(AppConfig):
-    name = 'webhooks'
+    name = "thunderstore.webhooks"
+    label = "webhooks"

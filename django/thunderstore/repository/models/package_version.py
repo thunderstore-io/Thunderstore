@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
 
-from webhooks.models import Webhook, WebhookType
+from thunderstore.webhooks.models import Webhook, WebhookType
 
 
 def get_version_zip_filepath(instance, filename):
