@@ -1,7 +1,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 
-from frontend.models import DynamicHTML
+from thunderstore.frontend.models import DynamicHTML
 
 from core.cache import (
     CacheBustCondition,

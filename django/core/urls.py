@@ -10,8 +10,8 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-from frontend.views import ads_txt_view
-from frontend.views import robots_txt_view
+from thunderstore.frontend.views import ads_txt_view
+from thunderstore.frontend.views import robots_txt_view
 
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
@@ -22,8 +22,8 @@ from .api_urls import api_urls
 from .healthcheck import healthcheck_view
 
 
-handler404 = "frontend.views.handle404"
-handler500 = "frontend.views.handle500"
+handler404 = "thunderstore.frontend.views.handle404"
+handler500 = "thunderstore.frontend.views.handle500"
 
 urlpatterns = [
     path('', PackageListView.as_view(), name="index"),

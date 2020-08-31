@@ -147,7 +147,7 @@ INSTALLED_APPS = [
 
     # Own
     'core',
-    'frontend',
+    'thunderstore.frontend',
     'thunderstore.repository',
     'thunderstore.webhooks',
     'thunderstore.social',
@@ -156,7 +156,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'frontend.middleware.SocialAuthExceptionHandlerMiddleware',
+    'thunderstore.frontend.middleware.SocialAuthExceptionHandlerMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

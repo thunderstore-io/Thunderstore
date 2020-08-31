@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 
-from frontend.models import DynamicHTML
+from thunderstore.frontend.models import DynamicHTML
 
 
 @admin.register(DynamicHTML)
