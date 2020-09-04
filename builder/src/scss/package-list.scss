@@ -15,3 +15,52 @@
     transform: rotate(45deg);
     transform-origin: center;
 }
+
+
+.search-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+
+    .option {
+        label {
+            margin-right: 10px;
+            margin-bottom: 0;
+        }
+
+        margin-bottom: .5rem;
+    }
+
+    .separator {
+        margin: 0 12px;
+    }
+
+    .multiselect {
+        display: flex;
+        align-items: center;
+        flex: 1 1;
+
+        .ss-main .ss-multi-selected {
+            min-height: 38px;
+
+            .ss-disabled {
+                color: #999999;
+            }
+
+            .ss-disabled,
+            .ss-values .ss-value {
+                font-size: 16px;
+            }
+
+            .ss-add {
+                margin-top: 14px;
+            }
+        }
+    }
+
+    .checkbox {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+    }
+}

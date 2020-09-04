@@ -1,0 +1,45 @@
+
+.field-wrapper {
+    margin: 10px 0;
+
+    .ss-main .ss-multi-selected {
+        min-height: 38px;
+
+        .ss-disabled {
+            color: #999999;
+        }
+
+        .ss-disabled,
+        .ss-values .ss-value {
+            font-size: 16px;
+        }
+
+        .ss-add {
+            margin-top: 14px;
+        }
+    }
+
+    .field-errors {
+        ul {
+            margin: 0;
+        }
+    }
+}
+
+.field-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+
+    label {
+        margin-bottom: 0;
+        flex: 0 0 200px;
+    }
+
+    input[type=checkbox] {
+        width: 32px;
+        height: 32px;
+    }
+}

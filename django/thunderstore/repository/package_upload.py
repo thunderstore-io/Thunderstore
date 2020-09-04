@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 
+from thunderstore.community.models import PackageCategory
 from thunderstore.repository.models import PackageVersion, Package, UploaderIdentity
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 
@@ -37,6 +38,11 @@ def unpack_serializer_errors(field, errors, error_dict=None):
 
 
 class PackageUploadForm(forms.ModelForm):
+    categories = forms.ModelMultipleChoiceField(
+        queryset=PackageCategory.objects.all(), required=False
+    )
+    has_nsfw_content = forms.BooleanField(required=False)
+
     class Meta:
         model = PackageVersion
         fields = ["file"]
@@ -149,6 +155,10 @@ class PackageUploadForm(forms.ModelForm):
             owner=self.identity,
             name=self.instance.name,
         )[0]
+        self.instance.package.update_listing(
+            has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),
+            categories=self.cleaned_data.get("categories", []),
+        )
         self.instance.icon.save("icon.png", self.icon)
         instance = super(PackageUploadForm, self).save()
         for reference in self.manifest["dependencies"]:

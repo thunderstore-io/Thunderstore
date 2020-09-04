@@ -10,7 +10,7 @@
 {% cache_until "any_package_updated" "mod-list" 300 page_obj.number cache_vary %}
 
 {% if breadcrumbs %}
-<nav aria-label="breadcrumb">
+<nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
     {% for breadcrumb in breadcrumbs %}
         {% if forloop.last %}
@@ -27,9 +27,65 @@
     <h3 class="col-12 mt-4">{{ page_title }}</h3>
 </div>
 
-<div class="row m-0">
-    <div class="col-12 col-md-auto m-0 mb-2 mr-2 p-0">
-        <div class="btn-group" role="group" aria-label="Result ordering">
+<form class="form-inline" method="get" action="{{ request.path }}">
+    <div class="w-100 m-0 p-0">
+        <div class="search-options">
+            <div class="checkbox option custom-control custom-switch">
+                <input
+                    type="checkbox"
+                    class="custom-control-input"
+                    id="nsfw"
+                    name="nsfw"
+                    {% if nsfw_included %}checked=""{% endif %}
+                />
+                <label class="custom-control-label" for="nsfw">Include NSFW</label>
+            </div>
+            <div class="separator"></div>
+            <div class="checkbox option custom-control custom-switch">
+                <input
+                    type="checkbox"
+                    class="custom-control-input"
+                    id="deprecated"
+                    name="deprecated"
+                    {% if deprecated_included %}checked=""{% endif %}
+                />
+                <label class="custom-control-label" for="deprecated">Include deprecated</label>
+            </div>
+            <div class="separator"></div>
+            <div class="multiselect option">
+                <label for="categories">Categories</label>
+                <select class="slimselect" name="categories" id="categories" multiple="">
+                    {% for category in categories %}
+                        <option
+                            value="{{ category.pk }}"
+                            {% if category.pk in selected_categories %}selected=""{% endif %}
+                        >
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <script type="text/javascript">
+                    new SlimSelect({select: "#categories"});
+                </script>
+            </div>
+        </div>
+    </div>
+    <div class="m-0 mb-2 p-0 w-100">
+        <div class="row w-100 m-0 p-0">
+            <div class="col-7 m-0 p-0 pr-2">
+                <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
+                <input type="hidden" name="ordering" value="{{ active_ordering }}">
+            </div>
+            <div class="col-3 m-0 p-0 pr-1">
+                <button class="btn btn-outline-success w-100" type="submit">Search</button>
+            </div>
+            <div class="col-2 m-0 p-0">
+                <a href="{% url 'packages.list' %}" class="btn btn-outline-success w-100">Clear</a>
+            </div>
+        </div>
+    </div>
+    <div class="m-0 mb-2 p-0 w-100">
+        <div class="btn-group d-flex" role="group" aria-label="Result ordering">
             {% for entry in ordering_modes %}
                 <a href="{% qurl ordering entry.0 %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
                     {{ entry.1 }}
@@ -37,23 +93,7 @@
             {% endfor %}
         </div>
     </div>
-    <div class="col-12 col-md-12 col-lg-5 m-0 mb-2 p-0 ml-auto">
-        <form class="form-inline" method="get" action="{{ request.path }}">
-            <div class="row w-100 m-0 p-0">
-                <div class="col-7 m-0 p-0 pr-2">
-                    <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
-                    <input type="hidden" name="ordering" value="{{ active_ordering }}">
-                </div>
-                <div class="col-3 m-0 p-0 pr-1">
-                    <button class="btn btn-outline-success w-100" type="submit">Search</button>
-                </div>
-                <div class="col-2 m-0 p-0">
-                    <a href="{% url 'packages.list' %}" class="btn btn-outline-success w-100">Clear</a>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
+</form>
 
 {% if object_list %}
     <div class="d-flex flex-row flex-wrap mb-3 package-list">

@@ -7,6 +7,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic import View
 
+from thunderstore.community.models import PackageCategory
 from thunderstore.repository.models import Package
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.models import UploaderIdentity
@@ -31,10 +32,16 @@ class PackageListSearchView(ListView):
     def get_cache_vary(self):
         return ""
 
+    def get_categories(self):
+        return PackageCategory.objects.all()
+
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
         cache_vary += f".{self.get_search_query()}"
         cache_vary += f".{self.get_active_ordering()}"
+        cache_vary += f".{self.get_selected_categories()}"
+        cache_vary += f".{self.get_is_deprecated_included()}"
+        cache_vary += f".{self.get_is_nsfw_included()}"
         return cache_vary
 
     def get_ordering_choices(self):
@@ -44,6 +51,28 @@ class PackageListSearchView(ListView):
             ("most-downloaded", "Most downloaded"),
             ("top-rated", "Top rated"),
         )
+
+    def get_selected_categories(self):
+        selections = self.request.GET.getlist("categories", [])
+        result = []
+        for selection in selections:
+            try:
+                result.append(int(selection))
+            except ValueError:
+                pass
+        return result
+
+    def get_is_nsfw_included(self):
+        try:
+            return bool(self.request.GET.get("nsfw", False))
+        except ValueError:
+            return False
+
+    def get_is_deprecated_included(self):
+        try:
+            return bool(self.request.GET.get("deprecated", False))
+        except ValueError:
+            return False
 
     def get_active_ordering(self):
         ordering = self.request.GET.get("ordering", "last-updated")
@@ -99,6 +128,16 @@ class PackageListSearchView(ListView):
                 "owner",
             )
         )
+        selected_categories = self.get_selected_categories()
+        if selected_categories:
+            category_queryset = Q()
+            for category in selected_categories:
+                category_queryset &= Q(package_listings__categories=category)
+            queryset = queryset.exclude(~category_queryset)
+        if not self.get_is_nsfw_included():
+            queryset = queryset.exclude(package_listings__has_nsfw_content=True)
+        if not self.get_is_deprecated_included():
+            queryset = queryset.exclude(is_deprecated=True)
         search_query = self.get_search_query()
         if search_query:
             queryset = self.perform_search(queryset, search_query)
@@ -112,6 +151,10 @@ class PackageListSearchView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context["categories"] = self.get_categories()
+        context["selected_categories"] = self.get_selected_categories()
+        context["nsfw_included"] = self.get_is_nsfw_included()
+        context["deprecated_included"] = self.get_is_deprecated_included()
         context["cache_vary"] = self.get_full_cache_vary()
         context["page_title"] = self.get_page_title()
         context["ordering_modes"] = self.get_ordering_choices()

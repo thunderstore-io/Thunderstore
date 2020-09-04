@@ -11,8 +11,24 @@
         {{ form.file.errors }}
     </div>
     {% csrf_token %}
-    <label for="id_file" class="btn btn-primary btn-lg btn-block" id="file_drop"></label>
-    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file" style="display:none;"></p>
+    <label for="id_file" class="btn btn-primary btn-lg btn-block" id="file_drop" style="cursor: pointer;"></label>
+    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file" style="display: none;"></p>
+
+    <div class="field-wrapper">
+        <div class="field-row">
+            <label for="{{ form.categories.id_for_label }}">Categories</label>
+            {{ form.categories }}
+        </div>
+        <div class="text-danger field-errors">{{ form.categories.errors }}</div>
+    </div>
+
+    <div class="field-wrapper">
+        <div class="field-row">
+            <label for="{{ form.has_nsfw_content.id_for_label }}">Contains NSFW content</label>
+            {{ form.has_nsfw_content }}
+        </div>
+        <div class="text-danger field-errors">{{ form.has_nsfw_content.errors }}</div>
+    </div>
     <input type="submit" class="btn btn-primary btn-lg btn-block" value="Upload">
 </form>
 
@@ -102,6 +118,11 @@
 
 
 <script type="text/javascript">
+
+new SlimSelect({
+    select: "#{{ form.categories.auto_id }}"
+});
+
 var file_drop = document.getElementById("file_drop");
 var file_input = document.getElementById("id_file");
 var last_target;
@@ -120,7 +141,7 @@ function reset_file_input() {
     if (file_input.files.length > 0) {
         file_drop.innerHTML = file_input.files[0].name;
     } else {
-        file_drop.innerHTML = 'Choose file';
+        file_drop.innerHTML = 'Choose or drag file here';
     }
     file_drop.style.height = "";
     file_drop.style.border = "";
@@ -128,7 +149,7 @@ function reset_file_input() {
 
 file_input.addEventListener("change", function(){
     reset_file_input();
-})
+});
 
 window.addEventListener("dragenter", function(e)
 {

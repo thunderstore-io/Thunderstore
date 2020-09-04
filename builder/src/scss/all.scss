@@ -9,8 +9,12 @@
 // GitHub Markdown
 @import "./vendor/github-markdown";
 
+// Slimselect
+@import "./vendor/slimselect-1.26.0.min";
+
 // Custom Markdown
 @import "./markdown";
 @import "./settings";
 @import "./general";
 @import "./package-list";
+@import "./forms";
