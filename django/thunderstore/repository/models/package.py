@@ -77,7 +77,8 @@ class Package(models.Model):
         from thunderstore.community.models import PackageListing
         listing, _ = PackageListing.objects.get_or_create(package=self)
         listing.has_nsfw_content = has_nsfw_content
-        listing.categories.set(categories)
+        if categories:
+            listing.categories.set(categories)
         listing.save(update_fields=("has_nsfw_content",))
 
     @cached_property
