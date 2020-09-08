@@ -163,7 +163,8 @@ class PackageVersion(models.Model):
         return cls.objects.aggregate(total=Sum("file_size"))["total"] or 0
 
     def announce_release(self):
-        webhooks = Webhook.objects.filter(
+        categories = self.package.primary_package_listing.categories.all()
+        webhooks = Webhook.objects.exclude(exclude_categories__in=categories).filter(
             webhook_type=WebhookType.mod_release,
             is_active=True,
         )

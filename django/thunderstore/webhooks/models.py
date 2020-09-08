@@ -35,6 +35,12 @@ class Webhook(models.Model):
         unique=True,
     )
 
+    exclude_categories = models.ManyToManyField(
+        "community.PackageCategory",
+        related_name="webhooks",
+        blank=True,
+    )
+
     def __str__(self):
         return self.name
 

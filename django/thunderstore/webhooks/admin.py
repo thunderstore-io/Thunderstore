@@ -10,6 +10,9 @@ class PackageAdmin(admin.ModelAdmin):
         "date_created",
         "uuid4",
     )
+    filter_horizontal = (
+        "exclude_categories",
+    )
     list_display = (
         "name",
         "date_created",
