@@ -12,6 +12,7 @@ class PackageAdmin(admin.ModelAdmin):
     )
     filter_horizontal = (
         "exclude_categories",
+        "require_categories",
     )
     list_display = (
         "name",
