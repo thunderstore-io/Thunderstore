@@ -168,6 +168,8 @@ class PackageVersion(models.Model):
             webhook_type=WebhookType.mod_release,
             is_active=True,
         )
+        if self.package.primary_package_listing.has_nsfw_content:
+            webhooks = webhooks.exclude(allow_nsfw=False)
 
         thumbnail_url = self.icon.url
         if not (thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")):

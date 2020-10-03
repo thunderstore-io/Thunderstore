@@ -18,6 +18,7 @@ def get_mod_list_queryset():
         .prefetch_related(
             "versions",
             "versions__dependencies",
+            "package_listings",
         )
         .order_by("-is_pinned", "is_deprecated", "-date_updated")
     )

@@ -42,6 +42,7 @@ class PackageListApiView(BackgroundUpdatedCacheMixin, ListAPIView):
     def get_no_cache_response(cls):
         return HttpResponse(
             json.dumps({"error": "No cache available"}),
+            status=503,
             content_type="application/json"
         )
 
