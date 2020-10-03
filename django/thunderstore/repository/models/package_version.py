@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
 
-from thunderstore.webhooks.models import Webhook, WebhookType
+from thunderstore.webhooks.models import Webhook
 
 
 def get_version_zip_filepath(instance, filename):
@@ -163,14 +163,7 @@ class PackageVersion(models.Model):
         return cls.objects.aggregate(total=Sum("file_size"))["total"] or 0
 
     def announce_release(self):
-        categories = self.package.primary_package_listing.categories.all()
-        webhooks = Webhook.objects.exclude(exclude_categories__in=categories).filter(
-            webhook_type=WebhookType.mod_release,
-            is_active=True,
-        )
-        if self.package.primary_package_listing.has_nsfw_content:
-            webhooks = webhooks.exclude(allow_nsfw=False)
-
+        webhooks = Webhook.get_for_package_release(self.package)
         thumbnail_url = self.icon.url
         if not (thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")):
             thumbnail_url = f"{settings.PROTOCOL}{settings.SERVER_NAME}{thumbnail_url}"
