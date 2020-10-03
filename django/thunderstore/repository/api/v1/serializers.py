@@ -45,6 +45,8 @@ class PackageSerializer(ModelSerializer):
     owner = SerializerMethodField()
     full_name = SerializerMethodField()
     package_url = SerializerMethodField()
+    has_nsfw_content = SerializerMethodField()
+    categories = SerializerMethodField()
 
     def get_versions(self, instance):
         versions = instance.available_versions
@@ -59,6 +61,12 @@ class PackageSerializer(ModelSerializer):
     def get_package_url(self, instance):
         return instance.full_url
 
+    def get_has_nsfw_content(self, instance):
+        return instance.primary_package_listing.has_nsfw_content
+
+    def get_categories(self, instance):
+        return set(instance.primary_package_listing.categories.all().values_list("name", flat=True))
+
     class Meta:
         model = Package
         fields = (
@@ -72,6 +80,8 @@ class PackageSerializer(ModelSerializer):
             "rating_score",
             "is_pinned",
             "is_deprecated",
+            "has_nsfw_content",
+            "categories",
             "versions",
         )
         depth = 0
