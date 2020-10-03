@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 
+from thunderstore.cache.models import DatabaseCache
 from thunderstore.core.utils import ChoiceEnum
 
 
@@ -50,6 +51,14 @@ def get_cache_key(cache_bust_condition, cache_type, key, vary_on):
     return f"cache.{cache_bust_condition}.{cache_type}.{key}.{vary}"
 
 
+def get_view_cache_name(cls):
+    module = cls.__module__
+    if module is None or module == str.__class__.__module__:
+        return cls.__name__
+    else:
+        return module + "." + cls.__name__
+
+
 class ManualCacheMixin(object):
     cache_until = None
     cache_expiry = DEFAULT_CACHE_EXPIRY
@@ -66,7 +75,7 @@ class ManualCacheMixin(object):
             key=get_cache_key(
                 cache_bust_condition=self.cache_until,
                 cache_type="view",
-                key=type(self).__name__,
+                key=get_view_cache_name(type(self)),
                 vary_on=args + tuple(kwargs.values()),
             ),
             default=get_default,
@@ -77,6 +86,7 @@ class ManualCacheMixin(object):
 
 
 class BackgroundUpdatedCacheMixin(object):
+    cache_database_fallback = True
 
     @classmethod
     def get_no_cache_response(cls):
@@ -87,15 +97,33 @@ class BackgroundUpdatedCacheMixin(object):
         return get_cache_key(
             cache_bust_condition=CacheBustCondition.background_update_only,
             cache_type="view",
-            key=cls.__name__,
+            key=get_view_cache_name(cls),
             vary_on=args + tuple(kwargs.values()),
         )
+
+    @classmethod
+    def get_cache(cls, key, default):
+        result = cache.get(key, None)
+        if result:
+            return result
+        elif cls.cache_database_fallback:
+            db_result = DatabaseCache.get(key, None)
+            if db_result:
+                cache.set(key, db_result, None)
+                return db_result
+        return default
+
+    @classmethod
+    def set_cache(cls, key, value, timeout):
+        result = cache.set(key, value, timeout)
+        if cls.cache_database_fallback:
+            DatabaseCache.set(key, value, timeout)
+        return result
 
     def dispatch(self, *args, **kwargs):
         if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
             return super(BackgroundUpdatedCacheMixin, self).dispatch(*args, **kwargs).render()
-
-        return cache.get(
+        return self.get_cache(
             self.get_cache_key(*args, **kwargs),
             self.get_no_cache_response()
         )
@@ -105,7 +133,7 @@ class BackgroundUpdatedCacheMixin(object):
         kwargs.update({"skip_cache": True})
         result = view(*args, **kwargs)
         del kwargs["skip_cache"]
-        cache.set(
+        cls.set_cache(
             key=cls.get_cache_key(*args, **kwargs),
             value=result,
             timeout=None,
