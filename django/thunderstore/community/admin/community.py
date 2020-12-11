@@ -1,32 +1,33 @@
 from django.contrib import admin
 
 
-from ..models.package_category import PackageCategory
+from ..models.community import Community
 
 
-@admin.register(PackageCategory)
-class PackageCategoryAdmin(admin.ModelAdmin):
+@admin.register(Community)
+class CommunityAdmin(admin.ModelAdmin):
+    filter_horizontal = (
+    )
     list_filter = (
-        "community",
     )
     list_display = (
         "id",
+        "identifier",
         "name",
-        "slug",
         "datetime_created",
         "datetime_updated",
-        "community",
     )
     list_display_links = (
         "id",
+        "identifier",
         "name",
-        "slug",
     )
     search_fields = (
+        "identifier",
         "name",
-        "slug",
     )
     readonly_fields = (
+        "identifier",
         "datetime_created",
         "datetime_updated",
     )

@@ -76,7 +76,11 @@ class Package(models.Model):
     @property
     def primary_package_listing(self):
         from thunderstore.community.models import PackageListing
-        listing, _ = PackageListing.objects.get_or_create(package=self)
+        from thunderstore.community.utils import get_community_for_request
+        community = get_community_for_request(None)
+        listing, _ = PackageListing.objects.get_or_create(
+            package=self, community=community,
+        )
         return listing
 
     def update_listing(self, has_nsfw_content, categories):

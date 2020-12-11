@@ -1,6 +1,7 @@
 import pytest
+from django.contrib.sites.models import Site
 
-from thunderstore.community.models import PackageCategory
+from thunderstore.community.models import PackageCategory, Community, CommunitySite
 from thunderstore.repository.factories import PackageVersionFactory, PackageFactory
 from thunderstore.repository.models import Package, UploaderIdentity, Webhook
 from thunderstore.webhooks.models import WebhookType
@@ -83,5 +84,24 @@ def release_webhook():
 
 
 @pytest.fixture()
-def package_category():
-    return PackageCategory.objects.create(name="Test", slug="test")
+def community():
+    return Community.objects.create(name="Test", identifier="test")
+
+
+@pytest.fixture()
+def package_category(community):
+    return PackageCategory.objects.create(
+        name="Test",
+        slug="test",
+        community=community,
+    )
+
+
+@pytest.fixture()
+def site():
+    return Site.objects.create(domain="testsite.test", name="Testsite")
+
+
+@pytest.fixture()
+def community_site(community, site):
+    return CommunitySite.objects.create(site=site, community=community)

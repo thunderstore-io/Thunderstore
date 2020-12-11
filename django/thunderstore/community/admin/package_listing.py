@@ -12,6 +12,7 @@ class PackageCategoryAdmin(admin.ModelAdmin):
     list_filter = (
         "categories",
         "has_nsfw_content",
+        "community",
     )
     list_display = (
         "id",
@@ -19,6 +20,7 @@ class PackageCategoryAdmin(admin.ModelAdmin):
         "has_nsfw_content",
         "datetime_created",
         "datetime_updated",
+        "community",
     )
     list_display_links = (
         "id",

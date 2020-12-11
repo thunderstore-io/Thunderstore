@@ -10,7 +10,7 @@ from ..factories import PackageVersionFactory
 
 
 @pytest.mark.django_db
-def test_package_list_view(client):
+def test_package_list_view(client, community_site):
     for i in range(4):
         uploader = UploaderIdentityFactory.create(
             name=f"Tester-{i}",
@@ -26,7 +26,7 @@ def test_package_list_view(client):
             package=package,
             is_active=True,
         )
-    response = client.get(reverse("packages.list"))
+    response = client.get(reverse("packages.list"), HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
 
     for i in range(4):
@@ -51,15 +51,16 @@ def test_package_detail_version_view(client, active_version):
     assert active_version.owner.name in response_text
 
 
-def test_package_create_view_not_logged_in(client):
-    response = client.get(reverse("packages.create"))
+@pytest.mark.django_db
+def test_package_create_view_not_logged_in(client, community_site):
+    response = client.get(reverse("packages.create"), HTTP_HOST=community_site.site.domain)
     assert response.status_code == 302
 
 
 @pytest.mark.django_db
-def test_package_create_view_logged_in(client):
+def test_package_create_view_logged_in(client, community_site):
     user = UserFactory.create()
     client.force_login(user)
-    response = client.get(reverse("packages.create"))
+    response = client.get(reverse("packages.create"), HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
     assert b"Upload package" in response.content
