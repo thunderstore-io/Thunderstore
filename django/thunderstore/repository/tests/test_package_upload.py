@@ -48,7 +48,7 @@ def test_package_upload(user, manifest_v1_data):
 
 
 @pytest.mark.django_db
-def test_package_upload_with_extra_data(user, manifest_v1_data):
+def test_package_upload_with_extra_data(user, community, manifest_v1_data):
 
     icon_raw = io.BytesIO()
     icon = Image.new("RGB", (256, 256), "#FF0000")
@@ -71,6 +71,7 @@ def test_package_upload_with_extra_data(user, manifest_v1_data):
     category = PackageCategory.objects.create(
         name="Test Category",
         slug="test-category",
+        community=community,
     )
 
     file_data = {

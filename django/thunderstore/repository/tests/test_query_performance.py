@@ -32,6 +32,6 @@ def test_package_query_count(django_assert_max_num_queries, package_count, versi
             )
 
     packages = get_mod_list_queryset()
-    with django_assert_max_num_queries(package_count * 6 + 5):
+    with django_assert_max_num_queries(package_count * 8 + 5):
         serializer = PackageSerializer(packages, many=True)
         _ = serializer.data
