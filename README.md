@@ -9,6 +9,19 @@ Thunderstore is a mod database and API for downloading Risk of Rain 2 mods.
 * Run `docker-compose up`
 * Run `docker-compose exec django python manage.py migrate` in another terminal
 
+You will also need to navigate to the admin panel (`/djangoadmin`)
+and configure a mapping from a site to a community. You can create a superuser
+account with the `createsuperuser` Django management command (akin to how
+migrate was run) to gain access to the admin panel.
+
+To connect a site to a community, you will need to:
+1. Make sure at least one Community object exists or create one
+(`Risk of Rain 2` should be created automatically)
+2. Make sure at least one Site object exists or create one
+3. Make the site object's `domain name` attribute match what you use for
+connecting to your development environment
+4. Create a new Community Site object, linking the two together
+
 ## Mod package format
 
 Mod packages are `.zip` files, with at least the following contents:
