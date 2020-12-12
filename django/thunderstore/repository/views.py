@@ -295,6 +295,7 @@ class PackageCreateView(CreateView):
         kwargs["identity"] = UploaderIdentity.get_or_create_for_user(
             self.request.user
         )
+        kwargs["community"] = self.request.community
         return kwargs
 
     @transaction.atomic
