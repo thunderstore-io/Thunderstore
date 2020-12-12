@@ -163,39 +163,9 @@ class PackageVersion(models.Model):
 
     def announce_release(self):
         webhooks = Webhook.get_for_package_release(self.package)
-        thumbnail_url = self.icon.url
-        if not (thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")):
-            thumbnail_url = f"{settings.PROTOCOL}{settings.SERVER_NAME}{thumbnail_url}"
-
-        webhook_data = {
-            "embeds": [{
-                "title": f"{self.name} v{self.version_number}",
-                "type": "rich",
-                "description": self.description,
-                "url": self.package.full_url,
-                "timestamp": timezone.now().isoformat(),
-                "color": 4474879,
-                "thumbnail": {
-                    "url": thumbnail_url,
-                    "width": 256,
-                    "height": 256,
-                },
-                "provider": {
-                    "name": "Thunderstore",
-                    "url": f"{settings.PROTOCOL}{settings.SERVER_NAME}/"
-                },
-                "author": {
-                    "name": self.package.owner.name,
-                },
-                "fields": [{
-                    "name": "Total downloads across versions",
-                    "value": f"{self.package.downloads}",
-                }]
-            }]
-        }
 
         for webhook in webhooks:
-            webhook.call_with_json(webhook_data)
+            webhook.post_package_version_release(self)
 
     def maybe_increase_download_counter(self, request):
         client_ip, is_routable = get_client_ip(request)

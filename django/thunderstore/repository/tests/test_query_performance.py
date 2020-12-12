@@ -1,4 +1,6 @@
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from thunderstore.repository.api.v1.serializers import PackageSerializer
 from thunderstore.repository.cache import get_mod_list_queryset
@@ -17,21 +19,23 @@ from thunderstore.repository.factories import PackageVersionFactory, PackageFact
     ]
 )
 def test_package_query_count(django_assert_max_num_queries, package_count, version_count):
-    for package_id in range(package_count):
-        package = PackageFactory.create(
-            owner=UploaderIdentityFactory.create(
-                name=f"uploader_{package_id}"
-            ),
-            name=f"package_{package_id}",
-        )
-        for version_id in range(version_count):
-            PackageVersionFactory.create(
-                package=package,
+    with CaptureQueriesContext(connection) as context:
+        for package_id in range(package_count):
+            package = PackageFactory.create(
+                owner=UploaderIdentityFactory.create(
+                    name=f"uploader_{package_id}"
+                ),
                 name=f"package_{package_id}",
-                version_number=f"{version_id}.0.0",
             )
+            for version_id in range(version_count):
+                PackageVersionFactory.create(
+                    package=package,
+                    name=f"package_{package_id}",
+                    version_number=f"{version_id}.0.0",
+                )
+        creation_queries = len(context)
 
     packages = get_mod_list_queryset()
-    with django_assert_max_num_queries(package_count * 8 + 5):
+    with django_assert_max_num_queries(package_count + creation_queries + 1):
         serializer = PackageSerializer(packages, many=True)
         _ = serializer.data

@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.sites.models import Site
 
-from thunderstore.community.models import PackageCategory, Community, CommunitySite
+from thunderstore.community.models import PackageCategory, Community, CommunitySite, PackageListing
 from thunderstore.repository.factories import PackageVersionFactory, PackageFactory
 from thunderstore.repository.models import Package, UploaderIdentity, Webhook
 from thunderstore.webhooks.models import WebhookType
@@ -69,17 +69,26 @@ def active_package():
 
 
 @pytest.fixture(scope="function")
+def active_package_listing(community, active_package):
+    return PackageListing.objects.create(
+        community=community,
+        package=active_package,
+    )
+
+
+@pytest.fixture(scope="function")
 def active_version(active_package):
     return active_package.versions.first()
 
 
 @pytest.fixture()
-def release_webhook():
+def release_webhook(community_site):
     return Webhook.objects.create(
         name="test",
         webhook_url="https://example.com/",
         webhook_type=WebhookType.mod_release,
         is_active=True,
+        community_site=community_site,
     )
 
 
