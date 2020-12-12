@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get tag
+        id: tag
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+      - name: Build Docker image
+        run: docker build -t thunderstore:latest .
+      - name: Tag image
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          docker tag thunderstore:latest riskofthunder/thunderstore:release-${TAG}
+          docker tag thunderstore:latest ghcr.io/risk-of-thunder/thunderstore:release-${TAG}
+      - name: Login to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - name: Login to GitHub Container Registry
+        env:
+          DOCKER_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.GHCR_PAT }}
+        run: docker login ghcr.io -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - name: Push image
+        run: |
+          docker push riskofthunder/thunderstore
+          docker push ghcr.io/risk-of-thunder/thunderstore

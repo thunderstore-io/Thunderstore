@@ -1,0 +1,43 @@
+name: Build & Test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker image
+        run: docker build -t thunderstore:${GITHUB_SHA} .
+      - name: Run pytest
+        run: >
+          docker run --rm
+          --entrypoint pytest
+          -e SECRET_KEY=hunter2
+          -v "$(pwd)/coverage_results:/app/coverage_results"
+          --no-healthcheck
+          thunderstore:${GITHUB_SHA}
+          --cov-report=xml:coverage_results/coverage.xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage_results/coverage.xml
+      - name: Tag image
+        run: |
+          docker tag thunderstore:${GITHUB_SHA} riskofthunder/thunderstore:${GITHUB_SHA}
+          docker tag thunderstore:${GITHUB_SHA} ghcr.io/risk-of-thunder/thunderstore:${GITHUB_SHA}
+      - name: Login to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - name: Push image to Docker Hub
+        run: docker push riskofthunder/thunderstore
+      - name: Login to GitHub Container Registry
+        env:
+          DOCKER_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.GHCR_PAT }}
+        run: docker login ghcr.io -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - name: Push image to GitHub Container Registry
+        run: docker push ghcr.io/risk-of-thunder/thunderstore
