@@ -29,7 +29,9 @@
     <body>
         {% dynamic_html "html_body_beginning" %}
         <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
-            <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">Thunderstore</a>
+            <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">
+                {% if request.site %}{{ request.site.name }}{% else %}Thunderstore{% endif %}
+            </a>
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'packages.list' %}">Browse</a>
@@ -44,15 +46,19 @@
                         <a href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false" class="nav-link dropdown-toggle">Developers</a>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                            <a class="dropdown-item" href="https://github.com/risk-of-thunder/R2Wiki/wiki">Modding Wiki</a>
+                            {% if request.community and request.community.wiki_url %}
+                            <a class="dropdown-item" href="{{ request.community.wiki_url }}">Modding Wiki</a>
+                            {% endif %}
                             <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
                             <a class="dropdown-item" href="https://github.com/risk-of-thunder/Thunderstore">GitHub Repo</a>
                         </div>
                     </div>
                 </li>
+                {% if request.community and request.community.discord_url %}
                 <li class="nav-item">
-                    <a class="nav-link" href="https://discord.gg/5MbXZvd"><span class="fab fa-discord"></span> &nbsp;Join our Discord</a>
+                    <a class="nav-link" href="{{ request.community.discord_url }}"><span class="fab fa-discord"></span> &nbsp;Join our Discord</a>
                 </li>
+                {% endif %}
             </ul>
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}

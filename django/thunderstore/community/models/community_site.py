@@ -14,7 +14,6 @@ class CommunitySite(TimestampMixin, models.Model):
         related_name="sites",
         on_delete=models.CASCADE,
     )
-    discord_url = models.CharField(max_length=512, blank=True, null=True)
 
     def __str__(self):
         return str(self.community)
