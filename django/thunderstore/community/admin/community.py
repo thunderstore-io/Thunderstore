@@ -2,6 +2,7 @@ from django.contrib import admin
 
 
 from ..models.community import Community
+from ...core.utils import ensure_fields_editable_on_creation
 
 
 @admin.register(Community)
@@ -31,3 +32,6 @@ class CommunityAdmin(admin.ModelAdmin):
         "datetime_created",
         "datetime_updated",
     )
+
+    def get_readonly_fields(self, request, obj=None):
+        return ensure_fields_editable_on_creation(self.readonly_fields, obj, ("identifier",))
