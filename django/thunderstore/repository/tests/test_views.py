@@ -7,6 +7,7 @@ from thunderstore.core.factories import UserFactory
 from ..factories import UploaderIdentityFactory
 from ..factories import PackageFactory
 from ..factories import PackageVersionFactory
+from ...community.models import PackageListing
 
 
 @pytest.mark.django_db
@@ -25,6 +26,10 @@ def test_package_list_view(client, community_site):
             name=package.name,
             package=package,
             is_active=True,
+        )
+        PackageListing.objects.create(
+            package=package,
+            community=community_site.community,
         )
     response = client.get(reverse("packages.list"), HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200

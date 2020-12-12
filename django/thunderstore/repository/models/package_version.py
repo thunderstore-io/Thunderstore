@@ -138,10 +138,9 @@ class PackageVersion(models.Model):
             "version": self.version_number,
         })
 
-    @cached_property
-    def install_url(self):
+    def get_install_url(self, request):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
-            "hostname": settings.SERVER_NAME,
+            "hostname": request.site.domain,
             "owner": self.package.owner.name,
             "name": self.package.name,
             "version": self.version_number,

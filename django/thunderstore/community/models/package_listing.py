@@ -1,6 +1,16 @@
 from django.db import models
+from django.db.models import Q
 
 from thunderstore.core.mixins import TimestampMixin
+
+
+class PackageListingQueryset(models.QuerySet):
+    def active(self):
+        return (
+            self
+            .exclude(package__is_active=False)
+            .exclude(~Q(package__versions__is_active=True))
+        )
 
 
 # TODO: Add a db constraint that ensures a package listing and it's categories
@@ -10,6 +20,7 @@ class PackageListing(TimestampMixin, models.Model):
     """
     Represents a package's relation to how it's displayed on the site and APIs
     """
+    objects = PackageListingQueryset.as_manager()
 
     community = models.ForeignKey(
         "community.Community",

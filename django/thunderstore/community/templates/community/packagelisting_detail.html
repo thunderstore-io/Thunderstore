@@ -2,35 +2,36 @@
 {% load thumbnail %}
 {% load arrow %}
 {% load markdownify %}
+{% load get_install_url %}
 {% load cache_until %}
 
-{% block title %}{{ object.display_name }}{% endblock %}
-{% block description %}{{ object.description }}{% endblock %}
+{% block title %}{{ object.package.display_name }}{% endblock %}
+{% block description %}{{ object.package.description }}{% endblock %}
 
 {% block opengraph %}
-<meta property="og:title" content="{{ object.display_name }} v{{ object.version_number }}" />
+<meta property="og:title" content="{{ object.package.display_name }} v{{ object.package.version_number }}" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="{{ request.build_absolute_uri }}" />
-<meta property="og:image" content="{% thumbnail object.icon 256x256 %}" />
+<meta property="og:image" content="{% thumbnail object.package.icon 256x256 %}" />
 <meta property="og:image:width" content="256" />
 <meta property="og:image:height" content="256" />
 
-<meta property="og:description" content="{{ object.description }}" />
+<meta property="og:description" content="{{ object.package.description }}" />
 <meta property="og:site_name" content="Thunderstore" />
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-detail" 300 object.pk %}
+{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{% url "packages.list" %}">Packages</a></li>
-    <li class="breadcrumb-item"><a href="{% url "packages.list_by_owner" object.owner.name %}">{{ object.owner.name }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ object.display_name }}</li>
+    <li class="breadcrumb-item"><a href="{% url "packages.list_by_owner" object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ object.package.display_name }}</li>
   </ol>
 </nav>
 
-{% if object.is_deprecated %}
+{% if object.package.is_deprecated %}
     <div class="alert alert-danger" role="alert">
         This package has been marked as deprecated, and it's suggested another
         alternative is used.
@@ -38,16 +39,16 @@
 {% endif %}
 
 <div class="media mt-4">
-    <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
+    <img class="align-self-center mr-3" src="{% thumbnail object.package.icon 128x128 %}" alt="{{ object.package }} icon">
     <div class="media-body">
-        <h1 class="mt-0">{{ object.display_name }}</h1>
-        <p>{{ object.description }}</p>
+        <h1 class="mt-0">{{ object.package.display_name }}</h1>
+        <p>{{ object.package.description }}</p>
         <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></h5>
-            {% if object.website_url %}
-            <a class="text-nowrap" href="{{ object.website_url }}">
+            <h5 class="mb-1">By <a href="{{ object.package.owner_url }}">{{ object.package.owner.name }}</a></h5>
+            {% if object.package.website_url %}
+            <a class="text-nowrap" href="{{ object.package.website_url }}">
               <span class="fa fa-globe-americas fa-fw"></span>
-              {{ object.website_url }}</a>
+              {{ object.package.website_url }}</a>
             {% endif %}
         </div>
     </div>
@@ -56,40 +57,40 @@
 <table class="table mt-2">
     <tr>
         <td>Last updated</td>
-        <td>{% humanize_timestamp object.date_updated %}</td>
+        <td>{% humanize_timestamp object.package.date_updated %}</td>
     </tr>
     <tr>
         <td>Total downloads</td>
-        <td>{{ object.downloads }}</td>
+        <td>{{ object.package.downloads }}</td>
     </tr>
     <tr>
         <td>Total rating</td>
-        <td><span id="package-rating-{{ object.uuid4 }}">{{ object.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.uuid4 }}"></i></td>
+        <td><span id="package-rating-{{ object.package.uuid4 }}">{{ object.package.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.package.uuid4 }}"></i></td>
     </tr>
     <tr>
         <td>Dependency string</td>
-        <td>{{ object.latest.full_version_name }}</td>
+        <td>{{ object.package.latest.full_version_name }}</td>
     </tr>
     <tr>
         <td>Dependants</td>
-        <td><a href="{{ object.dependants_url }}">{{ dependants_string }}</a>
+        <td><a href="{{ object.package.dependants_url }}">{{ dependants_string }}</a>
     </tr>
 </table>
 
 <div class="row my-2 ">
     <div class="col-12 col-sm-6 px-3 pl-sm-3 pr-sm-1">
-        <a href="{{ object.latest.install_url }}" type="button" class="btn btn-primary w-100 text-large">
+        <a href="{% get_install_url object.package.latest %}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-rocket mr-2" aria-hidden="true"></i>Install with Mod Manager
         </a>
     </div>
     <div class="col-12 col-sm-6 px-3 pr-sm-3 pl-sm-1 mt-1 mt-sm-0">
-        <a href="{{ object.latest.download_url }}" type="button" class="btn btn-primary w-100 text-large">
+        <a href="{{ object.package.latest.download_url }}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-download mr-2" aria-hidden="true"></i>Manual Download
         </a>
     </div>
 </div>
 
-{% with object.dependencies as dependencies %}
+{% with object.package.dependencies as dependencies %}
 {% if dependencies %}
     {% include "repository/includes/dependencies.html" with dependencies=dependencies %}
 {% endif %}
@@ -98,7 +99,7 @@
 <div class="card bg-light mb-3 mt-2">
     <div class="card-header">README</div>
     <div class="card-body markdown-body">
-        {{ object.readme|markdownify }}
+        {{ object.package.readme|markdownify }}
     </div>
 </div>
 
@@ -113,13 +114,13 @@ software installed. Otherwise use the zip download links instead.</p>
         <th>Download link</th>
         <th>&nbsp;</th>
     </tr>
-    {% for version in object.available_versions %}
+    {% for version in object.package.available_versions %}
     <tr>
         <td>{{ version.date_created|date:"Y-n-j" }}</td>
         <td>{{ version.version_number }}</td>
         <td>{{ version.downloads }}</td>
         <td><a href="{{ version.download_url }}">{{ version }}.zip</a></td>
-        <td><a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a></td>
+        <td><a href="{% get_install_url version %}" type="button" class="btn btn-primary">Install</a></td>
     </tr>
     {% endfor %}
 </table>

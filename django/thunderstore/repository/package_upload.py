@@ -39,7 +39,7 @@ def unpack_serializer_errors(field, errors, error_dict=None):
 
 class PackageUploadForm(forms.ModelForm):
     categories = forms.ModelMultipleChoiceField(
-        queryset=PackageCategory.objects.all(), required=False
+        queryset=PackageCategory.objects.none(), required=False
     )
     has_nsfw_content = forms.BooleanField(required=False)
 
@@ -52,6 +52,7 @@ class PackageUploadForm(forms.ModelForm):
         self.user: User = user
         self.identity: UploaderIdentity = identity
         self.community: Community = community
+        self.fields["categories"].queryset = PackageCategory.objects.filter(community=community)
         self.manifest: Optional[dict] = None
         self.icon: Optional[ContentFile] = None
         self.readme: Optional[str] = None

@@ -4,7 +4,7 @@
     <div class="list-group-item flex-column align-items-start active">
         <h4>This mod requires the following mods to function</h4>
     </div>
-    {% for dependency in object.dependencies.all %}
+    {% for dependency in object.package.dependencies.all %}
     <div class="list-group-item flex-column align-items-start media">
         <div class="media">
             <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
