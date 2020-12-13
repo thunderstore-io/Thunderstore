@@ -3,6 +3,7 @@ import uuid
 
 from distutils.version import StrictVersion
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 
 from django.conf import settings
@@ -72,12 +73,6 @@ class Package(models.Model):
     def save(self, *args, **kwargs):
         self.validate()
         return super().save(*args, **kwargs)
-
-    @property
-    def primary_package_listing(self):
-        from thunderstore.community.utils import get_community_for_request
-        community = get_community_for_request(None)
-        return self.get_package_listing(community)
 
     def get_package_listing(self, community):
         from thunderstore.community.models import PackageListing
@@ -201,11 +196,10 @@ class Package(models.Model):
             kwargs={"owner": self.owner.name, "name": self.name}
         )
 
-    @cached_property
-    def full_url(self):
+    def get_full_url(self, site: Site):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
-            "hostname": settings.SERVER_NAME,
+            "hostname": site.domain,
             "path": self.get_absolute_url()
         }
 

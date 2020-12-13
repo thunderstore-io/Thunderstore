@@ -1,5 +1,7 @@
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
+from django.utils.functional import cached_property
 
 from thunderstore.core.mixins import TimestampMixin
 
@@ -41,3 +43,26 @@ class PackageListing(TimestampMixin, models.Model):
 
     def __str__(self):
         return self.package.name
+
+    def get_absolute_url(self):
+        return reverse(
+            "packages.detail",
+            kwargs={"owner": self.package.owner.name, "name": self.package.name}
+        )
+
+    @cached_property
+    def owner_url(self):
+        return reverse(
+            "packages.list_by_owner",
+            kwargs={"owner": self.package.owner.name}
+        )
+
+    @cached_property
+    def dependants_url(self):
+        return reverse(
+            "packages.list_by_dependency",
+            kwargs={
+                "owner": self.package.owner.name,
+                "name": self.package.name,
+            }
+        )

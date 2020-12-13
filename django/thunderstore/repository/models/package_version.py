@@ -9,7 +9,6 @@ from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models import Sum, signals
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.functional import cached_property
 
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX

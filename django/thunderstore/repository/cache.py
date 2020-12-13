@@ -1,4 +1,4 @@
-from thunderstore.repository.models import Package
+from thunderstore.community.models import CommunitySite, PackageListing, Q
 
 from thunderstore.core.cache import (
     CacheBustCondition,
@@ -7,18 +7,23 @@ from thunderstore.core.cache import (
 
 
 @cache_function_result(cache_until=CacheBustCondition.any_package_updated)
-def get_mod_list_queryset():
+def get_package_listing_queryset(community_site: CommunitySite):
     return (
-        Package.objects
+        PackageListing.objects
         .active()
+        .exclude(~Q(community=community_site.community))
         .select_related(
-            "owner",
-            "latest",
+            "package",
+            "package__owner",
+            "package__latest",
         )
         .prefetch_related(
-            "versions",
-            "versions__dependencies",
-            "package_listings",
+            "package__versions",
+            "package__versions__dependencies",
         )
-        .order_by("-is_pinned", "is_deprecated", "-date_updated")
+        .order_by(
+            "-package__is_pinned",
+            "package__is_deprecated",
+            "-package__date_updated"
+        )
     )

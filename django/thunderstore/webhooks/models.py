@@ -89,7 +89,7 @@ class Webhook(models.Model):
                 "title": f"{version.name} v{version.version_number}",
                 "type": "rich",
                 "description": version.description,
-                "url": version.package.full_url,
+                "url": version.package.get_full_url(self.community_site.site),
                 "timestamp": timezone.now().isoformat(),
                 "color": 4474879,
                 "thumbnail": {

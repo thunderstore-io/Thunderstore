@@ -76,7 +76,7 @@ class ManualCacheMixin(object):
                 cache_bust_condition=self.cache_until,
                 cache_type="view",
                 key=get_view_cache_name(type(self)),
-                vary_on=args + tuple(kwargs.values()),
+                vary_on=args + tuple(kwargs.values()) + (self.request.community_site,),
             ),
             default=get_default,
             default_args=args,
@@ -93,12 +93,12 @@ class BackgroundUpdatedCacheMixin(object):
         return HttpResponse("Cache missing")
 
     @classmethod
-    def get_cache_key(cls, *args, **kwargs):
+    def get_cache_key(cls, request, *args, **kwargs):
         return get_cache_key(
             cache_bust_condition=CacheBustCondition.background_update_only,
             cache_type="view",
             key=get_view_cache_name(cls),
-            vary_on=args + tuple(kwargs.values()),
+            vary_on=args + tuple(kwargs.values()) + (request.community_site,),
         )
 
     @classmethod

@@ -232,12 +232,13 @@ class PackageListByOwnerView(PackageListSearchView):
 
 
 class PackageListByDependencyView(PackageListSearchView):
+    package_listing: PackageListing
 
-    def cache_package(self):
+    def cache_package_listing(self):
         owner = self.kwargs["owner"]
         owner = get_object_or_404(UploaderIdentity, name=owner)
         name = self.kwargs["name"]
-        package = (
+        package_listing = (
             self.model.objects.active()
             .filter(
                 package__owner=owner,
@@ -246,22 +247,24 @@ class PackageListByDependencyView(PackageListSearchView):
             )
             .first()
         )
-        if not package:
+        if not package_listing:
             raise Http404("No matching package found")
-        self.package = package
+        self.package_listing = package_listing
 
     def dispatch(self, *args, **kwargs):
-        self.cache_package()
+        self.cache_package_listing()
         return super().dispatch(*args, **kwargs)
 
     def get_base_queryset(self):
-        return self.package.dependants
+        return PackageListing.objects.exclude(~Q(
+            package__in=self.package_listing.package.dependants
+        ))
 
     def get_page_title(self):
-        return f"Mods that depend on {self.package.display_name}"
+        return f"Mods that depend on {self.package_listing.package.display_name}"
 
     def get_cache_vary(self):
-        return f"dependencies-{self.package.id}"
+        return f"dependencies-{self.package_listing.package.id}"
 
 
 class PackageDetailView(DetailView):

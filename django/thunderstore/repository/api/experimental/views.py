@@ -4,25 +4,32 @@ from django.http import HttpResponse
 from rest_framework.generics import ListAPIView
 from rest_framework.schemas import AutoSchema
 
+from thunderstore.community.models import PackageListing, CommunitySite, Q
 from thunderstore.core.cache import CacheBustCondition, cache_function_result, BackgroundUpdatedCacheMixin
-from thunderstore.repository.models import Package
+from thunderstore.core.utils import CommunitySiteSerializerContext
 
-from thunderstore.repository.api.experimental.serializers import PackageSerializerExperimental
+from thunderstore.repository.api.experimental.serializers import PackageListingSerializerExperimental
 
 
 @cache_function_result(cache_until=CacheBustCondition.any_package_updated)
-def get_mod_list_queryset():
+def get_mod_list_queryset(community_site: CommunitySite):
     return (
-        Package.objects
+        PackageListing.objects
         .active()
+        .exclude(~Q(community=community_site.community))
         .select_related(
-            "owner",
-            "latest",
+            "package",
+            "package__owner",
+            "package__latest",
         )
         .prefetch_related(
-            "latest__dependencies",
+            "package__latest__dependencies",
         )
-        .order_by("-is_pinned", "is_deprecated", "-date_updated")
+        .order_by(
+            "-package__is_pinned",
+            "package__is_deprecated",
+            "-package__date_updated"
+        )
     )
 
 
@@ -30,12 +37,12 @@ class PackageListSchema(AutoSchema):
     pass
 
 
-class PackageListApiView(BackgroundUpdatedCacheMixin, ListAPIView):
+class PackageListApiView(BackgroundUpdatedCacheMixin, CommunitySiteSerializerContext, ListAPIView):
     """
     Lists all available packages
     """
     cache_until = CacheBustCondition.any_package_updated
-    serializer_class = PackageSerializerExperimental
+    serializer_class = PackageListingSerializerExperimental
     schema = PackageListSchema()
 
     @classmethod
@@ -47,4 +54,4 @@ class PackageListApiView(BackgroundUpdatedCacheMixin, ListAPIView):
         )
 
     def get_queryset(self):
-        return get_mod_list_queryset()
+        return get_mod_list_queryset(self.request.community_site)

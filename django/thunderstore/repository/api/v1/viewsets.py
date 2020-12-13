@@ -9,17 +9,19 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from thunderstore.core.cache import BackgroundUpdatedCacheMixin
+from thunderstore.core.utils import CommunitySiteSerializerContext
 
 from thunderstore.repository.api.v1.serializers import (
-    PackageSerializer,
+    PackageListingSerializer,
 )
 from thunderstore.repository.models import PackageRating
-from thunderstore.repository.cache import get_mod_list_queryset
+from thunderstore.repository.cache import get_package_listing_queryset
 
 
-class PackageViewSet(BackgroundUpdatedCacheMixin, viewsets.ReadOnlyModelViewSet):
-    serializer_class = PackageSerializer
-    lookup_field = "uuid4"
+class PackageViewSet(BackgroundUpdatedCacheMixin, CommunitySiteSerializerContext, viewsets.ReadOnlyModelViewSet):
+    serializer_class = PackageListingSerializer
+    lookup_field = "package__uuid4"
+    lookup_url_kwarg = "uuid4"
 
     @classmethod
     def get_no_cache_response(cls):
@@ -29,8 +31,11 @@ class PackageViewSet(BackgroundUpdatedCacheMixin, viewsets.ReadOnlyModelViewSet)
             content_type="application/json"
         )
 
+    def get_object(self):
+        return super().get_object()
+
     def get_queryset(self):
-        return get_mod_list_queryset()
+        return get_package_listing_queryset(community_site=self.request.community_site)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def rate(self, request, uuid4=None):
