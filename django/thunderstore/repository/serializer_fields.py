@@ -3,9 +3,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX, PACKAGE_VERSION_REGEX
-from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.models import PackageVersion, UploaderIdentity
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.validators import (
+    AuthorNameRegexValidator,
     PackageReferenceValidator,
     VersionNumberValidator,
     license_validator,
@@ -38,6 +39,15 @@ class PackageNameField(serializers.CharField):
             PACKAGE_NAME_REGEX,
             message=f"Package names can only contain a-Z A-Z 0-9 _ characers",
         )
+        self.validators.append(validator)
+
+
+class PackageAuthorNameField(serializers.CharField):
+    def __init__(self, **kwargs):
+        kwargs["max_length"] = UploaderIdentity._meta.get_field("name").max_length
+        kwargs["allow_blank"] = False
+        super().__init__(**kwargs)
+        validator = AuthorNameRegexValidator
         self.validators.append(validator)
 
 

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models, transaction
+from django.core.exceptions import ValidationError
 
 from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.validators import AuthorNameRegexValidator
@@ -61,23 +62,18 @@ class UploaderIdentity(models.Model):
 
     @classmethod
     @transaction.atomic
-    def get_or_create_for_user(cls, user):
-        identity_membership = user.uploader_identities.first()
-        if identity_membership:
-            return identity_membership.identity
-
-        identity, created = cls.objects.get_or_create(
-            name=user.username,
-        )
-        if created:
+    def get_or_create_for_user(cls, name: str, user) -> "UploaderIdentity":
+        uploader_identity, created = cls.objects.get_or_create(name=name)
+        if created is True:
             UploaderIdentityMember.objects.create(
                 user=user,
-                identity=identity,
+                identity=uploader_identity,
                 role=UploaderIdentityMemberRole.owner,
             )
-        if not identity.members.filter(user=user).exists():
-            raise RuntimeError("User missing permissions")
-        return identity
+        else:
+            if uploader_identity.members.filter(user=user).exists() is False:
+                raise ValidationError("Not a member of the team")
+        return uploader_identity
 
     def can_user_upload(self, user):
         membership = self.members.filter(user=user).first()

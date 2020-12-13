@@ -52,6 +52,7 @@ def manifest_v1_data():
     return {
         "name": "name",
         "display_name": "display name",
+        "author_name": "author_name",
         "version_number": "1.0.0",
         "license": next(iter(SPDX_LICENSE_IDS)),
         "website_url": "",
