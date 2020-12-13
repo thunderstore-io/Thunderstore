@@ -30,4 +30,6 @@ class CommunitySiteAdmin(admin.ModelAdmin):
     readonly_fields = (
         "datetime_created",
         "datetime_updated",
+        "icon_width",
+        "icon_height",
     )

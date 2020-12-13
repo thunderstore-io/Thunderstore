@@ -183,7 +183,8 @@ TEMPLATES = [
                 'social_django.context_processors.login_redirect',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'thunderstore.repository.context_processors.uploader_identity'
+                'thunderstore.repository.context_processors.uploader_identity',
+                'thunderstore.community.context_processors.community_site',
             ],
         },
     },
