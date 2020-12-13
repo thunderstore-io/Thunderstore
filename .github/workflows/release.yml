@@ -16,6 +16,13 @@ jobs:
         run: echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
       - name: Build Docker image
         run: docker build -t thunderstore:latest .
+      - name: Run pytest
+        run: >
+          docker run --rm
+          --entrypoint pytest
+          -e SECRET_KEY=hunter2
+          --no-healthcheck
+          thunderstore:latest
       - name: Tag image
         env:
           TAG: ${{ steps.tag.outputs.tag }}
