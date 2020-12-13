@@ -103,7 +103,7 @@ class PackageListSearchView(ListView):
                 .order_by(
                     "-package__is_pinned",
                     "package__is_deprecated",
-                    "-package__total_downloads",
+                    "-total_downloads",
                 )
             )
         if active_ordering == "top-rated":
@@ -113,7 +113,7 @@ class PackageListSearchView(ListView):
                 .order_by(
                     "-package__is_pinned",
                     "package__is_deprecated",
-                    "-package__total_rating",
+                    "-total_rating",
                 )
             )
         return queryset.order_by(

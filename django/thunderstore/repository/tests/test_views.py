@@ -11,7 +11,8 @@ from ...community.models import PackageListing
 
 
 @pytest.mark.django_db
-def test_package_list_view(client, community_site):
+@pytest.mark.parametrize("ordering", ("last-updated", "newest", "most-downloaded", "top-rated"))
+def test_package_list_view(client, community_site, ordering):
     for i in range(4):
         uploader = UploaderIdentityFactory.create(
             name=f"Tester-{i}",
@@ -31,7 +32,10 @@ def test_package_list_view(client, community_site):
             package=package,
             community=community_site.community,
         )
-    response = client.get(reverse("packages.list"), HTTP_HOST=community_site.site.domain)
+
+    base_url = reverse("packages.list")
+    url = f"{base_url}?ordering={ordering}"
+    response = client.get(url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
 
     for i in range(4):
