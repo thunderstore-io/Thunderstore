@@ -2,7 +2,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
-from django.views.generic.base import RedirectView
 from django.urls import path, include
 
 from rest_framework import permissions
@@ -20,7 +19,7 @@ from thunderstore.social.urls import settings_urls
 
 from .api_urls import api_urls
 from .healthcheck import healthcheck_view
-
+from ..community.views import FaviconView
 
 handler404 = "thunderstore.frontend.views.handle404"
 handler500 = "thunderstore.frontend.views.handle500"
@@ -33,7 +32,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), kwargs={'next_page': '/'}, name="logout"),
     path('package/', include(repository_urls)),
     path('settings/', include(settings_urls)),
-    path('favicon.ico', RedirectView.as_view(url="%s%s" % (settings.STATIC_URL, 'favicon.ico'))),
+    path('favicon.ico', FaviconView.as_view()),
     path('djangoadmin/', admin.site.urls),
     path('healthcheck/', healthcheck_view, name="healthcheck"),
     path('api/', include((api_urls, "api"), namespace="api")),
