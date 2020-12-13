@@ -48,7 +48,7 @@ class PackageUploadForm(forms.ModelForm):
         fields = ["file"]
 
     def __init__(self, user, identity, *args, **kwargs):
-        super(PackageUploadForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.user: User = user
         self.identity: UploaderIdentity = identity
         self.manifest: Optional[dict] = None
@@ -160,7 +160,7 @@ class PackageUploadForm(forms.ModelForm):
             categories=self.cleaned_data.get("categories", []),
         )
         self.instance.icon.save("icon.png", self.icon)
-        instance = super(PackageUploadForm, self).save()
+        instance = super().save()
         for reference in self.manifest["dependencies"]:
             instance.dependencies.add(reference.instance)
         return instance

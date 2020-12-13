@@ -66,7 +66,7 @@ class ManualCacheMixin(object):
     def dispatch(self, *args, **kwargs):
 
         def get_default(*a, **kw):
-            return super(ManualCacheMixin, self).dispatch(*a, **kw).render()
+            return super().dispatch(*a, **kw).render()
 
         if self.request.method != "GET":
             return get_default(*args, **kwargs)
@@ -122,7 +122,7 @@ class BackgroundUpdatedCacheMixin(object):
 
     def dispatch(self, *args, **kwargs):
         if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
-            return super(BackgroundUpdatedCacheMixin, self).dispatch(*args, **kwargs).render()
+            return super().dispatch(*args, **kwargs).render()
         return self.get_cache(
             self.get_cache_key(*args, **kwargs),
             self.get_no_cache_response()
