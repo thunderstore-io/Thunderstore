@@ -39,7 +39,7 @@ class PackageViewSet(BackgroundUpdatedCacheMixin, CommunitySiteSerializerContext
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def rate(self, request, uuid4=None):
-        package = self.get_object()
+        package = self.get_object().package
         user = request.user
         if not user.is_authenticated:
             raise PermissionDenied("Must be logged in")
