@@ -1,5 +1,7 @@
+from rest_framework.fields import Field
 from rest_framework.serializers import SerializerMethodField, ModelSerializer
 
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.models import Package, PackageVersion
 
 
@@ -40,35 +42,53 @@ class PackageVersionSerializer(ModelSerializer):
         )
 
 
-class PackageSerializer(ModelSerializer):
-    versions = SerializerMethodField()
-    owner = SerializerMethodField()
+class RelatedObjectField(Field):
+    def __init__(self, relation_name: str, **kwargs):
+        self.relation_name = relation_name
+        kwargs["source"] = "*"
+        kwargs["read_only"] = True
+        super().__init__(**kwargs)
+
+    def bind(self, field_name, parent):
+        self.field_name = field_name
+        super().bind(field_name, parent)
+
+    def to_representation(self, value):
+        return getattr(getattr(value, self.relation_name), self.field_name)
+
+
+class PackageListingSerializer(ModelSerializer):
+    name = RelatedObjectField(relation_name="package")
     full_name = SerializerMethodField()
+    owner = SerializerMethodField()
     package_url = SerializerMethodField()
-    has_nsfw_content = SerializerMethodField()
+    date_created = RelatedObjectField(relation_name="package")
+    date_updated = RelatedObjectField(relation_name="package")
+    uuid4 = RelatedObjectField(relation_name="package")
+    rating_score = RelatedObjectField(relation_name="package")
+    is_pinned = RelatedObjectField(relation_name="package")
+    is_deprecated = RelatedObjectField(relation_name="package")
     categories = SerializerMethodField()
+    versions = SerializerMethodField()
 
     def get_versions(self, instance):
-        versions = instance.available_versions
-        return PackageVersionSerializer(versions, many=True, context=self._context).data
+        versions = instance.package.available_versions
+        return PackageVersionSerializer(versions, many=True, context=self.context).data
 
     def get_owner(self, instance):
-        return instance.owner.name
+        return instance.package.owner.name
 
     def get_full_name(self, instance):
-        return instance.full_package_name
+        return instance.package.full_package_name
 
     def get_package_url(self, instance):
-        return instance.full_url
-
-    def get_has_nsfw_content(self, instance):
-        return instance.primary_package_listing.has_nsfw_content
+        return instance.package.get_full_url(self.context["community_site"].site)
 
     def get_categories(self, instance):
-        return set(instance.primary_package_listing.categories.all().values_list("name", flat=True))
+        return set(instance.categories.all().values_list("name", flat=True))
 
     class Meta:
-        model = Package
+        model = PackageListing
         fields = (
             "name",
             "full_name",

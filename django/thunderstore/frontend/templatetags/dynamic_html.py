@@ -12,16 +12,16 @@ register = template.Library()
 
 
 @cache_function_result(cache_until=CacheBustCondition.dynamic_html_updated)
-def get_dynamic_html_content(placement):
-    dynamic_content = (
-        DynamicHTML.objects
-        .filter(is_active=True, placement=placement)
-        .order_by("-ordering", "-pk")
+def get_dynamic_html_content(community, placement):
+    entries = (
+        DynamicHTML
+        .get_for_community(community, placement)
         .values_list("content", flat=True)
     )
-    return "".join(dynamic_content)
+    return "".join(entries)
 
 
-@register.simple_tag
-def dynamic_html(placement):
-    return mark_safe(get_dynamic_html_content(placement))
+@register.simple_tag(takes_context=True)
+def dynamic_html(context, placement):
+    community = context["request"].community
+    return mark_safe(get_dynamic_html_content(community, placement))

@@ -6,6 +6,10 @@ from thunderstore.frontend.models import DynamicHTML
 
 @admin.register(DynamicHTML)
 class DynamicHTML(admin.ModelAdmin):
+    filter_horizontal = (
+        "exclude_communities",
+        "require_communities",
+    )
     readonly_fields = (
         "date_created",
         "date_modified",
@@ -21,4 +25,6 @@ class DynamicHTML(admin.ModelAdmin):
     list_filter = (
         "is_active",
         "placement",
+        "exclude_communities",
+        "require_communities",
     )

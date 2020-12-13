@@ -9,7 +9,6 @@ from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models import Sum, signals
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.functional import cached_property
 
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
@@ -138,10 +137,9 @@ class PackageVersion(models.Model):
             "version": self.version_number,
         })
 
-    @cached_property
-    def install_url(self):
+    def get_install_url(self, request):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
-            "hostname": settings.SERVER_NAME,
+            "hostname": request.site.domain,
             "owner": self.package.owner.name,
             "name": self.package.name,
             "version": self.version_number,
@@ -164,39 +162,9 @@ class PackageVersion(models.Model):
 
     def announce_release(self):
         webhooks = Webhook.get_for_package_release(self.package)
-        thumbnail_url = self.icon.url
-        if not (thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")):
-            thumbnail_url = f"{settings.PROTOCOL}{settings.SERVER_NAME}{thumbnail_url}"
-
-        webhook_data = {
-            "embeds": [{
-                "title": f"{self.name} v{self.version_number}",
-                "type": "rich",
-                "description": self.description,
-                "url": self.package.full_url,
-                "timestamp": timezone.now().isoformat(),
-                "color": 4474879,
-                "thumbnail": {
-                    "url": thumbnail_url,
-                    "width": 256,
-                    "height": 256,
-                },
-                "provider": {
-                    "name": "Thunderstore",
-                    "url": f"{settings.PROTOCOL}{settings.SERVER_NAME}/"
-                },
-                "author": {
-                    "name": self.package.owner.name,
-                },
-                "fields": [{
-                    "name": "Total downloads across versions",
-                    "value": f"{self.package.downloads}",
-                }]
-            }]
-        }
 
         for webhook in webhooks:
-            webhook.call_with_json(webhook_data)
+            webhook.post_package_version_release(self)
 
     def maybe_increase_download_counter(self, request):
         client_ip, is_routable = get_client_ip(request)

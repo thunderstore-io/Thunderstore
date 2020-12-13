@@ -12,7 +12,7 @@ from thunderstore.repository.package_upload import PackageUploadForm
 
 
 @pytest.mark.django_db
-def test_package_upload(user, manifest_v1_data):
+def test_package_upload(user, manifest_v1_data, community):
 
     icon_raw = io.BytesIO()
     icon = Image.new("RGB", (256, 256), "#FF0000")
@@ -40,6 +40,7 @@ def test_package_upload(user, manifest_v1_data):
         user=user,
         identity=identity,
         files=file_data,
+        community=community,
     )
     assert form.is_valid()
     version = form.save()
@@ -82,6 +83,7 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data):
         user=user,
         identity=identity,
         files=file_data,
+        community=community,
         data={
             "categories": [category.pk],
             "has_nsfw_content": True,

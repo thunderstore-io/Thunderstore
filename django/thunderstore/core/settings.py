@@ -20,7 +20,6 @@ env = environ.Env(
     DATABASE_URL=(str, 'sqlite:///database/default.db'),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
-    SERVER_NAME=(str, ''),
     PROTOCOL=(str, ''),
 
     SOCIAL_AUTH_DISCORD_KEY=(str, ''),
@@ -84,7 +83,6 @@ DEBUG_SIMULATED_LAG = env.int('DEBUG_SIMULATED_LAG')
 SECRET_KEY = env.str("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
-SERVER_NAME = env.str('SERVER_NAME')
 
 
 DATABASES = {'default': env.db()}

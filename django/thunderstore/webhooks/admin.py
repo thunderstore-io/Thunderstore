@@ -19,7 +19,9 @@ class PackageAdmin(admin.ModelAdmin):
         "date_created",
         "webhook_type",
         "is_active",
+        "community_site",
     )
     list_filter = (
         "is_active",
+        "community_site",
     )

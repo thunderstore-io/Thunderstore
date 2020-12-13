@@ -1,5 +1,7 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework.fields import SerializerMethodField
+
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.models import Package, PackageVersion
 
 
@@ -54,7 +56,7 @@ class PackageSerializerExperimental(ModelSerializer):
         return instance.full_package_name
 
     def get_package_url(self, instance):
-        return instance.full_url
+        return instance.get_full_url(self.context["community_site"].site)
 
     def get_total_downloads(self, instance):
         return instance.downloads
@@ -76,3 +78,20 @@ class PackageSerializerExperimental(ModelSerializer):
             "latest",
         )
         depth = 0
+
+
+class PackageListingSerializerExperimental(ModelSerializer):
+    package = PackageSerializerExperimental()
+    categories = SerializerMethodField()
+
+    def get_categories(self, instance):
+        return set(instance.categories.all().values_list("name", flat=True))
+
+    class Meta:
+        model = PackageListing
+        ref_name = "PackageListingExperimental"
+        fields = (
+            "package",
+            "has_nsfw_content",
+            "categories",
+        )

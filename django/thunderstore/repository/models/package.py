@@ -3,6 +3,7 @@ import uuid
 
 from distutils.version import StrictVersion
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 
 from django.conf import settings
@@ -73,18 +74,15 @@ class Package(models.Model):
         self.validate()
         return super().save(*args, **kwargs)
 
-    @property
-    def primary_package_listing(self):
+    def get_package_listing(self, community):
         from thunderstore.community.models import PackageListing
-        from thunderstore.community.utils import get_community_for_request
-        community = get_community_for_request(None)
         listing, _ = PackageListing.objects.get_or_create(
             package=self, community=community,
         )
         return listing
 
-    def update_listing(self, has_nsfw_content, categories):
-        listing = self.primary_package_listing
+    def update_listing(self, has_nsfw_content, categories, community):
+        listing = self.get_package_listing(community)
         listing.has_nsfw_content = has_nsfw_content
         if categories:
             listing.categories.set(categories)
@@ -198,11 +196,10 @@ class Package(models.Model):
             kwargs={"owner": self.owner.name, "name": self.name}
         )
 
-    @cached_property
-    def full_url(self):
+    def get_full_url(self, site: Site):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
-            "hostname": settings.SERVER_NAME,
+            "hostname": site.domain,
             "path": self.get_absolute_url()
         }
 

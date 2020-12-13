@@ -7,6 +7,7 @@ from thunderstore.core.factories import UserFactory
 from ..factories import UploaderIdentityFactory
 from ..factories import PackageFactory
 from ..factories import PackageVersionFactory
+from ...community.models import PackageListing
 
 
 @pytest.mark.django_db
@@ -26,6 +27,10 @@ def test_package_list_view(client, community_site):
             package=package,
             is_active=True,
         )
+        PackageListing.objects.create(
+            package=package,
+            community=community_site.community,
+        )
     response = client.get(reverse("packages.list"), HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
 
@@ -34,8 +39,8 @@ def test_package_list_view(client, community_site):
 
 
 @pytest.mark.django_db
-def test_package_detail_view(client, active_package):
-    response = client.get(active_package.get_absolute_url())
+def test_package_detail_view(client, active_package, community_site):
+    response = client.get(active_package.get_absolute_url(), HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
     assert active_package.name in response_text
@@ -43,8 +48,8 @@ def test_package_detail_view(client, active_package):
 
 
 @pytest.mark.django_db
-def test_package_detail_version_view(client, active_version):
-    response = client.get(active_version.get_absolute_url())
+def test_package_detail_version_view(client, active_version, community_site):
+    response = client.get(active_version.get_absolute_url(), HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
     assert active_version.name in response_text
