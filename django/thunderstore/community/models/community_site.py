@@ -38,6 +38,12 @@ class CommunitySite(TimestampMixin, models.Model):
         blank=True, null=True,
     )
 
+    social_auth_github_key = models.TextField(blank=True, null=True)
+    social_auth_github_secret = models.TextField(blank=True, null=True)
+
+    social_auth_discord_key = models.TextField(blank=True, null=True)
+    social_auth_discord_secret = models.TextField(blank=True, null=True)
+
     def __str__(self):
         return str(self.community)
 

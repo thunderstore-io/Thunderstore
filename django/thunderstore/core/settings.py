@@ -392,14 +392,6 @@ SOCIAL_AUTH_DISCORD_PROFILE_EXTRA_PARAMS = {
 }
 SOCIAL_AUTH_DISCORD_GET_ALL_EXTRA_DATA = True
 
-
-PROTOCOL = env.str("PROTOCOL")
-if PROTOCOL == "https://":
-    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
-    SECURE_SSL_REDIRECT = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_REDIRECT_EXEMPT = ("/healthcheck/")
-
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
@@ -410,3 +402,11 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
 )
+SOCIAL_AUTH_STRATEGY = "thunderstore.community.social_auth.CommunitySocialAuthStrategy"
+
+PROTOCOL = env.str("PROTOCOL")
+if PROTOCOL == "https://":
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_REDIRECT_EXEMPT = ("/healthcheck/")
