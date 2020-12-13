@@ -24,8 +24,8 @@ RUN pip install -U pip poetry~=1.1.4 --no-cache-dir && \
     poetry install && \
     rm -rf ~/.cache
 
-COPY ./django /app
 COPY --from=builder /app/build /app/static_built
+COPY ./django /app
 
 RUN SECRET_KEY=x python manage.py collectstatic --noinput
 
