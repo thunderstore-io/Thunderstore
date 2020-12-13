@@ -287,10 +287,10 @@ class PackageCreateView(CreateView):
     def dispatch(self, *args, **kwargs):
         if not self.request.user.is_authenticated:
             return redirect("index")
-        return super(PackageCreateView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     def get_form_kwargs(self, *args, **kwargs):
-        kwargs = super(PackageCreateView, self).get_form_kwargs(*args, **kwargs)
+        kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs["user"] = self.request.user
         kwargs["identity"] = UploaderIdentity.get_or_create_for_user(
             self.request.user

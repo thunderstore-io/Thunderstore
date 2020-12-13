@@ -145,4 +145,4 @@ class BackblazeB2Storage(Storage):
         name = get_available_overwrite_name(clean_name(name), max_length)
         if self.exists(name) and not self.file_overwrite:
             raise ValueError("File with the same name already exists")
-        return super(BackblazeB2Storage, self).get_available_name(name, max_length)
+        return super().get_available_name(name, max_length)
