@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from distutils.version import StrictVersion
-from typing import Union
+from typing import Optional, Union
 
 from django.db.models import QuerySet
 from django.utils.functional import cached_property
@@ -10,7 +10,7 @@ from thunderstore.repository.models import PackageVersion, Package
 
 
 class PackageReference:
-    def __init__(self, namespace: str, name: str, version: Union[str, StrictVersion, None] = None):
+    def __init__(self, namespace: str, name: str, version: Optional[Union[str, StrictVersion]] = None):
         """
         :param str namespace: The namespace of the referenced package
         :param str name: The name of the referenced package
@@ -21,7 +21,7 @@ class PackageReference:
         self._name: str = name
         if version is not None and not isinstance(version, StrictVersion):
             version = StrictVersion(version)
-        self._version: Union[StrictVersion, None] = version
+        self._version: Optional[StrictVersion] = version
 
     def __str__(self) -> str:
         if self.version:
@@ -41,7 +41,7 @@ class PackageReference:
         return self._name
 
     @property
-    def version(self) -> Union[StrictVersion, None]:
+    def version(self) -> Optional[StrictVersion]:
         return self._version
 
     @property
@@ -160,7 +160,7 @@ class PackageReference:
             return PackageReference(namespace=self.namespace, name=self.name)
         return self
 
-    def with_version(self, version: Union[str, StrictVersion, None]) -> PackageReference:
+    def with_version(self, version: Optional[Union[str, StrictVersion]]) -> PackageReference:
         """
         Return this same package reference with a different version
 
@@ -193,7 +193,7 @@ class PackageReference:
             )
 
     @cached_property
-    def package_version(self) -> Union[PackageVersion, None]:
+    def package_version(self) -> Optional[PackageVersion]:
         """
         Resolve and return the PackageVersion model instance for this reference
 
@@ -205,7 +205,7 @@ class PackageReference:
         return self.queryset.first()
 
     @cached_property
-    def package(self) -> Union[Package, None]:
+    def package(self) -> Optional[Package]:
         """
         Resolve and return the Package model instance for this reference
 
@@ -215,7 +215,7 @@ class PackageReference:
         return self.without_version.instance
 
     @cached_property
-    def instance(self) -> Union[Package, PackageVersion, None]:
+    def instance(self) -> Optional[Union[Package, PackageVersion]]:
         """
         Resolve and return the PackageVersion or Package model instance for
         this reference. PackageVersion will be returned if version information

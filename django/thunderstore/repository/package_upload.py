@@ -1,6 +1,6 @@
 import json
 import io
-from typing import Union
+from typing import Optional
 
 from PIL import Image
 from zipfile import ZipFile, BadZipFile
@@ -51,10 +51,10 @@ class PackageUploadForm(forms.ModelForm):
         super(PackageUploadForm, self).__init__(*args, **kwargs)
         self.user: User = user
         self.identity: UploaderIdentity = identity
-        self.manifest: Union[dict, None] = None
-        self.icon: Union[ContentFile, None] = None
-        self.readme: Union[str, None] = None
-        self.file_size: Union[int, None] = None
+        self.manifest: Optional[dict] = None
+        self.icon: Optional[ContentFile] = None
+        self.readme: Optional[str] = None
+        self.file_size: Optional[int] = None
 
     def validate_manifest(self, manifest_str):
         try:
