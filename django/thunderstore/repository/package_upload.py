@@ -47,7 +47,7 @@ class PackageUploadForm(forms.ModelForm):
         fields = ["file"]
 
     def __init__(self, user, community, *args, **kwargs):
-        super(PackageUploadForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.user: User = user
         self.identity: Optional[UploaderIdentity] = None
         self.community: Community = community
