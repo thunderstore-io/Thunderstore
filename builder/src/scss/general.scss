@@ -1,4 +1,3 @@
-
 .deleted {
     text-decoration: line-through !important;
 }
@@ -14,7 +13,7 @@
 }
 
 .rated {
-    color: #3498db!important;
+    color: #3498db !important;
 }
 
 .clickable {
@@ -22,11 +21,11 @@
 }
 
 .rotate {
-  animation: rotate 1.5s linear infinite;
+    animation: rotate 1.5s linear infinite;
 }
 
 @keyframes rotate {
-  to {
-    transform: rotate(360deg);
-  }
+    to {
+        transform: rotate(360deg);
+    }
 }
