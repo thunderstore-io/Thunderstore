@@ -48,18 +48,9 @@ class ManifestV1Serializer(serializers.Serializer):
 
     def validate(self, data):
         result = super().validate(data)
-        self.uploader = UploaderIdentity.get_or_create_for_user(
-            result["author_name"], self.user
-        )
-        if self.uploader.can_user_upload(self.user) is False:
-            raise ValidationError(
-                f"Missing privileges to upload under author {self.uploader.name}"
-            )
         reference = PackageReference(
-            self.uploader.name, result["name"], result["version_number"]
+            result["author_name"], result["name"], result["version_number"]
         )
-        if reference.exists:
-            raise ValidationError("Package of the same name and version already exists")
         if has_duplicate_packages(result["dependencies"]):
             raise ValidationError(
                 "Cannot depend on multiple versions of the same package"

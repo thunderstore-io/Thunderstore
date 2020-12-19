@@ -7,7 +7,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
 from thunderstore.community.models import PackageCategory, PackageListing
-from thunderstore.repository.models import UploaderIdentity
+from thunderstore.core.factories import UserFactory
+from thunderstore.repository.models import (
+    UploaderIdentity,
+    UploaderIdentityMember,
+    UploaderIdentityMemberRole,
+)
 from thunderstore.repository.package_upload import PackageUploadForm
 
 
@@ -45,6 +50,87 @@ def test_package_upload(user, manifest_v1_data, community):
     version = form.save()
     assert version.name == manifest_v1_data["name"]
     assert version.package.owner == identity
+
+
+@pytest.mark.django_db
+def test_package_upload_missing_privileges(user, manifest_v1_data, community):
+
+    icon_raw = io.BytesIO()
+    icon = Image.new("RGB", (256, 256), "#FF0000")
+    icon.save(icon_raw, format="PNG")
+
+    readme = "# Test readme".encode("utf-8")
+    manifest = json.dumps(manifest_v1_data).encode("utf-8")
+
+    files = [
+        ("README.md", readme),
+        ("icon.png", icon_raw.getvalue()),
+        ("manifest.json", manifest),
+    ]
+
+    zip_raw = io.BytesIO()
+    with ZipFile(zip_raw, "a", ZIP_DEFLATED, False) as zip_file:
+        for name, data in files:
+            zip_file.writestr(name, data)
+
+    file_data = {"file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())}
+    UploaderIdentity.get_or_create_for_user(
+        manifest_v1_data["author_name"], UserFactory.create()
+    )
+    form = PackageUploadForm(
+        user=user,
+        files=file_data,
+        community=community,
+    )
+    assert form.is_valid() is False
+    assert len(form.errors["file"]) == 1
+    assert form.errors["file"][0] == "Not a member of the team"
+
+
+@pytest.mark.django_db
+def test_package_upload_version_already_exists(
+    user, manifest_v1_data, community, package_version
+):
+
+    icon_raw = io.BytesIO()
+    icon = Image.new("RGB", (256, 256), "#FF0000")
+    icon.save(icon_raw, format="PNG")
+
+    readme = "# Test readme".encode("utf-8")
+
+    UploaderIdentityMember.objects.create(
+        user=user,
+        identity=package_version.owner,
+        role=UploaderIdentityMemberRole.owner,
+    )
+    manifest_v1_data["name"] = package_version.name
+    manifest_v1_data["author_name"] = package_version.owner.name
+    manifest_v1_data["version_number"] = package_version.version_number
+
+    manifest = json.dumps(manifest_v1_data).encode("utf-8")
+
+    files = [
+        ("README.md", readme),
+        ("icon.png", icon_raw.getvalue()),
+        ("manifest.json", manifest),
+    ]
+
+    zip_raw = io.BytesIO()
+    with ZipFile(zip_raw, "a", ZIP_DEFLATED, False) as zip_file:
+        for name, data in files:
+            zip_file.writestr(name, data)
+
+    file_data = {"file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())}
+    form = PackageUploadForm(
+        user=user,
+        files=file_data,
+        community=community,
+    )
+    assert form.is_valid() is False
+    assert len(form.errors["file"]) == 1
+    assert (
+        form.errors["file"][0] == "Package of the same name and version already exists"
+    )
 
 
 @pytest.mark.django_db

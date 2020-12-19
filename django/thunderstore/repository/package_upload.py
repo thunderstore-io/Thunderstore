@@ -12,6 +12,7 @@ from PIL import Image
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
 from thunderstore.repository.package_manifest import ManifestV1Serializer
+from thunderstore.repository.package_reference import PackageReference
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * 500
 MAX_ICON_SIZE = 1024 * 1024 * 6
@@ -70,8 +71,25 @@ class PackageUploadForm(forms.ModelForm):
             data=manifest_data,
         )
         if serializer.is_valid():
+            # Identity validation
+            data = serializer.validated_data
+            uploader = UploaderIdentity.get_or_create_for_user(
+                data["author_name"], self.user
+            )
+            if not uploader.can_user_upload(self.user):
+                raise ValidationError(
+                    f"Missing privileges to upload under author {self.uploader.name}"
+                )
+            reference = PackageReference(
+                data["author_name"], data["name"], data["version_number"]
+            )
+            if reference.exists:
+                raise ValidationError(
+                    "Package of the same name and version already exists"
+                )
+
             self.manifest = serializer.validated_data
-            self.identity = serializer.uploader
+            self.identity = uploader
         else:
             errors = unpack_serializer_errors("manifest.json", serializer.errors)
             errors = ValidationError(

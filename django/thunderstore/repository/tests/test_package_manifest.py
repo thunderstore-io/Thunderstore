@@ -19,41 +19,6 @@ from thunderstore.repository.validators import PackageReferenceValidator
 
 
 @pytest.mark.django_db
-def test_manifest_v1_serializer_missing_privileges(user, manifest_v1_data):
-    UploaderIdentity.get_or_create_for_user(manifest_v1_data["author_name"], user)
-    serializer = ManifestV1Serializer(
-        user=UserFactory.create(),
-        data=manifest_v1_data,
-    )
-    assert serializer.is_valid() is False
-    assert len(serializer.errors["non_field_errors"]) == 1
-    assert "Not a member of the team" in str(serializer.errors["non_field_errors"][0])
-
-
-@pytest.mark.django_db
-def test_manifest_v1_serializer_version_already_exists(
-    user, manifest_v1_data, package_version
-):
-    UploaderIdentityMember.objects.create(
-        user=user,
-        identity=package_version.owner,
-        role=UploaderIdentityMemberRole.owner,
-    )
-    manifest_v1_data["name"] = package_version.name
-    manifest_v1_data["author_name"] = package_version.owner.name
-    manifest_v1_data["version_number"] = package_version.version_number
-    serializer = ManifestV1Serializer(
-        user=user,
-        data=manifest_v1_data,
-    )
-    assert serializer.is_valid() is False
-    assert len(serializer.errors["non_field_errors"]) == 1
-    assert "Package of the same name and version already exists" in str(
-        serializer.errors["non_field_errors"][0]
-    )
-
-
-@pytest.mark.django_db
 def test_manifest_v1_serializer_duplicate_dependency(
     user, manifest_v1_data, package_version
 ):

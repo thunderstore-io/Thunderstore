@@ -71,7 +71,7 @@ class UploaderIdentity(models.Model):
                 role=UploaderIdentityMemberRole.owner,
             )
         else:
-            if uploader_identity.members.filter(user=user).exists() is False:
+            if not uploader_identity.members.filter(user=user).exists():
                 raise ValidationError("Not a member of the team")
         return uploader_identity
 
