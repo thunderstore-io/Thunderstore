@@ -4,3 +4,7 @@ updates:
     directory: "/django/"
     schedule:
       interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/builder/"
+    schedule:
+      interval: "daily"
