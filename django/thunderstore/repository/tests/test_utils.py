@@ -1,8 +1,7 @@
 import pytest
 
 from thunderstore.repository.package_reference import PackageReference
-from thunderstore.repository.utils import does_contain_package
-from thunderstore.repository.utils import has_duplicate_packages
+from thunderstore.repository.utils import does_contain_package, has_duplicate_packages
 
 
 @pytest.mark.parametrize(

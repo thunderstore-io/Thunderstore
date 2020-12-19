@@ -6,11 +6,16 @@ from typing import Optional, Union
 from django.db.models import QuerySet
 from django.utils.functional import cached_property
 
-from thunderstore.repository.models import PackageVersion, Package
+from thunderstore.repository.models import Package, PackageVersion
 
 
 class PackageReference:
-    def __init__(self, namespace: str, name: str, version: Optional[Union[str, StrictVersion]] = None):
+    def __init__(
+        self,
+        namespace: str,
+        name: str,
+        version: Optional[Union[str, StrictVersion]] = None,
+    ):
         """
         :param str namespace: The namespace of the referenced package
         :param str name: The name of the referenced package
@@ -160,7 +165,9 @@ class PackageReference:
             return PackageReference(namespace=self.namespace, name=self.name)
         return self
 
-    def with_version(self, version: Optional[Union[str, StrictVersion]]) -> PackageReference:
+    def with_version(
+        self, version: Optional[Union[str, StrictVersion]]
+    ) -> PackageReference:
         """
         Return this same package reference with a different version
 
@@ -201,7 +208,9 @@ class PackageReference:
         :rtype: PackageVersion or None
         """
         if not self.version:
-            raise TypeError("Unable to resolve package version from a versionless reference")
+            raise TypeError(
+                "Unable to resolve package version from a versionless reference"
+            )
         return self.queryset.first()
 
     @cached_property

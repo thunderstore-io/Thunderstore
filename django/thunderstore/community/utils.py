@@ -14,6 +14,4 @@ def get_community_for_request(request):
 
 def get_community_site_for_request(request):
     site = get_current_site(request)
-    return CommunitySite.objects.select_related(
-        "site", "community"
-    ).get(site=site)
+    return CommunitySite.objects.select_related("site", "community").get(site=site)

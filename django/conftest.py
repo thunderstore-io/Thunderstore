@@ -1,8 +1,13 @@
 import pytest
 from django.contrib.sites.models import Site
 
-from thunderstore.community.models import PackageCategory, Community, CommunitySite, PackageListing
-from thunderstore.repository.factories import PackageVersionFactory, PackageFactory
+from thunderstore.community.models import (
+    Community,
+    CommunitySite,
+    PackageCategory,
+    PackageListing,
+)
+from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import Package, UploaderIdentity, Webhook
 from thunderstore.webhooks.models import WebhookType
 
@@ -18,9 +23,7 @@ def user(django_user_model):
 
 @pytest.fixture()
 def uploader_identity():
-    return UploaderIdentity.objects.create(
-        name="Test-Identity"
-    )
+    return UploaderIdentity.objects.create(name="Test-Identity")
 
 
 @pytest.fixture()

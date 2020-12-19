@@ -1,5 +1,5 @@
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class CurrentUserInfoView(APIView):
@@ -12,12 +12,7 @@ class CurrentUserInfoView(APIView):
         rated_packages = []
         if request.user.is_authenticated:
             capabilities.add("package.rate")
-            rated_packages = (
-                request.user.package_ratings
-                .select_related("package")
-                .values_list("package__uuid4", flat=True)
-            )
-        return Response({
-            "capabilities": capabilities,
-            "ratedPackages": rated_packages
-        })
+            rated_packages = request.user.package_ratings.select_related(
+                "package"
+            ).values_list("package__uuid4", flat=True)
+        return Response({"capabilities": capabilities, "ratedPackages": rated_packages})

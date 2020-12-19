@@ -1,17 +1,16 @@
-import json
 import io
+import json
 from typing import Optional
-
-from PIL import Image
-from zipfile import ZipFile, BadZipFile
+from zipfile import BadZipFile, ZipFile
 
 from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from PIL import Image
 
-from thunderstore.community.models import PackageCategory, Community
-from thunderstore.repository.models import PackageVersion, Package, UploaderIdentity
+from thunderstore.community.models import Community, PackageCategory
+from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * 500
@@ -52,7 +51,9 @@ class PackageUploadForm(forms.ModelForm):
         self.user: User = user
         self.identity: UploaderIdentity = identity
         self.community: Community = community
-        self.fields["categories"].queryset = PackageCategory.objects.filter(community=community)
+        self.fields["categories"].queryset = PackageCategory.objects.filter(
+            community=community
+        )
         self.manifest: Optional[dict] = None
         self.icon: Optional[ContentFile] = None
         self.readme: Optional[str] = None
@@ -73,9 +74,9 @@ class PackageUploadForm(forms.ModelForm):
             self.manifest = serializer.validated_data
         else:
             errors = unpack_serializer_errors("manifest.json", serializer.errors)
-            errors = ValidationError([
-                f"{key}: {value}" for key, value in errors.items()
-            ])
+            errors = ValidationError(
+                [f"{key}: {value}" for key, value in errors.items()]
+            )
             self.add_error(None, errors)
 
     def validate_icon(self, icon):
@@ -85,7 +86,9 @@ class PackageUploadForm(forms.ModelForm):
             raise ValidationError("Unknown error while processing icon.png")
 
         if self.icon.size > MAX_ICON_SIZE:
-            raise ValidationError(f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes")
+            raise ValidationError(
+                f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes"
+            )
 
         try:
             image = Image.open(io.BytesIO(icon))
@@ -111,11 +114,15 @@ class PackageUploadForm(forms.ModelForm):
             raise ValidationError("Must upload a file")
 
         if file.size > MAX_PACKAGE_SIZE:
-            raise ValidationError(f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes")
+            raise ValidationError(
+                f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes"
+            )
         self.file_size = file.size
 
         if file.size + PackageVersion.get_total_used_disk_space() > MAX_TOTAL_SIZE:
-            raise ValidationError(f"The server has reached maximum total storage used, and can't receive new uploads")
+            raise ValidationError(
+                f"The server has reached maximum total storage used, and can't receive new uploads"
+            )
 
         try:
             with ZipFile(file) as unzip:

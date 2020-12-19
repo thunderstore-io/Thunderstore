@@ -2,44 +2,60 @@
 
 import django.core.validators
 from django.db import migrations, models
+
 import thunderstore.community.models.community_site
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0007_add_community_links'),
+        ("community", "0007_add_community_links"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='communitysite',
-            name='description',
+            model_name="communitysite",
+            name="description",
             field=models.CharField(blank=True, max_length=512, null=True),
         ),
         migrations.AddField(
-            model_name='communitysite',
-            name='favicon',
-            field=models.FileField(blank=True, null=True, upload_to=thunderstore.community.models.community_site.get_community_filepath, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['ico'])]),
+            model_name="communitysite",
+            name="favicon",
+            field=models.FileField(
+                blank=True,
+                null=True,
+                upload_to=thunderstore.community.models.community_site.get_community_filepath,
+                validators=[
+                    django.core.validators.FileExtensionValidator(
+                        allowed_extensions=["ico"]
+                    )
+                ],
+            ),
         ),
         migrations.AddField(
-            model_name='communitysite',
-            name='icon',
-            field=models.ImageField(blank=True, height_field='icon_height', null=True, upload_to=thunderstore.community.models.community_site.get_community_filepath, width_field='icon_width'),
+            model_name="communitysite",
+            name="icon",
+            field=models.ImageField(
+                blank=True,
+                height_field="icon_height",
+                null=True,
+                upload_to=thunderstore.community.models.community_site.get_community_filepath,
+                width_field="icon_width",
+            ),
         ),
         migrations.AddField(
-            model_name='communitysite',
-            name='icon_height',
+            model_name="communitysite",
+            name="icon_height",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='communitysite',
-            name='icon_width',
+            model_name="communitysite",
+            name="icon_width",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='communitysite',
-            name='slogan',
+            model_name="communitysite",
+            name="slogan",
             field=models.CharField(blank=True, max_length=512, null=True),
         ),
     ]

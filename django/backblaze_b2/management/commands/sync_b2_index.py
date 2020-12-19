@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-
 from storages.utils import setting
 
 from ...api import BackblazeB2API
@@ -35,9 +34,7 @@ class Command(BaseCommand):
         next_name = files.get("nextFileName", None)
 
         for file in files["files"]:
-            file_obj = BackblazeB2File.objects.filter(
-                name=file["fileName"]
-            ).first()
+            file_obj = BackblazeB2File.objects.filter(name=file["fileName"]).first()
             if not file_obj:
                 file_obj = BackblazeB2File(name=file["fileName"])
 

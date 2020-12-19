@@ -1,10 +1,10 @@
 import io
 import json
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
-from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.models import UploaderIdentity
@@ -32,9 +32,7 @@ def test_package_upload(user, manifest_v1_data, community):
         for name, data in files:
             zip_file.writestr(name, data)
 
-    file_data = {
-        "file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())
-    }
+    file_data = {"file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())}
     identity = UploaderIdentity.get_or_create_for_user(user)
     form = PackageUploadForm(
         user=user,
@@ -75,9 +73,7 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data):
         community=community,
     )
 
-    file_data = {
-        "file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())
-    }
+    file_data = {"file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())}
     identity = UploaderIdentity.get_or_create_for_user(user)
     form = PackageUploadForm(
         user=user,
@@ -87,7 +83,7 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data):
         data={
             "categories": [category.pk],
             "has_nsfw_content": True,
-        }
+        },
     )
     assert form.is_valid()
     version = form.save()

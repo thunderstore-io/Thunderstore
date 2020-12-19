@@ -2,11 +2,13 @@ import factory
 
 from thunderstore.core.factories import UserFactory
 
-from .models import UploaderIdentity
-from .models import UploaderIdentityMember
-from .models import Package
-from .models import PackageVersion
-from .models import PackageVersionDownloadEvent
+from .models import (
+    Package,
+    PackageVersion,
+    PackageVersionDownloadEvent,
+    UploaderIdentity,
+    UploaderIdentityMember,
+)
 
 
 class UploaderIdentityFactory(factory.DjangoModelFactory):

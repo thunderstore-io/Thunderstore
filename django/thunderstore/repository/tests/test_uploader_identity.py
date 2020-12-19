@@ -1,7 +1,10 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from thunderstore.repository.factories import UploaderIdentityFactory, UploaderIdentityMemberFactory
+from thunderstore.repository.factories import (
+    UploaderIdentityFactory,
+    UploaderIdentityMemberFactory,
+)
 from thunderstore.repository.models import UploaderIdentity
 
 
@@ -11,7 +14,7 @@ from thunderstore.repository.models import UploaderIdentity
         ["owner", True],
         ["member", True],
         [None, False],
-    ]
+    ],
 )
 def test_uploader_identity_can_user_upload(user, role, expected):
     identity = UploaderIdentityFactory.create()
@@ -33,7 +36,7 @@ def test_uploader_identity_can_user_upload(user, role, expected):
         ("Som3_Auth0r", False),
         ("Some.Author", False),
         ("Some@Author", True),
-    )
+    ),
 )
 def test_uploader_identity_creation(user, author_name, should_fail):
     user.username = author_name

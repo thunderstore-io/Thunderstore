@@ -2,7 +2,7 @@ import pickle
 from datetime import timedelta
 
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import F, Q
 from django.utils import timezone
 
 from thunderstore.core.mixins import TimestampMixin

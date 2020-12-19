@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0002_add_webhook_exclude_categories'),
-        ('webhooks', '0001_initial'),
+        ("community", "0002_add_webhook_exclude_categories"),
+        ("webhooks", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='webhook',
-            name='exclude_categories',
-            field=models.ManyToManyField(blank=True, related_name='webhooks', to='community.PackageCategory'),
+            model_name="webhook",
+            name="exclude_categories",
+            field=models.ManyToManyField(
+                blank=True, related_name="webhooks", to="community.PackageCategory"
+            ),
         ),
     ]

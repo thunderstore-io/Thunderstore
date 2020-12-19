@@ -2,7 +2,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 
 from thunderstore.core.jwt_helpers import JWTApiView
-from thunderstore.repository.models import Package, DiscordUserBotPermission
+from thunderstore.repository.models import DiscordUserBotPermission, Package
 from thunderstore.repository.package_reference import PackageReference
 
 

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0005_migrate_update_dates'),
+        ("repository", "0005_migrate_update_dates"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='package',
-            name='pinned',
+            model_name="package",
+            name="pinned",
             field=models.BooleanField(default=False),
         ),
     ]

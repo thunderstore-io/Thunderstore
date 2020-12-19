@@ -27,7 +27,8 @@ class CommunitySite(TimestampMixin, models.Model):
         upload_to=get_community_filepath,
         width_field="icon_width",
         height_field="icon_height",
-        blank=True, null=True,
+        blank=True,
+        null=True,
     )
     icon_width = models.PositiveIntegerField(default=0)
     icon_height = models.PositiveIntegerField(default=0)
@@ -35,7 +36,8 @@ class CommunitySite(TimestampMixin, models.Model):
     favicon = models.FileField(
         upload_to=get_community_filepath,
         validators=[FileExtensionValidator(allowed_extensions=["ico"])],
-        blank=True, null=True,
+        blank=True,
+        null=True,
     )
 
     social_auth_github_key = models.TextField(blank=True, null=True)

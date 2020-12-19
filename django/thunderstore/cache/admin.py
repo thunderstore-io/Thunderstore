@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-
 from .models import DatabaseCache
 
 
@@ -18,12 +17,8 @@ class DatabaseCacheAdmin(admin.ModelAdmin):
         "id",
         "key",
     )
-    search_fields = (
-        "key",
-    )
-    exclude = (
-        "content",
-    )
+    search_fields = ("key",)
+    exclude = ("content",)
 
     def has_change_permission(self, request, obj=None):
         return False

@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0002_incomingjwtauthconfiguration'),
+        ("core", "0002_incomingjwtauthconfiguration"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='incomingjwtauthconfiguration',
-            name='secret_type',
-            field=models.CharField(choices=[('HS256', 'HS256'), ('RS256', 'RS256')], max_length=16),
+            model_name="incomingjwtauthconfiguration",
+            name="secret_type",
+            field=models.CharField(
+                choices=[("HS256", "HS256"), ("RS256", "RS256")], max_length=16
+            ),
         ),
     ]

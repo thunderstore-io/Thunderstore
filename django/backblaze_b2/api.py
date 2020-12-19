@@ -1,14 +1,21 @@
 import base64
 import hashlib
 import json
+
 import requests
 
 
 class AuthorizedSession:
-
-    def __init__(self, account_id, api_url, download_url, authorization_token,
-                 absolute_minimum_part_size, recommended_part_size,
-                 allowed):
+    def __init__(
+        self,
+        account_id,
+        api_url,
+        download_url,
+        authorization_token,
+        absolute_minimum_part_size,
+        recommended_part_size,
+        allowed,
+    ):
         self.account_id = account_id
         self.api_url = api_url
         self.download_url = download_url
@@ -64,7 +71,6 @@ class AuthorizedSession:
 
 
 class UploadSession:
-
     def __init__(self, bucket_id, upload_url, authorization_token):
         self.bucket_id = bucket_id
         self.upload_url = upload_url
@@ -81,7 +87,6 @@ class UploadSession:
 
 
 class BackblazeB2API:
-
     def __init__(self, application_key_id, application_key, bucket_id):
         self.application_key_id = application_key_id
         self.application_key = application_key
@@ -106,9 +111,11 @@ class BackblazeB2API:
 
     def _authorize_request_params(self, request_params):
         headers = request_params.get("headers", {})
-        headers.update({
-            "Authorization": self.session.authorization_token,
-        })
+        headers.update(
+            {
+                "Authorization": self.session.authorization_token,
+            }
+        )
         request_params["headers"] = headers
         return request_params
 

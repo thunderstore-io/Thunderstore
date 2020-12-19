@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-
 from thunderstore.frontend.models import DynamicHTML
 
 

@@ -1,6 +1,6 @@
+from django import forms
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
-from django import forms
 
 
 class LinkedAccountDisconnectForm(forms.Form):

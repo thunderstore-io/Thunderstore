@@ -1,15 +1,10 @@
+from django.template import Library, Node, TemplateSyntaxError
 from django.utils.http import urlencode
-
-from django.template import (
-    Library, Node, TemplateSyntaxError,
-)
-
 
 register = Library()
 
 
 class QurlNode(Node):
-
     def __init__(self, param_key, param_val):
         self.param_key = param_key
         self.param_val = param_val

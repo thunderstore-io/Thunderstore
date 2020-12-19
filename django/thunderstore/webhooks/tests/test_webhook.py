@@ -5,7 +5,9 @@ from thunderstore.webhooks.models import Webhook
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("is_active", (False, True))
-def test_webhook_get_for_package_release_is_active(release_webhook, active_package_listing, is_active):
+def test_webhook_get_for_package_release_is_active(
+    release_webhook, active_package_listing, is_active
+):
     release_webhook.is_active = is_active
     release_webhook.save(update_fields=("is_active",))
     result = Webhook.get_for_package_release(active_package_listing.package)
@@ -17,7 +19,9 @@ def test_webhook_get_for_package_release_is_active(release_webhook, active_packa
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("allow_nsfw", (False, True))
-def test_webhook_get_for_package_release_filter_nsfw(release_webhook, active_package_listing, allow_nsfw):
+def test_webhook_get_for_package_release_filter_nsfw(
+    release_webhook, active_package_listing, allow_nsfw
+):
     release_webhook.allow_nsfw = allow_nsfw
     release_webhook.save(update_fields=("allow_nsfw",))
 

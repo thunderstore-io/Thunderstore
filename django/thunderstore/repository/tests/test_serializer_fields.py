@@ -1,14 +1,19 @@
 import pytest
 from rest_framework import serializers
-
 from rest_framework.exceptions import ValidationError as ValidationError
 
-from thunderstore.repository.factories import PackageVersionFactory, UploaderIdentityFactory, PackageFactory
+from thunderstore.repository.factories import (
+    PackageFactory,
+    PackageVersionFactory,
+    UploaderIdentityFactory,
+)
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
-from thunderstore.repository.serializer_fields import PackageNameField
-from thunderstore.repository.serializer_fields import PackageVersionField
-from thunderstore.repository.serializer_fields import DependencyField
+from thunderstore.repository.serializer_fields import (
+    DependencyField,
+    PackageNameField,
+    PackageVersionField,
+)
 
 
 def test_fields_dependency_invalid_reference():
@@ -55,14 +60,11 @@ def test_fields_list_dependency_field():
         PackageVersionFactory.create(
             package=PackageFactory.create(owner=identity, name=f"package_{i}"),
             name=f"package_{i}",
-        ) for i in range(10)
+        )
+        for i in range(10)
     ]
-    references = [
-        x.reference for x in versions
-    ]
-    reference_strings = [
-        str(x) for x in references
-    ]
+    references = [x.reference for x in versions]
+    reference_strings = [str(x) for x in references]
     result = field.run_validation(reference_strings)
     assert len(result) == 10
     assert isinstance(result[0], PackageReference)
@@ -80,7 +82,7 @@ def test_fields_list_dependency_field():
         ["a" * PackageVersion._meta.get_field("name").max_length, ""],
         [
             "a" * PackageVersion._meta.get_field("name").max_length + "b",
-            "Ensure this field has no more than 128 characters."
+            "Ensure this field has no more than 128 characters.",
         ],
     ],
 )
@@ -99,12 +101,27 @@ def test_fields_package_name(value: str, exception_message: str):
     "value, exception_message",
     [
         ["1.0.0", ""],
-        ["1", "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"],
-        ["1.0", "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"],
-        ["1.0.0+a", "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"],
+        [
+            "1",
+            "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
+        ],
+        [
+            "1.0",
+            "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
+        ],
+        [
+            "1.0.0+a",
+            "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
+        ],
         ["0.0.0", ""],
-        ["-1.0.0", "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"],
-        ["1a.0.0", "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)"],
+        [
+            "-1.0.0",
+            "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
+        ],
+        [
+            "1a.0.0",
+            "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
+        ],
         ["", "This field may not be blank."],
         ["10000.100000.100", ""],
         ["10000.100000.1000", "Ensure this field has no more than 16 characters."],

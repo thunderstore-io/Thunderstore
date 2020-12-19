@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import signals, Q
+from django.db.models import Q, signals
 
 from thunderstore.core.cache import CacheBustCondition, invalidate_cache
 from thunderstore.core.utils import ChoiceEnum
@@ -66,12 +66,10 @@ class DynamicHTML(models.Model):
     @classmethod
     def get_for_community(cls, community, placement):
         community_filter = Q(
-            ~Q(exclude_communities=community) &
-            Q(Q(require_communities=None) | Q(require_communities=community))
+            ~Q(exclude_communities=community)
+            & Q(Q(require_communities=None) | Q(require_communities=community))
         )
-        full_query = Q(
-            Q(is_active=True) & Q(placement=placement) & community_filter
-        )
+        full_query = Q(Q(is_active=True) & Q(placement=placement) & community_filter)
         return cls.objects.filter(full_query).order_by("-ordering", "-pk")
 
 

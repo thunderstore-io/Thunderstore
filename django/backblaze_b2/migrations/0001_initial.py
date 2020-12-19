@@ -7,22 +7,32 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='BackblazeB2File',
+            name="BackblazeB2File",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('b2_id', models.CharField(db_index=True, max_length=2048, unique=True)),
-                ('name', models.CharField(db_index=True, max_length=2048, unique=True)),
-                ('bucket_id', models.CharField(max_length=2048)),
-                ('content_length', models.BigIntegerField()),
-                ('content_sha1', models.CharField(max_length=2048)),
-                ('content_type', models.CharField(max_length=2048)),
-                ('created_time', models.DateTimeField(auto_now_add=True)),
-                ('modified_time', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "b2_id",
+                    models.CharField(db_index=True, max_length=2048, unique=True),
+                ),
+                ("name", models.CharField(db_index=True, max_length=2048, unique=True)),
+                ("bucket_id", models.CharField(max_length=2048)),
+                ("content_length", models.BigIntegerField()),
+                ("content_sha1", models.CharField(max_length=2048)),
+                ("content_type", models.CharField(max_length=2048)),
+                ("created_time", models.DateTimeField(auto_now_add=True)),
+                ("modified_time", models.DateTimeField(auto_now=True)),
             ],
         ),
     ]

@@ -3,7 +3,11 @@ import copy
 import pytest
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from thunderstore.repository.validators import PackageReferenceValidator, VersionNumberValidator, AuthorNameRegexValidator
+from thunderstore.repository.validators import (
+    AuthorNameRegexValidator,
+    PackageReferenceValidator,
+    VersionNumberValidator,
+)
 
 
 @pytest.mark.django_db
@@ -98,7 +102,7 @@ def test_version_number_validator_eq():
         ("Som3_Auth0r", False),
         ("Some.Author", False),
         ("Some@Author", True),
-    )
+    ),
 )
 def test_author_name_regex_validator(author_name, should_fail):
     validator = AuthorNameRegexValidator

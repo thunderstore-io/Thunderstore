@@ -1,14 +1,11 @@
 from django.contrib import admin
 
-
 from ..models.package_listing import PackageListing
 
 
 @admin.register(PackageListing)
 class PackageCategoryAdmin(admin.ModelAdmin):
-    filter_horizontal = (
-        "categories",
-    )
+    filter_horizontal = ("categories",)
     list_filter = (
         "categories",
         "has_nsfw_content",

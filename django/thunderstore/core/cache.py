@@ -1,6 +1,5 @@
-import time
 import hashlib
-
+import time
 from urllib.parse import quote
 
 from django.conf import settings
@@ -9,7 +8,6 @@ from django.http import HttpResponse
 
 from thunderstore.cache.models import DatabaseCache
 from thunderstore.core.utils import ChoiceEnum
-
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
 
@@ -64,7 +62,6 @@ class ManualCacheMixin(object):
     cache_expiry = DEFAULT_CACHE_EXPIRY
 
     def dispatch(self, *args, **kwargs):
-
         def get_default(*a, **kw):
             return super().dispatch(*a, **kw).render()
 
@@ -124,8 +121,7 @@ class BackgroundUpdatedCacheMixin(object):
         if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
             return super().dispatch(*args, **kwargs).render()
         return self.get_cache(
-            self.get_cache_key(*args, **kwargs),
-            self.get_no_cache_response()
+            self.get_cache_key(*args, **kwargs), self.get_no_cache_response()
         )
 
     @classmethod
@@ -155,5 +151,7 @@ def cache_function_result(cache_until, expiry=DEFAULT_CACHE_EXPIRY):
                 default_kwargs=kwargs,
                 expiry=expiry,
             )
+
         return wrapper
+
     return decorator

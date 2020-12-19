@@ -21,6 +21,7 @@ if __name__ == "__main__":
         raise
 
     from django import setup
+
     setup()
 
     import thunderstore.monkeypatch  # noqa

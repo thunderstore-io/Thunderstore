@@ -3,10 +3,7 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    PackageVersion = apps.get_model(
-        "repository",
-        "PackageVersion"
-    )
+    PackageVersion = apps.get_model("repository", "PackageVersion")
     for version in PackageVersion.objects.all():
         version.file.name = f"repository/packages/{version.file.name}"
         version.icon.name = f"repository/icons/{version.icon.name}"
@@ -14,10 +11,7 @@ def forwards(apps, schema_editor):
 
 
 def backwards(apps, schema_editor):
-    PackageVersion = apps.get_model(
-        "repository",
-        "PackageVersion"
-    )
+    PackageVersion = apps.get_model("repository", "PackageVersion")
     for version in PackageVersion.objects.all():
         version.file.name = version.file.name.replace("repository/packages/", "")
         version.icon.name = version.icon.name.replace("repository/icons/", "")
@@ -27,7 +21,7 @@ def backwards(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0016_recache_versions'),
+        ("repository", "0016_recache_versions"),
     ]
 
     operations = [

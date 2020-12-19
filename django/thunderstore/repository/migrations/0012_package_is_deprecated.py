@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0011_package_remove_owner'),
+        ("repository", "0011_package_remove_owner"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='package',
-            name='is_deprecated',
+            model_name="package",
+            name="is_deprecated",
             field=models.BooleanField(default=False),
         ),
     ]

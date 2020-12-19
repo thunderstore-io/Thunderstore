@@ -1,11 +1,13 @@
 from django.contrib import admin
 
-from thunderstore.repository.models import DiscordUserBotPermission
-from thunderstore.repository.models import Package
-from thunderstore.repository.models import PackageVersion
-from thunderstore.repository.models import PackageRating
-from thunderstore.repository.models import UploaderIdentity
-from thunderstore.repository.models import UploaderIdentityMember
+from thunderstore.repository.models import (
+    DiscordUserBotPermission,
+    Package,
+    PackageRating,
+    PackageVersion,
+    UploaderIdentity,
+    UploaderIdentityMember,
+)
 
 
 @admin.register(PackageRating)
@@ -40,12 +42,8 @@ class UploaderIdentityAdmin(admin.ModelAdmin):
         else:
             return []
 
-    readonly_fields = (
-        "name",
-    )
-    list_display = (
-        "name",
-    )
+    readonly_fields = ("name",)
+    list_display = ("name",)
 
 
 class PackageVersionInline(admin.StackedInline):
@@ -106,9 +104,7 @@ class DiscordUserBotPermissionAdmin(admin.ModelAdmin):
         "discord_user_id",
         "can_deprecate",
     )
-    list_filter = (
-        "can_deprecate",
-    )
+    list_filter = ("can_deprecate",)
     search_fields = (
         "label",
         "thunderstore_user__username",

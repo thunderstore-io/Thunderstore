@@ -44,8 +44,7 @@ def thumbnail_exists(self, thumbnail_name):
         return False
 
     if utils.is_storage_local(self.source_storage):
-        source_modtime = utils.get_modified_time(
-            self.source_storage, self.name)
+        source_modtime = utils.get_modified_time(self.source_storage, self.name)
     else:
         source = self.get_source_cache()
         if not source:
@@ -58,7 +57,8 @@ def thumbnail_exists(self, thumbnail_name):
     local_thumbnails = utils.is_storage_local(self.thumbnail_storage)
     if local_thumbnails:
         thumbnail_modtime = utils.get_modified_time(
-            self.thumbnail_storage, thumbnail_name)
+            self.thumbnail_storage, thumbnail_name
+        )
         if not thumbnail_modtime:
             return False
         return source_modtime <= thumbnail_modtime
