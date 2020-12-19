@@ -3,14 +3,15 @@ from rest_framework.exceptions import ValidationError
 
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
-from thunderstore.repository.serializer_fields import DependencyField
-from thunderstore.repository.serializer_fields import PackageVersionField
-from thunderstore.repository.serializer_fields import PackageNameField
+from thunderstore.repository.serializer_fields import (
+    DependencyField,
+    PackageNameField,
+    PackageVersionField,
+)
 from thunderstore.repository.utils import does_contain_package, has_duplicate_packages
 
 
 class ManifestV1Serializer(serializers.Serializer):
-
     def __init__(self, *args, **kwargs):
         if "user" not in kwargs:
             raise AttributeError("Missing required key word parameter: user")
@@ -39,12 +40,18 @@ class ManifestV1Serializer(serializers.Serializer):
     def validate(self, data):
         result = super().validate(data)
         if not self.uploader.can_user_upload(self.user):
-            raise ValidationError(f"Missing privileges to upload under author {self.uploader.name}")
-        reference = PackageReference(self.uploader.name, result["name"], result["version_number"])
+            raise ValidationError(
+                f"Missing privileges to upload under author {self.uploader.name}"
+            )
+        reference = PackageReference(
+            self.uploader.name, result["name"], result["version_number"]
+        )
         if reference.exists:
             raise ValidationError("Package of the same name and version already exists")
         if has_duplicate_packages(result["dependencies"]):
-            raise ValidationError("Cannot depend on multiple versions of the same package")
+            raise ValidationError(
+                "Cannot depend on multiple versions of the same package"
+            )
         if does_contain_package(result["dependencies"], reference):
             raise ValidationError("Package depending on itself is not allowed")
         return result

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0018_add_discord_permissions'),
+        ("repository", "0018_add_discord_permissions"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='packageversion',
-            name='file_size',
+            model_name="packageversion",
+            name="file_size",
             field=models.PositiveIntegerField(null=True),
         ),
     ]

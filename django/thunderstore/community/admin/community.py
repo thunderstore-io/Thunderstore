@@ -1,16 +1,13 @@
 from django.contrib import admin
 
-
-from ..models.community import Community
 from ...core.utils import ensure_fields_editable_on_creation
+from ..models.community import Community
 
 
 @admin.register(Community)
 class CommunityAdmin(admin.ModelAdmin):
-    filter_horizontal = (
-    )
-    list_filter = (
-    )
+    filter_horizontal = ()
+    list_filter = ()
     list_display = (
         "id",
         "identifier",
@@ -34,4 +31,6 @@ class CommunityAdmin(admin.ModelAdmin):
     )
 
     def get_readonly_fields(self, request, obj=None):
-        return ensure_fields_editable_on_creation(self.readonly_fields, obj, ("identifier",))
+        return ensure_fields_editable_on_creation(
+            self.readonly_fields, obj, ("identifier",)
+        )

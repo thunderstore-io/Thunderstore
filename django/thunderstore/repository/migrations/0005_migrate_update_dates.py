@@ -23,7 +23,7 @@ def migrate_update_dates(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0004_add_update_date'),
+        ("repository", "0004_add_update_date"),
     ]
 
     operations = [

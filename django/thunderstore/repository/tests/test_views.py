@@ -1,17 +1,16 @@
 import pytest
-
 from django.urls import reverse
 
 from thunderstore.core.factories import UserFactory
 
-from ..factories import UploaderIdentityFactory
-from ..factories import PackageFactory
-from ..factories import PackageVersionFactory
 from ...community.models import PackageListing
+from ..factories import PackageFactory, PackageVersionFactory, UploaderIdentityFactory
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("ordering", ("last-updated", "newest", "most-downloaded", "top-rated"))
+@pytest.mark.parametrize(
+    "ordering", ("last-updated", "newest", "most-downloaded", "top-rated")
+)
 def test_package_list_view(client, community_site, ordering):
     for i in range(4):
         uploader = UploaderIdentityFactory.create(
@@ -44,7 +43,9 @@ def test_package_list_view(client, community_site, ordering):
 
 @pytest.mark.django_db
 def test_package_detail_view(client, active_package, community_site):
-    response = client.get(active_package.get_absolute_url(), HTTP_HOST=community_site.site.domain)
+    response = client.get(
+        active_package.get_absolute_url(), HTTP_HOST=community_site.site.domain
+    )
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
     assert active_package.name in response_text
@@ -53,7 +54,9 @@ def test_package_detail_view(client, active_package, community_site):
 
 @pytest.mark.django_db
 def test_package_detail_version_view(client, active_version, community_site):
-    response = client.get(active_version.get_absolute_url(), HTTP_HOST=community_site.site.domain)
+    response = client.get(
+        active_version.get_absolute_url(), HTTP_HOST=community_site.site.domain
+    )
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
     assert active_version.name in response_text
@@ -62,7 +65,9 @@ def test_package_detail_version_view(client, active_version, community_site):
 
 @pytest.mark.django_db
 def test_package_create_view_not_logged_in(client, community_site):
-    response = client.get(reverse("packages.create"), HTTP_HOST=community_site.site.domain)
+    response = client.get(
+        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+    )
     assert response.status_code == 302
 
 
@@ -70,6 +75,8 @@ def test_package_create_view_not_logged_in(client, community_site):
 def test_package_create_view_logged_in(client, community_site):
     user = UserFactory.create()
     client.force_login(user)
-    response = client.get(reverse("packages.create"), HTTP_HOST=community_site.site.domain)
+    response = client.get(
+        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+    )
     assert response.status_code == 200
     assert b"Upload package" in response.content

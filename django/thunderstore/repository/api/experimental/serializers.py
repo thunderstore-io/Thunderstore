@@ -1,5 +1,5 @@
-from rest_framework.serializers import ModelSerializer
 from rest_framework.fields import SerializerMethodField
+from rest_framework.serializers import ModelSerializer
 
 from thunderstore.community.models import PackageListing
 from thunderstore.repository.models import Package, PackageVersion

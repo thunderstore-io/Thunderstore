@@ -1,19 +1,17 @@
 import re
 import uuid
 
-from django.core.exceptions import ValidationError
-from ipware import get_client_ip
-
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models import Sum, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
+from ipware import get_client_ip
 
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
-
 from thunderstore.webhooks.models import Webhook
 
 
@@ -37,9 +35,7 @@ class PackageVersion(models.Model):
     date_created = models.DateTimeField(
         auto_now_add=True,
     )
-    downloads = models.PositiveIntegerField(
-        default=0
-    )
+    downloads = models.PositiveIntegerField(default=0)
 
     name = models.CharField(
         max_length=Package._meta.get_field("name").max_length,
@@ -52,9 +48,7 @@ class PackageVersion(models.Model):
     website_url = models.CharField(
         max_length=1024,
     )
-    description = models.CharField(
-        max_length=256
-    )
+    description = models.CharField(max_length=256)
     dependencies = models.ManyToManyField(
         "self",
         related_name="dependants",
@@ -74,14 +68,13 @@ class PackageVersion(models.Model):
     icon = models.ImageField(
         upload_to=get_version_png_filepath,
     )
-    uuid4 = models.UUIDField(
-        default=uuid.uuid4,
-        editable=False
-    )
+    uuid4 = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def validate(self):
         if not re.match(PACKAGE_NAME_REGEX, self.name):
-            raise ValidationError("Package names can only contain a-Z A-Z 0-9 _ characers")
+            raise ValidationError(
+                "Package names can only contain a-Z A-Z 0-9 _ characers"
+            )
 
     def save(self, *args, **kwargs):
         self.validate()
@@ -96,8 +89,8 @@ class PackageVersion(models.Model):
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
-                "version": self.version_number
-            }
+                "version": self.version_number,
+            },
         )
 
     @cached_property
@@ -123,6 +116,7 @@ class PackageVersion(models.Model):
     @cached_property
     def reference(self):
         from thunderstore.repository.package_reference import PackageReference
+
         return PackageReference(
             namespace=self.owner.name,
             name=self.name,
@@ -131,11 +125,14 @@ class PackageVersion(models.Model):
 
     @cached_property
     def download_url(self):
-        return reverse("packages.download", kwargs={
-            "owner": self.package.owner.name,
-            "name": self.package.name,
-            "version": self.version_number,
-        })
+        return reverse(
+            "packages.download",
+            kwargs={
+                "owner": self.package.owner.name,
+                "name": self.package.name,
+                "version": self.version_number,
+            },
+        )
 
     def get_install_url(self, request):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {

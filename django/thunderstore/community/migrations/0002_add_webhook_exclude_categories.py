@@ -6,12 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0001_add_package_listing'),
+        ("community", "0001_add_package_listing"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='packagecategory',
-            options={'verbose_name': 'package category', 'verbose_name_plural': 'package categories'},
+            name="packagecategory",
+            options={
+                "verbose_name": "package category",
+                "verbose_name_plural": "package categories",
+            },
         ),
     ]

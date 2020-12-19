@@ -6,22 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0006_add_default_site_mappings'),
+        ("community", "0006_add_default_site_mappings"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='communitysite',
-            name='discord_url',
+            model_name="communitysite",
+            name="discord_url",
         ),
         migrations.AddField(
-            model_name='community',
-            name='discord_url',
+            model_name="community",
+            name="discord_url",
             field=models.CharField(blank=True, max_length=512, null=True),
         ),
         migrations.AddField(
-            model_name='community',
-            name='wiki_url',
+            model_name="community",
+            name="wiki_url",
             field=models.CharField(blank=True, max_length=512, null=True),
         ),
     ]

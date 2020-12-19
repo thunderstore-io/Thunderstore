@@ -1,18 +1,16 @@
 from django.db import transaction
-from django.db.models import Q, Sum, Count
+from django.db.models import Count, Q, Sum
 from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.views.generic.list import ListView
+from django.views.generic import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
-from django.views.generic import View
+from django.views.generic.list import ListView
 
 from thunderstore.community.models import PackageCategory, PackageListing
-from thunderstore.repository.models import PackageVersion
-from thunderstore.repository.models import UploaderIdentity
+from thunderstore.repository.models import PackageVersion, UploaderIdentity
 from thunderstore.repository.package_upload import PackageUploadForm
-
-from django.shortcuts import redirect, get_object_or_404
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -23,9 +21,7 @@ class PackageListSearchView(ListView):
     paginate_by = MODS_PER_PAGE
 
     def get_base_queryset(self):
-        return self.model.objects.active().exclude(
-            ~Q(community=self.request.community)
-        )
+        return self.model.objects.active().exclude(~Q(community=self.request.community))
 
     def get_page_title(self):
         return ""
@@ -34,9 +30,7 @@ class PackageListSearchView(ListView):
         return ""
 
     def get_categories(self):
-        return PackageCategory.objects.exclude(
-            ~Q(community=self.request.community)
-        )
+        return PackageCategory.objects.exclude(~Q(community=self.request.community))
 
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
@@ -97,24 +91,20 @@ class PackageListSearchView(ListView):
                 "-package__date_created",
             )
         if active_ordering == "most-downloaded":
-            return (
-                queryset
-                .annotate(total_downloads=Sum("package__versions__downloads"))
-                .order_by(
-                    "-package__is_pinned",
-                    "package__is_deprecated",
-                    "-total_downloads",
-                )
+            return queryset.annotate(
+                total_downloads=Sum("package__versions__downloads")
+            ).order_by(
+                "-package__is_pinned",
+                "package__is_deprecated",
+                "-total_downloads",
             )
         if active_ordering == "top-rated":
-            return (
-                queryset
-                .annotate(total_rating=Count("package__package_ratings"))
-                .order_by(
-                    "-package__is_pinned",
-                    "package__is_deprecated",
-                    "-total_rating",
-                )
+            return queryset.annotate(
+                total_rating=Count("package__package_ratings")
+            ).order_by(
+                "-package__is_pinned",
+                "package__is_deprecated",
+                "-total_rating",
             )
         return queryset.order_by(
             "-package__is_pinned",
@@ -133,15 +123,9 @@ class PackageListSearchView(ListView):
         parts = search_query.split(" ")
         for part in parts:
             for field in search_fields:
-                icontains_query &= ~Q(**{
-                    f"{field}__icontains": part
-                })
+                icontains_query &= ~Q(**{f"{field}__icontains": part})
 
-        return (
-            queryset
-            .exclude(icontains_query)
-            .distinct()
-        )
+        return queryset.exclude(icontains_query).distinct()
 
     def get_queryset(self):
         queryset = (
@@ -169,10 +153,12 @@ class PackageListSearchView(ListView):
         return self.order_queryset(queryset)
 
     def get_breadcrumbs(self):
-        return [{
-            "url": reverse_lazy("packages.list"),
-            "name": "Packages",
-        }]
+        return [
+            {
+                "url": reverse_lazy("packages.list"),
+                "name": "Packages",
+            }
+        ]
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -192,7 +178,6 @@ class PackageListSearchView(ListView):
 
 
 class PackageListView(PackageListSearchView):
-
     def get_page_title(self):
         return f"All mods"
 
@@ -201,28 +186,26 @@ class PackageListView(PackageListSearchView):
 
 
 class PackageListByOwnerView(PackageListSearchView):
-
     def get_breadcrumbs(self):
         breadcrumbs = super().get_breadcrumbs()
-        return breadcrumbs + [{
-            "url": reverse_lazy("packages.list_by_owner", kwargs=self.kwargs),
-            "name": self.owner.name,
-        }]
+        return breadcrumbs + [
+            {
+                "url": reverse_lazy("packages.list_by_owner", kwargs=self.kwargs),
+                "name": self.owner.name,
+            }
+        ]
 
     def cache_owner(self):
-        self.owner = get_object_or_404(
-            UploaderIdentity,
-            name=self.kwargs["owner"]
-        )
+        self.owner = get_object_or_404(UploaderIdentity, name=self.kwargs["owner"])
 
     def dispatch(self, *args, **kwargs):
         self.cache_owner()
         return super().dispatch(*args, **kwargs)
 
     def get_base_queryset(self):
-        return self.model.objects.active().exclude(~Q(
-            Q(package__owner=self.owner) & Q(community=self.request.community)
-        ))
+        return self.model.objects.active().exclude(
+            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community))
+        )
 
     def get_page_title(self):
         return f"Mods uploaded by {self.owner.name}"
@@ -256,9 +239,9 @@ class PackageListByDependencyView(PackageListSearchView):
         return super().dispatch(*args, **kwargs)
 
     def get_base_queryset(self):
-        return PackageListing.objects.exclude(~Q(
-            package__in=self.package_listing.package.dependants
-        ))
+        return PackageListing.objects.exclude(
+            ~Q(package__in=self.package_listing.package.dependants)
+        )
 
     def get_page_title(self):
         return f"Mods that depend on {self.package_listing.package.display_name}"
@@ -316,9 +299,7 @@ class PackageVersionDetailView(DetailView):
             community=self.request.community,
         )
         version = get_object_or_404(
-            PackageVersion,
-            package=listing.package,
-            version_number=version
+            PackageVersion, package=listing.package, version_number=version
         )
         return version
 
@@ -336,9 +317,7 @@ class PackageCreateView(CreateView):
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs["user"] = self.request.user
-        kwargs["identity"] = UploaderIdentity.get_or_create_for_user(
-            self.request.user
-        )
+        kwargs["identity"] = UploaderIdentity.get_or_create_for_user(self.request.user)
         kwargs["community"] = self.request.community
         return kwargs
 
@@ -349,7 +328,6 @@ class PackageCreateView(CreateView):
 
 
 class PackageDownloadView(View):
-
     def get(self, *args, **kwargs):
         owner = kwargs["owner"]
         name = kwargs["name"]
@@ -362,9 +340,7 @@ class PackageDownloadView(View):
             community=self.request.community,
         )
         version = get_object_or_404(
-            PackageVersion,
-            package=listing.package,
-            version_number=version
+            PackageVersion, package=listing.package, version_number=version
         )
         version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))

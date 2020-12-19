@@ -6,19 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0002_add_webhook_exclude_categories'),
-        ('webhooks', '0003_add_webhook_nsfw_exclusion'),
+        ("community", "0002_add_webhook_exclude_categories"),
+        ("webhooks", "0003_add_webhook_nsfw_exclusion"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='webhook',
-            name='require_categories',
-            field=models.ManyToManyField(blank=True, related_name='webhook_inclusions', to='community.PackageCategory'),
+            model_name="webhook",
+            name="require_categories",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="webhook_inclusions",
+                to="community.PackageCategory",
+            ),
         ),
         migrations.AlterField(
-            model_name='webhook',
-            name='exclude_categories',
-            field=models.ManyToManyField(blank=True, related_name='webhook_exclusions', to='community.PackageCategory'),
+            model_name="webhook",
+            name="exclude_categories",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="webhook_exclusions",
+                to="community.PackageCategory",
+            ),
         ),
     ]

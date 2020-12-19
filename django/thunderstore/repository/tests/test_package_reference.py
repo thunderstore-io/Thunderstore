@@ -1,10 +1,10 @@
+from distutils.version import StrictVersion
 from typing import Union
 
 import pytest
 
-from distutils.version import StrictVersion
-
 from thunderstore.repository.models import Package, PackageVersion
+
 from ..package_reference import PackageReference
 
 
@@ -28,7 +28,10 @@ from ..package_reference import PackageReference
         ["someUser-somePackage-1231203912.43.249234234", False],
         [PackageReference("namespace", "name", "1.0.0"), False],
         ["TheIllustriousMr.Judson-VindictiveRage-1.0.0", False],
-        ["ewfWJMPFK\"#=jf0p29j3fEWJDf+231'saf#¤)\"!%?I(!\")#(¤?)=\"#!%-VindictiveRage-1.0.0", False],
+        [
+            'ewfWJMPFK"#=jf0p29j3fEWJDf+231\'saf#¤)"!%?I(!")#(¤?)="#!%-VindictiveRage-1.0.0',
+            False,
+        ],
     ],
 )
 def test_parsing(to_parse, should_raise):
@@ -45,12 +48,27 @@ def test_parsing(to_parse, should_raise):
     [
         ["someUser-SomePackage", "someUser", "SomePackage", ""],
         ["someUser-SomePackage-1.0.2", "someUser", "SomePackage", "1.0.2"],
-        ["some-user-that-has-dashes-SomePackage-1.0.6", "some-user-that-has-dashes", "SomePackage", "1.0.6"],
-        ["some-user-with-dashers-SomePackage", "some-user-with-dashers", "SomePackage", ""],
+        [
+            "some-user-that-has-dashes-SomePackage-1.0.6",
+            "some-user-that-has-dashes",
+            "SomePackage",
+            "1.0.6",
+        ],
+        [
+            "some-user-with-dashers-SomePackage",
+            "some-user-with-dashers",
+            "SomePackage",
+            "",
+        ],
         ["239423-2fwjeoifjw32023", "239423", "2fwjeoifjw32023", ""],
         ["a-b", "a", "b", ""],
         ["a-b-0.0.1", "a", "b", "0.0.1"],
-        ["someUser-somePackage-1231203912.43.249234234", "someUser", "somePackage", "1231203912.43.249234234"],
+        [
+            "someUser-somePackage-1231203912.43.249234234",
+            "someUser",
+            "somePackage",
+            "1231203912.43.249234234",
+        ],
         ["Tester-0-test-0-0.0.1", "Tester-0-test", "0", "0.0.1"],
     ],
 )
@@ -196,11 +214,15 @@ def test_init_version_parsing(version_number: str, should_raise: bool):
     [
         ["user-pack-1.0.0", "user-pack-1.1.0", False],
         ["user-pack-2.0.0", "user-pack-1.1.0", True],
-        ["user-pack-1.0.0", "user-another-1.1.0", "Unable to compare different packages"],
+        [
+            "user-pack-1.0.0",
+            "user-another-1.1.0",
+            "Unable to compare different packages",
+        ],
         ["user-pack-1.0.0", "user-pack", "Unable to compare packages without version"],
         ["user-pack", "user-pack-1.0.0", "Unable to compare packages without version"],
         ["user-pack-1.0.0", 10, "Unable to make comparison"],
-    ]
+    ],
 )
 def test_greater_than(a: str, b: str, expected: Union[bool, str]):
     a = PackageReference.parse(a) if isinstance(a, str) else a
@@ -218,11 +240,15 @@ def test_greater_than(a: str, b: str, expected: Union[bool, str]):
     [
         ["user-pack-1.0.0", "user-pack-1.1.0", True],
         ["user-pack-2.0.0", "user-pack-1.1.0", False],
-        ["user-pack-1.0.0", "user-another-1.1.0", "Unable to compare different packages"],
+        [
+            "user-pack-1.0.0",
+            "user-another-1.1.0",
+            "Unable to compare different packages",
+        ],
         ["user-pack-1.0.0", "user-pack", "Unable to compare packages without version"],
         ["user-pack", "user-pack-1.0.0", "Unable to compare packages without version"],
         ["user-pack-1.0.0", 10, "Unable to make comparison"],
-    ]
+    ],
 )
 def test_lesser_than(a: str, b: str, expected: Union[bool, str]):
     a = PackageReference.parse(a) if isinstance(a, str) else a

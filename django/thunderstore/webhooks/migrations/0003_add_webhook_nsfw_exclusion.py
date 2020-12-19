@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('webhooks', '0002_add_webhook_exclude_categories'),
+        ("webhooks", "0002_add_webhook_exclude_categories"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='webhook',
-            name='allow_nsfw',
+            model_name="webhook",
+            name="allow_nsfw",
             field=models.BooleanField(default=False),
         ),
     ]

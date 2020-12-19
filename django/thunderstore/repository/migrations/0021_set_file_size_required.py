@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0020_fetch_version_file_sizes'),
+        ("repository", "0020_fetch_version_file_sizes"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='packageversion',
-            name='file_size',
+            model_name="packageversion",
+            name="file_size",
             field=models.PositiveIntegerField(),
         ),
     ]

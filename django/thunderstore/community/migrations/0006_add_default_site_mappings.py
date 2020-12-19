@@ -19,9 +19,7 @@ def forwards(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0005_add_community_site'),
+        ("community", "0005_add_community_site"),
     ]
 
-    operations = [
-        migrations.RunPython(forwards, migrations.RunPython.noop)
-    ]
+    operations = [migrations.RunPython(forwards, migrations.RunPython.noop)]

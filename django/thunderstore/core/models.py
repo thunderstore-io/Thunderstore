@@ -1,9 +1,9 @@
 import uuid
-import jwt
-from django.core.exceptions import ValidationError
 
-from django.db import models
+import jwt
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
 
 from thunderstore.core.utils import ChoiceEnum
 
@@ -41,7 +41,9 @@ class IncomingJWTAuthConfiguration(models.Model):
 
     def decode(self, data):
         if self.secret_type not in SecretTypeChoices.options():
-            raise ValidationError("Invalid secret type in database, this could be a security issue!")
+            raise ValidationError(
+                "Invalid secret type in database, this could be a security issue!"
+            )
         return jwt.decode(data, self.secret, algorithms=[self.secret_type])
 
     @classmethod

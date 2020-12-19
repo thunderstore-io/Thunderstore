@@ -6,19 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0007_add_community_links'),
-        ('frontend', '0005_add_webhook_exclude_categories'),
+        ("community", "0007_add_community_links"),
+        ("frontend", "0005_add_webhook_exclude_categories"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dynamichtml',
-            name='exclude_communities',
-            field=models.ManyToManyField(blank=True, related_name='dynamic_html_exclusions', to='community.Community'),
+            model_name="dynamichtml",
+            name="exclude_communities",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="dynamic_html_exclusions",
+                to="community.Community",
+            ),
         ),
         migrations.AddField(
-            model_name='dynamichtml',
-            name='require_communities',
-            field=models.ManyToManyField(blank=True, related_name='dynamic_html_inclusions', to='community.Community'),
+            model_name="dynamichtml",
+            name="require_communities",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="dynamic_html_inclusions",
+                to="community.Community",
+            ),
         ),
     ]

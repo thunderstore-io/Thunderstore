@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-
 from backblaze_b2.models import BackblazeB2File
 
 
@@ -21,6 +20,4 @@ class BackblazeB2FileAdmin(admin.ModelAdmin):
         "created_time",
         "modified_time",
     )
-    list_filter = (
-        "bucket_id",
-    )
+    list_filter = ("bucket_id",)

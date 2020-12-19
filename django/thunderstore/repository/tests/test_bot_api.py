@@ -1,5 +1,4 @@
 import jwt
-
 from django.urls import reverse
 
 from thunderstore.core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
@@ -27,14 +26,14 @@ def test_bot_api_deprecate_mod_200(client, admin_user, package, community_site):
         payload=payload,
         key=jwt_secret,
         algorithm=SecretTypeChoices.HS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
 
     response = client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     assert response.content == b'{"success":true}'
@@ -42,7 +41,9 @@ def test_bot_api_deprecate_mod_200(client, admin_user, package, community_site):
     assert package.is_deprecated is True
 
 
-def test_bot_api_deprecate_mod_403_thunderstore_perms(client, user, package, community_site):
+def test_bot_api_deprecate_mod_403_thunderstore_perms(
+    client, user, package, community_site
+):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
@@ -63,22 +64,27 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(client, user, package, com
         payload=payload,
         key=jwt_secret,
         algorithm=SecretTypeChoices.HS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
 
     response = client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 403
-    assert response.content == b'{"detail":"You do not have permission to perform this action."}'
+    assert (
+        response.content
+        == b'{"detail":"You do not have permission to perform this action."}'
+    )
     package.refresh_from_db()
     assert package.is_deprecated is False
 
 
-def test_bot_api_deprecate_mod_403_discord_perms(client, admin_user, package, community_site):
+def test_bot_api_deprecate_mod_403_discord_perms(
+    client, admin_user, package, community_site
+):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
@@ -99,14 +105,14 @@ def test_bot_api_deprecate_mod_403_discord_perms(client, admin_user, package, co
         payload=payload,
         key=jwt_secret,
         algorithm=SecretTypeChoices.HS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
 
     response = client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 403
     assert response.content == b'{"detail":"Insufficient Discord user permissions"}'
@@ -134,14 +140,14 @@ def test_bot_api_deprecate_mod_404(client, admin_user, community_site):
         payload=payload,
         key=jwt_secret,
         algorithm=SecretTypeChoices.HS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
 
     response = client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
     assert response.content == b'{"detail":"Not found."}'

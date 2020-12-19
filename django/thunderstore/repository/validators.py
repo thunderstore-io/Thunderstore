@@ -17,6 +17,7 @@ class PackageReferenceValidator:
 
     def __call__(self, value):
         from thunderstore.repository.package_reference import PackageReference
+
         try:
             reference = PackageReference.parse(value)
         except ValueError as exc:
@@ -24,14 +25,18 @@ class PackageReferenceValidator:
         if reference.version is None and self.require_version:
             raise ValidationError(f"Package reference is missing version: {reference}")
         if self.resolve and reference.instance is None:
-            raise ValidationError(f"No matching package found for reference: {reference}")
+            raise ValidationError(
+                f"No matching package found for reference: {reference}"
+            )
 
     def __eq__(self, other):
-        return all((
-            isinstance(other, self.__class__),
-            self.require_version == other.require_version,
-            self.resolve == other.resolve,
-        ))
+        return all(
+            (
+                isinstance(other, self.__class__),
+                self.require_version == other.require_version,
+                self.resolve == other.resolve,
+            )
+        )
 
 
 @deconstructible
@@ -48,12 +53,10 @@ class VersionNumberValidator:
             raise ValidationError(str(exc))
 
     def __eq__(self, other):
-        return all((
-            isinstance(other, self.__class__),
-        ))
+        return all((isinstance(other, self.__class__),))
 
 
 AuthorNameRegexValidator = RegexValidator(
     regex=AUTHOR_NAME_REGEX,
-    message="Author names can only contain a-Z A-Z 0-9 . _ - characers"
+    message="Author names can only contain a-Z A-Z 0-9 . _ - characers",
 )

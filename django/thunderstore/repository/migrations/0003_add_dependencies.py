@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0002_add_packageversiondownloadevent'),
+        ("repository", "0002_add_packageversiondownloadevent"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='packageversion',
-            name='dependencies',
-            field=models.ManyToManyField(blank=True, related_name='dependants', to='repository.PackageVersion'),
+            model_name="packageversion",
+            name="dependencies",
+            field=models.ManyToManyField(
+                blank=True, related_name="dependants", to="repository.PackageVersion"
+            ),
         ),
     ]

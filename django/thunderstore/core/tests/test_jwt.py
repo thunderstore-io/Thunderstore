@@ -1,6 +1,5 @@
 import jwt
 import pytest
-
 from django.contrib.auth import get_user_model
 from rest_framework.response import Response
 
@@ -95,6 +94,7 @@ def test_jwt_view():
     class TestApiView(JWTApiView):
         def post(self, request, format=None):
             return Response("OK")
+
     return TestApiView.as_view()
 
 
@@ -176,7 +176,7 @@ def test_jwt_hs256_request_auth_valid(rf, test_jwt_view, user):
         payload={"test": "data"},
         key=secret,
         algorithm=SecretTypeChoices.HS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
     request = rf.post("/", data, content_type="application/jwt")
     response = test_jwt_view(request)
@@ -195,7 +195,7 @@ def test_jwt_hs256_request_auth_invalid(rf, test_jwt_view, user):
         payload={"test": "data"},
         key="INVALID",
         algorithm=SecretTypeChoices.HS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
     request = rf.post("/", data, content_type="application/jwt")
     response = test_jwt_view(request)
@@ -214,7 +214,7 @@ def test_jwt_rs256_request_auth_valid(rf, test_jwt_view, user):
         payload={"test": "data"},
         key=TEST_PRIVATE_KEY,
         algorithm=SecretTypeChoices.RS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
     request = rf.post("/", data, content_type="application/jwt")
     response = test_jwt_view(request)
@@ -233,7 +233,7 @@ def test_jwt_rs256_request_auth_invalid(rf, test_jwt_view, user):
         payload={"test": "data"},
         key=TEST_PRIVATE_KEY_2,
         algorithm=SecretTypeChoices.RS256,
-        headers={"kid": str(auth.key_id)}
+        headers={"kid": str(auth.key_id)},
     )
     request = rf.post("/", data, content_type="application/jwt")
     response = test_jwt_view(request)

@@ -1,5 +1,4 @@
 import arrow
-
 from django import template
 from django.utils import timezone
 

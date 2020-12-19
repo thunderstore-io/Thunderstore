@@ -14,17 +14,21 @@ def community_site(request):
             url = request.community_site.icon.url
             if not (url.startswith("http://") or url.startswith("https://")):
                 url = f"{request.scheme}://{request.get_host()}{url}"
-            result.update({
-                "site_icon": url,
-                "site_icon_width": request.community_site.icon_width,
-                "site_icon_height": request.community_site.icon_height,
-            })
+            result.update(
+                {
+                    "site_icon": url,
+                    "site_icon_width": request.community_site.icon_width,
+                    "site_icon_height": request.community_site.icon_height,
+                }
+            )
         else:
-            result.update({
-                "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
-                "site_icon_width": "303",
-                "site_icon_height": "303",
-            })
+            result.update(
+                {
+                    "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
+                    "site_icon_width": "303",
+                    "site_icon_height": "303",
+                }
+            )
         return result
     else:
         return {

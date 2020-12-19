@@ -1,9 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-
-from social_core.exceptions import (
-    AuthAlreadyAssociated, AuthFailed, AuthCanceled
-)
+from social_core.exceptions import AuthAlreadyAssociated, AuthCanceled, AuthFailed
 
 
 # TODO: Move to it's own auth module if more auth related things are needed

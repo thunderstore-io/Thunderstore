@@ -6,7 +6,9 @@ from django.db.models import Case, When
 
 
 def get_latest(package):
-    versions = package.versions.filter(is_active=True).values_list("pk", "version_number")
+    versions = package.versions.filter(is_active=True).values_list(
+        "pk", "version_number"
+    )
     ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
     pk_list = [version[0] for version in reversed(ordered)]
     preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
@@ -14,10 +16,7 @@ def get_latest(package):
 
 
 def forwards(apps, schema_editor):
-    Package = apps.get_model(
-        "repository",
-        "Package"
-    )
+    Package = apps.get_model("repository", "Package")
     for package in Package.objects.all():
         package.latest = get_latest(package)
         package.save()
@@ -26,7 +25,7 @@ def forwards(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0015_add_ratings'),
+        ("repository", "0015_add_ratings"),
     ]
 
     operations = [

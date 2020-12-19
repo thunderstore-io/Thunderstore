@@ -10,9 +10,13 @@ class CommunitySiteAdminForm(forms.ModelForm):
         model = CommunitySite
         widgets = {
             "social_auth_discord_key": TextInput(attrs={"size": 40}),
-            "social_auth_discord_secret": PasswordInput(render_value=True, attrs={"size": 40}),
+            "social_auth_discord_secret": PasswordInput(
+                render_value=True, attrs={"size": 40}
+            ),
             "social_auth_github_key": TextInput(attrs={"size": 40}),
-            "social_auth_github_secret": PasswordInput(render_value=True, attrs={"size": 40}),
+            "social_auth_github_secret": PasswordInput(
+                render_value=True, attrs={"size": 40}
+            ),
         }
         fields = "__all__"
 
@@ -21,10 +25,8 @@ class CommunitySiteAdminForm(forms.ModelForm):
 class CommunitySiteAdmin(admin.ModelAdmin):
     form = CommunitySiteAdminForm
 
-    filter_horizontal = (
-    )
-    list_filter = (
-    )
+    filter_horizontal = ()
+    list_filter = ()
     list_display = (
         "id",
         "community",

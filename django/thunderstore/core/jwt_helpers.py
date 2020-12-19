@@ -1,6 +1,5 @@
 import jwt
 from rest_framework import exceptions
-
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.parsers import BaseParser
 from rest_framework.views import APIView
@@ -12,6 +11,7 @@ class JWTAuthentication(BaseAuthentication):
     """
     Authenticates JWT data
     """
+
     def authenticate(self, request):
         jwt_data = request.data
 
@@ -38,6 +38,7 @@ class JWTParser(BaseParser):
     """
     Parses JWT data
     """
+
     media_type = "application/jwt"
 
     def parse(self, stream, media_type=None, parser_context=None):
@@ -51,5 +52,6 @@ class JWTApiView(APIView):
     """
     API View intended to be used for receiving JWT requets
     """
+
     authentication_classes = [JWTAuthentication]
     parser_classes = [JWTParser]

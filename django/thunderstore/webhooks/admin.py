@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-
 from thunderstore.webhooks.models import Webhook
 
 

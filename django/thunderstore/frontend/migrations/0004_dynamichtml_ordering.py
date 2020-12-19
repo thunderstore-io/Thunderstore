@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('frontend', '0003_add_placement_info'),
+        ("frontend", "0003_add_placement_info"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dynamichtml',
-            name='ordering',
+            model_name="dynamichtml",
+            name="ordering",
             field=models.IntegerField(default=0),
         ),
     ]

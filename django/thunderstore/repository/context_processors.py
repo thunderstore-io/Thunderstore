@@ -1,4 +1,3 @@
-
 def uploader_identity(request):
     if not request.user.is_authenticated:
         return {}
@@ -6,6 +5,4 @@ def uploader_identity(request):
     membership = request.user.uploader_identities.first()
     if membership:
         name = membership.identity.name
-    return {
-        "uploader_identity": name
-    }
+    return {"uploader_identity": name}
