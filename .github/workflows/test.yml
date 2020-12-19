@@ -59,6 +59,7 @@ jobs:
           thunderstore:${GITHUB_SHA}
           --cov-report=xml:coverage_results/coverage.xml
       - name: Upload coverage to Codecov
+        if: always()
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage_results/coverage.xml
