@@ -32,10 +32,10 @@ def test_package_upload(user, manifest_v1_data, community):
         for name, data in files:
             zip_file.writestr(name, data)
 
-    file_data = {
-        "file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())
-    }
-    identity = UploaderIdentity.get_or_create_for_user(manifest_v1_data["author_name"], user)
+    file_data = {"file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())}
+    identity = UploaderIdentity.get_or_create_for_user(
+        manifest_v1_data["author_name"], user
+    )
     form = PackageUploadForm(
         user=user,
         files=file_data,
@@ -74,10 +74,10 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data):
         community=community,
     )
 
-    file_data = {
-        "file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())
-    }
-    identity = UploaderIdentity.get_or_create_for_user(manifest_v1_data["author_name"], user)
+    file_data = {"file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())}
+    identity = UploaderIdentity.get_or_create_for_user(
+        manifest_v1_data["author_name"], user
+    )
     form = PackageUploadForm(
         user=user,
         files=file_data,

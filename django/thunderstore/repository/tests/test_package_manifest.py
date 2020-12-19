@@ -1,6 +1,6 @@
 import pytest
-from thunderstore.core.factories import UserFactory
 
+from thunderstore.core.factories import UserFactory
 from thunderstore.repository.consts import SPDX_LICENSE_IDS
 from thunderstore.repository.factories import (
     PackageFactory,
@@ -118,7 +118,9 @@ def test_manifest_v1_serializer_self_dependency(
 
 
 @pytest.mark.django_db
-def test_manifest_v1_serializer_unresolved_dependency(user, manifest_v1_data, package_version):
+def test_manifest_v1_serializer_unresolved_dependency(
+    user, manifest_v1_data, package_version
+):
     manifest_v1_data["dependencies"] = [
         "invalid-package-1.0.0",
         str(package_version.reference),
@@ -140,9 +142,7 @@ def test_manifest_v1_serializer_unresolved_dependency(user, manifest_v1_data, pa
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
-    reference_strings = [
-        f"user-package-{i}.{i}.{i}" for i in range(101)
-    ]
+    reference_strings = [f"user-package-{i}.{i}.{i}" for i in range(101)]
     manifest_v1_data["dependencies"] = reference_strings
     serializer = ManifestV1Serializer(
         user=user,
@@ -179,7 +179,9 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
         ],
     ],
 )
-def test_manifest_v1_serializer_name_validation(user, manifest_v1_data, name: str, error: str):
+def test_manifest_v1_serializer_name_validation(
+    user, manifest_v1_data, name: str, error: str
+):
     manifest_v1_data["name"] = name
     serializer = ManifestV1Serializer(
         user=user,
@@ -212,7 +214,9 @@ def test_manifest_v1_serializer_name_validation(user, manifest_v1_data, name: st
         ["111111.111111.111", "Ensure this field has no more than 16 characters."],
     ],
 )
-def test_manifest_v1_serializer_version_number_validation(user, manifest_v1_data, version: str, error: str):
+def test_manifest_v1_serializer_version_number_validation(
+    user, manifest_v1_data, version: str, error: str
+):
     manifest_v1_data["version_number"] = version
     serializer = ManifestV1Serializer(
         user=user,
@@ -273,7 +277,9 @@ def test_license_max_length():
         ],
     ],
 )
-def test_manifest_v1_serializer_website_url_validation(user, manifest_v1_data, url: str, error: str):
+def test_manifest_v1_serializer_website_url_validation(
+    user, manifest_v1_data, url: str, error: str
+):
     manifest_v1_data["website_url"] = url
     serializer = ManifestV1Serializer(
         user=user,
@@ -303,7 +309,9 @@ def test_manifest_v1_serializer_website_url_validation(user, manifest_v1_data, u
         ],
     ],
 )
-def test_manifest_v1_serializer_description_validation(user, manifest_v1_data, description: str, error: str):
+def test_manifest_v1_serializer_description_validation(
+    user, manifest_v1_data, description: str, error: str
+):
     manifest_v1_data["description"] = description
     serializer = ManifestV1Serializer(
         user=user,
@@ -330,7 +338,9 @@ def test_manifest_v1_serializer_description_validation(user, manifest_v1_data, d
         ["", 'Expected a list of items but got type "str".'],
     ],
 )
-def test_manifest_v1_serializer_dependencies_invalid(user, manifest_v1_data, dependencies, error: str):
+def test_manifest_v1_serializer_dependencies_invalid(
+    user, manifest_v1_data, dependencies, error: str
+):
     manifest_v1_data["dependencies"] = dependencies
     serializer = ManifestV1Serializer(
         user=user,
@@ -416,7 +426,9 @@ def test_manifest_v1_null_fields(user, manifest_v1_data, field):
         ["dependencies", [], False],
     ],
 )
-def test_manifest_v1_blank_fields(user, manifest_v1_data, field, empty_val, should_fail):
+def test_manifest_v1_blank_fields(
+    user, manifest_v1_data, field, empty_val, should_fail
+):
     manifest_v1_data[field] = empty_val
     serializer = ManifestV1Serializer(
         user=user,
