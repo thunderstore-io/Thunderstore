@@ -41,7 +41,7 @@ class PackageVersion(models.Model):
         max_length=Package._meta.get_field("name").max_length,
     )
     display_name = models.CharField(
-        max_length=Package._meta.get_field("display_name").max_length,
+        max_length=128,
     )
 
     # TODO: Split to three fields for each number in the version for better querying performance
