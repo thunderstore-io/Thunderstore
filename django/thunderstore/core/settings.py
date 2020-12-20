@@ -53,6 +53,7 @@ env = environ.Env(
     AWS_LOCATION=(str, ""),
     AWS_QUERYSTRING_AUTH=(bool, False),
     REDIS_URL=(str, ""),
+    DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
     DB_CLIENT_KEY=(str, ""),
     DB_SERVER_CA=(str, ""),
@@ -80,13 +81,14 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 DATABASES = {"default": env.db()}
 
+DB_CERT_DIR = env.str("DB_CERT_DIR")
 DB_CLIENT_CERT = env.str("DB_CLIENT_CERT")
 DB_CLIENT_KEY = env.str("DB_CLIENT_KEY")
 DB_SERVER_CA = env.str("DB_SERVER_CA")
 
 
 def load_db_certs():
-    if not any((DB_CLIENT_CERT, DB_CLIENT_KEY, DB_SERVER_CA)):
+    if not DB_CERT_DIR:
         return
 
     cert_dir = "/etc/ssl/private/db-certs/"

@@ -11,6 +11,9 @@ FROM python:3.8-slim-buster
 LABEL org.opencontainers.image.source https://github.com/risk-of-thunder/Thunderstore
 
 ENV PYTHONUNBUFFERED 1
+
+ENV DB_CERT_DIR /etc/ssl/private/db-certs/
+
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
