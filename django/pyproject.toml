@@ -29,7 +29,7 @@ pyjwt = { version = "^1.7", extras = ["crypto"] }
 [tool.poetry.dev-dependencies]
 pytest = "^5.4"
 pytest-cov = "^2.8"
-pytest-django = "^3.8"
+pytest-django = "^4.1"
 factory_boy = "^2.12"
 Faker = "^4.0"
 pytest-mock = "^2.0"
