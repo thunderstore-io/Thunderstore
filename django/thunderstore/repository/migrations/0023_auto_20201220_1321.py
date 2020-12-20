@@ -7,8 +7,8 @@ from django.db.models.functions import Replace
 
 def set_default(apps, schema_editor):
     for model_name in ("Package", "PackageVersion"):
-        for model in apps.get_model("repository", model_name):
-            model.objects.update(display_name=Replace("name", Value("_"), Value(" ")))
+        model = apps.get_model("repository", model_name)
+        model.objects.update(display_name=Replace("name", Value("_"), Value(" ")))
 
 
 class Migration(migrations.Migration):
