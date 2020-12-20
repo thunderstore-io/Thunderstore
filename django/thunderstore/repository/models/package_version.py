@@ -44,6 +44,7 @@ class PackageVersion(models.Model):
         max_length=128,
     )
 
+    # Can be "Unknown", "None" or an SPDX license ID
     license = models.CharField(
         max_length=64,
     )

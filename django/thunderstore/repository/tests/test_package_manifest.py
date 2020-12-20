@@ -246,6 +246,7 @@ def test_manifest_v1_serializer_version_number_validation(
     "license, error",
     [
         [next(iter(SPDX_LICENSE_IDS)), ""],
+        ["None", ""],
         ["", "This field may not be blank."],
         ["-", "Invalid SPDX license ID"],
     ],

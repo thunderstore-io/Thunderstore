@@ -63,5 +63,5 @@ AuthorNameRegexValidator = RegexValidator(
 
 
 def license_validator(value: str) -> None:
-    if value not in SPDX_LICENSE_IDS:
+    if value not in SPDX_LICENSE_IDS and value != "None":
         raise ValidationError("Invalid SPDX license ID")
