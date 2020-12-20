@@ -21,7 +21,7 @@ django-storages = { version = "^1.9", extras = ["google", "boto3"] }
 djangorestframework = "^3.11"
 drf-yasg = "^1.17"
 django-ipware = "^2.1"
-sentry_sdk = "^0.14"
+sentry_sdk = "^0.19"
 django-redis = "^4.11"
 pymdown-extensions = "^6.3"
 pyjwt = { version = "^1.7", extras = ["crypto"] }
