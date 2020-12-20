@@ -44,7 +44,9 @@ class PackageVersion(models.Model):
         max_length=128,
     )
 
-    # Can be "Unknown", "None" or an SPDX license ID
+    # Can be "" or an SPDX license ID
+    # "" means "we don't know"
+    # See https://github.com/risk-of-thunder/Thunderstore/pull/170#discussion_r546436399
     license = models.CharField(
         max_length=64,
     )

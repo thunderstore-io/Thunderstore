@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="packageversion",
             name="license",
-            field=models.CharField(default="Unknown", max_length=64),
+            field=models.CharField(default="", max_length=64),
             preserve_default=False,
         ),
     ]

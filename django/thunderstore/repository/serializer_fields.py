@@ -61,5 +61,6 @@ class PackageVersionField(serializers.CharField):
 # Not part of the model as IDs may be deprecated
 class LicenseField(serializers.CharField):
     def __init__(self, **kwargs):
+        kwargs["allow_blank"] = True
         super().__init__(**kwargs)
         self.validators.append(license_validator)
