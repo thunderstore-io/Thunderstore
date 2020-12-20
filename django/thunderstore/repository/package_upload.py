@@ -155,6 +155,7 @@ class PackageUploadForm(forms.ModelForm):
 
     def save(self, *args, **kwargs):
         self.instance.name = self.manifest["name"]
+        self.instance.display_name = self.manifest["display_name"]
         self.instance.version_number = self.manifest["version_number"]
         self.instance.website_url = self.manifest["website_url"]
         self.instance.description = self.manifest["description"]
@@ -165,6 +166,7 @@ class PackageUploadForm(forms.ModelForm):
             name=self.instance.name,
         )[0]
         self.instance.package.update_listing(
+            display_name=self.instance.display_name,
             has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),
             categories=self.cleaned_data.get("categories", []),
             community=self.community,

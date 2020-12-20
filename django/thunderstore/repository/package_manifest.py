@@ -22,6 +22,10 @@ class ManifestV1Serializer(serializers.Serializer):
         super().__init__(*args, **kwargs)
 
     name = PackageNameField()
+    display_name = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("display_name").max_length,
+        allow_blank=False,
+    )
     version_number = PackageVersionField()
     website_url = serializers.CharField(
         max_length=PackageVersion._meta.get_field("website_url").max_length,
