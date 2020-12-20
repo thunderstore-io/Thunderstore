@@ -86,6 +86,9 @@ DB_SERVER_CA = env.str("DB_SERVER_CA")
 
 
 def load_db_certs():
+    if not any((DB_CLIENT_CERT, DB_CLIENT_KEY, DB_SERVER_CA)):
+        return
+
     cert_dir = "/etc/ssl/private/db-certs/"
     if not os.path.exists(cert_dir):
         os.makedirs(cert_dir)
