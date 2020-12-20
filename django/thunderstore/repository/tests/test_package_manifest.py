@@ -1,5 +1,6 @@
 import pytest
 
+from thunderstore.repository.consts import SPDX_LICENSE_IDS
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
@@ -238,6 +239,37 @@ def test_manifest_v1_serializer_version_number_validation(
         assert error in str(serializer.errors["version_number"][0])
     else:
         assert serializer.is_valid() is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "license, error",
+    [
+        [next(iter(SPDX_LICENSE_IDS)), ""],
+        ["", "This field may not be blank."],
+        ["-", "Invalid SPDX license ID"],
+    ],
+)
+def test_manifest_v1_serializer_license_validation(
+    user, manifest_v1_data, license: str, error: str
+):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    manifest_v1_data["license"] = license
+    serializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    if error:
+        assert serializer.is_valid() is False
+        assert error in str(serializer.errors["license"][0])
+    else:
+        assert serializer.is_valid() is True
+
+
+def test_license_max_length():
+    max_length = max(len(lid) for lid in SPDX_LICENSE_IDS)
+    assert max_length <= PackageVersion._meta.get_field("license").max_length
 
 
 @pytest.mark.django_db

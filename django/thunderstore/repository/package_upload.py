@@ -159,6 +159,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.version_number = self.manifest["version_number"]
         self.instance.website_url = self.manifest["website_url"]
         self.instance.description = self.manifest["description"]
+        self.instance.license = self.manifest["license"]
         self.instance.readme = self.readme
         self.instance.file_size = self.file_size
         self.instance.package = Package.objects.get_or_create(

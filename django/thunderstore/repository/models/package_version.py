@@ -44,6 +44,10 @@ class PackageVersion(models.Model):
         max_length=128,
     )
 
+    license = models.CharField(
+        max_length=64,
+    )
+
     # TODO: Split to three fields for each number in the version for better querying performance
     version_number = models.CharField(
         max_length=16,
