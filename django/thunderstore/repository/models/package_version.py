@@ -40,6 +40,9 @@ class PackageVersion(models.Model):
     name = models.CharField(
         max_length=Package._meta.get_field("name").max_length,
     )
+    display_name = models.CharField(
+        max_length=Package._meta.get_field("display_name").max_length,
+    )
 
     # TODO: Split to three fields for each number in the version for better querying performance
     version_number = models.CharField(
@@ -92,10 +95,6 @@ class PackageVersion(models.Model):
                 "version": self.version_number,
             },
         )
-
-    @cached_property
-    def display_name(self):
-        return self.name.replace("_", " ")
 
     @cached_property
     def owner_url(self):
