@@ -4,11 +4,10 @@ from django.db import migrations, models
 
 
 def set_default(apps, schema_editor):
-    for model_name in ("Package", "PackageVersion"):
-        model = apps.get_model("repository", model_name)
-        for package in model.objects.all().iterator():
-            package.display_name = package.name.replace("_", " ")
-            package.save()
+    PackageVersion = apps.get_model("repository", "PackageVersion")
+    for package in PackageVersion.objects.all().iterator():
+        package.display_name = package.name.replace("_", " ")
+        package.save()
 
 
 class Migration(migrations.Migration):
@@ -19,24 +18,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="package",
-            name="display_name",
-            field=models.CharField(null=True, max_length=128),
-            preserve_default=False,
-        ),
-        migrations.AddField(
             model_name="packageversion",
             name="display_name",
             field=models.CharField(null=True, max_length=128),
             preserve_default=False,
         ),
         migrations.RunPython(set_default, migrations.RunPython.noop),
-        migrations.AlterField(
-            model_name="package",
-            name="display_name",
-            field=models.CharField(max_length=128),
-            preserve_default=False,
-        ),
         migrations.AlterField(
             model_name="packageversion",
             name="display_name",
