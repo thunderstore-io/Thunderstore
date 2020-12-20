@@ -50,6 +50,7 @@ def package_version(package):
 def manifest_v1_data():
     return {
         "name": "name",
+        "display_name": "display name",
         "version_number": "1.0.0",
         "website_url": "",
         "description": "",

@@ -30,6 +30,9 @@ class Package(models.Model):
     name = models.CharField(
         max_length=128,
     )
+    display_name = models.CharField(
+        max_length=128,
+    )
     is_active = models.BooleanField(
         default=True,
     )
@@ -98,10 +101,6 @@ class Package(models.Model):
             namespace=self.owner.name,
             name=self.name,
         )
-
-    @cached_property
-    def display_name(self):
-        return self.name.replace("_", " ")
 
     @cached_property
     def available_versions(self):
