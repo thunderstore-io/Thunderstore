@@ -1,12 +1,14 @@
 function getCookie(name) {
     var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
+    if (document.cookie && document.cookie != "") {
+        var cookies = document.cookie.split(";");
         for (var i = 0; i < cookies.length; i++) {
             var cookie = cookies[i].trim();
 
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            if (cookie.substring(0, name.length + 1) == name + "=") {
+                cookieValue = decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                );
                 break;
             }
         }
@@ -30,34 +32,34 @@ function ratePackage() {
 
     var package = $el.data("target");
     var url = "/api/v1/package/" + package + "/rate/";
-    var payload = JSON.stringify({target_state: targetState});
+    var payload = JSON.stringify({ target_state: targetState });
 
-    $.post(url, payload, function(response) {
+    $.post(url, payload, function (response) {
         $score = $("#package-rating-" + package);
         $score.text(response.score);
-        if(response.state == "rated") {
+        if (response.state == "rated") {
             $el.addClass("rated");
         } else {
             $el.removeClass("rated");
         }
-    }).always(function() {
+    }).always(function () {
         $el.addClass("fa-thumbs-up");
         $el.removeClass("fa-sync rotate");
-    })
+    });
 
     $el.addClass("fa-sync rotate");
     $el.removeClass("fa-thumbs-up");
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
     $.ajaxSetup({
         headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            Accept: "application/json",
             "X-CSRFToken": getCookie("csrftoken"),
-        }
+        },
     });
-    $.get("/api/v1/current-user/info/", function(response) {
+    $.get("/api/v1/current-user/info/", function (response) {
         if (response.capabilities.includes("package.rate")) {
             var $ratingButtons = $('[data-action="package.rate"]');
             $ratingButtons.addClass("clickable");

@@ -13,6 +13,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.8"
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+      - name: Get node version
+        id: node-version
+        run: echo "::set-output name=node-version::$(node --version)"
       - uses: Gr1N/setup-poetry@v4
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -36,6 +42,7 @@ jobs:
           path: ~/.cache/pre-commit
           key: "pre-commit-${{ runner.os }}-\
             ${{ steps.setup-python.outputs.python-version }}-\
+            ${{ steps.node-version.outputs.node-version }}-\
             ${{ hashFiles('.pre-commit-config.yaml') }}"
       - name: Run pre-commit
         run: |

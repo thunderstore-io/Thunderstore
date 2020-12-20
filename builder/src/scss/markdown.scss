@@ -1,13 +1,12 @@
-
 .markdown-body {
     color: #ffffff;
 }
 
 .markdown-body a {
-  // TODO: Use the link color variable from _variables.scss.
-  //       didn't work for some reason so just copypasting for now.
-  color: #00bc8c;
-  text-decoration: none;
+    // TODO: Use the link color variable from _variables.scss.
+    //       didn't work for some reason so just copypasting for now.
+    color: #00bc8c;
+    text-decoration: none;
 }
 
 .markdown-body h6 {
@@ -18,7 +17,8 @@
     background-color: #191919;
 }
 
-.markdown-body table td, .markdown-body table th {
+.markdown-body table td,
+.markdown-body table th {
     border-color: #1f1c1c;
 }
 
