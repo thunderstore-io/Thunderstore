@@ -1,0 +1,15 @@
+name: "Run Django"
+description: "Run command with Django settings"
+inputs:
+  command:
+    description: "Command to run in poetry venv with Django settings"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - run: poetry run ${{ inputs.command }}
+      working-directory: "django/"
+      env:
+        DEBUG: "1"
+        SECRET_KEY: "x"
+      shell: bash

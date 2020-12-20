@@ -104,23 +104,17 @@ jobs:
       - name: Copy built static files
         run: cp -r builder/build/ django/static_built/
       - name: Run collectstatic
-        env:
-          SECRET_KEY: "x"
-        run: |
-          cd django/
-          poetry run python manage.py collectstatic --noinput
+        uses: ./.github/actions/run-django
+        with:
+          command: "python manage.py collectstatic --noinput"
       - name: Run pytest
-        env:
-          SECRET_KEY: "x"
-        run: |
-          cd django/
-          poetry run pytest --no-cov
+        uses: ./.github/actions/run-django
+        with:
+          command: "pytest --no-cov"
       # - name: Run mypy
-      #   env:
-      #     SECRET_KEY: "x"
-      #   run: |
-      #     cd django/
-      #     poetry run mypy .
+      #   uses: ./.github/actions/run-django
+      #   with:
+      #     command: "mypy ."
   build-docker:
     name: Build and test (Docker)
     runs-on: ubuntu-latest
