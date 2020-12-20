@@ -78,6 +78,7 @@ jobs:
           --no-healthcheck
           thunderstore:${GITHUB_SHA}
           /app/
+          || :
       - name: Tag image
         run: |
           docker tag thunderstore:${GITHUB_SHA} riskofthunder/thunderstore:${GITHUB_SHA}
