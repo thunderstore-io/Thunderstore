@@ -166,7 +166,6 @@ class PackageUploadForm(forms.ModelForm):
             name=self.instance.name,
         )[0]
         self.instance.package.update_listing(
-            display_name=self.instance.display_name,
             has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),
             categories=self.cleaned_data.get("categories", []),
             community=self.community,
