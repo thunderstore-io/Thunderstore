@@ -116,7 +116,8 @@ def load_db_certs():
     DATABASES["default"]["OPTIONS"].update(cert_options)
 
 
-load_db_certs()
+if not DEBUG:
+    load_db_certs()
 
 # Application definition
 
