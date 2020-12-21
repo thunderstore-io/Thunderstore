@@ -42,7 +42,7 @@ def test_uploader_identity_creation(user, author_name, should_fail):
     user.username = author_name
     if should_fail:
         with pytest.raises(ValidationError):
-            UploaderIdentity.get_or_create_for_user(user)
+            UploaderIdentity.get_or_create_for_user(author_name, user)
     else:
-        identity = UploaderIdentity.get_or_create_for_user(user)
+        identity = UploaderIdentity.get_or_create_for_user(author_name, user)
         assert identity.name == author_name
