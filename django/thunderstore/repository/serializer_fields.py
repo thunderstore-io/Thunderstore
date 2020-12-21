@@ -8,6 +8,7 @@ from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.validators import (
     PackageReferenceValidator,
     VersionNumberValidator,
+    license_validator,
 )
 
 
@@ -54,3 +55,12 @@ class PackageVersionField(serializers.CharField):
         version_number_validator = VersionNumberValidator()
         self.validators.append(regex_validator)
         self.validators.append(version_number_validator)
+
+
+# Can be more optimised than ChoiceField as the list of licenses is a set
+# Not part of the model as IDs may be deprecated
+class LicenseField(serializers.CharField):
+    def __init__(self, **kwargs):
+        kwargs["allow_blank"] = True
+        super().__init__(**kwargs)
+        self.validators.append(license_validator)

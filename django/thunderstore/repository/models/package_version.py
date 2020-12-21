@@ -44,6 +44,13 @@ class PackageVersion(models.Model):
         max_length=128,
     )
 
+    # Can be "" or an SPDX license ID
+    # "" means "we don't know"
+    # See https://github.com/risk-of-thunder/Thunderstore/pull/170#discussion_r546436399
+    license = models.CharField(
+        max_length=64,
+    )
+
     # TODO: Split to three fields for each number in the version for better querying performance
     version_number = models.CharField(
         max_length=16,
