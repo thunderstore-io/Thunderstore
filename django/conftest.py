@@ -1,5 +1,8 @@
+import io
+
 import pytest
 from django.contrib.sites.models import Site
+from PIL import Image
 
 from thunderstore.community.models import (
     Community,
@@ -59,6 +62,14 @@ def manifest_v1_data():
         "description": "",
         "dependencies": [],
     }
+
+
+@pytest.fixture()
+def icon_raw():
+    icon_raw = io.BytesIO()
+    icon = Image.new("RGB", (256, 256), "#FF0000")
+    icon.save(icon_raw, format="PNG")
+    return icon_raw
 
 
 @pytest.fixture(scope="function")

@@ -17,12 +17,7 @@ from thunderstore.repository.package_upload import PackageUploadForm
 
 
 @pytest.mark.django_db
-def test_package_upload(user, manifest_v1_data, community):
-
-    icon_raw = io.BytesIO()
-    icon = Image.new("RGB", (256, 256), "#FF0000")
-    icon.save(icon_raw, format="PNG")
-
+def test_package_upload(user, manifest_v1_data, icon_raw, community):
     readme = "# Test readme".encode("utf-8")
     manifest = json.dumps(manifest_v1_data).encode("utf-8")
 
@@ -53,12 +48,7 @@ def test_package_upload(user, manifest_v1_data, community):
 
 
 @pytest.mark.django_db
-def test_package_upload_missing_privileges(user, manifest_v1_data, community):
-
-    icon_raw = io.BytesIO()
-    icon = Image.new("RGB", (256, 256), "#FF0000")
-    icon.save(icon_raw, format="PNG")
-
+def test_package_upload_missing_privileges(user, manifest_v1_data, icon_raw, community):
     readme = "# Test readme".encode("utf-8")
     manifest = json.dumps(manifest_v1_data).encode("utf-8")
 
@@ -89,13 +79,8 @@ def test_package_upload_missing_privileges(user, manifest_v1_data, community):
 
 @pytest.mark.django_db
 def test_package_upload_version_already_exists(
-    user, manifest_v1_data, community, package_version
+    user, manifest_v1_data, icon_raw, community, package_version
 ):
-
-    icon_raw = io.BytesIO()
-    icon = Image.new("RGB", (256, 256), "#FF0000")
-    icon.save(icon_raw, format="PNG")
-
     readme = "# Test readme".encode("utf-8")
 
     UploaderIdentityMember.objects.create(
@@ -134,12 +119,7 @@ def test_package_upload_version_already_exists(
 
 
 @pytest.mark.django_db
-def test_package_upload_with_extra_data(user, community, manifest_v1_data):
-
-    icon_raw = io.BytesIO()
-    icon = Image.new("RGB", (256, 256), "#FF0000")
-    icon.save(icon_raw, format="PNG")
-
+def test_package_upload_with_extra_data(user, community, manifest_v1_data, icon_raw):
     readme = "# Test readme".encode("utf-8")
     manifest = json.dumps(manifest_v1_data).encode("utf-8")
 
