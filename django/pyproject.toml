@@ -23,7 +23,7 @@ drf-yasg = "^1.17"
 django-ipware = "^2.1"
 sentry_sdk = "^0.19"
 django-redis = "^4.11"
-pymdown-extensions = "^6.3"
+pymdown-extensions = "^8.0"
 pyjwt = { version = "^1.7", extras = ["crypto"] }
 
 [tool.poetry.dev-dependencies]
