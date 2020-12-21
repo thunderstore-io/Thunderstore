@@ -79,6 +79,15 @@ jobs:
           thunderstore:${GITHUB_SHA}
           /app/
           || :
+      - name: Check for missing migrations
+        run: >
+          docker run --rm
+          --entrypoint python
+          -e SECRET_KEY=hunter2
+          -e DATABASE_URL=sqlite://django.db
+          --no-healthcheck
+          thunderstore:${GITHUB_SHA}
+          manage.py makemigrations --check
       - name: Tag image
         run: |
           docker tag thunderstore:${GITHUB_SHA} riskofthunder/thunderstore:${GITHUB_SHA}
