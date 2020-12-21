@@ -84,6 +84,7 @@ jobs:
           docker run --rm
           --entrypoint python
           -e SECRET_KEY=hunter2
+          -e DATABASE_URL=sqlite:///tmp/django.db
           --no-healthcheck
           thunderstore:${GITHUB_SHA}
           manage.py makemigrations --check
