@@ -206,11 +206,12 @@ def test_manifest_v1_serializer_version_number_validation(
 def test_manifest_v1_serializer_license_validation(
     user, manifest_v1_data, license: str, error: str
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    identity = UploaderIdentity.get_or_create_for_user(
+        manifest_v1_data["author_name"], user
+    )
     manifest_v1_data["license"] = license
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
         data=manifest_v1_data,
     )
     if error:
