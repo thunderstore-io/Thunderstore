@@ -81,7 +81,7 @@ class PackageUploadForm(forms.ModelForm):
                     f"Missing privileges to upload under author {self.uploader.name}"
                 )
             reference = PackageReference(
-                data["author_name"], data["name"], data["version_number"]
+                uploader.name, data["name"], data["version_number"]
             )
             if reference.exists:
                 raise ValidationError(
