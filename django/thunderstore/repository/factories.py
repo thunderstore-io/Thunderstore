@@ -1,4 +1,5 @@
 import factory
+from factory.django import DjangoModelFactory
 
 from thunderstore.core.factories import UserFactory
 
@@ -11,14 +12,14 @@ from .models import (
 )
 
 
-class UploaderIdentityFactory(factory.DjangoModelFactory):
+class UploaderIdentityFactory(DjangoModelFactory):
     class Meta:
         model = UploaderIdentity
 
     name = factory.Faker("first_name")
 
 
-class UploaderIdentityMemberFactory(factory.DjangoModelFactory):
+class UploaderIdentityMemberFactory(DjangoModelFactory):
     class Meta:
         model = UploaderIdentityMember
 
@@ -26,7 +27,7 @@ class UploaderIdentityMemberFactory(factory.DjangoModelFactory):
     identity = factory.SubFactory(UploaderIdentityFactory)
 
 
-class PackageFactory(factory.DjangoModelFactory):
+class PackageFactory(DjangoModelFactory):
     class Meta:
         model = Package
 
@@ -34,7 +35,7 @@ class PackageFactory(factory.DjangoModelFactory):
     name = factory.Faker("first_name")
 
 
-class PackageVersionFactory(factory.DjangoModelFactory):
+class PackageVersionFactory(DjangoModelFactory):
     class Meta:
         model = PackageVersion
 
@@ -45,7 +46,7 @@ class PackageVersionFactory(factory.DjangoModelFactory):
     file_size = 5242880
 
 
-class PackageVersionDownloadEventFactory(factory.DjangoModelFactory):
+class PackageVersionDownloadEventFactory(DjangoModelFactory):
     class Meta:
         model = PackageVersionDownloadEvent
 
