@@ -7,6 +7,7 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
+from thunderstore.repository.consts import SPDX_LICENSE_IDS
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import Package, UploaderIdentity, Webhook
 from thunderstore.webhooks.models import WebhookType
@@ -52,6 +53,7 @@ def manifest_v1_data():
         "name": "name",
         "display_name": "display name",
         "version_number": "1.0.0",
+        "license": next(iter(SPDX_LICENSE_IDS)),
         "website_url": "",
         "description": "",
         "dependencies": [],

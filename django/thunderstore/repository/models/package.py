@@ -104,6 +104,10 @@ class Package(models.Model):
         return self.latest.display_name
 
     @cached_property
+    def license(self):
+        return self.latest.license
+
+    @cached_property
     def available_versions(self):
         # TODO: Caching
         versions = self.versions.filter(is_active=True).values_list(
