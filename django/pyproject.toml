@@ -25,6 +25,9 @@ sentry_sdk = "^0.19"
 django-redis = "^4.11"
 pymdown-extensions = "^8.0"
 pyjwt = { version = "^1.7", extras = ["crypto"] }
+celery = "^5.0.5"
+django-celery-results = "^2.0.0"
+django-celery-beat = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
@@ -53,6 +56,7 @@ flake8-pie = "^0.6.1"
 flake8-printf-formatting = "^1.1.0"
 flake8-pytest-style = "^1.3.0"
 pep8-naming = "^0.11.1"
+watchdog = {extras = ["watchmedo"], version = "^1.0.2"}
 
 [tool.black]
 target-version = ["py38"]
