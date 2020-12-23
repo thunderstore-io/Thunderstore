@@ -1,3 +1,5 @@
+from copy import copy
+
 import pytest
 from django.contrib.sites.models import Site
 
@@ -117,3 +119,19 @@ def site():
 @pytest.fixture()
 def community_site(community, site):
     return CommunitySite.objects.create(site=site, community=community)
+
+
+@pytest.fixture()
+def celery_app():
+    from celery import Celery, _state
+
+    app = Celery("thunderstore", set_as_current=False)
+    app.config_from_object("django.conf:settings", namespace="CELERY")
+    app.autodiscover_tasks(force=True)
+    on_app_finalizers = copy(_state._on_app_finalizers)
+    yield app
+    _state._deregister_app(app)
+    # Registering a new task creates a hook that adds it to all future app
+    # instances, meaning that we need to restore the hooks to pre-test
+    # state as to not spill over tasks to other tests
+    _state._on_app_finalizers = on_app_finalizers

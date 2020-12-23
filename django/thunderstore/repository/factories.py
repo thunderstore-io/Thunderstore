@@ -41,7 +41,7 @@ class PackageVersionFactory(DjangoModelFactory):
 
     package = factory.lazy_attribute(lambda o: PackageFactory.create(name=o.name))
     icon = factory.django.ImageField(width=256, height=256)
-    name = factory.Faker("first_name")
+    name = factory.Sequence(lambda n: f"Package_{n:04d}")
     version_number = "1.0.0"
     file_size = 5242880
 
