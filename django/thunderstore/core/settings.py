@@ -17,6 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 env = environ.Env(
     DEBUG=(bool, False),
+    ENABLE_DEBUGPY=(bool, False),
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
@@ -72,6 +73,7 @@ if not os.path.exists(checkout_dir("manage.py")):
     raise RuntimeError("Could not locate manage.py")
 
 DEBUG = env.bool("DEBUG")
+ENABLE_DEBUGPY = env.bool("ENABLE_DEBUGPY")
 DEBUG_SIMULATED_LAG = env.int("DEBUG_SIMULATED_LAG")
 
 SECRET_KEY = env.str("SECRET_KEY")
