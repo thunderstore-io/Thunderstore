@@ -54,6 +54,8 @@ jobs:
     needs: pre-commit
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: "2"
       - name: Build Docker image
         run: docker build -t thunderstore:${GITHUB_SHA} .
       - name: Run pytest
