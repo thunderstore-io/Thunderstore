@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  django:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    command: sleep infinity
+    volumes:
+      - built-static:/workspace/django/static_built:ro
+      - .:/workspace

@@ -1,0 +1,69 @@
+{
+    "name": "Thunderstore",
+    "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+    "service": "django",
+    "workspaceFolder": "/workspace",
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "files.exclude": {
+            "**/.git": true,
+            "**/.DS_Store": true,
+            "**/__pycache__/": true,
+            "**/.pytest_cache/": true,
+            "**/.mypy_cache/": true,
+            "**/*.egg-info/": true,
+            "**/.venv/": true,
+            "**/.coverage": true,
+            "**/htmlcov/": true
+        },
+        "python.analysis.extraPaths": ["/workspace/django/"],
+        "python.formatting.provider": "black",
+        "python.languageServer": "Pylance",
+        "python.analysis.typeCheckingMode": "basic",
+        "python.linting.mypyArgs": [
+            "--follow-imports=silent",
+            "--show-column-numbers",
+            "--config-file",
+            "/workspace/django/.mypy.ini"
+        ],
+        "python.linting.mypyEnabled": true,
+        "python.pythonPath": "/workspace/django/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+            "--no-cov",
+            "-c",
+            "/workspace/django/pytest.ini",
+            "/workspace/django/"
+        ],
+        "python.testing.unittestEnabled": false,
+        "python.testing.nosetestsEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "[python]": {
+            "editor.rulers": [88]
+        },
+        "files.associations": {
+            "**/*.html": "html",
+            "**/templates/**/*.html": "django-html"
+        },
+        "emmet.includeLanguages": {
+            "django-html": "html"
+        }
+    },
+    "extensions": [
+        "ms-python.python",
+        "bungcip.better-toml",
+        "streetsidesoftware.code-spell-checker",
+        "batisteo.vscode-django",
+        "editorconfig.editorconfig",
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode",
+        "visualstudioexptteam.vscodeintellicode",
+        "redhat.vscode-yaml",
+        "ms-python.vscode-pylance"
+    ],
+    "postCreateCommand": [
+        "/bin/bash",
+        "/workspace/.devcontainer/postAttach.sh"
+    ],
+    "postAttachCommand": ["/bin/bash", "/workspace/.devcontainer/postAttach.sh"]
+}

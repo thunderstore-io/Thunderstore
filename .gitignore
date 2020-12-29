@@ -1,6 +1,6 @@
 # Custom
 node/
-.vscode/
+.vscode/settings.json
 package/
 .env
 *.service-account.json

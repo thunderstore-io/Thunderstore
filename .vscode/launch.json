@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Django",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/django/manage.py",
+            "console": "integratedTerminal",
+            "args": ["runserver", "0.0.0.0:8000"],
+            "django": true
+        }
+    ]
+}
