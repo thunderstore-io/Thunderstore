@@ -65,6 +65,7 @@ jobs:
           --no-healthcheck
           thunderstore:${GITHUB_SHA}
           --cov-report=xml:coverage_results/coverage.xml
+          --cov-report=term
           --cov /app/
       - name: Upload coverage to Codecov
         if: always()
