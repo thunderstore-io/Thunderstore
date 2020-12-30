@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 
 services:
   db:
@@ -40,10 +40,9 @@ services:
       context: .
       dockerfile: ./docker/builder.Dockerfile
     volumes:
-      - built-static:/app/build/
-      - type: bind
-        source: ./builder/gulpfile.js
-        target: /app/gulpfile.js
+      - built-static:/home/node/app/build
+      - ./builder/src:/home/node/app/src:ro
+      - ./builder/gulpfile.js:/home/node/app/gulpfile.js:ro
 
 volumes:
   db-data:
