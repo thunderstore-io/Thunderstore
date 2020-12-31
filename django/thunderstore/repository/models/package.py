@@ -101,7 +101,11 @@ class Package(models.Model):
 
     @cached_property
     def display_name(self):
-        return self.name.replace("_", " ")
+        return self.latest.display_name
+
+    @cached_property
+    def license(self):
+        return self.latest.license
 
     @cached_property
     def available_versions(self):

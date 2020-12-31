@@ -1,5 +1,8 @@
+import io
+
 import pytest
 from django.contrib.sites.models import Site
+from PIL import Image
 
 from thunderstore.community.models import (
     Community,
@@ -7,6 +10,7 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
+from thunderstore.repository.consts import SPDX_LICENSE_IDS
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import Package, UploaderIdentity, Webhook
 from thunderstore.webhooks.models import WebhookType
@@ -50,11 +54,22 @@ def package_version(package):
 def manifest_v1_data():
     return {
         "name": "name",
+        "display_name": "display name",
+        "author_name": "author_name",
         "version_number": "1.0.0",
+        "license": next(iter(SPDX_LICENSE_IDS)),
         "website_url": "",
         "description": "",
         "dependencies": [],
     }
+
+
+@pytest.fixture()
+def icon_raw():
+    icon_raw = io.BytesIO()
+    icon = Image.new("RGB", (256, 256), "#FF0000")
+    icon.save(icon_raw, format="PNG")
+    return icon_raw
 
 
 @pytest.fixture(scope="function")

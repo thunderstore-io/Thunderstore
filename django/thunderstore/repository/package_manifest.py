@@ -1,10 +1,15 @@
+from typing import Optional
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.models.uploader_identity import UploaderIdentity
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.serializer_fields import (
     DependencyField,
+    LicenseField,
+    PackageAuthorNameField,
     PackageNameField,
     PackageVersionField,
 )
@@ -15,13 +20,17 @@ class ManifestV1Serializer(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         if "user" not in kwargs:
             raise AttributeError("Missing required key word parameter: user")
-        if "uploader" not in kwargs:
-            raise AttributeError("Missing required key word parameter: uploader")
         self.user = kwargs.pop("user")
-        self.uploader = kwargs.pop("uploader")
+        self.uploader: Optional[UploaderIdentity] = None
         super().__init__(*args, **kwargs)
 
     name = PackageNameField()
+    display_name = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("display_name").max_length,
+        allow_blank=False,
+    )
+    license = LicenseField()
+    author_name = PackageAuthorNameField()
     version_number = PackageVersionField()
     website_url = serializers.CharField(
         max_length=PackageVersion._meta.get_field("website_url").max_length,
@@ -39,15 +48,9 @@ class ManifestV1Serializer(serializers.Serializer):
 
     def validate(self, data):
         result = super().validate(data)
-        if not self.uploader.can_user_upload(self.user):
-            raise ValidationError(
-                f"Missing privileges to upload under author {self.uploader.name}"
-            )
         reference = PackageReference(
-            self.uploader.name, result["name"], result["version_number"]
+            result["author_name"], result["name"], result["version_number"]
         )
-        if reference.exists:
-            raise ValidationError("Package of the same name and version already exists")
         if has_duplicate_packages(result["dependencies"]):
             raise ValidationError(
                 "Cannot depend on multiple versions of the same package"

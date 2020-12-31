@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.utils.deconstruct import deconstructible
 
-from thunderstore.repository.consts import AUTHOR_NAME_REGEX
+from thunderstore.repository.consts import AUTHOR_NAME_REGEX, SPDX_LICENSE_IDS
 
 
 @deconstructible
@@ -60,3 +60,8 @@ AuthorNameRegexValidator = RegexValidator(
     regex=AUTHOR_NAME_REGEX,
     message="Author names can only contain a-Z A-Z 0-9 . _ - characers",
 )
+
+
+def license_validator(value: str) -> None:
+    if value not in SPDX_LICENSE_IDS and value:
+        raise ValidationError("Invalid SPDX license ID")
