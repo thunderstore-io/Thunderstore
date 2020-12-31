@@ -1,3 +1,4 @@
+from .comment import *
 from .discord_bot import *
 from .package import *
 from .package_download import *
