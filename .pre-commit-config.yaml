@@ -19,7 +19,7 @@ repos:
     rev: "v2.2.1"
     hooks:
       - id: prettier
-        exclude: "^(django/|builder/src/[a-z]+/vendor/)"
+        exclude: "^(web/|builder/src/[a-z]+/vendor/)"
   - repo: https://gitlab.com/PyCQA/flake8
     rev: "3.8.4"
     hooks:

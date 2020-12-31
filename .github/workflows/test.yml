@@ -26,15 +26,15 @@ jobs:
         id: cache-poetry
         uses: actions/cache@v2
         with:
-          path: django/.venv
+          path: web/.venv
           key: "poetry-${{ runner.os }}-\
             ${{ steps.setup-python.outputs.python-version }}-\
-            ${{ hashFiles('django/poetry.lock') }}"
+            ${{ hashFiles('web/poetry.lock') }}"
           restore-keys: |
             poetry-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-
       - name: Install poetry dependencies
         run: |
-          cd django/
+          cd web/
           poetry install
       - name: Cache pre-commit cache
         uses: actions/cache@v2
@@ -46,7 +46,7 @@ jobs:
             ${{ hashFiles('.pre-commit-config.yaml') }}"
       - name: Run pre-commit
         run: |
-          cd django/
+          cd web/
           poetry run pre-commit run --show-diff-on-failure --color=always --all-files
   build:
     name: Build and test

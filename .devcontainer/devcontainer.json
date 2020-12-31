@@ -1,7 +1,7 @@
 {
     "name": "Thunderstore",
     "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
-    "service": "django",
+    "service": "web",
     "workspaceFolder": "/workspace",
     "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",
@@ -16,7 +16,7 @@
             "**/.coverage": true,
             "**/htmlcov/": true
         },
-        "python.analysis.extraPaths": ["/workspace/django/"],
+        "python.analysis.extraPaths": ["/workspace/web/"],
         "python.formatting.provider": "black",
         "python.languageServer": "Pylance",
         "python.analysis.typeCheckingMode": "basic",
@@ -24,16 +24,16 @@
             "--follow-imports=silent",
             "--show-column-numbers",
             "--config-file",
-            "/workspace/django/.mypy.ini"
+            "/workspace/web/.mypy.ini"
         ],
         "python.linting.mypyEnabled": true,
-        "python.pythonPath": "/workspace/django/.venv/bin/python",
+        "python.pythonPath": "/workspace/web/.venv/bin/python",
         "python.testing.pytestEnabled": true,
         "python.testing.pytestArgs": [
             "--no-cov",
             "-c",
-            "/workspace/django/pytest.ini",
-            "/workspace/django/"
+            "/workspace/web/pytest.ini",
+            "/workspace/web/"
         ],
         "python.testing.unittestEnabled": false,
         "python.testing.nosetestsEnabled": false,

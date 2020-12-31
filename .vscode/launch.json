@@ -5,7 +5,7 @@
             "name": "Python: Django",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/django/manage.py",
+            "program": "${workspaceFolder}/web/manage.py",
             "console": "integratedTerminal",
             "args": ["runserver", "0.0.0.0:8000"],
             "django": true
