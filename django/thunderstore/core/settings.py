@@ -17,6 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 env = environ.Env(
     DEBUG=(bool, False),
+    TESTING=(bool, False),
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
@@ -72,6 +73,7 @@ if not os.path.exists(checkout_dir("manage.py")):
     raise RuntimeError("Could not locate manage.py")
 
 DEBUG = env.bool("DEBUG")
+TESTING = env.bool("TESTING")
 DEBUG_SIMULATED_LAG = env.int("DEBUG_SIMULATED_LAG")
 
 SECRET_KEY = env.str("SECRET_KEY")
@@ -217,7 +219,10 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static_built"),
 ]
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+if TESTING:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Internationalization
