@@ -37,7 +37,7 @@ class CreateCommentForm(forms.ModelForm):
 
 class EditCommentForm(forms.Form):
     content = forms.CharField(max_length=Comment._meta.get_field("content").max_length)
-    pinned = forms.BooleanField()
+    is_pinned = forms.BooleanField(required=False)
 
     def __init__(self, user: User, comment: Comment, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
