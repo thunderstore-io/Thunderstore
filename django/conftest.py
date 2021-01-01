@@ -23,6 +23,7 @@ from thunderstore.repository.factories import (
     UploaderIdentityMemberFactory,
 )
 from thunderstore.repository.models import (
+    Comment,
     Package,
     UploaderIdentity,
     UploaderIdentityMember,
@@ -235,3 +236,9 @@ class TestUserTypes(ChoiceEnum):
         if usertype == TestUserTypes.superuser:
             return UserFactory(is_staff=True, is_superuser=True)
         raise AttributeError(f"Invalid useretype: {usertype}")
+
+
+def comment(user, active_package_listing):
+    return Comment.objects.create(
+        author=user, parent_object=active_package_listing, content="Test content"
+    )
