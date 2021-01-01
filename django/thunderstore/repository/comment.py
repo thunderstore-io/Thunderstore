@@ -56,19 +56,23 @@ class EditCommentForm(forms.Form):
         raise NotImplementedError()
 
     def clean_content(self) -> str:
-        return clean_content(self.cleaned_data["content"])
-
-    def save(self, *args, **kwargs) -> Comment:
-        content = self.cleaned_data.get("content")
-        is_pinned = self.cleaned_data.get("is_pinned")
+        content = clean_content(self.cleaned_data["content"])
 
         if content != self.comment.content and not self.can_edit_content():
             raise ValidationError("Cannot edit content")
 
+        return content
+
+    def clean_is_pinned(self) -> bool:
+        is_pinned = self.cleaned_data.get("is_pinned")
+
         if is_pinned != self.comment.is_pinned and not self.can_pin():
             raise ValidationError("Cannot edit pinned status")
 
-        self.comment.content = content
-        self.comment.is_pinned = is_pinned
+        return is_pinned
+
+    def save(self) -> Comment:
+        self.comment.content = self.cleaned_data.get("content")
+        self.comment.is_pinned = self.cleaned_data.get("is_pinned")
         self.comment.save(update_fields=("content", "is_pinned"))
         return self.comment
