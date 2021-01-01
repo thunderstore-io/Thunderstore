@@ -2,8 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-from thunderstore.community.models import Community
-from thunderstore.repository.models import Comment, Package
+from thunderstore.community.models import PackageListing
+from thunderstore.repository.models import Comment
 
 
 def clean_content(content: str) -> str:
@@ -16,20 +16,22 @@ class CreateCommentForm(forms.ModelForm):
         fields = ["content"]
 
     def __init__(
-        self, user: User, package: Package, community: Community, *args, **kwargs
+        self,
+        user: User,
+        parent_object: PackageListing,
+        *args,
+        **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.user = user
-        self.package = package
-        self.community = community
+        self.parent_object = parent_object
 
     def clean_content(self) -> str:
         return clean_content(self.cleaned_data["content"])
 
     def save(self, *args, **kwargs) -> Comment:
         self.instance.author = self.user
-        self.instance.package = self.package
-        self.instance.community = self.community
+        self.instance.parent_object = self.parent_object
         return super().save(*args, **kwargs)
 
 
@@ -47,8 +49,11 @@ class EditCommentForm(forms.Form):
         return self.user == self.comment.author
 
     def can_pin(self) -> bool:
-        # Must be a member of the identity to pin
-        return self.comment.package.owner.members.filter(user=self.user).exists()
+        parent_object = self.comment.parent_object
+        if isinstance(parent_object, PackageListing):
+            # Must be a member of the identity to pin
+            return parent_object.package.owner.members.filter(user=self.user).exists()
+        raise NotImplementedError()
 
     def clean_content(self) -> str:
         return clean_content(self.cleaned_data["content"])

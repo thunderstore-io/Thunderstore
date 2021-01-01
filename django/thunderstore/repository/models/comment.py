@@ -1,19 +1,19 @@
 import uuid
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 
 class Comment(models.Model):
-    package = models.ForeignKey(
-        "repository.Package",
+    parent_object = GenericForeignKey("parent_type", "parent_id")
+    parent_type = models.ForeignKey(
+        ContentType,
         on_delete=models.CASCADE,
         related_name="comments",
     )
-    community = models.ForeignKey(
-        "community.Community",
-        on_delete=models.CASCADE,
-    )
+    parent_id = models.PositiveIntegerField()
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
