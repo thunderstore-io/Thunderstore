@@ -1,7 +1,7 @@
 builder/node_modules
-django/.pytest_cache
-django/.coverage
-django/htmlcov
+web/.pytest_cache
+web/.coverage
+web/htmlcov
 .vscode/
 .env
 package-example/

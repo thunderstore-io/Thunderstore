@@ -70,7 +70,6 @@ exclude = '''
 
 [tool.isort]
 profile = "black"
-known_third_party = ["django"]
 
 [build-system]
 requires = ["poetry>=1.0"]

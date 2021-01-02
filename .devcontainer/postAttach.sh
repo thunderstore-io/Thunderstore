@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd /workspace/django/
+cd /workspace/web/
 poetry install 2>&1

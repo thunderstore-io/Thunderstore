@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     curl build-essential cron \
  && rm -rf /var/lib/apt/lists/*
 
-COPY ./django/pyproject.toml ./django/poetry.lock /app/
+COPY ./web/pyproject.toml ./web/poetry.lock /app/
 
 RUN pip install -U pip poetry~=1.1.4 --no-cache-dir && \
     poetry config virtualenvs.create false && \
@@ -28,11 +28,11 @@ RUN pip install -U pip poetry~=1.1.4 --no-cache-dir && \
     rm -rf ~/.cache
 
 COPY --from=builder /app/build /app/static_built
-COPY ./django /app
+COPY ./web /app
 
 RUN SECRET_KEY=x python manage.py collectstatic --noinput
 
-COPY ./django/crontab /etc/cron.d/crontab
+COPY ./web/crontab /etc/cron.d/crontab
 RUN chmod 0644 /etc/cron.d/crontab
 
 HEALTHCHECK --interval=5s --timeout=8s --retries=3 \

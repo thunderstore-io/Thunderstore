@@ -19,7 +19,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
 
-  django:
+  web:
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -31,8 +31,8 @@ services:
       - db
       - redis
     volumes:
-      - django-data:/app/var
-      - ./django:/app
+      - web-data:/app/var
+      - ./web:/app
       - built-static:/app/static_built:ro
 
   builder:

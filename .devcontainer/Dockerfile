@@ -16,7 +16,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
 && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
 && chmod 0440 /etc/sudoers.d/$USERNAME
 
-RUN mkdir -p /workspace/django/var && chown -R $USERNAME:$USERNAME /workspace
+RUN mkdir -p /workspace/web/var && chown -R $USERNAME:$USERNAME /workspace
 
 USER $USERNAME
 ENV PATH /home/$USERNAME/.local/bin:$PATH
