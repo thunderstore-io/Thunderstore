@@ -18,20 +18,20 @@ class CreateCommentForm(forms.ModelForm):
     def __init__(
         self,
         user: User,
-        parent_object: PackageListing,
+        commented_object: PackageListing,
         *args,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.user = user
-        self.parent_object = parent_object
+        self.commented_object = commented_object
 
     def clean_content(self) -> str:
         return clean_content(self.cleaned_data["content"])
 
     def save(self, *args, **kwargs) -> Comment:
         self.instance.author = self.user
-        self.instance.parent_object = self.parent_object
+        self.instance.commented_object = self.commented_object
         return super().save(*args, **kwargs)
 
 
@@ -49,10 +49,12 @@ class EditCommentForm(forms.Form):
         return self.user == self.comment.author
 
     def can_pin(self) -> bool:
-        parent_object = self.comment.parent_object
-        if isinstance(parent_object, PackageListing):
+        commented_object = self.comment.commented_object
+        if isinstance(commented_object, PackageListing):
             # Must be a member of the identity to pin
-            return parent_object.package.owner.members.filter(user=self.user).exists()
+            return commented_object.package.owner.members.filter(
+                user=self.user,
+            ).exists()
         raise NotImplementedError()
 
     def clean_content(self) -> str:

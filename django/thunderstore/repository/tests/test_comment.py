@@ -12,21 +12,25 @@ from thunderstore.repository.models import (
 def test_create_comment(user, active_package_listing):
     content = "Test content"
     form = CreateCommentForm(
-        user, active_package_listing, data={"content": content, "is_pinned": False}
+        user,
+        active_package_listing,
+        data={"content": content, "is_pinned": False},
     )
     assert form.is_valid()
     comment = form.save()
     assert comment.content == content
     assert comment.author == user
     assert comment.is_pinned is False
-    assert comment.parent_object == active_package_listing
+    assert comment.commented_object == active_package_listing
 
 
 @pytest.mark.django_db
 def test_create_comment_too_long(user, active_package_listing):
     content = "x" * 10000
     form = CreateCommentForm(
-        user, active_package_listing, data={"content": content, "is_pinned": False}
+        user,
+        active_package_listing,
+        data={"content": content, "is_pinned": False},
     )
     assert form.is_valid() is False
     assert len(form.errors["content"]) == 1
@@ -88,7 +92,7 @@ def test_edit_comment_pin(comment):
 
     UploaderIdentityMember.objects.create(
         user=comment.author,
-        identity=comment.parent_object.package.owner,
+        identity=comment.commented_object.package.owner,
         role=UploaderIdentityMemberRole.owner,
     )
 
@@ -106,7 +110,9 @@ def test_edit_comment_pin(comment):
 def test_edit_comment_pin_not_allowed(comment):
     assert comment.is_pinned is False
     assert (
-        comment.parent_object.package.owner.members.filter(user=comment.author).exists()
+        comment.commented_object.package.owner.members.filter(
+            user=comment.author,
+        ).exists()
         is False
     )
 

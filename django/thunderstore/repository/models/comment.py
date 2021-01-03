@@ -7,13 +7,13 @@ from django.db import models
 
 
 class Comment(models.Model):
-    parent_object = GenericForeignKey("parent_type", "parent_id")
-    parent_type = models.ForeignKey(
+    commented_object = GenericForeignKey()
+    content_type = models.ForeignKey(
         ContentType,
         on_delete=models.CASCADE,
         related_name="comments",
     )
-    parent_id = models.PositiveIntegerField()
+    object_id = models.PositiveIntegerField()
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
