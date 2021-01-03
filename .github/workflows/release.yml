@@ -21,6 +21,7 @@ jobs:
           docker run --rm
           --entrypoint pytest
           -e SECRET_KEY=hunter2
+          -e DEV_TESTING=0
           --no-healthcheck
           thunderstore:latest
       - name: Tag image
