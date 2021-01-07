@@ -12,9 +12,11 @@ x-django-service: &django-service
     - db
     - redis
     - rabbitmq
+
+x-django-volumes: &django-volumes
   volumes:
     - django-data:/app/var
-    - ./django:/app
+    - ./django:/app:ro
     - built-static:/app/static_built:ro
 
 services:
@@ -46,18 +48,22 @@ services:
 
   django:
     <<: *django-service
+    volumes:
+      - django-data:/app/var
+      - ./django:/app
+      - built-static:/app/static_built:ro
     ports:
       - 127.0.0.1:80:8000
 
   django-worker:
-    <<: *django-service
+    <<: [*django-service, *django-volumes]
     entrypoint: watchmedo
     command: >
       auto-restart --patterns="*.py" --ignore-directories --recursive -d ./ --
       celery -A thunderstore.core worker -l INFO
 
   django-beat:
-    <<: *django-service
+    <<: [*django-service, *django-volumes]
     entrypoint: watchmedo
     command: >
       auto-restart --patterns="*.py" --ignore-directories --recursive -d ./ --
