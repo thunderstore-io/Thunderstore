@@ -36,7 +36,7 @@ jobs:
         run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to Docker Hub
         run: |
-          echo "Pushing riskofthunder/thunderstore:${{ steps.tag.outputs.tag }}"
+          echo "Pushing riskofthunder/thunderstore:release-${{ steps.tag.outputs.tag }}"
           docker push riskofthunder/thunderstore
       - name: Login to GitHub Container Registry
         env:
@@ -45,5 +45,5 @@ jobs:
         run: docker login ghcr.io -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to GitHub Container Registry
         run: |
-          echo "Pushing ghcr.io/risk-of-thunder/thunderstore:${{ steps.tag.outputs.tag }}"
+          echo "Pushing ghcr.io/risk-of-thunder/thunderstore:release-${{ steps.tag.outputs.tag }}"
           docker push ghcr.io/risk-of-thunder/thunderstore
