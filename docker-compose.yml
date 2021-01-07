@@ -1,5 +1,22 @@
 version: "3.8"
 
+x-django-service: &django-service
+  build:
+    context: .
+    dockerfile: ./Dockerfile
+  environment:
+    CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
+  env_file:
+    - .env
+  depends_on:
+    - db
+    - redis
+    - rabbitmq
+  volumes:
+    - django-data:/app/var
+    - ./django:/app
+    - built-static:/app/static_built:ro
+
 services:
   db:
     image: postgres:10.4-alpine
@@ -19,21 +36,32 @@ services:
     ports:
       - 127.0.0.1:8080:8080
 
+  rabbitmq:
+    image: rabbitmq:3.8.9
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: django
+      RABBITMQ_DEFAULT_PASS: django
+      RABBITMQ_DEFAULT_VHOST: django
+
   django:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    env_file:
-      - .env
+    <<: *django-service
     ports:
       - 127.0.0.1:80:8000
-    depends_on:
-      - db
-      - redis
-    volumes:
-      - django-data:/app/var
-      - ./django:/app
-      - built-static:/app/static_built:ro
+
+  django-worker:
+    <<: *django-service
+    entrypoint: watchmedo
+    command: >
+      auto-restart --patterns="*.py" --ignore-directories --recursive -d ./ --
+      celery -A thunderstore.core worker -l INFO
+
+  django-beat:
+    <<: *django-service
+    entrypoint: watchmedo
+    command: >
+      auto-restart --patterns="*.py" --ignore-directories --recursive -d ./ --
+      celery -A thunderstore.core beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
   builder:
     build:

@@ -58,6 +58,9 @@ env = environ.Env(
     DB_CLIENT_KEY=(str, ""),
     DB_SERVER_CA=(str, ""),
     SENTRY_DSN=(str, ""),
+    CELERY_BROKER_URL=(str, ""),
+    CELERY_TASK_ALWAYS_EAGER=(bool, False),
+    CELERY_EAGER_PROPAGATES_EXCEPTIONS=(bool, False),
 )
 
 SENTRY_DSN = env.str("SENTRY_DSN")
@@ -140,6 +143,8 @@ INSTALLED_APPS = [
     "social_django",
     "rest_framework",
     "drf_yasg",
+    "django_celery_beat",
+    "django_celery_results",
     # Own
     "thunderstore.core",
     "thunderstore.cache",
@@ -233,10 +238,13 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
+# Celery
 
-STATIC_URL = "/static/"
+CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER")
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = env.bool("CELERY_EAGER_PROPAGATES_EXCEPTIONS")
 
 # Custom settings
 

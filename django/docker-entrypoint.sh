@@ -6,7 +6,6 @@ maxrequests=${GUNICORN_MAX_REQUESTS:-10000}
 maxrequestsjitter=${GUNICORN_MAX_REQUESTS_JITTER:-1000}
 
 export >> ~/.profile
-cron
 
 if [ "$DEBUG" = true ] || [ "$DEBUG" = 'True' ] || [ "$DEBUG" = 1 ]; then
     echo 'Launching in debug mode'
