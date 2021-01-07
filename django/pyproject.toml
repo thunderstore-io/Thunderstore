@@ -17,7 +17,7 @@ gunicorn = { version = "^20.0", extras = ["gevent"] }
 social-auth-app-django = "^4.0"
 social-auth-core = "^3.3"
 whitenoise = "^5.0"
-django-storages = { version = "^1.9", extras = ["google", "boto3"] }
+django-storages = { version = "^1.11", extras = ["google", "boto3"] }
 djangorestframework = "^3.11"
 drf-yasg = "^1.17"
 django-ipware = "^2.1"

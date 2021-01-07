@@ -429,7 +429,7 @@ redis = ">=3.0.0"
 
 [[package]]
 name = "django-storages"
-version = "1.11"
+version = "1.11.1"
 description = "Support for many storage backends in Django"
 category = "main"
 optional = false
@@ -1701,7 +1701,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "8f71049f92fa4edbf2f317f631a4784899faba3536eff033a18c0035dad2f198"
+content-hash = "fe02115c8974f4ddf8cbbe61cd84dc8aef8e2832d6346ccb826ba37d9c8084f6"
 
 [metadata.files]
 amqp = [
@@ -1935,8 +1935,8 @@ django-redis = [
     {file = "django_redis-4.12.1-py3-none-any.whl", hash = "sha256:1133b26b75baa3664164c3f44b9d5d133d1b8de45d94d79f38d1adc5b1d502e5"},
 ]
 django-storages = [
-    {file = "django-storages-1.11.tar.gz", hash = "sha256:7af56611c62a1c174aab4e862efb7fdd98296dccf76f42135f5b6851fc313c97"},
-    {file = "django_storages-1.11-py3-none-any.whl", hash = "sha256:056ec3e9e2b0c6f363913976072ffba2923e79e4859578047da139ba1637497e"},
+    {file = "django-storages-1.11.1.tar.gz", hash = "sha256:c823dbf56c9e35b0999a13d7e05062b837bae36c518a40255d522fbe3750fbb4"},
+    {file = "django_storages-1.11.1-py3-none-any.whl", hash = "sha256:f28765826d507a0309cfaa849bd084894bc71d81bf0d09479168d44785396f80"},
 ]
 django-stubs = [
     {file = "django-stubs-1.7.0.tar.gz", hash = "sha256:ddd190aca5b9adb4d30760d5c64f67cb3658703f5f42c3bb0c2c71ff4d752c39"},
@@ -1948,6 +1948,7 @@ django-timezone-field = [
 ]
 djangorestframework = [
     {file = "djangorestframework-3.12.2-py3-none-any.whl", hash = "sha256:0209bafcb7b5010fdfec784034f059d512256424de2a0f084cb82b096d6dd6a7"},
+    {file = "djangorestframework-3.12.2.tar.gz", hash = "sha256:0898182b4737a7b584a2c73735d89816343369f259fea932d90dc78e35d8ac33"},
 ]
 djangorestframework-stubs = [
     {file = "djangorestframework-stubs-1.3.0.tar.gz", hash = "sha256:4467ed6d981169b150fa5eb470eab22723fb0305b9d34b87bd435aee71b8c75c"},
