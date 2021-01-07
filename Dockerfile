@@ -32,7 +32,4 @@ COPY ./django /app
 
 RUN SECRET_KEY=x python manage.py collectstatic --noinput
 
-HEALTHCHECK --interval=5s --timeout=8s --retries=3 \
-    CMD curl --fail --header "Host: $SERVER_NAME" localhost:8000/healthcheck/ || exit 1
-
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
