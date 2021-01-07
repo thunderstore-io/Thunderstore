@@ -15,7 +15,7 @@ x-django-service: &django-service
 
 x-django-volumes: &django-volumes
   volumes:
-    - django-data:/app/var
+    - django-data:/app/var:ro
     - ./django:/app:ro
     - built-static:/app/static_built:ro
 
