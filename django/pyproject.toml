@@ -23,7 +23,7 @@ drf-yasg = "^1.17"
 django-ipware = "^2.1"
 sentry_sdk = "^0.19"
 django-redis = "^4.11"
-pymdown-extensions = "^8.0"
+pymdown-extensions = "^8.1"
 pyjwt = { version = "^1.7", extras = ["crypto"] }
 celery = "^5.0.5"
 django-celery-results = "^2.0.0"
