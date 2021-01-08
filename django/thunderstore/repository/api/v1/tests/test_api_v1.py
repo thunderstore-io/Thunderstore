@@ -16,12 +16,13 @@ def test_api_v1(client, active_package_listing, community_site):
     assert result[0]["name"] == active_package_listing.package.name
     assert result[0]["full_name"] == active_package_listing.package.full_package_name
 
-    uuid = result[0]["uuid4"]
-    response = client.get(
-        f"/api/v1/package/{uuid}/", HTTP_HOST=community_site.site.domain
-    )
-    assert response.status_code == 200
-    assert response.json() == result[0]
+    # TODO: Enable once detail views have been re-enabled
+    # uuid = result[0]["uuid4"]
+    # response = client.get(
+    #     f"/api/v1/package/{uuid}/", HTTP_HOST=community_site.site.domain
+    # )
+    # assert response.status_code == 200
+    # assert response.json() == result[0]
 
 
 @pytest.mark.django_db

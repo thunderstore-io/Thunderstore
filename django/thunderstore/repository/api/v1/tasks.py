@@ -8,7 +8,8 @@ from thunderstore.repository.models import Package
 
 def update_api_v1_caches():
     update_api_v1_indexes()
-    update_api_v1_details()
+    # TODO: Optimize and enable, or just leave it out of the manual cache
+    # update_api_v1_details()
 
 
 def update_api_v1_indexes():
