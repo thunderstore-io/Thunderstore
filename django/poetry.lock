@@ -1219,11 +1219,11 @@ test = ["pytest (>=4.0.1,<5.0.0)", "pytest-cov (>=2.6.0,<3.0.0)", "pytest-runner
 
 [[package]]
 name = "pymdown-extensions"
-version = "8.0.1"
+version = "8.1"
 description = "Extension pack for Python Markdown."
 category = "main"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [package.dependencies]
 Markdown = ">=3.2"
@@ -1300,7 +1300,7 @@ pytest = ">=2.6.0"
 
 [[package]]
 name = "pytest-mock"
-version = "3.4.0"
+version = "3.5.0"
 description = "Thin-wrapper around the mock package for easier use with pytest"
 category = "dev"
 optional = false
@@ -1701,7 +1701,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "fda2059a4418c97d422dba5e899cbfdadc8d79ef3dc2c47b487e71a802676fd2"
+content-hash = "291fc0ddc3ea639ff092a69ee25d1b6b9d15f8d4e9a515ff9b2f5989481c8a83"
 
 [metadata.files]
 amqp = [
@@ -2381,8 +2381,8 @@ pyjwt = [
     {file = "PyJWT-1.7.1.tar.gz", hash = "sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96"},
 ]
 pymdown-extensions = [
-    {file = "pymdown-extensions-8.0.1.tar.gz", hash = "sha256:9ba704052d4bdc04a7cd63f7db4ef6add73bafcef22c0cf6b2e3386cf4ece51e"},
-    {file = "pymdown_extensions-8.0.1-py2.py3-none-any.whl", hash = "sha256:a3689c04f4cbddacd9d569425c571ae07e2673cc4df63a26cdbf1abc15229137"},
+    {file = "pymdown-extensions-8.1.tar.gz", hash = "sha256:565583c5964ac8253896ef4a7f14023075503ca6514d7d470b343290b96fc6da"},
+    {file = "pymdown_extensions-8.1-py2.py3-none-any.whl", hash = "sha256:c0b285fdd6e8438895b0c4422847af012f32a487ae083ffafa4c21a151b4983b"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
@@ -2404,8 +2404,8 @@ pytest-env = [
     {file = "pytest-env-0.6.2.tar.gz", hash = "sha256:7e94956aef7f2764f3c147d216ce066bf6c42948bb9e293169b1b1c880a580c2"},
 ]
 pytest-mock = [
-    {file = "pytest-mock-3.4.0.tar.gz", hash = "sha256:c3981f5edee6c4d1942250a60d9b39d38d5585398de1bfce057f925bdda720f4"},
-    {file = "pytest_mock-3.4.0-py3-none-any.whl", hash = "sha256:c0fc979afac4aaba545cbd01e9c20736eb3fefb0a066558764b07d3de8f04ed3"},
+    {file = "pytest-mock-3.5.0.tar.gz", hash = "sha256:4992db789175540d40a193bc60e987b1e69f1a989adad525a44e581c82149b14"},
+    {file = "pytest_mock-3.5.0-py3-none-any.whl", hash = "sha256:f9d77233b3af6c71cec6a8b8b5e9e9a2effd1bb6ff56e9ace72541ff6843ac81"},
 ]
 python-crontab = [
     {file = "python-crontab-2.5.1.tar.gz", hash = "sha256:4bbe7e720753a132ca4ca9d4094915f40e9d9dc8a807a4564007651018ce8c31"},
