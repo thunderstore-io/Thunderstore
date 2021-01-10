@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from ulid2 import generate_ulid_as_uuid
 
 
 class Comment(models.Model):
@@ -29,7 +30,7 @@ class Comment(models.Model):
         auto_now=True,
     )
     uuid4 = models.UUIDField(
-        default=uuid.uuid4,
+        default=generate_ulid_as_uuid,
         editable=False,
         unique=True,
         primary_key=True,
