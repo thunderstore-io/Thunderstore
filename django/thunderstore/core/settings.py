@@ -20,6 +20,7 @@ env = environ.Env(
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
+    DISABLE_SERVER_SIDE_CURSORS=(bool, True),
     SECRET_KEY=(str, ""),
     ALLOWED_HOSTS=(list, []),
     PROTOCOL=(str, ""),
@@ -83,6 +84,9 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 
 DATABASES = {"default": env.db()}
+DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = env.bool(
+    "DISABLE_SERVER_SIDE_CURSORS"
+)
 
 DB_CERT_DIR = env.str("DB_CERT_DIR")
 DB_CLIENT_CERT = env.str("DB_CLIENT_CERT")

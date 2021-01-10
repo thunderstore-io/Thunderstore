@@ -6,6 +6,7 @@ x-django-service: &django-service
     dockerfile: ./Dockerfile
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
+    DATABASE_URL: "psql://django:django@dbpool/django"
   env_file:
     - .env
   depends_on:
@@ -28,6 +29,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db-data:/var/lib/postgresql/data
+
+  dbpool:
+    image: edoburu/pgbouncer:1.11.0
+    environment:
+      DATABASE_URL: "postgres://django:django@db/django"
+      POOL_MODE: "transaction"
+    logging:
+      driver: none
 
   redis:
     image: redis:5.0.4-alpine3.9
