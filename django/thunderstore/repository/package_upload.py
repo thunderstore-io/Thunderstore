@@ -62,6 +62,13 @@ class PackageUploadForm(forms.ModelForm):
     def validate_manifest(self, manifest_str):
         try:
             manifest_data = json.loads(manifest_str)
+        except UnicodeDecodeError as exc:
+            raise ValidationError(
+                [
+                    f"Unable to parse manifest.json: {exc}\n",
+                    "Make sure the manifest.json is UTF-8 compatible",
+                ]
+            )
         except json.decoder.JSONDecodeError as exc:
             raise ValidationError(f"Unable to parse manifest.json: {exc}")
 
