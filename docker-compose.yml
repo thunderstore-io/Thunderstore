@@ -54,6 +54,8 @@ services:
       - built-static:/app/static_built:ro
     ports:
       - 127.0.0.1:80:8000
+    depends_on:
+      - builder
 
   django-worker:
     <<: [*django-service, *django-volumes]
