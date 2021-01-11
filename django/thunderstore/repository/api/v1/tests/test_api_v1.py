@@ -51,3 +51,18 @@ def test_api_v1_rate_package(client, active_package_listing, community_site):
     result = response.json()
     assert result["state"] == "unrated"
     assert result["score"] == 0
+
+
+@pytest.mark.django_db
+def test_api_v1_rate_package_permission_denied(
+    client, active_package_listing, community_site
+):
+    uuid = active_package_listing.package.uuid4
+    response = client.post(
+        f"/api/v1/package/{uuid}/rate/",
+        json.dumps({"target_state": "rated"}),
+        content_type="application/json",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Authentication credentials were not provided."
