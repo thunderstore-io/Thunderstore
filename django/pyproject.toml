@@ -20,7 +20,7 @@ whitenoise = "^5.0"
 django-storages = { version = "^1.11", extras = ["google", "boto3"] }
 djangorestframework = "^3.11"
 drf-yasg = "^1.17"
-django-ipware = "^2.1"
+django-ipware = "^3.0"
 sentry_sdk = "^0.19"
 django-redis = "^4.11"
 pymdown-extensions = "^8.1"

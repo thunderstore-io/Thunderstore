@@ -409,7 +409,7 @@ python-versions = "*"
 
 [[package]]
 name = "django-ipware"
-version = "2.1.0"
+version = "3.0.2"
 description = "A Django utility application that returns client's real IP address"
 category = "main"
 optional = false
@@ -1702,7 +1702,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "ea6d0704d942f6f96e09d18c0efd4a71a8983bb45820a9a23a5a373c00fcce23"
+content-hash = "91fd144d2903131439800432ac8feac57d37dae811fc7b828c1be9f60ea9d4db"
 
 [metadata.files]
 amqp = [
@@ -1929,7 +1929,7 @@ django-environ = [
     {file = "django_environ-0.4.5-py2.py3-none-any.whl", hash = "sha256:c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"},
 ]
 django-ipware = [
-    {file = "django-ipware-2.1.0.tar.gz", hash = "sha256:a7c7a8fd019dbdc9c357e6e582f65034e897572fc79a7e467674efa8aef9d00b"},
+    {file = "django-ipware-3.0.2.tar.gz", hash = "sha256:c7df8e1410a8e5d6b1fbae58728402ea59950f043c3582e033e866f0f0cf5e94"},
 ]
 django-redis = [
     {file = "django-redis-4.12.1.tar.gz", hash = "sha256:306589c7021e6468b2656edc89f62b8ba67e8d5a1c8877e2688042263daa7a63"},
