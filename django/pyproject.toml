@@ -15,7 +15,7 @@ easy-thumbnails = "^2.7"  # This has a monkeypatch and might be a difficult upgr
 markdown = "^3.2"
 gunicorn = { version = "^20.0", extras = ["gevent"] }
 social-auth-app-django = "^4.0"
-social-auth-core = "^3.4"
+social-auth-core = "^4.0"
 whitenoise = "^5.0"
 django-storages = { version = "^1.11", extras = ["google", "boto3"] }
 djangorestframework = "^3.11"
