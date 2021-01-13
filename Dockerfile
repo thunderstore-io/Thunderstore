@@ -32,4 +32,7 @@ COPY ./django /app
 
 RUN SECRET_KEY=x python manage.py collectstatic --noinput
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+HEALTHCHECK --interval=5s --timeout=8s --retries=3 \
+    CMD python readycheck.py || exit 1
+
+ENTRYPOINT ["python", "/app/docker_entrypoint.py"]

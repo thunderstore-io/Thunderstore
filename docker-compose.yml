@@ -7,6 +7,7 @@ x-django-service: &django-service
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
     DATABASE_URL: "psql://django:django@dbpool/django"
+    REDIS_URL: "redis://redis:6379/0"
   env_file:
     - .env
   depends_on:
@@ -59,6 +60,7 @@ services:
 
   django:
     <<: *django-service
+    command: django
     volumes:
       - django-data:/app/var
       - ./django:/app
@@ -70,17 +72,11 @@ services:
 
   django-worker:
     <<: [*django-service, *django-volumes]
-    entrypoint: watchmedo
-    command: >
-      auto-restart --patterns="*.py" --ignore-directories --recursive -d ./ --
-      celery -A thunderstore.core worker -l INFO
+    command: celeryworker
 
   django-beat:
     <<: [*django-service, *django-volumes]
-    entrypoint: watchmedo
-    command: >
-      auto-restart --patterns="*.py" --ignore-directories --recursive -d ./ --
-      celery -A thunderstore.core beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celerybeat
 
   builder:
     build:
