@@ -15,7 +15,7 @@ class EnvironmentVariable:
     @property
     def value(self):
         val = os.environ.get(self.name, self.default)
-        if self.cast is not None and val is not None:
+        if self.cast is not None and val is not None and isinstance(val, str):
             val = self.cast(val)
         return val
 
