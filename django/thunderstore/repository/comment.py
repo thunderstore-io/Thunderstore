@@ -22,6 +22,9 @@ class CreateCommentForm(forms.ModelForm):
         *args,
         **kwargs,
     ) -> None:
+        if not isinstance(commented_object, PackageListing):
+            raise ValueError("Unsupported parent object for comment")
+
         super().__init__(*args, **kwargs)
         self.user = user
         self.commented_object = commented_object
