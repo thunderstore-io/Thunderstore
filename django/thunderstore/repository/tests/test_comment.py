@@ -12,7 +12,7 @@ from thunderstore.repository.models import (
 )
 
 
-def test_clean_content():
+def test_comment_clean_content():
     content = " Test content "
     assert "Test content" == clean_content(content)
 
