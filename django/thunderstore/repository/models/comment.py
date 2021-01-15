@@ -6,8 +6,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from ulid2 import generate_ulid_as_uuid
 
+from thunderstore.core.mixins import TimestampMixin
 
-class Comment(models.Model):
+
+class Comment(TimestampMixin, models.Model):
     commented_object = GenericForeignKey()
     content_type = models.ForeignKey(
         ContentType,
@@ -22,12 +24,6 @@ class Comment(models.Model):
     )
     content = models.TextField(
         max_length=2048,
-    )
-    date_created = models.DateTimeField(
-        auto_now_add=True,
-    )
-    date_updated = models.DateTimeField(
-        auto_now=True,
     )
     uuid4 = models.UUIDField(
         default=generate_ulid_as_uuid,
