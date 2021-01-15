@@ -17,6 +17,11 @@ class Comment(TimestampMixin, models.Model):
         related_name="comments",
     )
     thread_object_id = models.PositiveIntegerField()
+    parent_comment = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        related_name="replies",
+    )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
