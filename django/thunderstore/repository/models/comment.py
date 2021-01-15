@@ -10,13 +10,13 @@ from thunderstore.core.mixins import TimestampMixin
 
 
 class Comment(TimestampMixin, models.Model):
-    commented_object = GenericForeignKey()
-    content_type = models.ForeignKey(
+    thread = GenericForeignKey("thread_content_type", "thread_object_id")
+    thread_content_type = models.ForeignKey(
         ContentType,
         on_delete=models.CASCADE,
         related_name="comments",
     )
-    object_id = models.PositiveIntegerField()
+    thread_object_id = models.PositiveIntegerField()
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
