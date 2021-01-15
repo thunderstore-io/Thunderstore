@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 
 from thunderstore.community.models import PackageListing
+from thunderstore.core.utils import capture_exception
 from thunderstore.repository.models import Comment
 
 
@@ -58,7 +59,8 @@ class EditCommentForm(forms.Form):
             return commented_object.package.owner.members.filter(
                 user=self.user,
             ).exists()
-        raise NotImplementedError()
+        capture_exception(NotImplementedError())
+        return False
 
     def clean_content(self) -> str:
         content = clean_content(self.cleaned_data["content"])

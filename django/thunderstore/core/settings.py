@@ -17,6 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 env = environ.Env(
     DEBUG=(bool, False),
+    NO_SILENT_FAIL=(bool, True),
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
