@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import PermissionDenied
 
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.comment import (
@@ -90,9 +91,9 @@ def test_edit_comment_not_allowed(comment):
         comment=comment,
         data={"content": new_content, "is_pinned": False},
     )
-    assert form.is_valid() is False
-    assert len(form.errors["content"]) == 1
-    assert form.errors["content"][0] == "Cannot edit content"
+    with pytest.raises(PermissionDenied) as exc:
+        form.is_valid()
+    assert str(exc.value) == "Cannot edit content"
 
 
 @pytest.mark.django_db
@@ -130,6 +131,6 @@ def test_edit_comment_pin_not_allowed(comment):
         comment=comment,
         data={"content": comment.content, "is_pinned": True},
     )
-    assert form.is_valid() is False
-    assert len(form.errors["is_pinned"]) == 1
-    assert form.errors["is_pinned"][0] == "Cannot edit pinned status"
+    with pytest.raises(PermissionDenied) as exc:
+        form.is_valid()
+    assert str(exc.value) == "Cannot edit pinned status"
