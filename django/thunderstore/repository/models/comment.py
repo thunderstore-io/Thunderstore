@@ -19,6 +19,7 @@ class Comment(TimestampMixin, models.Model):
         "self",
         on_delete=models.CASCADE,
         related_name="replies",
+        null=True,
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
