@@ -1,16 +1,25 @@
 import pytest
 
 from thunderstore.core.factories import UserFactory
-from thunderstore.repository.comment import CreateCommentForm, EditCommentForm
+from thunderstore.repository.comment import (
+    CreateCommentForm,
+    EditCommentForm,
+    clean_content,
+)
 from thunderstore.repository.models import (
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
 )
 
 
+def test_clean_content():
+    content = " Test content "
+    assert "Test content" == clean_content(content)
+
+
 @pytest.mark.django_db
 def test_create_comment(user, active_package_listing):
-    content = "Test content"
+    content = " Test content "
     form = CreateCommentForm(
         user,
         active_package_listing,
@@ -18,7 +27,7 @@ def test_create_comment(user, active_package_listing):
     )
     assert form.is_valid()
     comment = form.save()
-    assert comment.content == content
+    assert comment.content == clean_content(content)
     assert comment.author == user
     assert comment.is_pinned is False
     assert comment.commented_object == active_package_listing
@@ -42,7 +51,7 @@ def test_create_comment_too_long(user, active_package_listing):
 
 @pytest.mark.django_db
 def test_edit_comment(comment):
-    new_content = "Edited content"
+    new_content = " Edited content "
     form = EditCommentForm(
         user=comment.author,
         comment=comment,
@@ -50,7 +59,7 @@ def test_edit_comment(comment):
     )
     assert form.is_valid()
     comment = form.save()
-    assert comment.content == new_content
+    assert comment.content == clean_content(new_content)
     assert comment.is_pinned is False
 
 
