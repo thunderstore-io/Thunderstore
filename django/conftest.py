@@ -240,5 +240,7 @@ class TestUserTypes(ChoiceEnum):
 
 def comment(user, active_package_listing):
     return Comment.objects.create(
-        author=user, commented_object=active_package_listing, content="Test content"
+        author=user,
+        thread=active_package_listing,
+        content="Test content",
     )

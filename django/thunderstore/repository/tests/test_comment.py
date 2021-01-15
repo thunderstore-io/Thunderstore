@@ -30,7 +30,7 @@ def test_create_comment(user, active_package_listing):
     assert comment.content == clean_content(content)
     assert comment.author == user
     assert comment.is_pinned is False
-    assert comment.commented_object == active_package_listing
+    assert comment.thread == active_package_listing
 
 
 @pytest.mark.django_db
@@ -101,7 +101,7 @@ def test_edit_comment_pin(comment):
 
     UploaderIdentityMember.objects.create(
         user=comment.author,
-        identity=comment.commented_object.package.owner,
+        identity=comment.thread.package.owner,
         role=UploaderIdentityMemberRole.owner,
     )
 
@@ -119,7 +119,7 @@ def test_edit_comment_pin(comment):
 def test_edit_comment_pin_not_allowed(comment):
     assert comment.is_pinned is False
     assert (
-        comment.commented_object.package.owner.members.filter(
+        comment.thread.package.owner.members.filter(
             user=comment.author,
         ).exists()
         is False

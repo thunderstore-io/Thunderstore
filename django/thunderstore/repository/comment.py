@@ -34,7 +34,7 @@ class CreateCommentForm(forms.ModelForm):
 
     def save(self, *args, **kwargs) -> Comment:
         self.instance.author = self.user
-        self.instance.commented_object = self.commented_object
+        self.instance.thread = self.commented_object
         return super().save(*args, **kwargs)
 
 
@@ -52,7 +52,7 @@ class EditCommentForm(forms.Form):
         return self.user == self.comment.author
 
     def can_pin(self) -> bool:
-        commented_object = self.comment.commented_object
+        commented_object = self.comment.thread
         if isinstance(commented_object, PackageListing):
             # Must be a member of the identity to pin
             return commented_object.package.owner.members.filter(
