@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 
 from thunderstore.community.models import PackageListing
 from thunderstore.repository.models import Comment
@@ -69,7 +69,7 @@ class EditCommentForm(forms.Form):
         is_pinned = self.cleaned_data.get("is_pinned")
 
         if is_pinned != self.comment.is_pinned and not self.can_pin():
-            raise ValidationError("Cannot edit pinned status")
+            raise PermissionDenied("Cannot edit pinned status")
 
         return is_pinned
 
