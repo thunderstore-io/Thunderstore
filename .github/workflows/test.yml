@@ -64,9 +64,9 @@ jobs:
         run: mv tests.env .env
       - name: Run pytest
         run: |
-          docker-compose up -f docker-compose.yml -f docker/docker-compose.pytest.yml -d --build db dbpool redis
-          docker-compose up -f docker-compose.yml -f docker/docker-compose.pytest.yml --build django
-          docker-compose down -f docker-compose.yml -f docker/docker-compose.pytest.yml
+          docker-compose -f docker-compose.yml -f docker/docker-compose.pytest.yml up -d --build db dbpool redis
+          docker-compose -f docker-compose.yml -f docker/docker-compose.pytest.yml up --build django
+          docker-compose -f docker-compose.yml -f docker/docker-compose.pytest.yml down
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v1
