@@ -60,17 +60,13 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: docker build -t thunderstore:${GITHUB_SHA} .
+      - name: Build docker-compose
+        run: docker-compose build
       - name: Run pytest
-        run: >
-          docker run --rm
-          --entrypoint pytest
-          -e SECRET_KEY=hunter2
-          -v "$(pwd)/coverage_results:/app/coverage_results"
-          --no-healthcheck
-          thunderstore:${GITHUB_SHA}
-          --cov-report=xml:coverage_results/coverage.xml
-          --cov-report=term
-          --cov /app/
+        run: |
+          docker-compose up -f docker-compose.yml -f docker/docker-compose.pytest.yml -d db dbpool redis
+          docker-compose up -f docker-compose.yml -f docker/docker-compose.pytest.yml django
+          docker-compose down -f docker-compose.yml -f docker/docker-compose.pytest.yml
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v1

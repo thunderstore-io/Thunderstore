@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  django:
+    entrypoint: pytest
+    command: >
+      --cov-report=xml:coverage_results/coverage.xml
+      --cov-report=term
+      --cov /app/
+    volumes:
+      - ../coverage_results:/app/coverage_results
+    environment:
+      SECRET_KEY: hunter2
+      DATABASE_URL: psql://postgres@db/django_test
