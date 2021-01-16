@@ -60,8 +60,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Docker image
         run: docker build -t thunderstore:${GITHUB_SHA} .
+      - name: Rename .env file
+        run: mv tests.env .env
       - name: Build docker-compose
-        run: docker-compose build
+        run: docker-compose build -f docker-compose.yml -f docker/docker-compose.pytest.yml
       - name: Run pytest
         run: |
           docker-compose up -f docker-compose.yml -f docker/docker-compose.pytest.yml -d db dbpool redis
