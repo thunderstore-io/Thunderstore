@@ -15,7 +15,7 @@ from thunderstore.repository.models import (
 
 def test_comment_clean_content():
     content = " Test content "
-    assert "Test content" == clean_content(content)
+    assert clean_content(content) == "Test content"
 
 
 @pytest.mark.django_db
