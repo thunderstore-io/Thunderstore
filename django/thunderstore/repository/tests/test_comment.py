@@ -19,7 +19,7 @@ def test_comment_clean_content():
 
 
 @pytest.mark.django_db
-def test_create_comment(user, active_package_listing):
+def test_comment_create(user, active_package_listing):
     content = " Test content "
     form = CreateCommentForm(
         user,
@@ -35,7 +35,7 @@ def test_create_comment(user, active_package_listing):
 
 
 @pytest.mark.django_db
-def test_create_comment_too_long(user, active_package_listing):
+def test_comment_create_too_long(user, active_package_listing):
     content = "x" * 10000
     form = CreateCommentForm(
         user,
@@ -51,7 +51,7 @@ def test_create_comment_too_long(user, active_package_listing):
 
 
 @pytest.mark.django_db
-def test_edit_comment(comment):
+def test_comment_edit(comment):
     new_content = " Edited content "
     form = EditCommentForm(
         user=comment.author,
@@ -65,7 +65,7 @@ def test_edit_comment(comment):
 
 
 @pytest.mark.django_db
-def test_edit_comment_too_long(comment):
+def test_comment_edit_too_long(comment):
     new_content = "x" * 10000
     form = EditCommentForm(
         user=comment.author,
@@ -81,7 +81,7 @@ def test_edit_comment_too_long(comment):
 
 
 @pytest.mark.django_db
-def test_edit_comment_not_allowed(comment):
+def test_comment_edit_not_allowed(comment):
     user = UserFactory.create()
     assert user != comment.author
 
@@ -97,7 +97,7 @@ def test_edit_comment_not_allowed(comment):
 
 
 @pytest.mark.django_db
-def test_edit_comment_pin(comment):
+def test_comment_edit_pin(comment):
     assert comment.is_pinned is False
 
     UploaderIdentityMember.objects.create(
@@ -117,7 +117,7 @@ def test_edit_comment_pin(comment):
 
 
 @pytest.mark.django_db
-def test_edit_comment_pin_not_allowed(comment):
+def test_comment_edit_pin_not_allowed(comment):
     assert comment.is_pinned is False
     assert (
         comment.thread.package.owner.members.filter(
