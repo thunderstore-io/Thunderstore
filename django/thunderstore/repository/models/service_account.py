@@ -2,8 +2,6 @@ import ulid2
 from django.conf import settings
 from django.db import models
 
-from thunderstore.repository.models import UploaderIdentity
-
 
 class ServiceAccountMetadata(models.Model):
     uuid = models.UUIDField(default=ulid2.generate_ulid_as_uuid, primary_key=True)
@@ -14,7 +12,7 @@ class ServiceAccountMetadata(models.Model):
     )
     is_service_account = models.BooleanField(default=False)
     owner = models.ForeignKey(
-        UploaderIdentity,
+        "repository.UploaderIdentity",
         related_name="service_accounts",
         on_delete=models.CASCADE,
     )
