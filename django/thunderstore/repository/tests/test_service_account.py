@@ -22,6 +22,7 @@ def test_service_account_create(user, uploader_identity):
 
 @pytest.mark.django_db
 def test_service_account_create_not_member(user, uploader_identity):
+    assert uploader_identity.members.filter(user=user).exists() is False
     form = CreateServiceAccountForm(user, data={"identity": uploader_identity})
     assert form.is_valid() is False
     assert len(form.errors["identity"]) == 1
