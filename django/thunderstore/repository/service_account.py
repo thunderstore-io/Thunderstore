@@ -7,7 +7,6 @@ from thunderstore.repository.models import (
     ServiceAccountMetadata,
     UploaderIdentity,
     UploaderIdentityMemberRole,
-    service_account,
 )
 
 
