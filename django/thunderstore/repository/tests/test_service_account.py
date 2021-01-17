@@ -8,6 +8,11 @@ from thunderstore.repository.service_account import CreateServiceAccountForm
 
 
 @pytest.mark.django_db
+def test_service_account_fixture(service_account):
+    assert service_account.uuid.hex == service_account.user.username
+
+
+@pytest.mark.django_db
 def test_service_account_create(user, uploader_identity):
     UploaderIdentityMember.objects.create(
         user=user,

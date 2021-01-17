@@ -10,7 +10,15 @@ from thunderstore.community.models import (
     PackageListing,
 )
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
-from thunderstore.repository.models import Package, UploaderIdentity, Webhook
+from thunderstore.repository.models import (
+    Package,
+    ServiceAccountMetadata,
+    UploaderIdentity,
+    UploaderIdentityMember,
+    UploaderIdentityMemberRole,
+    Webhook,
+)
+from thunderstore.repository.service_account import CreateServiceAccountForm
 from thunderstore.webhooks.models import WebhookType
 
 
@@ -142,3 +150,15 @@ def _use_static_files_storage(settings):
     settings.STATICFILES_STORAGE = (
         "django.contrib.staticfiles.storage.StaticFilesStorage"
     )
+
+
+@pytest.fixture()
+def service_account(user, uploader_identity) -> ServiceAccountMetadata:
+    UploaderIdentityMember.objects.create(
+        user=user,
+        identity=uploader_identity,
+        role=UploaderIdentityMemberRole.owner,
+    )
+    form = CreateServiceAccountForm(user, data={"identity": uploader_identity})
+    assert form.is_valid()
+    return form.save()
