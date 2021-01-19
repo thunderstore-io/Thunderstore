@@ -552,7 +552,7 @@ doc = ["sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [[package]]
 name = "faker"
-version = "5.6.0"
+version = "5.6.1"
 description = "Faker is a Python package that generates fake data for you."
 category = "dev"
 optional = false
@@ -1965,8 +1965,8 @@ factory-boy = [
     {file = "factory_boy-3.2.0.tar.gz", hash = "sha256:401cc00ff339a022f84d64a4339503d1689e8263a4478d876e58a3295b155c5b"},
 ]
 faker = [
-    {file = "Faker-5.6.0-py3-none-any.whl", hash = "sha256:eb14d0c6b8f7c9902bb07dedc2ad405237edbf808d4ead9f17b9567e586cabee"},
-    {file = "Faker-5.6.0.tar.gz", hash = "sha256:3d8ba3e4a3700962a1bf5599a43797b286d1ac52b3dd90c1e8a2625f73c46bd6"},
+    {file = "Faker-5.6.1-py3-none-any.whl", hash = "sha256:e4d981700628a6c428372c3664f22f8e85cd42199bb47434a0c0785176a8efa5"},
+    {file = "Faker-5.6.1.tar.gz", hash = "sha256:818cce31afc6482d8371df783a282b025acc464e7e03d743eb4645c2bf33e3c8"},
 ]
 filelock = [
     {file = "filelock-3.0.12-py3-none-any.whl", hash = "sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836"},
