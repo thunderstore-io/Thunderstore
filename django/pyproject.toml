@@ -31,7 +31,7 @@ django-celery-beat = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
-pytest-cov = "^2.8"
+pytest-cov = "^2.11"
 pytest-django = "^4.1"
 factory_boy = "^3.2"
 Faker = "^5.6"
