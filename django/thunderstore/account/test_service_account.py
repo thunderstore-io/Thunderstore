@@ -1,5 +1,4 @@
 import pytest
-from django.contrib.auth import get_user_model
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.account.service_account import (
@@ -63,8 +62,8 @@ def test_service_account_create_not_owner(user, uploader_identity):
 
 
 @pytest.mark.django_db
-def test_service_account_delete(service_account):
-    User = get_user_model()
+def test_service_account_delete(django_user_model, service_account):
+    User = django_user_model
     member = service_account.owner.members.first()
     assert member.role == UploaderIdentityMemberRole.owner
     assert User.objects.filter(pk=service_account.user.pk).exists() is True
