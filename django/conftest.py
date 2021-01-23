@@ -3,6 +3,8 @@ from copy import copy
 import pytest
 from django.contrib.sites.models import Site
 
+from thunderstore.account.models import ServiceAccount
+from thunderstore.account.service_account import CreateServiceAccountForm
 from thunderstore.community.models import (
     Community,
     CommunitySite,
@@ -12,13 +14,11 @@ from thunderstore.community.models import (
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import (
     Package,
-    ServiceAccount,
     UploaderIdentity,
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
     Webhook,
 )
-from thunderstore.repository.service_account import CreateServiceAccountForm
 from thunderstore.webhooks.models import WebhookType
 
 

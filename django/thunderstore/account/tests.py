@@ -1,16 +1,16 @@
 import pytest
 from django.contrib.auth import get_user_model
 
+from thunderstore.account.models import ServiceAccount
+from thunderstore.account.service_account import (
+    CreateServiceAccountForm,
+    DeleteServiceAccountForm,
+    create_service_account_username,
+)
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.models import (
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
-)
-from thunderstore.repository.models.service_account import ServiceAccount
-from thunderstore.repository.service_account import (
-    CreateServiceAccountForm,
-    DeleteServiceAccountForm,
-    create_service_account_username,
 )
 
 

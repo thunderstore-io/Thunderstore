@@ -3,7 +3,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-from thunderstore.repository.models import ServiceAccount, UploaderIdentity
+from thunderstore.account.models import ServiceAccount
+from thunderstore.repository.models import UploaderIdentity
 
 
 def create_service_account_username(id_: str) -> str:

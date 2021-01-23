@@ -157,6 +157,7 @@ INSTALLED_APPS = [
     "thunderstore.webhooks",
     "thunderstore.social",
     "thunderstore.community",
+    "thunderstore.account",
     "backblaze_b2",
 ]
 
