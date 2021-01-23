@@ -40,9 +40,7 @@ class DeleteServiceAccountForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["service_account"] = forms.ModelChoiceField(
-            queryset=ServiceAccount.objects.filter(
-                owner__in=UploaderIdentity.objects.filter(members__user=user),
-            ),
+            queryset=ServiceAccount.objects.filter(owner__members__user=user),
         )
 
     def clean_service_account(self) -> ServiceAccount:
