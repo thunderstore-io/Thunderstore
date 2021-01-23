@@ -6,6 +6,10 @@ from django.core.exceptions import ValidationError
 from thunderstore.repository.models import ServiceAccount, UploaderIdentity
 
 
+def create_service_account_username(id_: str) -> str:
+    return f"{id_}.sa@thunderstore.io"
+
+
 class CreateServiceAccountForm(forms.Form):
     def __init__(self, user: User, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -22,7 +26,8 @@ class CreateServiceAccountForm(forms.Form):
 
     def save(self) -> ServiceAccount:
         service_account_id = ulid2.generate_ulid_as_uuid()
-        user = User.objects.create_user(service_account_id.hex)
+        username = create_service_account_username(service_account_id.hex)
+        user = User.objects.create_user(username, email=username)
         return ServiceAccount.objects.create(
             uuid=service_account_id,
             user=user,

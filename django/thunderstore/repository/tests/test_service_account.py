@@ -8,12 +8,14 @@ from thunderstore.repository.models import (
 from thunderstore.repository.service_account import (
     CreateServiceAccountForm,
     DeleteServiceAccountForm,
+    create_service_account_username,
 )
 
 
 @pytest.mark.django_db
 def test_service_account_fixture(service_account):
-    assert service_account.uuid.hex == service_account.user.username
+    username = create_service_account_username(service_account.uuid.hex)
+    assert username == service_account.user.username
 
 
 @pytest.mark.django_db
@@ -26,7 +28,8 @@ def test_service_account_create(user, uploader_identity):
     form = CreateServiceAccountForm(user, data={"identity": uploader_identity})
     assert form.is_valid()
     service_account = form.save()
-    assert service_account.uuid.hex == service_account.user.username
+    username = create_service_account_username(service_account.uuid.hex)
+    assert username == service_account.user.username
 
 
 @pytest.mark.django_db
