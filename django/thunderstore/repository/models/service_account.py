@@ -15,3 +15,7 @@ class ServiceAccount(models.Model):
         related_name="service_accounts",
         on_delete=models.CASCADE,
     )
+
+    def delete(self, *args, **kwargs):
+        self.user.delete()
+        return super().delete(*args, **kwargs)
