@@ -1,4 +1,12 @@
 version: "3.8"
+
+x-django-services: &django-service
+  build:
+    context: .
+    dockerfile: .devcontainer/django.Dockerfile
+  volumes:
+    - .:/workspace:ro
+
 services:
   django:
     build:
@@ -8,3 +16,10 @@ services:
     volumes:
       - built-static:/workspace/django/static_built:ro
       - .:/workspace
+
+  django-worker:
+    <<: *django-service
+    command: bash /workspace/.devcontainer/celeryCommand.sh celeryworker
+  django-beat:
+    <<: *django-service
+    command: bash /workspace/.devcontainer/celeryCommand.sh celerybeat
