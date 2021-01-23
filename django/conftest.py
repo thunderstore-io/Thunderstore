@@ -135,3 +135,10 @@ def celery_app():
     # instances, meaning that we need to restore the hooks to pre-test
     # state as to not spill over tasks to other tests
     _state._on_app_finalizers = on_app_finalizers
+
+
+@pytest.fixture(autouse=True)
+def _use_static_files_storage(settings):
+    settings.STATICFILES_STORAGE = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
