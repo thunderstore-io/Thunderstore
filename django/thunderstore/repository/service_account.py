@@ -20,9 +20,8 @@ class CreateServiceAccountForm(forms.Form):
 
     def clean_identity(self) -> UploaderIdentity:
         identity = self.cleaned_data["identity"]
-        member = identity.members.get(user=self.user)
-        if member.role != UploaderIdentityMemberRole.owner:
-            raise ValidationError("Must be identity owner to create a service account")
+        if not identity.can_create_service_account(self.user):
+            raise ValidationError("Must be identity owner to delete a service account")
         return identity
 
     def save(self) -> ServiceAccountMetadata:
@@ -48,8 +47,7 @@ class DeleteServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccountMetadata:
         service_account = self.cleaned_data["service_account"]
-        member = service_account.owner.members.get(user=self.user)
-        if member.role != UploaderIdentityMemberRole.owner:
+        if not service_account.owner.can_delete_service_account(self.user):
             raise ValidationError("Must be identity owner to delete a service account")
         return service_account
 

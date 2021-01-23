@@ -87,3 +87,15 @@ class UploaderIdentity(models.Model):
             UploaderIdentityMemberRole.owner,
             UploaderIdentityMemberRole.member,
         )
+
+    def can_create_service_account(self, user) -> bool:
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            return False
+        return membership.role == UploaderIdentityMemberRole.owner
+
+    def can_delete_service_account(self, user) -> bool:
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            return False
+        return membership.role == UploaderIdentityMemberRole.owner
