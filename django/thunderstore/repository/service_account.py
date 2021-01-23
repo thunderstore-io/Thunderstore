@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 from thunderstore.repository.models import (
-    ServiceAccountMetadata,
+    ServiceAccount,
     UploaderIdentity,
     UploaderIdentityMemberRole,
 )
@@ -24,10 +24,10 @@ class CreateServiceAccountForm(forms.Form):
             raise ValidationError("Must be identity owner to delete a service account")
         return identity
 
-    def save(self) -> ServiceAccountMetadata:
+    def save(self) -> ServiceAccount:
         service_account_id = ulid2.generate_ulid_as_uuid()
         user = User.objects.create_user(service_account_id.hex)
-        return ServiceAccountMetadata.objects.create(
+        return ServiceAccount.objects.create(
             uuid=service_account_id,
             user=user,
             is_service_account=True,
@@ -40,12 +40,12 @@ class DeleteServiceAccountForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["service_account"] = forms.ModelChoiceField(
-            queryset=ServiceAccountMetadata.objects.filter(
+            queryset=ServiceAccount.objects.filter(
                 owner__in=UploaderIdentity.objects.filter(members__user=user),
             ),
         )
 
-    def clean_service_account(self) -> ServiceAccountMetadata:
+    def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
         if not service_account.owner.can_delete_service_account(self.user):
             raise ValidationError("Must be identity owner to delete a service account")

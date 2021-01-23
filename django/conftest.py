@@ -12,7 +12,7 @@ from thunderstore.community.models import (
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import (
     Package,
-    ServiceAccountMetadata,
+    ServiceAccount,
     UploaderIdentity,
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
@@ -153,7 +153,7 @@ def _use_static_files_storage(settings):
 
 
 @pytest.fixture()
-def service_account(user, uploader_identity) -> ServiceAccountMetadata:
+def service_account(user, uploader_identity) -> ServiceAccount:
     UploaderIdentityMember.objects.create(
         user=user,
         identity=uploader_identity,
