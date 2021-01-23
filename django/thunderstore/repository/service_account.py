@@ -17,7 +17,7 @@ class CreateServiceAccountForm(forms.Form):
     def clean_identity(self) -> UploaderIdentity:
         identity = self.cleaned_data["identity"]
         if not identity.can_create_service_account(self.user):
-            raise ValidationError("Must be identity owner to delete a service account")
+            raise ValidationError("Must be identity owner to create a service account")
         return identity
 
     def save(self) -> ServiceAccount:
