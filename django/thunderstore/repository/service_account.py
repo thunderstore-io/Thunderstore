@@ -30,7 +30,6 @@ class CreateServiceAccountForm(forms.Form):
         return ServiceAccount.objects.create(
             uuid=service_account_id,
             user=user,
-            is_service_account=True,
             owner=self.cleaned_data["identity"],
         )
 

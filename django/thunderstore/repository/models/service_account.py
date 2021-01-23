@@ -10,7 +10,6 @@ class ServiceAccount(models.Model):
         related_name="service_account",
         on_delete=models.CASCADE,
     )
-    is_service_account = models.BooleanField(default=False)
     owner = models.ForeignKey(
         "repository.UploaderIdentity",
         related_name="service_accounts",
