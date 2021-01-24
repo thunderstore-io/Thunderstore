@@ -35,7 +35,7 @@ class PackageNameField(serializers.CharField):
         super().__init__(**kwargs)
         validator = RegexValidator(
             PACKAGE_NAME_REGEX,
-            message=f"Package names can only contain a-Z A-Z 0-9 _ characers",
+            message="Package names can only contain a-Z A-Z 0-9 _ characers",
         )
         self.validators.append(validator)
 
@@ -49,7 +49,7 @@ class PackageVersionField(serializers.CharField):
         super().__init__(**kwargs)
         regex_validator = RegexValidator(
             PACKAGE_VERSION_REGEX,
-            message=f"Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
+            message="Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
         )
         version_number_validator = VersionNumberValidator()
         self.validators.append(regex_validator)

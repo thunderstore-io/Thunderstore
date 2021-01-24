@@ -129,7 +129,7 @@ class PackageUploadForm(forms.ModelForm):
 
         if file.size + PackageVersion.get_total_used_disk_space() > MAX_TOTAL_SIZE:
             raise ValidationError(
-                f"The server has reached maximum total storage used, and can't receive new uploads",
+                "The server has reached maximum total storage used, and can't receive new uploads",
             )
 
         try:

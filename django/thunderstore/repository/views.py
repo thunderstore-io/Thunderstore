@@ -179,7 +179,7 @@ class PackageListSearchView(ListView):
 
 class PackageListView(PackageListSearchView):
     def get_page_title(self):
-        return f"All mods"
+        return "All mods"
 
     def get_cache_vary(self):
         return "all"
