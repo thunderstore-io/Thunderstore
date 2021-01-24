@@ -159,6 +159,8 @@ def service_account(user, uploader_identity) -> ServiceAccount:
         identity=uploader_identity,
         role=UploaderIdentityMemberRole.owner,
     )
-    form = CreateServiceAccountForm(user, data={"identity": uploader_identity})
+    form = CreateServiceAccountForm(
+        user, data={"identity": uploader_identity, "nickname": "Nickname"}
+    )
     assert form.is_valid()
     return form.save()
