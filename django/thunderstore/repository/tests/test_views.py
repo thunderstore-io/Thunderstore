@@ -10,7 +10,7 @@ from ..factories import PackageFactory, PackageVersionFactory, UploaderIdentityF
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "ordering",
-    ("last-updated", "newest", "most-downloaded", "top-rated"),
+    ["last-updated", "newest", "most-downloaded", "top-rated"],
 )
 def test_package_list_view(client, community_site, ordering):
     for i in range(4):
