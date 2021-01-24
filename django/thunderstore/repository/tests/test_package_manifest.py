@@ -181,19 +181,19 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "name, error",
+    ("name", "error"),
     [
-        ["some_name", ""],
-        ["some-name", "Package names can only contain a-Z A-Z 0-9 _ characers"],
-        ["", "This field may not be blank."],
-        ["a", ""],
-        ["some_very_long_name", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("name").max_length, ""],
-        [
+        ("some_name", ""),
+        ("some-name", "Package names can only contain a-Z A-Z 0-9 _ characers"),
+        ("", "This field may not be blank."),
+        ("a", ""),
+        ("some_very_long_name", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("name").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("name").max_length + "b",
             "Ensure this field has no more than 128 characters.",
-        ],
+        ),
     ],
 )
 def test_manifest_v1_serializer_name_validation(
@@ -218,22 +218,22 @@ def test_manifest_v1_serializer_name_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "version, error",
+    ("version", "error"),
     [
-        ["1.0.0", ""],
-        [
+        ("1.0.0", ""),
+        (
             "asdasdasd",
             "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
-        ],
-        ["", "This field may not be blank."],
-        ["1.5.2", ""],
-        [
+        ),
+        ("", "This field may not be blank."),
+        ("1.5.2", ""),
+        (
             "1.6.2+post.dev1",
             "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
-        ],
-        ["11111.111111.111", ""],
-        [None, "This field may not be null."],
-        ["111111.111111.111", "Ensure this field has no more than 16 characters."],
+        ),
+        ("11111.111111.111", ""),
+        (None, "This field may not be null."),
+        ("111111.111111.111", "Ensure this field has no more than 16 characters."),
     ],
 )
 def test_manifest_v1_serializer_version_number_validation(
@@ -258,19 +258,19 @@ def test_manifest_v1_serializer_version_number_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "url, error",
+    ("url", "error"),
     [
-        ["asdiasdhuasd", ""],
-        ["https://google.com/", ""],
-        ["", ""],
-        ["a", ""],
-        ["some not valid website URL", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("website_url").max_length, ""],
-        [
+        ("asdiasdhuasd", ""),
+        ("https://google.com/", ""),
+        ("", ""),
+        ("a", ""),
+        ("some not valid website URL", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("website_url").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("website_url").max_length + "b",
             "Ensure this field has no more than 1024 characters.",
-        ],
+        ),
     ],
 )
 def test_manifest_v1_serializer_website_url_validation(
@@ -295,19 +295,19 @@ def test_manifest_v1_serializer_website_url_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "description, error",
+    ("description", "error"),
     [
-        ["asdiasdhuasd", ""],
-        ["https://google.com/", ""],
-        ["", ""],
-        ["a", ""],
-        ["some not valid website URL", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("description").max_length, ""],
-        [
+        ("asdiasdhuasd", ""),
+        ("https://google.com/", ""),
+        ("", ""),
+        ("a", ""),
+        ("some not valid website URL", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("description").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("description").max_length + "b",
             "Ensure this field has no more than 256 characters.",
-        ],
+        ),
     ],
 )
 def test_manifest_v1_serializer_description_validation(
@@ -332,16 +332,16 @@ def test_manifest_v1_serializer_description_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "dependencies, error",
+    ("dependencies", "error"),
     [
-        [["asdiasdhuasd"], "Invalid package reference string"],
-        [["https://google.com/"], "Invalid package reference string"],
-        [[""], "Invalid package reference string"],
-        [["a"], "Invalid package reference string"],
-        [["some not valid website URL"], "Invalid package reference string"],
-        [[None], "This field may not be null."],
-        [None, "This field may not be null."],
-        ["", 'Expected a list of items but got type "str".'],
+        (["asdiasdhuasd"], "Invalid package reference string"),
+        (["https://google.com/"], "Invalid package reference string"),
+        ([""], "Invalid package reference string"),
+        (["a"], "Invalid package reference string"),
+        (["some not valid website URL"], "Invalid package reference string"),
+        ([None], "This field may not be null."),
+        (None, "This field may not be null."),
+        ("", 'Expected a list of items but got type "str".'),
     ],
 )
 def test_manifest_v1_serializer_dependencies_invalid(
@@ -434,13 +434,13 @@ def test_manifest_v1_null_fields(user, manifest_v1_data, field):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "field, empty_val, should_fail",
+    ("field", "empty_val", "should_fail"),
     [
-        ["name", "", True],
-        ["version_number", "", True],
-        ["website_url", "", False],
-        ["description", "", False],
-        ["dependencies", [], False],
+        ("name", "", True),
+        ("version_number", "", True),
+        ("website_url", "", False),
+        ("description", "", False),
+        ("dependencies", [], False),
     ],
 )
 def test_manifest_v1_blank_fields(

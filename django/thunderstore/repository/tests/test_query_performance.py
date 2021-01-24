@@ -14,7 +14,7 @@ from thunderstore.repository.factories import (
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "package_count, version_count",
+    ("package_count", "version_count"),
     [
         (1, 1),
         (1, 5),

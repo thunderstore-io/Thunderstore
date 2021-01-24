@@ -67,15 +67,15 @@ def test_reference_validator_eq():
 
 
 @pytest.mark.parametrize(
-    "version_str, should_fail",
+    ("version_str", "should_fail"),
     [
-        ["1.0.0", False],
-        ["1.0.0.0", True],
-        ["1.a", True],
-        ["asd.dsa.asd", True],
-        ["0.0.0", False],
-        ["1", True],
-        ["20.08.210338", True],
+        ("1.0.0", False),
+        ("1.0.0.0", True),
+        ("1.a", True),
+        ("asd.dsa.asd", True),
+        ("0.0.0", False),
+        ("1", True),
+        ("20.08.210338", True),
     ],
 )
 def test_version_number_validator(version_str, should_fail):
@@ -94,15 +94,15 @@ def test_version_number_validator_eq():
 
 
 @pytest.mark.parametrize(
-    "author_name, should_fail",
-    (
+    ("author_name", "should_fail"),
+    [
         ("SomeAuthor", False),
         ("Some-Author", False),
         ("Som3-Auth0r", False),
         ("Som3_Auth0r", False),
         ("Some.Author", False),
         ("Some@Author", True),
-    ),
+    ],
 )
 def test_author_name_regex_validator(author_name, should_fail):
     validator = AuthorNameRegexValidator
