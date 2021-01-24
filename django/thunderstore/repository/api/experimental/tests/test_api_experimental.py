@@ -6,9 +6,9 @@ from thunderstore.repository.api.experimental.tasks import (
 
 
 @pytest.mark.django_db
-def test_api_experimental(client, active_package_listing, community_site):
+def test_api_experimental(api_client, active_package_listing, community_site):
     update_api_experimental_caches()
-    response = client.get(
+    response = api_client.get(
         "/api/experimental/package/", HTTP_HOST=community_site.site.domain
     )
     assert response.status_code == 200

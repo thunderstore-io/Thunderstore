@@ -5,7 +5,7 @@ from thunderstore.core.models import IncomingJWTAuthConfiguration, SecretTypeCho
 from thunderstore.repository.models import DiscordUserBotPermission
 
 
-def test_bot_api_deprecate_mod_200(client, admin_user, package, community_site):
+def test_bot_api_deprecate_mod_200(api_client, admin_user, package, community_site):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
@@ -29,7 +29,7 @@ def test_bot_api_deprecate_mod_200(client, admin_user, package, community_site):
         headers={"kid": str(auth.key_id)},
     )
 
-    response = client.post(
+    response = api_client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
@@ -42,7 +42,7 @@ def test_bot_api_deprecate_mod_200(client, admin_user, package, community_site):
 
 
 def test_bot_api_deprecate_mod_403_thunderstore_perms(
-    client, user, package, community_site
+    api_client, user, package, community_site
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -67,7 +67,7 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
         headers={"kid": str(auth.key_id)},
     )
 
-    response = client.post(
+    response = api_client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
@@ -83,7 +83,7 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
 
 
 def test_bot_api_deprecate_mod_403_discord_perms(
-    client, admin_user, package, community_site
+    api_client, admin_user, package, community_site
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -108,7 +108,7 @@ def test_bot_api_deprecate_mod_403_discord_perms(
         headers={"kid": str(auth.key_id)},
     )
 
-    response = client.post(
+    response = api_client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
@@ -120,7 +120,7 @@ def test_bot_api_deprecate_mod_403_discord_perms(
     assert package.is_deprecated is False
 
 
-def test_bot_api_deprecate_mod_404(client, admin_user, community_site):
+def test_bot_api_deprecate_mod_404(api_client, admin_user, community_site):
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
@@ -143,7 +143,7 @@ def test_bot_api_deprecate_mod_404(client, admin_user, community_site):
         headers={"kid": str(auth.key_id)},
     )
 
-    response = client.post(
+    response = api_client.post(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",

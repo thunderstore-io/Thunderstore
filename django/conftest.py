@@ -2,6 +2,7 @@ from copy import copy
 
 import pytest
 from django.contrib.sites.models import Site
+from rest_framework.test import APIClient
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.account.service_account import CreateServiceAccountForm
@@ -164,3 +165,8 @@ def service_account(user, uploader_identity) -> ServiceAccount:
     )
     assert form.is_valid()
     return form.save()
+
+
+@pytest.fixture()
+def api_client() -> APIClient:
+    return APIClient()
