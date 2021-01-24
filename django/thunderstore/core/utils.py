@@ -15,7 +15,7 @@ def ensure_fields_editable_on_creation(readonly_fields, obj, editable_fields):
         return readonly_fields
     else:
         # Creating the object so make restaurant editable
-        return list(x for x in readonly_fields if x not in editable_fields)
+        return [x for x in readonly_fields if x not in editable_fields]
 
 
 class CommunitySiteSerializerContext:
