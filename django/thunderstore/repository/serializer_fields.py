@@ -49,7 +49,10 @@ class PackageVersionField(serializers.CharField):
         super().__init__(**kwargs)
         regex_validator = RegexValidator(
             PACKAGE_VERSION_REGEX,
-            message="Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
+            message=(
+                "Version numbers must follow the Major.Minor.Patch "
+                "format (e.g. 1.45.320)"
+            ),
         )
         version_number_validator = VersionNumberValidator()
         self.validators.append(regex_validator)

@@ -43,7 +43,8 @@ class JWTParser(BaseParser):
 
     def parse(self, stream, media_type=None, parser_context=None):
         """
-        Parsing will be handled by the authentication part, so simply pass the content forward
+        Parsing will be handled by the authentication part,
+        so simply pass the content forward
         """
         return stream.read()
 

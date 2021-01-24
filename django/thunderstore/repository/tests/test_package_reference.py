@@ -29,7 +29,10 @@ from ..package_reference import PackageReference
         (PackageReference("namespace", "name", "1.0.0"), False),
         ("TheIllustriousMr.Judson-VindictiveRage-1.0.0", False),
         (
-            'ewfWJMPFK"#=jf0p29j3fEWJDf+231\'saf#¤)"!%?I(!")#(¤?)="#!%-VindictiveRage-1.0.0',
+            (
+                'ewfWJMPFK"#=jf0p29j3fEWJDf+231\'saf#¤)"'
+                '!%?I(!")#(¤?)="#!%-VindictiveRage-1.0.0'
+            ),
             False,
         ),
     ],

@@ -22,7 +22,8 @@ class CacheNode(Node):
             cache_until = self.cache_bust_condition.resolve(context)
         except VariableDoesNotExist:
             raise TemplateSyntaxError(
-                f'"cache_until" tag got an unknown variable: {self.cache_bust_condition.var}',
+                '"cache_until" tag got an unknown variable: '
+                f"{self.cache_bust_condition.var}",
             )
 
         try:

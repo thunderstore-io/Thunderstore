@@ -24,7 +24,10 @@ def community_site(request):
         else:
             result.update(
                 {
-                    "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
+                    "site_icon": (
+                        f"{request.scheme}://{request.get_host()}"
+                        f"{static('icon.png')}"
+                    ),
                     "site_icon_width": "303",
                     "site_icon_height": "303",
                 },
@@ -34,7 +37,10 @@ def community_site(request):
         return {
             "site_name": "Thunderstore",
             "site_slogan": "The Risk of Rain 2 Mod Database",
-            "site_description": "Thunderstore is a mod database and API for downloading Risk of Rain 2 mods",
+            "site_description": (
+                "Thunderstore is a mod database and API "
+                "for downloading Risk of Rain 2 mods"
+            ),
             "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
             "site_icon_width": "303",
             "site_icon_height": "303",

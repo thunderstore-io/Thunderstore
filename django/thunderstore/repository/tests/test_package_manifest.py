@@ -169,7 +169,8 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
     serializer.fields["dependencies"].child.validators = [
         PackageReferenceValidator(
             require_version=True,
-            resolve=False,  # Otherwise the same, but don't try to resolve the references
+            # Otherwise the same, but don't try to resolve the references
+            resolve=False,
         ),
     ]
     assert serializer.is_valid() is False

@@ -95,7 +95,10 @@ class PackageUploadForm(forms.ModelForm):
 
         if self.icon.size > MAX_ICON_SIZE:
             raise ValidationError(
-                f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes",
+                (
+                    "icon.png filesize is too big, "
+                    f"current maximum is {MAX_ICON_SIZE} bytes"
+                ),
             )
 
         try:
@@ -129,7 +132,10 @@ class PackageUploadForm(forms.ModelForm):
 
         if file.size + PackageVersion.get_total_used_disk_space() > MAX_TOTAL_SIZE:
             raise ValidationError(
-                "The server has reached maximum total storage used, and can't receive new uploads",
+                (
+                    "The server has reached maximum total storage used, "
+                    "and can't receive new uploads"
+                ),
             )
 
         try:
