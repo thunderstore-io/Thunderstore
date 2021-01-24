@@ -136,12 +136,11 @@ class PackageVersion(models.Model):
         )
 
     def get_install_url(self, request):
-        return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
-            "hostname": request.site.domain,
-            "owner": self.package.owner.name,
-            "name": self.package.name,
-            "version": self.version_number,
-        }
+        hostname = request.site.domain
+        owner = self.package.owner.name
+        name = self.package.name
+        version = self.version_number
+        return f"ror2mm://v1/install/{hostname}/{owner}/{name}/{version}/"
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):

@@ -77,7 +77,9 @@ def do_cache(parser, token):
     tokens = token.split_contents()
 
     if len(tokens) < 3:
-        raise TemplateSyntaxError("'%r' tag requires at least 2 arguments." % tokens[0])
+        raise TemplateSyntaxError(
+            f"'{repr(tokens[0])}' tag requires at least 2 arguments."
+        )
 
     expiry = DEFAULT_CACHE_EXPIRY
     if len(tokens) > 3:

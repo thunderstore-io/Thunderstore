@@ -202,11 +202,10 @@ class Package(models.Model):
         )
 
     def get_full_url(self, site: Site):
-        return "%(protocol)s%(hostname)s%(path)s" % {
-            "protocol": settings.PROTOCOL,
-            "hostname": site.domain,
-            "path": self.get_absolute_url(),
-        }
+        protocol = settings.PROTOCOL
+        hostname = site.domain
+        path = self.get_absolute_url()
+        return f"{protocol}{hostname}{path}"
 
     def recache_latest(self):
         old_latest = self.latest
