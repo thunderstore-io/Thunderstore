@@ -80,7 +80,8 @@ def test_service_account_create_not_owner(user, uploader_identity):
         role=UploaderIdentityMemberRole.member,
     )
     form = CreateServiceAccountForm(
-        user, data={"identity": uploader_identity, "nickname": "Nickname"}
+        user,
+        data={"identity": uploader_identity, "nickname": "Nickname"},
     )
     assert form.is_valid() is False
     assert len(form.errors["identity"]) == 1
