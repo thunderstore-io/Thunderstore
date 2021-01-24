@@ -127,7 +127,7 @@ def test_fields_package_name(value: str, exception_message: str):
         ["10000.100000.1000", "Ensure this field has no more than 16 characters."],
     ],
 )
-def test_fields_package_name(value: str, exception_message: str):
+def test_fields_package_version(value: str, exception_message: str):
     field = PackageVersionField()
     if exception_message:
         with pytest.raises(ValidationError) as exception:
