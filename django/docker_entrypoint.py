@@ -78,7 +78,9 @@ GUNICORN_WORKER_COUNT = register_variable(int, "GUNICORN_WORKER_COUNT", 2)
 GUNICORN_LOG_LEVEL = register_variable(str, "GUNICORN_LOG_LEVEL", "info")
 GUNICORN_MAX_REQUESTS = register_variable(int, "GUNICORN_MAX_REQUESTS", 10000)
 GUNICORN_MAX_REQUESTS_JITTER = register_variable(
-    int, "GUNICORN_MAX_REQUESTS_JITTER", 1000
+    int,
+    "GUNICORN_MAX_REQUESTS_JITTER",
+    1000,
 )
 GUNICORN_PIDFILE = register_variable(str, "GUNICORN_PIDFILE", "/var/run/gunicorn.pid")
 
@@ -199,7 +201,7 @@ def dump_env() -> None:
                 f'declare -x {key}="{str(var)}"\n'
                 for key, var in VARIABLES.items()
                 if var.value is not None
-            ]
+            ],
         )
     with open("/var/run/thunderstore-launch.json", "w") as f:
         f.write(json.dumps({k: str(v) for k, v in VARIABLES.items()}))

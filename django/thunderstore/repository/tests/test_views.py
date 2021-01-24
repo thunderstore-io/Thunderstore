@@ -9,7 +9,8 @@ from ..factories import PackageFactory, PackageVersionFactory, UploaderIdentityF
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "ordering", ("last-updated", "newest", "most-downloaded", "top-rated")
+    "ordering",
+    ("last-updated", "newest", "most-downloaded", "top-rated"),
 )
 def test_package_list_view(client, community_site, ordering):
     for i in range(4):
@@ -44,7 +45,8 @@ def test_package_list_view(client, community_site, ordering):
 @pytest.mark.django_db
 def test_package_detail_view(client, active_package, community_site):
     response = client.get(
-        active_package.get_absolute_url(), HTTP_HOST=community_site.site.domain
+        active_package.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
@@ -55,7 +57,8 @@ def test_package_detail_view(client, active_package, community_site):
 @pytest.mark.django_db
 def test_package_detail_version_view(client, active_version, community_site):
     response = client.get(
-        active_version.get_absolute_url(), HTTP_HOST=community_site.site.domain
+        active_version.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
@@ -66,7 +69,8 @@ def test_package_detail_version_view(client, active_version, community_site):
 @pytest.mark.django_db
 def test_package_create_view_not_logged_in(client, community_site):
     response = client.get(
-        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+        reverse("packages.create"),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 302
 
@@ -76,7 +80,8 @@ def test_package_create_view_logged_in(client, community_site):
     user = UserFactory.create()
     client.force_login(user)
     response = client.get(
-        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+        reverse("packages.create"),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     assert b"Upload package" in response.content

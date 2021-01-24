@@ -42,7 +42,10 @@ def test_bot_api_deprecate_mod_200(client, admin_user, package, community_site):
 
 
 def test_bot_api_deprecate_mod_403_thunderstore_perms(
-    client, user, package, community_site
+    client,
+    user,
+    package,
+    community_site,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -83,7 +86,10 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
 
 
 def test_bot_api_deprecate_mod_403_discord_perms(
-    client, admin_user, package, community_site
+    client,
+    admin_user,
+    package,
+    community_site,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"

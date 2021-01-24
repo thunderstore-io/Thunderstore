@@ -4,7 +4,8 @@ from thunderstore.repository.package_reference import PackageReference
 
 
 def does_contain_package(
-    packages: List[PackageReference], package: PackageReference
+    packages: List[PackageReference],
+    package: PackageReference,
 ) -> bool:
     """
     Checks whether or not a list of package references contains a specific

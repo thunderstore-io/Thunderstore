@@ -8,7 +8,8 @@ from thunderstore.repository.api.experimental.views import PackageListApiView
 def update_api_experimental_caches():
     for community_site in CommunitySite.objects.all():
         request = RequestFactory().get(
-            "/api/experimental/package/", SERVER_NAME=community_site.site.domain
+            "/api/experimental/package/",
+            SERVER_NAME=community_site.site.domain,
         )
         # TODO: Somehow use middleware instead
         add_community_context_to_request(request)

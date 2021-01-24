@@ -24,7 +24,10 @@ from thunderstore.repository.factories import (
     ],
 )
 def test_package_query_count(
-    django_assert_max_num_queries, package_count, version_count, community_site
+    django_assert_max_num_queries,
+    package_count,
+    version_count,
+    community_site,
 ):
     with CaptureQueriesContext(connection) as context:
         for package_id in range(package_count):
@@ -39,13 +42,16 @@ def test_package_query_count(
                     version_number=f"{version_id}.0.0",
                 )
             PackageListing.objects.create(
-                package=package, community=community_site.community
+                package=package,
+                community=community_site.community,
             )
         creation_queries = len(context)
 
     packages = get_package_listing_queryset(community_site)
     with django_assert_max_num_queries(package_count + creation_queries + 1):
         serializer = PackageListingSerializer(
-            packages, many=True, context={"community_site": community_site}
+            packages,
+            many=True,
+            context={"community_site": community_site},
         )
         _ = serializer.data

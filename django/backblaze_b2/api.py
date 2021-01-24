@@ -54,7 +54,7 @@ class AuthorizedSession:
     @classmethod
     def authorize_account(cls, application_key_id, application_key):
         authorization_token = base64.b64encode(
-            f"{application_key_id}:{application_key}".encode("utf-8")
+            f"{application_key_id}:{application_key}".encode("utf-8"),
         ).decode("utf-8")
         headers = {
             "Authorization": f"Basic: {authorization_token}",
@@ -114,7 +114,7 @@ class BackblazeB2API:
         headers.update(
             {
                 "Authorization": self.session.authorization_token,
-            }
+            },
         )
         request_params["headers"] = headers
         return request_params

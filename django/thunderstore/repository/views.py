@@ -92,7 +92,7 @@ class PackageListSearchView(ListView):
             )
         if active_ordering == "most-downloaded":
             return queryset.annotate(
-                total_downloads=Sum("package__versions__downloads")
+                total_downloads=Sum("package__versions__downloads"),
             ).order_by(
                 "-package__is_pinned",
                 "package__is_deprecated",
@@ -100,7 +100,7 @@ class PackageListSearchView(ListView):
             )
         if active_ordering == "top-rated":
             return queryset.annotate(
-                total_rating=Count("package__package_ratings")
+                total_rating=Count("package__package_ratings"),
             ).order_by(
                 "-package__is_pinned",
                 "package__is_deprecated",
@@ -157,7 +157,7 @@ class PackageListSearchView(ListView):
             {
                 "url": reverse_lazy("packages.list"),
                 "name": "Packages",
-            }
+            },
         ]
 
     def get_context_data(self, *args, **kwargs):
@@ -192,7 +192,7 @@ class PackageListByOwnerView(PackageListSearchView):
             {
                 "url": reverse_lazy("packages.list_by_owner", kwargs=self.kwargs),
                 "name": self.owner.name,
-            }
+            },
         ]
 
     def cache_owner(self):
@@ -204,7 +204,7 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community))
+            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community)),
         )
 
     def get_page_title(self):
@@ -240,7 +240,7 @@ class PackageListByDependencyView(PackageListSearchView):
 
     def get_base_queryset(self):
         return PackageListing.objects.exclude(
-            ~Q(package__in=self.package_listing.package.dependants)
+            ~Q(package__in=self.package_listing.package.dependants),
         )
 
     def get_page_title(self):
@@ -299,7 +299,9 @@ class PackageVersionDetailView(DetailView):
             community=self.request.community,
         )
         version = get_object_or_404(
-            PackageVersion, package=listing.package, version_number=version
+            PackageVersion,
+            package=listing.package,
+            version_number=version,
         )
         return version
 
@@ -340,7 +342,9 @@ class PackageDownloadView(View):
             community=self.request.community,
         )
         version = get_object_or_404(
-            PackageVersion, package=listing.package, version_number=version
+            PackageVersion,
+            package=listing.package,
+            version_number=version,
         )
         version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))

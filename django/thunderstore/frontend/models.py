@@ -67,7 +67,7 @@ class DynamicHTML(models.Model):
     def get_for_community(cls, community, placement):
         community_filter = Q(
             ~Q(exclude_communities=community)
-            & Q(Q(require_communities=None) | Q(require_communities=community))
+            & Q(Q(require_communities=None) | Q(require_communities=community)),
         )
         full_query = Q(Q(is_active=True) & Q(placement=placement) & community_filter)
         return cls.objects.filter(full_query).order_by("-ordering", "-pk")

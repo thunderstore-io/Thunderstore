@@ -93,28 +93,28 @@ class BackblazeB2Storage(Storage):
     def size(self, name):
         name = self._normalize_name(clean_name(name))
         return BackblazeB2File.objects.values_list("content_length", flat=True).get(
-            name=name
+            name=name,
         )
 
     def modified_time(self, name):
         name = self._normalize_name(clean_name(name))
         return timezone.make_naive(
             BackblazeB2File.objects.values_list("modified_time", flat=True).get(
-                name=name
-            )
+                name=name,
+            ),
         )
 
     def get_modified_time(self, name):
         name = self._normalize_name(clean_name(name))
         modified = BackblazeB2File.objects.values_list("created_time", flat=True).get(
-            name=name
+            name=name,
         )
         return modified if setting("USE_TZ") else timezone.make_naive(modified)
 
     def get_created_time(self, name):
         name = self._normalize_name(clean_name(name))
         created = BackblazeB2File.objects.values_list("created_time", flat=True).get(
-            name=name
+            name=name,
         )
         return created if setting("USE_TZ") else timezone.make_naive(created)
 

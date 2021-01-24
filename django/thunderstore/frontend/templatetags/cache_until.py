@@ -22,14 +22,14 @@ class CacheNode(Node):
             cache_until = self.cache_bust_condition.resolve(context)
         except VariableDoesNotExist:
             raise TemplateSyntaxError(
-                f'"cache_until" tag got an unknown variable: {self.cache_bust_condition.var}'
+                f'"cache_until" tag got an unknown variable: {self.cache_bust_condition.var}',
             )
 
         try:
             expire_time = self.expiry.resolve(context)
         except VariableDoesNotExist:
             raise TemplateSyntaxError(
-                f'"cache_until" tag got an unknown variable: {self.expire_time.var}'
+                f'"cache_until" tag got an unknown variable: {self.expire_time.var}',
             )
 
         if expire_time is not None:
@@ -37,7 +37,7 @@ class CacheNode(Node):
                 expire_time = int(expire_time)
             except (ValueError, TypeError):
                 raise TemplateSyntaxError(
-                    f'"cache_until" tag got a non-integer expiry value: {expire_time}'
+                    f'"cache_until" tag got a non-integer expiry value: {expire_time}',
                 )
 
         vary_on = [var.resolve(context) for var in self.vary_on]

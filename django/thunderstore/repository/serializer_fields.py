@@ -15,7 +15,7 @@ class DependencyField(serializers.Field):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.validators.append(
-            PackageReferenceValidator(require_version=True, resolve=True)
+            PackageReferenceValidator(require_version=True, resolve=True),
         )
 
     def to_internal_value(self, data):
@@ -43,7 +43,7 @@ class PackageNameField(serializers.CharField):
 class PackageVersionField(serializers.CharField):
     def __init__(self, **kwargs):
         kwargs["max_length"] = PackageVersion._meta.get_field(
-            "version_number"
+            "version_number",
         ).max_length
         kwargs["allow_blank"] = False
         super().__init__(**kwargs)

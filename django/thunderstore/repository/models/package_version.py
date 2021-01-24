@@ -73,7 +73,7 @@ class PackageVersion(models.Model):
     def validate(self):
         if not re.match(PACKAGE_NAME_REGEX, self.name):
             raise ValidationError(
-                "Package names can only contain a-Z A-Z 0-9 _ characers"
+                "Package names can only contain a-Z A-Z 0-9 _ characers",
             )
 
     def save(self, *args, **kwargs):

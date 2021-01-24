@@ -19,7 +19,7 @@ def community_site(request):
                     "site_icon": url,
                     "site_icon_width": request.community_site.icon_width,
                     "site_icon_height": request.community_site.icon_height,
-                }
+                },
             )
         else:
             result.update(
@@ -27,7 +27,7 @@ def community_site(request):
                     "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
                     "site_icon_width": "303",
                     "site_icon_height": "303",
-                }
+                },
             )
         return result
     else:

@@ -39,6 +39,6 @@ def markdownify(value):
                     "pymdownx.magiclink",
                     "pymdownx.tilde",
                 ],
-            )
-        )
+            ),
+        ),
     )

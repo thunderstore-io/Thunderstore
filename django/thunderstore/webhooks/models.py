@@ -108,10 +108,10 @@ class Webhook(models.Model):
                         {
                             "name": "Total downloads across versions",
                             "value": f"{version.package.downloads}",
-                        }
+                        },
                     ],
-                }
-            ]
+                },
+            ],
         }
 
     def post_package_version_release(self, version):

@@ -42,7 +42,7 @@ class IncomingJWTAuthConfiguration(models.Model):
     def decode(self, data):
         if self.secret_type not in SecretTypeChoices.options():
             raise ValidationError(
-                "Invalid secret type in database, this could be a security issue!"
+                "Invalid secret type in database, this could be a security issue!",
             )
         return jwt.decode(data, self.secret, algorithms=[self.secret_type])
 

@@ -55,7 +55,9 @@ def test_api_v1_rate_package(client, active_package_listing, community_site):
 
 @pytest.mark.django_db
 def test_api_v1_rate_package_permission_denied(
-    client, active_package_listing, community_site
+    client,
+    active_package_listing,
+    community_site,
 ):
     uuid = active_package_listing.package.uuid4
     response = client.post(

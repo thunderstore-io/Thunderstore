@@ -18,7 +18,9 @@ from thunderstore.repository.validators import PackageReferenceValidator
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_missing_privileges(
-    user, uploader_identity, manifest_v1_data
+    user,
+    uploader_identity,
+    manifest_v1_data,
 ):
     serializer = ManifestV1Serializer(
         user=user,
@@ -28,13 +30,15 @@ def test_manifest_v1_serializer_missing_privileges(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Missing privileges to upload under author" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_version_already_exists(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     UploaderIdentityMember.objects.create(
         user=user,
@@ -51,13 +55,15 @@ def test_manifest_v1_serializer_version_already_exists(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Package of the same name and version already exists" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_duplicate_dependency(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     UploaderIdentityMember.objects.create(
         user=user,
@@ -90,13 +96,15 @@ def test_manifest_v1_serializer_duplicate_dependency(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Cannot depend on multiple versions of the same package" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_self_dependency(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     UploaderIdentityMember.objects.create(
         user=user,
@@ -116,13 +124,15 @@ def test_manifest_v1_serializer_self_dependency(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Package depending on itself is not allowed" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_unresolved_dependency(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = [
@@ -138,10 +148,10 @@ def test_manifest_v1_serializer_unresolved_dependency(
     assert serializer.is_valid() is False
     assert len(serializer.errors["dependencies"]) == 2
     assert "No matching package found for reference" in str(
-        serializer.errors["dependencies"][0]
+        serializer.errors["dependencies"][0],
     )
     assert "No matching package found for reference" in str(
-        serializer.errors["dependencies"][2]
+        serializer.errors["dependencies"][2],
     )
 
 
@@ -160,12 +170,12 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
         PackageReferenceValidator(
             require_version=True,
             resolve=False,  # Otherwise the same, but don't try to resolve the references
-        )
+        ),
     ]
     assert serializer.is_valid() is False
     assert len(serializer.errors["dependencies"]) == 1
     assert "Ensure this field has no more than 100 elements." in str(
-        serializer.errors["dependencies"][0]
+        serializer.errors["dependencies"][0],
     )
 
 
@@ -187,7 +197,10 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
     ],
 )
 def test_manifest_v1_serializer_name_validation(
-    user, manifest_v1_data, name: str, error: str
+    user,
+    manifest_v1_data,
+    name: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["name"] = name
@@ -224,7 +237,10 @@ def test_manifest_v1_serializer_name_validation(
     ],
 )
 def test_manifest_v1_serializer_version_number_validation(
-    user, manifest_v1_data, version: str, error: str
+    user,
+    manifest_v1_data,
+    version: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["version_number"] = version
@@ -258,7 +274,10 @@ def test_manifest_v1_serializer_version_number_validation(
     ],
 )
 def test_manifest_v1_serializer_website_url_validation(
-    user, manifest_v1_data, url: str, error: str
+    user,
+    manifest_v1_data,
+    url: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["website_url"] = url
@@ -292,7 +311,10 @@ def test_manifest_v1_serializer_website_url_validation(
     ],
 )
 def test_manifest_v1_serializer_description_validation(
-    user, manifest_v1_data, description: str, error: str
+    user,
+    manifest_v1_data,
+    description: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["description"] = description
@@ -323,7 +345,10 @@ def test_manifest_v1_serializer_description_validation(
     ],
 )
 def test_manifest_v1_serializer_dependencies_invalid(
-    user, manifest_v1_data, dependencies, error: str
+    user,
+    manifest_v1_data,
+    dependencies,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = dependencies
@@ -419,7 +444,11 @@ def test_manifest_v1_null_fields(user, manifest_v1_data, field):
     ],
 )
 def test_manifest_v1_blank_fields(
-    user, manifest_v1_data, field, empty_val, should_fail
+    user,
+    manifest_v1_data,
+    field,
+    empty_val,
+    should_fail,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data[field] = empty_val

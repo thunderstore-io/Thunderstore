@@ -9,7 +9,7 @@ from thunderstore.core.mixins import TimestampMixin
 class PackageListingQueryset(models.QuerySet):
     def active(self):
         return self.exclude(package__is_active=False).exclude(
-            ~Q(package__versions__is_active=True)
+            ~Q(package__versions__is_active=True),
         )
 
 
@@ -29,7 +29,9 @@ class PackageListing(TimestampMixin, models.Model):
         on_delete=models.CASCADE,
     )
     package = models.ForeignKey(
-        "repository.Package", related_name="package_listings", on_delete=models.CASCADE
+        "repository.Package",
+        related_name="package_listings",
+        on_delete=models.CASCADE,
     )
     categories = models.ManyToManyField(
         "community.PackageCategory",
@@ -50,7 +52,8 @@ class PackageListing(TimestampMixin, models.Model):
     @cached_property
     def owner_url(self):
         return reverse(
-            "packages.list_by_owner", kwargs={"owner": self.package.owner.name}
+            "packages.list_by_owner",
+            kwargs={"owner": self.package.owner.name},
         )
 
     @cached_property

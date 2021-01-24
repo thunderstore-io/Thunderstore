@@ -85,7 +85,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
 DATABASES = {"default": env.db()}
 DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = env.bool(
-    "DISABLE_SERVER_SIDE_CURSORS"
+    "DISABLE_SERVER_SIDE_CURSORS",
 )
 
 DB_CERT_DIR = env.str("DB_CERT_DIR")
@@ -262,7 +262,7 @@ DEBUG_TOOLBAR_ENABLED = all(
         DEBUG,
         DEBUG_TOOLBAR_AVAILABLE,
         env.bool("DEBUG_TOOLBAR_ENABLED"),
-    )
+    ),
 )
 
 
@@ -293,7 +293,7 @@ if REDIS_URL:
                 "SOCKET_CONNECT_TIMEOUT": 0.5,
                 "SOCKET_TIMEOUT": 5,
             },
-        }
+        },
     }
 
 # if DEBUG and not DEBUG_SIMULATED_LAG:
@@ -327,7 +327,7 @@ GS_CREDENTIALS = env.str("GS_CREDENTIALS")
 if GS_CREDENTIALS:
     GS_CREDENTIALS = json.loads(base64.b64decode(GS_CREDENTIALS).decode("utf-8"))
     GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
-        GS_CREDENTIALS
+        GS_CREDENTIALS,
     )
 
 GS_AUTO_CREATE_BUCKET = env.str("GS_AUTO_CREATE_BUCKET")
@@ -367,7 +367,7 @@ AWS_LOCATION = env.str("AWS_LOCATION")
 AWS_QUERYSTRING_AUTH = env.bool("AWS_QUERYSTRING_AUTH")
 
 if all(
-    (AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)
+    (AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID),
 ):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"

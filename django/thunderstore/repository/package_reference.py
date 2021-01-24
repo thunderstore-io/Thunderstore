@@ -166,7 +166,8 @@ class PackageReference:
         return self
 
     def with_version(
-        self, version: Optional[Union[str, StrictVersion]]
+        self,
+        version: Optional[Union[str, StrictVersion]],
     ) -> PackageReference:
         """
         Return this same package reference with a different version
@@ -175,7 +176,9 @@ class PackageReference:
         :rtype: PackageReference
         """
         return PackageReference(
-            namespace=self.namespace, name=self.name, version=version
+            namespace=self.namespace,
+            name=self.name,
+            version=version,
         )
 
     @property
@@ -209,7 +212,7 @@ class PackageReference:
         """
         if not self.version:
             raise TypeError(
-                "Unable to resolve package version from a versionless reference"
+                "Unable to resolve package version from a versionless reference",
             )
         return self.queryset.first()
 

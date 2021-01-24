@@ -26,7 +26,7 @@ class PackageReferenceValidator:
             raise ValidationError(f"Package reference is missing version: {reference}")
         if self.resolve and reference.instance is None:
             raise ValidationError(
-                f"No matching package found for reference: {reference}"
+                f"No matching package found for reference: {reference}",
             )
 
     def __eq__(self, other):
@@ -35,7 +35,7 @@ class PackageReferenceValidator:
                 isinstance(other, self.__class__),
                 self.require_version == other.require_version,
                 self.resolve == other.resolve,
-            )
+            ),
         )
 
 
