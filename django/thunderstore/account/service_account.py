@@ -29,10 +29,10 @@ class CreateServiceAccountForm(forms.Form):
 
     def clean(self) -> None:
         super().clean()
-        nickname = self.cleaned_data["nickname"]
+        nickname = self.cleaned_data.get("nickname")
         identity = self.cleaned_data.get("identity")
 
-        if not identity:
+        if not all((nickname, identity)):
             return
 
         if identity.service_accounts.filter(
@@ -91,10 +91,10 @@ class EditServiceAccountForm(forms.Form):
 
     def clean(self) -> None:
         super().clean()
-        nickname = self.cleaned_data["nickname"]
+        nickname = self.cleaned_data.get("nickname")
         service_account = self.cleaned_data.get("service_account")
 
-        if not service_account:
+        if not all((nickname, service_account)):
             return
 
         if service_account.owner.service_accounts.filter(

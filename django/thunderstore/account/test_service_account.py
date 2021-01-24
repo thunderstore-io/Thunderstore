@@ -39,6 +39,25 @@ def test_service_account_create(user, uploader_identity):
 
 
 @pytest.mark.django_db
+def test_service_account_create_nickname_too_long(user, uploader_identity):
+    UploaderIdentityMember.objects.create(
+        user=user,
+        identity=uploader_identity,
+        role=UploaderIdentityMemberRole.owner,
+    )
+    form = CreateServiceAccountForm(
+        user,
+        data={"identity": uploader_identity, "nickname": "x" * 1000},
+    )
+    assert form.is_valid() is False
+    assert len(form.errors["nickname"]) == 1
+    assert (
+        form.errors["nickname"][0]
+        == "Ensure this value has at most 32 characters (it has 1000)."
+    )
+
+
+@pytest.mark.django_db
 def test_service_account_create_not_member(user, uploader_identity):
     assert uploader_identity.members.filter(user=user).exists() is False
     form = CreateServiceAccountForm(
@@ -135,6 +154,22 @@ def test_service_account_edit_nickname(service_account):
     service_account = form.save()
     assert service_account.user.first_name == "New nickname"
     assert service_account.nickname == "New nickname"
+
+
+@pytest.mark.django_db
+def test_service_account_edit_nickname_too_long(service_account):
+    member = service_account.owner.members.first()
+    assert member.role == UploaderIdentityMemberRole.owner
+    form = EditServiceAccountForm(
+        member.user,
+        data={"service_account": service_account, "nickname": "x" * 1000},
+    )
+    assert form.is_valid() is False
+    assert len(form.errors["nickname"]) == 1
+    assert (
+        form.errors["nickname"][0]
+        == "Ensure this value has at most 32 characters (it has 1000)."
+    )
 
 
 @pytest.mark.django_db
