@@ -134,6 +134,7 @@ def test_service_account_edit_nickname(django_user_model, service_account):
     assert form.is_valid()
     service_account = form.save()
     assert service_account.user.first_name == "New nickname"
+    assert service_account.nickname == "New nickname"
 
 
 @pytest.mark.django_db

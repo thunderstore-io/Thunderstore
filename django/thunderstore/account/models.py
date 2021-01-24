@@ -16,6 +16,10 @@ class ServiceAccount(models.Model):
         on_delete=models.CASCADE,
     )
 
+    @property
+    def nickname(self) -> str:
+        return self.user.first_name
+
     def delete(self, *args, **kwargs):
         self.user.delete()
         return super().delete(*args, **kwargs)
