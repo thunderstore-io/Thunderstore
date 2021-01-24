@@ -298,12 +298,11 @@ class PackageVersionDetailView(DetailView):
             package__name=name,
             community=self.request.community,
         )
-        version = get_object_or_404(
+        return get_object_or_404(
             PackageVersion,
             package=listing.package,
             version_number=version,
         )
-        return version
 
 
 class PackageCreateView(CreateView):
