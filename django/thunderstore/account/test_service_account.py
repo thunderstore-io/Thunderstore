@@ -124,7 +124,7 @@ def test_service_account_delete_not_owner(service_account):
 
 
 @pytest.mark.django_db
-def test_service_account_edit_nickname(django_user_model, service_account):
+def test_service_account_edit_nickname(service_account):
     member = service_account.owner.members.first()
     assert member.role == UploaderIdentityMemberRole.owner
     form = EditServiceAccountForm(
