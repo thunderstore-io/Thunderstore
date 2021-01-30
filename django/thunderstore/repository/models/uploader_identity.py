@@ -99,3 +99,6 @@ class UploaderIdentity(models.Model):
 
     def can_delete_service_account(self, user) -> bool:
         return self.can_create_service_account(user)
+
+    def can_generate_service_account_token(self, user) -> bool:
+        return self.can_create_service_account(user)

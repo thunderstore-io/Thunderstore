@@ -3,6 +3,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from rest_framework.authtoken.models import Token
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.repository.models import UploaderIdentity
@@ -99,3 +100,26 @@ class EditServiceAccountForm(forms.Form):
         service_account.user.first_name = self.cleaned_data["nickname"]
         service_account.save()
         return service_account
+
+
+class CreateTokenForm(forms.Form):
+    def __init__(self, user: User, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields["service_account"] = forms.ModelChoiceField(
+            queryset=ServiceAccount.objects.filter(owner__members__user=user),
+        )
+
+    def clean_service_account(self) -> ServiceAccount:
+        service_account = self.cleaned_data["service_account"]
+        if not service_account.owner.can_generate_service_account_token(self.user):
+            raise ValidationError(
+                "Must be identity owner to generate a service account token",
+            )
+        return service_account
+
+    @transaction.atomic
+    def save(self) -> Token:
+        service_account_user = self.cleaned_data["service_account"].user
+        Token.objects.filter(user=service_account_user).delete()
+        return Token.objects.create(user=service_account_user)
