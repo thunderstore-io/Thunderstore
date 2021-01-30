@@ -4,8 +4,8 @@ import pytest
 from django.contrib.sites.models import Site
 from rest_framework.test import APIClient
 
+from thunderstore.account.forms import CreateServiceAccountForm
 from thunderstore.account.models import ServiceAccount
-from thunderstore.account.service_account import CreateServiceAccountForm
 from thunderstore.community.models import (
     Community,
     CommunitySite,
@@ -161,7 +161,8 @@ def service_account(user, uploader_identity) -> ServiceAccount:
         role=UploaderIdentityMemberRole.owner,
     )
     form = CreateServiceAccountForm(
-        user, data={"identity": uploader_identity, "nickname": "Nickname"}
+        user,
+        data={"identity": uploader_identity, "nickname": "Nickname"},
     )
     assert form.is_valid()
     return form.save()

@@ -1,12 +1,12 @@
 import pytest
 
-from thunderstore.account.models import ServiceAccount
-from thunderstore.account.service_account import (
+from thunderstore.account.forms import (
     CreateServiceAccountForm,
     DeleteServiceAccountForm,
     EditServiceAccountForm,
     create_service_account_username,
 )
+from thunderstore.account.models import ServiceAccount
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.models import (
     UploaderIdentityMember,
