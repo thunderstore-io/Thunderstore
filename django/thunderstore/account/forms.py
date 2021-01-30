@@ -35,11 +35,6 @@ class CreateServiceAccountForm(forms.Form):
         if not all((nickname, identity)):
             return
 
-        if identity.service_accounts.filter(
-            user__first_name=nickname,
-        ).exists():
-            raise ValidationError("Service account nickname must be unique")
-
     def save(self) -> ServiceAccount:
         service_account_id = ulid2.generate_ulid_as_uuid()
         username = create_service_account_username(service_account_id.hex)
@@ -96,11 +91,6 @@ class EditServiceAccountForm(forms.Form):
 
         if not all((nickname, service_account)):
             return
-
-        if service_account.owner.service_accounts.filter(
-            user__first_name=nickname,
-        ).exists():
-            raise ValidationError("Service account nickname must be unique")
 
     def save(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
