@@ -17,7 +17,7 @@ class DatabaseCache(TimestampMixin, models.Model):
     @classmethod
     def get(cls, key, default=None):
         query = cls.objects.filter(key=key).exclude(
-            Q(expires_on__lte=timezone.now()) & ~Q(expires_on=None)
+            Q(expires_on__lte=timezone.now()) & ~Q(expires_on=None),
         )
         result = query.values_list("content", flat=True)
         if result:

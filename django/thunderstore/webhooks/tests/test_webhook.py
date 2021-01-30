@@ -4,9 +4,11 @@ from thunderstore.webhooks.models import Webhook
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("is_active", (False, True))
+@pytest.mark.parametrize("is_active", [False, True])
 def test_webhook_get_for_package_release_is_active(
-    release_webhook, active_package_listing, is_active
+    release_webhook,
+    active_package_listing,
+    is_active,
 ):
     release_webhook.is_active = is_active
     release_webhook.save(update_fields=("is_active",))
@@ -18,9 +20,11 @@ def test_webhook_get_for_package_release_is_active(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("allow_nsfw", (False, True))
+@pytest.mark.parametrize("allow_nsfw", [False, True])
 def test_webhook_get_for_package_release_filter_nsfw(
-    release_webhook, active_package_listing, allow_nsfw
+    release_webhook,
+    active_package_listing,
+    allow_nsfw,
 ):
     release_webhook.allow_nsfw = allow_nsfw
     release_webhook.save(update_fields=("allow_nsfw",))
@@ -38,9 +42,12 @@ def test_webhook_get_for_package_release_filter_nsfw(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("should_exclude", (False, True))
+@pytest.mark.parametrize("should_exclude", [False, True])
 def test_webhook_get_for_package_release_exclude_categories(
-    release_webhook, active_package_listing, package_category, should_exclude
+    release_webhook,
+    active_package_listing,
+    package_category,
+    should_exclude,
 ):
     active_package_listing.categories.add(package_category)
     active_package_listing.refresh_from_db()
@@ -57,9 +64,12 @@ def test_webhook_get_for_package_release_exclude_categories(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("should_require", (False, True))
+@pytest.mark.parametrize("should_require", [False, True])
 def test_webhook_get_for_package_release_require_categories(
-    release_webhook, active_package_listing, package_category, should_require
+    release_webhook,
+    active_package_listing,
+    package_category,
+    should_require,
 ):
     assert package_category not in active_package_listing.categories.all()
 

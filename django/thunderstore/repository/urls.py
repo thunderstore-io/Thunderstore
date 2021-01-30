@@ -19,7 +19,9 @@ urlpatterns = [
         name="packages.download",
     ),
     path(
-        "<str:owner>/<str:name>/", PackageDetailView.as_view(), name="packages.detail"
+        "<str:owner>/<str:name>/",
+        PackageDetailView.as_view(),
+        name="packages.detail",
     ),
     path(
         "<str:owner>/<str:name>/dependants/",

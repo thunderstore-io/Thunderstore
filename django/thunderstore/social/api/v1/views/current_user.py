@@ -13,6 +13,6 @@ class CurrentUserInfoView(APIView):
         if request.user.is_authenticated:
             capabilities.add("package.rate")
             rated_packages = request.user.package_ratings.select_related(
-                "package"
+                "package",
             ).values_list("package__uuid4", flat=True)
         return Response({"capabilities": capabilities, "ratedPackages": rated_packages})

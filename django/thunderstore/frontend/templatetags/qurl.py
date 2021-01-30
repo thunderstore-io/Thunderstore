@@ -21,7 +21,7 @@ def qurl(parser, token):
     tokens = token.split_contents()
 
     if len(tokens) != 3:
-        raise TemplateSyntaxError("'%r' tag requires 2 arguments." % tokens[0])
+        raise TemplateSyntaxError(f"'{repr(tokens[0])}' tag requires 2 arguments.")
 
     return QurlNode(
         param_key=tokens[1],

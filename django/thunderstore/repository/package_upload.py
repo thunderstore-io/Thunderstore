@@ -38,7 +38,8 @@ def unpack_serializer_errors(field, errors, error_dict=None):
 
 class PackageUploadForm(forms.ModelForm):
     categories = forms.ModelMultipleChoiceField(
-        queryset=PackageCategory.objects.none(), required=False
+        queryset=PackageCategory.objects.none(),
+        required=False,
     )
     has_nsfw_content = forms.BooleanField(required=False)
 
@@ -52,7 +53,7 @@ class PackageUploadForm(forms.ModelForm):
         self.identity: UploaderIdentity = identity
         self.community: Community = community
         self.fields["categories"].queryset = PackageCategory.objects.filter(
-            community=community
+            community=community,
         )
         self.manifest: Optional[dict] = None
         self.icon: Optional[ContentFile] = None
@@ -67,7 +68,7 @@ class PackageUploadForm(forms.ModelForm):
                 [
                     f"Unable to parse manifest.json: {exc}\n",
                     "Make sure the manifest.json is UTF-8 compatible",
-                ]
+                ],
             )
         except json.decoder.JSONDecodeError as exc:
             raise ValidationError(f"Unable to parse manifest.json: {exc}")
@@ -82,7 +83,7 @@ class PackageUploadForm(forms.ModelForm):
         else:
             errors = unpack_serializer_errors("manifest.json", serializer.errors)
             errors = ValidationError(
-                [f"{key}: {value}" for key, value in errors.items()]
+                [f"{key}: {value}" for key, value in errors.items()],
             )
             self.add_error(None, errors)
 
@@ -94,7 +95,10 @@ class PackageUploadForm(forms.ModelForm):
 
         if self.icon.size > MAX_ICON_SIZE:
             raise ValidationError(
-                f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes"
+                (
+                    "icon.png filesize is too big, "
+                    f"current maximum is {MAX_ICON_SIZE} bytes"
+                ),
             )
 
         try:
@@ -122,13 +126,16 @@ class PackageUploadForm(forms.ModelForm):
 
         if file.size > MAX_PACKAGE_SIZE:
             raise ValidationError(
-                f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes"
+                f"Too large package, current maximum is {MAX_PACKAGE_SIZE} bytes",
             )
         self.file_size = file.size
 
         if file.size + PackageVersion.get_total_used_disk_space() > MAX_TOTAL_SIZE:
             raise ValidationError(
-                f"The server has reached maximum total storage used, and can't receive new uploads"
+                (
+                    "The server has reached maximum total storage used, "
+                    "and can't receive new uploads"
+                ),
             )
 
         try:

@@ -121,7 +121,8 @@ class BackgroundUpdatedCacheMixin(object):
         if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
             return super().dispatch(*args, **kwargs).render()
         return self.get_cache(
-            self.get_cache_key(*args, **kwargs), self.get_no_cache_response()
+            self.get_cache_key(*args, **kwargs),
+            self.get_no_cache_response(),
         )
 
     @classmethod

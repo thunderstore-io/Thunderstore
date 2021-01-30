@@ -15,7 +15,8 @@ def update_api_v1_caches():
 def update_api_v1_indexes():
     for community_site in CommunitySite.objects.all():
         request = RequestFactory().get(
-            "/api/v1/package/", SERVER_NAME=community_site.site.domain
+            "/api/v1/package/",
+            SERVER_NAME=community_site.site.domain,
         )
         # TODO: Somehow use middleware instead
         add_community_context_to_request(request)
@@ -26,11 +27,13 @@ def update_api_v1_indexes():
 def update_api_v1_details():
     for community_site in CommunitySite.objects.all():
         for uuid in Package.objects.filter(is_active=True).values_list(
-            "uuid4", flat=True
+            "uuid4",
+            flat=True,
         ):
             view = PackageViewSet.as_view({"get": "retrieve"})
             request = RequestFactory().get(
-                f"/api/v1/package/{uuid}/", SERVER_NAME=community_site.site.domain
+                f"/api/v1/package/{uuid}/",
+                SERVER_NAME=community_site.site.domain,
             )
             # TODO: Somehow use middleware instead
             add_community_context_to_request(request)

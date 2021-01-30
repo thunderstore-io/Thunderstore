@@ -9,11 +9,11 @@ from thunderstore.repository.models import UploaderIdentity
 
 
 @pytest.mark.parametrize(
-    "role, expected",
+    ("role", "expected"),
     [
-        ["owner", True],
-        ["member", True],
-        [None, False],
+        ("owner", True),
+        ("member", True),
+        (None, False),
     ],
 )
 def test_uploader_identity_can_user_upload(user, role, expected):
@@ -28,15 +28,15 @@ def test_uploader_identity_can_user_upload(user, role, expected):
 
 
 @pytest.mark.parametrize(
-    "author_name, should_fail",
-    (
+    ("author_name", "should_fail"),
+    [
         ("SomeAuthor", False),
         ("Some-Author", False),
         ("Som3-Auth0r", False),
         ("Som3_Auth0r", False),
         ("Some.Author", False),
         ("Some@Author", True),
-    ),
+    ],
 )
 def test_uploader_identity_creation(user, author_name, should_fail):
     user.username = author_name

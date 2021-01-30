@@ -9,7 +9,7 @@ class TimestampMixin(models.Model):
         update_fields = kwargs.pop("update_fields", [])
         if update_fields:
             kwargs["update_fields"] = tuple(
-                set(list(update_fields) + ["datetime_updated"])
+                set(list(update_fields) + ["datetime_updated"]),
             )
         super().save(*args, **kwargs)
 

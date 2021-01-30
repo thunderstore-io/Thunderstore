@@ -41,7 +41,8 @@ class PackageVersion(models.Model):
         max_length=Package._meta.get_field("name").max_length,
     )
 
-    # TODO: Split to three fields for each number in the version for better querying performance
+    # TODO: Split to three fields for each number in the version for
+    # better querying performance
     version_number = models.CharField(
         max_length=16,
     )
@@ -73,7 +74,7 @@ class PackageVersion(models.Model):
     def validate(self):
         if not re.match(PACKAGE_NAME_REGEX, self.name):
             raise ValidationError(
-                "Package names can only contain a-Z A-Z 0-9 _ characers"
+                "Package names can only contain a-Z A-Z 0-9 _ characers",
             )
 
     def save(self, *args, **kwargs):
@@ -135,12 +136,11 @@ class PackageVersion(models.Model):
         )
 
     def get_install_url(self, request):
-        return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
-            "hostname": request.site.domain,
-            "owner": self.package.owner.name,
-            "name": self.package.name,
-            "version": self.version_number,
-        }
+        hostname = request.site.domain
+        owner = self.package.owner.name
+        name = self.package.name
+        version = self.version_number
+        return f"ror2mm://v1/install/{hostname}/{owner}/{name}/{version}/"
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):

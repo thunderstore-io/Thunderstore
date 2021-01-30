@@ -10,7 +10,8 @@ register = template.Library()
 @cache_function_result(cache_until=CacheBustCondition.dynamic_html_updated)
 def get_dynamic_html_content(community, placement):
     entries = DynamicHTML.get_for_community(community, placement).values_list(
-        "content", flat=True
+        "content",
+        flat=True,
     )
     return "".join(entries)
 

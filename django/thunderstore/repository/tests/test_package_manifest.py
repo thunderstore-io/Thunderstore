@@ -18,7 +18,9 @@ from thunderstore.repository.validators import PackageReferenceValidator
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_missing_privileges(
-    user, uploader_identity, manifest_v1_data
+    user,
+    uploader_identity,
+    manifest_v1_data,
 ):
     serializer = ManifestV1Serializer(
         user=user,
@@ -28,13 +30,15 @@ def test_manifest_v1_serializer_missing_privileges(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Missing privileges to upload under author" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_version_already_exists(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     UploaderIdentityMember.objects.create(
         user=user,
@@ -51,13 +55,15 @@ def test_manifest_v1_serializer_version_already_exists(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Package of the same name and version already exists" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_duplicate_dependency(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     UploaderIdentityMember.objects.create(
         user=user,
@@ -90,13 +96,15 @@ def test_manifest_v1_serializer_duplicate_dependency(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Cannot depend on multiple versions of the same package" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_self_dependency(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     UploaderIdentityMember.objects.create(
         user=user,
@@ -116,13 +124,15 @@ def test_manifest_v1_serializer_self_dependency(
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
     assert "Package depending on itself is not allowed" in str(
-        serializer.errors["non_field_errors"][0]
+        serializer.errors["non_field_errors"][0],
     )
 
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_unresolved_dependency(
-    user, manifest_v1_data, package_version
+    user,
+    manifest_v1_data,
+    package_version,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = [
@@ -138,10 +148,10 @@ def test_manifest_v1_serializer_unresolved_dependency(
     assert serializer.is_valid() is False
     assert len(serializer.errors["dependencies"]) == 2
     assert "No matching package found for reference" in str(
-        serializer.errors["dependencies"][0]
+        serializer.errors["dependencies"][0],
     )
     assert "No matching package found for reference" in str(
-        serializer.errors["dependencies"][2]
+        serializer.errors["dependencies"][2],
     )
 
 
@@ -159,35 +169,39 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
     serializer.fields["dependencies"].child.validators = [
         PackageReferenceValidator(
             require_version=True,
-            resolve=False,  # Otherwise the same, but don't try to resolve the references
-        )
+            # Otherwise the same, but don't try to resolve the references
+            resolve=False,
+        ),
     ]
     assert serializer.is_valid() is False
     assert len(serializer.errors["dependencies"]) == 1
     assert "Ensure this field has no more than 100 elements." in str(
-        serializer.errors["dependencies"][0]
+        serializer.errors["dependencies"][0],
     )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "name, error",
+    ("name", "error"),
     [
-        ["some_name", ""],
-        ["some-name", "Package names can only contain a-Z A-Z 0-9 _ characers"],
-        ["", "This field may not be blank."],
-        ["a", ""],
-        ["some_very_long_name", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("name").max_length, ""],
-        [
+        ("some_name", ""),
+        ("some-name", "Package names can only contain a-Z A-Z 0-9 _ characers"),
+        ("", "This field may not be blank."),
+        ("a", ""),
+        ("some_very_long_name", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("name").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("name").max_length + "b",
             "Ensure this field has no more than 128 characters.",
-        ],
+        ),
     ],
 )
 def test_manifest_v1_serializer_name_validation(
-    user, manifest_v1_data, name: str, error: str
+    user,
+    manifest_v1_data,
+    name: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["name"] = name
@@ -205,26 +219,29 @@ def test_manifest_v1_serializer_name_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "version, error",
+    ("version", "error"),
     [
-        ["1.0.0", ""],
-        [
+        ("1.0.0", ""),
+        (
             "asdasdasd",
             "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
-        ],
-        ["", "This field may not be blank."],
-        ["1.5.2", ""],
-        [
+        ),
+        ("", "This field may not be blank."),
+        ("1.5.2", ""),
+        (
             "1.6.2+post.dev1",
             "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
-        ],
-        ["11111.111111.111", ""],
-        [None, "This field may not be null."],
-        ["111111.111111.111", "Ensure this field has no more than 16 characters."],
+        ),
+        ("11111.111111.111", ""),
+        (None, "This field may not be null."),
+        ("111111.111111.111", "Ensure this field has no more than 16 characters."),
     ],
 )
 def test_manifest_v1_serializer_version_number_validation(
-    user, manifest_v1_data, version: str, error: str
+    user,
+    manifest_v1_data,
+    version: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["version_number"] = version
@@ -242,23 +259,26 @@ def test_manifest_v1_serializer_version_number_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "url, error",
+    ("url", "error"),
     [
-        ["asdiasdhuasd", ""],
-        ["https://google.com/", ""],
-        ["", ""],
-        ["a", ""],
-        ["some not valid website URL", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("website_url").max_length, ""],
-        [
+        ("asdiasdhuasd", ""),
+        ("https://google.com/", ""),
+        ("", ""),
+        ("a", ""),
+        ("some not valid website URL", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("website_url").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("website_url").max_length + "b",
             "Ensure this field has no more than 1024 characters.",
-        ],
+        ),
     ],
 )
 def test_manifest_v1_serializer_website_url_validation(
-    user, manifest_v1_data, url: str, error: str
+    user,
+    manifest_v1_data,
+    url: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["website_url"] = url
@@ -276,23 +296,26 @@ def test_manifest_v1_serializer_website_url_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "description, error",
+    ("description", "error"),
     [
-        ["asdiasdhuasd", ""],
-        ["https://google.com/", ""],
-        ["", ""],
-        ["a", ""],
-        ["some not valid website URL", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("description").max_length, ""],
-        [
+        ("asdiasdhuasd", ""),
+        ("https://google.com/", ""),
+        ("", ""),
+        ("a", ""),
+        ("some not valid website URL", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("description").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("description").max_length + "b",
             "Ensure this field has no more than 256 characters.",
-        ],
+        ),
     ],
 )
 def test_manifest_v1_serializer_description_validation(
-    user, manifest_v1_data, description: str, error: str
+    user,
+    manifest_v1_data,
+    description: str,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["description"] = description
@@ -310,20 +333,23 @@ def test_manifest_v1_serializer_description_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "dependencies, error",
+    ("dependencies", "error"),
     [
-        [["asdiasdhuasd"], "Invalid package reference string"],
-        [["https://google.com/"], "Invalid package reference string"],
-        [[""], "Invalid package reference string"],
-        [["a"], "Invalid package reference string"],
-        [["some not valid website URL"], "Invalid package reference string"],
-        [[None], "This field may not be null."],
-        [None, "This field may not be null."],
-        ["", 'Expected a list of items but got type "str".'],
+        (["asdiasdhuasd"], "Invalid package reference string"),
+        (["https://google.com/"], "Invalid package reference string"),
+        ([""], "Invalid package reference string"),
+        (["a"], "Invalid package reference string"),
+        (["some not valid website URL"], "Invalid package reference string"),
+        ([None], "This field may not be null."),
+        (None, "This field may not be null."),
+        ("", 'Expected a list of items but got type "str".'),
     ],
 )
 def test_manifest_v1_serializer_dependencies_invalid(
-    user, manifest_v1_data, dependencies, error: str
+    user,
+    manifest_v1_data,
+    dependencies,
+    error: str,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = dependencies
@@ -409,17 +435,21 @@ def test_manifest_v1_null_fields(user, manifest_v1_data, field):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "field, empty_val, should_fail",
+    ("field", "empty_val", "should_fail"),
     [
-        ["name", "", True],
-        ["version_number", "", True],
-        ["website_url", "", False],
-        ["description", "", False],
-        ["dependencies", [], False],
+        ("name", "", True),
+        ("version_number", "", True),
+        ("website_url", "", False),
+        ("description", "", False),
+        ("dependencies", [], False),
     ],
 )
 def test_manifest_v1_blank_fields(
-    user, manifest_v1_data, field, empty_val, should_fail
+    user,
+    manifest_v1_data,
+    field,
+    empty_val,
+    should_fail,
 ):
     identity = UploaderIdentity.get_or_create_for_user(user)
     manifest_v1_data[field] = empty_val

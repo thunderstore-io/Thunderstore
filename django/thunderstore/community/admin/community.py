@@ -32,5 +32,7 @@ class CommunityAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return ensure_fields_editable_on_creation(
-            self.readonly_fields, obj, ("identifier",)
+            self.readonly_fields,
+            obj,
+            ("identifier",),
         )

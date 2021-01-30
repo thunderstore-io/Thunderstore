@@ -22,14 +22,15 @@ class CacheNode(Node):
             cache_until = self.cache_bust_condition.resolve(context)
         except VariableDoesNotExist:
             raise TemplateSyntaxError(
-                f'"cache_until" tag got an unknown variable: {self.cache_bust_condition.var}'
+                '"cache_until" tag got an unknown variable: '
+                f"{self.cache_bust_condition.var}",
             )
 
         try:
             expire_time = self.expiry.resolve(context)
         except VariableDoesNotExist:
             raise TemplateSyntaxError(
-                f'"cache_until" tag got an unknown variable: {self.expire_time.var}'
+                f'"cache_until" tag got an unknown variable: {self.expire_time.var}',
             )
 
         if expire_time is not None:
@@ -37,7 +38,7 @@ class CacheNode(Node):
                 expire_time = int(expire_time)
             except (ValueError, TypeError):
                 raise TemplateSyntaxError(
-                    f'"cache_until" tag got a non-integer expiry value: {expire_time}'
+                    f'"cache_until" tag got a non-integer expiry value: {expire_time}',
                 )
 
         vary_on = [var.resolve(context) for var in self.vary_on]
@@ -76,7 +77,9 @@ def do_cache(parser, token):
     tokens = token.split_contents()
 
     if len(tokens) < 3:
-        raise TemplateSyntaxError("'%r' tag requires at least 2 arguments." % tokens[0])
+        raise TemplateSyntaxError(
+            f"'{repr(tokens[0])}' tag requires at least 2 arguments."
+        )
 
     expiry = DEFAULT_CACHE_EXPIRY
     if len(tokens) > 3:

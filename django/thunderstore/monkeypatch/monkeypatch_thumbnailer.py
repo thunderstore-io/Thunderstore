@@ -57,7 +57,8 @@ def thumbnail_exists(self, thumbnail_name):
     local_thumbnails = utils.is_storage_local(self.thumbnail_storage)
     if local_thumbnails:
         thumbnail_modtime = utils.get_modified_time(
-            self.thumbnail_storage, thumbnail_name
+            self.thumbnail_storage,
+            thumbnail_name,
         )
         if not thumbnail_modtime:
             return False

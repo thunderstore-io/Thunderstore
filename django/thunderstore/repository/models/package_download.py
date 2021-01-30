@@ -25,7 +25,7 @@ class PackageVersionDownloadEvent(models.Model):
             is_valid = True
 
         self.save(
-            update_fields=("total_downloads", "counted_downloads", "last_download")
+            update_fields=("total_downloads", "counted_downloads", "last_download"),
         )
         return is_valid
 

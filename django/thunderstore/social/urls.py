@@ -9,6 +9,8 @@ settings_urls = [
         name="settings.linked-accounts",
     ),
     path(
-        "delete-account/", DeleteAccountView.as_view(), name="settings.delete-account"
+        "delete-account/",
+        DeleteAccountView.as_view(),
+        name="settings.delete-account",
     ),
 ]

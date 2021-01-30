@@ -63,7 +63,7 @@ class Package(models.Model):
     def validate(self):
         if not re.match(PACKAGE_NAME_REGEX, self.name):
             raise ValidationError(
-                "Package names can only contain a-Z A-Z 0-9 _ characers"
+                "Package names can only contain a-Z A-Z 0-9 _ characers",
             )
 
     def save(self, *args, **kwargs):
@@ -107,7 +107,8 @@ class Package(models.Model):
     def available_versions(self):
         # TODO: Caching
         versions = self.versions.filter(is_active=True).values_list(
-            "pk", "version_number"
+            "pk",
+            "version_number",
         )
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
@@ -173,7 +174,7 @@ class Package(models.Model):
         return Package.objects.exclude(
             ~Q(
                 versions__dependencies__package=self,
-            )
+            ),
         ).active()
 
     @cached_property
@@ -196,15 +197,15 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "packages.detail", kwargs={"owner": self.owner.name, "name": self.name}
+            "packages.detail",
+            kwargs={"owner": self.owner.name, "name": self.name},
         )
 
     def get_full_url(self, site: Site):
-        return "%(protocol)s%(hostname)s%(path)s" % {
-            "protocol": settings.PROTOCOL,
-            "hostname": site.domain,
-            "path": self.get_absolute_url(),
-        }
+        protocol = settings.PROTOCOL
+        hostname = site.domain
+        path = self.get_absolute_url()
+        return f"{protocol}{hostname}{path}"
 
     def recache_latest(self):
         old_latest = self.latest
