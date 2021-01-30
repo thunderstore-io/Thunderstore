@@ -15,6 +15,8 @@ class ServiceAccount(models.Model):
         related_name="service_accounts",
         on_delete=models.CASCADE,
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used = models.DateTimeField(null=True)
 
     @property
     def nickname(self) -> str:

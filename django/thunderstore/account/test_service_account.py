@@ -36,6 +36,8 @@ def test_service_account_create(user, uploader_identity):
     username = create_service_account_username(service_account.uuid.hex)
     assert username == service_account.user.username
     assert service_account.user.first_name == "Nickname"
+    assert service_account.created_at is not None
+    assert service_account.last_used is None
 
 
 @pytest.mark.django_db
