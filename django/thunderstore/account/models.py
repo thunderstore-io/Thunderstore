@@ -1,6 +1,6 @@
 import ulid2
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 
 
 class ServiceAccount(models.Model):
@@ -20,6 +20,7 @@ class ServiceAccount(models.Model):
     def nickname(self) -> str:
         return self.user.first_name
 
+    @transaction.atomic
     def delete(self, *args, **kwargs):
         self.user.delete()
         return super().delete(*args, **kwargs)

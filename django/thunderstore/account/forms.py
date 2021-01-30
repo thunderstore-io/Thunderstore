@@ -2,6 +2,7 @@ import ulid2
 from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.repository.models import UploaderIdentity
@@ -35,6 +36,7 @@ class CreateServiceAccountForm(forms.Form):
         if not all((nickname, identity)):
             return
 
+    @transaction.atomic
     def save(self) -> ServiceAccount:
         service_account_id = ulid2.generate_ulid_as_uuid()
         username = create_service_account_username(service_account_id.hex)
