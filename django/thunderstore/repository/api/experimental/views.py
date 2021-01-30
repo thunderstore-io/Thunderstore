@@ -1,10 +1,11 @@
 import json
 
+from django.db.models import Q
 from django.http import HttpResponse
 from rest_framework.generics import ListAPIView
 from rest_framework.schemas import AutoSchema
 
-from thunderstore.community.models import CommunitySite, PackageListing, Q
+from thunderstore.community.models import CommunitySite, PackageListing
 from thunderstore.core.cache import (
     BackgroundUpdatedCacheMixin,
     CacheBustCondition,
