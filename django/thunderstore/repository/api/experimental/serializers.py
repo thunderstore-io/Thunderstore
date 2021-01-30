@@ -124,7 +124,7 @@ class PackageUploadCategoriesField(serializers.RelatedField):
 
         out = []
         for category_pk in data:
-            category = PackageCategory.objects.filter(pk=category_pk).first()
+            category = self.get_queryset().filter(pk=category_pk).first()
             if not category:
                 raise serializers.ValidationError(f"{category_pk} category not found")
             out.append(category)
