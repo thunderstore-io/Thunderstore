@@ -2,8 +2,12 @@ import json
 
 from django.db.models import Q
 from django.http import HttpResponse
+from rest_framework import status
 from rest_framework.generics import ListAPIView
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
+from rest_framework.views import APIView
 
 from thunderstore.community.models import CommunitySite, PackageListing
 from thunderstore.core.cache import (
@@ -14,7 +18,10 @@ from thunderstore.core.cache import (
 from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.experimental.serializers import (
     PackageListingSerializerExperimental,
+    PackageUploadSerializer,
+    PackageVersionSerializer,
 )
+from thunderstore.repository.models.package_version import PackageVersion
 
 
 @cache_function_result(cache_until=CacheBustCondition.any_package_updated)
@@ -61,3 +68,31 @@ class PackageListApiView(
 
     def get_queryset(self):
         return get_mod_list_queryset(self.request.community_site)
+
+
+class UploadPackageApiView(APIView):
+    """
+    Uploads a package. Requires multipart/form-data.
+    """
+
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        categories = request.data.get("categories")
+        if categories:
+            try:
+                request.data["categories"] = json.loads(categories)
+            except json.JSONDecodeError:
+                return Response(
+                    {"error": "Invalid"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+        serializer = PackageUploadSerializer(
+            data=request.data,
+            context={"request": request},
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        package_version = serializer.save()
+        serializer = PackageVersionSerializer(instance=package_version)
+        return Response(serializer.data)
