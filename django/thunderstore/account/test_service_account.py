@@ -233,7 +233,6 @@ def test_service_account_token_fixture(service_account_token):
 
 @pytest.mark.django_db
 def test_service_account_token_last_used(
-    community_site,
     api_client,
     service_account_token,
 ):
