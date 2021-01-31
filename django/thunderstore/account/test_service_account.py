@@ -1,7 +1,9 @@
 import pytest
+from rest_framework.authtoken.models import Token
 
 from thunderstore.account.forms import (
     CreateServiceAccountForm,
+    CreateTokenForm,
     DeleteServiceAccountForm,
     EditServiceAccountForm,
     create_service_account_username,
@@ -210,3 +212,42 @@ def test_service_account_edit_not_owner(service_account):
         form.errors["service_account"][0]
         == "Must be identity owner to edit a service account"
     )
+
+
+@pytest.mark.django_db
+def test_service_account_create_token(service_account):
+    member = service_account.owner.members.first()
+    assert member.role == UploaderIdentityMemberRole.owner
+    form = CreateTokenForm(
+        member.user,
+        data={"service_account": service_account},
+    )
+    assert form.is_valid()
+    token = form.save()
+    assert service_account.user == token.user
+
+
+@pytest.mark.django_db
+def test_service_account_token_fixture(service_account_token):
+    assert service_account_token.user.service_account
+
+
+@pytest.mark.django_db
+def test_service_account_token_last_used(
+    community_site,
+    api_client,
+    service_account_token,
+):
+    original_created_at = service_account_token.user.service_account.created_at
+    original_last_used = service_account_token.user.service_account.last_used
+    api_client.credentials(HTTP_AUTHORIZATION="Bearer " + service_account_token.key)
+    response = api_client.get(
+        "/api/v1/current-user/info/",
+        HTTP_HOST=community_site.site.domain,
+        HTTP_ACCEPT="application/json",
+    )
+    assert response.status_code == 200
+    assert "capabilities" in response.content.decode()
+    service_account_token = Token.objects.get(pk=service_account_token.pk)
+    assert service_account_token.user.service_account.created_at == original_created_at
+    assert service_account_token.user.service_account.last_used != original_last_used

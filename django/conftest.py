@@ -2,9 +2,10 @@ from copy import copy
 
 import pytest
 from django.contrib.sites.models import Site
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
-from thunderstore.account.forms import CreateServiceAccountForm
+from thunderstore.account.forms import CreateServiceAccountForm, CreateTokenForm
 from thunderstore.account.models import ServiceAccount
 from thunderstore.community.models import (
     Community,
@@ -163,6 +164,18 @@ def service_account(user, uploader_identity) -> ServiceAccount:
     form = CreateServiceAccountForm(
         user,
         data={"identity": uploader_identity, "nickname": "Nickname"},
+    )
+    assert form.is_valid()
+    return form.save()
+
+
+@pytest.fixture()
+def service_account_token(service_account) -> Token:
+    member = service_account.owner.members.first()
+    assert member.role == UploaderIdentityMemberRole.owner
+    form = CreateTokenForm(
+        member.user,
+        data={"service_account": service_account},
     )
     assert form.is_valid()
     return form.save()
