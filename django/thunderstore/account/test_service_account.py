@@ -95,10 +95,9 @@ def test_service_account_create_not_owner(user, uploader_identity):
 
 @pytest.mark.django_db
 def test_service_account_delete(django_user_model, service_account):
-    User = django_user_model
     member = service_account.owner.members.first()
     assert member.role == UploaderIdentityMemberRole.owner
-    assert User.objects.filter(pk=service_account.user.pk).exists() is True
+    assert django_user_model.objects.filter(pk=service_account.user.pk).exists() is True
     form = DeleteServiceAccountForm(
         member.user,
         data={"service_account": service_account},
@@ -106,7 +105,9 @@ def test_service_account_delete(django_user_model, service_account):
     assert form.is_valid()
     form.save()
     assert ServiceAccount.objects.filter(pk=service_account.pk).exists() is False
-    assert User.objects.filter(pk=service_account.user.pk).exists() is False
+    assert (
+        django_user_model.objects.filter(pk=service_account.user.pk).exists() is False
+    )
 
 
 @pytest.mark.django_db
