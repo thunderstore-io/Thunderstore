@@ -7,9 +7,9 @@ from thunderstore.repository.api.v1.tasks import update_api_v1_caches
 
 
 @pytest.mark.django_db
-def test_api_v1(api_client, active_package_listing, community_site):
+def test_api_v1(api_client, active_package_listing):
     update_api_v1_caches()
-    response = api_client.get("/api/v1/package/", HTTP_HOST=community_site.site.domain)
+    response = api_client.get("/api/v1/package/")
     assert response.status_code == 200
     result = response.json()
     assert len(result) == 1
@@ -19,14 +19,14 @@ def test_api_v1(api_client, active_package_listing, community_site):
     # TODO: Enable once detail views have been re-enabled
     # uuid = result[0]["uuid4"]
     # response = api_client.get(
-    #     f"/api/v1/package/{uuid}/", HTTP_HOST=community_site.site.domain
+    #     f"/api/v1/package/{uuid}/",
     # )
     # assert response.status_code == 200
     # assert response.json() == result[0]
 
 
 @pytest.mark.django_db
-def test_api_v1_rate_package(api_client, active_package_listing, community_site):
+def test_api_v1_rate_package(api_client, active_package_listing):
     uuid = active_package_listing.package.uuid4
     user = UserFactory.create()
     api_client.force_authenticate(user)
@@ -34,7 +34,6 @@ def test_api_v1_rate_package(api_client, active_package_listing, community_site)
         f"/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     result = response.json()
@@ -45,7 +44,6 @@ def test_api_v1_rate_package(api_client, active_package_listing, community_site)
         f"/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "unrated"}),
         content_type="application/json",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     result = response.json()
@@ -55,14 +53,14 @@ def test_api_v1_rate_package(api_client, active_package_listing, community_site)
 
 @pytest.mark.django_db
 def test_api_v1_rate_package_permission_denied(
-    api_client, active_package_listing, community_site
+    api_client,
+    active_package_listing,
 ):
     uuid = active_package_listing.package.uuid4
     response = api_client.post(
         f"/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "Authentication credentials were not provided."

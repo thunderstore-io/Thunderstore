@@ -182,5 +182,5 @@ def service_account_token(service_account) -> Token:
 
 
 @pytest.fixture()
-def api_client() -> APIClient:
-    return APIClient()
+def api_client(community_site) -> APIClient:
+    return APIClient(HTTP_HOST=community_site.site.domain)

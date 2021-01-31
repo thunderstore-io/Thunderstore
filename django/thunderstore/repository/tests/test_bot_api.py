@@ -1,11 +1,13 @@
 import jwt
+import pytest
 from django.urls import reverse
 
 from thunderstore.core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
 from thunderstore.repository.models import DiscordUserBotPermission
 
 
-def test_bot_api_deprecate_mod_200(api_client, admin_user, package, community_site):
+@pytest.mark.django_db
+def test_bot_api_deprecate_mod_200(api_client, admin_user, package):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
@@ -33,7 +35,6 @@ def test_bot_api_deprecate_mod_200(api_client, admin_user, package, community_si
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     assert response.content == b'{"success":true}'
@@ -41,8 +42,11 @@ def test_bot_api_deprecate_mod_200(api_client, admin_user, package, community_si
     assert package.is_deprecated is True
 
 
+@pytest.mark.django_db
 def test_bot_api_deprecate_mod_403_thunderstore_perms(
-    api_client, user, package, community_site
+    api_client,
+    user,
+    package,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -71,7 +75,6 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 403
     assert (
@@ -82,8 +85,11 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
     assert package.is_deprecated is False
 
 
+@pytest.mark.django_db
 def test_bot_api_deprecate_mod_403_discord_perms(
-    api_client, admin_user, package, community_site
+    api_client,
+    admin_user,
+    package,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -112,7 +118,6 @@ def test_bot_api_deprecate_mod_403_discord_perms(
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 403
     assert response.content == b'{"detail":"Insufficient Discord user permissions"}'
@@ -120,7 +125,8 @@ def test_bot_api_deprecate_mod_403_discord_perms(
     assert package.is_deprecated is False
 
 
-def test_bot_api_deprecate_mod_404(api_client, admin_user, community_site):
+@pytest.mark.django_db
+def test_bot_api_deprecate_mod_404(api_client, admin_user):
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
@@ -147,7 +153,6 @@ def test_bot_api_deprecate_mod_404(api_client, admin_user, community_site):
         reverse("api:v1:bot.deprecate-mod"),
         data=encoded,
         content_type="application/jwt",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
     assert response.content == b'{"detail":"Not found."}'

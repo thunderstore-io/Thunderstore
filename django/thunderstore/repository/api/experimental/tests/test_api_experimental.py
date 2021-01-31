@@ -10,7 +10,6 @@ from thunderstore.repository.api.experimental.tasks import (
     update_api_experimental_caches,
 )
 from thunderstore.repository.models import (
-    UploaderIdentity,
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
 )
@@ -18,10 +17,10 @@ from thunderstore.repository.models.package_version import PackageVersion
 
 
 @pytest.mark.django_db
-def test_api_experimental(api_client, active_package_listing, community_site):
+def test_api_experimental(api_client, active_package_listing):
     update_api_experimental_caches()
     response = api_client.get(
-        "/api/experimental/package/", HTTP_HOST=community_site.site.domain
+        "/api/experimental/package/",
     )
     assert response.status_code == 200
     result = response.json()
@@ -38,7 +37,6 @@ def test_api_experimental_upload_package(
     api_client,
     user,
     manifest_v1_data,
-    community_site,
     package_category,
     uploader_identity,
 ):
@@ -76,7 +74,6 @@ def test_api_experimental_upload_package(
             "file": SimpleUploadedFile("mod.zip", zip_raw.getvalue()),
         },
         HTTP_ACCEPT="application/json",
-        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     response = response.json()
