@@ -8,6 +8,7 @@ from thunderstore.repository.comment import (
     clean_content,
 )
 from thunderstore.repository.models import (
+    Comment,
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
 )
@@ -134,3 +135,15 @@ def test_comment_edit_pin_not_allowed(comment):
     with pytest.raises(PermissionDenied) as exc:
         form.is_valid()
     assert str(exc.value) == "Cannot edit pinned status"
+
+
+@pytest.mark.django_db
+def test_comment_create_ghost_user(comment, django_user_model):
+    author_pk = comment.author.pk
+    assert django_user_model.objects.filter(pk=author_pk).exists()
+    comment.author.delete()
+    assert django_user_model.objects.filter(pk=author_pk).exists() is False
+    comment = Comment.objects.get(pk=comment.pk)
+    assert comment.author is not None
+    assert comment.author.username == comment.author.email
+    assert comment.author.email.endswith(".gu@thunderstore.io")
