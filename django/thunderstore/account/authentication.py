@@ -1,5 +1,4 @@
-import datetime
-
+from django.utils import timezone
 from rest_framework.authentication import TokenAuthentication as DRFTokenAuthentication
 from rest_framework.authtoken.models import Token
 
@@ -16,6 +15,6 @@ class TokenAuthentication(DRFTokenAuthentication):
             token: Token = out[1]
             service_account = ServiceAccount.objects.filter(user=token.user).first()
             if service_account:
-                service_account.last_used = datetime.datetime.now()
+                service_account.last_used = timezone.now()
                 service_account.save()
         return out
