@@ -157,7 +157,12 @@ def test_service_account_edit_nickname(service_account):
         data={"service_account": service_account, "nickname": "New nickname"},
     )
     assert form.is_valid()
+
     service_account = form.save()
+    assert service_account.user.first_name == "New nickname"
+    assert service_account.nickname == "New nickname"
+
+    service_account = ServiceAccount.objects.get(pk=service_account.pk)
     assert service_account.user.first_name == "New nickname"
     assert service_account.nickname == "New nickname"
 
