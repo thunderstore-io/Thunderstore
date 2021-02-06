@@ -230,6 +230,42 @@ def test_service_account_create_token(service_account):
 
 
 @pytest.mark.django_db
+def test_service_account_create_token_not_member(service_account):
+    user = UserFactory.create()
+    assert service_account.owner.members.filter(user=user).exists() is False
+    form = CreateTokenForm(
+        user,
+        data={"service_account": service_account},
+    )
+    assert form.is_valid() is False
+    assert len(form.errors["service_account"]) == 1
+    assert (
+        form.errors["service_account"][0]
+        == "Select a valid choice. That choice is not one of the available choices."
+    )
+
+
+@pytest.mark.django_db
+def test_service_account_create_token_not_owner(service_account):
+    user = UserFactory.create()
+    UploaderIdentityMember.objects.create(
+        user=user,
+        identity=service_account.owner,
+        role=UploaderIdentityMemberRole.member,
+    )
+    form = CreateTokenForm(
+        user,
+        data={"service_account": service_account},
+    )
+    assert form.is_valid() is False
+    assert len(form.errors["service_account"]) == 1
+    assert (
+        form.errors["service_account"][0]
+        == "Must be an owner to generate a service account token"
+    )
+
+
+@pytest.mark.django_db
 def test_service_account_token_fixture(service_account_token):
     assert service_account_token.user.service_account
 
