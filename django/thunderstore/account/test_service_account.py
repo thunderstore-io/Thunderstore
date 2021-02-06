@@ -89,10 +89,7 @@ def test_service_account_create_not_owner(user, uploader_identity):
     )
     assert form.is_valid() is False
     assert len(form.errors["identity"]) == 1
-    assert (
-        form.errors["identity"][0]
-        == "Must be identity owner to create a service account"
-    )
+    assert form.errors["identity"][0] == "Must be an owner to create a service account"
 
 
 @pytest.mark.django_db
@@ -144,7 +141,7 @@ def test_service_account_delete_not_owner(service_account):
     assert len(form.errors["service_account"]) == 1
     assert (
         form.errors["service_account"][0]
-        == "Must be identity owner to delete a service account"
+        == "Must be an owner to delete a service account"
     )
 
 
@@ -215,7 +212,7 @@ def test_service_account_edit_not_owner(service_account):
     assert len(form.errors["service_account"]) == 1
     assert (
         form.errors["service_account"][0]
-        == "Must be identity owner to edit a service account"
+        == "Must be an owner to edit a service account"
     )
 
 

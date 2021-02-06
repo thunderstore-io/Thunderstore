@@ -25,8 +25,7 @@ class CreateServiceAccountForm(forms.Form):
 
     def clean_identity(self) -> UploaderIdentity:
         identity = self.cleaned_data["identity"]
-        if not identity.can_create_service_account(self.user):
-            raise ValidationError("Must be identity owner to create a service account")
+        identity.can_create_service_account(self.user)
         return identity
 
     @transaction.atomic
@@ -55,8 +54,7 @@ class DeleteServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        if not service_account.owner.can_delete_service_account(self.user):
-            raise ValidationError("Must be identity owner to delete a service account")
+        service_account.owner.can_delete_service_account(self.user)
         return service_account
 
     def save(self) -> None:
@@ -75,8 +73,7 @@ class EditServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        if not service_account.owner.can_edit_service_account(self.user):
-            raise ValidationError("Must be identity owner to edit a service account")
+        service_account.owner.can_edit_service_account(self.user)
         return service_account
 
     def save(self) -> ServiceAccount:
@@ -96,10 +93,7 @@ class CreateTokenForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        if not service_account.owner.can_generate_service_account_token(self.user):
-            raise ValidationError(
-                "Must be identity owner to generate a service account token",
-            )
+        service_account.owner.can_generate_service_account_token(self.user)
         return service_account
 
     @transaction.atomic
