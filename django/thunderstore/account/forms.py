@@ -29,14 +29,6 @@ class CreateServiceAccountForm(forms.Form):
             raise ValidationError("Must be identity owner to create a service account")
         return identity
 
-    def clean(self) -> None:
-        super().clean()
-        nickname = self.cleaned_data.get("nickname")
-        identity = self.cleaned_data.get("identity")
-
-        if not all((nickname, identity)):
-            return
-
     @transaction.atomic
     def save(self) -> ServiceAccount:
         service_account_id = ulid2.generate_ulid_as_uuid()
@@ -86,14 +78,6 @@ class EditServiceAccountForm(forms.Form):
         if not service_account.owner.can_edit_service_account(self.user):
             raise ValidationError("Must be identity owner to edit a service account")
         return service_account
-
-    def clean(self) -> None:
-        super().clean()
-        nickname = self.cleaned_data.get("nickname")
-        service_account = self.cleaned_data.get("service_account")
-
-        if not all((nickname, service_account)):
-            return
 
     def save(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
