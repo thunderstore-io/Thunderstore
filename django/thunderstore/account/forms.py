@@ -82,7 +82,7 @@ class EditServiceAccountForm(forms.Form):
     def save(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
         service_account.user.first_name = self.cleaned_data["nickname"]
-        service_account.save()
+        service_account.user.save(update_fields=("first_name",))
         return service_account
 
 
