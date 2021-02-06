@@ -116,17 +116,17 @@ class PackageUploadCategoriesField(serializers.RelatedField):
         )
 
     def to_representation(self, value):
-        return [c.pk for c in value]
+        return [c.slug for c in value]
 
     def to_internal_value(self, data):
         if not isinstance(data, list):
             raise serializers.ValidationError("Not a list")
 
         out = []
-        for category_pk in data:
-            category = self.get_queryset().filter(pk=category_pk).first()
+        for category_slug in data:
+            category = self.get_queryset().filter(slug=category_slug).first()
             if not category:
-                raise serializers.ValidationError(f"{category_pk} category not found")
+                raise serializers.ValidationError(f"{category_slug} category not found")
             out.append(category)
         return out
 

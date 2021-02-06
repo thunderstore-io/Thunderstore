@@ -69,7 +69,7 @@ def test_api_experimental_upload_package(
         "/api/experimental/package/version/",
         {
             "author_name": uploader_identity.name,
-            "categories": json.dumps([package_category.pk]),
+            "categories": json.dumps([package_category.slug]),
             "has_nsfw_content": True,
             "file": SimpleUploadedFile("mod.zip", zip_raw.getvalue()),
         },
