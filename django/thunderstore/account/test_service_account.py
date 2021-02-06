@@ -232,6 +232,7 @@ def test_service_account_create_token(service_account):
     assert service_account.user == token.user
 
 
+@pytest.mark.django_db
 def test_service_account_token_fixture(service_account_token):
     assert service_account_token.user.service_account
 
