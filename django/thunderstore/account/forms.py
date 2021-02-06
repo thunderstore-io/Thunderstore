@@ -25,7 +25,7 @@ class CreateServiceAccountForm(forms.Form):
 
     def clean_identity(self) -> UploaderIdentity:
         identity = self.cleaned_data["identity"]
-        identity.can_create_service_account(self.user)
+        identity.ensure_can_create_service_account(self.user)
         return identity
 
     @transaction.atomic
@@ -54,7 +54,7 @@ class DeleteServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        service_account.owner.can_delete_service_account(self.user)
+        service_account.owner.ensure_can_delete_service_account(self.user)
         return service_account
 
     def save(self) -> None:
@@ -73,7 +73,7 @@ class EditServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        service_account.owner.can_edit_service_account(self.user)
+        service_account.owner.ensure_can_edit_service_account(self.user)
         return service_account
 
     def save(self) -> ServiceAccount:
@@ -93,7 +93,7 @@ class CreateTokenForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        service_account.owner.can_generate_service_account_token(self.user)
+        service_account.owner.ensure_can_generate_service_account_token(self.user)
         return service_account
 
     @transaction.atomic
