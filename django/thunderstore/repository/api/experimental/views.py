@@ -84,7 +84,8 @@ class UploadPackageApiView(APIView):
                 request.data["categories"] = json.loads(categories)
             except json.JSONDecodeError:
                 return Response(
-                    {"error": "Invalid"}, status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Invalid"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         serializer = PackageUploadSerializer(
