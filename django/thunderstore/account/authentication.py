@@ -16,5 +16,5 @@ class TokenAuthentication(DRFTokenAuthentication):
             service_account = ServiceAccount.objects.filter(user=token.user).first()
             if service_account:
                 service_account.last_used = timezone.now()
-                service_account.save()
+                service_account.save(update_fields=("last_used",))
         return out
