@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from thunderstore.community.models import Community, PackageCategory, PackageListing
+from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
 from thunderstore.repository.package_upload import PackageUploadForm
 
@@ -135,7 +135,6 @@ class PackageUploadSerializer(serializers.Serializer):
     author_name = PackageUploadAuthorNameField()
     categories = PackageUploadCategoriesField()
     has_nsfw_content = serializers.BooleanField()
-    pk = serializers.IntegerField(read_only=True)
     file = serializers.FileField(write_only=True)
 
     def _create_form(self, data) -> PackageUploadForm:
@@ -166,10 +165,7 @@ class PackageUploadSerializer(serializers.Serializer):
 class UploaderIdentitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UploaderIdentity
-        fields = (
-            "name",
-            "pk",
-        )
+        fields = ("name",)
 
     def create(self, *args, **kwargs):
         raise Exception()
@@ -217,7 +213,6 @@ class PackageVersionSerializer(serializers.ModelSerializer):
             "dependencies",
             "readme",
             "file_size",
-            "pk",
         )
 
     def create(self, *args, **kwargs):

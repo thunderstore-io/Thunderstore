@@ -13,7 +13,7 @@ from thunderstore.repository.models import (
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
 )
-from thunderstore.repository.models.package_version import PackageVersion
+from thunderstore.repository.package_reference import PackageReference
 
 
 @pytest.mark.django_db
@@ -77,4 +77,8 @@ def test_api_experimental_upload_package(
     )
     assert response.status_code == 200
     response = response.json()
-    assert PackageVersion.objects.filter(pk=response["pk"]).exists()
+    namespace = uploader_identity.name
+    # From manifest_v1_data fixture
+    name = "name"
+    version = "1.0.0"
+    assert PackageReference(namespace, name, version).exists
