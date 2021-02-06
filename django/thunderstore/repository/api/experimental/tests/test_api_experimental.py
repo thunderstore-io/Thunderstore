@@ -66,7 +66,7 @@ def test_api_experimental_upload_package(
 
     api_client.force_authenticate(user=user)
     response = api_client.post(
-        "/api/experimental/package/version/",
+        "/api/experimental/package/upload/",
         {
             "author_name": uploader_identity.name,
             "categories": json.dumps([package_category.slug]),

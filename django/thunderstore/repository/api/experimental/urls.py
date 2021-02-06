@@ -7,5 +7,5 @@ from thunderstore.repository.api.experimental.views import (
 
 urls = [
     path("package/", PackageListApiView.as_view(), name="package-list"),
-    path("package/version/", UploadPackageApiView.as_view(), name="package-version"),
+    path("package/upload/", UploadPackageApiView.as_view(), name="package-upload"),
 ]
