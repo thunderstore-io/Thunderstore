@@ -145,5 +145,5 @@ def test_comment_create_ghost_user(comment, django_user_model):
     assert django_user_model.objects.filter(pk=author_pk).exists() is False
     comment = Comment.objects.get(pk=comment.pk)
     assert comment.author is not None
-    assert comment.author.username == comment.author.email
+    assert comment.author.username.startswith("Ghost User ")
     assert comment.author.email.endswith(".gu@thunderstore.io")
