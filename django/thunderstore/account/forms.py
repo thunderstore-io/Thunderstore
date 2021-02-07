@@ -5,7 +5,11 @@ from django.db import transaction
 from rest_framework.authtoken.models import Token
 
 from thunderstore.account.models import ServiceAccount
-from thunderstore.repository.models import UploaderIdentity
+from thunderstore.repository.models import (
+    UploaderIdentity,
+    UploaderIdentityMember,
+    UploaderIdentityMemberRole,
+)
 
 
 def create_service_account_username(id_: str) -> str:
@@ -35,6 +39,11 @@ class CreateServiceAccountForm(forms.Form):
             username,
             email=username,
             first_name=self.cleaned_data["nickname"],
+        )
+        UploaderIdentityMember.objects.create(
+            user=user,
+            identity=self.cleaned_data["identity"],
+            role=UploaderIdentityMemberRole.member,
         )
         return ServiceAccount.objects.create(
             uuid=service_account_id,
