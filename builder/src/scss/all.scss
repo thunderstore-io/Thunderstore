@@ -1,16 +1,16 @@
 // Bootstrap and theme
 @import "./theme/_variables";
-@import "node_modules/bootstrap/scss/bootstrap";
+@import "./node_modules/bootstrap/scss/bootstrap";
 @import "./theme/_bootswatch";
 
 // Font awesome
-@import "./vendor/fontawesome";
+@import "./node_modules/@fortawesome/fontawesome-free/css/all";
 
 // GitHub Markdown
-@import "./vendor/github-markdown";
+@import "./node_modules/github-markdown-css/github-markdown";
 
 // Slimselect
-@import "./vendor/slimselect-1.26.0.min";
+@import "./node_modules/slim-select/dist/slimselect";
 
 // Custom Markdown
 @import "./markdown";

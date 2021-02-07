@@ -6,9 +6,24 @@ const concat = require("gulp-concat");
 const order = require("gulp-order");
 
 function js() {
-    return src("./src/js/**/*.js")
+    return src([
+        "src/js/**/*.js",
+        "node_modules/jquery/dist/jquery.js",
+        "node_modules/popper.js/dist/umd/popper.js",
+        "node_modules/bootstrap/dist/js/bootstrap.js",
+        "node_modules/slim-select/dist/slimselect.js",
+    ])
         .pipe(
-            order(["vendor/jquery-3.3.1.min.js", "vendor/**/*.js", "**/*.js"])
+            order(
+                [
+                    "node_modules/jquery/dist/jquery.js",
+                    "node_modules/popper.js/dist/umd/popper.js",
+                    "node_modules/bootstrap/dist/js/bootstrap.js",
+                    "node_modules/slim-select/dist/slimselect.js",
+                    "src/js/**/*.js",
+                ],
+                { base: "./" }
+            )
         )
         .pipe(concat("all.js"))
         .pipe(uglify())
@@ -20,7 +35,7 @@ function watch_js() {
 }
 
 function css() {
-    return src("./src/scss/**/*.scss")
+    return src("src/scss/**/*.scss")
         .pipe(sass().on("error", sass.logError))
         .pipe(clean_css())
         .pipe(dest("./build/css/"));
