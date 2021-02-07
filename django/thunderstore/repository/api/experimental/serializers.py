@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
@@ -126,26 +128,55 @@ class PackageUploadCategoriesField(serializers.RelatedField):
         for category_slug in data:
             category = self.get_queryset().filter(slug=category_slug).first()
             if not category:
-                raise serializers.ValidationError(f"{category_slug} category not found")
+                raise serializers.ValidationError(
+                    f"'{category_slug}' category not found",
+                )
             out.append(category)
         return out
 
 
-class PackageUploadSerializer(serializers.Serializer):
+class JSONToSerializerField(serializers.Field):
+    def __init__(self, serializer, *args, **kwargs):
+        self._serializer = serializer
+        super().__init__(*args, **kwargs)
+
+    def to_internal_value(self, data):
+        try:
+            serializer = self._serializer(data=json.loads(data), context=self.context)
+        except json.JSONDecodeError:
+            raise serializers.ValidationError("Invalid JSON")
+        serializer.is_valid(raise_exception=True)
+        return serializer.save()
+
+    def to_representation(self, value):
+        raise Exception()
+
+
+class DictSerializer(serializers.Serializer):
+    def create(self, validated_data):
+        return validated_data
+
+
+class PackageUploadMetadataSerializer(DictSerializer):
     author_name = PackageUploadAuthorNameField()
     categories = PackageUploadCategoriesField()
     has_nsfw_content = serializers.BooleanField()
+
+
+class PackageUploadSerializer(serializers.Serializer):
     file = serializers.FileField(write_only=True)
+    metadata = JSONToSerializerField(serializer=PackageUploadMetadataSerializer)
 
     def _create_form(self, data) -> PackageUploadForm:
         request = self.context["request"]
+        metadata = data.get("metadata", {})
         return PackageUploadForm(
             request.user,
-            data.get("author_name"),
+            metadata.get("author_name"),
             request.community,
             data={
-                "categories": data.get("categories"),
-                "has_nsfw_content": data.get("has_nsfw_content"),
+                "categories": metadata.get("categories"),
+                "has_nsfw_content": metadata.get("has_nsfw_content"),
             },
             files={"file": data.get("file")},
         )
@@ -153,7 +184,7 @@ class PackageUploadSerializer(serializers.Serializer):
     def validate(self, data):
         form = self._create_form(data)
         if not form.is_valid():
-            raise serializers.ValidationError("Invalid")
+            raise serializers.ValidationError(form.errors)
         return data
 
     def create(self, validated_data) -> PackageVersion:

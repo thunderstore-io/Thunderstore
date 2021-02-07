@@ -68,9 +68,13 @@ def test_api_experimental_upload_package(
     response = api_client.post(
         "/api/experimental/package/upload/",
         {
-            "author_name": uploader_identity.name,
-            "categories": json.dumps([package_category.slug]),
-            "has_nsfw_content": True,
+            "metadata": json.dumps(
+                {
+                    "author_name": uploader_identity.name,
+                    "categories": [package_category.slug],
+                    "has_nsfw_content": True,
+                },
+            ),
             "file": SimpleUploadedFile("mod.zip", zip_raw.getvalue()),
         },
         HTTP_ACCEPT="application/json",

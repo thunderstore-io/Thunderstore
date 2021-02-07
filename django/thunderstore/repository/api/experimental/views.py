@@ -2,7 +2,7 @@ import json
 
 from django.db.models import Q
 from django.http import HttpResponse
-from rest_framework import status
+from rest_framework import permissions, status
 from rest_framework.generics import ListAPIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -21,7 +21,6 @@ from thunderstore.repository.api.experimental.serializers import (
     PackageUploadSerializer,
     PackageVersionSerializer,
 )
-from thunderstore.repository.models.package_version import PackageVersion
 
 
 @cache_function_result(cache_until=CacheBustCondition.any_package_updated)
@@ -76,24 +75,14 @@ class UploadPackageApiView(APIView):
     """
 
     parser_classes = [MultiPartParser]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        categories = request.data.get("categories")
-        if categories:
-            try:
-                request.data["categories"] = json.loads(categories)
-            except json.JSONDecodeError:
-                return Response(
-                    {"error": "Invalid"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
         serializer = PackageUploadSerializer(
             data=request.data,
             context={"request": request},
         )
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         package_version = serializer.save()
         serializer = PackageVersionSerializer(instance=package_version)
         return Response(serializer.data)
