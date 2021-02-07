@@ -82,7 +82,7 @@ def delete_user(user: User) -> None:
     """
     Delete a User.
 
-    This should be the only place where User.delete() is called (other than tests).
+    This should be the only place where User.delete() is called.
     """
     # Ghost user
     if user.comments.exists():
