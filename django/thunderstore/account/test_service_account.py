@@ -33,13 +33,20 @@ def test_service_account_create(user, uploader_identity):
         user,
         data={"identity": uploader_identity, "nickname": "Nickname"},
     )
-    assert form.is_valid()
+    assert form.is_valid() is True
     service_account = form.save()
     username = create_service_account_username(service_account.uuid.hex)
     assert username == service_account.user.username
     assert service_account.user.first_name == "Nickname"
     assert service_account.created_at is not None
     assert service_account.last_used is None
+    assert (
+        uploader_identity.members.filter(
+            user=service_account.user,
+            role=UploaderIdentityMemberRole.member,
+        ).exists()
+        is True
+    )
 
 
 @pytest.mark.django_db
