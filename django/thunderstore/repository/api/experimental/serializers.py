@@ -160,7 +160,7 @@ class JSONToSerializerField(serializers.Field):
         return serializer.save()
 
     def to_representation(self, value):
-        raise Exception()
+        raise NotImplementedError()
 
 
 class PackageUploadMetadataSerializer(DictSerializer):
