@@ -139,9 +139,9 @@ file_drop.ondrop = function(evt) {
 
 function reset_file_input() {
     if (file_input.files.length > 0) {
-        file_drop.innerHTML = file_input.files[0].name;
+        file_drop.textContent = file_input.files[0].name;
     } else {
-        file_drop.innerHTML = 'Choose or drag file here';
+        file_drop.textContent = 'Choose or drag file here';
     }
     file_drop.style.height = "";
     file_drop.style.border = "";
