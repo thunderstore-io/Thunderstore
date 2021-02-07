@@ -2,6 +2,8 @@ from django import forms
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 
+from thunderstore.core import utils
+
 
 class LinkedAccountDisconnectForm(forms.Form):
     provider = forms.CharField()
@@ -63,5 +65,5 @@ class DeleteAccountView(FormView):
         return kwargs
 
     def form_valid(self, form):
-        self.request.user.delete()
+        utils.delete_user(self.request.user)
         return super().form_valid(form)

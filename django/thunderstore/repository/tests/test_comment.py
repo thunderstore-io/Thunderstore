@@ -1,6 +1,7 @@
 import pytest
 from django.core.exceptions import PermissionDenied
 
+from thunderstore.core import utils
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.comment import (
     CreateCommentForm,
@@ -141,7 +142,7 @@ def test_comment_edit_pin_not_allowed(comment):
 def test_comment_create_ghost_user(comment, django_user_model):
     author_pk = comment.author.pk
     assert django_user_model.objects.filter(pk=author_pk).exists()
-    comment.author.delete()
+    utils.delete_user(comment.author)
     assert django_user_model.objects.filter(pk=author_pk).exists() is False
     comment = Comment.objects.get(pk=comment.pk)
     assert comment.author is not None
