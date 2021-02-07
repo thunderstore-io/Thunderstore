@@ -48,6 +48,10 @@ class Comment(TimestampMixin, models.Model):
 
 
 def _create_ghost_user_username(id_: str) -> str:
+    return f"Ghost User {id_}"
+
+
+def _create_ghost_user_email(id_: str) -> str:
     # The ID used in ghost user usernames and emails are not the same as their `User.id`
     # This is because `User` still uses an autoincrement ID
     return f"{id_}.gu@thunderstore.io"
@@ -59,7 +63,8 @@ def set_ghost_user(instance, **kwargs) -> None:
         return
     uuid = generate_ulid_as_uuid()
     username = _create_ghost_user_username(uuid.hex)
-    ghost_user = User.objects.create_user(username, email=username)
+    email = _create_ghost_user_email(uuid.hex)
+    ghost_user = User.objects.create_user(username, email=email)
     for comment in instance.comments.iterator():
         comment.author = ghost_user
         comment.save()
