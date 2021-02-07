@@ -101,6 +101,8 @@ class PackageListingSerializerExperimental(serializers.ModelSerializer):
 
 
 class PackageUploadAuthorNameField(serializers.SlugRelatedField):
+    """Package upload's author name metadata field."""
+
     def __init__(self, *args, **kwargs):
         kwargs["slug_field"] = "name"
         super().__init__(*args, **kwargs)
@@ -112,6 +114,8 @@ class PackageUploadAuthorNameField(serializers.SlugRelatedField):
 
 
 class PackageUploadCategoriesField(serializers.RelatedField):
+    """Package upload's categories metadata field."""
+
     def get_queryset(self):
         return PackageCategory.objects.filter(
             community=self.context["request"].community,
@@ -135,7 +139,14 @@ class PackageUploadCategoriesField(serializers.RelatedField):
         return out
 
 
+class DictSerializer(serializers.Serializer):
+    def create(self, validated_data):
+        return validated_data
+
+
 class JSONToSerializerField(serializers.Field):
+    """Parses a JSON string and passes the data to a DictSerializer subclass."""
+
     def __init__(self, serializer, *args, **kwargs):
         self._serializer = serializer
         super().__init__(*args, **kwargs)
@@ -152,18 +163,15 @@ class JSONToSerializerField(serializers.Field):
         raise Exception()
 
 
-class DictSerializer(serializers.Serializer):
-    def create(self, validated_data):
-        return validated_data
-
-
 class PackageUploadMetadataSerializer(DictSerializer):
+    """Non-file fields used for package upload."""
+
     author_name = PackageUploadAuthorNameField()
     categories = PackageUploadCategoriesField()
     has_nsfw_content = serializers.BooleanField()
 
 
-class PackageUploadSerializer(serializers.Serializer):
+class PackageUploadSerializerExperiemental(serializers.Serializer):
     file = serializers.FileField(write_only=True)
     metadata = JSONToSerializerField(serializer=PackageUploadMetadataSerializer)
 
@@ -191,63 +199,3 @@ class PackageUploadSerializer(serializers.Serializer):
         form = self._create_form(validated_data)
         form.is_valid()
         return form.save()
-
-
-class UploaderIdentitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UploaderIdentity
-        fields = ("name",)
-
-    def create(self, *args, **kwargs):
-        raise Exception()
-
-    def update(self, *args, **kwargs):
-        raise Exception()
-
-
-class PackageSerializer(serializers.ModelSerializer):
-    owner = UploaderIdentitySerializer()
-
-    class Meta:
-        model = Package
-        fields = (
-            "owner",
-            "name",
-            "is_active",
-            "is_deprecated",
-            "date_created",
-            "date_updated",
-            "is_pinned",
-        )
-
-    def create(self, *args, **kwargs):
-        raise Exception()
-
-    def update(self, *args, **kwargs):
-        raise Exception()
-
-
-class PackageVersionSerializer(serializers.ModelSerializer):
-    package = PackageSerializer()
-
-    class Meta:
-        model = PackageVersion
-        fields = (
-            "package",
-            "is_active",
-            "date_created",
-            "downloads",
-            "name",
-            "version_number",
-            "website_url",
-            "description",
-            "dependencies",
-            "readme",
-            "file_size",
-        )
-
-    def create(self, *args, **kwargs):
-        raise Exception()
-
-    def update(self, *args, **kwargs):
-        raise Exception()

@@ -2,7 +2,7 @@ import json
 
 from django.db.models import Q
 from django.http import HttpResponse
-from rest_framework import permissions, status
+from rest_framework import permissions
 from rest_framework.generics import ListAPIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -18,8 +18,8 @@ from thunderstore.core.cache import (
 from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.experimental.serializers import (
     PackageListingSerializerExperimental,
-    PackageUploadSerializer,
-    PackageVersionSerializer,
+    PackageUploadSerializerExperiemental,
+    PackageVersionSerializerExperimental,
 )
 
 
@@ -78,11 +78,11 @@ class UploadPackageApiView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        serializer = PackageUploadSerializer(
+        serializer = PackageUploadSerializerExperiemental(
             data=request.data,
             context={"request": request},
         )
         serializer.is_valid(raise_exception=True)
         package_version = serializer.save()
-        serializer = PackageVersionSerializer(instance=package_version)
+        serializer = PackageVersionSerializerExperimental(instance=package_version)
         return Response(serializer.data)
