@@ -4,7 +4,7 @@ import uuid
 import requests
 from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 from sentry_sdk import capture_exception
 
@@ -13,6 +13,7 @@ from thunderstore.core.utils import ChoiceEnum
 
 class WebhookType(ChoiceEnum):
     mod_release = "mod_release"
+    mod_update = "mod_update"
 
 
 class Webhook(models.Model):
@@ -57,8 +58,8 @@ class Webhook(models.Model):
         return self.name
 
     @classmethod
-    def get_for_package_release(cls, package):
-        base_query = Q(Q(webhook_type=WebhookType.mod_release) & Q(is_active=True))
+    def _get_for_package(cls, package, webhook_type: str) -> QuerySet["Webhook"]:
+        base_query = Q(Q(webhook_type=webhook_type) & Q(is_active=True))
         community_query = Q()
         for listing in package.package_listings.all():
             categories = listing.categories.all()
@@ -73,6 +74,14 @@ class Webhook(models.Model):
 
         full_query = base_query & Q(community_query)
         return cls.objects.exclude(~Q(full_query))
+
+    @classmethod
+    def get_for_package_release(cls, package) -> QuerySet["Webhook"]:
+        return cls._get_for_package(package, WebhookType.mod_release)
+
+    @classmethod
+    def get_for_package_update(cls, package) -> QuerySet["Webhook"]:
+        return cls._get_for_package(package, WebhookType.mod_update)
 
     def get_version_release_json(self, version):
         thumbnail_url = version.icon.url
