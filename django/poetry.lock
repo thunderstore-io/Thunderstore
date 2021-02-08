@@ -364,7 +364,7 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-celery-beat"
-version = "2.1.0"
+version = "2.2.0"
 description = "Database-backed Periodic Tasks."
 category = "main"
 optional = false
@@ -372,8 +372,8 @@ python-versions = "*"
 
 [package.dependencies]
 celery = ">=4.4,<6.0"
-Django = ">=2.2"
-django-timezone-field = ">=4.0,<5.0"
+Django = ">=2.2,<4.0"
+django-timezone-field = ">=4.1.0,<5.0"
 python-crontab = ">=2.3.4"
 
 [[package]]
@@ -1700,7 +1700,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "3c6789790e3fa104bcee84629dfaeb1747927b8b5b036945643c11b70adad111"
+content-hash = "d9f130de7a770a5739187ef9f64ee1b9175f32462d6e86784a9c80af3b881a13"
 
 [metadata.files]
 amqp = [
@@ -1912,8 +1912,8 @@ django = [
     {file = "Django-3.1.5.tar.gz", hash = "sha256:2d78425ba74c7a1a74b196058b261b9733a8570782f4e2828974777ccca7edf7"},
 ]
 django-celery-beat = [
-    {file = "django-celery-beat-2.1.0.tar.gz", hash = "sha256:4eb0e8412e2e05ba0029912a6f80d1054731001eecbcb4d59688c4e07cf4d9d3"},
-    {file = "django_celery_beat-2.1.0-py2.py3-none-any.whl", hash = "sha256:8a169e11d96faed8b72d505ddbc70e7fe0b16cdc854df43cb209c153ed08d651"},
+    {file = "django-celery-beat-2.2.0.tar.gz", hash = "sha256:b8a13afb15e7c53fc04f4f847ac71a6d32088959aba701eb7c4a59f0c28ba543"},
+    {file = "django_celery_beat-2.2.0-py2.py3-none-any.whl", hash = "sha256:c4c72a9579f20eff4c4ccf1b58ebdca5ef940f4210065057db1754ea5f8dffdc"},
 ]
 django-celery-results = [
     {file = "django_celery_results-2.0.0-py2.py3-none-any.whl", hash = "sha256:f82280a9a25c44048b9e64ae4d47ade7d522c8221304b0e25388080021b95468"},
