@@ -378,7 +378,7 @@ python-crontab = ">=2.3.4"
 
 [[package]]
 name = "django-celery-results"
-version = "2.0.0"
+version = "2.0.1"
 description = "Celery result backends for Django."
 category = "main"
 optional = false
@@ -1700,7 +1700,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "3c6789790e3fa104bcee84629dfaeb1747927b8b5b036945643c11b70adad111"
+content-hash = "04e905d89c22bf4ced47a2ec1dc551aa862fadc97b663ee5eb07cbbe02675112"
 
 [metadata.files]
 amqp = [
@@ -1916,8 +1916,8 @@ django-celery-beat = [
     {file = "django_celery_beat-2.1.0-py2.py3-none-any.whl", hash = "sha256:8a169e11d96faed8b72d505ddbc70e7fe0b16cdc854df43cb209c153ed08d651"},
 ]
 django-celery-results = [
-    {file = "django_celery_results-2.0.0-py2.py3-none-any.whl", hash = "sha256:f82280a9a25c44048b9e64ae4d47ade7d522c8221304b0e25388080021b95468"},
-    {file = "django_celery_results-2.0.0.tar.gz", hash = "sha256:754e01f22f70fddee5f2ca95c18f183fccee42ad98f9803577bffa717d45ac5d"},
+    {file = "django_celery_results-2.0.1-py2.py3-none-any.whl", hash = "sha256:a2f7d172f7f57dd972538acc6e80a5bf50c673fb4d82fe027189c8659c60dfce"},
+    {file = "django_celery_results-2.0.1.tar.gz", hash = "sha256:d625e324138e5b2ef46ffa9e89fa353c16d619420066ac8b240ef9247b293a84"},
 ]
 django-debug-toolbar = [
     {file = "django-debug-toolbar-3.2.tar.gz", hash = "sha256:84e2607d900dbd571df0a2acf380b47c088efb787dce9805aefeb407341961d2"},
