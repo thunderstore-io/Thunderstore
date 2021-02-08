@@ -1,8 +1,9 @@
+from django.conf import settings
 from rest_framework.fields import Field
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from thunderstore.community.models import PackageListing
-from thunderstore.repository.models import Package, PackageVersion
+from thunderstore.repository.models import PackageVersion
 
 
 class PackageVersionSerializer(ModelSerializer):
@@ -14,6 +15,8 @@ class PackageVersionSerializer(ModelSerializer):
         url = instance.download_url
         if "request" in self.context:
             url = self.context["request"].build_absolute_uri(instance.download_url)
+        if settings.PROTOCOL == "https://" and url.startswith("http://"):
+            url = f"https://{url[7:]}"
         return url
 
     def get_full_name(self, instance):
