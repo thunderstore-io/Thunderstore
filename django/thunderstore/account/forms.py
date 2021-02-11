@@ -1,6 +1,7 @@
 import ulid2
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User as UserType
 from django.db import transaction
 from rest_framework.authtoken.models import Token
 
@@ -11,6 +12,8 @@ from thunderstore.repository.models import (
     UploaderIdentityMemberRole,
 )
 
+User = get_user_model()
+
 
 def create_service_account_username(id_: str) -> str:
     return f"{id_}.sa@thunderstore.io"
@@ -19,7 +22,7 @@ def create_service_account_username(id_: str) -> str:
 class CreateServiceAccountForm(forms.Form):
     nickname = forms.CharField(max_length=32)
 
-    def __init__(self, user: User, *args, **kwargs) -> None:
+    def __init__(self, user: UserType, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["identity"] = forms.ModelChoiceField(
@@ -53,7 +56,7 @@ class CreateServiceAccountForm(forms.Form):
 
 
 class DeleteServiceAccountForm(forms.Form):
-    def __init__(self, user: User, *args, **kwargs) -> None:
+    def __init__(self, user: UserType, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["service_account"] = forms.ModelChoiceField(
@@ -72,7 +75,7 @@ class DeleteServiceAccountForm(forms.Form):
 class EditServiceAccountForm(forms.Form):
     nickname = forms.CharField(max_length=32)
 
-    def __init__(self, user: User, *args, **kwargs) -> None:
+    def __init__(self, user: UserType, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["service_account"] = forms.ModelChoiceField(
