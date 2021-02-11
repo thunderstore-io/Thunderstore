@@ -1,8 +1,6 @@
-import json
-
 from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.fields import SerializerMethodField
+from rest_framework.fields import SerializerMethodField, empty
 
 from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
@@ -141,31 +139,22 @@ class PackageUploadCategoriesField(serializers.RelatedField):
         return categories
 
 
-class DictSerializer(serializers.Serializer):
-    def create(self, validated_data):
-        return validated_data
-
-
-class JSONToSerializerField(serializers.Field):
-    """Parses a JSON string and passes the data to a DictSerializer subclass."""
+class JSONSerializerField(serializers.JSONField):
+    """Parses a JSON string and passes the data to a Serializer."""
 
     def __init__(self, serializer, *args, **kwargs):
-        self._serializer = serializer
         super().__init__(*args, **kwargs)
+        self.serializer = serializer
 
-    def to_internal_value(self, data):
-        try:
-            serializer = self._serializer(data=json.loads(data), context=self.context)
-        except json.JSONDecodeError:
-            raise serializers.ValidationError("Invalid JSON")
-        serializer.is_valid(raise_exception=True)
-        return serializer.save()
+    def bind(self, field_name, parent):
+        super().bind(field_name, parent)
+        self.serializer.bind(field_name, parent)
 
-    def to_representation(self, value):
-        raise NotImplementedError()
+    def run_validation(self, data=empty):
+        return self.serializer.run_validation(super().run_validation(data))
 
 
-class PackageUploadMetadataSerializer(DictSerializer):
+class PackageUploadMetadataSerializer(serializers.Serializer):
     """Non-file fields used for package upload."""
 
     author_name = PackageUploadAuthorNameField()
@@ -175,7 +164,7 @@ class PackageUploadMetadataSerializer(DictSerializer):
 
 class PackageUploadSerializerExperiemental(serializers.Serializer):
     file = serializers.FileField(write_only=True)
-    metadata = JSONToSerializerField(serializer=PackageUploadMetadataSerializer)
+    metadata = JSONSerializerField(serializer=PackageUploadMetadataSerializer())
 
     def _create_form(self, data) -> PackageUploadForm:
         request = self.context["request"]
