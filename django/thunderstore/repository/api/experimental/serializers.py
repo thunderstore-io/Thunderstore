@@ -1,5 +1,6 @@
 import json
 
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
@@ -108,8 +109,8 @@ class PackageUploadAuthorNameField(serializers.SlugRelatedField):
         super().__init__(*args, **kwargs)
 
     def get_queryset(self):
-        return UploaderIdentity.objects.filter(
-            members__user=self.context["request"].user,
+        return UploaderIdentity.objects.exclude(
+            ~Q(members__user=self.context["request"].user),
         )
 
 
@@ -117,8 +118,8 @@ class PackageUploadCategoriesField(serializers.RelatedField):
     """Package upload's categories metadata field."""
 
     def get_queryset(self):
-        return PackageCategory.objects.filter(
-            community=self.context["request"].community,
+        return PackageCategory.objects.exclude(
+            ~Q(community=self.context["request"].community),
         )
 
     def to_representation(self, value):
