@@ -129,15 +129,16 @@ class PackageUploadCategoriesField(serializers.RelatedField):
         if not isinstance(data, list):
             raise serializers.ValidationError("Not a list")
 
-        out = []
-        for category_slug in data:
-            category = self.get_queryset().filter(slug=category_slug).first()
-            if not category:
-                raise serializers.ValidationError(
-                    f"'{category_slug}' category not found",
-                )
-            out.append(category)
-        return out
+        categories = self.get_queryset().filter(slug__in=data)
+        slugs = set(categories.values_list("slug", flat=True))
+        errors = {
+            category_slug: f"category not found"
+            for category_slug in data
+            if category_slug not in slugs
+        }
+        if errors:
+            raise serializers.ValidationError(errors)
+        return categories
 
 
 class DictSerializer(serializers.Serializer):
