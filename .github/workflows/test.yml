@@ -106,7 +106,7 @@ jobs:
       - name: Push image to Docker Hub
         run: |
           echo "Pushing riskofthunder/thunderstore:${GITHUB_SHA}"
-          docker push riskofthunder/thunderstore
+          docker push riskofthunder/thunderstore:${GITHUB_SHA}
       - name: Login to GitHub Container Registry
         env:
           DOCKER_USERNAME: ${{ secrets.GHCR_USERNAME }}
@@ -115,4 +115,4 @@ jobs:
       - name: Push image to GitHub Container Registry
         run: |
           echo "Pushing ghcr.io/risk-of-thunder/thunderstore:${GITHUB_SHA}"
-          docker push ghcr.io/risk-of-thunder/thunderstore
+          docker push ghcr.io/risk-of-thunder/thunderstore:${GITHUB_SHA}

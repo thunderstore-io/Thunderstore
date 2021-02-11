@@ -35,15 +35,19 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
         run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to Docker Hub
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          echo "Pushing riskofthunder/thunderstore:release-${{ steps.tag.outputs.tag }}"
-          docker push riskofthunder/thunderstore
+          echo "Pushing riskofthunder/thunderstore:release-${TAG}"
+          docker push riskofthunder/thunderstore:release-${TAG}
       - name: Login to GitHub Container Registry
         env:
           DOCKER_USERNAME: ${{ secrets.GHCR_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.GHCR_PAT }}
         run: docker login ghcr.io -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to GitHub Container Registry
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          echo "Pushing ghcr.io/risk-of-thunder/thunderstore:release-${{ steps.tag.outputs.tag }}"
-          docker push ghcr.io/risk-of-thunder/thunderstore
+          echo "Pushing ghcr.io/risk-of-thunder/thunderstore:release-${TAG}"
+          docker push ghcr.io/risk-of-thunder/thunderstore:release-${TAG}
