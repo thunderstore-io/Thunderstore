@@ -1,6 +1,7 @@
 from copy import copy
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
@@ -13,7 +14,14 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
-from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
+from thunderstore.core.factories import UserFactory
+from thunderstore.core.utils import ChoiceEnum
+from thunderstore.repository.factories import (
+    PackageFactory,
+    PackageVersionFactory,
+    UploaderIdentityFactory,
+    UploaderIdentityMemberFactory,
+)
 from thunderstore.repository.models import (
     Package,
     UploaderIdentity,
@@ -184,3 +192,46 @@ def service_account_token(service_account) -> Token:
 @pytest.fixture()
 def api_client(community_site) -> APIClient:
     return APIClient(HTTP_HOST=community_site.site.domain)
+
+
+def create_test_service_account_user():
+    identity_owner = UserFactory()
+    identity = UploaderIdentityFactory()
+    UploaderIdentityMemberFactory(user=identity_owner, identity=identity, role="owner")
+    form = CreateServiceAccountForm(
+        user=identity_owner,
+        data={"identity": identity, "nickname": "Nickname"},
+    )
+    assert form.is_valid()
+    return form.save().user
+
+
+class TestUserTypes(ChoiceEnum):
+    no_user = "none"
+    unauthenticated = "unauthenticated"
+    regular_user = "regular_user"
+    service_account = "service_account"
+    superuser = "superuser"
+
+    @classmethod
+    def real_users(cls):
+        """ Returns only actual database-level user objects """
+        return (
+            cls.regular_user,
+            cls.service_account,
+            cls.superuser,
+        )
+
+    @staticmethod
+    def get_user_by_type(usertype: str):
+        if usertype == TestUserTypes.no_user:
+            return None
+        if usertype == TestUserTypes.unauthenticated:
+            return AnonymousUser()
+        if usertype == TestUserTypes.regular_user:
+            return UserFactory()
+        if usertype == TestUserTypes.service_account:
+            return create_test_service_account_user()
+        if usertype == TestUserTypes.superuser:
+            return UserFactory(is_staff=True, is_superuser=True)
+        raise AttributeError(f"Invalid useretype: {usertype}")
