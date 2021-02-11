@@ -1,11 +1,13 @@
-from rest_framework.fields import SerializerMethodField
-from rest_framework.serializers import ModelSerializer
+from django.db.models import Q
+from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField, empty
 
-from thunderstore.community.models import PackageListing
-from thunderstore.repository.models import Package, PackageVersion
+from thunderstore.community.models import PackageCategory, PackageListing
+from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
+from thunderstore.repository.package_upload import PackageUploadForm
 
 
-class PackageVersionSerializerExperimental(ModelSerializer):
+class PackageVersionSerializerExperimental(serializers.ModelSerializer):
     download_url = SerializerMethodField()
     full_name = SerializerMethodField()
     dependencies = SerializerMethodField()
@@ -42,7 +44,7 @@ class PackageVersionSerializerExperimental(ModelSerializer):
         )
 
 
-class PackageSerializerExperimental(ModelSerializer):
+class PackageSerializerExperimental(serializers.ModelSerializer):
     owner = SerializerMethodField()
     full_name = SerializerMethodField()
     package_url = SerializerMethodField()
@@ -80,7 +82,7 @@ class PackageSerializerExperimental(ModelSerializer):
         depth = 0
 
 
-class PackageListingSerializerExperimental(ModelSerializer):
+class PackageListingSerializerExperimental(serializers.ModelSerializer):
     package = PackageSerializerExperimental()
     categories = SerializerMethodField()
 
@@ -95,3 +97,96 @@ class PackageListingSerializerExperimental(ModelSerializer):
             "has_nsfw_content",
             "categories",
         )
+
+
+class PackageUploadAuthorNameField(serializers.SlugRelatedField):
+    """Package upload's author name metadata field."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["slug_field"] = "name"
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        return UploaderIdentity.objects.exclude(
+            ~Q(members__user=self.context["request"].user),
+        )
+
+
+class PackageUploadCategoriesField(serializers.RelatedField):
+    """Package upload's categories metadata field."""
+
+    def get_queryset(self):
+        return PackageCategory.objects.exclude(
+            ~Q(community=self.context["request"].community),
+        )
+
+    def to_representation(self, value):
+        return [c.slug for c in value]
+
+    def to_internal_value(self, data):
+        if not isinstance(data, list):
+            raise serializers.ValidationError("Not a list")
+
+        categories = self.get_queryset().filter(slug__in=data)
+        slugs = set(categories.values_list("slug", flat=True))
+        errors = {
+            category_slug: f"category not found"
+            for category_slug in data
+            if category_slug not in slugs
+        }
+        if errors:
+            raise serializers.ValidationError(errors)
+        return categories
+
+
+class JSONSerializerField(serializers.JSONField):
+    """Parses a JSON string and passes the data to a Serializer."""
+
+    def __init__(self, serializer, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.serializer = serializer
+
+    def bind(self, field_name, parent):
+        super().bind(field_name, parent)
+        self.serializer.bind(field_name, parent)
+
+    def run_validation(self, data=empty):
+        return self.serializer.run_validation(super().run_validation(data))
+
+
+class PackageUploadMetadataSerializer(serializers.Serializer):
+    """Non-file fields used for package upload."""
+
+    author_name = PackageUploadAuthorNameField()
+    categories = PackageUploadCategoriesField()
+    has_nsfw_content = serializers.BooleanField()
+
+
+class PackageUploadSerializerExperiemental(serializers.Serializer):
+    file = serializers.FileField(write_only=True)
+    metadata = JSONSerializerField(serializer=PackageUploadMetadataSerializer())
+
+    def _create_form(self, data) -> PackageUploadForm:
+        request = self.context["request"]
+        metadata = data.get("metadata", {})
+        return PackageUploadForm(
+            user=request.user,
+            identity=metadata.get("author_name"),
+            community=request.community,
+            data={
+                "categories": metadata.get("categories"),
+                "has_nsfw_content": metadata.get("has_nsfw_content"),
+            },
+            files={"file": data.get("file")},
+        )
+
+    def validate(self, data):
+        form = self._create_form(data)
+        if not form.is_valid():
+            raise serializers.ValidationError(form.errors)
+        return data
+
+    def create(self, validated_data) -> PackageVersion:
+        form = self._create_form(validated_data)
+        form.is_valid()
+        return form.save()

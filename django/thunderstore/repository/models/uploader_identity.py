@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 
 from thunderstore.core.utils import ChoiceEnum
@@ -87,3 +88,35 @@ class UploaderIdentity(models.Model):
             UploaderIdentityMemberRole.owner,
             UploaderIdentityMemberRole.member,
         )
+
+    def ensure_can_create_service_account(self, user) -> None:
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            raise ValidationError("Must be a member to create a service account")
+        if membership.role != UploaderIdentityMemberRole.owner:
+            raise ValidationError("Must be an owner to create a service account")
+
+    def ensure_can_edit_service_account(self, user) -> None:
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            raise ValidationError("Must be a member to edit a service account")
+        if membership.role != UploaderIdentityMemberRole.owner:
+            raise ValidationError("Must be an owner to edit a service account")
+
+    def ensure_can_delete_service_account(self, user) -> None:
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            raise ValidationError("Must be a member to delete a service account")
+        if membership.role != UploaderIdentityMemberRole.owner:
+            raise ValidationError("Must be an owner to delete a service account")
+
+    def ensure_can_generate_service_account_token(self, user) -> None:
+        membership = self.members.filter(user=user).first()
+        if not membership:
+            raise ValidationError(
+                "Must be a member to generate a service account token",
+            )
+        if membership.role != UploaderIdentityMemberRole.owner:
+            raise ValidationError(
+                "Must be an owner to generate a service account token",
+            )

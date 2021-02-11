@@ -2,7 +2,11 @@ from copy import copy
 
 import pytest
 from django.contrib.sites.models import Site
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
+from thunderstore.account.forms import CreateServiceAccountForm, CreateTokenForm
+from thunderstore.account.models import ServiceAccount
 from thunderstore.community.models import (
     Community,
     CommunitySite,
@@ -10,7 +14,13 @@ from thunderstore.community.models import (
     PackageListing,
 )
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
-from thunderstore.repository.models import Package, UploaderIdentity, Webhook
+from thunderstore.repository.models import (
+    Package,
+    UploaderIdentity,
+    UploaderIdentityMember,
+    UploaderIdentityMemberRole,
+    Webhook,
+)
 from thunderstore.webhooks.models import WebhookType
 
 
@@ -142,3 +152,35 @@ def _use_static_files_storage(settings):
     settings.STATICFILES_STORAGE = (
         "django.contrib.staticfiles.storage.StaticFilesStorage"
     )
+
+
+@pytest.fixture()
+def service_account(user, uploader_identity) -> ServiceAccount:
+    UploaderIdentityMember.objects.create(
+        user=user,
+        identity=uploader_identity,
+        role=UploaderIdentityMemberRole.owner,
+    )
+    form = CreateServiceAccountForm(
+        user,
+        data={"identity": uploader_identity, "nickname": "Nickname"},
+    )
+    assert form.is_valid()
+    return form.save()
+
+
+@pytest.fixture()
+def service_account_token(service_account) -> Token:
+    member = service_account.owner.members.first()
+    assert member.role == UploaderIdentityMemberRole.owner
+    form = CreateTokenForm(
+        member.user,
+        data={"service_account": service_account},
+    )
+    assert form.is_valid()
+    return form.save()
+
+
+@pytest.fixture()
+def api_client(community_site) -> APIClient:
+    return APIClient(HTTP_HOST=community_site.site.domain)

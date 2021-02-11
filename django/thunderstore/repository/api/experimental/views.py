@@ -1,10 +1,15 @@
 import json
 
+from django.db.models import Q
 from django.http import HttpResponse
+from rest_framework import permissions
 from rest_framework.generics import ListAPIView
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
+from rest_framework.views import APIView
 
-from thunderstore.community.models import CommunitySite, PackageListing, Q
+from thunderstore.community.models import CommunitySite, PackageListing
 from thunderstore.core.cache import (
     BackgroundUpdatedCacheMixin,
     CacheBustCondition,
@@ -13,6 +18,8 @@ from thunderstore.core.cache import (
 from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.experimental.serializers import (
     PackageListingSerializerExperimental,
+    PackageUploadSerializerExperiemental,
+    PackageVersionSerializerExperimental,
 )
 
 
@@ -60,3 +67,22 @@ class PackageListApiView(
 
     def get_queryset(self):
         return get_mod_list_queryset(self.request.community_site)
+
+
+class UploadPackageApiView(APIView):
+    """
+    Uploads a package. Requires multipart/form-data.
+    """
+
+    parser_classes = [MultiPartParser]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = PackageUploadSerializerExperiemental(
+            data=request.data,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        package_version = serializer.save()
+        serializer = PackageVersionSerializerExperimental(instance=package_version)
+        return Response(serializer.data)

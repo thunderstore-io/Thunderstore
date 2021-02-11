@@ -2,6 +2,7 @@ import json
 
 from django.http import HttpResponse
 from rest_framework import viewsets
+from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
@@ -35,7 +36,12 @@ class PackageViewSet(
     def get_queryset(self):
         return get_package_listing_queryset(community_site=self.request.community_site)
 
-    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=["post"],
+        authentication_classes=[SessionAuthentication, BasicAuthentication],
+        permission_classes=[IsAuthenticated],
+    )
     def rate(self, request, uuid4=None):
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
         user = request.user
