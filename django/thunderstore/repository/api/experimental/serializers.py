@@ -181,9 +181,9 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
         request = self.context["request"]
         metadata = data.get("metadata", {})
         return PackageUploadForm(
-            request.user,
-            metadata.get("author_name"),
-            request.community,
+            user=request.user,
+            identity=metadata.get("author_name"),
+            community=request.community,
             data={
                 "categories": metadata.get("categories"),
                 "has_nsfw_content": metadata.get("has_nsfw_content"),
