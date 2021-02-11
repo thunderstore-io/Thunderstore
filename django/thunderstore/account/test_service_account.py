@@ -286,7 +286,7 @@ def test_service_account_token_last_used(
     original_last_used = service_account_token.user.service_account.last_used
     api_client.credentials(HTTP_AUTHORIZATION="Bearer " + service_account_token.key)
     response = api_client.get(
-        "/api/v1/current-user/info/",
+        "/api/experimental/current-user/",
         HTTP_ACCEPT="application/json",
     )
     assert response.status_code == 200

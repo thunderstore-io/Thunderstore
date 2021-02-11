@@ -4,7 +4,6 @@ from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,6 +13,7 @@ from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import get_package_listing_queryset
 from thunderstore.repository.models import Package, PackageRating
+from thunderstore.repository.permissions import ensure_can_rate_package
 
 
 class PackageViewSet(
@@ -45,8 +45,7 @@ class PackageViewSet(
     def rate(self, request, uuid4=None):
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
         user = request.user
-        if not user.is_authenticated:
-            raise PermissionDenied("Must be logged in")
+        ensure_can_rate_package(user, package)
         target_state = request.data.get("target_state")
         if target_state == "rated":
             PackageRating.objects.get_or_create(rater=user, package=package)

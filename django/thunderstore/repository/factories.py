@@ -16,7 +16,7 @@ class UploaderIdentityFactory(DjangoModelFactory):
     class Meta:
         model = UploaderIdentity
 
-    name = factory.Faker("first_name")
+    name = factory.Sequence(lambda n: f"TestIdentity{n}")
 
 
 class UploaderIdentityMemberFactory(DjangoModelFactory):

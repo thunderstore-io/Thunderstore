@@ -2,12 +2,36 @@ class ChoiceEnum(object):
     @classmethod
     def as_choices(cls):
         return [
-            (key, value) for key, value in vars(cls).items() if not key.startswith("_")
+            (key, value)
+            for key, value in vars(cls).items()
+            if not key.startswith("_")
+            and any(
+                (
+                    isinstance(value, str),
+                    isinstance(value, int),
+                    isinstance(value, float),
+                    isinstance(value, list),
+                    isinstance(value, dict),
+                )
+            )
         ]
 
     @classmethod
     def options(cls):
-        return [value for key, value in vars(cls).items() if not key.startswith("_")]
+        return [
+            value
+            for key, value in vars(cls).items()
+            if not key.startswith("_")
+            and any(
+                (
+                    isinstance(value, str),
+                    isinstance(value, int),
+                    isinstance(value, float),
+                    isinstance(value, list),
+                    isinstance(value, dict),
+                )
+            )
+        ]
 
 
 def ensure_fields_editable_on_creation(readonly_fields, obj, editable_fields):

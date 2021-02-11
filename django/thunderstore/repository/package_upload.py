@@ -160,6 +160,11 @@ class PackageUploadForm(forms.ModelForm):
 
         return file
 
+    def clean(self):
+        result = super().clean()
+        self.identity.ensure_can_upload_package(self.user)
+        return result
+
     def save(self, *args, **kwargs):
         self.instance.name = self.manifest["name"]
         self.instance.version_number = self.manifest["version_number"]
