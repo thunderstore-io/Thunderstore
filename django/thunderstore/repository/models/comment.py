@@ -21,13 +21,9 @@ class Comment(TimestampMixin, models.Model):
         related_name="replies",
         null=True,
     )
-    # author should never be NULL
-    # It is temporarily set before the `User` `pre_delete` signal is ran but then set
-    # to a "ghost user" `User`.
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="comments",
     )
     content = models.TextField(
