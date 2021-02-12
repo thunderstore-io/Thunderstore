@@ -1,10 +1,14 @@
 from django.conf import settings
+from django.contrib.auth.models import User as UserType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.db import models
 from ulid2 import generate_ulid_as_uuid
 
+from thunderstore.community.models import PackageListing
 from thunderstore.core.mixins import TimestampMixin
+from thunderstore.core.utils import capture_exception
 
 
 class Comment(TimestampMixin, models.Model):
@@ -38,3 +42,27 @@ class Comment(TimestampMixin, models.Model):
     is_pinned = models.BooleanField(
         default=False,
     )
+
+    def ensure_can_edit_content(self, user: UserType) -> None:
+        # Only the comment author can edit a comment's content
+        if user != self.author:
+            raise PermissionDenied("Only the comment author can edit a message")
+
+    def ensure_can_pin(self, user: UserType) -> None:
+        commented_object = self.thread
+        if isinstance(commented_object, PackageListing):
+            # Must be a member of the identity to pin
+            if not commented_object.package.owner.members.filter(
+                user=user,
+            ).exists():
+                raise PermissionDenied("Must be a member to pin messages")
+        else:
+            capture_exception(
+                NotImplementedError(
+                    (
+                        "Comment pin permission logic not setup for "
+                        f"{type(commented_object)}"
+                    )
+                ),
+            )
+            raise PermissionDenied("Server error")

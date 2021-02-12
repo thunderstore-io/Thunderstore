@@ -95,7 +95,7 @@ def test_comment_edit_not_allowed(comment):
     )
     with pytest.raises(PermissionDenied) as exc:
         form.is_valid()
-    assert str(exc.value) == "Cannot edit content"
+    assert str(exc.value) == "Only the comment author can edit a message"
 
 
 @pytest.mark.django_db
@@ -135,7 +135,7 @@ def test_comment_edit_pin_not_allowed(comment):
     )
     with pytest.raises(PermissionDenied) as exc:
         form.is_valid()
-    assert str(exc.value) == "Cannot edit pinned status"
+    assert str(exc.value) == "Must be a member to pin messages"
 
 
 @pytest.mark.django_db

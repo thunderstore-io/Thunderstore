@@ -1,9 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
 
 from thunderstore.community.models import PackageListing
-from thunderstore.core.utils import capture_exception
 from thunderstore.repository.models import Comment
 
 
@@ -48,33 +46,19 @@ class EditCommentForm(forms.Form):
         self.user = user
         self.comment = comment
 
-    def can_edit_content(self) -> bool:
-        # Only the comment author can edit a comment's content
-        return self.user == self.comment.author
-
-    def can_pin(self) -> bool:
-        commented_object = self.comment.thread
-        if isinstance(commented_object, PackageListing):
-            # Must be a member of the identity to pin
-            return commented_object.package.owner.members.filter(
-                user=self.user,
-            ).exists()
-        capture_exception(NotImplementedError())
-        return False
-
     def clean_content(self) -> str:
         content = clean_content(self.cleaned_data["content"])
 
-        if content != self.comment.content and not self.can_edit_content():
-            raise PermissionDenied("Cannot edit content")
+        if content != self.comment.content:
+            self.comment.ensure_can_edit_content(self.user)
 
         return content
 
     def clean_is_pinned(self) -> bool:
         is_pinned = self.cleaned_data.get("is_pinned")
 
-        if is_pinned != self.comment.is_pinned and not self.can_pin():
-            raise PermissionDenied("Cannot edit pinned status")
+        if is_pinned != self.comment.is_pinned:
+            self.comment.ensure_can_pin(self.user)
 
         return is_pinned
 
