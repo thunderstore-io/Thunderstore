@@ -63,7 +63,7 @@ def capture_exception(exception: Exception) -> None:
     testing = "PYTEST_CURRENT_TEST" in os.environ
     if testing or not settings.SILENT_FAIL:
         raise exception
-    if not testing and settings.SENTRY_DSN:
+    else:
         capture_sentry_exception(exception)
 
 
