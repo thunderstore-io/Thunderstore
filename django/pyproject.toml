@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "Thunderstore"
 version = "0.0.0"
-description = "Thunderstore is a mod database and API for downloading Risk of Rain 2 mods"
+description = "Thunderstore is a mod database and API for downloading mods"
 authors = ["Mythic <mythicmaniac@gmail.com>"]
 
 [tool.poetry.dependencies]

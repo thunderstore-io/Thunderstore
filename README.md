@@ -1,8 +1,8 @@
 # Thunderstore
 
-[![codecov](https://codecov.io/gh/risk-of-thunder/Thunderstore/branch/master/graph/badge.svg)](https://codecov.io/gh/risk-of-thunder/Thunderstore)
+[![codecov](https://codecov.io/gh/thunderstore-io/Thunderstore/branch/master/graph/badge.svg)](https://codecov.io/gh/thunderstore-io/Thunderstore)
 
-Thunderstore is a mod database and API for downloading Risk of Rain 2 mods.
+Thunderstore is a mod database and API for downloading mods.
 
 ## Setup guide for development
 
