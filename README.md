@@ -45,7 +45,7 @@ Example `manifest.json` contents:
 {
     "name": "TestMod",
     "version_number": "1.1.0",
-    "website_url": "https://github.com/risk-of-thunder",
+    "website_url": "https://github.com/thunderstore-io",
     "description": "This is a description for a mod. Max length is 250 characters"
 }
 ```

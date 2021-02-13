@@ -8,7 +8,7 @@ RUN npm run build
 
 FROM python:3.8-slim-buster
 
-LABEL org.opencontainers.image.source https://github.com/risk-of-thunder/Thunderstore
+LABEL org.opencontainers.image.source https://github.com/thunderstore-io/Thunderstore
 
 ENV PYTHONUNBUFFERED 1
 
