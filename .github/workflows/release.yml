@@ -27,8 +27,8 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          docker tag thunderstore:latest riskofthunder/thunderstore:release-${TAG}
-          docker tag thunderstore:latest ghcr.io/risk-of-thunder/thunderstore:release-${TAG}
+          docker tag thunderstore:latest thunderstore/thunderstore:release-${TAG}
+          docker tag thunderstore:latest ghcr.io/thunderstore-io/thunderstore:release-${TAG}
       - name: Login to Docker Hub
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -38,8 +38,8 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          echo "Pushing riskofthunder/thunderstore:release-${TAG}"
-          docker push riskofthunder/thunderstore:release-${TAG}
+          echo "Pushing thunderstore/thunderstore:release-${TAG}"
+          docker push thunderstore/thunderstore:release-${TAG}
       - name: Login to GitHub Container Registry
         env:
           DOCKER_USERNAME: ${{ secrets.GHCR_USERNAME }}
@@ -49,5 +49,5 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          echo "Pushing ghcr.io/risk-of-thunder/thunderstore:release-${TAG}"
-          docker push ghcr.io/risk-of-thunder/thunderstore:release-${TAG}
+          echo "Pushing ghcr.io/thunderstore-io/thunderstore:release-${TAG}"
+          docker push ghcr.io/thunderstore-io/thunderstore:release-${TAG}

@@ -96,8 +96,8 @@ jobs:
           manage.py makemigrations --check
       - name: Tag image
         run: |
-          docker tag thunderstore:${GITHUB_SHA} riskofthunder/thunderstore:${GITHUB_SHA}
-          docker tag thunderstore:${GITHUB_SHA} ghcr.io/risk-of-thunder/thunderstore:${GITHUB_SHA}
+          docker tag thunderstore:${GITHUB_SHA} thunderstore/thunderstore:${GITHUB_SHA}
+          docker tag thunderstore:${GITHUB_SHA} ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}
       - name: Login to Docker Hub
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -105,8 +105,8 @@ jobs:
         run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to Docker Hub
         run: |
-          echo "Pushing riskofthunder/thunderstore:${GITHUB_SHA}"
-          docker push riskofthunder/thunderstore:${GITHUB_SHA}
+          echo "Pushing thunderstore/thunderstore:${GITHUB_SHA}"
+          docker push thunderstore/thunderstore:${GITHUB_SHA}
       - name: Login to GitHub Container Registry
         env:
           DOCKER_USERNAME: ${{ secrets.GHCR_USERNAME }}
@@ -114,5 +114,5 @@ jobs:
         run: docker login ghcr.io -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to GitHub Container Registry
         run: |
-          echo "Pushing ghcr.io/risk-of-thunder/thunderstore:${GITHUB_SHA}"
-          docker push ghcr.io/risk-of-thunder/thunderstore:${GITHUB_SHA}
+          echo "Pushing ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}"
+          docker push ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}
