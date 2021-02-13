@@ -1,11 +1,11 @@
 import ulid2
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User as UserType
 from django.db import transaction
 from rest_framework.authtoken.models import Token
 
 from thunderstore.account.models import ServiceAccount
+from thunderstore.core.types import UserType
 from thunderstore.repository.models import (
     UploaderIdentity,
     UploaderIdentityMember,
@@ -95,7 +95,7 @@ class EditServiceAccountForm(forms.Form):
 
 
 class CreateTokenForm(forms.Form):
-    def __init__(self, user: User, *args, **kwargs) -> None:
+    def __init__(self, user: UserType, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["service_account"] = forms.ModelChoiceField(
