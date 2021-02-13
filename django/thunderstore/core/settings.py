@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 env = environ.Env(
     DEBUG=(bool, False),
-    NO_SILENT_FAIL=(bool, False),
+    SILENT_FAIL=(bool, True),
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
@@ -78,7 +78,7 @@ if not os.path.exists(checkout_dir("manage.py")):
 
 DEBUG = env.bool("DEBUG")
 DEBUG_SIMULATED_LAG = env.int("DEBUG_SIMULATED_LAG")
-NO_SILENT_FAIL = env.bool("NO_SILENT_FAIL")
+SILENT_FAIL = env.bool("SILENT_FAIL")
 
 SECRET_KEY = env.str("SECRET_KEY")
 

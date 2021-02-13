@@ -61,7 +61,7 @@ class CommunitySiteSerializerContext:
 def capture_exception(exception: Exception) -> None:
     """Raises exception when running tests or NO_SILENT_FAIL."""
     testing = "PYTEST_CURRENT_TEST" in os.environ
-    if testing or settings.NO_SILENT_FAIL:
+    if testing or not settings.SILENT_FAIL:
         raise exception
     if not testing and settings.SENTRY_DSN:
         capture_sentry_exception(exception)
