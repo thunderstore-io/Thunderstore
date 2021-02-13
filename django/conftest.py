@@ -238,6 +238,7 @@ class TestUserTypes(ChoiceEnum):
         raise AttributeError(f"Invalid useretype: {usertype}")
 
 
+@pytest.fixture()
 def comment(user, active_package_listing):
     return Comment.objects.create(
         author=user,
