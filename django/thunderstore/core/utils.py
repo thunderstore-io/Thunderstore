@@ -1,10 +1,7 @@
 import os
 
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.db import transaction
 from sentry_sdk import capture_exception as capture_sentry_exception
-from ulid2 import generate_ulid_as_uuid
 
 
 class ChoiceEnum(object):
@@ -65,33 +62,3 @@ def capture_exception(exception: Exception) -> None:
         raise exception
     else:
         capture_sentry_exception(exception)
-
-
-def _create_ghost_user_username(id_: str) -> str:
-    return f"Ghost User {id_}"
-
-
-def _create_ghost_user_email(id_: str) -> str:
-    # The ID used in ghost user usernames and emails are not the same as their `User.id`
-    # This is because `User` still uses an autoincrement ID
-    return f"{id_}.gu@thunderstore.io"
-
-
-@transaction.atomic
-def delete_user(user: User) -> None:
-    """
-    Delete a User.
-
-    This should be the only place where User.delete() is called.
-    """
-    # Ghost user
-    if user.comments.exists():
-        uuid = generate_ulid_as_uuid()
-        username = _create_ghost_user_username(uuid.hex)
-        email = _create_ghost_user_email(uuid.hex)
-        ghost_user = User.objects.create_user(username, email=email)
-        for comment in user.comments.iterator():
-            comment.author = ghost_user
-            comment.save()
-
-    user.delete()
