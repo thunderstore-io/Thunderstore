@@ -18,7 +18,7 @@ class Comment(TimestampMixin, models.Model):
         on_delete=models.CASCADE,
         related_name="comments",
     )
-    thread_object_id = models.PositiveIntegerField()
+    thread_object_id = models.UUIDField()
     parent_comment = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
