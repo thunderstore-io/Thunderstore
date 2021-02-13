@@ -7,6 +7,7 @@ from thunderstore.repository.api.experimental.tasks import (
     update_api_experimental_caches,
 )
 from thunderstore.repository.api.v1.tasks import update_api_v1_caches
+from thunderstore.repository.models import Comment
 
 User = get_user_model()
 
@@ -46,3 +47,11 @@ def delete_user(user_id: int) -> None:
             comment.author = ghost_user
             comment.save(update_fields=("author",))
         user.delete()
+
+
+@shared_task
+def clean_up_comments() -> None:
+    """Deletes comments with a deleted parent."""
+    for comment in Comment.objects.iterator():
+        if comment.thread is None:
+            comment.delete()

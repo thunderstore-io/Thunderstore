@@ -12,7 +12,7 @@ from thunderstore.repository.models import (
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
 )
-from thunderstore.repository.tasks import delete_user
+from thunderstore.repository.tasks import clean_up_comments, delete_user
 
 
 def test_comment_clean_content():
@@ -147,3 +147,14 @@ def test_comment_create_ghost_user(comment, django_user_model):
     comment = Comment.objects.get(pk=comment.pk)
     assert comment.author.username.startswith("Ghost User ")
     assert comment.author.email.endswith(".gu@thunderstore.io")
+
+
+@pytest.mark.django_db
+def test_comment_clean_up_orphans(comment):
+    # Check if comments with parents are not deleted
+    clean_up_comments.delay().get()
+    assert Comment.objects.filter(pk=comment.pk).exists() is True
+    # Check if comments without parents are deleted
+    comment.thread.delete()
+    clean_up_comments.delay().get()
+    assert Comment.objects.filter(pk=comment.pk).exists() is False
