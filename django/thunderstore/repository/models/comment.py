@@ -18,7 +18,10 @@ class Comment(TimestampMixin, models.Model):
         on_delete=models.CASCADE,
         related_name="comments",
     )
-    thread_object_id = models.UUIDField()
+    # `thread_object_id` is a CharField to optimise the clean up comments task
+    # As UUIDs cannot be casted to integers or vice versa, you are not able to compare
+    # `thread_object_id` and `thread_content_type`'s `pk`.
+    thread_object_id = models.CharField(max_length=36)
     parent_comment = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
