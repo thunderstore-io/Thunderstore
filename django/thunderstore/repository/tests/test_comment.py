@@ -1,6 +1,7 @@
 import pytest
 from django.core.exceptions import PermissionDenied
 
+from thunderstore.account.tasks import delete_user
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.comment import (
     CreateCommentForm,
@@ -12,7 +13,7 @@ from thunderstore.repository.models import (
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
 )
-from thunderstore.repository.tasks import clean_up_comments, delete_user
+from thunderstore.repository.tasks import clean_up_comments
 
 
 def test_comment_clean_content():

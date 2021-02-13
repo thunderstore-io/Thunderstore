@@ -2,7 +2,7 @@ from django import forms
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 
-from thunderstore.repository.tasks import delete_user
+from thunderstore.account.tasks import delete_user
 
 
 class LinkedAccountDisconnectForm(forms.Form):
