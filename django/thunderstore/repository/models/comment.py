@@ -62,7 +62,7 @@ class Comment(TimestampMixin, models.Model):
                     (
                         "Comment pin permission logic not setup for "
                         f"{type(commented_object)}"
-                    )
+                    ),
                 ),
             )
             raise PermissionDenied("Server error")
