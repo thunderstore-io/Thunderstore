@@ -1,10 +1,10 @@
 from typing import Optional
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 
+from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.validators import AuthorNameRegexValidator
 
@@ -92,31 +92,31 @@ class UploaderIdentity(models.Model):
             UploaderIdentityMemberRole.member,
         )
 
-    def get_membership_for_user(self, user) -> Optional[User]:
+    def get_membership_for_user(self, user) -> Optional[UploaderIdentityMember]:
         return self.members.filter(user=user).first()
 
-    def ensure_can_create_service_account(self, user: User) -> None:
+    def ensure_can_create_service_account(self, user: UserType) -> None:
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to create a service account")
         if membership.role != UploaderIdentityMemberRole.owner:
             raise ValidationError("Must be an owner to create a service account")
 
-    def ensure_can_edit_service_account(self, user: User) -> None:
+    def ensure_can_edit_service_account(self, user: UserType) -> None:
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to edit a service account")
         if membership.role != UploaderIdentityMemberRole.owner:
             raise ValidationError("Must be an owner to edit a service account")
 
-    def ensure_can_delete_service_account(self, user: User) -> None:
+    def ensure_can_delete_service_account(self, user: UserType) -> None:
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to delete a service account")
         if membership.role != UploaderIdentityMemberRole.owner:
             raise ValidationError("Must be an owner to delete a service account")
 
-    def ensure_can_generate_service_account_token(self, user: User) -> None:
+    def ensure_can_generate_service_account_token(self, user: UserType) -> None:
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError(
@@ -127,7 +127,7 @@ class UploaderIdentity(models.Model):
                 "Must be an owner to generate a service account token",
             )
 
-    def ensure_can_upload_package(self, user: User) -> None:
+    def ensure_can_upload_package(self, user: UserType) -> None:
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member of identity to upload package")

@@ -4,12 +4,12 @@ from typing import Optional
 from zipfile import BadZipFile, ZipFile
 
 from django import forms
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from PIL import Image
 
 from thunderstore.community.models import Community, PackageCategory
+from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 
@@ -46,11 +46,18 @@ class PackageUploadForm(forms.ModelForm):
         model = PackageVersion
         fields = ["file"]
 
-    def __init__(self, user, identity, community, *args, **kwargs):
+    def __init__(
+        self,
+        user: UserType,
+        identity: UploaderIdentity,
+        community: Community,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
-        self.user: User = user
-        self.identity: UploaderIdentity = identity
-        self.community: Community = community
+        self.user = user
+        self.identity = identity
+        self.community = community
         self.fields["categories"].queryset = PackageCategory.objects.filter(
             community=community
         )
