@@ -1,4 +1,5 @@
 from django.db import models
+from django.shortcuts import redirect
 
 
 class TimestampMixin(models.Model):
@@ -15,3 +16,10 @@ class TimestampMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+class RequireAuthenticationMixin:
+    def dispatch(self, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            return redirect("index")
+        return super().dispatch(*args, **kwargs)
