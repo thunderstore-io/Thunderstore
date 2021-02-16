@@ -1,3 +1,6 @@
+from typing import Callable
+
+from django.core.exceptions import ValidationError
 from sentry_sdk import capture_exception as capture_sentry_exception
 
 
@@ -50,6 +53,14 @@ class CommunitySiteSerializerContext:
         context = super().get_serializer_context()
         context["community_site"] = self.request.community_site
         return context
+
+
+def check_validity(fn: Callable[[], None]) -> bool:
+    try:
+        fn()
+        return True
+    except ValidationError:
+        return False
 
 
 def capture_exception(*args, **kwargs):
