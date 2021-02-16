@@ -47,6 +47,15 @@ def uploader_identity():
 
 
 @pytest.fixture()
+def uploader_identity_member(uploader_identity):
+    return UploaderIdentityMember.objects.create(
+        identity=uploader_identity,
+        user=UserFactory(),
+        role=UploaderIdentityMemberRole.member,
+    )
+
+
+@pytest.fixture()
 def package(uploader_identity):
     return Package.objects.create(
         owner=uploader_identity,
@@ -221,6 +230,10 @@ class TestUserTypes(ChoiceEnum):
             cls.service_account,
             cls.superuser,
         )
+
+    @classmethod
+    def fake_users(cls):
+        return (cls.no_user, cls.unauthenticated)
 
     @staticmethod
     def get_user_by_type(usertype: str):
