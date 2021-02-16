@@ -6,6 +6,7 @@ from ..models.package_listing import PackageListing
 @admin.register(PackageListing)
 class PackageCategoryAdmin(admin.ModelAdmin):
     filter_horizontal = ("categories",)
+    raw_id_fields = ("package",)
     list_filter = (
         "categories",
         "has_nsfw_content",
@@ -32,3 +33,9 @@ class PackageCategoryAdmin(admin.ModelAdmin):
         "datetime_created",
         "datetime_updated",
     )
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields
+        else:
+            return []

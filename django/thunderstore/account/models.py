@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING, Optional
+
 import ulid2
 from django.conf import settings
 from django.db import models, transaction
+
+if TYPE_CHECKING:
+    from thunderstore.repository.models import UploaderIdentityMember
 
 
 class ServiceAccount(models.Model):
@@ -21,6 +26,10 @@ class ServiceAccount(models.Model):
     @property
     def nickname(self) -> str:
         return self.user.first_name
+
+    @property
+    def owner_membership(self) -> "Optional[UploaderIdentityMember]":
+        return self.owner.members.filter(user=self.user).first()
 
     @transaction.atomic
     def delete(self, *args, **kwargs):

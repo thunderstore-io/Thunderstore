@@ -49,6 +49,20 @@ class CommunitySite(TimestampMixin, models.Model):
     def __str__(self):
         return str(self.community)
 
+    def save(self, *args, **kwargs):
+        if not self.icon:
+            self.icon_width = 0
+            self.icon_height = 0
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = set(
+                    kwargs["update_fields"]
+                    + (
+                        "icon_width",
+                        "icon_height",
+                    )
+                )
+        return super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = "community site"
         verbose_name_plural = "community sites"

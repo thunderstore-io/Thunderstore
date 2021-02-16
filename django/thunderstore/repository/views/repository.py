@@ -317,8 +317,13 @@ class PackageCreateView(CreateView):
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs["user"] = self.request.user
-        kwargs["identity"] = UploaderIdentity.get_or_create_for_user(self.request.user)
         kwargs["community"] = self.request.community
+
+        # Ensures the user has at least one team by default
+        # TODO: Remove once teams are autocreated elsewhere
+        kwargs["initial"] = {
+            "team": UploaderIdentity.get_or_create_for_user(self.request.user)
+        }
         return kwargs
 
     @transaction.atomic

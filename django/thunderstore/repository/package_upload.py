@@ -6,6 +6,7 @@ from zipfile import BadZipFile, ZipFile
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.db import transaction
 from PIL import Image
 
 from thunderstore.community.models import Community, PackageCategory
@@ -38,29 +39,39 @@ def unpack_serializer_errors(field, errors, error_dict=None):
 
 class PackageUploadForm(forms.ModelForm):
     categories = forms.ModelMultipleChoiceField(
-        queryset=PackageCategory.objects.none(), required=False
+        queryset=PackageCategory.objects.none(),
+        required=False,
+    )
+    team = forms.ModelChoiceField(
+        queryset=UploaderIdentity.objects.none(),
+        to_field_name="name",
+        required=True,
     )
     has_nsfw_content = forms.BooleanField(required=False)
 
     class Meta:
         model = PackageVersion
-        fields = ["file"]
+        fields = ["team", "file"]
 
     def __init__(
         self,
         user: UserType,
-        identity: UploaderIdentity,
         community: Community,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.user = user
-        self.identity = identity
         self.community = community
         self.fields["categories"].queryset = PackageCategory.objects.filter(
             community=community
         )
+        # TODO: Query only teams where the user has upload permission
+        self.fields["team"].queryset = UploaderIdentity.objects.filter(
+            members__user=self.user,
+        )
+        # TODO: Move this to the frontent code somehow
+        self.fields["team"].widget.attrs["class"] = "slimselect-lg"
         self.manifest: Optional[dict] = None
         self.icon: Optional[ContentFile] = None
         self.readme: Optional[str] = None
@@ -81,7 +92,7 @@ class PackageUploadForm(forms.ModelForm):
 
         serializer = ManifestV1Serializer(
             user=self.user,
-            uploader=self.identity,
+            uploader=self.cleaned_data.get("team"),
             data=manifest_data,
         )
         if serializer.is_valid():
@@ -167,11 +178,12 @@ class PackageUploadForm(forms.ModelForm):
 
         return file
 
-    def clean(self):
-        result = super().clean()
-        self.identity.ensure_can_upload_package(self.user)
-        return result
+    def clean_team(self):
+        team = self.cleaned_data["team"]
+        team.ensure_can_upload_package(self.user)
+        return team
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         self.instance.name = self.manifest["name"]
         self.instance.version_number = self.manifest["version_number"]
@@ -179,8 +191,10 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
         self.instance.file_size = self.file_size
+        identity = self.cleaned_data["team"]
+        identity.ensure_can_upload_package(self.user)
         self.instance.package = Package.objects.get_or_create(
-            owner=self.identity,
+            owner=identity,
             name=self.instance.name,
         )[0]
         self.instance.package.update_listing(

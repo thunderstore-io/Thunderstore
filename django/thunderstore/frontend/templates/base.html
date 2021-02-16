@@ -90,6 +90,9 @@
             </ul>
         </nav>
         <div class="container">
+            {% for message in messages %}
+                <div class="alert mt-3 alert-{{ message.tags }}" role="alert"><p class="mb-0">{{ message }}</p></div>
+            {% endfor %}
             {% block content_beginning %}
                 {% dynamic_html "content_beginning" %}
             {% endblock %}

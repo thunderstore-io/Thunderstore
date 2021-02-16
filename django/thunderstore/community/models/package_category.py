@@ -1,9 +1,11 @@
 from django.db import models
+from django.db.models import Manager
 
 from thunderstore.core.mixins import TimestampMixin
 
 
 class PackageCategory(TimestampMixin, models.Model):
+    objects: "Manager[PackageCategory]"
     community = models.ForeignKey(
         "community.Community",
         related_name="package_categories",

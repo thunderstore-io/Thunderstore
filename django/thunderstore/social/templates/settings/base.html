@@ -19,6 +19,8 @@
                 <li><a href="{% url "settings.linked-accounts" %}">Linked Accounts</a></li>
                 <li><a href="{% url "settings.delete-account" %}" class="text-danger">Delete Account</a></li>
             </ul>
+            {% block settings_sidebar_extra %}
+            {% endblock %}
         </div>
         <div class="col-9">
             {% block settings_content %}

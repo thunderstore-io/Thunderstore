@@ -39,6 +39,8 @@ class ManifestV1Serializer(serializers.Serializer):
 
     def validate(self, data):
         result = super().validate(data)
+        if self.uploader is None:
+            raise ValidationError("Unable to validate package when no team is selected")
         if not self.uploader.can_user_upload(self.user):
             raise ValidationError(
                 f"Missing privileges to upload under author {self.uploader.name}"
