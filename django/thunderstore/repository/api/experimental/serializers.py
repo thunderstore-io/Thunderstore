@@ -171,11 +171,11 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
         metadata = data.get("metadata", {})
         return PackageUploadForm(
             user=request.user,
-            identity=metadata.get("author_name"),
             community=request.community,
             data={
                 "categories": metadata.get("categories"),
                 "has_nsfw_content": metadata.get("has_nsfw_content"),
+                "team": metadata.get("author_name"),
             },
             files={"file": data.get("file")},
         )

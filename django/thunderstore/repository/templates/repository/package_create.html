@@ -12,7 +12,15 @@
     </div>
     {% csrf_token %}
     <label for="id_file" class="btn btn-primary btn-lg btn-block" id="file_drop" style="cursor: pointer;"></label>
-    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file" style="display: none;"></p>
+    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file" style="display: none;">
+
+    <div class="field-wrapper">
+        <div class="field-row">
+            <label for="{{ form.team.id_for_label }}">Team</label>
+            {{ form.team }}
+        </div>
+        <div class="text-danger field-errors">{{ form.team.errors }}</div>
+    </div>
 
     <div class="field-wrapper">
         <div class="field-row">
@@ -121,6 +129,9 @@
 
 new SlimSelect({
     select: "#{{ form.categories.auto_id }}"
+});
+new SlimSelect({
+    select: "#{{ form.team.auto_id }}"
 });
 
 var file_drop = document.getElementById("file_drop");
