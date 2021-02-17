@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 
 from thunderstore.repository.validators import (
     AuthorNameRegexValidator,
+    PackageReferenceComponentValidator,
     PackageReferenceValidator,
     VersionNumberValidator,
 )
@@ -111,3 +112,28 @@ def test_author_name_regex_validator(author_name, should_fail):
             validator(author_name)
     else:
         validator(author_name)
+
+
+@pytest.mark.parametrize(
+    "component, should_fail",
+    (
+        ("SomeAuthor", False),
+        ("Some-Author", True),
+        ("Som3-Auth0r", True),
+        ("Som3_Auth0r", False),
+        ("Some.Author", True),
+        ("Some@Author", True),
+        ("_", True),
+        ("_Asd", True),
+        ("Asd_", True),
+        ("As_d_", True),
+        ("As_d", False),
+    ),
+)
+def test_package_reference_component_validator(component: str, should_fail: bool):
+    validator = PackageReferenceComponentValidator("Component")
+    if should_fail:
+        with pytest.raises(DjangoValidationError):
+            validator(component)
+    else:
+        validator(component)
