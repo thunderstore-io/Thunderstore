@@ -9,7 +9,7 @@ from django.urls import reverse
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, check_validity
 from thunderstore.repository.models import Package
-from thunderstore.repository.validators import AuthorNameRegexValidator
+from thunderstore.repository.validators import PackageReferenceComponentValidator
 
 
 class UploaderIdentityMemberRole(ChoiceEnum):
@@ -73,7 +73,7 @@ class UploaderIdentity(models.Model):
     name = models.CharField(
         max_length=64,
         unique=True,
-        validators=[AuthorNameRegexValidator],
+        validators=[PackageReferenceComponentValidator("Author name")],
     )
     is_active = models.BooleanField(default=True)
 
@@ -85,9 +85,12 @@ class UploaderIdentity(models.Model):
         return self.name
 
     def validate(self):
-        for validator in self._meta.get_field("name").validators:
-            validator(self.name)
-        if not self.pk:
+        if self.pk:
+            if not UploaderIdentity.objects.get(pk=self.pk).name == self.name:
+                raise ValidationError("UploaderIdentity name is read only")
+        else:
+            for validator in self._meta.get_field("name").validators:
+                validator(self.name)
             if UploaderIdentity.objects.filter(name__iexact=self.name.lower()).exists():
                 raise ValidationError("The author name already exists")
 

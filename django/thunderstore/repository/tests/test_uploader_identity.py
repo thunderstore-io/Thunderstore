@@ -38,11 +38,15 @@ def test_uploader_identity_can_user_upload(user, role, expected):
     "author_name, should_fail",
     (
         ("SomeAuthor", False),
-        ("Some-Author", False),
-        ("Som3-Auth0r", False),
+        ("Some-Author", True),
+        ("Som3-Auth0r", True),
         ("Som3_Auth0r", False),
-        ("Some.Author", False),
+        ("Some.Author", True),
         ("Some@Author", True),
+        ("_someAuthor_", True),
+        ("_someAuthor", True),
+        ("someAuthor_", True),
+        ("_", True),
     ),
 )
 @pytest.mark.django_db

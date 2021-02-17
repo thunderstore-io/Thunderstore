@@ -43,7 +43,7 @@ def user(django_user_model):
 
 @pytest.fixture()
 def uploader_identity():
-    return UploaderIdentity.objects.create(name="Test-Identity")
+    return UploaderIdentity.objects.create(name="Test_Identity")
 
 
 @pytest.fixture()

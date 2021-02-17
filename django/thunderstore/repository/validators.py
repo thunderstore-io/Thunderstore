@@ -4,10 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.utils.deconstruct import deconstructible
 
-from thunderstore.repository.consts import (
-    AUTHOR_NAME_REGEX,
-    PACKAGE_REFERENCE_COMPONENT_REGEX,
-)
+from thunderstore.repository.consts import PACKAGE_REFERENCE_COMPONENT_REGEX
 
 
 @deconstructible
@@ -57,12 +54,6 @@ class VersionNumberValidator:
 
     def __eq__(self, other):
         return all((isinstance(other, self.__class__),))
-
-
-AuthorNameRegexValidator = RegexValidator(
-    regex=AUTHOR_NAME_REGEX,
-    message="Author names can only contain a-Z A-Z 0-9 . _ - characers",
-)
 
 
 @deconstructible
