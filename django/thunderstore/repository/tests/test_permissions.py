@@ -13,6 +13,7 @@ def test_permissions_ensure_can_rate_package(user_type, package):
     should_fail = (
         TestUserTypes.no_user,
         TestUserTypes.unauthenticated,
+        TestUserTypes.deactivated_user,
         TestUserTypes.service_account,
     )
 

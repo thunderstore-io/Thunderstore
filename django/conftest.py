@@ -219,6 +219,7 @@ class TestUserTypes(ChoiceEnum):
     no_user = "none"
     unauthenticated = "unauthenticated"
     regular_user = "regular_user"
+    deactivated_user = "deactivated_user"
     service_account = "service_account"
     superuser = "superuser"
 
@@ -243,6 +244,8 @@ class TestUserTypes(ChoiceEnum):
             return AnonymousUser()
         if usertype == TestUserTypes.regular_user:
             return UserFactory()
+        if usertype == TestUserTypes.deactivated_user:
+            return UserFactory(is_active=False)
         if usertype == TestUserTypes.service_account:
             return create_test_service_account_user()
         if usertype == TestUserTypes.superuser:

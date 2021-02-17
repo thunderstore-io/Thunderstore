@@ -214,19 +214,28 @@ def test_uploader_identity_ensure_can_upload_package(
                 role=role,
             )
         if role is not None:
-            if uploader_active:
-                assert uploader_identity.can_user_upload(user) is True
-                assert uploader_identity.ensure_user_can_access(user) is None
-            else:
+            if user_type == TestUserTypes.deactivated_user:
                 assert uploader_identity.can_user_upload(user) is False
                 with pytest.raises(ValidationError) as e:
                     uploader_identity.ensure_can_upload_package(user)
-                assert (
-                    "The team has been deactivated and as such cannot receive new packages"
-                    in str(e.value)
-                )
+                assert "User has been deactivated" in str(e.value)
+            else:
+                if uploader_active:
+                    assert uploader_identity.can_user_upload(user) is True
+                    assert uploader_identity.ensure_user_can_access(user) is None
+                else:
+                    assert uploader_identity.can_user_upload(user) is False
+                    with pytest.raises(ValidationError) as e:
+                        uploader_identity.ensure_can_upload_package(user)
+                    assert (
+                        "The team has been deactivated and as such cannot receive new packages"
+                        in str(e.value)
+                    )
         else:
             assert uploader_identity.can_user_upload(user) is False
             with pytest.raises(ValidationError) as e:
                 uploader_identity.ensure_can_upload_package(user)
-            assert "Must be a member of identity to upload package" in str(e.value)
+            if user_type == TestUserTypes.deactivated_user:
+                assert "User has been deactivated" in str(e.value)
+            else:
+                assert "Must be a member of identity to upload package" in str(e.value)

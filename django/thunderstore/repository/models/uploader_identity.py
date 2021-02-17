@@ -194,6 +194,8 @@ class UploaderIdentity(models.Model):
     def ensure_can_upload_package(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member of identity to upload package")
