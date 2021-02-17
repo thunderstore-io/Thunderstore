@@ -189,11 +189,17 @@ def test_uploader_identity_ensure_user_can_access(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("uploader_active", (False, True))
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", UploaderIdentityMemberRole.options() + [None])
 def test_uploader_identity_ensure_can_upload_package(
-    uploader_identity: UploaderIdentity, user_type: str, role: str
+    uploader_identity: UploaderIdentity,
+    uploader_active: bool,
+    user_type: str,
+    role: str,
 ):
+    uploader_identity.is_active = uploader_active
+    uploader_identity.save(update_fields=("is_active",))
     user = TestUserTypes.get_user_by_type(user_type)
     if user_type in TestUserTypes.fake_users():
         assert uploader_identity.can_user_upload(user) is False
@@ -208,8 +214,17 @@ def test_uploader_identity_ensure_can_upload_package(
                 role=role,
             )
         if role is not None:
-            assert uploader_identity.can_user_upload(user) is True
-            assert uploader_identity.ensure_user_can_access(user) is None
+            if uploader_active:
+                assert uploader_identity.can_user_upload(user) is True
+                assert uploader_identity.ensure_user_can_access(user) is None
+            else:
+                assert uploader_identity.can_user_upload(user) is False
+                with pytest.raises(ValidationError) as e:
+                    uploader_identity.ensure_can_upload_package(user)
+                assert (
+                    "The team has been deactivated and as such cannot receive new packages"
+                    in str(e.value)
+                )
         else:
             assert uploader_identity.can_user_upload(user) is False
             with pytest.raises(ValidationError) as e:

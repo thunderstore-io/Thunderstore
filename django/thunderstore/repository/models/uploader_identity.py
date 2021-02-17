@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Manager, Q, QuerySet
+from django.urls import reverse
 
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, check_validity
@@ -74,6 +75,7 @@ class UploaderIdentity(models.Model):
         unique=True,
         validators=[AuthorNameRegexValidator],
     )
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Uploader Identity"
@@ -96,6 +98,13 @@ class UploaderIdentity(models.Model):
     @property
     def member_count(self):
         return self.members.count()
+
+    @property
+    def settings_url(self):
+        return reverse(
+            "settings.teams.detail",
+            kwargs={"name": self.name},
+        )
 
     def add_member(self, user: UserType, role: str) -> UploaderIdentityMember:
         return UploaderIdentityMember.objects.create(
@@ -188,6 +197,10 @@ class UploaderIdentity(models.Model):
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member of identity to upload package")
+        if not self.is_active:
+            raise ValidationError(
+                "The team has been deactivated and as such cannot receive new packages"
+            )
 
     def can_user_upload(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_upload_package(user))
