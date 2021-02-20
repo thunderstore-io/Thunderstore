@@ -36,6 +36,26 @@ class UploaderIdentityMemberAdmin(admin.StackedInline):
     )
 
 
+@transaction.atomic
+def deactivate(modeladmin, request, queryset: QuerySet):
+    for package in queryset:
+        package.is_active = False
+        package.save(update_fields=("is_active",))
+
+
+deactivate.short_description = "Deactivate"
+
+
+@transaction.atomic
+def activate(modeladmin, request, queryset: QuerySet):
+    for package in queryset:
+        package.is_active = True
+        package.save(update_fields=("is_active",))
+
+
+activate.short_description = "Activate"
+
+
 @admin.register(UploaderIdentity)
 class UploaderIdentityAdmin(admin.ModelAdmin):
     inlines = [
@@ -48,8 +68,14 @@ class UploaderIdentityAdmin(admin.ModelAdmin):
         else:
             return []
 
+    actions = (
+        activate,
+        deactivate,
+    )
     readonly_fields = ("name",)
-    list_display = ("name",)
+    list_display = ("name", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
 
 
 class PackageVersionInline(admin.StackedInline):
@@ -97,26 +123,6 @@ def undeprecate_package(modeladmin, request, queryset: QuerySet[Package]):
 undeprecate_package.short_description = "Undeprecate"
 
 
-@transaction.atomic
-def deactivate_package(modeladmin, request, queryset: QuerySet[Package]):
-    for package in queryset:
-        package.is_active = False
-        package.save(update_fields=("is_active",))
-
-
-deactivate_package.short_description = "Deactivate"
-
-
-@transaction.atomic
-def activate_package(modeladmin, request, queryset: QuerySet[Package]):
-    for package in queryset:
-        package.is_active = True
-        package.save(update_fields=("is_active",))
-
-
-activate_package.short_description = "Activate"
-
-
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
     inlines = [
@@ -125,8 +131,8 @@ class PackageAdmin(admin.ModelAdmin):
     actions = (
         deprecate_package,
         undeprecate_package,
-        deactivate_package,
-        activate_package,
+        deactivate,
+        activate,
     )
 
     readonly_fields = (
