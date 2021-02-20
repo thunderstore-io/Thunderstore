@@ -107,6 +107,7 @@ def test_version_number_validator_eq():
         ("Asd_", True),
         ("As_d_", True),
         ("As_d", False),
+        ("26", False),
     ),
 )
 def test_package_reference_component_validator(component: str, should_fail: bool):
