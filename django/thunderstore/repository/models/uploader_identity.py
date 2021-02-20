@@ -137,7 +137,7 @@ class UploaderIdentity(models.Model):
         if created:
             identity.add_member(user=user, role=UploaderIdentityMemberRole.owner)
         if not identity.members.filter(user=user).exists():
-            raise RuntimeError("User missing permissions")
+            return None
         return identity
 
     def is_last_owner(self, member: Optional[UploaderIdentityMember]) -> bool:
