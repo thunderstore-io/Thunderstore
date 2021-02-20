@@ -1,0 +1,13 @@
+{% extends 'settings/base.html' %}
+
+{% block title %}Team {{ team.name }}{% endblock %}
+
+{% block settings_sidebar_extra %}
+<h5>Team {{ team.name }}</h5>
+<ul>
+    <li><a href="{% url "settings.teams.detail" team.name %}">Members</a></li>
+{# TODO: Implement    <li><a href="{% url "settings.teams.detail.service_accounts" team.name %}">Service Accounts</a></li>#}
+    <li><a href="{% url "settings.teams.detail.leave" team.name %}" class="text-danger">Leave</a></li>
+    <li><a href="{% url "settings.teams.detail.disband" team.name %}" class="text-danger">Disband</a></li>
+</ul>
+{% endblock %}

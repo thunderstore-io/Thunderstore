@@ -1,0 +1,52 @@
+{% extends 'settings/team_base.html' %}
+
+{% block settings_content %}
+{% if can_manage_members %}
+<div class="row mb-3">
+    <div class="col-12">
+        <a href="{% url "settings.teams.detail.add_member" team.name %}" class="btn btn-success">Add member</a>
+    </div>
+</div>
+{% endif %}
+<div class="row">
+    <div class="col-12">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for membership in team.members.real_users %}
+                <tr>
+                    <td>{{ membership.user.username }}</td>
+                    <td>{{ membership.role }}</td>
+                    <td>
+                        {% if can_manage_members %}
+                        <form class="form-inline d-flex justify-content-end" method="post" action="{{ request.path }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="membership" value="{{ membership.pk }}">
+                            <div class="d-flex justify-content-end">
+                                {% if membership.can_be_demoted and membership.user != request.user %}
+                                <input type="submit" class="btn btn-outline-danger ml-2" value="Demote" name="demote">
+                                <input type="hidden" name="role" value="member">
+                                {% elif membership.can_be_promoted %}
+                                <input type="submit" class="btn btn-outline-success ml-2" value="Promote" name="promote">
+                                <input type="hidden" name="role" value="owner">
+                                {% endif %}
+                                {% if membership.user != request.user %}
+                                <input type="submit" class="btn btn-danger ml-2" value="Kick" name="kick">
+                                {% endif %}
+                            </div>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

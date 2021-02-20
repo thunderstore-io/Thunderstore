@@ -110,6 +110,13 @@ class UploaderIdentity(models.Model):
     def member_count(self):
         return self.members.count()
 
+    @property
+    def settings_url(self):
+        return reverse(
+            "settings.teams.detail",
+            kwargs={"name": self.name},
+        )
+
     def add_member(self, user: UserType, role: str) -> UploaderIdentityMember:
         return UploaderIdentityMember.objects.create(
             identity=self,
