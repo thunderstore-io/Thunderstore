@@ -17,7 +17,12 @@
     <div class="field-wrapper">
         <div class="field-row">
             <label for="{{ form.team.id_for_label }}">Team</label>
-            {{ form.team }}
+            <div class="w-100">
+                {{ form.team }}
+                <p class="mt-1 mb-2">
+                    No teams available? <a href="{% url "settings.teams.create" %}" class="ml-1">Create one here!</a>
+                </p>
+            </div>
         </div>
         <div class="text-danger field-errors">{{ form.team.errors }}</div>
     </div>

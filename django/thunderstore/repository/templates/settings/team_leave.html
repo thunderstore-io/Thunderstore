@@ -1,0 +1,28 @@
+{% extends 'settings/team_base.html' %}
+
+{% block title %}Leave Team{% endblock %}
+
+{% block settings_content %}
+<p>
+    You are about to leave the team <kbd class="text-info">{{ team.name }}</kbd>
+</p>
+<p>
+    If you are an owner of the team, you can only leave if the team has another
+    owner assigned
+</p>
+
+
+<form class="form-inline" method="post" action="{{ request.path }}">
+    {% csrf_token %}
+    <div class="text-danger mb-2">
+        {{ form.non_field_errors }}
+    </div>
+    <div class="col-12 p-0">
+        <input type="hidden" name="membership" value="{{ membership.pk }}">
+        <input type="submit" class="btn btn-danger {% if not can_leave %}disabled{% endif %}" {% if not can_leave %}disabled{% endif %} value="Leave team">
+        {% if not can_leave %}
+        <p class="text-danger mt-1">You cannot currently leave this team as you are it's last owner</p>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

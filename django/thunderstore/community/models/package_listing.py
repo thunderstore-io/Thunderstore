@@ -1,8 +1,9 @@
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 
+from thunderstore.core.cache import CacheBustCondition, invalidate_cache
 from thunderstore.core.mixins import TimestampMixin
 
 
@@ -62,3 +63,15 @@ class PackageListing(TimestampMixin, models.Model):
                 "name": self.package.name,
             },
         )
+
+    @staticmethod
+    def post_save(sender, instance, created, **kwargs):
+        invalidate_cache(CacheBustCondition.any_package_updated)
+
+    @staticmethod
+    def post_delete(sender, instance, **kwargs):
+        invalidate_cache(CacheBustCondition.any_package_updated)
+
+
+signals.post_save.connect(PackageListing.post_save, sender=PackageListing)
+signals.post_delete.connect(PackageListing.post_delete, sender=PackageListing)

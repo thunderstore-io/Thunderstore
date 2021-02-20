@@ -46,6 +46,7 @@ class PackageUploadForm(forms.ModelForm):
         queryset=UploaderIdentity.objects.none(),
         to_field_name="name",
         required=True,
+        empty_label=None,
     )
     has_nsfw_content = forms.BooleanField(required=False)
 

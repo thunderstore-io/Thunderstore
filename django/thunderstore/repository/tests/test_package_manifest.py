@@ -340,7 +340,7 @@ def test_manifest_v1_serializer_dependencies_invalid(
 
 
 def test_manifest_v1_serializer_dependencies_valid(user, manifest_v1_data):
-    reference = PackageReference.parse("actual-package-reference-1.0.0")
+    reference = PackageReference.parse("actual_package-reference-1.0.0")
     PackageVersionFactory.create(
         package=PackageFactory.create(
             owner=UploaderIdentityFactory.create(

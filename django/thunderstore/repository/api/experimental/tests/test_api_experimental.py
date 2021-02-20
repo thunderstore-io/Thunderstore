@@ -123,7 +123,7 @@ def test_api_experimental_upload_package_fail_no_permission(
     assert response.status_code == 400
     assert (
         response.json()["metadata"]["author_name"][0]
-        == "Object with name=Test-Identity does not exist."
+        == "Object with name=Test_Identity does not exist."
     )
     namespace = uploader_identity.name
     name = "name"

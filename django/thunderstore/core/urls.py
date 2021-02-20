@@ -10,11 +10,11 @@ from rest_framework import permissions
 from thunderstore.frontend.views import ads_txt_view, robots_txt_view
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
-from thunderstore.social.urls import settings_urls
 
 from ..community.views import FaviconView
 from .api_urls import api_urls
 from .healthcheck import healthcheck_view
+from .setting_urls import settings_urls
 
 handler404 = "thunderstore.frontend.views.handle404"
 handler500 = "thunderstore.frontend.views.handle500"

@@ -14,11 +14,11 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
-from thunderstore.core.factories import UserFactory
 from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
+    ThunderstoreUserFactory,
     UploaderIdentityFactory,
     UploaderIdentityMemberFactory,
 )
@@ -43,14 +43,14 @@ def user(django_user_model):
 
 @pytest.fixture()
 def uploader_identity():
-    return UploaderIdentity.objects.create(name="Test-Identity")
+    return UploaderIdentity.objects.create(name="Test_Identity")
 
 
 @pytest.fixture()
 def uploader_identity_member(uploader_identity):
     return UploaderIdentityMember.objects.create(
         identity=uploader_identity,
-        user=UserFactory(),
+        user=ThunderstoreUserFactory(),
         role=UploaderIdentityMemberRole.member,
     )
 
@@ -204,7 +204,7 @@ def api_client(community_site) -> APIClient:
 
 
 def create_test_service_account_user():
-    identity_owner = UserFactory()
+    identity_owner = ThunderstoreUserFactory()
     identity = UploaderIdentityFactory()
     UploaderIdentityMemberFactory(user=identity_owner, identity=identity, role="owner")
     form = CreateServiceAccountForm(
@@ -219,6 +219,7 @@ class TestUserTypes(ChoiceEnum):
     no_user = "none"
     unauthenticated = "unauthenticated"
     regular_user = "regular_user"
+    deactivated_user = "deactivated_user"
     service_account = "service_account"
     superuser = "superuser"
 
@@ -242,9 +243,11 @@ class TestUserTypes(ChoiceEnum):
         if usertype == TestUserTypes.unauthenticated:
             return AnonymousUser()
         if usertype == TestUserTypes.regular_user:
-            return UserFactory()
+            return ThunderstoreUserFactory.create()
+        if usertype == TestUserTypes.deactivated_user:
+            return ThunderstoreUserFactory.create(is_active=False)
         if usertype == TestUserTypes.service_account:
             return create_test_service_account_user()
         if usertype == TestUserTypes.superuser:
-            return UserFactory(is_staff=True, is_superuser=True)
+            return ThunderstoreUserFactory.create(is_staff=True, is_superuser=True)
         raise AttributeError(f"Invalid useretype: {usertype}")

@@ -9,6 +9,14 @@ from thunderstore.repository.views import (
     PackageListView,
     PackageVersionDetailView,
 )
+from thunderstore.repository.views.team_settings import (
+    SettingsTeamAddMemberView,
+    SettingsTeamCreateView,
+    SettingsTeamDetailView,
+    SettingsTeamDisbandView,
+    SettingsTeamLeaveView,
+    SettingsTeamListView,
+)
 
 urlpatterns = [
     path("", PackageListView.as_view(), name="packages.list"),
@@ -35,5 +43,44 @@ urlpatterns = [
         "<str:owner>/",
         PackageListByOwnerView.as_view(),
         name="packages.list_by_owner",
+    ),
+]
+
+settings_urls = [
+    path(
+        "teams/",
+        SettingsTeamListView.as_view(),
+        name="settings.teams",
+    ),
+    path(
+        "teams/create/",
+        SettingsTeamCreateView.as_view(),
+        name="settings.teams.create",
+    ),
+    path(
+        "teams/<str:name>/",
+        SettingsTeamDetailView.as_view(),
+        name="settings.teams.detail",
+    ),
+    path(
+        "teams/<str:name>/add-member/",
+        SettingsTeamAddMemberView.as_view(),
+        name="settings.teams.detail.add_member",
+    ),
+    # TODO: Enable
+    # path(
+    #     "teams/<str:name>/service-accounts/",
+    #     SettingsTeamDetailView.as_view(),
+    #     name="settings.teams.detail.service_accounts",
+    # ),
+    path(
+        "teams/<str:name>/leave/",
+        SettingsTeamLeaveView.as_view(),
+        name="settings.teams.detail.leave",
+    ),
+    path(
+        "teams/<str:name>/disband/",
+        SettingsTeamDisbandView.as_view(),
+        name="settings.teams.detail.disband",
     ),
 ]
