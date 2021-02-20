@@ -37,3 +37,5 @@ urlpatterns = [
         name="packages.list_by_owner",
     ),
 ]
+
+settings_urls = []
