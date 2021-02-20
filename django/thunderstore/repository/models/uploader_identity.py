@@ -26,6 +26,14 @@ class UploaderIdentityMemberManager(models.Manager):
     ) -> "QuerySet[UploaderIdentityMember]":  # TODO: Generic type
         return self.exclude(user__service_account=None)
 
+    def owners(self) -> "QuerySet[UploaderIdentityMember]":  # TODO: Generic type
+        return self.exclude(~Q(role=UploaderIdentityMemberRole.owner))
+
+    def real_user_owners(
+        self,
+    ) -> "QuerySet[UploaderIdentityMember]":  # TODO: Generic type
+        return self.real_users().exclude(~Q(role=UploaderIdentityMemberRole.owner))
+
 
 class UploaderIdentityMember(models.Model):
     objects: "UploaderIdentityMemberManager[UploaderIdentityMemberManager]" = (
@@ -102,13 +110,6 @@ class UploaderIdentity(models.Model):
     def member_count(self):
         return self.members.count()
 
-    @property
-    def settings_url(self):
-        return reverse(
-            "settings.teams.detail",
-            kwargs={"name": self.name},
-        )
-
     def add_member(self, user: UserType, role: str) -> UploaderIdentityMember:
         return UploaderIdentityMember.objects.create(
             identity=self,
@@ -132,6 +133,12 @@ class UploaderIdentity(models.Model):
             raise RuntimeError("User missing permissions")
         return identity
 
+    def is_last_owner(self, member: Optional[UploaderIdentityMember]) -> bool:
+        if not member:
+            return False
+        owners = self.members.real_user_owners()
+        return member in owners and owners.count() <= 1
+
     def get_membership_for_user(self, user) -> Optional[UploaderIdentityMember]:
         if not hasattr(self, "__membership_cache"):
             self.__membership_cache = {}
@@ -142,6 +149,8 @@ class UploaderIdentity(models.Model):
     def ensure_can_create_service_account(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to create a service account")
@@ -151,6 +160,8 @@ class UploaderIdentity(models.Model):
     def ensure_can_edit_service_account(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to edit a service account")
@@ -160,6 +171,8 @@ class UploaderIdentity(models.Model):
     def ensure_can_delete_service_account(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to delete a service account")
@@ -171,6 +184,8 @@ class UploaderIdentity(models.Model):
     ) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError(
@@ -184,6 +199,10 @@ class UploaderIdentity(models.Model):
     def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
+        if hasattr(user, "service_account"):
+            raise ValidationError("Service accounts are unable to manage members")
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != UploaderIdentityMemberRole.owner:
             raise ValidationError("Must be an owner to manage team members")
@@ -191,6 +210,8 @@ class UploaderIdentity(models.Model):
     def ensure_user_can_access(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
         if not self.get_membership_for_user(user):
             raise ValidationError("Must be a member to access team")
 
@@ -207,6 +228,42 @@ class UploaderIdentity(models.Model):
                 "The team has been deactivated and as such cannot receive new packages"
             )
 
+    def ensure_member_can_be_removed(
+        self, member: Optional[UploaderIdentityMember]
+    ) -> None:
+        if not member:
+            raise ValidationError("Invalid member")
+        if member.identity != self:
+            raise ValidationError("Member is not a part of this uploader identity")
+        if self.is_last_owner(member):
+            raise ValidationError("Cannot remove last owner from team")
+
+    def ensure_member_role_can_be_changed(
+        self, member: Optional[UploaderIdentityMember], new_role: Optional[str]
+    ) -> None:
+        if not member:
+            raise ValidationError("Invalid member")
+        if member.identity != self:
+            raise ValidationError("Member is not a part of this uploader identity")
+        if not new_role or new_role not in UploaderIdentityMemberRole.options():
+            raise ValidationError("New role is invalid")
+        if new_role != UploaderIdentityMemberRole.owner:
+            if self.is_last_owner(member):
+                raise ValidationError("Cannot remove last owner from team")
+
+    def ensure_user_can_disband(self, user: Optional[UserType]):
+        if not user or not user.is_authenticated:
+            raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
+        if hasattr(user, "service_account"):
+            raise ValidationError("Service accounts are unable to disband teams")
+        membership = self.get_membership_for_user(user)
+        if not membership or membership.role != UploaderIdentityMemberRole.owner:
+            raise ValidationError("Must be an owner to disband team")
+        if self.owned_packages.exists():
+            raise ValidationError("Unable to disband teams with packages")
+
     def can_user_upload(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_upload_package(user))
 
@@ -221,3 +278,16 @@ class UploaderIdentity(models.Model):
 
     def can_user_access(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_access(user))
+
+    def can_member_be_removed(self, member: Optional[UploaderIdentityMember]) -> bool:
+        return check_validity(lambda: self.ensure_member_can_be_removed(member))
+
+    def can_member_role_be_changed(
+        self, member: Optional[UploaderIdentityMember], new_role: Optional[str]
+    ) -> bool:
+        return check_validity(
+            lambda: self.ensure_member_role_can_be_changed(member, new_role)
+        )
+
+    def can_user_disband(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_disband(user))
