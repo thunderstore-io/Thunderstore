@@ -135,7 +135,15 @@ class PackageUploadForm(forms.ModelForm):
             raise ValidationError("Invalid icon dimensions, must be 256x256")
 
     def validate_readme(self, readme):
-        readme = readme.decode("utf-8")
+        try:
+            readme = readme.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValidationError(
+                [
+                    f"Unable to parse README.md: {exc}\n",
+                    "Make sure the README.md is UTF-8 compatible",
+                ]
+            )
         max_length = 32768
         if len(readme) > max_length:
             raise ValidationError(f"README.md is too long, max: {max_length}")
