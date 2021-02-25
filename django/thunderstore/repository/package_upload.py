@@ -48,6 +48,11 @@ class PackageUploadForm(forms.ModelForm):
         required=True,
         empty_label=None,
     )
+    communities = forms.ModelMultipleChoiceField(
+        queryset=Community.objects.all(),
+        to_field_name="identifier",
+        required=True,
+    )
     has_nsfw_content = forms.BooleanField(required=False)
 
     class Meta:
@@ -64,6 +69,8 @@ class PackageUploadForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
         self.community = community
+        # TODO: How to handle with multi-community? Let's just default to the
+        #       currently active community for the sake of simplicity
         self.fields["categories"].queryset = PackageCategory.objects.filter(
             community=community
         )
@@ -198,11 +205,17 @@ class PackageUploadForm(forms.ModelForm):
             owner=identity,
             name=self.instance.name,
         )[0]
-        self.instance.package.update_listing(
-            has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),
-            categories=self.cleaned_data.get("categories", []),
-            community=self.community,
-        )
+
+        for community in self.cleaned_data.get("communities", []):
+            categories = []
+            if community == self.community:
+                categories = self.cleaned_data.get("categories", [])
+            self.instance.package.update_listing(
+                has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),
+                categories=categories,
+                community=community,
+            )
+
         self.instance.icon.save("icon.png", self.icon)
         instance = super().save()
         for reference in self.manifest["dependencies"]:

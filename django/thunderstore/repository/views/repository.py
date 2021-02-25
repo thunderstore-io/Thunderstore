@@ -8,7 +8,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 
-from thunderstore.community.models import PackageCategory, PackageListing
+from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.repository.models import PackageVersion, UploaderIdentity
 from thunderstore.repository.package_upload import PackageUploadForm
 
@@ -314,12 +314,20 @@ class PackageCreateView(CreateView):
             return redirect("index")
         return super().dispatch(*args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["selectable_communities"] = Community.objects.filter(
+            Q(is_listed=True) | Q(pk=self.request.community.pk)
+        )
+        return context
+
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs["user"] = self.request.user
         kwargs["community"] = self.request.community
         kwargs["initial"] = {
-            "team": UploaderIdentity.get_default_for_user(self.request.user)
+            "team": UploaderIdentity.get_default_for_user(self.request.user),
+            "communities": [self.request.community],
         }
         return kwargs
 

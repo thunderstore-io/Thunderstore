@@ -2,9 +2,10 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField, empty
 
-from thunderstore.community.models import PackageCategory, PackageListing
+from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
 from thunderstore.repository.package_upload import PackageUploadForm
+from thunderstore.repository.serializer_fields import ModelChoiceField
 
 
 class PackageVersionSerializerExperimental(serializers.ModelSerializer):
@@ -112,33 +113,6 @@ class PackageUploadAuthorNameField(serializers.SlugRelatedField):
         )
 
 
-class PackageUploadCategoriesField(serializers.RelatedField):
-    """Package upload's categories metadata field."""
-
-    def get_queryset(self):
-        return PackageCategory.objects.exclude(
-            ~Q(community=self.context["request"].community),
-        )
-
-    def to_representation(self, value):
-        return [c.slug for c in value]
-
-    def to_internal_value(self, data):
-        if not isinstance(data, list):
-            raise serializers.ValidationError("Not a list")
-
-        categories = self.get_queryset().filter(slug__in=data)
-        slugs = set(categories.values_list("slug", flat=True))
-        errors = {
-            category_slug: f"category not found"
-            for category_slug in data
-            if category_slug not in slugs
-        }
-        if errors:
-            raise serializers.ValidationError(errors)
-        return categories
-
-
 class JSONSerializerField(serializers.JSONField):
     """Parses a JSON string and passes the data to a Serializer."""
 
@@ -154,11 +128,31 @@ class JSONSerializerField(serializers.JSONField):
         return self.serializer.run_validation(super().run_validation(data))
 
 
+class CommunityFilteredModelChoiceField(ModelChoiceField):
+    def get_queryset(self):
+        return self.queryset.exclude(
+            ~Q(community=self.context["request"].community),
+        )
+
+
 class PackageUploadMetadataSerializer(serializers.Serializer):
     """Non-file fields used for package upload."""
 
     author_name = PackageUploadAuthorNameField()
-    categories = PackageUploadCategoriesField()
+    categories = serializers.ListField(
+        child=CommunityFilteredModelChoiceField(
+            queryset=PackageCategory.objects.all(),
+            to_field="slug",
+        ),
+        allow_empty=True,
+    )
+    communities = serializers.ListField(
+        child=ModelChoiceField(
+            queryset=Community.objects.all(),
+            to_field="identifier",
+        ),
+        allow_empty=False,
+    )
     has_nsfw_content = serializers.BooleanField()
 
 
@@ -176,6 +170,7 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
                 "categories": metadata.get("categories"),
                 "has_nsfw_content": metadata.get("has_nsfw_content"),
                 "team": metadata.get("author_name"),
+                "communities": metadata.get("communities"),
             },
             files={"file": data.get("file")},
         )

@@ -36,7 +36,7 @@ class UploaderIdentityMemberManager(models.Manager):
 
 
 class UploaderIdentityMember(models.Model):
-    objects: "UploaderIdentityMemberManager[UploaderIdentityMemberManager]" = (
+    objects: "UploaderIdentityMemberManager[UploaderIdentityMember]" = (
         UploaderIdentityMemberManager()
     )
 
