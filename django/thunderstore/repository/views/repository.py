@@ -8,8 +8,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 
-from thunderstore.community.models import PackageCategory, PackageListing
-from thunderstore.core.utils import capture_exception
+from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.repository.models import PackageVersion, UploaderIdentity
 from thunderstore.repository.package_upload import PackageUploadForm
 
@@ -315,25 +314,21 @@ class PackageCreateView(CreateView):
             return redirect("index")
         return super().dispatch(*args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["selectable_communities"] = Community.objects.filter(
+            Q(is_listed=True) | Q(pk=self.request.community.pk)
+        )
+        return context
+
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs["user"] = self.request.user
         kwargs["community"] = self.request.community
-
-        # Ensures the user has at least one team by default
-        # TODO: Remove once teams are autocreated elsewhere
-        try:
-            initial_team = UploaderIdentity.get_or_create_for_user(self.request.user)
-        except Exception as e:
-            initial_team = None
-            capture_exception(e)
-
-        if initial_team is None:
-            initial_team = UploaderIdentity.objects.filter(
-                members__user=self.request.user
-            ).first()
-
-        kwargs["initial"] = {"team": initial_team}
+        kwargs["initial"] = {
+            "team": UploaderIdentity.get_default_for_user(self.request.user),
+            "communities": [self.request.community],
+        }
         return kwargs
 
     @transaction.atomic

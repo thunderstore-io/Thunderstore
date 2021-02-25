@@ -35,7 +35,13 @@ def test_package_upload(user, manifest_v1_data, community):
     file_data = {"file": SimpleUploadedFile("mod.zip", zip_raw.getvalue())}
     identity = UploaderIdentity.get_or_create_for_user(user)
     form = PackageUploadForm(
-        user=user, files=file_data, community=community, data={"team": identity.name}
+        user=user,
+        files=file_data,
+        community=community,
+        data={
+            "team": identity.name,
+            "communities": [community.identifier],
+        },
     )
     assert form.is_valid()
     version = form.save()
@@ -80,6 +86,7 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data):
             "categories": [category.pk],
             "has_nsfw_content": True,
             "team": identity.name,
+            "communities": [community.identifier],
         },
     )
     assert form.is_valid()

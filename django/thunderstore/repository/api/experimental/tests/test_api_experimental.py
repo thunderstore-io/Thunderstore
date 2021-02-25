@@ -61,6 +61,7 @@ def test_api_experimental_upload_package_success(
     manifest_v1_data,
     package_category,
     uploader_identity,
+    community,
 ):
     zip_data = _create_test_zip(manifest_v1_data)
 
@@ -78,6 +79,7 @@ def test_api_experimental_upload_package_success(
                 {
                     "author_name": uploader_identity.name,
                     "categories": [package_category.slug],
+                    "communities": [community.identifier],
                     "has_nsfw_content": True,
                 },
             ),
@@ -101,6 +103,7 @@ def test_api_experimental_upload_package_fail_no_permission(
     manifest_v1_data,
     package_category,
     uploader_identity,
+    community,
 ):
     zip_data = _create_test_zip(manifest_v1_data)
 
@@ -112,6 +115,7 @@ def test_api_experimental_upload_package_fail_no_permission(
                 {
                     "author_name": uploader_identity.name,
                     "categories": [package_category.slug],
+                    "communities": [community.identifier],
                     "has_nsfw_content": True,
                 },
             ),
@@ -121,10 +125,9 @@ def test_api_experimental_upload_package_fail_no_permission(
     )
     print(response.content)
     assert response.status_code == 400
-    assert (
-        response.json()["metadata"]["author_name"][0]
-        == "Object with name=Test_Identity does not exist."
-    )
+    assert response.json() == {
+        "metadata": {"author_name": ["Object with name=Test_Identity does not exist."]}
+    }
     namespace = uploader_identity.name
     name = "name"
     version = "1.0.0"
@@ -138,6 +141,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
     manifest_v1_data,
     package_category,
     uploader_identity,
+    community,
 ):
     zip_data = _create_test_zip(manifest_v1_data)
 
@@ -156,6 +160,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
                 {
                     "author_name": uploader_identity.name,
                     "categories": [category_slug],
+                    "communities": [community.identifier],
                     "has_nsfw_content": True,
                 },
             ),
@@ -165,10 +170,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
     )
     assert response.status_code == 400
     print(response.content)
-    assert (
-        response.json()["metadata"]["categories"]["invalid-test"]
-        == "category not found"
-    )
+    assert response.json() == {"metadata": {"categories": {"0": ["Object not found"]}}}
     namespace = uploader_identity.name
     name = "name"
     version = "1.0.0"

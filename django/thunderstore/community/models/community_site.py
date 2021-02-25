@@ -1,7 +1,14 @@
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.db.models import QuerySet
 
 from thunderstore.core.mixins import TimestampMixin
+
+
+class CommunitySiteManager(models.Manager):
+    def listed(self) -> "QuerySet[CommunitySiteManager]":  # TODO: Generic type
+        return self.exclude(is_listed=False)
 
 
 def get_community_filepath(instance, filename):
@@ -9,6 +16,8 @@ def get_community_filepath(instance, filename):
 
 
 class CommunitySite(TimestampMixin, models.Model):
+    objects: "CommunitySiteManager[CommunitySite]" = CommunitySiteManager()
+
     site = models.OneToOneField(
         "sites.Site",
         related_name="community",
@@ -19,6 +28,7 @@ class CommunitySite(TimestampMixin, models.Model):
         related_name="sites",
         on_delete=models.CASCADE,
     )
+    is_listed = models.BooleanField(default=True)
 
     slogan = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)
@@ -62,6 +72,10 @@ class CommunitySite(TimestampMixin, models.Model):
                     )
                 )
         return super().save(*args, **kwargs)
+
+    @property
+    def full_url(self) -> str:
+        return f"{settings.PROTOCOL}{self.site.domain}/"
 
     class Meta:
         verbose_name = "community site"

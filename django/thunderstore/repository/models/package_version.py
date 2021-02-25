@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
-from django.db.models import Sum, signals
+from django.db.models import Manager, Sum, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
@@ -24,6 +24,8 @@ def get_version_png_filepath(instance, filename):
 
 
 class PackageVersion(models.Model):
+    objects: "Manager[PackageVersion]"
+
     package = models.ForeignKey(
         "repository.Package",
         related_name="versions",

@@ -26,11 +26,12 @@ class CommunitySiteAdmin(admin.ModelAdmin):
     form = CommunitySiteAdminForm
 
     filter_horizontal = ()
-    list_filter = ()
+    list_filter = ("is_listed",)
     list_display = (
         "id",
         "community",
         "site",
+        "is_listed",
         "datetime_created",
         "datetime_updated",
     )

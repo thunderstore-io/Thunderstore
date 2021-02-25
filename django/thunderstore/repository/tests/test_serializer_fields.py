@@ -11,6 +11,7 @@ from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.serializer_fields import (
     DependencyField,
+    ModelChoiceField,
     PackageNameField,
     PackageVersionField,
 )
@@ -127,7 +128,7 @@ def test_fields_package_name(value: str, exception_message: str):
         ["10000.100000.1000", "Ensure this field has no more than 16 characters."],
     ],
 )
-def test_fields_package_name(value: str, exception_message: str):
+def test_fields_package_version(value: str, exception_message: str):
     field = PackageVersionField()
     if exception_message:
         with pytest.raises(ValidationError) as exception:
@@ -136,3 +137,44 @@ def test_fields_package_name(value: str, exception_message: str):
     else:
         result = field.run_validation(value)
         assert field.to_representation(result) == value
+
+
+def test_fields_model_choice_field_not_none():
+    field = ModelChoiceField(
+        queryset=PackageVersion.objects.all(),
+        to_field="name",
+    )
+    with pytest.raises(ValidationError) as e:
+        field.run_validation(None)
+    assert "This field may not be null" in str(e.value)
+
+
+@pytest.mark.django_db
+def test_fields_model_choice_field_not_found():
+    field = ModelChoiceField(
+        queryset=PackageVersion.objects.none(),
+        to_field="name",
+    )
+    with pytest.raises(ValidationError) as e:
+        field.to_internal_value("somepackage")
+    assert "Object not found" in str(e.value)
+
+
+@pytest.mark.django_db
+def test_fields_model_choice_field_to_internal(package_version: PackageVersion):
+    field = ModelChoiceField(
+        queryset=PackageVersion.objects.all(),
+        to_field="name",
+    )
+    internal = field.to_internal_value(package_version.name)
+    assert internal == package_version
+
+
+@pytest.mark.django_db
+def test_fields_model_choice_field_to_representation(package_version: PackageVersion):
+    field = ModelChoiceField(
+        queryset=PackageVersion.objects.all(),
+        to_field="name",
+    )
+    representation = field.to_representation(package_version)
+    assert representation == package_version.name
