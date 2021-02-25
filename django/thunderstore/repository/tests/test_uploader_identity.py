@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
 from thunderstore.core.factories import UserFactory
+from thunderstore.core.types import UserType
 from thunderstore.repository.factories import (
     UploaderIdentityFactory,
     UploaderIdentityMemberFactory,
@@ -14,6 +15,7 @@ from thunderstore.repository.models import (
     UploaderIdentity,
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
+    strip_unsupported_characters,
 )
 
 
@@ -38,7 +40,7 @@ def test_uploader_identity_can_user_upload(user, role, expected) -> None:
 
 
 @pytest.mark.parametrize(
-    "author_name, should_fail",
+    "name, should_fail",
     (
         ("SomeAuthor", False),
         ("Some-Author", True),
@@ -53,19 +55,114 @@ def test_uploader_identity_can_user_upload(user, role, expected) -> None:
     ),
 )
 @pytest.mark.django_db
-def test_uploader_identity_creation(user, author_name, should_fail) -> None:
-    user.username = author_name
+def test_uploader_identity_create(name: str, should_fail: bool) -> None:
     if should_fail:
         with pytest.raises(ValidationError):
-            UploaderIdentity.get_or_create_for_user(user)
+            UploaderIdentity.objects.create(name=name)
     else:
-        identity = UploaderIdentity.get_or_create_for_user(user)
-        assert identity.name == author_name
+        identity = UploaderIdentity.objects.create(name=name)
+        assert identity.name == name
 
 
-@pytest.mark.parametrize("role", UploaderIdentityMemberRole.options())
 @pytest.mark.django_db
-def test_uploader_identity_member_can_be_demoted(role) -> None:
+@pytest.mark.parametrize(
+    "username, expected_name",
+    (
+        ("SomeAuthor", "SomeAuthor"),
+        ("Some-Author", "SomeAuthor"),
+        ("Som3-Auth0r", "Som3Auth0r"),
+        ("Som3_Auth0r", "Som3_Auth0r"),
+        ("Some.Author", "SomeAuthor"),
+        ("Some@Author", "SomeAuthor"),
+        ("_someAuthor_", "someAuthor"),
+        ("_someAuthor", "someAuthor"),
+        ("someAuthor_", "someAuthor"),
+        ("_", None),
+        ("", None),
+        ("!(¤#!¤)(!#=", None),
+        ("_____", None),
+    ),
+)
+def test_uploader_identity_create_for_user(
+    user: UserType, username: str, expected_name: Optional[str]
+) -> None:
+    user.username = username
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    if expected_name:
+        assert identity.name == expected_name
+        assert identity.members.count() == 1
+        assert identity.members.first().user == user
+    else:
+        assert identity is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("role", UploaderIdentityMemberRole.options() + [None])
+def test_uploader_identity_create_for_user_name_taken(
+    user: UserType, role: str
+) -> None:
+    would_be_name = strip_unsupported_characters(user.username)
+    identity = UploaderIdentity.objects.create(name=would_be_name)
+    if role:
+        UploaderIdentityMember.objects.create(
+            identity=identity,
+            user=user,
+            role=UploaderIdentityMemberRole.owner,
+        )
+    result = UploaderIdentity.get_or_create_for_user(user)
+    if role:
+        assert result == identity
+    else:
+        assert result is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "existing_team_role", UploaderIdentityMemberRole.options() + [None]
+)
+def test_uploader_identity_get_default_for_user(
+    user: UserType, existing_team_role: Optional[str]
+) -> None:
+    existing_identity = None
+    if existing_team_role:
+        existing_identity = UploaderIdentity.objects.create(name="TestTeam")
+        UploaderIdentityMember.objects.create(
+            identity=existing_identity,
+            user=user,
+            role=existing_team_role,
+        )
+
+    default_identity = UploaderIdentity.get_default_for_user(user)
+
+    if existing_team_role:
+        assert default_identity == existing_identity
+    else:
+        assert bool(default_identity)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type",
+    [
+        # Exclude service accounts as they have a team by default
+        x
+        for x in TestUserTypes.options()
+        if x != TestUserTypes.service_account
+    ],
+)
+def test_uploader_identity_get_default_for_user_conflict(user_type: str):
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user and user.is_authenticated:
+        UploaderIdentity.objects.create(
+            name=strip_unsupported_characters(user.username)
+        )
+    default_identity = UploaderIdentity.get_default_for_user(user)
+    assert default_identity is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("role", UploaderIdentityMemberRole.options())
+def test_uploader_identity_member_can_be_demoted(role: str) -> None:
     membership = UploaderIdentityMemberFactory(role=role)
     result_map = {
         UploaderIdentityMemberRole.owner: True,
@@ -502,3 +599,42 @@ def test_uploader_identity_ensure_user_can_disband_has_packages(
     with pytest.raises(ValidationError) as e:
         uploader_identity.ensure_user_can_disband(member.user)
     assert "Unable to disband teams with packages" in str(e.value)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "val_in, val_out",
+    (
+        ("as'\"df", "asdf"),
+        ("_asdf", "asdf"),
+        ("asdf_", "asdf"),
+        ("_asdf_", "asdf"),
+        ("as_df_", "as_df"),
+        ("mr.test", "mrtest"),
+        ("Mr.Test52", "MrTest52"),
+        ("_Some._.name_", "Some_name"),
+        ("_____Some._.name_____", "Some_name"),
+        ("_____", ""),
+        ("_a", "a"),
+        ("", ""),
+        (
+            "_abcdefghij.klmnopqrst_uvwxyzAB#CDEFGHIJ_KLMNOPQRSTU_VXYZ0123-456789_",
+            "abcdefghijklmnopqrst_uvwxyzABCDEFGHIJ_KLMNOPQRSTU_VXYZ0123456789",
+        ),
+    ),
+)
+def test_strip_unsupported_characters(val_in: str, val_out: str):
+    assert strip_unsupported_characters(val_in) == val_out
+
+
+@pytest.mark.django_db
+def test_uploader_identity_name_is_read_only(uploader_identity: UploaderIdentity):
+    uploader_identity.name = uploader_identity.name + "_test"
+    with pytest.raises(ValidationError) as e:
+        uploader_identity.save()
+    assert "UploaderIdentity name is read only" in str(e.value)
+
+
+@pytest.mark.django_db
+def test_uploader_identity_settings_url(uploader_identity: UploaderIdentity):
+    assert bool(uploader_identity.settings_url)

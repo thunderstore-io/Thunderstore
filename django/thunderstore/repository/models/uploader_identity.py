@@ -7,7 +7,7 @@ from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
 
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import ChoiceEnum, check_validity
+from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
 from thunderstore.repository.models import Package
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
@@ -73,6 +73,16 @@ class UploaderIdentityMember(models.Model):
         return f"{self.user.username} membership to {self.identity.name}"
 
 
+def strip_unsupported_characters(val: str) -> str:
+    whitelist = "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789_"
+    result = "".join([x for x in val if x in whitelist])
+    while result.startswith("_"):
+        result = result[1:]
+    while result.endswith("_"):
+        result = result[:-1]
+    return result
+
+
 class UploaderIdentity(models.Model):
     objects: "Manager[UploaderIdentity]"
     members: "UploaderIdentityMemberManager[UploaderIdentityMember]"
@@ -126,19 +136,38 @@ class UploaderIdentity(models.Model):
 
     @classmethod
     @transaction.atomic
-    def get_or_create_for_user(cls, user: UserType):
-        identity_membership = user.uploader_identities.first()
-        if identity_membership:
-            return identity_membership.identity
-
-        identity, created = cls.objects.get_or_create(
-            name=user.username,
-        )
-        if created:
-            identity.add_member(user=user, role=UploaderIdentityMemberRole.owner)
-        if not identity.members.filter(user=user).exists():
+    def get_or_create_for_user(cls, user: UserType) -> "Optional[UploaderIdentity]":
+        name = strip_unsupported_characters(user.username)
+        if not name:
             return None
-        return identity
+
+        existing = cls.objects.filter(name__iexact=name).first()
+        if existing:
+            if existing.can_user_access(user):
+                return existing
+            else:
+                return None
+        else:
+            identity = cls.objects.create(name=name)
+            identity.add_member(user=user, role=UploaderIdentityMemberRole.owner)
+            return identity
+
+    @classmethod
+    def get_default_for_user(
+        cls, user: Optional[UserType]
+    ) -> "Optional[UploaderIdentity]":
+        if not user or not user.is_authenticated:
+            return None
+
+        default = cls.objects.filter(members__user=user).first()
+        if default and default.can_user_access(user):
+            return default
+
+        try:
+            return cls.get_or_create_for_user(user)
+        except Exception as e:  # pragma: no cover
+            capture_exception(e)
+            return None
 
     def is_last_owner(self, member: Optional[UploaderIdentityMember]) -> bool:
         if not member:
