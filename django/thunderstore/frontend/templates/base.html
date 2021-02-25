@@ -37,6 +37,19 @@
             </a>
             <ul class="navbar-nav">
                 <li class="nav-item">
+                    <div class="dropdown">
+                        <a href="#" role="button" id="communitiesMenu" data-toggle="dropdown" aria-haspopup="true"
+                           aria-expanded="false" class="nav-link dropdown-toggle">Communities</a>
+                        {% if selectable_community_sites %}
+                        <div class="dropdown-menu" aria-labelledby="communitiesMenu">
+                            {% for site in selectable_community_sites %}
+                                <a class="dropdown-item" href="{{ site.full_url }}">{{ site.community.name }}</a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'packages.list' %}">Browse</a>
                 </li>
                 {% if request.user.is_authenticated %}
@@ -46,9 +59,9 @@
                 {% endif %}
                 <li class="nav-item">
                     <div class="dropdown">
-                        <a href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true"
+                        <a href="#" role="button" id="developersMenu" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false" class="nav-link dropdown-toggle">Developers</a>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-menu" aria-labelledby="developersMenu">
                             {% if site_wiki_url %}
                             <a class="dropdown-item" href="{{ site_wiki_url }}">Modding Wiki</a>
                             {% endif %}

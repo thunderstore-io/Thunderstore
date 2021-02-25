@@ -1,4 +1,7 @@
+from django.db.models import Q
 from django.templatetags.static import static
+
+from thunderstore.community.models import Community, CommunitySite
 
 
 def community_site(request):
@@ -41,3 +44,11 @@ def community_site(request):
             "site_discord_url": "https://discord.gg/5MbXZvd",
             "site_wiki_url": "https://github.com/risk-of-thunder/R2Wiki/wiki",
         }
+
+
+def selectable_sites(request):
+    return {
+        "selectable_community_sites": CommunitySite.objects.exclude(
+            is_listed=False
+        ).select_related("community", "site")
+    }

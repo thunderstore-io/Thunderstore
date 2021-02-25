@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import QuerySet
@@ -71,6 +72,10 @@ class CommunitySite(TimestampMixin, models.Model):
                     )
                 )
         return super().save(*args, **kwargs)
+
+    @property
+    def full_url(self) -> str:
+        return f"{settings.PROTOCOL}{self.site.domain}/"
 
     class Meta:
         verbose_name = "community site"
