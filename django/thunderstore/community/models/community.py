@@ -1,14 +1,23 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import QuerySet
 
 from thunderstore.core.mixins import TimestampMixin
 
 
+class CommunityManager(models.Manager):
+    def listed(self) -> "QuerySet[Community]":  # TODO: Generic type
+        return self.exclude(is_listed=False)
+
+
 class Community(TimestampMixin, models.Model):
+    objects: "CommunityManager[Community]" = CommunityManager()
+
     identifier = models.CharField(max_length=256, unique=True, db_index=True)
     name = models.CharField(max_length=256)
     discord_url = models.CharField(max_length=512, blank=True, null=True)
     wiki_url = models.CharField(max_length=512, blank=True, null=True)
+    is_listed = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         if self.pk:
