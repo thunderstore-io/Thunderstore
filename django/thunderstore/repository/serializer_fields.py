@@ -1,4 +1,7 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
+from django.db.models import QuerySet
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -9,6 +12,30 @@ from thunderstore.repository.validators import (
     PackageReferenceValidator,
     VersionNumberValidator,
 )
+
+
+class ModelChoiceField(serializers.Field):
+    default_error_messages = {
+        "not_found": _("Object not found"),
+    }
+    initial = ""
+
+    def __init__(self, queryset: QuerySet, to_field: str, **kwargs):
+        self.queryset = queryset
+        self.to_field = to_field
+        super().__init__(**kwargs)
+
+    def get_queryset(self):
+        return self.queryset
+
+    def to_internal_value(self, data):
+        try:
+            return self.get_queryset().get(**{self.to_field: data})
+        except ObjectDoesNotExist:
+            self.fail("not_found")
+
+    def to_representation(self, value):
+        return str(getattr(value, self.to_field))
 
 
 class DependencyField(serializers.Field):
