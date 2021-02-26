@@ -15,14 +15,11 @@ jobs:
         id: tag
         run: echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
       - name: Build Docker image
-        run: docker build -t thunderstore:latest .
+        run: docker build -t thunderstore:latest -t thunderstore:release-${TAG} .
       - name: Run pytest
-        run: >
-          docker run --rm
-          --entrypoint pytest
-          -e SECRET_KEY=hunter2
-          --no-healthcheck
-          thunderstore:latest
+        run: |
+          DJANGO_IMAGE="thunderstore:release-${TAG}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
+          docker-compose -f docker/docker-compose.pytest.yml down -f
       - name: Tag image
         env:
           TAG: ${{ steps.tag.outputs.tag }}
