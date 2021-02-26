@@ -1,12 +1,16 @@
 import hashlib
 import time
+import warnings
+from typing import Any, Callable
 from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db import connection
 from django.http import HttpResponse
 
 from thunderstore.cache.models import DatabaseCache
+from thunderstore.core.transactions import atomic_lock
 from thunderstore.core.utils import ChoiceEnum
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
@@ -19,17 +23,77 @@ class CacheBustCondition(ChoiceEnum):
     dynamic_html_updated = "dynamic_html_updated"
 
 
-def cache_get_or_set(key, default, default_args=(), default_kwargs={}, expiry=None):
+def try_regenerate_cache(
+    key: str,
+    old_key: str,
+    generator: Callable,
+    timeout: int,
+    version=None,
+) -> Any:
+    with atomic_lock(f"cache.regenerate.{key}", shared=False, wait=False) as acquired:
+        if not acquired:
+            return None
+        generated = generator()
+        if generated is None:
+            # TODO: Use some empty object instead which can be used to
+            #       recognize None was cached
+            warnings.warn(
+                "Attempted to set 'None' to cache, replacing with empty string",
+            )
+            generated = ""
+        cache.set(key, generated, timeout=timeout, version=version)
+        # TODO: Cache fallback could technically be stored forever?
+        cache.set(
+            old_key,
+            generated,
+            timeout=max(timeout * 2, DEFAULT_CACHE_EXPIRY),
+            version=version,
+        )
+        return generated
+
+
+def regenerate_cache(key: str, generator: Callable, timeout: int, version=None):
+    if connection.in_atomic_block:
+        if settings.DEBUG:
+            raise RuntimeError("cache regenerated during transaction, unable to lock")
+        else:
+            warnings.warn("cache regenerated during transaction, unable to lock")
+        generated = generator()
+        cache.set(key, generated, timeout=timeout, version=version)
+        return generated
+    else:
+        old_key = f"old.{key}"
+        generated = try_regenerate_cache(
+            key=key,
+            old_key=old_key,
+            generator=generator,
+            timeout=timeout,
+            version=version,
+        )
+        if generated is None:
+            # Lock was taken by another thread, check fallback version
+            generated = cache.get(old_key, version=version)
+        if generated is None:
+            # Finally fall back to generating it on this thread
+            generated = generator()
+            cache.set(key, generated, timeout=timeout, version=version)
+        return generated
+
+
+def cache_get_or_set(key, default, default_args=(), default_kwargs=None, expiry=None):
+    if default_kwargs is None:
+        default_kwargs = {}
+
     def call_default():
         if settings.DEBUG and settings.DEBUG_SIMULATED_LAG:
             time.sleep(settings.DEBUG_SIMULATED_LAG)
         return default(*default_args, **default_kwargs)
 
-    return cache.get_or_set(
-        key=key,
-        default=call_default,
-        timeout=expiry,
-    )
+    result = cache.get(key, version=None)
+    if result is None:
+        result = regenerate_cache(key=key, generator=call_default, timeout=expiry)
+
+    return result
 
 
 def invalidate_cache(cache_bust_condition):
@@ -121,7 +185,8 @@ class BackgroundUpdatedCacheMixin(object):
         if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
             return super().dispatch(*args, **kwargs).render()
         return self.get_cache(
-            self.get_cache_key(*args, **kwargs), self.get_no_cache_response()
+            self.get_cache_key(*args, **kwargs),
+            self.get_no_cache_response(),
         )
 
     @classmethod
