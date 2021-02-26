@@ -1,7 +1,6 @@
-from django.db.models import Q
 from django.templatetags.static import static
 
-from thunderstore.community.models import Community, CommunitySite
+from thunderstore.community.models import CommunitySite
 
 
 def community_site(request):

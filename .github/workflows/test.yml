@@ -59,18 +59,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker image
-        run: docker build -t thunderstore:${GITHUB_SHA} .
+        run: docker build --pull -t thunderstore:${GITHUB_SHA} .
       - name: Run pytest
-        run: >
-          docker run --rm
-          --entrypoint pytest
-          -e SECRET_KEY=hunter2
-          -v "$(pwd)/coverage_results:/app/coverage_results"
-          --no-healthcheck
-          thunderstore:${GITHUB_SHA}
-          --cov-report=xml:coverage_results/coverage.xml
-          --cov-report=term
-          --cov /app/
+        run: |
+          DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
+          docker-compose -f docker/docker-compose.pytest.yml down -f
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v1
