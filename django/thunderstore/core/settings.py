@@ -155,6 +155,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_celery_results",
     "cachalot",
+    "corsheaders",
     # Own
     "thunderstore.core",
     "thunderstore.cache",
@@ -172,6 +173,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "thunderstore.frontend.middleware.SocialAuthExceptionHandlerMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
