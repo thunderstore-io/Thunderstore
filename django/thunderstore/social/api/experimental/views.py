@@ -8,10 +8,12 @@ class CurrentUserExperimentalApiView(APIView):
     """
 
     def get(self, request, format=None):
+        username = None
         capabilities = set()
         rated_packages = []
         teams = []
         if request.user.is_authenticated:
+            username = request.user.username
             capabilities.add("package.rate")
             rated_packages = request.user.package_ratings.select_related(
                 "package"
@@ -19,6 +21,7 @@ class CurrentUserExperimentalApiView(APIView):
             teams = request.user.uploader_identities.values_list("identity__name")
         return Response(
             {
+                "username": username,
                 "capabilities": capabilities,
                 "ratedPackages": rated_packages,
                 "teams": teams,
