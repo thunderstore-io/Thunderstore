@@ -30,7 +30,9 @@ class PackageListing(TimestampMixin, models.Model):
         on_delete=models.CASCADE,
     )
     package = models.ForeignKey(
-        "repository.Package", related_name="package_listings", on_delete=models.CASCADE
+        "repository.Package",
+        related_name="community_listings",
+        on_delete=models.CASCADE,
     )
     categories = models.ManyToManyField(
         "community.PackageCategory",

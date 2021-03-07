@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from distutils.version import StrictVersion
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 from django.db.models import QuerySet
 from django.utils.functional import cached_property
@@ -188,13 +188,26 @@ class PackageReference:
         :rtype: QuerySet of PackageVersion or Package
         """
         if self.version:
-            return PackageVersion.objects.filter(
+            return PackageVersion.objects.filter(**self.get_filter_kwargs())
+        else:
+            return Package.objects.filter(**self.get_filter_kwargs())
+
+    def get_filter_kwargs(self) -> Dict[str, str]:
+        """
+        Get kwargs that can be used on a QuerySet filter to filter for this
+        package or package version
+
+        :return: A dict of kwargs that can be passed into QuerySet.filter()
+        :rtype: Dict[str, str]
+        """
+        if self.version:
+            return dict(
                 package__owner__name=self.namespace,
                 package__name=self.name,
                 version_number=self.version_str,
             )
         else:
-            return Package.objects.filter(
+            return dict(
                 owner__name=self.namespace,
                 name=self.name,
             )
