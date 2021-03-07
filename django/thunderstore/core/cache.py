@@ -42,11 +42,10 @@ def try_regenerate_cache(
             )
             generated = ""
         cache.set(key, generated, timeout=timeout, version=version)
-        # TODO: Cache fallback could technically be stored forever?
         cache.set(
             old_key,
             generated,
-            timeout=max(timeout * 2, DEFAULT_CACHE_EXPIRY),
+            timeout=None,
             version=version,
         )
         return generated
