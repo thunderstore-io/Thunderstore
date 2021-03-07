@@ -60,7 +60,7 @@ class Webhook(models.Model):
     def get_for_package_release(cls, package):
         base_query = Q(Q(webhook_type=WebhookType.mod_release) & Q(is_active=True))
         community_query = Q()
-        for listing in package.package_listings.all():
+        for listing in package.community_listings.all():
             categories = listing.categories.all()
             query = (
                 ~Q(exclude_categories__in=categories)

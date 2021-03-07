@@ -115,10 +115,10 @@
             <div class="bg-light p-2">
                 <div class="row mb-1">
                     <div class="col-6" title="Downloads">
-                        <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ object.package.downloads }}
+                        <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ object.total_downloads }}
                     </div>
                     <div class="col-6 text-right" title="Likes">
-                        <span id="package-rating-{{ object.package.uuid4 }}">{{ object.package.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.package.uuid4 }}"></i>
+                        <span id="package-rating-{{ object.package.uuid4 }}">{{ object.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.package.uuid4 }}"></i>
                     </div>
                 </div>
                 <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ object.package.display_name }}">{{ object.package.display_name }}</h5>

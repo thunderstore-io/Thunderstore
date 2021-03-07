@@ -1,5 +1,5 @@
 from distutils.version import StrictVersion
-from typing import Union
+from typing import Optional, Union
 
 import pytest
 
@@ -337,6 +337,23 @@ def test_queryset(package_version: PackageVersion):
     invalid = PackageReference("user", "name", "1.0.0")
     assert invalid.queryset.count() == 0
     assert invalid.without_version.queryset.count() == 0
+
+
+@pytest.mark.parametrize("namespace", ("test", "namespace"))
+@pytest.mark.parametrize("name", ("name", "package"))
+@pytest.mark.parametrize("version", ("1.0.0", "2.0.0", None))
+def test_get_filter_kwargs(namespace: str, name: str, version: Optional[str]) -> None:
+    reference = PackageReference(namespace, name, version)
+    kwargs = reference.get_filter_kwargs()
+    if version is not None:
+        assert len(kwargs) == 3
+        assert kwargs["package__owner__name"] == namespace
+        assert kwargs["package__name"] == name
+        assert kwargs["version_number"] == version
+    else:
+        assert len(kwargs) == 2
+        assert kwargs["owner__name"] == namespace
+        assert kwargs["name"] == name
 
 
 @pytest.mark.django_db

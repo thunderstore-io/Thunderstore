@@ -163,6 +163,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "thunderstore.core.middleware.QueryCountHeaderMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "thunderstore.frontend.middleware.SocialAuthExceptionHandlerMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -305,6 +306,28 @@ if REDIS_URL:
 #             "BACKEND": "django.core.cache.backends.dummy.DummyCache",
 #         }
 #     }
+
+LOGGING = {
+    "version": 1,
+    "filters": {
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "filters": ["require_debug_true"],
+            "class": "logging.StreamHandler",
+        }
+    },
+    "loggers": {
+        "django.db.backends": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+        }
+    },
+}
 
 # REST Framework
 

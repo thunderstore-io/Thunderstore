@@ -30,7 +30,9 @@ class PackageListing(TimestampMixin, models.Model):
         on_delete=models.CASCADE,
     )
     package = models.ForeignKey(
-        "repository.Package", related_name="package_listings", on_delete=models.CASCADE
+        "repository.Package",
+        related_name="community_listings",
+        on_delete=models.CASCADE,
     )
     categories = models.ManyToManyField(
         "community.PackageCategory",
@@ -70,6 +72,20 @@ class PackageListing(TimestampMixin, models.Model):
                 "name": self.package.name,
             },
         )
+
+    @cached_property
+    def rating_score(self):
+        annotated = getattr(self, "_rating_score", None)
+        if annotated is not None:
+            return annotated
+        return self.package.rating_score
+
+    @cached_property
+    def total_downloads(self):
+        annotated = getattr(self, "_total_downloads", None)
+        if annotated is not None:
+            return annotated
+        return self.package.downloads
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):

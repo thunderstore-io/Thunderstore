@@ -42,11 +42,10 @@ def try_regenerate_cache(
             )
             generated = ""
         cache.set(key, generated, timeout=timeout, version=version)
-        # TODO: Cache fallback could technically be stored forever?
         cache.set(
             old_key,
             generated,
-            timeout=max(timeout * 2, DEFAULT_CACHE_EXPIRY),
+            timeout=None,
             version=version,
         )
         return generated
@@ -127,7 +126,7 @@ class ManualCacheMixin(object):
 
     def dispatch(self, *args, **kwargs):
         def get_default(*a, **kw):
-            return super().dispatch(*a, **kw).render()
+            return super(ManualCacheMixin, self).dispatch(*a, **kw).render()
 
         if self.request.method != "GET":
             return get_default(*args, **kwargs)
@@ -183,7 +182,11 @@ class BackgroundUpdatedCacheMixin(object):
 
     def dispatch(self, *args, **kwargs):
         if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
-            return super().dispatch(*args, **kwargs).render()
+            return (
+                super(BackgroundUpdatedCacheMixin, self)
+                .dispatch(*args, **kwargs)
+                .render()
+            )
         return self.get_cache(
             self.get_cache_key(*args, **kwargs),
             self.get_no_cache_response(),
