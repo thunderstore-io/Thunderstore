@@ -71,6 +71,20 @@ class PackageListing(TimestampMixin, models.Model):
             },
         )
 
+    @cached_property
+    def rating_score(self):
+        annotated = getattr(self, "_rating_score", None)
+        if annotated is not None:
+            return annotated
+        return self.package.rating_score
+
+    @cached_property
+    def total_downloads(self):
+        annotated = getattr(self, "_total_downloads", None)
+        if annotated is not None:
+            return annotated
+        return self.package.downloads
+
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
         invalidate_cache(CacheBustCondition.any_package_updated)
