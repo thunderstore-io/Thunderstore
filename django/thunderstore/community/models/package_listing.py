@@ -39,6 +39,13 @@ class PackageListing(TimestampMixin, models.Model):
     )
     has_nsfw_content = models.BooleanField(default=False)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("package", "community"), name="one_listing_per_community"
+            ),
+        ]
+
     def __str__(self):
         return self.package.name
 

@@ -58,7 +58,11 @@ class Package(models.Model):
     )
 
     class Meta:
-        unique_together = ("owner", "name")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("owner", "name"), name="unique_name_per_namespace"
+            ),
+        ]
 
     def validate(self):
         if not re.match(PACKAGE_NAME_REGEX, self.name):

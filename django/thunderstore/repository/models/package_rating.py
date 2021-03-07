@@ -18,7 +18,11 @@ class PackageRating(models.Model):
     )
 
     class Meta:
-        unique_together = ("rater", "package")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("rater", "package"), name="one_rating_per_rater"
+            ),
+        ]
 
     def __str__(self):
         return f"{self.rater.username} rating on {self.package.full_package_name}"

@@ -30,4 +30,8 @@ class PackageVersionDownloadEvent(models.Model):
         return is_valid
 
     class Meta:
-        unique_together = ("version", "source_ip")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("version", "source_ip"), name="unique_counter_per_ip"
+            ),
+        ]

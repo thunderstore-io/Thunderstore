@@ -18,6 +18,11 @@ class DiscordUserBotPermission(models.Model):
     )
 
     class Meta:
-        unique_together = ("thunderstore_user", "discord_user_id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("thunderstore_user", "discord_user_id"),
+                name="one_permission_per_user",
+            ),
+        ]
         verbose_name = "Discord User Permissions"
         verbose_name_plural = "Discord User Permissions"

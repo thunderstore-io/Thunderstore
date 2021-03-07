@@ -57,7 +57,11 @@ class UploaderIdentityMember(models.Model):
     )
 
     class Meta:
-        unique_together = ("user", "identity")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "identity"), name="one_membership_per_user"
+            ),
+        ]
         verbose_name = "Uploader Identity Member"
         verbose_name_plural = "Uploader Identy Members"
 

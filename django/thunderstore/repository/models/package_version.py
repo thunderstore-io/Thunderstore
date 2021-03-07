@@ -83,7 +83,11 @@ class PackageVersion(models.Model):
         return super().save(*args, **kwargs)
 
     class Meta:
-        unique_together = ("package", "version_number")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("package", "version_number"), name="unique_version_per_package"
+            ),
+        ]
 
     def get_absolute_url(self):
         return reverse(
