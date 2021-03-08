@@ -2,7 +2,6 @@ from thunderstore.cache.cache import CacheBustCondition, cache_function_result
 from thunderstore.community.models import CommunitySite, PackageListing, Q
 
 
-@cache_function_result(cache_until=CacheBustCondition.any_package_updated)
 def get_package_listing_queryset(community_site: CommunitySite):
     return (
         PackageListing.objects.active()
