@@ -44,7 +44,7 @@ def get_package_queryset() -> "QuerySet[Package]":
 
 class CustomCursorPagination(CursorPagination):
     ordering = "-date_created"
-    page_size = 50
+    page_size = 5
 
 
 class PackageListApiView(ManualCacheMixin, ListAPIView):
