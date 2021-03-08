@@ -8,6 +8,7 @@ authors = ["Mythic <mythicmaniac@gmail.com>"]
 python = "^3.8"
 aiohttp = "^3.7.4"
 click = "^7.1.2"
+locust = "^1.4.3"
 
 [tool.poetry.dev-dependencies]
 
