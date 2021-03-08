@@ -150,6 +150,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "django_celery_beat",
     "django_celery_results",
+    "cachalot",
     # Own
     "thunderstore.core",
     "thunderstore.cache",
@@ -277,6 +278,23 @@ def show_debug_toolbar(request):
 if DEBUG_TOOLBAR_ENABLED:
     INSTALLED_APPS += ["debug_toolbar"]
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+    DEBUG_TOOLBAR_PANELS = [
+        "debug_toolbar.panels.history.HistoryPanel",
+        "debug_toolbar.panels.versions.VersionsPanel",
+        "debug_toolbar.panels.timer.TimerPanel",
+        "debug_toolbar.panels.settings.SettingsPanel",
+        "debug_toolbar.panels.headers.HeadersPanel",
+        "debug_toolbar.panels.request.RequestPanel",
+        "debug_toolbar.panels.sql.SQLPanel",
+        "debug_toolbar.panels.staticfiles.StaticFilesPanel",
+        "debug_toolbar.panels.templates.TemplatesPanel",
+        "debug_toolbar.panels.cache.CachePanel",
+        "debug_toolbar.panels.signals.SignalsPanel",
+        "debug_toolbar.panels.logging.LoggingPanel",
+        "debug_toolbar.panels.redirects.RedirectsPanel",
+        "debug_toolbar.panels.profiling.ProfilingPanel",
+        "cachalot.panels.CachalotPanel",
+    ]
     DEBUG_TOOLBAR_CONFIG = {
         "SHOW_TOOLBAR_CALLBACK": "thunderstore.core.settings.show_debug_toolbar",
     }
@@ -300,6 +318,55 @@ if REDIS_URL:
         }
     }
 
+CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
+    (
+        "auth_group",
+        "auth_group_permissions",
+        "auth_permission",
+        "auth_user",
+        "auth_user_groups",
+        "auth_user_user_permissions",
+        "authtoken_token",
+        "backblaze_b2_backblazeb2file",
+        "community_community",
+        "community_communitysite",
+        "community_packagecategory",
+        "community_packagelisting",
+        "community_packagelisting_categories",
+        "core_incomingjwtauthconfiguration",
+        "django_admin_log",
+        "django_celery_beat_clockedschedule",
+        "django_celery_beat_crontabschedule",
+        "django_celery_beat_intervalschedule",
+        "django_celery_beat_periodictask",
+        "django_celery_beat_periodictasks",
+        "django_celery_beat_solarschedule",
+        "django_celery_results_chordcounter",
+        "django_celery_results_taskresult",
+        "django_content_type",
+        "django_site",
+        "easy_thumbnails_source",
+        "easy_thumbnails_thumbnail",
+        "easy_thumbnails_thumbnaildimensions",
+        "frontend_dynamichtml",
+        "frontend_dynamichtml_exclude_communities",
+        "frontend_dynamichtml_require_communities",
+        "repository_discorduserbotpermission",
+        "repository_package",
+        "repository_packageversion_dependencies",
+        "repository_uploaderidentity",
+        "repository_uploaderidentitymember",
+        "social_auth_association",
+        "social_auth_code",
+        "social_auth_nonce",
+        "social_auth_partial",
+        "social_auth_usersocialauth",
+        "webhooks_webhook",
+        "webhooks_webhook_exclude_categories",
+        "webhooks_webhook_require_categories",
+    )
+)
+
 # if DEBUG and not DEBUG_SIMULATED_LAG:
 #     CACHES = {
 #         "default": {
@@ -307,27 +374,27 @@ if REDIS_URL:
 #         }
 #     }
 
-LOGGING = {
-    "version": 1,
-    "filters": {
-        "require_debug_true": {
-            "()": "django.utils.log.RequireDebugTrue",
-        }
-    },
-    "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "filters": ["require_debug_true"],
-            "class": "logging.StreamHandler",
-        }
-    },
-    "loggers": {
-        "django.db.backends": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-        }
-    },
-}
+# LOGGING = {
+#     "version": 1,
+#     "filters": {
+#         "require_debug_true": {
+#             "()": "django.utils.log.RequireDebugTrue",
+#         }
+#     },
+#     "handlers": {
+#         "console": {
+#             "level": "DEBUG",
+#             "filters": ["require_debug_true"],
+#             "class": "logging.StreamHandler",
+#         }
+#     },
+#     "loggers": {
+#         "django.db.backends": {
+#             "level": "DEBUG",
+#             "handlers": ["console"],
+#         }
+#     },
+# }
 
 # REST Framework
 

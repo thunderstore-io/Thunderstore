@@ -6,14 +6,14 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import connection
 from django.http import HttpResponse
+from redis.exceptions import LockError
 
 from thunderstore.cache.models import DatabaseCache
-from thunderstore.core.transactions import atomic_lock
 from thunderstore.core.utils import ChoiceEnum
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
+CACHE_LOCK_TIMEOUT = 30
 
 
 # TODO: Support parameters in cache bust conditions (e.g. specific package update)
@@ -30,9 +30,9 @@ def try_regenerate_cache(
     timeout: int,
     version=None,
 ) -> Any:
-    with atomic_lock(f"cache.regenerate.{key}", shared=False, wait=False) as acquired:
-        if not acquired:
-            return None
+    with cache.lock(
+        f"lock.cachegenerate.{key}", timeout=CACHE_LOCK_TIMEOUT, blocking_timeout=None
+    ):
         generated = generator()
         if generated is None:
             # TODO: Use some empty object instead which can be used to
@@ -52,31 +52,50 @@ def try_regenerate_cache(
 
 
 def regenerate_cache(key: str, generator: Callable, timeout: int, version=None):
-    if connection.in_atomic_block:
-        if settings.DEBUG:
-            raise RuntimeError("cache regenerated during transaction, unable to lock")
-        else:
-            warnings.warn("cache regenerated during transaction, unable to lock")
-        generated = generator()
-        cache.set(key, generated, timeout=timeout, version=version)
-        return generated
-    else:
-        old_key = f"old.{key}"
-        generated = try_regenerate_cache(
+    old_key = f"old.{key}"
+    try:
+        return try_regenerate_cache(
             key=key,
             old_key=old_key,
             generator=generator,
             timeout=timeout,
             version=version,
         )
-        if generated is None:
-            # Lock was taken by another thread, check fallback version
-            generated = cache.get(old_key, version=version)
+    except (LockError, AttributeError):
+        # Lock was taken by another thread, check fallback version
+        generated = cache.get(old_key, version=version)
         if generated is None:
             # Finally fall back to generating it on this thread
             generated = generator()
             cache.set(key, generated, timeout=timeout, version=version)
+            cache.set(old_key, generated, timeout=timeout, version=version)
         return generated
+
+
+def cache_get_or_set_by_key(
+    condition: str,
+    cache_key: str,
+    cache_vary,
+    get_default,
+    default_args=(),
+    default_kwargs=None,
+    expiry=None,
+):
+    if default_kwargs is None:
+        default_kwargs = {}
+
+    return cache_get_or_set(
+        key=get_cache_key(
+            cache_bust_condition=condition,
+            cache_type="key",
+            key=cache_key,
+            vary_on=cache_vary,
+        ),
+        default=get_default,
+        default_args=default_args,
+        default_kwargs=default_kwargs,
+        expiry=expiry,
+    )
 
 
 def cache_get_or_set(key, default, default_args=(), default_kwargs=None, expiry=None):

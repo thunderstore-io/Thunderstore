@@ -15,6 +15,4 @@ class QueryCountHeaderMiddleware:
             with CaptureQueriesContext(connection) as context:
                 response = self.get_response(request)
             response["Django-Query-Count"] = len(context)
-            print("=" * 20)
-            print(f"Executed {len(context)} queries")
             return response

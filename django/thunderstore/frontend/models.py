@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q, signals
 
-from thunderstore.core.cache import CacheBustCondition, invalidate_cache
+from thunderstore.cache.cache import CacheBustCondition, invalidate_cache
 from thunderstore.core.utils import ChoiceEnum
 
 

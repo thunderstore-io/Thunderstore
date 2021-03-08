@@ -8,7 +8,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.core.cache import CacheBustCondition, ManualCacheMixin
+from thunderstore.cache.cache import CacheBustCondition, ManualCacheMixin
 from thunderstore.repository.api.experimental.serializers import (
     PackageSerializerExperimental,
     PackageUploadSerializerExperiemental,

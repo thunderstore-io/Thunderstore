@@ -8,8 +8,14 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 
+from thunderstore.cache.cache import CacheBustCondition, cache_function_result
+from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models import Community, PackageCategory, PackageListing
-from thunderstore.repository.models import PackageVersion, UploaderIdentity
+from thunderstore.repository.models import (
+    PackageVersion,
+    UploaderIdentity,
+    get_package_dependants,
+)
 from thunderstore.repository.package_upload import PackageUploadForm
 
 # Should be divisible by 4 and 3
@@ -19,6 +25,7 @@ MODS_PER_PAGE = 24
 class PackageListSearchView(ListView):
     model = PackageListing
     paginate_by = MODS_PER_PAGE
+    paginator_class = CachedPaginator
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(~Q(community=self.request.community))
@@ -164,6 +171,19 @@ class PackageListSearchView(ListView):
             }
         ]
 
+    def get_paginator(
+        self, queryset, per_page, orphans=0, allow_empty_first_page=True, **kwargs
+    ):
+        return self.paginator_class(
+            queryset,
+            per_page,
+            cache_key="repository.package_list.paginator",
+            cache_vary=self.get_full_cache_vary(),
+            cache_bust_condition=CacheBustCondition.any_package_updated,
+            orphans=orphans,
+            allow_empty_first_page=allow_empty_first_page,
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["categories"] = self.get_categories()
@@ -244,7 +264,7 @@ class PackageListByDependencyView(PackageListSearchView):
 
     def get_base_queryset(self):
         return PackageListing.objects.exclude(
-            ~Q(package__in=self.package_listing.package.dependants)
+            ~Q(package__in=get_package_dependants(self.package_listing.package.pk))
         )
 
     def get_page_title(self):
@@ -254,31 +274,43 @@ class PackageListByDependencyView(PackageListSearchView):
         return f"dependencies-{self.package_listing.package.id}"
 
 
+@cache_function_result(cache_until=CacheBustCondition.any_package_updated)
+def get_package_listing_or_404(namespace: str, name: str, community_pk: int):
+    owner = get_object_or_404(UploaderIdentity, name=namespace)
+    package_listing = (
+        PackageListing.objects.active()
+        .filter(
+            package__owner=owner,
+            package__name=name,
+            community=community_pk,
+        )
+        .select_related(
+            "package",
+            "package__owner",
+            "package__latest",
+        )
+        .first()
+    )
+    if not package_listing:
+        raise Http404("No matching package found")
+    return package_listing
+
+
 class PackageDetailView(DetailView):
     model = PackageListing
 
     def get_object(self, *args, **kwargs):
-        owner = self.kwargs["owner"]
-        owner = get_object_or_404(UploaderIdentity, name=owner)
-        name = self.kwargs["name"]
-        package_listing = (
-            self.model.objects.active()
-            .filter(
-                package__owner=owner,
-                package__name=name,
-                community=self.request.community,
-            )
-            .first()
+        return get_package_listing_or_404(
+            namespace=self.kwargs["owner"],
+            name=self.kwargs["name"],
+            community_pk=self.request.community.pk,
         )
-        if not package_listing:
-            raise Http404("No matching package found")
-        return package_listing
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
         package_listing = context["object"]
-        dependant_count = package_listing.package.dependants.active().count()
+        dependant_count = len(package_listing.package.dependants_list)
 
         if dependant_count == 1:
             dependants_string = f"{dependant_count} other mod depends on this mod"

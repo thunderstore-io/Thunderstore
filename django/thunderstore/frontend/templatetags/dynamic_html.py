@@ -1,7 +1,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 
-from thunderstore.core.cache import CacheBustCondition, cache_function_result
+from thunderstore.cache.cache import CacheBustCondition, cache_function_result
 from thunderstore.frontend.models import DynamicHTML
 
 register = template.Library()

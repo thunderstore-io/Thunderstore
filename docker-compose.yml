@@ -60,7 +60,7 @@ services:
 
   django:
     <<: *django-service
-    command: django
+    command: gunicorn
     volumes:
       - django-data:/app/var
       - ./django:/app
