@@ -68,7 +68,7 @@ def regenerate_cache(key: str, generator: Callable, timeout: int, version=None):
             # Finally fall back to generating it on this thread
             generated = generator()
             cache.set(key, generated, timeout=timeout, version=version)
-            cache.set(old_key, generated, timeout=timeout, version=version)
+            cache.set(old_key, generated, timeout=None, version=version)
         return generated
 
 

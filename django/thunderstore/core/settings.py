@@ -150,7 +150,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "django_celery_beat",
     "django_celery_results",
-    "cachalot",
+    # "cachalot",  # TODO: Re-enable once memory leak has been ruled out
     # Own
     "thunderstore.core",
     "thunderstore.cache",
@@ -293,7 +293,7 @@ if DEBUG_TOOLBAR_ENABLED:
         "debug_toolbar.panels.logging.LoggingPanel",
         "debug_toolbar.panels.redirects.RedirectsPanel",
         "debug_toolbar.panels.profiling.ProfilingPanel",
-        "cachalot.panels.CachalotPanel",
+        # "cachalot.panels.CachalotPanel",  # TODO: Re-enable
     ]
     DEBUG_TOOLBAR_CONFIG = {
         "SHOW_TOOLBAR_CALLBACK": "thunderstore.core.settings.show_debug_toolbar",

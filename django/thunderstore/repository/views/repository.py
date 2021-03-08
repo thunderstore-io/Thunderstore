@@ -143,10 +143,10 @@ class PackageListSearchView(ListView):
                 "package__latest",
                 "package__owner",
             )
-            .annotate(
-                _rating_score=Count("package__package_ratings"),
-                _total_downloads=Sum("package__versions__downloads"),
-            )
+            # .annotate(
+            #     _rating_score=Count("package__package_ratings"),
+            #     _total_downloads=Sum("package__versions__downloads"),
+            # )
         )
         selected_categories = self.get_selected_categories()
         if selected_categories:
