@@ -72,6 +72,32 @@ def regenerate_cache(key: str, generator: Callable, timeout: int, version=None):
         return generated
 
 
+def cache_get_or_set_by_key(
+    condition: str,
+    cache_key: str,
+    cache_vary,
+    get_default,
+    default_args=(),
+    default_kwargs=None,
+    expiry=None,
+):
+    if default_kwargs is None:
+        default_kwargs = {}
+
+    return cache_get_or_set(
+        key=get_cache_key(
+            cache_bust_condition=condition,
+            cache_type="key",
+            key=cache_key,
+            vary_on=cache_vary,
+        ),
+        default=get_default,
+        default_args=default_args,
+        default_kwargs=default_kwargs,
+        expiry=expiry,
+    )
+
+
 def cache_get_or_set(key, default, default_args=(), default_kwargs=None, expiry=None):
     if default_kwargs is None:
         default_kwargs = {}

@@ -8,6 +8,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 
+from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.repository.models import PackageVersion, UploaderIdentity
 from thunderstore.repository.package_upload import PackageUploadForm
@@ -19,6 +21,7 @@ MODS_PER_PAGE = 24
 class PackageListSearchView(ListView):
     model = PackageListing
     paginate_by = MODS_PER_PAGE
+    paginator_class = CachedPaginator
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(~Q(community=self.request.community))
@@ -163,6 +166,19 @@ class PackageListSearchView(ListView):
                 "name": "Packages",
             }
         ]
+
+    def get_paginator(
+        self, queryset, per_page, orphans=0, allow_empty_first_page=True, **kwargs
+    ):
+        return self.paginator_class(
+            queryset,
+            per_page,
+            cache_key="repository.package_list.paginator",
+            cache_vary=self.get_full_cache_vary(),
+            cache_bust_condition=CacheBustCondition.any_package_updated,
+            orphans=orphans,
+            allow_empty_first_page=allow_empty_first_page,
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
