@@ -12,10 +12,6 @@ from .models import (
 )
 
 
-class ThunderstoreUserFactory(UserFactory):
-    username = factory.Sequence(lambda n: f"TestUser{n}")
-
-
 class UploaderIdentityFactory(DjangoModelFactory):
     class Meta:
         model = UploaderIdentity
