@@ -42,7 +42,7 @@ services:
       driver: none
 
   redis:
-    image: redis:5.0.4-alpine3.9
+    image: redis:6.2.1-alpine
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru
 
   adminer:
