@@ -6,7 +6,7 @@ class QueryCountHeaderMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if not settings.DEBUG:
+        if not settings.DATABASE_QUERY_COUNT_HEADER:
             return self.get_response(request)
         else:
             from django.db import connection
