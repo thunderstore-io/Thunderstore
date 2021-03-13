@@ -6,6 +6,8 @@ Thunderstore is a mod database and API for downloading mods.
 
 ## Setup guide for development
 
+##### If you need a more basic setup for frontend development, see the [basic setup docs](docs/run_basic.md).
+
 -   Copy `.env.template` to `.env` and modify as you see fit
 -   Run `docker-compose up`
 -   Run `docker-compose exec django python manage.py migrate` in another terminal
