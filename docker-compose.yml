@@ -51,7 +51,7 @@ services:
       - 127.0.0.1:8080:8080
 
   rabbitmq:
-    image: rabbitmq:3.8.9
+    image: rabbitmq:3.8.14-alpine
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: django

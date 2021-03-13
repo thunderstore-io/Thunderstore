@@ -33,7 +33,7 @@ services:
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru
 
   rabbitmq:
-    image: rabbitmq:3.8.9
+    image: rabbitmq:3.8.14-alpine
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: django
