@@ -5,7 +5,7 @@ This is useful when developing the [React frontend](https://github.com/thunderst
 You can get the Docker tag from the GitHub Actions logs or just use the commit SHA1. If tests fail, an image will not be pushed.
 
 ```
-docker run --rm -p 80:8000 -v $(pwd)/database.db:/database/default.db thunderstore/thunderstore:${COMMIT_SHA} gunicorn
+COMMIT_SHA=... docker-compose up -f docker/docker-compose.basic.yml
 ```
 
 To set up the instance, run in the container:
