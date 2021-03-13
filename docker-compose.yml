@@ -45,11 +45,6 @@ services:
     image: redis:5.0.4-alpine3.9
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru
 
-  adminer:
-    image: adminer:4.7.5
-    ports:
-      - 127.0.0.1:8080:8080
-
   rabbitmq:
     image: rabbitmq:3.8.9
     hostname: rabbitmq
