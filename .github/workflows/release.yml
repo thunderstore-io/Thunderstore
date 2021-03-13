@@ -17,9 +17,7 @@ jobs:
       - name: Build Docker image
         run: docker build -t thunderstore:latest -t thunderstore:release-${TAG} .
       - name: Run pytest
-        run: |
-          DJANGO_IMAGE="thunderstore:release-${TAG}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
-          docker-compose -f docker/docker-compose.pytest.yml down -f
+        run: DJANGO_IMAGE="thunderstore:release-${TAG}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
       - name: Tag image
         env:
           TAG: ${{ steps.tag.outputs.tag }}

@@ -61,9 +61,7 @@ jobs:
       - name: Build Docker image
         run: docker build --pull -t thunderstore:${GITHUB_SHA} .
       - name: Run pytest
-        run: |
-          DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
-          docker-compose -f docker/docker-compose.pytest.yml down -f
+        run: DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v1
