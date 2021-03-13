@@ -19,6 +19,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
+    DATABASE_LOGS=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
     DISABLE_SERVER_SIDE_CURSORS=(bool, True),
     SECRET_KEY=(str, ""),
@@ -82,6 +83,7 @@ SECRET_KEY = env.str("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
+DATABASE_LOGS = env.bool("DATABASE_LOGS")
 
 DATABASES = {"default": env.db()}
 DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = env.bool(
@@ -374,27 +376,29 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
 #         }
 #     }
 
-# LOGGING = {
-#     "version": 1,
-#     "filters": {
-#         "require_debug_true": {
-#             "()": "django.utils.log.RequireDebugTrue",
-#         }
-#     },
-#     "handlers": {
-#         "console": {
-#             "level": "DEBUG",
-#             "filters": ["require_debug_true"],
-#             "class": "logging.StreamHandler",
-#         }
-#     },
-#     "loggers": {
-#         "django.db.backends": {
-#             "level": "DEBUG",
-#             "handlers": ["console"],
-#         }
-#     },
-# }
+LOGGING = {
+    "version": 1,
+    "filters": {
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "filters": ["require_debug_true"],
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {},
+}
+
+if DATABASE_LOGS:
+    LOGGING["loggers"]["django.db.backends"] = {
+        "level": "DEBUG",
+        "handlers": ["console"],
+    }
+
 
 # REST Framework
 
