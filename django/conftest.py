@@ -14,11 +14,11 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
+from thunderstore.core.factories import UserFactory
 from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
-    ThunderstoreUserFactory,
     UploaderIdentityFactory,
     UploaderIdentityMemberFactory,
 )
@@ -50,7 +50,7 @@ def uploader_identity():
 def uploader_identity_member(uploader_identity):
     return UploaderIdentityMember.objects.create(
         identity=uploader_identity,
-        user=ThunderstoreUserFactory(),
+        user=UserFactory(),
         role=UploaderIdentityMemberRole.member,
     )
 
@@ -204,7 +204,7 @@ def api_client(community_site) -> APIClient:
 
 
 def create_test_service_account_user():
-    identity_owner = ThunderstoreUserFactory()
+    identity_owner = UserFactory()
     identity = UploaderIdentityFactory()
     UploaderIdentityMemberFactory(user=identity_owner, identity=identity, role="owner")
     form = CreateServiceAccountForm(
@@ -243,11 +243,11 @@ class TestUserTypes(ChoiceEnum):
         if usertype == TestUserTypes.unauthenticated:
             return AnonymousUser()
         if usertype == TestUserTypes.regular_user:
-            return ThunderstoreUserFactory.create()
+            return UserFactory.create()
         if usertype == TestUserTypes.deactivated_user:
-            return ThunderstoreUserFactory.create(is_active=False)
+            return UserFactory.create(is_active=False)
         if usertype == TestUserTypes.service_account:
             return create_test_service_account_user()
         if usertype == TestUserTypes.superuser:
-            return ThunderstoreUserFactory.create(is_staff=True, is_superuser=True)
+            return UserFactory.create(is_staff=True, is_superuser=True)
         raise AttributeError(f"Invalid useretype: {usertype}")
