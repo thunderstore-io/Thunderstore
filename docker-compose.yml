@@ -32,7 +32,7 @@ services:
       - db-data:/var/lib/postgresql/data
 
   dbpool:
-    image: edoburu/pgbouncer:1.11.0
+    image: edoburu/pgbouncer:1.15.0
     environment:
       DATABASE_URL: "postgres://django:django@db/django"
       POOL_MODE: "transaction"
