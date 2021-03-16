@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from ..forms import PackageListingForm
 from ..models.package_listing import PackageListing
 
 
 @admin.register(PackageListing)
-class PackageCategoryAdmin(admin.ModelAdmin):
+class PackageListingAdmin(admin.ModelAdmin):
     filter_horizontal = ("categories",)
     raw_id_fields = ("package",)
     list_filter = (
@@ -30,9 +31,11 @@ class PackageCategoryAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "package",
+        "community",
         "datetime_created",
         "datetime_updated",
     )
+    form = PackageListingForm
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
