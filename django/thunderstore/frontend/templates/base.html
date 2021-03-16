@@ -30,6 +30,13 @@
         <script src="{% static 'js/all.js' %}"></script>
     </head>
     <body>
+        {% if request.community_site.background_image %}
+            <div class="background">
+                <div class="image" style="background: url({{ request.community_site.background_image.url }});"></div>
+                <div class="tint"></div>
+            </div>
+        {% endif %}
+
         {% dynamic_html "html_body_beginning" %}
         <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
             <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">
