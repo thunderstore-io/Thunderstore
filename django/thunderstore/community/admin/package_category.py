@@ -26,4 +26,11 @@ class PackageCategoryAdmin(admin.ModelAdmin):
     readonly_fields = (
         "datetime_created",
         "datetime_updated",
+        "community",
     )
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields
+        else:
+            return []

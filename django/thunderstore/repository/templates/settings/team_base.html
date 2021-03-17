@@ -3,11 +3,17 @@
 {% block title %}Team {{ team.name }}{% endblock %}
 
 {% block settings_sidebar_extra %}
-<h5>Team {{ team.name }}</h5>
-<ul>
-    <li><a href="{% url "settings.teams.detail" team.name %}">Members</a></li>
-{# TODO: Implement    <li><a href="{% url "settings.teams.detail.service_accounts" team.name %}">Service Accounts</a></li>#}
-    <li><a href="{% url "settings.teams.detail.leave" team.name %}" class="text-danger">Leave</a></li>
-    <li><a href="{% url "settings.teams.detail.disband" team.name %}" class="text-danger">Disband</a></li>
-</ul>
+<div class="card bg-light mt-2">
+    <div class="card-header">
+        <h5 class="mb-0">Team {{ team.name }}</h5>
+    </div>
+    <div class="card-body">
+        <ul class="pl-3 mb-0">
+            <li><a href="{% url "settings.teams.detail" team.name %}">Members</a></li>
+        {# TODO: Implement    <li><a href="{% url "settings.teams.detail.service_accounts" team.name %}">Service Accounts</a></li>#}
+            <li><a href="{% url "settings.teams.detail.leave" team.name %}" class="text-danger">Leave</a></li>
+            <li><a href="{% url "settings.teams.detail.disband" team.name %}" class="text-danger">Disband</a></li>
+        </ul>
+    </div>
+</div>
 {% endblock %}

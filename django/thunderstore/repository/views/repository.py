@@ -1,3 +1,5 @@
+from typing import List
+
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import Http404
@@ -44,7 +46,8 @@ class PackageListSearchView(ListView):
         cache_vary += f".{self.request.community.identifier}"
         cache_vary += f".{self.get_search_query()}"
         cache_vary += f".{self.get_active_ordering()}"
-        cache_vary += f".{self.get_selected_categories()}"
+        cache_vary += f".{self.get_included_categories()}"
+        cache_vary += f".{self.get_excluded_categories()}"
         cache_vary += f".{self.get_is_deprecated_included()}"
         cache_vary += f".{self.get_is_nsfw_included()}"
         return cache_vary
@@ -57,8 +60,8 @@ class PackageListSearchView(ListView):
             ("top-rated", "Top rated"),
         )
 
-    def get_selected_categories(self):
-        selections = self.request.GET.getlist("categories", [])
+    def _get_int_list(self, name: str) -> List[int]:
+        selections = self.request.GET.getlist(name, [])
         result = []
         for selection in selections:
             try:
@@ -66,6 +69,12 @@ class PackageListSearchView(ListView):
             except ValueError:
                 pass
         return result
+
+    def get_included_categories(self):
+        return self._get_int_list("included_categories")
+
+    def get_excluded_categories(self):
+        return self._get_int_list("excluded_categories")
 
     def get_is_nsfw_included(self):
         try:
@@ -137,23 +146,31 @@ class PackageListSearchView(ListView):
     def get_queryset(self):
         queryset = (
             self.get_base_queryset()
-            .prefetch_related("package__versions")
+            .prefetch_related("package__versions", "categories")
             .select_related(
                 "package",
                 "package__latest",
                 "package__owner",
             )
-            # .annotate(
-            #     _rating_score=Count("package__package_ratings"),
-            #     _total_downloads=Sum("package__versions__downloads"),
-            # )
+            .annotate(
+                _total_downloads=Sum("package__versions__downloads"),
+            )
+            .annotate(
+                _rating_score=Count("package__package_ratings"),
+            )
         )
-        selected_categories = self.get_selected_categories()
-        if selected_categories:
-            category_queryset = Q()
-            for category in selected_categories:
-                category_queryset &= Q(categories=category)
-            queryset = queryset.exclude(~category_queryset)
+        included_categories = self.get_included_categories()
+        if included_categories:
+            include_categories_qs = Q()
+            for category in included_categories:
+                include_categories_qs |= Q(categories=category)
+            queryset = queryset.exclude(~include_categories_qs)
+        excluded_categories = self.get_excluded_categories()
+        if excluded_categories:
+            exclude_categories_qs = Q()
+            for category in excluded_categories:
+                exclude_categories_qs |= Q(categories=category)
+            queryset = queryset.exclude(exclude_categories_qs)
         if not self.get_is_nsfw_included():
             queryset = queryset.exclude(has_nsfw_content=True)
         if not self.get_is_deprecated_included():
@@ -187,7 +204,8 @@ class PackageListSearchView(ListView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["categories"] = self.get_categories()
-        context["selected_categories"] = self.get_selected_categories()
+        context["included_categories"] = self.get_included_categories()
+        context["excluded_categories"] = self.get_excluded_categories()
         context["nsfw_included"] = self.get_is_nsfw_included()
         context["deprecated_included"] = self.get_is_deprecated_included()
         context["cache_vary"] = self.get_full_cache_vary()
@@ -288,6 +306,9 @@ def get_package_listing_or_404(namespace: str, name: str, community_pk: int):
             "package",
             "package__owner",
             "package__latest",
+        )
+        .prefetch_related(
+            "categories",
         )
         .first()
     )

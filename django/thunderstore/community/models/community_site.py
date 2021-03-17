@@ -43,6 +43,16 @@ class CommunitySite(TimestampMixin, models.Model):
     icon_width = models.PositiveIntegerField(default=0)
     icon_height = models.PositiveIntegerField(default=0)
 
+    background_image = models.ImageField(
+        upload_to=get_community_filepath,
+        width_field="background_image_width",
+        height_field="background_image_height",
+        blank=True,
+        null=True,
+    )
+    background_image_width = models.PositiveIntegerField(default=0)
+    background_image_height = models.PositiveIntegerField(default=0)
+
     favicon = models.FileField(
         upload_to=get_community_filepath,
         validators=[FileExtensionValidator(allowed_extensions=["ico"])],
@@ -69,6 +79,17 @@ class CommunitySite(TimestampMixin, models.Model):
                     + (
                         "icon_width",
                         "icon_height",
+                    )
+                )
+        if not self.background_image:
+            self.background_image_width = 0
+            self.background_image_height = 0
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = set(
+                    kwargs["update_fields"]
+                    + (
+                        "background_image_width",
+                        "background_image_height",
                     )
                 )
         return super().save(*args, **kwargs)

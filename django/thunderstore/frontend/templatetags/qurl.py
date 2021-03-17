@@ -11,9 +11,9 @@ class QurlNode(Node):
 
     def render(self, context):
         request = context["request"]
-        params = request.GET.dict()
-        params[self.param_key] = self.param_val.resolve(context)
-        return f"{request.path}?{urlencode(params)}"
+        params = request.GET.copy()
+        params.update({self.param_key: self.param_val.resolve(context)})
+        return f"{request.path}?{urlencode(params, True)}"
 
 
 @register.tag("qurl")

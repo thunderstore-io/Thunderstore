@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, signals
 from django.urls import reverse
@@ -47,6 +48,15 @@ class PackageListing(TimestampMixin, models.Model):
                 fields=("package", "community"), name="one_listing_per_community"
             ),
         ]
+
+    def validate(self):
+        if self.pk:
+            if PackageListing.objects.get(pk=self.pk).community != self.community:
+                raise ValidationError("PackageListing.community is read only")
+
+    def save(self, *args, **kwargs):
+        self.validate()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.package.name

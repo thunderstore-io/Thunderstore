@@ -6,67 +6,73 @@
 <h1 class="mt-4">Upload package</h1>
 
 <form class="mt-4" method="post" enctype="multipart/form-data" novalidate>
-    <div class="text-danger">
-        {{ form.non_field_errors }}
-        {{ form.file.errors }}
-    </div>
     {% csrf_token %}
     <label for="id_file" class="btn btn-primary btn-lg btn-block" id="file_drop" style="cursor: pointer;"></label>
     <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file" style="display: none;">
+    {{ form.file.errors }}
 
-    <div class="field-wrapper">
-        <div class="field-row">
-            <label for="{{ form.team.id_for_label }}">Team</label>
-            <div class="w-100">
-                {{ form.team }}
-                <p class="mt-1 mb-2">
-                    No teams available? <a href="{% url "settings.teams.create" %}" class="ml-1">Create one here!</a>
-                </p>
+    <div class="card bg-light mb-2">
+        <div class="card-header">Listing options</div>
+        <div class="card-body py-2">
+            <div class="text-danger">
+                {{ form.non_field_errors }}
+            </div>
+
+            <div class="field-wrapper">
+                <div class="field-row">
+                    <label for="{{ form.team.id_for_label }}">Team</label>
+                    <div class="w-100">
+                        {{ form.team }}
+                        <p class="mt-1 mb-2">
+                            No teams available? <a href="{% url "settings.teams.create" %}" class="ml-1">Create one here!</a>
+                        </p>
+                    </div>
+                </div>
+                <div class="text-danger field-errors">{{ form.team.errors }}</div>
+            </div>
+
+            <div class="field-wrapper">
+                <div class="field-row">
+                    <label for="{{ form.communities.id_for_label }}">Communities</label>
+                    <div class="w-100">
+                        {# Manual rendering due to different set being displayed than validated #}
+                        <select class="slimselect-lg" name="communities" id="{{ form.communities.auto_id }}" multiple>
+                            {% for community in selectable_communities %}
+                            <option value="{{ community.identifier }}" {% if community == request.community %}selected{% endif %}>{{ community.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="text-danger field-errors">{{ form.communities.errors }}</div>
+            </div>
+
+            <div class="field-wrapper">
+                <div class="field-row">
+                    <label for="{{ form.categories.id_for_label }}">Categories</label>
+                    <div class="w-100">
+                        {{ form.categories }}
+                        <p class="mt-1 mb-2">
+                            Note that the selected categories are applied only to the
+                            <kbd class="text-info">{{ request.community.name }}</kbd> community.
+                        </p>
+                    </div>
+                </div>
+                <div class="text-danger field-errors">{{ form.categories.errors }}</div>
+            </div>
+
+            <div class="field-wrapper">
+                <div class="field-row">
+                    <label for="{{ form.has_nsfw_content.id_for_label }}">Contains NSFW content</label>
+                    {{ form.has_nsfw_content }}
+                </div>
+                <div class="text-danger field-errors">{{ form.has_nsfw_content.errors }}</div>
             </div>
         </div>
-        <div class="text-danger field-errors">{{ form.team.errors }}</div>
-    </div>
-
-    <div class="field-wrapper">
-        <div class="field-row">
-            <label for="{{ form.communities.id_for_label }}">Communities</label>
-            <div class="w-100">
-                {# Manual rendering due to different set being displayed than validated #}
-                <select class="slimselect-lg" name="communities" id="{{ form.communities.auto_id }}" multiple>
-                    {% for community in selectable_communities %}
-                    <option value="{{ community.identifier }}" {% if community == request.community %}selected{% endif %}>{{ community.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="text-danger field-errors">{{ form.communities.errors }}</div>
-    </div>
-
-    <div class="field-wrapper">
-        <div class="field-row">
-            <label for="{{ form.categories.id_for_label }}">Categories</label>
-            <div class="w-100">
-                {{ form.categories }}
-                <p class="mt-1 mb-2">
-                    Note that the selected categories are applied only to the
-                    <kbd class="text-info">{{ request.community.name }}</kbd> community.
-                </p>
-            </div>
-        </div>
-        <div class="text-danger field-errors">{{ form.categories.errors }}</div>
-    </div>
-
-    <div class="field-wrapper">
-        <div class="field-row">
-            <label for="{{ form.has_nsfw_content.id_for_label }}">Contains NSFW content</label>
-            {{ form.has_nsfw_content }}
-        </div>
-        <div class="text-danger field-errors">{{ form.has_nsfw_content.errors }}</div>
     </div>
     <input type="submit" class="btn btn-primary btn-lg btn-block" value="Upload">
 </form>
 
-<div class="card mt-4 mb-4">
+<div class="card mt-2 mb-4">
     <div class="card-header">Package requirements</div>
     <div class="card-body markdown-body">
         <p>
