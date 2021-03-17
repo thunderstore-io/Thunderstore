@@ -83,13 +83,31 @@ class Webhook(models.Model):
                 f"{settings.PROTOCOL}{self.community_site.site.domain}{thumbnail_url}"
             )
 
+        fields = [
+            {
+                "name": "Total downloads",
+                "value": f"{version.package.downloads}",
+            },
+        ]
+
+        listing = version.package.get_package_listing(self.community_site.community)
+        if listing:
+            categories = listing.categories.all().values_list("name", flat=True)
+            if categories:
+                fields.append(
+                    {
+                        "name": "Categories",
+                        "value": ", ".join(categories),
+                    }
+                )
+
         return {
             "embeds": [
                 {
                     "title": f"{version.name} v{version.version_number}",
                     "type": "rich",
                     "description": version.description,
-                    "url": version.package.get_full_url(self.community_site.site),
+                    "url": f"{version.package.get_full_url(self.community_site.site)}?utm_source=discord",
                     "timestamp": timezone.now().isoformat(),
                     "color": 4474879,
                     "thumbnail": {
@@ -104,12 +122,7 @@ class Webhook(models.Model):
                     "author": {
                         "name": version.package.owner.name,
                     },
-                    "fields": [
-                        {
-                            "name": "Total downloads across versions",
-                            "value": f"{version.package.downloads}",
-                        }
-                    ],
+                    "fields": fields,
                 }
             ]
         }
