@@ -1,3 +1,5 @@
+@import "./theme/_variables";
+
 .slimselect-lg .ss-multi-selected,
 .slimselect-lg .ss-single-selected {
     min-height: 36px;
@@ -7,7 +9,24 @@
     }
 
     .ss-disabled,
-    .ss-values .ss-value {
-        font-size: 16px;
+    .ss-values {
+        .ss-value {
+            font-size: 16px;
+        }
+        .ss-disabled {
+            color: #999999;
+        }
+    }
+}
+
+.slimselect-info {
+    .ss-multi-selected .ss-values .ss-value {
+        background-color: $cyan;
+    }
+}
+
+.slimselect-danger {
+    .ss-multi-selected .ss-values .ss-value {
+        background-color: $red;
     }
 }

@@ -29,9 +29,41 @@
 
 <form class="form-inline" method="get" action="{{ request.path }}">
     <div class="card bg-light w-100 mb-2">
-        <div class="card-body py-3 px-3">
-            <div class="w-100 m-0 p-0">
-                <div class="search-options">
+        <div class="card-body search-options py-3 px-3">
+
+            <div class="row m-0 p-0 w-100 align-items-center">
+                <div class="col-7 m-0 p-0 pr-2">
+                    <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
+                    <input type="hidden" name="ordering" value="{{ active_ordering }}">
+                </div>
+                <div class="col-3 m-0 p-0 pr-1">
+                    <button class="btn btn-success w-100" type="submit">Search</button>
+                </div>
+                <div class="col-2 m-0 p-0">
+                    <a href="{% url 'packages.list' %}" class="btn btn-success w-100">Clear</a>
+                </div>
+            </div>
+
+            <div class="row m-0 p-0 w-100 my-1 align-items-center">
+                <div class="col-7 pl-0 pr-2">
+                    <select class="slimselect-lg slimselect-info" name="included_categories" id="included_categories" multiple="">
+                        {% for category in categories %}
+                            <option
+                                value="{{ category.pk }}"
+                                {% if category.pk in included_categories %}selected=""{% endif %}
+                            >
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <script type="text/javascript">
+                        new SlimSelect({
+                            select: "#included_categories",
+                            placeholder: "Include Categories",
+                        });
+                    </script>
+                </div>
+                <div class="col-5 pr-0">
                     <div class="checkbox option custom-control custom-switch">
                         <input
                             type="checkbox"
@@ -40,9 +72,31 @@
                             name="nsfw"
                             {% if nsfw_included %}checked=""{% endif %}
                         />
-                        <label class="custom-control-label" for="nsfw">Include NSFW</label>
+                        <label class="custom-control-label" for="nsfw">Show NSFW</label>
                     </div>
-                    <div class="separator"></div>
+                </div>
+            </div>
+
+            <div class="row m-0 p-0 w-100 align-items-center">
+                <div class="col-7 pl-0 pr-2">
+                    <select class="slimselect-lg slimselect-danger" name="excluded_categories" id="excluded_categories" multiple="">
+                        {% for category in categories %}
+                            <option
+                                value="{{ category.pk }}"
+                                {% if category.pk in excluded_categories %}selected=""{% endif %}
+                            >
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <script type="text/javascript">
+                        new SlimSelect({
+                            select: "#excluded_categories",
+                            placeholder: "Exclude Categories",
+                        });
+                    </script>
+                </div>
+                <div class="col-5 pr-0">
                     <div class="checkbox option custom-control custom-switch">
                         <input
                             type="checkbox"
@@ -51,38 +105,7 @@
                             name="deprecated"
                             {% if deprecated_included %}checked=""{% endif %}
                         />
-                        <label class="custom-control-label" for="deprecated">Include deprecated</label>
-                    </div>
-                    <div class="separator"></div>
-                    <div class="multiselect option">
-                        <label for="categories">Categories</label>
-                        <select class="slimselect" name="categories" id="categories" multiple="">
-                            {% for category in categories %}
-                                <option
-                                    value="{{ category.pk }}"
-                                    {% if category.pk in selected_categories %}selected=""{% endif %}
-                                >
-                                    {{ category.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <script type="text/javascript">
-                            new SlimSelect({select: "#categories"});
-                        </script>
-                    </div>
-                </div>
-            </div>
-            <div class="m-0 p-0 w-100">
-                <div class="row w-100 m-0 p-0">
-                    <div class="col-7 m-0 p-0 pr-2">
-                        <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
-                        <input type="hidden" name="ordering" value="{{ active_ordering }}">
-                    </div>
-                    <div class="col-3 m-0 p-0 pr-1">
-                        <button class="btn btn-success w-100" type="submit">Search</button>
-                    </div>
-                    <div class="col-2 m-0 p-0">
-                        <a href="{% url 'packages.list' %}" class="btn btn-success w-100">Clear</a>
+                        <label class="custom-control-label" for="deprecated">Show deprecated</label>
                     </div>
                 </div>
             </div>
