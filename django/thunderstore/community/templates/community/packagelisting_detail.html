@@ -71,6 +71,14 @@
                 <td><span id="package-rating-{{ object.package.uuid4 }}">{{ object.package.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.package.uuid4 }}"></i></td>
             </tr>
             <tr>
+                <td>Categories</td>
+                <td>
+                    {% for category in object.categories.all %}
+                        <a href="{% url "packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
+                    {% endfor %}
+                </td>
+            </tr>
+            <tr>
                 <td>Dependency string</td>
                 <td>{{ object.package.latest.full_version_name }}</td>
             </tr>

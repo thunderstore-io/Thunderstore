@@ -146,7 +146,7 @@ class PackageListSearchView(ListView):
     def get_queryset(self):
         queryset = (
             self.get_base_queryset()
-            .prefetch_related("package__versions")
+            .prefetch_related("package__versions", "categories")
             .select_related(
                 "package",
                 "package__latest",
@@ -304,6 +304,9 @@ def get_package_listing_or_404(namespace: str, name: str, community_pk: int):
             "package",
             "package__owner",
             "package__latest",
+        )
+        .prefetch_related(
+            "categories",
         )
         .first()
     )
