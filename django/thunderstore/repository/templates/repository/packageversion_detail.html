@@ -59,7 +59,7 @@
     </div>
 {% endif %}
 
-<div class="card bg-light mt-2">
+<div class="card bg-light mt-2 mb-2">
     <div class="card-header">
         <div class="media">
             <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
@@ -100,18 +100,18 @@
     </div>
 </div>
 
+{% with object.dependencies.all as dependencies %}
+{% if dependencies %}
+    {% include "repository/includes/dependencies.html" with dependencies=dependencies %}
+{% endif %}
+{% endwith %}
+
 <div class="card bg-light mb-4 mt-2">
     <div class="card-header"><h4 class="mb-0">README</h4></div>
     <div class="card-body markdown-body">
         {{ object.readme|markdownify }}
     </div>
 </div>
-
-{% with object.dependencies.all as dependencies %}
-{% if dependencies %}
-    {% include "repository/includes/dependencies.html" with dependencies=dependencies %}
-{% endif %}
-{% endwith %}
 
 {% endcache %}
 {% endblock %}
