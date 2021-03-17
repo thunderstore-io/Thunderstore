@@ -91,7 +91,7 @@ class Package(models.Model):
         self.validate()
         return super().save(*args, **kwargs)
 
-    def get_package_listing(self, community):
+    def get_or_create_package_listing(self, community):
         from thunderstore.community.models import PackageListing
 
         listing, _ = PackageListing.objects.get_or_create(
@@ -100,8 +100,16 @@ class Package(models.Model):
         )
         return listing
 
+    def get_package_listing(self, community):
+        from thunderstore.community.models import PackageListing
+
+        return PackageListing.objects.filter(
+            package=self,
+            community=community,
+        ).first()
+
     def update_listing(self, has_nsfw_content, categories, community):
-        listing = self.get_package_listing(community)
+        listing = self.get_or_create_package_listing(community)
         listing.has_nsfw_content = has_nsfw_content
         if categories:
             listing.categories.set(categories)
