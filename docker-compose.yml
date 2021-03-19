@@ -23,7 +23,7 @@ x-django-volumes: &django-volumes
 
 services:
   db:
-    image: postgres:12.6-alpine
+    image: postgres:12.6-alpine@sha256:166da27dd4165a87288da435c92e6ac79e229b2d9c75e59eb576f205a4ed4a0d
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -32,7 +32,7 @@ services:
       - db-data:/var/lib/postgresql/data
 
   dbpool:
-    image: edoburu/pgbouncer:1.15.0
+    image: edoburu/pgbouncer:1.15.0@sha256:2f47bf272fa9fdf25c100d11f1972b23af61a351a136d3721bfa6bdb52630426
     environment:
       DATABASE_URL: "postgres://django:django@db/django"
       POOL_MODE: "transaction"
@@ -42,7 +42,7 @@ services:
       driver: none
 
   redis:
-    image: redis:6.2.1-alpine
+    image: redis:6.2.1-alpine@sha256:daa795ebec4c206cc7f76e19c4bb26a98dfca671d7b5bedcb38862de078bdaa2
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru
 
   adminer:
@@ -51,7 +51,7 @@ services:
       - 127.0.0.1:8080:8080
 
   rabbitmq:
-    image: rabbitmq:3.8.14-alpine
+    image: rabbitmq:3.8.14-alpine@sha256:11d8cd02ac340e99de628053f76bb1182ce3df3b41d3e8f399377276ba489409
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: django
