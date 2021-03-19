@@ -59,46 +59,44 @@
     </div>
 {% endif %}
 
-<div class="media mt-4">
-    <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
-    <div class="media-body">
-        <h1 class="mt-0">{{ object.display_name }}</h1>
-        <p>{{ object.description }}</p>
-        <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></h5>
-            {% if object.website_url %}
-            <a href="{{ object.website_url }}">{{ object.website_url }}</a>
-            {% endif %}
+<div class="card bg-light mt-2 mb-2">
+    <div class="card-header">
+        <div class="media">
+            <img class="align-self-center mr-3" src="{% thumbnail object.icon 128x128 %}" alt="{{ object }} icon">
+            <div class="media-body">
+                <h1 class="mt-0">{{ object.display_name }}</h1>
+                <p>{{ object.description }}</p>
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></h5>
+                    {% if object.website_url %}
+                    <a href="{{ object.website_url }}">{{ object.website_url }}</a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-</div>
-
-<table class="table mt-2">
-    <tr>
-        <td>Date uploaded</td>
-        <td>{% humanize_timestamp object.date_created %}</td>
-    </tr>
-    <tr>
-        <td>Version</td>
-        <td>{{ object.version_number }}</td>
-    <tr>
-        <td>Download link</td>
-        <td><a href="{{ object.download_url }}">{{ object.full_version_name }}.zip</a></td>
-    </tr>
-    <tr>
-        <td>Downloads</td>
-        <td>{{ object.downloads }}</td>
-    </tr>
-    <tr>
-        <td>Dependency string</td>
-        <td>{{ object.full_version_name }}</td>
-    </tr>
-</table>
-
-<div class="card bg-light mb-3 mt-2">
-    <div class="card-header">README</div>
-    <div class="card-body markdown-body">
-        {{ object.readme|markdownify }}
+    <div class="card-body pb-1">
+        <table class="table mb-0">
+            <tr>
+                <td>Date uploaded</td>
+                <td>{% humanize_timestamp object.date_created %}</td>
+            </tr>
+            <tr>
+                <td>Version</td>
+                <td>{{ object.version_number }}</td>
+            <tr>
+                <td>Download link</td>
+                <td><a href="{{ object.download_url }}">{{ object.full_version_name }}.zip</a></td>
+            </tr>
+            <tr>
+                <td>Downloads</td>
+                <td>{{ object.downloads }}</td>
+            </tr>
+            <tr>
+                <td>Dependency string</td>
+                <td>{{ object.full_version_name }}</td>
+            </tr>
+        </table>
     </div>
 </div>
 
@@ -107,6 +105,13 @@
     {% include "repository/includes/dependencies.html" with dependencies=dependencies %}
 {% endif %}
 {% endwith %}
+
+<div class="card bg-light mb-4 mt-2">
+    <div class="card-header"><h4 class="mb-0">README</h4></div>
+    <div class="card-body markdown-body">
+        {{ object.readme|markdownify }}
+    </div>
+</div>
 
 {% endcache %}
 {% endblock %}

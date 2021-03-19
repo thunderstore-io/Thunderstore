@@ -12,11 +12,16 @@ class PackageCategory(TimestampMixin, models.Model):
         on_delete=models.CASCADE,
     )
     name = models.CharField(max_length=512)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField()
 
     def __str__(self):
-        return self.name
+        return f"{self.community.name} -> {self.name}"
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("slug", "community"), name="unique_category_slug_per_community"
+            ),
+        ]
         verbose_name = "package category"
         verbose_name_plural = "package categories"

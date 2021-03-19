@@ -51,4 +51,6 @@ class CommunitySiteAdmin(admin.ModelAdmin):
         "datetime_updated",
         "icon_width",
         "icon_height",
+        "background_image_width",
+        "background_image_height",
     )

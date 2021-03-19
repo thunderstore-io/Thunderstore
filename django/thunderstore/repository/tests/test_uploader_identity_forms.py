@@ -1,8 +1,8 @@
 import pytest
 
 from conftest import TestUserTypes
+from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
-from thunderstore.repository.factories import ThunderstoreUserFactory
 from thunderstore.repository.forms import (
     AddUploaderIdentityMemberForm,
     CreateUploaderIdentityForm,
@@ -254,10 +254,10 @@ def test_form_remove_uploader_identity_member(
 @pytest.mark.django_db
 @pytest.mark.parametrize("role", UploaderIdentityMemberRole.options())
 def test_form_remove_uploader_identity_member_works_on_self(role: str) -> None:
-    user = ThunderstoreUserFactory()
+    user = UserFactory()
     identity = UploaderIdentity.objects.create(name="Test")
     UploaderIdentityMember.objects.create(
-        user=ThunderstoreUserFactory(),
+        user=UserFactory(),
         identity=identity,
         role=UploaderIdentityMemberRole.owner,
     )
@@ -277,7 +277,7 @@ def test_form_remove_uploader_identity_member_works_on_self(role: str) -> None:
 
 @pytest.mark.django_db
 def test_form_remove_uploader_identity_member_last_owner() -> None:
-    user = ThunderstoreUserFactory()
+    user = UserFactory()
     identity = UploaderIdentity.objects.create(name="Test")
     last_owner = UploaderIdentityMember.objects.create(
         user=user,
@@ -379,7 +379,7 @@ def test_form_edit_uploader_identity_member(
 
 @pytest.mark.django_db
 def test_form_edit_uploader_identity_member_remove_last_owner() -> None:
-    user = ThunderstoreUserFactory()
+    user = UserFactory()
     identity = UploaderIdentity.objects.create(name="Test")
     last_owner = UploaderIdentityMember.objects.create(
         user=user,
