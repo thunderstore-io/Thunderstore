@@ -9,10 +9,9 @@ class CreateSessionTokenExperimentalApiView(APIView):
     authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, format=None):
-        token = Token.objects.create(user=request.user)
+    def get(self, request, format=None):
         return Response(
             {
-                "token": token.key,
+                "token": request.session.session_key,
             },
         )
