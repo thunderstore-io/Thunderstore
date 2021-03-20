@@ -24,7 +24,7 @@ def forwards(apps, _):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("repository", "0024_comment"),
+        ("repository", "0027_comment"),
         ("django_celery_beat", "0014_remove_clockedschedule_enabled"),
     ]
 

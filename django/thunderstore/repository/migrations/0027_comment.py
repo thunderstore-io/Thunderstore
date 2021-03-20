@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("repository", "0023_add_cache_refresh_celery_schedule"),
+        ("repository", "0026_add_unique_constraints"),
     ]
 
     operations = [
