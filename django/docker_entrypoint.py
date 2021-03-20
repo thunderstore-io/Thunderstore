@@ -74,7 +74,7 @@ RUN_MIGRATIONS = register_variable(to_bool, "RUN_MIGRATIONS", True)
 AUTORELOAD = register_variable(str, "AUTORELOAD", False)
 
 GUNICORN_WORKER_CLASS = register_variable(str, "GUNICORN_WORKER_CLASS", "gevent")
-GUNICORN_WORKER_COUNT = register_variable(int, "GUNICORN_WORKER_COUNT", 2)
+GUNICORN_WORKER_COUNT = register_variable(int, "GUNICORN_WORKER_COUNT", 3)
 GUNICORN_LOG_LEVEL = register_variable(str, "GUNICORN_LOG_LEVEL", "info")
 GUNICORN_MAX_REQUESTS = register_variable(int, "GUNICORN_MAX_REQUESTS", 10000)
 GUNICORN_MAX_REQUESTS_JITTER = register_variable(

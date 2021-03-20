@@ -44,7 +44,16 @@ def user(django_user_model):
 
 @pytest.fixture()
 def uploader_identity():
-    return UploaderIdentity.objects.create(name="Test-Identity")
+    return UploaderIdentity.objects.create(name="Test_Identity")
+
+
+@pytest.fixture()
+def uploader_identity_member(uploader_identity):
+    return UploaderIdentityMember.objects.create(
+        identity=uploader_identity,
+        user=UserFactory(),
+        role=UploaderIdentityMemberRole.member,
+    )
 
 
 @pytest.fixture()
@@ -211,6 +220,7 @@ class TestUserTypes(ChoiceEnum):
     no_user = "none"
     unauthenticated = "unauthenticated"
     regular_user = "regular_user"
+    deactivated_user = "deactivated_user"
     service_account = "service_account"
     superuser = "superuser"
 
@@ -223,6 +233,10 @@ class TestUserTypes(ChoiceEnum):
             cls.superuser,
         )
 
+    @classmethod
+    def fake_users(cls):
+        return (cls.no_user, cls.unauthenticated)
+
     @staticmethod
     def get_user_by_type(usertype: str):
         if usertype == TestUserTypes.no_user:
@@ -230,11 +244,13 @@ class TestUserTypes(ChoiceEnum):
         if usertype == TestUserTypes.unauthenticated:
             return AnonymousUser()
         if usertype == TestUserTypes.regular_user:
-            return UserFactory()
+            return UserFactory.create()
+        if usertype == TestUserTypes.deactivated_user:
+            return UserFactory.create(is_active=False)
         if usertype == TestUserTypes.service_account:
             return create_test_service_account_user()
         if usertype == TestUserTypes.superuser:
-            return UserFactory(is_staff=True, is_superuser=True)
+            return UserFactory.create(is_staff=True, is_superuser=True)
         raise AttributeError(f"Invalid useretype: {usertype}")
 
 

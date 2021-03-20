@@ -1,4 +1,9 @@
+from typing import Optional
+
 from django.contrib import admin
+from django.db import transaction
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from thunderstore.repository.models import (
     DiscordUserBotPermission,
@@ -23,11 +28,32 @@ class PackageRatingAdmin(admin.ModelAdmin):
 class UploaderIdentityMemberAdmin(admin.StackedInline):
     model = UploaderIdentityMember
     extra = 0
+    raw_id_fields = ("user",)
     list_display = (
         "user",
         "identity",
         "role",
     )
+
+
+@transaction.atomic
+def deactivate(modeladmin, request, queryset: QuerySet):
+    for package in queryset:
+        package.is_active = False
+        package.save(update_fields=("is_active",))
+
+
+deactivate.short_description = "Deactivate"
+
+
+@transaction.atomic
+def activate(modeladmin, request, queryset: QuerySet):
+    for package in queryset:
+        package.is_active = True
+        package.save(update_fields=("is_active",))
+
+
+activate.short_description = "Activate"
 
 
 @admin.register(UploaderIdentity)
@@ -42,8 +68,14 @@ class UploaderIdentityAdmin(admin.ModelAdmin):
         else:
             return []
 
+    actions = (
+        activate,
+        deactivate,
+    )
     readonly_fields = ("name",)
-    list_display = ("name",)
+    list_display = ("name", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
 
 
 class PackageVersionInline(admin.StackedInline):
@@ -64,12 +96,44 @@ class PackageVersionInline(admin.StackedInline):
     extra = 0
     filter_horizontal = ("dependencies",)
 
+    def has_add_permission(self, request: HttpRequest, obj) -> bool:
+        return False
+
+    def has_delete_permission(self, request: HttpRequest, obj=None) -> bool:
+        return False
+
+
+@transaction.atomic
+def deprecate_package(modeladmin, request, queryset: QuerySet[Package]):
+    for package in queryset:
+        package.is_deprecated = True
+        package.save(update_fields=("is_deprecated",))
+
+
+deprecate_package.short_description = "Deprecate"
+
+
+@transaction.atomic
+def undeprecate_package(modeladmin, request, queryset: QuerySet[Package]):
+    for package in queryset:
+        package.is_deprecated = False
+        package.save(update_fields=("is_deprecated",))
+
+
+undeprecate_package.short_description = "Undeprecate"
+
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
     inlines = [
         PackageVersionInline,
     ]
+    actions = (
+        deprecate_package,
+        undeprecate_package,
+        deactivate,
+        activate,
+    )
 
     readonly_fields = (
         "date_created",
@@ -95,9 +159,18 @@ class PackageAdmin(admin.ModelAdmin):
         "owner__name",
     )
 
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: Optional[Package] = None
+    ) -> bool:
+        return False
+
 
 @admin.register(DiscordUserBotPermission)
 class DiscordUserBotPermissionAdmin(admin.ModelAdmin):
+    raw_id_fields = ("thunderstore_user",)
     list_display = (
         "thunderstore_user",
         "label",

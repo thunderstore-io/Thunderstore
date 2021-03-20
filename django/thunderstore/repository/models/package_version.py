@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
-from django.db.models import Sum, signals
+from django.db.models import Manager, QuerySet, Sum, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
@@ -23,7 +23,14 @@ def get_version_png_filepath(instance, filename):
     return f"repository/icons/{instance}.png"
 
 
+class PackageVersionManager(models.Manager):
+    def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
+        return self.exclude(is_active=False)
+
+
 class PackageVersion(models.Model):
+    objects: "Manager[PackageVersion]" = PackageVersionManager()
+
     package = models.ForeignKey(
         "repository.Package",
         related_name="versions",
@@ -81,7 +88,11 @@ class PackageVersion(models.Model):
         return super().save(*args, **kwargs)
 
     class Meta:
-        unique_together = ("package", "version_number")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("package", "version_number"), name="unique_version_per_package"
+            ),
+        ]
 
     def get_absolute_url(self):
         return reverse(

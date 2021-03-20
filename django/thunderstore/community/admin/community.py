@@ -7,11 +7,12 @@ from ..models.community import Community
 @admin.register(Community)
 class CommunityAdmin(admin.ModelAdmin):
     filter_horizontal = ()
-    list_filter = ()
+    list_filter = ("is_listed",)
     list_display = (
         "id",
         "identifier",
         "name",
+        "is_listed",
         "datetime_created",
         "datetime_updated",
     )

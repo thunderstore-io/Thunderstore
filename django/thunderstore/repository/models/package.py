@@ -11,13 +11,30 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from thunderstore.core.cache import CacheBustCondition, invalidate_cache
+from thunderstore.cache.cache import (
+    CacheBustCondition,
+    cache_function_result,
+    invalidate_cache,
+)
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
 
 class PackageQueryset(models.QuerySet):
     def active(self):
         return self.exclude(is_active=False).exclude(~Q(versions__is_active=True))
+
+
+def get_package_dependants(package_pk: int):
+    return Package.objects.exclude(
+        ~Q(
+            versions__dependencies__package=package_pk,
+        )
+    ).active()
+
+
+@cache_function_result(CacheBustCondition.any_package_updated)
+def get_package_dependants_list(package_pk: int):
+    return list(get_package_dependants(package_pk))
 
 
 class Package(models.Model):
@@ -58,7 +75,11 @@ class Package(models.Model):
     )
 
     class Meta:
-        unique_together = ("owner", "name")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("owner", "name"), name="unique_name_per_namespace"
+            ),
+        ]
 
     def validate(self):
         if not re.match(PACKAGE_NAME_REGEX, self.name):
@@ -70,7 +91,7 @@ class Package(models.Model):
         self.validate()
         return super().save(*args, **kwargs)
 
-    def get_package_listing(self, community):
+    def get_or_create_package_listing(self, community):
         from thunderstore.community.models import PackageListing
 
         listing, _ = PackageListing.objects.get_or_create(
@@ -79,8 +100,16 @@ class Package(models.Model):
         )
         return listing
 
+    def get_package_listing(self, community):
+        from thunderstore.community.models import PackageListing
+
+        return PackageListing.objects.filter(
+            package=self,
+            community=community,
+        ).first()
+
     def update_listing(self, has_nsfw_content, categories, community):
-        listing = self.get_package_listing(community)
+        listing = self.get_or_create_package_listing(community)
         listing.has_nsfw_content = has_nsfw_content
         if categories:
             listing.categories.set(categories)
@@ -168,13 +197,8 @@ class Package(models.Model):
         return self.is_active and self.versions.filter(is_active=True).count() > 0
 
     @cached_property
-    def dependants(self):
-        # TODO: Caching
-        return Package.objects.exclude(
-            ~Q(
-                versions__dependencies__package=self,
-            )
-        ).active()
+    def dependants_list(self):
+        return get_package_dependants_list(self.pk)
 
     @cached_property
     def owner_url(self):

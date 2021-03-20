@@ -1,6 +1,9 @@
 import os
+from typing import Callable, Optional
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.http import HttpRequest
 from sentry_sdk import capture_exception as capture_sentry_exception
 
 
@@ -62,3 +65,21 @@ def capture_exception(exception: Exception) -> None:
         raise exception
     else:
         capture_sentry_exception(exception)
+
+
+def check_validity(fn: Callable[[], None]) -> bool:
+    try:
+        fn()
+        return True
+    except ValidationError:
+        return False
+
+
+def make_full_url(request: Optional[HttpRequest], path: str):
+    """Build an URL relative to a request using the proper request scheme"""
+    url = path
+    if request:
+        url = request.build_absolute_uri(url)
+    if settings.PROTOCOL == "https://" and url.startswith("http://"):
+        url = f"https://{url[7:]}"
+    return url

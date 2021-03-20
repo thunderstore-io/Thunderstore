@@ -1,15 +1,19 @@
 import hashlib
 import time
+import warnings
+from typing import Any, Callable
 from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
+from redis.exceptions import LockError
 
 from thunderstore.cache.models import DatabaseCache
 from thunderstore.core.utils import ChoiceEnum
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
+CACHE_LOCK_TIMEOUT = 30
 
 
 # TODO: Support parameters in cache bust conditions (e.g. specific package update)
@@ -19,17 +23,95 @@ class CacheBustCondition(ChoiceEnum):
     dynamic_html_updated = "dynamic_html_updated"
 
 
-def cache_get_or_set(key, default, default_args=(), default_kwargs={}, expiry=None):
+def try_regenerate_cache(
+    key: str,
+    old_key: str,
+    generator: Callable,
+    timeout: int,
+    version=None,
+) -> Any:
+    with cache.lock(
+        f"lock.cachegenerate.{key}", timeout=CACHE_LOCK_TIMEOUT, blocking_timeout=None
+    ):
+        generated = generator()
+        if generated is None:
+            # TODO: Use some empty object instead which can be used to
+            #       recognize None was cached
+            warnings.warn(
+                "Attempted to set 'None' to cache, replacing with empty string",
+            )
+            generated = ""
+        cache.set(key, generated, timeout=timeout, version=version)
+        cache.set(
+            old_key,
+            generated,
+            timeout=None,
+            version=version,
+        )
+        return generated
+
+
+def regenerate_cache(key: str, generator: Callable, timeout: int, version=None):
+    old_key = f"old.{key}"
+    try:
+        return try_regenerate_cache(
+            key=key,
+            old_key=old_key,
+            generator=generator,
+            timeout=timeout,
+            version=version,
+        )
+    except (LockError, AttributeError):
+        # Lock was taken by another thread, check fallback version
+        generated = cache.get(old_key, version=version)
+        if generated is None:
+            # Finally fall back to generating it on this thread
+            generated = generator()
+            cache.set(key, generated, timeout=timeout, version=version)
+            cache.set(old_key, generated, timeout=None, version=version)
+        return generated
+
+
+def cache_get_or_set_by_key(
+    condition: str,
+    cache_key: str,
+    cache_vary,
+    get_default,
+    default_args=(),
+    default_kwargs=None,
+    expiry=None,
+):
+    if default_kwargs is None:
+        default_kwargs = {}
+
+    return cache_get_or_set(
+        key=get_cache_key(
+            cache_bust_condition=condition,
+            cache_type="key",
+            key=cache_key,
+            vary_on=cache_vary,
+        ),
+        default=get_default,
+        default_args=default_args,
+        default_kwargs=default_kwargs,
+        expiry=expiry,
+    )
+
+
+def cache_get_or_set(key, default, default_args=(), default_kwargs=None, expiry=None):
+    if default_kwargs is None:
+        default_kwargs = {}
+
     def call_default():
         if settings.DEBUG and settings.DEBUG_SIMULATED_LAG:
             time.sleep(settings.DEBUG_SIMULATED_LAG)
         return default(*default_args, **default_kwargs)
 
-    return cache.get_or_set(
-        key=key,
-        default=call_default,
-        timeout=expiry,
-    )
+    result = cache.get(key, version=None)
+    if result is None:
+        result = regenerate_cache(key=key, generator=call_default, timeout=expiry)
+
+    return result
 
 
 def invalidate_cache(cache_bust_condition):
@@ -63,7 +145,7 @@ class ManualCacheMixin(object):
 
     def dispatch(self, *args, **kwargs):
         def get_default(*a, **kw):
-            return super().dispatch(*a, **kw).render()
+            return super(ManualCacheMixin, self).dispatch(*a, **kw).render()
 
         if self.request.method != "GET":
             return get_default(*args, **kwargs)
@@ -119,9 +201,14 @@ class BackgroundUpdatedCacheMixin(object):
 
     def dispatch(self, *args, **kwargs):
         if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
-            return super().dispatch(*args, **kwargs).render()
+            return (
+                super(BackgroundUpdatedCacheMixin, self)
+                .dispatch(*args, **kwargs)
+                .render()
+            )
         return self.get_cache(
-            self.get_cache_key(*args, **kwargs), self.get_no_cache_response()
+            self.get_cache_key(*args, **kwargs),
+            self.get_no_cache_response(),
         )
 
     @classmethod

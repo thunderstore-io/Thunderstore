@@ -1,5 +1,7 @@
 from django.templatetags.static import static
 
+from thunderstore.community.models import CommunitySite
+
 
 def community_site(request):
     if request.community_site:
@@ -25,8 +27,8 @@ def community_site(request):
             result.update(
                 {
                     "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
-                    "site_icon_width": "303",
-                    "site_icon_height": "303",
+                    "site_icon_width": "1000",
+                    "site_icon_height": "1000",
                 }
             )
         return result
@@ -36,8 +38,16 @@ def community_site(request):
             "site_slogan": "The Risk of Rain 2 Mod Database",
             "site_description": "Thunderstore is a mod database and API for downloading Risk of Rain 2 mods",
             "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
-            "site_icon_width": "303",
-            "site_icon_height": "303",
+            "site_icon_width": "1000",
+            "site_icon_height": "1000",
             "site_discord_url": "https://discord.gg/5MbXZvd",
             "site_wiki_url": "https://github.com/risk-of-thunder/R2Wiki/wiki",
         }
+
+
+def selectable_sites(request):
+    return {
+        "selectable_community_sites": CommunitySite.objects.exclude(
+            is_listed=False
+        ).select_related("community", "site")
+    }

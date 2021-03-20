@@ -1,0 +1,33 @@
+{% extends 'settings/base.html' %}
+
+{% block title %}Teams{% endblock %}
+
+{% block settings_content %}
+<div class="row mb-3">
+    <div class="col-12">
+        <a href="{% url "settings.teams.create" %}" class="btn btn-success">Create Team</a>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Team Name</th>
+                    <th>Role</th>
+                    <th>Member Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for membership in team_memberships %}
+                <tr>
+                    <td><a href="{{ membership.identity.settings_url }}">{{ membership.identity.name }}</a></td>
+                    <td>{{ membership.role }}</td>
+                    <td>{{ membership.identity.member_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

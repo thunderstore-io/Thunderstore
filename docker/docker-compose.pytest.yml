@@ -1,0 +1,51 @@
+version: "3.8"
+
+x-django-service: &django-service
+  image: ${DJANGO_IMAGE}
+  environment:
+    CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
+    DATABASE_URL: "psql://django:django@dbpool/django"
+    REDIS_URL: "redis://redis:6379/0"
+    SECRET_KEY: "hunter2"
+  depends_on:
+    - db
+    - redis
+    - rabbitmq
+
+services:
+  db:
+    image: postgres:12.6-alpine
+    environment:
+      POSTGRES_PASSWORD: django
+      POSTGRES_USER: django
+      POSTGRES_DB: django
+
+  dbpool:
+    image: edoburu/pgbouncer:1.15.0
+    environment:
+      DATABASE_URL: "postgres://django:django@db/django"
+      POOL_MODE: "transaction"
+    volumes:
+      - ../pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+
+  redis:
+    image: redis:5.0.4-alpine3.9
+    command: --maxmemory 200mb --maxmemory-policy allkeys-lru
+
+  rabbitmq:
+    image: rabbitmq:3.8.14-alpine
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: django
+      RABBITMQ_DEFAULT_PASS: django
+      RABBITMQ_DEFAULT_VHOST: django
+
+  django:
+    <<: *django-service
+    entrypoint: pytest
+    command: >
+      --cov-report=xml:coverage_results/coverage.xml
+      --cov-report=term
+      --cov /app/
+    volumes:
+      - ../coverage_results:/app/coverage_results

@@ -4,11 +4,10 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from PIL import Image
 
-from thunderstore.repository.api.experimental.tasks import (
-    update_api_experimental_caches,
-)
 from thunderstore.repository.models import (
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
@@ -18,18 +17,54 @@ from thunderstore.repository.package_reference import PackageReference
 
 @pytest.mark.django_db
 def test_api_experimental(api_client, active_package_listing):
-    update_api_experimental_caches()
-    response = api_client.get(
-        "/api/experimental/package/",
-    )
+    # TODO: Create more packages
+    with CaptureQueriesContext(connection) as context:
+        response = api_client.get(
+            "/api/experimental/package/",
+        )
+    assert len(context) <= 10
     assert response.status_code == 200
     result = response.json()
+    assert "next" in result
+    assert "previous" in result
+    result = result["results"]
     assert len(result) == 1
-    assert result[0]["package"]["name"] == active_package_listing.package.name
-    assert (
-        result[0]["package"]["full_name"]
-        == active_package_listing.package.full_package_name
-    )
+    assert result[0]["name"] == active_package_listing.package.name
+    assert result[0]["full_name"] == active_package_listing.package.full_package_name
+
+
+@pytest.mark.django_db
+def test_api_experimental_package_detail(api_client, active_package_listing):
+    # TODO: Create dependencies and multiple versions
+    with CaptureQueriesContext(connection) as context:
+        response = api_client.get(
+            f"/api/experimental/package/{active_package_listing.package.owner.name}/{active_package_listing.package.name}/",
+        )
+    assert len(context) <= 10
+    assert response.status_code == 200
+    result = response.json()
+    assert result["namespace"] == active_package_listing.package.owner.name
+    assert result["name"] == active_package_listing.package.name
+    assert result["full_name"] == active_package_listing.package.full_package_name
+
+
+@pytest.mark.django_db
+def test_api_experimental_package_version_detail(api_client, package_version):
+    # TODO: Create dependencies
+    with CaptureQueriesContext(connection) as context:
+        response = api_client.get(
+            f"/api/experimental/package/"
+            f"{package_version.package.owner.name}/"
+            f"{package_version.package.name}/"
+            f"{package_version.version_number}/"
+        )
+    assert response.status_code == 200
+    assert len(context) <= 10
+    result = response.json()
+    assert result["namespace"] == package_version.package.owner.name
+    assert result["name"] == package_version.package.name
+    assert result["version_number"] == package_version.version_number
+    assert result["full_name"] == package_version.full_version_name
 
 
 def _create_test_zip(manifest_data):
@@ -61,6 +96,7 @@ def test_api_experimental_upload_package_success(
     manifest_v1_data,
     package_category,
     uploader_identity,
+    community,
 ):
     zip_data = _create_test_zip(manifest_v1_data)
 
@@ -78,6 +114,7 @@ def test_api_experimental_upload_package_success(
                 {
                     "author_name": uploader_identity.name,
                     "categories": [package_category.slug],
+                    "communities": [community.identifier],
                     "has_nsfw_content": True,
                 },
             ),
@@ -101,6 +138,7 @@ def test_api_experimental_upload_package_fail_no_permission(
     manifest_v1_data,
     package_category,
     uploader_identity,
+    community,
 ):
     zip_data = _create_test_zip(manifest_v1_data)
 
@@ -112,6 +150,7 @@ def test_api_experimental_upload_package_fail_no_permission(
                 {
                     "author_name": uploader_identity.name,
                     "categories": [package_category.slug],
+                    "communities": [community.identifier],
                     "has_nsfw_content": True,
                 },
             ),
@@ -121,10 +160,9 @@ def test_api_experimental_upload_package_fail_no_permission(
     )
     print(response.content)
     assert response.status_code == 400
-    assert (
-        response.json()["metadata"]["author_name"][0]
-        == "Object with name=Test-Identity does not exist."
-    )
+    assert response.json() == {
+        "metadata": {"author_name": ["Object with name=Test_Identity does not exist."]}
+    }
     namespace = uploader_identity.name
     name = "name"
     version = "1.0.0"
@@ -138,6 +176,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
     manifest_v1_data,
     package_category,
     uploader_identity,
+    community,
 ):
     zip_data = _create_test_zip(manifest_v1_data)
 
@@ -156,6 +195,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
                 {
                     "author_name": uploader_identity.name,
                     "categories": [category_slug],
+                    "communities": [community.identifier],
                     "has_nsfw_content": True,
                 },
             ),
@@ -165,10 +205,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
     )
     assert response.status_code == 400
     print(response.content)
-    assert (
-        response.json()["metadata"]["categories"]["invalid-test"]
-        == "category not found"
-    )
+    assert response.json() == {"metadata": {"categories": {"0": ["Object not found"]}}}
     namespace = uploader_identity.name
     name = "name"
     version = "1.0.0"

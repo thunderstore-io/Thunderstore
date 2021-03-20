@@ -14,7 +14,7 @@ from ..factories import PackageFactory, PackageVersionFactory, UploaderIdentityF
 def test_package_list_view(client, community_site, ordering):
     for i in range(4):
         uploader = UploaderIdentityFactory.create(
-            name=f"Tester-{i}",
+            name=f"Tester_{i}",
         )
         package = PackageFactory.create(
             owner=uploader,

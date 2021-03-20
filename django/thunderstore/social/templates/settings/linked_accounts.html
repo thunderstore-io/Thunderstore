@@ -1,6 +1,8 @@
 {% extends 'settings/base.html' %}
 {% load social %}
 
+{% block title %}Linked Accounts{% endblock %}
+
 {% block settings_content %}
 {% for entry in backends.associated %}
     <div class="row text-large mb-2">

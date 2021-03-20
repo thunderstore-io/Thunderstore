@@ -43,9 +43,8 @@ class CreateServiceAccountForm(forms.Form):
             email=username,
             first_name=self.cleaned_data["nickname"],
         )
-        UploaderIdentityMember.objects.create(
+        self.cleaned_data["identity"].add_member(
             user=user,
-            identity=self.cleaned_data["identity"],
             role=UploaderIdentityMemberRole.member,
         )
         return ServiceAccount.objects.create(

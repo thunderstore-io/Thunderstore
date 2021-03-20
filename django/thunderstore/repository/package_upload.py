@@ -6,6 +6,7 @@ from zipfile import BadZipFile, ZipFile
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.db import transaction
 from PIL import Image
 
 from thunderstore.community.models import Community, PackageCategory
@@ -38,29 +39,47 @@ def unpack_serializer_errors(field, errors, error_dict=None):
 
 class PackageUploadForm(forms.ModelForm):
     categories = forms.ModelMultipleChoiceField(
-        queryset=PackageCategory.objects.none(), required=False
+        queryset=PackageCategory.objects.none(),
+        required=False,
+    )
+    team = forms.ModelChoiceField(
+        queryset=UploaderIdentity.objects.none(),
+        to_field_name="name",
+        required=True,
+        empty_label=None,
+    )
+    communities = forms.ModelMultipleChoiceField(
+        queryset=Community.objects.all(),
+        to_field_name="identifier",
+        required=True,
     )
     has_nsfw_content = forms.BooleanField(required=False)
 
     class Meta:
         model = PackageVersion
-        fields = ["file"]
+        fields = ["team", "file"]
 
     def __init__(
         self,
         user: UserType,
-        identity: UploaderIdentity,
         community: Community,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.user = user
-        self.identity = identity
         self.community = community
+        # TODO: How to handle with multi-community? Let's just default to the
+        #       currently active community for the sake of simplicity
         self.fields["categories"].queryset = PackageCategory.objects.filter(
             community=community
         )
+        # TODO: Query only teams where the user has upload permission
+        self.fields["team"].queryset = UploaderIdentity.objects.filter(
+            members__user=self.user,
+        )
+        # TODO: Move this to the frontent code somehow
+        self.fields["team"].widget.attrs["class"] = "slimselect-lg"
         self.manifest: Optional[dict] = None
         self.icon: Optional[ContentFile] = None
         self.readme: Optional[str] = None
@@ -81,7 +100,7 @@ class PackageUploadForm(forms.ModelForm):
 
         serializer = ManifestV1Serializer(
             user=self.user,
-            uploader=self.identity,
+            uploader=self.cleaned_data.get("team"),
             data=manifest_data,
         )
         if serializer.is_valid():
@@ -116,7 +135,15 @@ class PackageUploadForm(forms.ModelForm):
             raise ValidationError("Invalid icon dimensions, must be 256x256")
 
     def validate_readme(self, readme):
-        readme = readme.decode("utf-8")
+        try:
+            readme = readme.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValidationError(
+                [
+                    f"Unable to parse README.md: {exc}\n",
+                    "Make sure the README.md is UTF-8 compatible",
+                ]
+            )
         max_length = 32768
         if len(readme) > max_length:
             raise ValidationError(f"README.md is too long, max: {max_length}")
@@ -167,11 +194,12 @@ class PackageUploadForm(forms.ModelForm):
 
         return file
 
-    def clean(self):
-        result = super().clean()
-        self.identity.ensure_can_upload_package(self.user)
-        return result
+    def clean_team(self):
+        team = self.cleaned_data["team"]
+        team.ensure_can_upload_package(self.user)
+        return team
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         self.instance.name = self.manifest["name"]
         self.instance.version_number = self.manifest["version_number"]
@@ -179,15 +207,23 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
         self.instance.file_size = self.file_size
+        identity = self.cleaned_data["team"]
+        identity.ensure_can_upload_package(self.user)
         self.instance.package = Package.objects.get_or_create(
-            owner=self.identity,
+            owner=identity,
             name=self.instance.name,
         )[0]
-        self.instance.package.update_listing(
-            has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),
-            categories=self.cleaned_data.get("categories", []),
-            community=self.community,
-        )
+
+        for community in self.cleaned_data.get("communities", []):
+            categories = []
+            if community == self.community:
+                categories = self.cleaned_data.get("categories", [])
+            self.instance.package.update_listing(
+                has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),
+                categories=categories,
+                community=community,
+            )
+
         self.instance.icon.save("icon.png", self.icon)
         instance = super().save()
         for reference in self.manifest["dependencies"]:

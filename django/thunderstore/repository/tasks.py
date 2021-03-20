@@ -4,9 +4,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.fields import CharField
 from django.db.models.functions import Cast
 
-from thunderstore.repository.api.experimental.tasks import (
-    update_api_experimental_caches,
-)
 from thunderstore.repository.api.v1.tasks import update_api_v1_caches
 from thunderstore.repository.models import Comment
 
@@ -16,7 +13,6 @@ User = get_user_model()
 @shared_task
 def update_api_caches():
     update_api_v1_caches()
-    update_api_experimental_caches()
 
 
 @shared_task
