@@ -26,4 +26,5 @@ class CommentsThreadMixin(models.Model):
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        self.comments_thread.delete()
+        if self.comments_thread:
+            self.comments_thread.delete()
