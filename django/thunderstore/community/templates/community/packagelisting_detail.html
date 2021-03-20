@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk %}
+{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk request.community.pk %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -38,46 +38,59 @@
     </div>
 {% endif %}
 
-<div class="media mt-4">
-    <img class="align-self-center mr-3" src="{% thumbnail object.package.icon 128x128 %}" alt="{{ object.package }} icon">
-    <div class="media-body">
-        <h1 class="mt-0">{{ object.package.display_name }}</h1>
-        <p>{{ object.package.description }}</p>
-        <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></h5>
-            {% if object.package.website_url %}
-            <a class="text-nowrap" href="{{ object.package.website_url }}">
-              <span class="fa fa-globe-americas fa-fw"></span>
-              {{ object.package.website_url }}</a>
-            {% endif %}
+<div class="card bg-light mt-2">
+    <div class="card-header">
+        <div class="media">
+            <img class="align-self-center mr-3" src="{% thumbnail object.package.icon 128x128 %}" alt="{{ object.package }} icon">
+            <div class="media-body">
+                <h1 class="mt-0">{{ object.package.display_name }}</h1>
+                <p>{{ object.package.description }}</p>
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></h5>
+                    {% if object.package.website_url %}
+                    <a class="text-nowrap" href="{{ object.package.website_url }}">
+                      <span class="fa fa-globe-americas fa-fw"></span>
+                      {{ object.package.website_url }}</a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
+    </div>
+    <div class="card-body pb-1">
+        <table class="table mb-0">
+            <tr>
+                <td>Last updated</td>
+                <td>{% humanize_timestamp object.package.date_updated %}</td>
+            </tr>
+            <tr>
+                <td>Total downloads</td>
+                <td>{{ object.package.downloads }}</td>
+            </tr>
+            <tr>
+                <td>Total rating</td>
+                <td><span id="package-rating-{{ object.package.uuid4 }}">{{ object.package.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.package.uuid4 }}"></i></td>
+            </tr>
+            <tr>
+                <td>Categories</td>
+                <td>
+                    {% for category in object.categories.all %}
+                        <a href="{% url "packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
+                    {% endfor %}
+                </td>
+            </tr>
+            <tr>
+                <td>Dependency string</td>
+                <td>{{ object.package.latest.full_version_name }}</td>
+            </tr>
+            <tr>
+                <td>Dependants</td>
+                <td><a href="{{ object.dependants_url }}">{{ dependants_string }}</a>
+            </tr>
+        </table>
     </div>
 </div>
 
-<table class="table mt-2">
-    <tr>
-        <td>Last updated</td>
-        <td>{% humanize_timestamp object.package.date_updated %}</td>
-    </tr>
-    <tr>
-        <td>Total downloads</td>
-        <td>{{ object.package.downloads }}</td>
-    </tr>
-    <tr>
-        <td>Total rating</td>
-        <td><span id="package-rating-{{ object.package.uuid4 }}">{{ object.package.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.package.uuid4 }}"></i></td>
-    </tr>
-    <tr>
-        <td>Dependency string</td>
-        <td>{{ object.package.latest.full_version_name }}</td>
-    </tr>
-    <tr>
-        <td>Dependants</td>
-        <td><a href="{{ object.dependants_url }}">{{ dependants_string }}</a>
-    </tr>
-</table>
-
-<div class="row my-2 ">
+<div class="row my-2">
     <div class="col-12 col-sm-6 px-3 pl-sm-3 pr-sm-1">
         <a href="{% get_install_url object.package.latest %}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-rocket mr-2" aria-hidden="true"></i>Install with Mod Manager
@@ -96,34 +109,44 @@
 {% endif %}
 {% endwith %}
 
-<div class="card bg-light mb-3 mt-2">
-    <div class="card-header">README</div>
+<div class="card bg-light mb-2 mt-2">
+    <div class="card-header"><h4 class="mb-0">README</h4></div>
     <div class="card-body markdown-body">
         {{ object.package.readme|markdownify }}
     </div>
 </div>
 
-<h2 class="mt-4">Available versions</h2>
-<p>Please note that the install buttons only work if you have compatible client
-software installed. Otherwise use the zip download links instead.</p>
-<table class="table">
-    <tr>
-        <th>Upload date</th>
-        <th>Version number</th>
-        <th>Downloads</th>
-        <th>Download link</th>
-        <th>&nbsp;</th>
-    </tr>
-    {% for version in object.package.available_versions %}
-    <tr>
-        <td>{{ version.date_created|date:"Y-n-j" }}</td>
-        <td>{{ version.version_number }}</td>
-        <td>{{ version.downloads }}</td>
-        <td><a href="{{ version.download_url }}">{{ version }}.zip</a></td>
-        <td><a href="{% get_install_url version %}" type="button" class="btn btn-primary">Install</a></td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="card bg-light mt-2 mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">Available versions</h2>
+    </div>
+    <div class="card-body pb-1">
+        <p>
+            Please note that the install buttons only work if you have compatible client
+            software installed, such as the
+            <a href="https://www.overwolf.com/app/Thunderstore-Thunderstore_Mod_Manager">Thunderstore Mod Manager</a>.
+            Otherwise use the zip download links instead.
+        </p>
+        <table class="table mb-0">
+            <tr>
+                <th>Upload date</th>
+                <th>Version number</th>
+                <th>Downloads</th>
+                <th>Download link</th>
+                <th>&nbsp;</th>
+            </tr>
+            {% for version in object.package.available_versions %}
+            <tr>
+                <td>{{ version.date_created|date:"Y-n-j" }}</td>
+                <td>{{ version.version_number }}</td>
+                <td>{{ version.downloads }}</td>
+                <td><a href="{{ version.download_url }}">Version {{ version.version_number }}</a></td>
+                <td><a href="{% get_install_url version %}" type="button" class="btn btn-primary">Install</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 
 {% endcache %}
 {% endblock %}

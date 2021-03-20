@@ -6,27 +6,32 @@
 
 {% block content %}
     <div class="row mt-4">
-        <div class="col-3"></div>
-        <div class="col-9">
-            <h2>{{ page_title }}</h2>
-            <hr class="border-white">
-        </div>
-    </div>
-    <div class="row">
         <div class="col-3">
-            <h5>Account settings</h5>
-            <ul>
-                <li><a href="{% url "settings.teams" %}">Teams</a></li>
-                <li><a href="{% url "settings.linked-accounts" %}">Linked Accounts</a></li>
-                <li><a href="{% url "settings.delete-account" %}" class="text-danger">Delete Account</a></li>
-            </ul>
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h5 class="mb-0">Account settings</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="pl-3 mb-0">
+                        <li><a href="{% url "settings.teams" %}">Teams</a></li>
+                        <li><a href="{% url "settings.linked-accounts" %}">Linked Accounts</a></li>
+                        <li><a href="{% url "settings.delete-account" %}" class="text-danger">Delete Account</a></li>
+                    </ul>
+                </div>
+            </div>
             {% block settings_sidebar_extra %}
             {% endblock %}
         </div>
         <div class="col-9">
-            {% block settings_content %}
-
-            {% endblock %}
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h2 class="mb-0">{{ page_title }}</h2>
+                </div>
+                <div class="card-body">
+                    {% block settings_content %}
+                    {% endblock %}
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

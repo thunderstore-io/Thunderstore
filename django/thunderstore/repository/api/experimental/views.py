@@ -37,6 +37,8 @@ def get_package_queryset() -> "QuerySet[Package]":
         )
         .annotate(
             _total_downloads=Sum("versions__downloads"),
+        )
+        .annotate(
             _rating_score=Count("package_ratings"),
         )
     )
