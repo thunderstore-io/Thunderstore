@@ -24,7 +24,6 @@ KNOWN_CELERY_IDS = (
     "celery.backend_cleanup",
     "thunderstore.repository.tasks.update_api_caches",
     "thunderstore.account.tasks.delete_user",
-    "thunderstore.repository.tasks.clean_up_comments",
 )
 
 
