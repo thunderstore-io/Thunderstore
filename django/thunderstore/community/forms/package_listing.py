@@ -8,7 +8,7 @@ from ..models.package_category import PackageCategory
 class PackageListingForm(forms.ModelForm):
     class Meta:
         model = PackageListing
-        exclude = []
+        exclude = ["comments_thread"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
