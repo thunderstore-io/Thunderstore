@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import SESSION_KEY, get_user_model
 from django.contrib.sessions.backends.db import SessionStore
 from django.utils import timezone
 from rest_framework import exceptions
@@ -39,7 +39,7 @@ class UserSessionTokenAuthentication(DRFTokenAuthentication):
         session = SessionStore(session_key=key)
         if not session.exists(key):
             raise exceptions.AuthenticationFailed("Invalid token.")
-        user_id = session.get("_auth_user_id")
+        user_id = session.get(SESSION_KEY)
         if user_id is None:
             raise exceptions.AuthenticationFailed("Invalid token.")
         try:
