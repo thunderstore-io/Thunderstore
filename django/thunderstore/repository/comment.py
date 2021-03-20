@@ -1,12 +1,17 @@
+from typing import Union, get_args
+
 from django import forms
 from django.contrib.auth.models import User
 
 from thunderstore.community.models import PackageListing
-from thunderstore.repository.models import Comment
+from thunderstore.repository.models import Comment, Thread
 
 
 def clean_content(content: str) -> str:
     return content.strip()
+
+
+SupportedParentTypes = Union[Comment, PackageListing]
 
 
 class CreateCommentForm(forms.ModelForm):
@@ -17,11 +22,11 @@ class CreateCommentForm(forms.ModelForm):
     def __init__(
         self,
         user: User,
-        commented_object: PackageListing,
+        commented_object: SupportedParentTypes,
         *args,
         **kwargs,
     ) -> None:
-        if not isinstance(commented_object, PackageListing):
+        if not isinstance(commented_object, get_args(SupportedParentTypes)):
             raise ValueError("Unsupported parent object for comment")
 
         super().__init__(*args, **kwargs)
@@ -33,7 +38,14 @@ class CreateCommentForm(forms.ModelForm):
 
     def save(self, *args, **kwargs) -> Comment:
         self.instance.author = self.user
-        self.instance.thread = self.commented_object
+
+        # Create Thread on demand
+        # This is needed if the commented object has not been commented on yet
+        if self.commented_object.comments_thread is None:
+            self.commented_object.comments_thread = Thread()
+            self.commented_object.comments_thread.save()
+
+        self.instance.thread = self.commented_object.comments_thread
         return super().save(*args, **kwargs)
 
 

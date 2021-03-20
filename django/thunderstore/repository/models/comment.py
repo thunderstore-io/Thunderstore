@@ -1,7 +1,5 @@
 from django.conf import settings
 from django.contrib.auth.models import User as UserType
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from ulid2 import generate_ulid_as_uuid
@@ -9,24 +7,14 @@ from ulid2 import generate_ulid_as_uuid
 from thunderstore.community.models import PackageListing
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.utils import capture_exception
+from thunderstore.repository.models.thread import CommentsThreadMixin, Thread
 
 
-class Comment(TimestampMixin, models.Model):
-    thread = GenericForeignKey("thread_content_type", "thread_object_id")
-    thread_content_type = models.ForeignKey(
-        ContentType,
+class Comment(CommentsThreadMixin, TimestampMixin, models.Model):
+    thread = models.ForeignKey(
+        Thread,
         on_delete=models.CASCADE,
         related_name="comments",
-    )
-    # `thread_object_id` is a CharField to optimise the clean up comments task
-    # As UUIDs cannot be casted to integers or vice versa, you are not able to compare
-    # `thread_object_id` and `thread_content_type`'s `pk`.
-    thread_object_id = models.CharField(max_length=36)
-    parent_comment = models.ForeignKey(
-        "self",
-        on_delete=models.CASCADE,
-        related_name="replies",
-        null=True,
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -36,7 +24,7 @@ class Comment(TimestampMixin, models.Model):
     content = models.TextField(
         max_length=2048,
     )
-    uuid4 = models.UUIDField(
+    uuid = models.UUIDField(
         default=generate_ulid_as_uuid,
         editable=False,
         unique=True,
@@ -52,13 +40,17 @@ class Comment(TimestampMixin, models.Model):
             raise PermissionDenied("Only the comment author can edit a message")
 
     def ensure_can_pin(self, user: UserType) -> None:
-        commented_object = self.thread
+        commented_object = self.thread.parent
         if isinstance(commented_object, PackageListing):
             # Must be a member of the identity to pin
             if not commented_object.package.owner.members.filter(
                 user=user,
             ).exists():
                 raise PermissionDenied("Must be a member to pin messages")
+        elif isinstance(commented_object, Comment):
+            # Use the parent's check
+            # As nested comments are allowed, this could be another comment
+            commented_object.ensure_can_pin(user)
         else:
             capture_exception(
                 NotImplementedError(

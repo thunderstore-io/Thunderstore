@@ -13,7 +13,6 @@ from thunderstore.repository.models import (
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
 )
-from thunderstore.repository.tasks import clean_up_comments
 
 
 def test_comment_clean_content():
@@ -34,7 +33,7 @@ def test_comment_create(user, active_package_listing):
     assert comment.content == clean_content(content)
     assert comment.author == user
     assert comment.is_pinned is False
-    assert comment.thread == active_package_listing
+    assert comment.thread.parent == active_package_listing
 
 
 @pytest.mark.django_db
@@ -105,7 +104,7 @@ def test_comment_edit_pin(comment):
 
     UploaderIdentityMember.objects.create(
         user=comment.author,
-        identity=comment.thread.package.owner,
+        identity=comment.thread.parent.package.owner,
         role=UploaderIdentityMemberRole.owner,
     )
 
@@ -123,7 +122,7 @@ def test_comment_edit_pin(comment):
 def test_comment_edit_pin_not_allowed(comment):
     assert comment.is_pinned is False
     assert (
-        comment.thread.package.owner.members.filter(
+        comment.thread.parent.package.owner.members.filter(
             user=comment.author,
         ).exists()
         is False
@@ -143,7 +142,7 @@ def test_comment_edit_pin_not_allowed(comment):
 def test_comment_create_ghost_user(comment, django_user_model):
     author_pk = comment.author.pk
     assert django_user_model.objects.filter(pk=author_pk).exists()
-    delete_user.delay(comment.author.id)
+    delete_user.delay(comment.author.id).get()
     assert django_user_model.objects.filter(pk=author_pk).exists() is False
     comment = Comment.objects.get(pk=comment.pk)
     assert comment.author.username.startswith("Ghost User ")
@@ -153,9 +152,7 @@ def test_comment_create_ghost_user(comment, django_user_model):
 @pytest.mark.django_db
 def test_comment_clean_up_orphans(comment):
     # Check if comments with parents are not deleted
-    clean_up_comments.delay().get()
     assert Comment.objects.filter(pk=comment.pk).exists() is True
     # Check if comments without parents are deleted
-    comment.thread.delete()
-    clean_up_comments.delay().get()
+    comment.thread.parent.delete()
     assert Comment.objects.filter(pk=comment.pk).exists() is False

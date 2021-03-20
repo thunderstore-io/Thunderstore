@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 
 from thunderstore.cache.cache import CacheBustCondition, invalidate_cache
 from thunderstore.core.mixins import TimestampMixin
+from thunderstore.repository.models.thread import CommentsThreadMixin
 
 
 class PackageListingQueryset(models.QuerySet):
@@ -18,7 +19,7 @@ class PackageListingQueryset(models.QuerySet):
 # TODO: Add a db constraint that ensures a package listing and it's categories
 #       belong to the same community. This might require actually specifying
 #       the intermediate model in code rather than letting Django handle it
-class PackageListing(TimestampMixin, models.Model):
+class PackageListing(CommentsThreadMixin, TimestampMixin, models.Model):
     """
     Represents a package's relation to how it's displayed on the site and APIs
     """

@@ -25,6 +25,7 @@ from thunderstore.repository.factories import (
 from thunderstore.repository.models import (
     Comment,
     Package,
+    Thread,
     UploaderIdentity,
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
@@ -255,9 +256,16 @@ class TestUserTypes(ChoiceEnum):
 
 
 @pytest.fixture()
-def comment(user, active_package_listing):
+def thread():
+    return Thread.objects.create()
+
+
+@pytest.fixture()
+def comment(user, thread, active_package_listing):
+    active_package_listing.comments_thread = thread
+    active_package_listing.save()
     return Comment.objects.create(
         author=user,
-        thread=active_package_listing,
+        thread=active_package_listing.comments_thread,
         content="Test content",
     )
