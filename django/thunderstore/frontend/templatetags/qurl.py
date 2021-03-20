@@ -12,7 +12,7 @@ class QurlNode(Node):
     def render(self, context):
         request = context["request"]
         params = request.GET.copy()
-        params.update({self.param_key: self.param_val.resolve(context)})
+        params.setlist(self.param_key, [self.param_val.resolve(context)])
         return f"{request.path}?{urlencode(params, True)}"
 
 
