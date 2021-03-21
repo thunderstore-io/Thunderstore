@@ -258,6 +258,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Sessions
+
+# Session cookie used by React components during Django React transition
+SESSION_COOKIE_HTTPONLY = False
+
 # Celery
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
