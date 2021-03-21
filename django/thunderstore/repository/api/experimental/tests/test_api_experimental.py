@@ -210,3 +210,17 @@ def test_api_experimental_upload_package_fail_invalid_category(
     name = "name"
     version = "1.0.0"
     assert PackageReference(namespace, name, version).exists is False
+
+
+@pytest.mark.django_db
+def test_api_experimental_package_upload_info(
+    api_client,
+    user,
+):
+    api_client.force_authenticate(user=user)
+    response = api_client.get(
+        "/api/experimental/package/upload/",
+        HTTP_ACCEPT="application/json",
+    )
+    assert response.status_code == 200
+    assert response.json()["max_package_size_bytes"] == 524288000
