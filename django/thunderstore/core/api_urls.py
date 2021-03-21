@@ -1,6 +1,5 @@
 from django.urls import include, path
 
-from thunderstore.account.api.experimental.urls import urls as account_experimental_urls
 from thunderstore.community.api.experimental.urls import (
     urls as community_experimental_urls,
 )
@@ -20,10 +19,6 @@ api_experimental_urls = [
     path(
         "",
         include(community_experimental_urls),
-    ),
-    path(
-        "",
-        include(account_experimental_urls),
     ),
 ]
 
