@@ -1,6 +1,8 @@
-from django.shortcuts import get_object_or_404
+from collections import OrderedDict
+
+from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from thunderstore.community.api.experimental.serializers import (
     CommunitySerializer,
@@ -9,23 +11,80 @@ from thunderstore.community.api.experimental.serializers import (
 from thunderstore.community.models import Community
 
 
-class CommunitiesExperimentalApiView(APIView):
-    def get(self, request, format=None):
-        communities = CommunitySerializer(Community.objects.listed(), many=True)
+class CustomCursorPagination(CursorPagination):
+    ordering = "-datetime_created"
+    results_name = "results"
+    page_size = 100
+
+    def get_paginated_response(self, data) -> Response:
         return Response(
-            {
-                "communities": communities.data,
-            },
+            OrderedDict(
+                [
+                    (
+                        "pagination",
+                        OrderedDict(
+                            [
+                                ("next_link", self.get_next_link()),
+                                ("previous_link", self.get_previous_link()),
+                            ],
+                        ),
+                    ),
+                    (self.results_name, data),
+                ],
+            ),
+        )
+
+    def get_unpaginated_response(self, data) -> Response:
+        return Response(
+            Response(
+                OrderedDict(
+                    [
+                        ("pagination", {}),
+                        (self.results_name, data),
+                    ],
+                ),
+            ),
         )
 
 
-class PackageCategoriesExperimentalApiView(APIView):
-    def get(self, request, format=None, **kwargs):
-        community_identifier = kwargs["community"]
+class CustomListAPIView(ListAPIView):
+    pagination_class = CustomCursorPagination
+    paginator: CustomCursorPagination
+
+    def get_unpaginated_response(self, data):
+        return self.paginator.get_unpaginated_response(data)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return self.get_unpaginated_response(serializer.data)
+
+
+class CommunitiesPagination(CustomCursorPagination):
+    results_name = "communities"
+
+
+class CommunitiesExperimentalApiView(CustomListAPIView):
+    pagination_class = CommunitiesPagination
+    queryset = Community.objects.listed()
+    serializer_class = CommunitySerializer
+
+
+class PackageCategoriesPagination(CustomCursorPagination):
+    results_name = "packageCategories"
+
+
+class PackageCategoriesExperimentalApiView(CustomListAPIView):
+    pagination_class = PackageCategoriesPagination
+    serializer_class = PackageCategorySerializer
+
+    def get_queryset(self):
+        community_identifier = self.kwargs.get("community")
         community = get_object_or_404(Community, identifier=community_identifier)
-        communities = PackageCategorySerializer(community.package_categories, many=True)
-        return Response(
-            {
-                "packageCategories": communities.data,
-            },
-        )
+        return community.package_categories
