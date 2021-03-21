@@ -77,7 +77,7 @@ class CommunitiesExperimentalApiView(CustomListAPIView):
 
 
 class PackageCategoriesPagination(CustomCursorPagination):
-    results_name = "packageCategories"
+    results_name = "package_categories"
 
 
 class PackageCategoriesExperimentalApiView(CustomListAPIView):
