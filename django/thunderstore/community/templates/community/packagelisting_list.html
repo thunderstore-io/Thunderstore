@@ -27,17 +27,29 @@
     <h3 class="col-12 mt-4">{{ page_title }}</h3>
 </div>
 
-<form class="form-inline" method="get" action="{{ request.path }}">
-    <div class="m-0 mb-2 p-0 w-100">
-        <div class="btn-group d-flex" role="group" aria-label="Result ordering">
-            {% for entry in ordering_modes %}
-                <a href="{% qurl ordering entry.0 %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
-                    {{ entry.1 }}
-                </a>
-            {% endfor %}
-        </div>
+{% if sections|length >= 2 %}
+<div class="m-0 mb-2 p-0 w-100">
+    <div class="btn-group d-flex" role="group" aria-label="Result ordering">
+        {% for entry in sections %}
+            <a href="{% qurl section entry.0 page %}" class="btn btn-primary {% if active_section == entry.0 %}active{% endif %}">
+                {{ entry.1 }}
+            </a>
+        {% endfor %}
     </div>
+</div>
+{% endif %}
 
+<div class="m-0 mb-2 p-0 w-100">
+    <div class="btn-group d-flex" role="group" aria-label="Result ordering">
+        {% for entry in ordering_modes %}
+            <a href="{% qurl ordering entry.0 page %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
+                {{ entry.1 }}
+            </a>
+        {% endfor %}
+    </div>
+</div>
+
+<form class="form-inline" method="get" action="{{ request.path }}">
     <div class="card bg-light w-100 mb-2">
         <div class="card-body search-options py-3 mb-4 px-3">
 
