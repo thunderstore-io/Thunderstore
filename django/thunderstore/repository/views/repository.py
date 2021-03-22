@@ -69,15 +69,11 @@ class PackageListSearchView(ListView):
 
     @cached_property
     def sections(self) -> List[PackageListingSection]:
-        # TODO: Remove try/except once migration applied
-        try:
-            return list(
-                self.request.community.package_listing_sections.order_by(
-                    "-priority", "datetime_created"
-                )
+        return list(
+            self.request.community.package_listing_sections.order_by(
+                "-priority", "datetime_created"
             )
-        except ProgrammingError:
-            return []
+        )
 
     @cached_property
     def section_choices(self) -> List[Tuple[str, str]]:
