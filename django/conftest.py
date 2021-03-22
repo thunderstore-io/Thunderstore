@@ -13,6 +13,7 @@ from thunderstore.community.models import (
     CommunitySite,
     PackageCategory,
     PackageListing,
+    PackageListingSection,
 )
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.utils import ChoiceEnum
@@ -135,6 +136,16 @@ def package_category(community):
         name="Test",
         slug="test",
         community=community,
+    )
+
+
+@pytest.fixture()
+def package_listing_section(community):
+    return PackageListingSection.objects.create(
+        community=community,
+        name="Test Section",
+        slug="test-section",
+        is_listed=True,
     )
 
 

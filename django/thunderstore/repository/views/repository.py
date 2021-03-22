@@ -1,10 +1,11 @@
-from typing import List
+from typing import List, Optional, Set, Tuple
 
-from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db import ProgrammingError, transaction
+from django.db.models import Count, Q, QuerySet, Sum
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils.functional import cached_property
 from django.views.generic import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -12,7 +13,12 @@ from django.views.generic.list import ListView
 
 from thunderstore.cache.cache import CacheBustCondition, cache_function_result
 from thunderstore.cache.pagination import CachedPaginator
-from thunderstore.community.models import Community, PackageCategory, PackageListing
+from thunderstore.community.models import (
+    Community,
+    PackageCategory,
+    PackageListing,
+    PackageListingSection,
+)
 from thunderstore.repository.models import (
     PackageVersion,
     UploaderIdentity,
@@ -50,6 +56,7 @@ class PackageListSearchView(ListView):
         cache_vary += f".{self.get_excluded_categories()}"
         cache_vary += f".{self.get_is_deprecated_included()}"
         cache_vary += f".{self.get_is_nsfw_included()}"
+        cache_vary += f".{self.active_section_slug}"
         return cache_vary
 
     def get_ordering_choices(self):
@@ -59,6 +66,40 @@ class PackageListSearchView(ListView):
             ("most-downloaded", "Most downloaded"),
             ("top-rated", "Top rated"),
         )
+
+    @cached_property
+    def sections(self) -> List[PackageListingSection]:
+        # TODO: Remove try/except once migration applied
+        try:
+            return list(
+                self.request.community.package_listing_sections.order_by(
+                    "-priority", "datetime_created"
+                )
+            )
+        except ProgrammingError:
+            return []
+
+    @cached_property
+    def section_choices(self) -> List[Tuple[str, str]]:
+        return list((x.slug, x.name) for x in self.sections if x.is_listed)
+
+    @cached_property
+    def active_section(self) -> Optional[PackageListingSection]:
+        section_param = self.request.GET.get("section", None)
+        if section_param is not None:
+            # Avoiding querying the database, should be faster as long as there
+            # aren't massive amounts of sections
+            for entry in self.sections:
+                if entry.slug == section_param:
+                    return entry
+            raise Http404()
+        elif self.sections:
+            return self.sections[0]
+        return None
+
+    @cached_property
+    def active_section_slug(self) -> str:
+        return self.active_section.slug if self.active_section else ""
 
     def _get_int_list(self, name: str) -> List[int]:
         selections = self.request.GET.getlist(name, [])
@@ -73,8 +114,26 @@ class PackageListSearchView(ListView):
     def get_included_categories(self):
         return self._get_int_list("included_categories")
 
+    @property
+    def filter_require_categories(self) -> Set[int]:
+        categories = set(self.get_included_categories())
+        if self.active_section:
+            categories.update(
+                self.active_section.require_categories.values_list("pk", flat=True)
+            )
+        return categories
+
     def get_excluded_categories(self):
         return self._get_int_list("excluded_categories")
+
+    @property
+    def filter_exclude_categories(self) -> Set[int]:
+        categories = set(self.get_excluded_categories())
+        if self.active_section:
+            categories.update(
+                self.active_section.exclude_categories.values_list("pk", flat=True)
+            )
+        return categories
 
     def get_is_nsfw_included(self):
         try:
@@ -159,22 +218,27 @@ class PackageListSearchView(ListView):
             #     _rating_score=Count("package__package_ratings"),
             # )
         )
-        included_categories = self.get_included_categories()
+
+        included_categories = self.filter_require_categories
         if included_categories:
             include_categories_qs = Q()
             for category in included_categories:
                 include_categories_qs |= Q(categories=category)
             queryset = queryset.exclude(~include_categories_qs)
-        excluded_categories = self.get_excluded_categories()
+
+        excluded_categories = self.filter_exclude_categories
         if excluded_categories:
             exclude_categories_qs = Q()
             for category in excluded_categories:
                 exclude_categories_qs |= Q(categories=category)
             queryset = queryset.exclude(exclude_categories_qs)
+
         if not self.get_is_nsfw_included():
             queryset = queryset.exclude(has_nsfw_content=True)
+
         if not self.get_is_deprecated_included():
             queryset = queryset.exclude(package__is_deprecated=True)
+
         search_query = self.get_search_query()
         if search_query:
             queryset = self.perform_search(queryset, search_query)
@@ -211,6 +275,8 @@ class PackageListSearchView(ListView):
         context["cache_vary"] = self.get_full_cache_vary()
         context["page_title"] = self.get_page_title()
         context["ordering_modes"] = self.get_ordering_choices()
+        context["sections"] = self.section_choices
+        context["active_section"] = self.active_section_slug
         context["active_ordering"] = self.get_active_ordering()
         context["current_search"] = self.get_search_query()
         breadcrumbs = self.get_breadcrumbs()
@@ -228,6 +294,8 @@ class PackageListView(PackageListSearchView):
 
 
 class PackageListByOwnerView(PackageListSearchView):
+    owner: Optional[UploaderIdentity]
+
     def get_breadcrumbs(self):
         breadcrumbs = super().get_breadcrumbs()
         return breadcrumbs + [
