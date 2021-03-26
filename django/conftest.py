@@ -24,7 +24,9 @@ from thunderstore.repository.factories import (
     UploaderIdentityMemberFactory,
 )
 from thunderstore.repository.models import (
+    Comment,
     Package,
+    Thread,
     UploaderIdentity,
     UploaderIdentityMember,
     UploaderIdentityMemberRole,
@@ -262,3 +264,19 @@ class TestUserTypes(ChoiceEnum):
         if usertype == TestUserTypes.superuser:
             return UserFactory.create(is_staff=True, is_superuser=True)
         raise AttributeError(f"Invalid useretype: {usertype}")
+
+
+@pytest.fixture()
+def thread():
+    return Thread.objects.create()
+
+
+@pytest.fixture()
+def comment(user, thread, active_package_listing):
+    active_package_listing.comments_thread = thread
+    active_package_listing.save()
+    return Comment.objects.create(
+        author=user,
+        thread=active_package_listing.comments_thread,
+        content="Test content",
+    )

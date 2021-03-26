@@ -2,6 +2,7 @@ from django import forms
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 
+from thunderstore.account.tasks import delete_user
 from thunderstore.core.mixins import RequireAuthenticationMixin
 
 
@@ -65,5 +66,5 @@ class DeleteAccountView(RequireAuthenticationMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        self.request.user.delete()
+        delete_user.delay(self.request.user.id)
         return super().form_valid(form)

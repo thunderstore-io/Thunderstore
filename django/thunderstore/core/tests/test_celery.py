@@ -23,6 +23,7 @@ KNOWN_CELERY_IDS = (
     "celery.starmap",
     "celery.backend_cleanup",
     "thunderstore.repository.tasks.update_api_caches",
+    "thunderstore.account.tasks.delete_user",
 )
 
 

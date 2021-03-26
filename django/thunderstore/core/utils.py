@@ -1,3 +1,4 @@
+import os
 from typing import Callable, Optional
 
 from django.conf import settings
@@ -57,16 +58,21 @@ class CommunitySiteSerializerContext:
         return context
 
 
+def capture_exception(exception: Exception) -> None:
+    """Raises exception when running tests or NO_SILENT_FAIL."""
+    testing = "PYTEST_CURRENT_TEST" in os.environ
+    if testing or not settings.SILENT_FAIL:
+        raise exception
+    else:
+        capture_sentry_exception(exception)
+
+
 def check_validity(fn: Callable[[], None]) -> bool:
     try:
         fn()
         return True
     except ValidationError:
         return False
-
-
-def capture_exception(*args, **kwargs):
-    capture_sentry_exception(*args, **kwargs)
 
 
 def make_full_url(request: Optional[HttpRequest], path: str):
