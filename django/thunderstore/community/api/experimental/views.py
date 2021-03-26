@@ -34,36 +34,20 @@ class CustomCursorPagination(CursorPagination):
             ),
         )
 
-    def get_unpaginated_response(self, data) -> Response:
-        return Response(
-            Response(
-                OrderedDict(
-                    [
-                        ("pagination", {}),
-                        (self.results_name, data),
-                    ],
-                ),
-            ),
-        )
-
 
 class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
 
-    def get_unpaginated_response(self, data):
-        return self.paginator.get_unpaginated_response(data)
-
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        if page is None:
+            raise ValueError("Pagination not set")
 
-        serializer = self.get_serializer(queryset, many=True)
-        return self.get_unpaginated_response(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
 
 class CommunitiesPagination(CustomCursorPagination):
