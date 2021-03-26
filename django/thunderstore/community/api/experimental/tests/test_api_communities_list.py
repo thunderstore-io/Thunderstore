@@ -10,4 +10,4 @@ def test_api_experimental_communities_list(
         HTTP_ACCEPT="application/json",
     )
     assert response.status_code == 200
-    assert isinstance(response.json()["communities"], list)
+    assert isinstance(response.json()["results"], list)

@@ -50,22 +50,14 @@ class CustomListAPIView(ListAPIView):
         return self.get_paginated_response(serializer.data)
 
 
-class CommunitiesPagination(CustomCursorPagination):
-    results_name = "communities"
-
-
 class CommunitiesExperimentalApiView(CustomListAPIView):
-    pagination_class = CommunitiesPagination
+    pagination_class = CustomCursorPagination
     queryset = Community.objects.listed()
     serializer_class = CommunitySerializer
 
 
-class PackageCategoriesPagination(CustomCursorPagination):
-    results_name = "package_categories"
-
-
 class PackageCategoriesExperimentalApiView(CustomListAPIView):
-    pagination_class = PackageCategoriesPagination
+    pagination_class = CustomCursorPagination
     serializer_class = PackageCategorySerializer
 
     def get_queryset(self):

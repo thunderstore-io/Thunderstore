@@ -13,7 +13,7 @@ def test_api_experimental_categories_list(
         HTTP_ACCEPT="application/json",
     )
     assert response.status_code == 200
-    assert isinstance(response.json()["package_categories"], list)
+    assert isinstance(response.json()["results"], list)
 
 
 @pytest.mark.django_db
