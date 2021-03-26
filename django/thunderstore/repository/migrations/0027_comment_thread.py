@@ -42,7 +42,6 @@ class Migration(migrations.Migration):
                         editable=False,
                         primary_key=True,
                         serialize=False,
-                        unique=True,
                     ),
                 ),
                 ("is_pinned", models.BooleanField(default=False)),

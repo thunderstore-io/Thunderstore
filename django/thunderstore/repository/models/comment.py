@@ -25,10 +25,9 @@ class Comment(CommentsThreadMixin, TimestampMixin, models.Model):
         max_length=2048,
     )
     uuid = models.UUIDField(
+        primary_key=True,
         default=generate_ulid_as_uuid,
         editable=False,
-        unique=True,
-        primary_key=True,
     )
     is_pinned = models.BooleanField(
         default=False,
