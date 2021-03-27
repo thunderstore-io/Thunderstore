@@ -19,6 +19,7 @@ class CurrentUserExperimentalApiView(APIView):
                 "package"
             ).values_list("package__uuid4", flat=True)
             teams = request.user.uploader_identities.values_list("identity__name")
+            teams = [team[0] for team in teams]
         return Response(
             {
                 "username": username,
