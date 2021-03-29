@@ -33,7 +33,7 @@ class ManifestV1Serializer(serializers.Serializer):
     )
     dependencies = serializers.ListField(
         child=DependencyField(),
-        max_length=100,
+        max_length=250,
         allow_empty=True,
     )
 
