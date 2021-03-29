@@ -53,7 +53,7 @@ def test_fields_dependency_valid(package_version):
 def test_fields_list_dependency_field():
     field = serializers.ListField(
         child=DependencyField(),
-        max_length=100,
+        max_length=250,
         allow_empty=True,
     )
     identity = UploaderIdentityFactory.create(name="tester")
