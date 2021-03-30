@@ -1,12 +1,24 @@
 from django.urls import include, path
 
-from thunderstore.repository.api.experimental.urls import urls as experimental_urls
+from thunderstore.community.api.experimental.urls import (
+    urls as community_experimental_urls,
+)
+from thunderstore.repository.api.experimental.urls import (
+    urls as repository_experimental_urls,
+)
 from thunderstore.repository.api.v1.urls import urls as v1_urls
 
 api_experimental_urls = [
     path(
         "",
-        include((experimental_urls, "api-experimental"), namespace="api-experimental"),
+        include(
+            (repository_experimental_urls, "api-experimental"),
+            namespace="api-experimental",
+        ),
+    ),
+    path(
+        "",
+        include(community_experimental_urls),
     ),
 ]
 

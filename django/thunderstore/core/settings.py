@@ -25,6 +25,7 @@ env = environ.Env(
     DISABLE_SERVER_SIDE_CURSORS=(bool, True),
     SECRET_KEY=(str, ""),
     ALLOWED_HOSTS=(list, []),
+    CORS_ALLOWED_ORIGINS=(list, []),
     PROTOCOL=(str, ""),
     SOCIAL_AUTH_DISCORD_KEY=(str, ""),
     SOCIAL_AUTH_DISCORD_SECRET=(str, ""),
@@ -83,6 +84,10 @@ DEBUG_SIMULATED_LAG = env.int("DEBUG_SIMULATED_LAG")
 SECRET_KEY = env.str("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
+if CORS_ALLOWED_ORIGINS == ["*"]:
+    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOW_ALL_ORIGINS = True
 
 DATABASE_LOGS = env.bool("DATABASE_LOGS")
 DATABASE_QUERY_COUNT_HEADER = env.bool("DATABASE_QUERY_COUNT_HEADER")
@@ -155,6 +160,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_celery_results",
     "cachalot",
+    "corsheaders",
     # Own
     "thunderstore.core",
     "thunderstore.cache",
@@ -172,6 +178,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "thunderstore.frontend.middleware.SocialAuthExceptionHandlerMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -250,6 +257,11 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+# Sessions
+
+# Session cookie used by React components during Django React transition
+SESSION_COOKIE_HTTPONLY = False
 
 # Celery
 
@@ -412,6 +424,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "thunderstore.account.authentication.TokenAuthentication",
+        "thunderstore.account.authentication.UserSessionTokenAuthentication",
     ],
 }
 

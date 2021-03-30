@@ -16,6 +16,7 @@ from thunderstore.repository.api.experimental.serializers import (
 )
 from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.repository.package_reference import PackageReference
+from thunderstore.repository.package_upload import MAX_PACKAGE_SIZE
 
 
 def get_package_queryset() -> "QuerySet[Package]":
@@ -144,6 +145,9 @@ class UploadPackageApiView(APIView):
 
     parser_classes = [MultiPartParser]
     permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        return Response({"max_package_size_bytes": MAX_PACKAGE_SIZE})
 
     def post(self, request):
         serializer = PackageUploadSerializerExperiemental(
