@@ -6,7 +6,7 @@ RUN npm ci
 COPY ./builder /app
 RUN npm run build
 
-FROM python:3.8-slim-buster
+FROM python:3.9.1-slim-buster
 
 LABEL org.opencontainers.image.source="https://github.com/thunderstore-io/Thunderstore"
 
