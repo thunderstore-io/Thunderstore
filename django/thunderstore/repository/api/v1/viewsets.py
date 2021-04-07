@@ -21,6 +21,7 @@ class PackageViewSet(
     CommunitySiteSerializerContext,
     viewsets.ReadOnlyModelViewSet,
 ):
+    cache_database_fallback = False
     serializer_class = PackageListingSerializer
     lookup_field = "package__uuid4"
     lookup_url_kwarg = "uuid4"
