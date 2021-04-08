@@ -8,6 +8,15 @@ x-django-service: &django-service
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
     DATABASE_URL: "psql://django:django@dbpool/django"
     REDIS_URL: "redis://redis:6379/0"
+
+    AWS_ACCESS_KEY_ID: "thunderstore"
+    AWS_SECRET_ACCESS_KEY: "thunderstore"
+    AWS_S3_REGION_NAME: ""
+    AWS_S3_ENDPOINT_URL: "http://minio:9000/"
+    AWS_S3_CUSTOM_DOMAIN: "localhost:9000/thunderstore"
+    AWS_STORAGE_BUCKET_NAME: "thunderstore"
+    AWS_LOCATION: "development"
+    AWS_S3_SECURE_URLS: "False"
   env_file:
     - .env
   depends_on:
@@ -58,12 +67,17 @@ services:
       RABBITMQ_DEFAULT_PASS: django
       RABBITMQ_DEFAULT_VHOST: django
 
-  cdn:
-    image: minio/minio:latest@sha256:e2fbeedcd0c5e2f0a462285430fc7313d89684b6c759c85480b817e54086a2ff
+  minio:
+    build:
+      context: .
+      dockerfile: minio/Dockerfile
     ports:
       - 127.0.0.1:9000:9000
     volumes:
       - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: thunderstore
+      MINIO_ROOT_PASSWORD: thunderstore
     command: server /data
 
   django:

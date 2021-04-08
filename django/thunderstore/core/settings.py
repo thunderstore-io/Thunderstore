@@ -56,6 +56,7 @@ env = environ.Env(
     AWS_AUTO_CREATE_BUCKET=(bool, False),
     AWS_LOCATION=(str, ""),
     AWS_QUERYSTRING_AUTH=(bool, False),
+    AWS_S3_SECURE_URLS=(bool, True),
     REDIS_URL=(str, ""),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
@@ -487,10 +488,9 @@ AWS_QUERYSTRING_AUTH = env.bool("AWS_QUERYSTRING_AUTH")
 AWS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=2592000",  # 30 days
 }
+AWS_S3_SECURE_URLS = env.bool("AWS_S3_SECURE_URLS")
 
-if all(
-    (AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)
-):
+if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
