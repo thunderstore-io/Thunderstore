@@ -48,6 +48,7 @@ env = environ.Env(
     AWS_SECRET_ACCESS_KEY=(str, ""),
     AWS_S3_REGION_NAME=(str, ""),
     AWS_S3_ENDPOINT_URL=(str, ""),
+    AWS_S3_SIGNING_ENDPOINT_URL=(str, ""),
     AWS_S3_HOST=(str, ""),
     AWS_S3_CUSTOM_DOMAIN=(str, ""),
     AWS_STORAGE_BUCKET_NAME=(str, ""),
@@ -170,6 +171,7 @@ INSTALLED_APPS = [
     "thunderstore.webhooks",
     "thunderstore.social",
     "thunderstore.community",
+    "thunderstore.usermedia",
     "thunderstore.account",
     "backblaze_b2",
 ]
@@ -382,6 +384,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "social_auth_nonce",
         "social_auth_partial",
         "social_auth_usersocialauth",
+        "usermedia_usermedia",
         "webhooks_webhook",
         "webhooks_webhook_exclude_categories",
         "webhooks_webhook_require_categories",
@@ -481,6 +484,7 @@ AWS_ACCESS_KEY_ID = env.str("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = env.str("AWS_SECRET_ACCESS_KEY")
 AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME")
 AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL")
+AWS_S3_SIGNING_ENDPOINT_URL = env.str("AWS_S3_SIGNING_ENDPOINT_URL")
 AWS_S3_HOST = env.str("AWS_S3_HOST")
 AWS_S3_CUSTOM_DOMAIN = env.str("AWS_S3_CUSTOM_DOMAIN")
 AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
