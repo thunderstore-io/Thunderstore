@@ -37,7 +37,7 @@ To connect a site to a community, you will need to:
 
 In local development, [minio](https://github.com/minio/minio) is used for S3
 compatible file storage. You can access it via http://localhost:9000/ with
-`minioadmin:minioadmin` credentials
+`thunderstore:thunderstore` credentials
 
 ## Mod package format
 
