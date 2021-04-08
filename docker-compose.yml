@@ -58,6 +58,14 @@ services:
       RABBITMQ_DEFAULT_PASS: django
       RABBITMQ_DEFAULT_VHOST: django
 
+  cdn:
+    image: minio/minio:latest@sha256:e2fbeedcd0c5e2f0a462285430fc7313d89684b6c759c85480b817e54086a2ff
+    ports:
+      - 127.0.0.1:9000:9000
+    volumes:
+      - minio-data:/data
+    command: server /data
+
   django:
     <<: *django-service
     command: gunicorn
@@ -90,4 +98,5 @@ services:
 volumes:
   db-data:
   django-data:
+  minio-data:
   built-static:
