@@ -9,7 +9,7 @@ class ThunderstoreApi {
 
     protected apiFetch = async (
         url: string,
-        method: "get" | "post",
+        method: "GET" | "POST",
         body?: string
     ) => {
         const headers = new Headers({
@@ -26,13 +26,13 @@ class ThunderstoreApi {
     };
 
     protected get = async (url: string) => {
-        return this.apiFetch(url, "get");
+        return this.apiFetch(url, "GET");
     };
 
     protected post = async (url: string, data?: object) => {
         return this.apiFetch(
             url,
-            "post",
+            "POST",
             data ? JSON.stringify(data) : undefined
         );
     };
@@ -51,7 +51,7 @@ class ApiUrls {
         apiUrl("usermedia", usermediaId, "finish-upload");
 }
 
-interface UserMedia {
+export interface UserMedia {
     uuid: string;
     datetime_created: string;
     expiry: string;
@@ -77,7 +77,7 @@ interface UserMediaUploadUrls {
     part_size: number;
 }
 
-interface CompletedPart {
+export interface CompletedPart {
     ETag: string;
     PartNumber: number;
 }

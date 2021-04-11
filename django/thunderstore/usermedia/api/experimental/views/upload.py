@@ -23,7 +23,7 @@ from thunderstore.usermedia.s3_upload import (
     get_signed_upload_urls,
 )
 
-PART_SIZE = 1024 * 1024 * 6
+PART_SIZE = 1024 * 1024 * 50
 
 
 class UserMediaInitiateUploadApiView(GenericAPIView):

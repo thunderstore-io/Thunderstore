@@ -86,6 +86,8 @@ def finalize_upload(
     if not user_media.can_user_write(user):
         raise PermissionDenied()
 
+    parts = sorted(parts, key=lambda x: x["PartNumber"])
+
     client.complete_multipart_upload(
         Bucket=bucket_name,
         Key=user_media.file_key,
