@@ -3,7 +3,6 @@ from datetime import timedelta
 from django.utils import timezone
 from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import status
-from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -30,8 +29,6 @@ PART_SIZE = 1024 * 1024 * 6
 class UserMediaInitiateUploadApiView(GenericAPIView):
     queryset = UserMedia.objects.active()
     serializer_class = UserMediaSerializer
-    # TODO: Remove session authentication
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     # TODO: Add test for permission check
     permission_classes = [IsAuthenticated]
 
@@ -57,8 +54,6 @@ class UserMediaCreatePartUploadUrlsApiView(GenericAPIView):
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
     serializer_class = UserMediaCreatePartUploadUrlsParams
-    # TODO: Remove session authentication
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     # TODO: Add test for permission check
     permission_classes = [IsAuthenticated]
 
@@ -95,8 +90,6 @@ class UserMediaFinishUploadApiView(GenericAPIView):
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
     serializer_class = UserMediaFinishUploadParamsSerializer
-    # TODO: Remove session authentication
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     # TODO: Add test for permission check
     permission_classes = [IsAuthenticated]
 
