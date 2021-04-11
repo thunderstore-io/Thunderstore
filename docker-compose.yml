@@ -13,7 +13,7 @@ x-django-service: &django-service
     AWS_SECRET_ACCESS_KEY: "thunderstore"
     AWS_S3_REGION_NAME: ""
     AWS_S3_ENDPOINT_URL: "http://minio:9000/"
-    AWS_S3_SIGNING_ENDPOINT_URL: "http://localhost:900/"
+    AWS_S3_SIGNING_ENDPOINT_URL: "http://localhost:9000/"
     AWS_S3_CUSTOM_DOMAIN: "localhost:9000/thunderstore"
     AWS_STORAGE_BUCKET_NAME: "thunderstore"
     AWS_LOCATION: "development"
