@@ -35,7 +35,7 @@ function ratePackage() {
     var payload = JSON.stringify({ target_state: targetState });
 
     $.post(url, payload, function (response) {
-        $score = $("#package-rating-" + pkg);
+        var $score = $("#package-rating-" + pkg);
         $score.text(response.score);
         if (response.state == "rated") {
             $el.addClass("rated");

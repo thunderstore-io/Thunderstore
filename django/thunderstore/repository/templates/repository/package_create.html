@@ -5,6 +5,15 @@
 {% block content %}
 <h1 class="mt-4">Upload package</h1>
 
+<div class="card bg-light mb-2">
+    <div class="card-header">React upload form</div>
+    <div class="card-body py-2" id="uploadform">
+    </div>
+</div>
+<script type="text/javascript">
+window.ts.UploadForm(document.getElementById("uploadform"));
+</script>
+
 <form class="mt-4" method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
     <label for="id_file" class="btn btn-primary btn-lg btn-block" id="file_drop" style="cursor: pointer;"></label>
@@ -211,6 +220,10 @@ window.addEventListener("dragleave", function(e)
     {
         reset_file_input();
     }
+});
+window.addEventListener("drop", function()
+{
+    reset_file_input();
 });
 
 reset_file_input();
