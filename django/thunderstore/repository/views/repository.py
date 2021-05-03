@@ -1,7 +1,7 @@
 from typing import List, Optional, Set, Tuple
 
-from django.db import ProgrammingError, transaction
-from django.db.models import Count, Q, QuerySet, Sum
+from django.db import transaction
+from django.db.models import Count, Q, Sum
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -17,6 +17,7 @@ from thunderstore.community.models import (
     Community,
     PackageCategory,
     PackageListing,
+    PackageListingReviewStatus,
     PackageListingSection,
 )
 from thunderstore.repository.models import (
@@ -235,6 +236,15 @@ class PackageListSearchView(ListView):
         if not self.get_is_deprecated_included():
             queryset = queryset.exclude(package__is_deprecated=True)
 
+        if self.request.community.require_package_listing_approval:
+            queryset = queryset.exclude(
+                ~Q(review_status=PackageListingReviewStatus.approved)
+            )
+        else:
+            queryset = queryset.exclude(
+                review_status=PackageListingReviewStatus.rejected
+            )
+
         search_query = self.get_search_query()
         if search_query:
             queryset = self.perform_search(queryset, search_query)
@@ -357,7 +367,9 @@ class PackageListByDependencyView(PackageListSearchView):
 
 
 @cache_function_result(cache_until=CacheBustCondition.any_package_updated)
-def get_package_listing_or_404(namespace: str, name: str, community_pk: int):
+def get_package_listing_or_404(
+    namespace: str, name: str, community_pk: int
+) -> PackageListing:
     owner = get_object_or_404(UploaderIdentity, name=namespace)
     package_listing = (
         PackageListing.objects.active()
@@ -385,11 +397,14 @@ class PackageDetailView(DetailView):
     model = PackageListing
 
     def get_object(self, *args, **kwargs):
-        return get_package_listing_or_404(
+        listing = get_package_listing_or_404(
             namespace=self.kwargs["owner"],
             name=self.kwargs["name"],
             community_pk=self.request.community.pk,
         )
+        if not listing.can_be_viewed_by_user(self.request.user):
+            raise Http404("Package is waiting for approval or has been rejected")
+        return listing
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -419,6 +434,8 @@ class PackageVersionDetailView(DetailView):
             package__name=name,
             community=self.request.community,
         )
+        if not listing.can_be_viewed_by_user(self.request.user):
+            raise Http404("Package is waiting for approval or has been rejected")
         version = get_object_or_404(
             PackageVersion, package=listing.package, version_number=version
         )

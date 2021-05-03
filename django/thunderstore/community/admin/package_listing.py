@@ -1,17 +1,44 @@
 from django.contrib import admin
+from django.db import transaction
+from django.db.models import QuerySet
 
 from ..forms import PackageListingForm
-from ..models.package_listing import PackageListing
+from ..models.package_listing import PackageListing, PackageListingReviewStatus
+
+
+@transaction.atomic
+def reject_listing(modeladmin, request, queryset: QuerySet[PackageListing]):
+    for listing in queryset:
+        listing.review_status = PackageListingReviewStatus.rejected
+        listing.save(update_fields=("review_status",))
+
+
+reject_listing.short_description = "Reject"
+
+
+@transaction.atomic
+def approve_listing(modeladmin, request, queryset: QuerySet[PackageListing]):
+    for listing in queryset:
+        listing.review_status = PackageListingReviewStatus.approved
+        listing.save(update_fields=("review_status",))
+
+
+approve_listing.short_description = "Approve"
 
 
 @admin.register(PackageListing)
 class PackageListingAdmin(admin.ModelAdmin):
+    actions = (
+        approve_listing,
+        reject_listing,
+    )
     filter_horizontal = ("categories",)
     raw_id_fields = ("package",)
     list_filter = (
         "categories",
         "has_nsfw_content",
         "community",
+        "review_status",
     )
     list_display = (
         "id",
@@ -19,6 +46,7 @@ class PackageListingAdmin(admin.ModelAdmin):
         "has_nsfw_content",
         "datetime_created",
         "datetime_updated",
+        "review_status",
         "community",
     )
     list_display_links = (

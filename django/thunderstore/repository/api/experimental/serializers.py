@@ -26,6 +26,7 @@ class PackageListingSerializerExperimental(serializers.ModelSerializer):
             "has_nsfw_content",
             "categories",
             "community",
+            "review_status",
         )
 
 

@@ -1,11 +1,20 @@
-from thunderstore.cache.cache import CacheBustCondition, cache_function_result
-from thunderstore.community.models import CommunitySite, PackageListing, Q
+from thunderstore.community.models import (
+    CommunitySite,
+    PackageListing,
+    PackageListingReviewStatus,
+    Q,
+)
 
 
 def get_package_listing_queryset(community_site: CommunitySite):
     return (
         PackageListing.objects.active()
         .exclude(~Q(community=community_site.community))
+        .exclude(review_status=PackageListingReviewStatus.rejected)
+        .exclude(
+            Q(community__require_package_listing_approval=True)
+            & ~Q(review_status=PackageListingReviewStatus.approved)
+        )
         .select_related(
             "package",
             "package__owner",

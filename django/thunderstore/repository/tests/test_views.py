@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from thunderstore.core.factories import UserFactory
 
-from ...community.models import PackageListing
+from ...community.models import PackageListing, PackageListingReviewStatus
 from ..factories import PackageFactory, PackageVersionFactory, UploaderIdentityFactory
 
 
@@ -30,6 +30,27 @@ def test_package_list_view(client, community_site, ordering):
         PackageListing.objects.create(
             package=package,
             community=community_site.community,
+        )
+
+    for i in range(2):
+        uploader = UploaderIdentityFactory.create(
+            name=f"RejectionTester_{i}",
+        )
+        package = PackageFactory.create(
+            owner=uploader,
+            name=f"test_rejected_{i}",
+            is_active=True,
+            is_deprecated=False,
+        )
+        PackageVersionFactory.create(
+            name=package.name,
+            package=package,
+            is_active=True,
+        )
+        PackageListing.objects.create(
+            package=package,
+            community=community_site.community,
+            review_status=PackageListingReviewStatus.rejected,
         )
 
     base_url = reverse("packages.list")
