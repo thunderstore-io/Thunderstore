@@ -12,6 +12,7 @@ class PackageListingAdmin(admin.ModelAdmin):
         "categories",
         "has_nsfw_content",
         "community",
+        "review_status",
     )
     list_display = (
         "id",
@@ -19,6 +20,7 @@ class PackageListingAdmin(admin.ModelAdmin):
         "has_nsfw_content",
         "datetime_created",
         "datetime_updated",
+        "review_status",
         "community",
     )
     list_display_links = (

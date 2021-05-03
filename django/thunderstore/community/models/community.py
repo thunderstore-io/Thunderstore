@@ -18,6 +18,7 @@ class Community(TimestampMixin, models.Model):
     discord_url = models.CharField(max_length=512, blank=True, null=True)
     wiki_url = models.CharField(max_length=512, blank=True, null=True)
     is_listed = models.BooleanField(default=True)
+    require_package_listing_approval = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.pk:

@@ -345,6 +345,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "authtoken_token",
         "backblaze_b2_backblazeb2file",
         "community_community",
+        "community_communitymembership",
         "community_communitysite",
         "community_packagecategory",
         "community_packagelisting",

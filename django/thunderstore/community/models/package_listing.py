@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 
 from thunderstore.cache.cache import CacheBustCondition, invalidate_cache
 from thunderstore.core.mixins import TimestampMixin
+from thunderstore.core.utils import ChoiceEnum
 
 
 class PackageListingQueryset(models.QuerySet):
@@ -13,6 +14,15 @@ class PackageListingQueryset(models.QuerySet):
         return self.exclude(package__is_active=False).exclude(
             ~Q(package__versions__is_active=True)
         )
+
+    def approved(self):
+        return self.exclude(~Q(review_status=PackageListingReviewStatus.approved))
+
+
+class PackageListingReviewStatus(ChoiceEnum):
+    unreviewed = "unreviewed"
+    approved = "approved"
+    rejected = "rejected"
 
 
 # TODO: Add a db constraint that ensures a package listing and it's categories
@@ -39,6 +49,11 @@ class PackageListing(TimestampMixin, models.Model):
         "community.PackageCategory",
         related_name="packages",
         blank=True,
+    )
+    review_status = models.CharField(
+        default=PackageListingReviewStatus.unreviewed,
+        choices=PackageListingReviewStatus.as_choices(),
+        max_length=512,
     )
     has_nsfw_content = models.BooleanField(default=False)
 
