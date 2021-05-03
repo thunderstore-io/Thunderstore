@@ -11,6 +11,7 @@ class CommunitySerializer(serializers.ModelSerializer):
             "name",
             "discord_url",
             "wiki_url",
+            "require_package_listing_approval",
         )
 
 

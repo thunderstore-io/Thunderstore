@@ -38,6 +38,32 @@
     </div>
 {% endif %}
 
+{% if object.is_rejected %}
+<div class="card text-white bg-danger mt-2">
+    <div class="card-body">
+        <h4 class="card-title">
+            Package rejected
+        </h4>
+        <p class="card-text">
+            This package has been rejected by site or community moderators
+        </p>
+    </div>
+</div>
+{% endif %}
+
+{% if object.is_waiting_for_approval %}
+<div class="card text-white bg-warning mt-2">
+    <div class="card-body">
+        <h4 class="card-title">
+            Waiting for approval
+        </h4>
+        <p class="card-text">
+            This package is waiting for approval by site or community moderators
+        </p>
+    </div>
+</div>
+{% endif %}
+
 <div class="card bg-light mt-2">
     <div class="card-header">
         <div class="media">

@@ -1,8 +1,16 @@
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import Manager, QuerySet
 
+from thunderstore.community.models.community_membership import (
+    CommunityMemberRole,
+    CommunityMembership,
+)
 from thunderstore.core.mixins import TimestampMixin
+from thunderstore.core.types import UserType
+from thunderstore.core.utils import check_validity
 
 
 class CommunityManager(models.Manager):
@@ -12,6 +20,7 @@ class CommunityManager(models.Manager):
 
 class Community(TimestampMixin, models.Model):
     objects: "CommunityManager[Community]" = CommunityManager()
+    members: "Manager[CommunityMembership]"
 
     identifier = models.CharField(max_length=256, unique=True, db_index=True)
     name = models.CharField(max_length=256)
@@ -33,3 +42,33 @@ class Community(TimestampMixin, models.Model):
     class Meta:
         verbose_name = "community"
         verbose_name_plural = "communities"
+
+    def get_membership_for_user(self, user) -> Optional[CommunityMembership]:
+        if not hasattr(self, "__membership_cache"):
+            self.__membership_cache = {}
+        if user.pk not in self.__membership_cache:
+            self.__membership_cache[user.pk] = self.members.filter(user=user).first()
+        return self.__membership_cache[user.pk]
+
+    def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
+        if not user or not user.is_authenticated:
+            raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
+        if hasattr(user, "service_account"):
+            raise ValidationError("Service accounts are unable to manage packages")
+        membership = self.get_membership_for_user(user)
+        if (
+            not membership
+            or membership.role
+            not in (
+                CommunityMemberRole.moderator,
+                CommunityMemberRole.owner,
+            )
+        ) and not (
+            user.is_superuser or user.is_staff
+        ):  # TODO: Maybe remove
+            raise ValidationError("Must be a moderator or higher to manage packages")
+
+    def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_manage_packages(user))

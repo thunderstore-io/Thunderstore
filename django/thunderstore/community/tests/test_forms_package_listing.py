@@ -73,6 +73,7 @@ def test_package_listing_form_create_categories_same_community(
             "package": active_package.pk,
             "community": community.pk,
             "categories": [category.pk],
+            "review_status": "unreviewed",
         }
     )
     assert form.is_valid() is True
@@ -95,6 +96,7 @@ def test_package_listing_form_create_categories_different_community(
             "package": active_package.pk,
             "community": community.pk,
             "categories": [category.pk],
+            "review_status": "unreviewed",
         }
     )
     expected_error = (

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, signals
@@ -6,7 +8,8 @@ from django.utils.functional import cached_property
 
 from thunderstore.cache.cache import CacheBustCondition, invalidate_cache
 from thunderstore.core.mixins import TimestampMixin
-from thunderstore.core.utils import ChoiceEnum
+from thunderstore.core.types import UserType
+from thunderstore.core.utils import ChoiceEnum, check_validity
 
 
 class PackageListingQueryset(models.QuerySet):
@@ -119,6 +122,44 @@ class PackageListing(TimestampMixin, models.Model):
     @staticmethod
     def post_delete(sender, instance, **kwargs):
         invalidate_cache(CacheBustCondition.any_package_updated)
+
+    @property
+    def is_waiting_for_approval(self):
+        return (
+            self.community.require_package_listing_approval
+            and self.review_status == PackageListingReviewStatus.unreviewed
+        )
+
+    @property
+    def is_rejected(self):
+        return self.review_status == PackageListingReviewStatus.rejected
+
+    def ensure_can_be_viewed_by_user(self, user: Optional[UserType]) -> None:
+        def get_has_perms() -> bool:
+            return (
+                user is not None
+                and user.is_authenticated
+                and (
+                    self.community.can_user_manage_packages(user)
+                    or self.package.owner.can_user_access(user)
+                )
+            )
+
+        if self.community.require_package_listing_approval:
+            if (
+                self.review_status != PackageListingReviewStatus.approved
+                and not get_has_perms()
+            ):
+                raise ValidationError("Insufficient permissions to view")
+        else:
+            if (
+                self.review_status == PackageListingReviewStatus.rejected
+                and not get_has_perms()
+            ):
+                raise ValidationError("Insufficient permissions to view")
+
+    def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
 
 
 signals.post_save.connect(PackageListing.post_save, sender=PackageListing)
