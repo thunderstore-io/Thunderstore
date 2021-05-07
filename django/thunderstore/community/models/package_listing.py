@@ -58,6 +58,14 @@ class PackageListing(TimestampMixin, models.Model):
         choices=PackageListingReviewStatus.as_choices(),
         max_length=512,
     )
+    rejection_reason = models.TextField(
+        null=True,
+        blank=True,
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True,
+    )
     has_nsfw_content = models.BooleanField(default=False)
 
     class Meta:
