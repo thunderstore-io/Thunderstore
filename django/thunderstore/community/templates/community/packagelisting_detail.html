@@ -47,6 +47,11 @@
         <p class="card-text">
             This package has been rejected by site or community moderators
         </p>
+        {% if object.rejection_reason %}
+        <p class="card-text">
+            Reason: {{ object.rejection_reason }}
+        </p>
+        {% endif %}
     </div>
 </div>
 {% endif %}
