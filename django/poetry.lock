@@ -364,14 +364,14 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-cachalot"
-version = "2.3.3"
+version = "2.4.0"
 description = "Caches your Django ORM queries and automatically invalidates them."
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-Django = ">=2"
+Django = ">=2.0,<=3.2"
 
 [[package]]
 name = "django-celery-beat"
@@ -1708,7 +1708,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "5291f076f70a73d49207bb9bc8ab30b3adcb0d4b92cf15eebdb5f97341eb567f"
+content-hash = "2227d76c134703de36833e62f4ef009938c730759604498b392110425c4b06e7"
 
 [metadata.files]
 amqp = [
@@ -1921,8 +1921,8 @@ django = [
     {file = "Django-3.1.7.tar.gz", hash = "sha256:32ce792ee9b6a0cbbec340123e229ac9f765dff8c2a4ae9247a14b2ba3a365a7"},
 ]
 django-cachalot = [
-    {file = "django-cachalot-2.3.3.tar.gz", hash = "sha256:ba3a6cabf834139196179c4f6d77409ae9170267ee8ce40e27bbf6c3f6733b2b"},
-    {file = "django_cachalot-2.3.3-py3-none-any.whl", hash = "sha256:55f94e94f7000f5f6bd92188d3d7535cfdef79f2e697e36daf69cba8f435e156"},
+    {file = "django-cachalot-2.4.0.tar.gz", hash = "sha256:983bfa857d97e202a54f9f06767b29cf360a94daee0dfb21642d0ab21aca5112"},
+    {file = "django_cachalot-2.4.0-py3-none-any.whl", hash = "sha256:4a0298877c3b3a69e7de580fd33b173c517bd50b904a85fef178c82d4d46b43e"},
 ]
 django-celery-beat = [
     {file = "django-celery-beat-2.2.0.tar.gz", hash = "sha256:b8a13afb15e7c53fc04f4f847ac71a6d32088959aba701eb7c4a59f0c28ba543"},
