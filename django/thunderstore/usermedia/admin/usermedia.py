@@ -11,6 +11,8 @@ class UserMediaAdmin(admin.ModelAdmin):
     list_display = (
         "uuid",
         "owner",
+        "filename",
+        "size",
         "prefix",
         "status",
         "datetime_created",
@@ -18,7 +20,7 @@ class UserMediaAdmin(admin.ModelAdmin):
         "expiry",
     )
     list_display_links = ("uuid",)
-    search_fields = ("uuid",)
+    search_fields = ("uuid", "filename")
     readonly_fields = (
         "uuid",
         "prefix",

@@ -18,11 +18,17 @@ class ThunderstoreApi {
         if (this.apiKey) {
             headers.set("Authorization", `Session ${this.apiKey}`);
         }
-        return fetch(url, {
+        const result = await fetch(url, {
             method: method,
             headers: headers,
             body: body,
         });
+        if (result.status < 200 || result.status >= 300) {
+            throw new Error(
+                `Invalid HTTP response status: ${result.status} ${result.statusText}`
+            );
+        }
+        return result;
     };
 
     protected get = async (url: string) => {
@@ -49,6 +55,8 @@ class ApiUrls {
         apiUrl("usermedia", usermediaId, "create-part-upload-urls");
     static finishUpload = (usermediaId: string) =>
         apiUrl("usermedia", usermediaId, "finish-upload");
+    static abortUpload = (usermediaId: string) =>
+        apiUrl("usermedia", usermediaId, "abort-upload");
 }
 
 export interface UserMedia {
@@ -56,6 +64,8 @@ export interface UserMedia {
     datetime_created: string;
     expiry: string;
     status: string;
+    filename: string;
+    size: number;
 }
 
 interface UploadPartUrl {
@@ -97,8 +107,10 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         return await response.json();
     };
 
-    initiateUpload = async () => {
-        const response = await this.post(ApiUrls.initiateUpload());
+    initiateUpload = async (props: {
+        data: { filename: string; file_size_bytes: number };
+    }) => {
+        const response = await this.post(ApiUrls.initiateUpload(), props.data);
         return (await response.json()) as UserMedia;
     };
 
@@ -114,6 +126,13 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         const response = await this.post(
             ApiUrls.finishUpload(props.usermediaId),
             props.data
+        );
+        return (await response.json()) as UserMedia;
+    };
+
+    abortUpload = async (props: { usermediaId: string }) => {
+        const response = await this.post(
+            ApiUrls.abortUpload(props.usermediaId)
         );
         return (await response.json()) as UserMedia;
     };
