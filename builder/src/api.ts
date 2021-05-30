@@ -57,6 +57,7 @@ class ApiUrls {
         apiUrl("usermedia", usermediaId, "finish-upload");
     static abortUpload = (usermediaId: string) =>
         apiUrl("usermedia", usermediaId, "abort-upload");
+    static submitPackage = () => apiUrl("package", "submit");
 }
 
 export interface UserMedia {
@@ -135,6 +136,19 @@ class ExperimentalApiImpl extends ThunderstoreApi {
             ApiUrls.abortUpload(props.usermediaId)
         );
         return (await response.json()) as UserMedia;
+    };
+
+    submitPackage = async (props: {
+        data: {
+            author_name: string;
+            categories: string[];
+            communities: string[];
+            has_nsfw_content: boolean;
+            upload_uuid: string;
+        };
+    }) => {
+        const response = await this.post(ApiUrls.submitPackage(), props.data);
+        return await response.json();
     };
 }
 

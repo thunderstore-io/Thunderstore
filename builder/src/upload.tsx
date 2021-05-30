@@ -210,6 +210,24 @@ export const UploadForm: React.FC = () => {
         setUploadUuid(null);
     };
 
+    const submit = async () => {
+        if (!uploadUuid) return;
+        try {
+            await ExperimentalApi.submitPackage({
+                data: {
+                    // TODO: Read from the form
+                    upload_uuid: uploadUuid,
+                    author_name: "uploadtest",
+                    categories: [],
+                    communities: ["riskofrain2"],
+                    has_nsfw_content: false,
+                },
+            });
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
     const progressBg = uploadError
         ? "bg-danger"
         : uploadComplete
@@ -248,6 +266,13 @@ export const UploadForm: React.FC = () => {
                 className="btn btn-danger btn-block"
             >
                 Cancel
+            </button>
+            <button
+                disabled={!(uploadUuid && uploadComplete)}
+                onClick={submit}
+                className="btn btn-primary btn-block"
+            >
+                Submit
             </button>
         </div>
     );

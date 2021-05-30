@@ -203,3 +203,7 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
         form = self._create_form(validated_data)
         form.is_valid()
         return form.save()
+
+
+class PackageSubmissionMetadataSerializer(PackageUploadMetadataSerializer):
+    upload_uuid = serializers.UUIDField()

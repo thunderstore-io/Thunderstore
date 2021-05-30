@@ -6,6 +6,7 @@ from thunderstore.repository.api.experimental.views import (
     PackageVersionDetailApiView,
     UploadPackageApiView,
 )
+from thunderstore.repository.api.experimental.views.submit import SubmitPackageApiView
 from thunderstore.social.api.experimental.views import CurrentUserExperimentalApiView
 
 urls = [
@@ -23,5 +24,6 @@ urls = [
         PackageVersionDetailApiView.as_view(),
         name="package-version-detail",
     ),
+    path("package/submit/", SubmitPackageApiView.as_view(), name="package-submit"),
     path("package/upload/", UploadPackageApiView.as_view(), name="package-upload"),
 ]

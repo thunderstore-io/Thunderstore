@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import List, Optional, TypedDict
+from typing import IO, List, Optional, TypedDict, cast
 
 import ulid2
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from mypy_boto3_s3 import Client
 from mypy_boto3_s3.type_defs import CompletedPartTypeDef
 
@@ -168,6 +169,31 @@ def abort_upload(user: UserType, client: Client, user_media: UserMedia) -> None:
     )
     user_media.status = UserMediaStatus.upload_aborted
     user_media.save(update_fields=("status",))
+
+
+def download_file(
+    user: UserType, client: Client, user_media: UserMedia
+) -> TemporaryUploadedFile:
+    bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
+    if not bucket_name:
+        raise S3BucketNameMissingException()
+
+    if not user_media.can_user_write(user):
+        raise PermissionDenied()
+
+    if user_media.status != UserMediaStatus.upload_complete:
+        raise InvalidUploadStateException(
+            current=user_media.status, expected=UserMediaStatus.upload_complete
+        )
+
+    fileobj = TemporaryUploadedFile(
+        name=user_media.filename,
+        content_type=None,
+        size=user_media.size,
+        charset=None,
+    )
+    client.download_fileobj(bucket_name, user_media.key, cast(IO, fileobj))
+    return fileobj
 
 
 # TODO: Implement
