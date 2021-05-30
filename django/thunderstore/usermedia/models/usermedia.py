@@ -22,7 +22,9 @@ class UserMediaQueryset(models.QuerySet):
 class UserMediaStatus(ChoiceEnum):
     initial = "initial"
     upload_created = "upload_initiated"
+    upload_error = "upload_error"
     upload_complete = "upload_complete"
+    upload_aborted = "upload_aborted"
 
 
 class UserMedia(TimestampMixin, models.Model):
@@ -35,6 +37,9 @@ class UserMedia(TimestampMixin, models.Model):
         blank=True,
         null=True,
     )
+    filename = models.CharField(max_length=1024)
+    key = models.CharField(max_length=2048)
+    size = models.PositiveIntegerField()
     uuid = models.UUIDField(default=ulid2.generate_ulid_as_uuid, primary_key=True)
     prefix = models.CharField(blank=True, null=True, max_length=256)
     expiry = models.DateTimeField(blank=True, null=True)
@@ -45,15 +50,14 @@ class UserMedia(TimestampMixin, models.Model):
     )
     upload_id = models.TextField(blank=True, null=True)
 
-    @property
-    def file_key(self) -> str:
+    def compute_key(self) -> str:
         return "/".join(
             [
                 x
                 for x in [
                     self.prefix,
                     "usermedia",
-                    str(self.uuid),
+                    f"{self.uuid}-{self.filename}",
                 ]
                 if x is not None
             ]
@@ -61,7 +65,7 @@ class UserMedia(TimestampMixin, models.Model):
 
     @property
     def s3_metadata(self):
-        params = copy.deepcopy(settings.AWS_S3_OBJECT_PARAMETERS)
+        params = copy.deepcopy(settings.USERMEDIA_S3_OBJECT_PARAMETERS)
         params.update(
             {
                 k: v

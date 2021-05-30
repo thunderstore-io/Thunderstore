@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect, useRef, useState } from "react";
-import { CompletedPart, ExperimentalApi, UserMedia } from "./api";
+import { CompletedPart, ExperimentalApi } from "./api";
 import * as crypto from "crypto-js";
 
 interface UploadFileInputProps {
@@ -110,24 +110,31 @@ const calculateMD5 = (blob: Blob) => {
 
 export const UploadForm: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
-    const [userMedia, setUserMedia] = useState<UserMedia | null>(null);
     const [progress, setProgress] = useState<number | null>(null);
     const [uploadComplete, setUploadComplete] = useState<boolean>(false);
     const [uploadError, setUploadError] = useState<boolean>(false);
+    const [uploadUuid, setUploadUuid] = useState<string | null>(null);
+    const uploadCanceled = useRef<boolean>(false);
 
     const onFileChange = (files: FileList) => {
         setFile(files.item(0));
+        setUploadUuid(null);
     };
 
     const beginUpload = async (file: File | null) => {
         if (!file) return;
+        if (!!uploadUuid) return;
         setUploadComplete(false);
         setUploadError(false);
         setProgress(null);
-        const handle = await ExperimentalApi.initiateUpload();
-        setUserMedia(handle);
-        console.log(handle);
-        console.log(userMedia);
+        uploadCanceled.current = false;
+        const handle = await ExperimentalApi.initiateUpload({
+            data: {
+                filename: file.name,
+                file_size_bytes: file.size,
+            },
+        });
+        setUploadUuid(handle.uuid);
         const urls = await ExperimentalApi.createPartUploadUrls({
             usermediaId: handle.uuid,
             data: { file_size_bytes: file.size },
@@ -145,6 +152,9 @@ export const UploadForm: React.FC = () => {
                 end < file.size ? file.slice(start, end) : file.slice(start);
             const promise = calculateMD5(blob)
                 .then((md5) => {
+                    if (uploadCanceled.current) {
+                        throw new Error("Upload was aborted by the user");
+                    }
                     return fetch(partInfo.url, {
                         method: "PUT",
                         headers: new Headers({
@@ -167,28 +177,37 @@ export const UploadForm: React.FC = () => {
                             `Failed part upload: ${completionInfo.statusText}`
                         );
                     }
-                    setProgress(completedParts.length / totalParts);
+                    if (!uploadCanceled.current) {
+                        setProgress(completedParts.length / totalParts);
+                    }
                 });
             uploadPromises.push(promise);
         }
         await Promise.all(uploadPromises);
-        const finish = await ExperimentalApi.finishUpload({
-            usermediaId: handle.uuid,
-            data: {
-                parts: completedParts,
-            },
-        });
-        setUploadComplete(true);
-        setUserMedia(finish);
+        if (!uploadCanceled.current) {
+            await ExperimentalApi.finishUpload({
+                usermediaId: handle.uuid,
+                data: {
+                    parts: completedParts,
+                },
+            });
+            setUploadUuid(handle.uuid);
+            setUploadComplete(true);
+        }
     };
 
     const cancel = async () => {
+        uploadCanceled.current = true;
         setFile(null);
-        // TODO: Add API call to abort upload
-        setUserMedia(null);
+        if (uploadUuid && !uploadComplete) {
+            try {
+                await ExperimentalApi.abortUpload({ usermediaId: uploadUuid });
+            } catch {}
+        }
         setUploadComplete(false);
         setUploadError(false);
         setProgress(null);
+        setUploadUuid(null);
     };
 
     const progressBg = uploadError
@@ -217,7 +236,7 @@ export const UploadForm: React.FC = () => {
                 </div>
             )}
             <button
-                disabled={!file}
+                disabled={!file || !!uploadUuid}
                 onClick={() => beginUpload(file)}
                 className="btn btn-success btn-block"
             >
