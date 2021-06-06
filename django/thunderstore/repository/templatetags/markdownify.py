@@ -28,6 +28,7 @@ def markdownify(value):
                     "markdown.extensions.abbr",
                     "markdown.extensions.def_list",
                     "markdown.extensions.fenced_code",
+                    "pymdownx.superfences",
                     "markdown.extensions.footnotes",
                     "markdown.extensions.tables",
                     "markdown.extensions.admonition",
