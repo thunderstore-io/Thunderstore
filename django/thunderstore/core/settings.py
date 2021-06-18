@@ -429,6 +429,10 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Thumbnails
+
+THUMBNAIL_PRESERVE_EXTENSIONS = ('png',)
+
 #######################################
 #               STORAGE               #
 #######################################
