@@ -431,9 +431,7 @@ REST_FRAMEWORK = {
 
 # Thumbnails
 
-THUMBNAIL_PRESERVE_EXTENSIONS = None
 THUMBNAIL_QUALITY = 95
-THUMBNAIL_TRANSPARENCY_EXTENSION = 'jpg'
 
 #######################################
 #               STORAGE               #
