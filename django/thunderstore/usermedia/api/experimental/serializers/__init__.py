@@ -1,17 +1,15 @@
 from .upload import (
     UploadPartUrlSerializer,
-    UserMediaCreatePartUploadUrlsParams,
     UserMediaFinishUploadParamsSerializer,
     UserMediaInitiateUploadParams,
+    UserMediaInitiateUploadResponseSerializer,
     UserMediaSerializer,
-    UserMediaUploadUrlsSerializer,
 )
 
 __all__ = [
     "UserMediaSerializer",
     "UploadPartUrlSerializer",
     "UserMediaInitiateUploadParams",
-    "UserMediaCreatePartUploadUrlsParams",
-    "UserMediaUploadUrlsSerializer",
+    "UserMediaInitiateUploadResponseSerializer",
     "UserMediaFinishUploadParamsSerializer",
 ]

@@ -31,8 +31,14 @@ class ThunderstoreApi {
         return result;
     };
 
-    protected get = async (url: string) => {
-        return this.apiFetch(url, "GET");
+    protected get = async (url: string, data?: object) => {
+        const queryUrl = new URL(url);
+        if (data) {
+            for (const [key, val] of Object.entries(data)) {
+                queryUrl.searchParams.set(key, val);
+            }
+        }
+        return this.apiFetch(queryUrl.toString(), "GET");
     };
 
     protected post = async (url: string, data?: object) => {
@@ -51,13 +57,12 @@ const apiUrl = (...path: string[]) => {
 class ApiUrls {
     static currentUser = () => apiUrl("current-user");
     static initiateUpload = () => apiUrl("usermedia", "initiate-upload");
-    static createPartUploadUrls = (usermediaId: string) =>
-        apiUrl("usermedia", usermediaId, "create-part-upload-urls");
     static finishUpload = (usermediaId: string) =>
         apiUrl("usermedia", usermediaId, "finish-upload");
     static abortUpload = (usermediaId: string) =>
         apiUrl("usermedia", usermediaId, "abort-upload");
     static submitPackage = () => apiUrl("package", "submit");
+    static listCommunities = () => apiUrl("community");
 }
 
 export interface UserMedia {
@@ -69,21 +74,44 @@ export interface UserMedia {
     size: number;
 }
 
+export interface PackageVersion {
+    date_created: string;
+    dependencies: string[];
+    description: string;
+    download_url: string;
+    downloads: number;
+    full_name: string;
+    icon: string;
+    is_active: boolean;
+    name: string;
+    namespace: string;
+    version_number: string;
+    website_url: string;
+}
+
+export interface Community {
+    identifier: string;
+    name: string;
+    discord_url: string;
+    wiki_url: string;
+    require_package_listing_approval: boolean;
+}
+
+export interface PaginatedResult<T> {
+    pagination: {
+        next_link: string | null;
+        previous_link: string | null;
+    };
+    results: T[];
+}
+
 interface UploadPartUrl {
     part_number: number;
     url: string;
 }
 
-interface UserMediaCreateUploadUrlsParams {
-    file_size_bytes: number;
-}
-
-interface CreatePartUploadUrlsProps {
-    usermediaId: string;
-    data: UserMediaCreateUploadUrlsParams;
-}
-
-interface UserMediaUploadUrls {
+interface UserMediaInitiateUploadResponse {
+    user_media: UserMedia;
     upload_urls: UploadPartUrl[];
     part_size: number;
 }
@@ -112,15 +140,7 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         data: { filename: string; file_size_bytes: number };
     }) => {
         const response = await this.post(ApiUrls.initiateUpload(), props.data);
-        return (await response.json()) as UserMedia;
-    };
-
-    createPartUploadUrls = async (props: CreatePartUploadUrlsProps) => {
-        const response = await this.post(
-            ApiUrls.createPartUploadUrls(props.usermediaId),
-            props.data
-        );
-        return (await response.json()) as UserMediaUploadUrls;
+        return (await response.json()) as UserMediaInitiateUploadResponse;
     };
 
     finishUpload = async (props: FinishUploadProps) => {
@@ -148,7 +168,12 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         };
     }) => {
         const response = await this.post(ApiUrls.submitPackage(), props.data);
-        return await response.json();
+        return (await response.json()) as PackageVersion;
+    };
+
+    listCommunities = async (props: { data: { cursor?: string } }) => {
+        const response = await this.get(ApiUrls.listCommunities(), props.data);
+        return (await response.json()) as PaginatedResult<Community>;
     };
 }
 

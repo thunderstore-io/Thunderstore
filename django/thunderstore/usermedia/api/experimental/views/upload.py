@@ -9,11 +9,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from thunderstore.usermedia.api.experimental.serializers import (
-    UserMediaCreatePartUploadUrlsParams,
     UserMediaFinishUploadParamsSerializer,
     UserMediaInitiateUploadParams,
+    UserMediaInitiateUploadResponseSerializer,
     UserMediaSerializer,
-    UserMediaUploadUrlsSerializer,
 )
 from thunderstore.usermedia.exceptions import InvalidUploadStateException
 from thunderstore.usermedia.models import UserMedia
@@ -30,19 +29,22 @@ PART_SIZE = 1024 * 1024 * 50
 
 class UserMediaInitiateUploadApiView(GenericAPIView):
     queryset = UserMedia.objects.active()
-    serializer_class = UserMediaSerializer
+    serializer_class = UserMediaInitiateUploadResponseSerializer
     # TODO: Add test for permission check
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         request_body=UserMediaInitiateUploadParams,
-        responses={201: UserMediaSerializer()},
+        responses={201: UserMediaInitiateUploadResponseSerializer()},
         operation_id="experimental.usermedia.initiate-upload",
     )
     def post(self, request, *args, **kwargs):
         validator = UserMediaInitiateUploadParams(data=request.data)
         validator.is_valid(raise_exception=True)
         total_size = validator.validated_data["file_size_bytes"]
+
+        # Double negative = ceil integer division as opposed to floor
+        part_count = -(-total_size // PART_SIZE)
 
         client = get_s3_client()
         user_media = create_upload(
@@ -52,55 +54,26 @@ class UserMediaInitiateUploadApiView(GenericAPIView):
             size=total_size,
             expiry=timezone.now() + timedelta(days=1),
         )
-        serializer = self.get_serializer(user_media)
+
+        upload_urls = get_signed_upload_urls(
+            user=request.user,
+            client=get_s3_client(for_signing=True),
+            user_media=user_media,
+            part_count=part_count,
+            total_size=total_size,
+        )
+
+        serializer = self.get_serializer(
+            {
+                "user_media": user_media,
+                "upload_urls": upload_urls,
+                "part_size": PART_SIZE,
+            },
+        )
         return Response(
             serializer.data,
             status=status.HTTP_201_CREATED,
         )
-
-
-class UserMediaCreatePartUploadUrlsApiView(GenericAPIView):
-    queryset = UserMedia.objects.active()
-    lookup_field = "uuid"
-    lookup_url_kwarg = "uuid"
-    serializer_class = UserMediaCreatePartUploadUrlsParams
-    # TODO: Add test for permission check
-    permission_classes = [IsAuthenticated]
-
-    @swagger_auto_schema(
-        request_body=UserMediaCreatePartUploadUrlsParams,
-        responses={200: UserMediaUploadUrlsSerializer()},
-        operation_id="experimental.usermedia.create-part-upload-urls",
-    )
-    def post(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        validator = self.get_serializer(data=request.data)
-        validator.is_valid(raise_exception=True)
-
-        total_size = validator.validated_data["file_size_bytes"]
-        part_count = -(-total_size // PART_SIZE)
-
-        try:
-            upload_urls = get_signed_upload_urls(
-                user=request.user,
-                client=get_s3_client(for_signing=True),
-                user_media=instance,
-                part_count=part_count,
-                total_size=total_size,
-            )
-        except InvalidUploadStateException as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        serializer = UserMediaUploadUrlsSerializer(
-            {
-                "upload_urls": upload_urls,
-                "part_size": PART_SIZE,
-            }
-        )
-        return Response(serializer.data)
 
 
 class UserMediaFinishUploadApiView(GenericAPIView):

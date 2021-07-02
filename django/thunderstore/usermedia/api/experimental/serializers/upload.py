@@ -34,16 +34,13 @@ class UploadPartUrlSerializer(serializers.Serializer):
     url = serializers.URLField()
 
 
-class UserMediaUploadUrlsSerializer(serializers.Serializer):
+class UserMediaInitiateUploadResponseSerializer(serializers.Serializer):
+    user_media = UserMediaSerializer()
     upload_urls = serializers.ListField(
         child=UploadPartUrlSerializer(),
         allow_empty=False,
     )
     part_size = serializers.IntegerField(required=True)
-
-
-class UserMediaCreatePartUploadUrlsParams(serializers.Serializer):
-    file_size_bytes = serializers.IntegerField(required=True)
 
 
 class CompletedPartSerializer(serializers.Serializer):

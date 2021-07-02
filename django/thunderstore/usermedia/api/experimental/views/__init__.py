@@ -1,11 +1,6 @@
-from .upload import (
-    UserMediaCreatePartUploadUrlsApiView,
-    UserMediaFinishUploadApiView,
-    UserMediaInitiateUploadApiView,
-)
+from .upload import UserMediaFinishUploadApiView, UserMediaInitiateUploadApiView
 
 __all__ = [
     "UserMediaInitiateUploadApiView",
-    "UserMediaCreatePartUploadUrlsApiView",
     "UserMediaFinishUploadApiView",
 ]

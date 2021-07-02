@@ -128,23 +128,21 @@ export const UploadForm: React.FC = () => {
         setUploadError(false);
         setProgress(null);
         uploadCanceled.current = false;
-        const handle = await ExperimentalApi.initiateUpload({
+        const uploadInfo = await ExperimentalApi.initiateUpload({
             data: {
                 filename: file.name,
                 file_size_bytes: file.size,
             },
         });
-        setUploadUuid(handle.uuid);
-        const urls = await ExperimentalApi.createPartUploadUrls({
-            usermediaId: handle.uuid,
-            data: { file_size_bytes: file.size },
-        });
-        const totalParts = urls.upload_urls.length;
-        setProgress(0);
-        const partSize = urls.part_size;
+        setUploadUuid(uploadInfo.user_media.uuid);
+        const totalParts = uploadInfo.upload_urls.length;
+        if (!uploadCanceled.current) {
+            setProgress(0);
+        }
+        const partSize = uploadInfo.part_size;
         const completedParts: CompletedPart[] = [];
         const uploadPromises = [];
-        for (const partInfo of urls.upload_urls) {
+        for (const partInfo of uploadInfo.upload_urls) {
             const partIndex = partInfo.part_number - 1;
             const start = partIndex * partSize;
             const end = (partIndex + 1) * partSize;
@@ -186,12 +184,12 @@ export const UploadForm: React.FC = () => {
         await Promise.all(uploadPromises);
         if (!uploadCanceled.current) {
             await ExperimentalApi.finishUpload({
-                usermediaId: handle.uuid,
+                usermediaId: uploadInfo.user_media.uuid,
                 data: {
                     parts: completedParts,
                 },
             });
-            setUploadUuid(handle.uuid);
+            setUploadUuid(uploadInfo.user_media.uuid);
             setUploadComplete(true);
         }
     };
