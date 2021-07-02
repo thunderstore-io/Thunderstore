@@ -1,5 +1,6 @@
 [run]
 branch = True
+data_file = coverage.coverage
 omit =
     *migrations/*
     *settings*
