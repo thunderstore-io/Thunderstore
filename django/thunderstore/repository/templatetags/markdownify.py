@@ -17,9 +17,7 @@ def deduplicate_escape(text):
     )
 
 
-@register.filter
-@stringfilter
-def markdownify(value):
+def render_markdown(value: str):
     return mark_safe(
         deduplicate_escape(
             markdown.markdown(
@@ -39,6 +37,12 @@ def markdownify(value):
                     "pymdownx.magiclink",
                     "pymdownx.tilde",
                 ],
-            )
-        )
+            ),
+        ),
     )
+
+
+@register.filter
+@stringfilter
+def markdownify(value):
+    return render_markdown(value)

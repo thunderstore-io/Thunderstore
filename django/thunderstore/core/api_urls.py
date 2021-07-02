@@ -3,6 +3,9 @@ from django.urls import include, path
 from thunderstore.community.api.experimental.urls import (
     urls as community_experimental_urls,
 )
+from thunderstore.frontend.api.experimental.urls import (
+    urls as frontend_experimental_urls,
+)
 from thunderstore.repository.api.experimental.urls import (
     urls as repository_experimental_urls,
 )
@@ -26,6 +29,10 @@ api_experimental_urls = [
     path(
         "",
         include(usermedia_experimental_urls),
+    ),
+    path(
+        "",
+        include(frontend_experimental_urls),
     ),
 ]
 
