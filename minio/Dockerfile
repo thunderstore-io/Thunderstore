@@ -4,7 +4,7 @@ RUN apk add --no-cache wget
 RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc && \
     chmod +x /usr/bin/mc
 
-FROM minio/minio:latest@sha256:e2fbeedcd0c5e2f0a462285430fc7313d89684b6c759c85480b817e54086a2ff
+FROM minio/minio:RELEASE.2021-06-17T00-10-46Z@sha256:10107f503382588f4bc620ccf2fd929c16c04bcc5887e8028ace1e26bc6bc0b8
 
 RUN microdnf install netcat
 
