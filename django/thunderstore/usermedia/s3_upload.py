@@ -9,14 +9,18 @@ from mypy_boto3_s3 import Client
 from mypy_boto3_s3.type_defs import CompletedPartTypeDef
 
 from thunderstore.core.types import UserType
+from thunderstore.repository.package_upload import MAX_PACKAGE_SIZE
 from thunderstore.usermedia.exceptions import (
     InvalidUploadStateException,
     S3BucketNameMissingException,
     S3FileKeyChangedException,
     S3MultipartUploadSizeMismatchException,
+    UploadTooLargeException,
 )
 from thunderstore.usermedia.models import UserMedia
 from thunderstore.usermedia.models.usermedia import UserMediaStatus
+
+PART_SIZE = 1024 * 1024 * 50
 
 
 def create_upload(
@@ -29,6 +33,9 @@ def create_upload(
     bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
     if not bucket_name:
         raise S3BucketNameMissingException()
+
+    if size > MAX_PACKAGE_SIZE:
+        raise UploadTooLargeException(size, MAX_PACKAGE_SIZE)
 
     user_media = UserMedia(
         uuid=ulid2.generate_ulid_as_uuid(),
@@ -54,7 +61,9 @@ def create_upload(
 
 
 UploadPartUrlTypeDef = TypedDict(
-    "UploadPartUrlTypeDef", {"part_number": int, "url": str}, total=False
+    "UploadPartUrlTypeDef",
+    {"part_number": int, "url": str, "offset": int, "length": int},
+    total=False,
 )
 
 
@@ -62,12 +71,14 @@ def get_signed_upload_urls(
     user: UserType,
     client: Client,
     user_media: UserMedia,
-    part_count: int,
     total_size: int,
 ) -> List[UploadPartUrlTypeDef]:
     bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
     if not bucket_name:
         raise S3BucketNameMissingException()
+
+    if total_size > MAX_PACKAGE_SIZE:
+        raise UploadTooLargeException(total_size, MAX_PACKAGE_SIZE)
 
     if not user_media.can_user_write(user):
         raise PermissionDenied()
@@ -77,11 +88,17 @@ def get_signed_upload_urls(
 
     if user_media.status != UserMediaStatus.upload_created:
         raise InvalidUploadStateException(
-            current=user_media.status, expected=UserMediaStatus.upload_created
+            current=user_media.status,
+            expected=UserMediaStatus.upload_created,
         )
+
+    # Double negative = ceil integer division as opposed to floor
+    part_count = -(-total_size // PART_SIZE)
 
     upload_urls = []
     for part_number in range(1, part_count + 1):
+        offset = (part_number - 1) * PART_SIZE
+        length = min(PART_SIZE, total_size - offset)
         upload_urls.append(
             {
                 "part_number": part_number,
@@ -92,10 +109,13 @@ def get_signed_upload_urls(
                         "Key": user_media.key,
                         "UploadId": user_media.upload_id,
                         "PartNumber": part_number,
+                        "ContentLength": length,
                     },
                     ExpiresIn=60 * 60 * 6,
                 ),
-            }
+                "offset": offset,
+                "length": length,
+            },
         )
 
     return upload_urls
@@ -116,7 +136,8 @@ def finalize_upload(
 
     if user_media.status != UserMediaStatus.upload_created:
         raise InvalidUploadStateException(
-            current=user_media.status, expected=UserMediaStatus.upload_created
+            current=user_media.status,
+            expected=UserMediaStatus.upload_created,
         )
 
     parts = sorted(parts, key=lambda x: x["PartNumber"])
@@ -159,7 +180,8 @@ def abort_upload(user: UserType, client: Client, user_media: UserMedia) -> None:
     )
     if user_media.status not in valid_states:
         raise InvalidUploadStateException(
-            current=user_media.status, expected=", ".join(valid_states)
+            current=user_media.status,
+            expected=", ".join(valid_states),
         )
 
     client.abort_multipart_upload(
@@ -172,7 +194,9 @@ def abort_upload(user: UserType, client: Client, user_media: UserMedia) -> None:
 
 
 def download_file(
-    user: UserType, client: Client, user_media: UserMedia
+    user: UserType,
+    client: Client,
+    user_media: UserMedia,
 ) -> TemporaryUploadedFile:
     bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
     if not bucket_name:
@@ -183,7 +207,8 @@ def download_file(
 
     if user_media.status != UserMediaStatus.upload_complete:
         raise InvalidUploadStateException(
-            current=user_media.status, expected=UserMediaStatus.upload_complete
+            current=user_media.status,
+            expected=UserMediaStatus.upload_complete,
         )
 
     fileobj = TemporaryUploadedFile(

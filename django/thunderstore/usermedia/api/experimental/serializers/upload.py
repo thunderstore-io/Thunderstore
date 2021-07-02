@@ -32,6 +32,8 @@ class UserMediaSerializer(serializers.ModelSerializer):
 class UploadPartUrlSerializer(serializers.Serializer):
     part_number = serializers.IntegerField()
     url = serializers.URLField()
+    offset = serializers.IntegerField()
+    length = serializers.IntegerField()
 
 
 class UserMediaInitiateUploadResponseSerializer(serializers.Serializer):
@@ -40,7 +42,6 @@ class UserMediaInitiateUploadResponseSerializer(serializers.Serializer):
         child=UploadPartUrlSerializer(),
         allow_empty=False,
     )
-    part_size = serializers.IntegerField(required=True)
 
 
 class CompletedPartSerializer(serializers.Serializer):

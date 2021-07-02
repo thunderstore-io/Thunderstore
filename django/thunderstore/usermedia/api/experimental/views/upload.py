@@ -24,8 +24,6 @@ from thunderstore.usermedia.s3_upload import (
     get_signed_upload_urls,
 )
 
-PART_SIZE = 1024 * 1024 * 50
-
 
 class UserMediaInitiateUploadApiView(GenericAPIView):
     queryset = UserMedia.objects.active()
@@ -43,9 +41,6 @@ class UserMediaInitiateUploadApiView(GenericAPIView):
         validator.is_valid(raise_exception=True)
         total_size = validator.validated_data["file_size_bytes"]
 
-        # Double negative = ceil integer division as opposed to floor
-        part_count = -(-total_size // PART_SIZE)
-
         client = get_s3_client()
         user_media = create_upload(
             client=client,
@@ -59,7 +54,6 @@ class UserMediaInitiateUploadApiView(GenericAPIView):
             user=request.user,
             client=get_s3_client(for_signing=True),
             user_media=user_media,
-            part_count=part_count,
             total_size=total_size,
         )
 
@@ -67,7 +61,6 @@ class UserMediaInitiateUploadApiView(GenericAPIView):
             {
                 "user_media": user_media,
                 "upload_urls": upload_urls,
-                "part_size": PART_SIZE,
             },
         )
         return Response(

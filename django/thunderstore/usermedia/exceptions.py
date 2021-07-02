@@ -18,12 +18,20 @@ class S3FileKeyChangedException(Exception):
         super().__init__(
             "S3 file key changed during upload.\n"
             f"Expected: {expected}.\n"
-            f"Received: {received}"
+            f"Received: {received}",
         )
 
 
 class InvalidUploadStateException(Exception):
     def __init__(self, current: str, expected: str):
         super().__init__(
-            f"Invalid upload state. Expected: {expected}; found: {current}"
+            f"Invalid upload state. Expected: {expected}; found: {current}",
+        )
+
+
+class UploadTooLargeException(Exception):
+    def __init__(self, size_received: int, max_size: int):
+        super().__init__(
+            "Upload size exceeds the maximum allwoed size. "
+            f"Allowed: {max_size}; received: {size_received}.",
         )

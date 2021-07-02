@@ -139,13 +139,11 @@ export const UploadForm: React.FC = () => {
         if (!uploadCanceled.current) {
             setProgress(0);
         }
-        const partSize = uploadInfo.part_size;
         const completedParts: CompletedPart[] = [];
         const uploadPromises = [];
         for (const partInfo of uploadInfo.upload_urls) {
-            const partIndex = partInfo.part_number - 1;
-            const start = partIndex * partSize;
-            const end = (partIndex + 1) * partSize;
+            const start = partInfo.offset;
+            const end = partInfo.offset + partInfo.length;
             const blob =
                 end < file.size ? file.slice(start, end) : file.slice(start);
 

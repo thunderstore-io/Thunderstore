@@ -108,12 +108,13 @@ export interface PaginatedResult<T> {
 interface UploadPartUrl {
     part_number: number;
     url: string;
+    offset: number;
+    length: number;
 }
 
 interface UserMediaInitiateUploadResponse {
     user_media: UserMedia;
     upload_urls: UploadPartUrl[];
-    part_size: number;
 }
 
 export interface CompletedPart {
