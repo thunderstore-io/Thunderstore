@@ -35,3 +35,8 @@ class UploadTooLargeException(Exception):
             "Upload size exceeds the maximum allwoed size. "
             f"Allowed: {max_size}; received: {size_received}.",
         )
+
+
+class UploadNotExpiredException(Exception):
+    def __init__(self):
+        super().__init__("Upload has not yet expired")

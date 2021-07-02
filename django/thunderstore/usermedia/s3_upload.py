@@ -5,6 +5,7 @@ import ulid2
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import TemporaryUploadedFile
+from django.db import transaction
 from mypy_boto3_s3 import Client
 from mypy_boto3_s3.type_defs import CompletedPartTypeDef
 
@@ -15,6 +16,7 @@ from thunderstore.usermedia.exceptions import (
     S3BucketNameMissingException,
     S3FileKeyChangedException,
     S3MultipartUploadSizeMismatchException,
+    UploadNotExpiredException,
     UploadTooLargeException,
 )
 from thunderstore.usermedia.models import UserMedia
@@ -221,7 +223,31 @@ def download_file(
     return fileobj
 
 
-# TODO: Implement
-# Might be needed to properly clean up interrupted or aborted uploads
-def list_upload_parts():
-    pass
+def cleanup_expired_upload(user_media: UserMedia, client: Client):
+    bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
+    if not bucket_name:
+        raise S3BucketNameMissingException()
+
+    if not user_media.has_expired:
+        raise UploadNotExpiredException()
+
+    # We delete first within a db transaction. If the cleanup operations fail
+    # for some reason, the transaction will be rolled back.
+    with transaction.atomic():
+        user_media.delete()
+
+        if user_media.status not in (
+            UserMediaStatus.upload_aborted,
+            UserMediaStatus.upload_complete,
+        ):
+            client.abort_multipart_upload(
+                Bucket=bucket_name,
+                Key=user_media.key,
+                UploadId=user_media.upload_id,
+            )
+
+        if user_media.status == UserMediaStatus.upload_complete:
+            client.delete_object(
+                Bucket=bucket_name,
+                Key=user_media.key,
+            )

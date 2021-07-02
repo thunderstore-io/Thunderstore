@@ -60,7 +60,7 @@ class UserMedia(TimestampMixin, models.Model):
                     f"{self.uuid}-{self.filename}",
                 ]
                 if x is not None
-            ]
+            ],
         )
 
     @property
@@ -74,9 +74,13 @@ class UserMedia(TimestampMixin, models.Model):
                     "Expiry": self.expiry.isoformat() if self.expiry else None,
                 }.items()
                 if v is not None
-            }
+            },
         )
         return params
+
+    @property
+    def has_expired(self):
+        return self.expiry and self.expiry < timezone.now()
 
     def can_user_write(self, user: UserType):
         return user == self.owner
