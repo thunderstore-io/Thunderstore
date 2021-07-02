@@ -148,38 +148,40 @@ export const UploadForm: React.FC = () => {
             const end = (partIndex + 1) * partSize;
             const blob =
                 end < file.size ? file.slice(start, end) : file.slice(start);
-            const promise = calculateMD5(blob)
-                .then((md5) => {
-                    if (uploadCanceled.current) {
-                        throw new Error("Upload was aborted by the user");
-                    }
-                    return fetch(partInfo.url, {
-                        method: "PUT",
-                        headers: new Headers({
-                            "Content-Length": `${blob.size}`,
-                            "Content-MD5": md5,
-                        }),
-                        body: blob,
-                    });
-                })
-                .then((completionInfo) => {
-                    if (completionInfo.ok) {
-                        completedParts.push({
-                            ETag: completionInfo.headers.get("ETag")!,
-                            PartNumber: partInfo.part_number,
-                        });
-                    } else {
-                        setProgress(100);
-                        setUploadError(true);
-                        throw new Error(
-                            `Failed part upload: ${completionInfo.statusText}`
-                        );
-                    }
-                    if (!uploadCanceled.current) {
-                        setProgress(completedParts.length / totalParts);
-                    }
+
+            const promise = async () => {
+                const md5 = await calculateMD5(blob);
+                if (uploadCanceled.current) {
+                    throw new Error("Upload was aborted by the user");
+                }
+                const completionInfo = await fetch(partInfo.url, {
+                    method: "PUT",
+                    headers: new Headers({
+                        "Content-Length": `${blob.size}`,
+                        "Content-MD5": md5,
+                    }),
+                    body: blob,
                 });
-            uploadPromises.push(promise);
+
+                if (!completionInfo.ok) {
+                    if (!uploadCanceled.current) {
+                        setProgress(100);
+                    }
+                    setUploadError(true);
+                    throw new Error(
+                        `Failed part upload: ${completionInfo.statusText}`
+                    );
+                }
+
+                completedParts.push({
+                    ETag: completionInfo.headers.get("ETag")!,
+                    PartNumber: partInfo.part_number,
+                });
+                if (!uploadCanceled.current) {
+                    setProgress(completedParts.length / totalParts);
+                }
+            };
+            uploadPromises.push(promise());
         }
         await Promise.all(uploadPromises);
         if (!uploadCanceled.current) {
