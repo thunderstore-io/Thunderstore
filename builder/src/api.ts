@@ -51,7 +51,8 @@ class ThunderstoreApi {
 }
 
 const apiUrl = (...path: string[]) => {
-    return `/api/experimental/${path.join("/")}/`;
+    const apiHost = window.location.origin;
+    return `${apiHost}/api/experimental/${path.join("/")}/`;
 };
 
 class ApiUrls {
@@ -106,14 +107,14 @@ export interface PaginatedResult<T> {
     results: T[];
 }
 
-interface UploadPartUrl {
+export interface UploadPartUrl {
     part_number: number;
     url: string;
     offset: number;
     length: number;
 }
 
-interface UserMediaInitiateUploadResponse {
+export interface UserMediaInitiateUploadResponse {
     user_media: UserMedia;
     upload_urls: UploadPartUrl[];
 }
@@ -136,10 +137,17 @@ interface RenderMarkdownResult {
     html: string;
 }
 
+interface CurrentUserInfo {
+    username: string | null;
+    capabilities: string[];
+    ratedPackages: string[];
+    teams: string[];
+}
+
 class ExperimentalApiImpl extends ThunderstoreApi {
     currentUser = async () => {
         const response = await this.get(ApiUrls.currentUser());
-        return await response.json();
+        return (await response.json()) as CurrentUserInfo;
     };
 
     initiateUpload = async (props: {
@@ -177,8 +185,8 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         return (await response.json()) as PackageVersion;
     };
 
-    listCommunities = async (props: { data: { cursor?: string } }) => {
-        const response = await this.get(ApiUrls.listCommunities(), props.data);
+    listCommunities = async (props?: { data?: { cursor?: string } }) => {
+        const response = await this.get(ApiUrls.listCommunities(), props?.data);
         return (await response.json()) as PaginatedResult<Community>;
     };
 

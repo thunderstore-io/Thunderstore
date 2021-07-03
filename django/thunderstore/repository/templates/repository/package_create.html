@@ -19,13 +19,10 @@
         <a href="{% url 'packages.create.old' %}">Try the old one here</a>
     </p>
 </div>
-<div class="card bg-light mb-2">
-    <div class="card-header">Upload Package</div>
-    <div class="card-body py-2 px-2" id="uploadform">
-    </div>
-</div>
+
+<div id="upload-page"></div>
 <script type="text/javascript">
-window.ts.UploadForm(document.getElementById("uploadform"));
+window.ts.UploadPage(document.getElementById("upload-page"));
 </script>
 
 {% endblock %}

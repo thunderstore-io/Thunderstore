@@ -1,220 +1,117 @@
-import React, { CSSProperties, useEffect, useRef, useState } from "react";
-import { CompletedPart, ExperimentalApi } from "./api";
-import * as crypto from "crypto-js";
+import React, { useEffect, useState } from "react";
+import { Community, ExperimentalApi } from "./api";
+import { useForm } from "react-hook-form";
+import { DragDropFileInput } from "./components/DragDropFileInput";
+import { PackageSubmission } from "./state/PackageSubmission";
+import { FileUpload, FileUploadStatus } from "./state/FileUpload";
+import { observer } from "mobx-react";
 
-interface UploadFileInputProps {
-    title: string;
-    onChange?: (files: FileList) => void;
-    readonly?: boolean;
+function getProgressBarColor(uploadStatus: FileUploadStatus | undefined) {
+    if (uploadStatus) {
+        if (uploadStatus == FileUploadStatus.CANCELED) {
+            return "bg-warning";
+        } else if (uploadStatus == FileUploadStatus.ERRORED) {
+            return "bg-danger";
+        } else if (uploadStatus == FileUploadStatus.COMPLETE) {
+            return "bg-success";
+        }
+    }
+    return "bg-info";
 }
 
-export const UploadFileInput: React.FC<UploadFileInputProps> = (props) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [fileDropStyle, setFileDropStyle] = useState<CSSProperties>({});
-    const [lastTarget, setLastTarget] = useState<EventTarget | null>(null);
-    const [isDragging, setIsDragging] = useState<boolean>(false);
+interface UploadHandlerProps {
+    onComplete: (uploadId: string | null) => void;
+    className?: string;
+}
+const UploadHandler: React.FC<UploadHandlerProps> = observer(
+    ({ onComplete, className }) => {
+        const [file, setFile] = useState<File | null>(null);
+        const [fileUpload, setFileUpload] = useState<FileUpload | null>(null);
 
-    const resetDragState = () => {
-        setIsDragging(false);
-        setFileDropStyle({
-            height: undefined,
-            border: undefined,
-        });
-    };
-    const windowDragEnter = (e: DragEvent) => {
-        setIsDragging(true);
-        setLastTarget(e.target);
-        if (!props.readonly) {
-            setFileDropStyle({
-                height: "200px",
-                border: "4px solid #fff",
-            });
-        }
-    };
-    const windowDragLeave = (e: DragEvent) => {
-        if (e.target === lastTarget || e.target === document) {
-            resetDragState();
-        }
-    };
-    const windowDrop = () => {
-        resetDragState();
-    };
-    const fileChange = () => {
-        resetDragState();
-    };
-    const onDrop = (e: React.DragEvent) => {
-        if (!props.readonly) {
-            const inp = fileInputRef.current;
-            if (inp) {
-                inp.files = e.dataTransfer.files;
-            }
-            if (props.onChange) {
-                props.onChange(e.dataTransfer.files);
-            }
-        }
-        e.preventDefault();
-        resetDragState();
-    };
-
-    useEffect(() => {
-        window.addEventListener("dragenter", windowDragEnter);
-        window.addEventListener("dragleave", windowDragLeave);
-        window.addEventListener("drop", windowDrop);
-        return () => {
-            window.removeEventListener("dragenter", windowDragEnter);
-            window.removeEventListener("dragleave", windowDragLeave);
-            window.removeEventListener("drop", windowDrop);
+        const onFileChange = (files: FileList) => {
+            setFile(files.item(0));
         };
-    });
 
-    const extraClass = !!props.readonly ? "disabled" : "";
-    const finalStyle = {
-        height: fileDropStyle.height,
-        border: fileDropStyle.border,
-        cursor: !!props.readonly ? undefined : "pointer",
-    };
-
-    return (
-        <label
-            className={`btn btn-primary btn-lg btn-block ${extraClass}`}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onDrop}
-            style={finalStyle}
-            aria-disabled={props.readonly}
-        >
-            {isDragging && !props.readonly ? "Drag file here" : props.title}
-            <input
-                type="file"
-                name="newfile"
-                style={{ display: "none" }}
-                ref={fileInputRef}
-                onChange={fileChange}
-                disabled={props.readonly}
-            />
-        </label>
-    );
-};
-
-const calculateMD5 = (blob: Blob) => {
-    return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.readAsBinaryString(blob);
-        reader.onloadend = () => {
-            const md5 = crypto.MD5(
-                crypto.enc.Latin1.parse(reader.result!.toString())
-            );
-            resolve(md5.toString(crypto.enc.Base64));
+        const cancel = async () => {
+            setFile(null);
+            onComplete(null);
+            if (fileUpload) {
+                await fileUpload.cancelUpload();
+            }
+            setFileUpload(null);
         };
-    });
-};
 
-export const UploadForm: React.FC = () => {
-    const [file, setFile] = useState<File | null>(null);
-    const [progress, setProgress] = useState<number | null>(null);
-    const [uploadComplete, setUploadComplete] = useState<boolean>(false);
-    const [uploadError, setUploadError] = useState<boolean>(false);
-    const [uploadUuid, setUploadUuid] = useState<string | null>(null);
-    const uploadCanceled = useRef<boolean>(false);
+        const upload = async (file: File | null) => {
+            if (!file) return;
+            const upload = new FileUpload();
+            setFileUpload(upload);
+            const uploadResult = await upload.upload(file);
+            onComplete(uploadResult);
+        };
 
-    const onFileChange = (files: FileList) => {
-        setFile(files.item(0));
-        setUploadUuid(null);
-    };
+        const progressBg = getProgressBarColor(fileUpload?.uploadStatus);
 
-    const beginUpload = async (file: File | null) => {
-        if (!file) return;
-        if (!!uploadUuid) return;
-        setUploadComplete(false);
-        setUploadError(false);
-        setProgress(null);
-        uploadCanceled.current = false;
-        const uploadInfo = await ExperimentalApi.initiateUpload({
-            data: {
-                filename: file.name,
-                file_size_bytes: file.size,
-            },
-        });
-        setUploadUuid(uploadInfo.user_media.uuid);
-        const totalParts = uploadInfo.upload_urls.length;
-        if (!uploadCanceled.current) {
-            setProgress(0);
-        }
-        const completedParts: CompletedPart[] = [];
-        const uploadPromises = [];
-        for (const partInfo of uploadInfo.upload_urls) {
-            const start = partInfo.offset;
-            const end = partInfo.offset + partInfo.length;
-            const blob =
-                end < file.size ? file.slice(start, end) : file.slice(start);
+        return (
+            <div className={className}>
+                <DragDropFileInput
+                    title={file ? file.name : "Choose or drag file here"}
+                    onChange={onFileChange}
+                    readonly={!!file}
+                />
+                {fileUpload && fileUpload.uploadProgress !== null && (
+                    <div className="progress mb-2">
+                        <div
+                            className={`progress-bar progress-bar-striped progress-bar-animated ${progressBg}`}
+                            role="progressbar"
+                            aria-valuenow={Math.trunc(
+                                fileUpload.uploadProgress * 100
+                            )}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            style={{
+                                width: `${Math.trunc(
+                                    fileUpload.uploadProgress * 100
+                                )}%`,
+                            }}
+                        />
+                    </div>
+                )}
+                <button
+                    disabled={!file || !!fileUpload}
+                    onClick={() => upload(file)}
+                    className="btn btn-success btn-block"
+                >
+                    Upload
+                </button>
+                <button
+                    disabled={!file}
+                    onClick={cancel}
+                    className="btn btn-danger btn-block"
+                >
+                    Cancel
+                </button>
+            </div>
+        );
+    }
+);
 
-            const promise = async () => {
-                const md5 = await calculateMD5(blob);
-                if (uploadCanceled.current) {
-                    throw new Error("Upload was aborted by the user");
-                }
-                const completionInfo = await fetch(partInfo.url, {
-                    method: "PUT",
-                    headers: new Headers({
-                        "Content-Length": `${blob.size}`,
-                        "Content-MD5": md5,
-                    }),
-                    body: blob,
-                });
+interface UploadFormProps {
+    packageSubmission: PackageSubmission;
+}
+const UploadForm: React.FC<UploadFormProps> = () => {
+    const [uploadId, setUploadId] = useState<string | null>(null);
+    const [communities, setCommunities] = useState<Community[]>([]);
+    const [teams, setTeams] = useState<string[]>([]);
 
-                if (!completionInfo.ok) {
-                    if (!uploadCanceled.current) {
-                        setProgress(100);
-                    }
-                    setUploadError(true);
-                    throw new Error(
-                        `Failed part upload: ${completionInfo.statusText}`
-                    );
-                }
+    const { register, handleSubmit } = useForm();
 
-                completedParts.push({
-                    ETag: completionInfo.headers.get("ETag")!,
-                    PartNumber: partInfo.part_number,
-                });
-                if (!uploadCanceled.current) {
-                    setProgress(completedParts.length / totalParts);
-                }
-            };
-            uploadPromises.push(promise());
-        }
-        await Promise.all(uploadPromises);
-        if (!uploadCanceled.current) {
-            await ExperimentalApi.finishUpload({
-                usermediaId: uploadInfo.user_media.uuid,
-                data: {
-                    parts: completedParts,
-                },
-            });
-            setUploadUuid(uploadInfo.user_media.uuid);
-            setUploadComplete(true);
-        }
-    };
-
-    const cancel = async () => {
-        uploadCanceled.current = true;
-        setFile(null);
-        if (uploadUuid && !uploadComplete) {
-            try {
-                await ExperimentalApi.abortUpload({ usermediaId: uploadUuid });
-            } catch {}
-        }
-        setUploadComplete(false);
-        setUploadError(false);
-        setProgress(null);
-        setUploadUuid(null);
-    };
-
-    const submit = async () => {
-        if (!uploadUuid) return;
+    const onSubmit = async () => {
+        if (!uploadId) return;
         try {
             await ExperimentalApi.submitPackage({
                 data: {
                     // TODO: Read from the form
-                    upload_uuid: uploadUuid,
+                    upload_uuid: uploadId,
                     author_name: "uploadtest",
                     categories: [],
                     communities: ["riskofrain2"],
@@ -226,52 +123,93 @@ export const UploadForm: React.FC = () => {
         }
     };
 
-    const progressBg = uploadError
-        ? "bg-danger"
-        : uploadComplete
-        ? "bg-success"
-        : "";
+    useEffect(() => {
+        ExperimentalApi.listCommunities().then((r) =>
+            setCommunities(r.results)
+        );
+        ExperimentalApi.currentUser().then((r) => setTeams(r.teams));
+    }, []);
 
     return (
         <div>
-            <UploadFileInput
-                title={file ? file.name : "Choose or drag file here"}
-                onChange={onFileChange}
-                readonly={!!file}
+            <UploadHandler
+                className={"mb-2"}
+                onComplete={(uploadId) => setUploadId(uploadId)}
             />
-            {progress !== null && (
-                <div className="progress mb-2">
-                    <div
-                        className={`progress-bar progress-bar-striped progress-bar-animated ${progressBg}`}
-                        role="progressbar"
-                        aria-valuenow={Math.trunc(progress * 100)}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        style={{ width: `${Math.trunc(progress * 100)}%` }}
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <div>
+                    <label htmlFor={"communities"}>Communities</label>
+                    <select {...register("communities")}>
+                        {communities.map((community) => (
+                            <option
+                                key={community.identifier}
+                                value={community.identifier}
+                            >
+                                {community.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor={"teams"}>Team</label>
+                    <select {...register("teams")}>
+                        {teams.map((team) => (
+                            <option key={team} value={team}>
+                                {team}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label htmlFor={"has_nsfw_content"}>
+                        Contains NSFW content
+                    </label>
+                    <input
+                        type={"checkbox"}
+                        {...register("has_nsfw_content")}
                     />
                 </div>
-            )}
-            <button
-                disabled={!file || !!uploadUuid}
-                onClick={() => beginUpload(file)}
-                className="btn btn-success btn-block"
-            >
-                Upload
-            </button>
-            <button
-                disabled={!file}
-                onClick={cancel}
-                className="btn btn-danger btn-block"
-            >
-                Cancel
-            </button>
-            <button
-                disabled={!(uploadUuid && uploadComplete)}
-                onClick={submit}
-                className="btn btn-primary btn-block"
-            >
-                Submit
-            </button>
+
+                <button
+                    type={"submit"}
+                    disabled={!uploadId}
+                    className="btn btn-primary btn-block"
+                >
+                    Submit
+                </button>
+            </form>
+        </div>
+    );
+};
+
+interface ReadmePreviewProps {
+    packageSubmission: PackageSubmission;
+}
+const ReadmePreview: React.FC<ReadmePreviewProps> = () => {
+    return (
+        <div className={"card bg-light mb-2"}>
+            <div className={"card-header"}>README Preview</div>
+            <div
+                className={"card-body markdown-body"}
+                dangerouslySetInnerHTML={{ __html: "" }}
+            />
+        </div>
+    );
+};
+
+export const UploadPage: React.FC = () => {
+    const packageSubmission = new PackageSubmission();
+
+    return (
+        <div>
+            <div className="card bg-light mb-2">
+                <div className="card-header">Upload Package</div>
+                <div className="card-body py-2 px-2">
+                    <UploadForm packageSubmission={packageSubmission} />
+                </div>
+            </div>
+            <ReadmePreview packageSubmission={packageSubmission} />
         </div>
     );
 };
