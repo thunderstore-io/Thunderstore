@@ -102,7 +102,7 @@ DATABASE_QUERY_COUNT_HEADER = env.bool("DATABASE_QUERY_COUNT_HEADER")
 
 DATABASES = {"default": env.db()}
 DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = env.bool(
-    "DISABLE_SERVER_SIDE_CURSORS"
+    "DISABLE_SERVER_SIDE_CURSORS",
 )
 
 DB_CERT_DIR = env.str("DB_CERT_DIR")
@@ -179,6 +179,7 @@ INSTALLED_APPS = [
     "thunderstore.community",
     "thunderstore.usermedia",
     "thunderstore.account",
+    "thunderstore.markdown",
     "backblaze_b2",
 ]
 
@@ -292,7 +293,7 @@ DEBUG_TOOLBAR_ENABLED = all(
         DEBUG,
         DEBUG_TOOLBAR_AVAILABLE,
         env.bool("DEBUG_TOOLBAR_ENABLED"),
-    )
+    ),
 )
 
 
@@ -340,7 +341,7 @@ if REDIS_URL:
                 "SOCKET_CONNECT_TIMEOUT": 0.5,
                 "SOCKET_TIMEOUT": 5,
             },
-        }
+        },
     }
 
 CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
@@ -394,7 +395,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "webhooks_webhook",
         "webhooks_webhook_exclude_categories",
         "webhooks_webhook_require_categories",
-    )
+    ),
 )
 
 # if DEBUG and not DEBUG_SIMULATED_LAG:
@@ -460,7 +461,7 @@ GS_CREDENTIALS = env.str("GS_CREDENTIALS")
 if GS_CREDENTIALS:
     GS_CREDENTIALS = json.loads(base64.b64decode(GS_CREDENTIALS).decode("utf-8"))
     GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
-        GS_CREDENTIALS
+        GS_CREDENTIALS,
     )
 
 GS_AUTO_CREATE_BUCKET = env.str("GS_AUTO_CREATE_BUCKET")

@@ -7,7 +7,7 @@ from thunderstore.frontend.api.experimental.serializers.markdown import (
     RenderMarkdownParamsSerializer,
     RenderMarkdownResponseSerializer,
 )
-from thunderstore.repository.templatetags.markdownify import render_markdown
+from thunderstore.markdown.templatetags.markdownify import render_markdown
 
 
 class RenderMarkdownApiView(APIView):

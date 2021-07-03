@@ -1,27 +1,23 @@
+import bleach
 import markdown
 from django import template
 from django.template.defaultfilters import stringfilter
-from django.utils.html import escape
 from django.utils.safestring import mark_safe
+
+from thunderstore.markdown.allowed_tags import (
+    ALLOWED_ATTRIBUTES,
+    ALLOWED_PROTOCOLS,
+    ALLOWED_TAGS,
+)
 
 register = template.Library()
 
 
-def deduplicate_escape(text):
-    return (
-        text.replace("&amp;lt;", "&lt;")
-        .replace("&amp;gt;", "&gt;")
-        .replace("&amp;quot;", "&quot;")
-        .replace("&amp;#39;", "&#39;")
-        .replace("&amp;amp;", "&amp;")
-    )
-
-
 def render_markdown(value: str):
     return mark_safe(
-        deduplicate_escape(
-            markdown.markdown(
-                escape(value),
+        bleach.clean(
+            text=markdown.markdown(
+                value,
                 extensions=[
                     "markdown.extensions.abbr",
                     "markdown.extensions.def_list",
@@ -38,6 +34,9 @@ def render_markdown(value: str):
                     "pymdownx.tilde",
                 ],
             ),
+            tags=ALLOWED_TAGS,
+            protocols=ALLOWED_PROTOCOLS,
+            attributes=ALLOWED_ATTRIBUTES,
         ),
     )
 
