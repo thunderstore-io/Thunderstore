@@ -1,8 +1,10 @@
 from django.urls import path
 
 from thunderstore.repository.views import (
+    PackageCreateOldView,
     PackageCreateView,
     PackageDetailView,
+    PackageDocsView,
     PackageDownloadView,
     PackageListByDependencyView,
     PackageListByOwnerView,
@@ -21,13 +23,17 @@ from thunderstore.repository.views.team_settings import (
 urlpatterns = [
     path("", PackageListView.as_view(), name="packages.list"),
     path("create/", PackageCreateView.as_view(), name="packages.create"),
+    path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
+    path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
     path(
         "download/<str:owner>/<str:name>/<str:version>/",
         PackageDownloadView.as_view(),
         name="packages.download",
     ),
     path(
-        "<str:owner>/<str:name>/", PackageDetailView.as_view(), name="packages.detail"
+        "<str:owner>/<str:name>/",
+        PackageDetailView.as_view(),
+        name="packages.detail",
     ),
     path(
         "<str:owner>/<str:name>/dependants/",

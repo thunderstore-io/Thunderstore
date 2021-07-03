@@ -2,230 +2,30 @@
 
 {% block title %}Upload{% endblock %}
 
+{% block content_beginning %}{% endblock %}
+
 {% block content %}
 <h1 class="mt-4">Upload package</h1>
 
+<div class="mb-3 mt-3 alert alert-info" role="alert">
+    <p class="mb-0">
+        Looking for package format documentation?
+        <a href="{% url 'packages.create.docs' %}">You can find it here</a>
+    </p>
+</div>
+<div class="mb-3 mt-3 alert alert-info" role="alert">
+    <p class="mb-0">
+        New upload UI not working?
+        <a href="{% url 'packages.create.old' %}">Try the old one here</a>
+    </p>
+</div>
 <div class="card bg-light mb-2">
-    <div class="card-header">Better Upload</div>
-    <div class="card-body py-2" id="uploadform">
+    <div class="card-header">Upload Package</div>
+    <div class="card-body py-2 px-2" id="uploadform">
     </div>
 </div>
 <script type="text/javascript">
 window.ts.UploadForm(document.getElementById("uploadform"));
 </script>
 
-<form class="mt-4" method="post" enctype="multipart/form-data" novalidate>
-    {% csrf_token %}
-    <label for="id_file" class="btn btn-primary btn-lg btn-block" id="file_drop" style="cursor: pointer;"></label>
-    <input type="file" class="btn btn-primary btn-lg btn-block" name="file" required="" id="id_file" style="display: none;">
-    {{ form.file.errors }}
-
-    <div class="card bg-light mb-2">
-        <div class="card-header">Listing options</div>
-        <div class="card-body py-2">
-            <div class="text-danger">
-                {{ form.non_field_errors }}
-            </div>
-
-            <div class="field-wrapper">
-                <div class="field-row">
-                    <label for="{{ form.team.id_for_label }}">Team</label>
-                    <div class="w-100">
-                        {{ form.team }}
-                        <p class="mt-1 mb-2">
-                            No teams available? <a href="{% url "settings.teams.create" %}" class="ml-1">Create one here!</a>
-                        </p>
-                    </div>
-                </div>
-                <div class="text-danger field-errors">{{ form.team.errors }}</div>
-            </div>
-
-            <div class="field-wrapper">
-                <div class="field-row">
-                    <label for="{{ form.communities.id_for_label }}">Communities</label>
-                    <div class="w-100">
-                        {# Manual rendering due to different set being displayed than validated #}
-                        <select class="slimselect-lg" name="communities" id="{{ form.communities.auto_id }}" multiple>
-                            {% for community in selectable_communities %}
-                            <option value="{{ community.identifier }}" {% if community == request.community %}selected{% endif %}>{{ community.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="text-danger field-errors">{{ form.communities.errors }}</div>
-            </div>
-
-            <div class="field-wrapper">
-                <div class="field-row">
-                    <label for="{{ form.categories.id_for_label }}">Categories</label>
-                    <div class="w-100">
-                        {{ form.categories }}
-                        <p class="mt-1 mb-2">
-                            Note that the selected categories are applied only to the
-                            <kbd class="text-info">{{ request.community.name }}</kbd> community.
-                        </p>
-                    </div>
-                </div>
-                <div class="text-danger field-errors">{{ form.categories.errors }}</div>
-            </div>
-
-            <div class="field-wrapper">
-                <div class="field-row">
-                    <label for="{{ form.has_nsfw_content.id_for_label }}">Contains NSFW content</label>
-                    {{ form.has_nsfw_content }}
-                </div>
-                <div class="text-danger field-errors">{{ form.has_nsfw_content.errors }}</div>
-            </div>
-        </div>
-    </div>
-    <input type="submit" class="btn btn-primary btn-lg btn-block" value="Upload">
-</form>
-
-<div class="card mt-2 mb-4">
-    <div class="card-header">Package requirements</div>
-    <div class="card-body markdown-body">
-        <p>
-            A valid package is a zip file that contains at least the following
-            files:
-        </p>
-        <table class="table">
-            <tr>
-                <td>icon.png</td>
-                <td>PNG icon for the mod, must be 256x256 resolution.</td>
-            </tr>
-            <tr>
-                <td>README.md</td>
-                <td>Readme in markdown syntax to be rendered on the package's page.</td>
-            </tr>
-            <tr>
-                <td>manifest.json</td>
-                <td>JSON file with the package's metadata.</td>
-            </tr>
-        </table>
-        <p>
-            Additionally, the manifest.json must contain the following fields:
-        </p>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Key</th>
-                    <th>Required</th>
-                    <th>Description</th>
-                    <th>Example value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>name</td>
-                    <td>✔</td>
-                    <td>Name of the mod, no spaces. Allowed characters: <code>a-z A-Z 0-9 _</code></td>
-                    <td><pre>"Some_Mod"</pre></td>
-                </tr>
-                <tr>
-                    <td>description</td>
-                    <td>✔</td>
-                    <td>A short description of the mod, shown on the mod list. Max 250 characters.</td>
-                    <td><pre>"Hello world"</pre></td>
-                </tr>
-                <tr>
-                    <td>version_number</td>
-                    <td>✔</td>
-                    <td>Version number of the mod, following the <a href="https://semver.org/">semantic version format</a> Major.Minor.Patch.</td>
-                    <td><pre>"1.3.2"</pre></td>
-                </tr>
-                <tr>
-                    <td>dependencies</td>
-                    <td>✔</td>
-                    <td>List of other packages that are required for this package to function</td>
-                    <td><pre>[
-    "MythicManiac-TestMod-1.1.0",
-    "SomeAuthor-SomePackage-1.0.0",
-]</pre></td>
-                </tr>
-                <tr>
-                    <td>website_url</td>
-                    <td>✔</td>
-                    <td>URL of the mod's website (e.g. GitHub repo). Can be an empty string.</td>
-                    <td><pre>"https://example.com/"</pre></td>
-                </tr>
-            </tbody>
-        </table>
-        <p>
-            Example manifest.json content:
-        </p>
-        <pre>{
-    "name": "TestMod",
-    "version_number": "1.1.0",
-    "website_url": "https://github.com/thunderstore-io",
-    "description": "This is a description for a mod. 250 characters max",
-    "dependencies": [
-        "MythicManiac-TestMod-1.1.0"
-    ]
-}</pre>
-    </div>
-</div>
-
-
-<script type="text/javascript">
-
-new SlimSelect({
-    select: "#{{ form.categories.auto_id }}"
-});
-new SlimSelect({
-    select: "#{{ form.team.auto_id }}"
-});
-new SlimSelect({
-    select: "#{{ form.communities.auto_id }}"
-});
-
-var file_drop = document.getElementById("file_drop");
-var file_input = document.getElementById("id_file");
-var last_target;
-
-file_drop.ondragover = file_drop.ondragenter = function(evt) {
-    evt.preventDefault();
-};
-
-file_drop.ondrop = function(evt) {
-    file_input.files = evt.dataTransfer.files;
-    evt.preventDefault();
-    reset_file_input();
-};
-
-function reset_file_input() {
-    if (file_input.files.length > 0) {
-        file_drop.textContent = file_input.files[0].name;
-    } else {
-        file_drop.textContent = 'Choose or drag file here';
-    }
-    file_drop.style.height = "";
-    file_drop.style.border = "";
-}
-
-file_input.addEventListener("change", function(){
-    reset_file_input();
-});
-
-window.addEventListener("dragenter", function(e)
-{
-    last_target = e.target;
-    file_drop.style.height = "200px";
-    file_drop.style.border = "4px solid #fff";
-    file_drop.innerHTML = 'Drag file here';
-});
-
-window.addEventListener("dragleave", function(e)
-{
-    if(e.target === last_target || e.target === document)
-    {
-        reset_file_input();
-    }
-});
-window.addEventListener("drop", function()
-{
-    reset_file_input();
-});
-
-reset_file_input();
-</script>
 {% endblock %}

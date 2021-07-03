@@ -1,6 +1,8 @@
 from .repository import (
+    PackageCreateOldView,
     PackageCreateView,
     PackageDetailView,
+    PackageDocsView,
     PackageDownloadView,
     PackageListByDependencyView,
     PackageListByOwnerView,
@@ -8,3 +10,16 @@ from .repository import (
     PackageListView,
     PackageVersionDetailView,
 )
+
+__all__ = [
+    "PackageCreateOldView",
+    "PackageCreateView",
+    "PackageDetailView",
+    "PackageDocsView",
+    "PackageDownloadView",
+    "PackageListByDependencyView",
+    "PackageListByOwnerView",
+    "PackageListSearchView",
+    "PackageListView",
+    "PackageVersionDetailView",
+]
