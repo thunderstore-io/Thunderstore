@@ -63,6 +63,7 @@ class ApiUrls {
         apiUrl("usermedia", usermediaId, "abort-upload");
     static submitPackage = () => apiUrl("package", "submit");
     static listCommunities = () => apiUrl("community");
+    static renderMarkdown = () => apiUrl("frontend", "render-markdown");
 }
 
 export interface UserMedia {
@@ -131,6 +132,10 @@ interface FinishUploadProps {
     data: UserMediaFinishUploadParams;
 }
 
+interface RenderMarkdownResult {
+    html: string;
+}
+
 class ExperimentalApiImpl extends ThunderstoreApi {
     currentUser = async () => {
         const response = await this.get(ApiUrls.currentUser());
@@ -175,6 +180,11 @@ class ExperimentalApiImpl extends ThunderstoreApi {
     listCommunities = async (props: { data: { cursor?: string } }) => {
         const response = await this.get(ApiUrls.listCommunities(), props.data);
         return (await response.json()) as PaginatedResult<Community>;
+    };
+
+    renderMarkdown = async (props: { data: { markdown: string } }) => {
+        const response = await this.post(ApiUrls.renderMarkdown(), props.data);
+        return (await response.json()) as RenderMarkdownResult;
     };
 }
 
