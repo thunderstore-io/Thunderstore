@@ -17,6 +17,7 @@ from thunderstore.repository.package_manifest import ManifestV1Serializer
 MAX_PACKAGE_SIZE = 1024 * 1024 * 500
 MAX_ICON_SIZE = 1024 * 1024 * 6
 MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * 500
+MAX_README_SIZE = 32768
 
 
 def unpack_serializer_errors(field, errors, error_dict=None):
@@ -144,9 +145,8 @@ class PackageUploadForm(forms.ModelForm):
                     "Make sure the README.md is UTF-8 compatible",
                 ]
             )
-        max_length = 32768
-        if len(readme) > max_length:
-            raise ValidationError(f"README.md is too long, max: {max_length}")
+        if len(readme) > MAX_README_SIZE:
+            raise ValidationError(f"README.md is too long, max: {MAX_README_SIZE}")
         self.readme = readme
 
     def clean_file(self):
