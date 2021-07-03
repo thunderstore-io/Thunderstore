@@ -36,3 +36,53 @@ export function calculateMD5(blob: Blob): Promise<string> {
 export function sleep(ms: number): Promise<undefined> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+function parseXhrResponseHeaders(allHeaders: string): Headers {
+    const result = new Headers();
+    allHeaders
+        .trim()
+        .split(/[\r\n]+/)
+        .map((value) => value.split(/: /))
+        .forEach((kvp) => {
+            if (kvp.length == 2 && kvp[0] && kvp[1]) {
+                result.set(kvp[0], kvp[1]);
+            }
+        });
+    return result;
+}
+
+interface FetchOptions extends RequestInit {
+    headers?: Headers;
+}
+export function fetchWithProgress(
+    url: string,
+    opts: FetchOptions = {},
+    onProgress?: (this: XMLHttpRequest, ev: ProgressEvent) => any
+): Promise<Response> {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(opts.method || "get", url);
+
+        if (opts.headers) {
+            opts.headers.forEach((val, key) => {
+                xhr.setRequestHeader(key, val);
+            });
+        }
+
+        xhr.onload = () => {
+            const headers = parseXhrResponseHeaders(
+                xhr.getAllResponseHeaders()
+            );
+            resolve(
+                new Response(xhr.response, {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    headers: headers,
+                })
+            );
+        };
+        xhr.onerror = reject;
+        if (xhr.upload && onProgress) xhr.upload.onprogress = onProgress; // event.loaded / event.total * 100 ; //event.lengthComputable
+        xhr.send(opts.body);
+    });
+}

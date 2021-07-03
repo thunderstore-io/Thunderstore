@@ -11,7 +11,7 @@ import {
     UploadPartUrl,
     UserMediaInitiateUploadResponse,
 } from "../api";
-import { calculateMD5 } from "../utils";
+import { calculateMD5, fetchWithProgress } from "../utils";
 
 export enum FileUploadStatus {
     NEW = "NEW",
@@ -116,10 +116,9 @@ export class FileUpload {
 
         const md5 = await this.cancelGuard(() => calculateMD5(blob));
         const completionInfo = await this.cancelGuard(() => {
-            return fetch(partInfo.url, {
+            return fetchWithProgress(partInfo.url, {
                 method: "PUT",
                 headers: new Headers({
-                    "Content-Length": `${blob.size}`,
                     "Content-MD5": md5,
                 }),
                 body: blob,
