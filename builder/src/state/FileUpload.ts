@@ -155,6 +155,11 @@ export class FileUpload {
 
     public async upload(file: File): Promise<string | null> {
         if (this.uploadStatus != FileUploadStatus.NEW) return null;
+        if (file.size <= 0) {
+            this.setUploadStatus(FileUploadStatus.ERRORED);
+            console.error("Attempted to upload a file with 0 size");
+            return null;
+        }
 
         transaction(() => {
             this.resetState();
