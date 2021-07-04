@@ -82,7 +82,7 @@ export function fetchWithProgress(
             );
         };
         xhr.onerror = reject;
-        if (xhr.upload && onProgress) xhr.upload.onprogress = onProgress; // event.loaded / event.total * 100 ; //event.lengthComputable
+        if (xhr.upload && onProgress) xhr.upload.onprogress = onProgress;
         xhr.send(opts.body);
     });
 }

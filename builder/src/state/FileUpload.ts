@@ -24,8 +24,7 @@ export enum FileUploadStatus {
 
 export class FileUpload {
     @observable uploadStatus: FileUploadStatus = FileUploadStatus.NEW;
-    @observable private _maxProgress: number | null = null;
-    @observable private _currentProgress: number | null = null;
+    @observable private _progress: Map<number, number> | null = null;
     @observable
     private _uploadInfo: UserMediaInitiateUploadResponse | null = null;
 
@@ -36,8 +35,7 @@ export class FileUpload {
     @action
     resetState = () => {
         this.uploadStatus = FileUploadStatus.NEW;
-        this._maxProgress = null;
-        this._currentProgress = null;
+        this._progress = null;
     };
 
     @action
@@ -48,20 +46,23 @@ export class FileUpload {
     }
 
     @action
-    private startProgress(maxProgress: number) {
+    private startProgress(info: UserMediaInitiateUploadResponse) {
         if (this.uploadStatus != FileUploadStatus.CANCELED) {
-            this._maxProgress = maxProgress;
-            this._currentProgress = 0;
+            this._progress = new Map<number, number>(
+                info.upload_urls.map((val) => [val.part_number, 0])
+            );
         }
     }
 
     @action
-    private adjustProgress(delta: number) {
+    private setProgress(partNumber: number, progress: number) {
         if (this.uploadStatus != FileUploadStatus.CANCELED) {
-            if (this._currentProgress) {
-                this._currentProgress += delta;
+            if (this._progress != null) {
+                this._progress.set(partNumber, progress);
             } else {
-                this._currentProgress = delta;
+                this._progress = new Map<number, number>([
+                    [partNumber, progress],
+                ]);
             }
         }
     }
@@ -80,8 +81,12 @@ export class FileUpload {
             case FileUploadStatus.INITIATING:
                 return 0;
             case FileUploadStatus.UPLOADING:
-                if (this._maxProgress && this._currentProgress) {
-                    return this._currentProgress / this._maxProgress;
+                if (this._progress != null && this._progress.size > 0) {
+                    let total = 0;
+                    for (const entry of this._progress.values()) {
+                        total += entry;
+                    }
+                    return total / this._progress.size;
                 } else {
                     return 0;
                 }
@@ -116,13 +121,22 @@ export class FileUpload {
 
         const md5 = await this.cancelGuard(() => calculateMD5(blob));
         const completionInfo = await this.cancelGuard(() => {
-            return fetchWithProgress(partInfo.url, {
-                method: "PUT",
-                headers: new Headers({
-                    "Content-MD5": md5,
-                }),
-                body: blob,
-            });
+            return fetchWithProgress(
+                partInfo.url,
+                {
+                    method: "PUT",
+                    headers: new Headers({
+                        "Content-MD5": md5,
+                    }),
+                    body: blob,
+                },
+                (event) => {
+                    this.setProgress(
+                        partInfo.part_number,
+                        event.loaded / event.total
+                    );
+                }
+            );
         });
 
         if (!completionInfo.ok) {
@@ -130,7 +144,7 @@ export class FileUpload {
             throw new Error(`Failed part upload: ${completionInfo.statusText}`);
         }
 
-        this.adjustProgress(+1);
+        this.setProgress(partInfo.part_number, 1);
         return {
             ETag: completionInfo.headers.get("ETag")!,
             PartNumber: partInfo.part_number,
@@ -222,7 +236,7 @@ export class FileUpload {
             })
         );
         transaction(() => {
-            this.startProgress(uploadInfo.upload_urls.length);
+            this.startProgress(uploadInfo);
             this.setUploadStatus(FileUploadStatus.UPLOADING);
         });
         return uploadInfo;
