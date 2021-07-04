@@ -115,6 +115,7 @@ services:
     volumes:
       - built-static:/home/node/app/build
       - ./builder/src:/home/node/app/src:ro
+      - ./builder/worker_src:/home/node/app/worker_src:ro
       - ./builder/gulpfile.js:/home/node/app/gulpfile.js:ro
 
 volumes:

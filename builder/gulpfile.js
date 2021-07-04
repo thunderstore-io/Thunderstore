@@ -52,6 +52,28 @@ function js(debug) {
     return result.pipe(dest("./build/js/"));
 }
 
+function js_workers(debug) {
+    // TODO: Iterate all source files in src/workers individually instead of
+    //       just the md5 worker.
+    let tsBuild = browserify({
+        basedir: ".",
+        debug: debug,
+        entries: ["worker_src/md5.ts"],
+        cache: {},
+        packageCache: {},
+    })
+        .plugin(tsify)
+        .bundle()
+        .on("error", (err) => console.log(err))
+        .pipe(source("md5.js"));
+
+    let result = tsBuild.pipe(buffer()).pipe(concat("md5.js"));
+    if (!debug) {
+        result = result.pipe(uglify());
+    }
+    return result.pipe(dest("./build/js/workers/"));
+}
+
 function js_prod() {
     return js(false);
 }
@@ -60,11 +82,34 @@ function js_debug() {
     return js(true);
 }
 
+function workers_prod() {
+    return js_workers(false);
+}
+
+function workers_debug() {
+    return js_workers(true);
+}
+
 function watch_js() {
     return watch(
         ["./src/**/*.ts", "./src/**/*.tsx", "./src/**/*.js"],
         { usePolling: true },
         js_debug
+    );
+}
+
+function watch_workers() {
+    return watch(
+        [
+            "./src/**/*.ts",
+            "./src/**/*.tsx",
+            "./src/**/*.js",
+            "./worker_src/**/*.ts",
+            "./worker_src/**/*.tsx",
+            "./worker_src/**/*.js",
+        ],
+        { usePolling: true },
+        workers_debug
     );
 }
 
@@ -83,5 +128,12 @@ function watch_css() {
     );
 }
 
-exports.watch = parallel(js_debug, watch_js, css, watch_css);
-exports.default = parallel(js_prod, css);
+exports.watch = parallel(
+    js_debug,
+    watch_js,
+    workers_debug,
+    watch_workers,
+    css,
+    watch_css
+);
+exports.default = parallel(js_prod, workers_prod, css);

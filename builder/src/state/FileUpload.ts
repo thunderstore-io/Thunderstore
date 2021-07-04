@@ -11,7 +11,8 @@ import {
     UploadPartUrl,
     UserMediaInitiateUploadResponse,
 } from "../api";
-import { calculateMD5, fetchWithProgress } from "../utils";
+import { fetchWithProgress } from "../utils";
+import { WorkerManager, Workers } from "../workers";
 
 export enum FileUploadStatus {
     NEW = "NEW",
@@ -119,7 +120,9 @@ export class FileUpload {
         const blob =
             end < file.size ? file.slice(start, end) : file.slice(start);
 
-        const md5 = await this.cancelGuard(() => calculateMD5(blob));
+        const md5 = await this.cancelGuard(() =>
+            WorkerManager.callWorker<string>(Workers.MD5, blob)
+        );
         const completionInfo = await this.cancelGuard(() => {
             return fetchWithProgress(
                 partInfo.url,
