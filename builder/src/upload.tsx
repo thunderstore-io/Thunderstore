@@ -28,6 +28,22 @@ const UploadHandler: React.FC<UploadHandlerProps> = observer(
         const [file, setFile] = useState<File | null>(null);
         const [fileUpload, setFileUpload] = useState<FileUpload | null>(null);
 
+        useEffect(() => {
+            if (file) {
+                // TODO: Add some global-state aware system which knows if
+                //       other components are interested in managing
+                //       onbeforeunload too, instead of simply overriding it
+                window.onbeforeunload = () => {
+                    return "You have a package submission in progress, are you sure you want to exit?";
+                };
+                return () => {
+                    window.onbeforeunload = null;
+                };
+            } else {
+                return () => {};
+            }
+        }, [file]);
+
         const onFileChange = (files: FileList) => {
             setFile(files.item(0));
         };
