@@ -29,6 +29,8 @@ export class FileUpload {
     @observable
     private _uploadInfo: UserMediaInitiateUploadResponse | null = null;
 
+    private _ongoingRequests: Set<XMLHttpRequest> | null = null;
+
     constructor() {
         makeObservable(this);
     }
@@ -128,7 +130,7 @@ export class FileUpload {
             }
         });
         const completionInfo = await this.cancelGuard(() => {
-            return fetchWithProgress(
+            const { request, response } = fetchWithProgress(
                 partInfo.url,
                 {
                     method: "PUT",
@@ -144,6 +146,16 @@ export class FileUpload {
                     );
                 }
             );
+            if (!this._ongoingRequests) {
+                this._ongoingRequests = new Set();
+            }
+            this._ongoingRequests.add(request);
+            return response.then((resp) => {
+                if (this._ongoingRequests) {
+                    this._ongoingRequests.delete(request);
+                }
+                return resp;
+            });
         });
 
         if (!completionInfo.ok) {
@@ -161,6 +173,17 @@ export class FileUpload {
     public async cancelUpload() {
         const oldStatus = this.uploadStatus;
         this.setUploadStatus(FileUploadStatus.CANCELED);
+        if (this._ongoingRequests) {
+            for (const request of this._ongoingRequests.values()) {
+                try {
+                    request.abort();
+                } catch (e) {
+                    // TODO: Capture to Sentry
+                    console.log(e, e.stack);
+                }
+            }
+            this._ongoingRequests = null;
+        }
         if (this._uploadInfo && oldStatus != FileUploadStatus.COMPLETE) {
             try {
                 await ExperimentalApi.abortUpload({
@@ -200,6 +223,7 @@ export class FileUpload {
 
         const uploadPromises = [];
         for (const partInfo of uploadInfo.upload_urls) {
+            this._ongoingRequests = new Set();
             uploadPromises.push(this.uploadPart(file, partInfo));
         }
 
@@ -224,6 +248,7 @@ export class FileUpload {
         return uploadInfo.user_media.uuid;
     }
 
+    @action
     private async initiateUpload(
         file: File
     ): Promise<UserMediaInitiateUploadResponse> {
@@ -245,6 +270,7 @@ export class FileUpload {
         transaction(() => {
             this.startProgress(uploadInfo);
             this.setUploadStatus(FileUploadStatus.UPLOADING);
+            this._uploadInfo = uploadInfo;
         });
         return uploadInfo;
     }

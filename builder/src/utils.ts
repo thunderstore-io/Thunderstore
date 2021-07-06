@@ -58,9 +58,9 @@ export function fetchWithProgress(
     url: string,
     opts: FetchOptions = {},
     onProgress?: (this: XMLHttpRequest, ev: ProgressEvent) => any
-): Promise<Response> {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
+): { request: XMLHttpRequest; response: Promise<Response> } {
+    const xhr = new XMLHttpRequest();
+    const response = new Promise<Response>((resolve, reject) => {
         xhr.open(opts.method || "get", url);
 
         if (opts.headers) {
@@ -85,4 +85,5 @@ export function fetchWithProgress(
         if (xhr.upload && onProgress) xhr.upload.onprogress = onProgress;
         xhr.send(opts.body);
     });
+    return { request: xhr, response: response };
 }
