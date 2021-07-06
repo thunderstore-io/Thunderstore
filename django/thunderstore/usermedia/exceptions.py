@@ -32,8 +32,16 @@ class InvalidUploadStateException(Exception):
 class UploadTooLargeException(Exception):
     def __init__(self, size_received: int, max_size: int):
         super().__init__(
-            "Upload size exceeds the maximum allwoed size. "
+            "Upload size exceeds the maximum allowed size. "
             f"Allowed: {max_size}; received: {size_received}.",
+        )
+
+
+class UploadTooSmallException(Exception):
+    def __init__(self, size_received: int, min_size: int):
+        super().__init__(
+            "Upload size is smaller than the minimum allowed size. "
+            f"Allowed: {min_size}; received: {size_received}"
         )
 
 

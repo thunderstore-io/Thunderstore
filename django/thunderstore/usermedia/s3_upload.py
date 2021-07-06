@@ -10,7 +10,7 @@ from mypy_boto3_s3 import Client
 from mypy_boto3_s3.type_defs import CompletedPartTypeDef
 
 from thunderstore.core.types import UserType
-from thunderstore.repository.package_upload import MAX_PACKAGE_SIZE
+from thunderstore.repository.package_upload import MAX_PACKAGE_SIZE, MIN_PACKAGE_SIZE
 from thunderstore.usermedia.exceptions import (
     InvalidUploadStateException,
     S3BucketNameMissingException,
@@ -18,6 +18,7 @@ from thunderstore.usermedia.exceptions import (
     S3MultipartUploadSizeMismatchException,
     UploadNotExpiredException,
     UploadTooLargeException,
+    UploadTooSmallException,
 )
 from thunderstore.usermedia.models import UserMedia
 from thunderstore.usermedia.models.usermedia import UserMediaStatus
@@ -38,6 +39,9 @@ def create_upload(
 
     if size > MAX_PACKAGE_SIZE:
         raise UploadTooLargeException(size, MAX_PACKAGE_SIZE)
+
+    if size < MIN_PACKAGE_SIZE:
+        raise UploadTooSmallException(size, MIN_PACKAGE_SIZE)
 
     user_media = UserMedia(
         uuid=ulid2.generate_ulid_as_uuid(),

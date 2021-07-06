@@ -15,6 +15,7 @@ from thunderstore.repository.models import Package, PackageVersion, UploaderIden
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * 500
+MIN_PACKAGE_SIZE = 1  # Honestly impossible, but need to set some value
 MAX_ICON_SIZE = 1024 * 1024 * 6
 MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * 500
 MAX_README_SIZE = 32768

@@ -2,6 +2,7 @@ import os
 
 from rest_framework import serializers
 
+from thunderstore.repository.package_upload import MIN_PACKAGE_SIZE
 from thunderstore.usermedia.models import UserMedia
 
 
@@ -13,7 +14,7 @@ class FilenameField(serializers.CharField):
 
 class UserMediaInitiateUploadParams(serializers.Serializer):
     filename = FilenameField(allow_null=False, allow_blank=False)
-    file_size_bytes = serializers.IntegerField()
+    file_size_bytes = serializers.IntegerField(min_value=MIN_PACKAGE_SIZE)
 
 
 class UserMediaSerializer(serializers.ModelSerializer):
