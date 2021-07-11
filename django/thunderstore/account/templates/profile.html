@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% load arrow %}
+
+{% block title %}Test{% endblock %}
+
+{% block content %}
+<style>
+    .profile-avatar {
+        display: block;
+        float: left;
+        width: 200px;
+        height: 200px;
+        margin-right: 16px;
+    }
+
+    .profile-badge {
+        max-width: 100%;
+    }
+
+    #badges {
+        border-radius: 4px;
+        background-color: #222;
+        padding: 8px;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .seperator {
+        background-color: #888;
+        margin-top: 8px;
+        margin-bottom: 8px;
+        padding-left: 8px;
+        padding-right: 8px;
+        height: 2px;
+    }
+</style>
+
+<div class="card bg-light mt-2 mb-2">
+    <div class="card-header">
+        Uploader profile for <b>{{ user.name }}</b>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-row flex-wrap">
+            <!-- General info box TODO: Get the connections and avatar image somehow -->
+            <div class="col-12 col-md-12 col-lg-8">
+                <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=256"
+                    class="profile-avatar" />
+                <h3><b>{{ user.name }}</b></h3>
+                <h4>
+                    <i class="fas fa-box text-dark mr-1"></i>&nbsp;{{ package_count }}&nbsp;&nbsp;
+                    <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ total_downloads}}&nbsp;&nbsp;
+                    <i class="fas fa-thumbs-up text-dark mr-1"></i>&nbsp;{{ total_likes }}
+                </h4>
+                <p>
+                <h5>Connections:</h5>
+                Discord: nrgill28#9007<br>
+                GitHub: <a href="">nrgill28</a>
+                </p>
+            </div>
+
+            <!-- Badges box TODO: This. -->
+            <div class="col-12 col-md-12 col-lg-4">
+                <h4>Badges</h4>
+                <div id="badges" class="w-100">
+                    <div title="Profile badge">
+                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
+                            class="profile-badge" />
+                    </div>
+                    <div title="Profile badge">
+                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
+                            class="profile-badge" />
+                    </div>
+                    <div title="Profile badge">
+                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
+                            class="profile-badge" />
+                    </div>
+                    <div title="Profile badge">
+                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
+                            class="profile-badge" />
+                    </div>
+                    <div title="Profile badge">
+                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
+                            class="profile-badge" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if popular_packages %}
+
+<div class="row">
+    <div class="col-12 mt-4">
+        <h3 style="display:inline;">
+            Popular packages
+        </h3>
+        <h4 style="display:inline;float:right;">
+            <a href="{{ user.packagelisting_url }}">
+                See all packages from {{ user.name }}
+            </a>
+        </h4>
+    </div>
+</div>
+
+<div class="d-flex flex-row flex-wrap mb-3 package-list">
+    {% for object in popular_packages %}
+        {% include "community/package.html" with object=object %}
+    {% endfor %}
+
+</div>
+
+{% else %}
+No packages have been uploaded by {{ user.name }} :(
+{% endif %}
+
+{% endblock %}

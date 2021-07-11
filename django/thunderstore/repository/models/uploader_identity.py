@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
+from django.utils.functional import cached_property
 
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
@@ -331,3 +332,7 @@ class UploaderIdentity(models.Model):
 
     def can_user_disband(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_disband(user))
+
+    @cached_property
+    def packagelisting_url(self):
+       return reverse("packages.list_by_owner", kwargs={"owner": self.name})

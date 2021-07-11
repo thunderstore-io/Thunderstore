@@ -10,6 +10,7 @@ from rest_framework import permissions
 from thunderstore.frontend.views import ads_txt_view, robots_txt_view
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
+from thunderstore.account.views import ProfileView
 
 from ..community.views import FaviconView
 from .api_urls import api_urls
@@ -26,6 +27,7 @@ urlpatterns = [
     path("auth/", include("social_django.urls", namespace="social")),
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
     path("package/", include(repository_urls)),
+    path("uploader/<str:user>/", ProfileView.as_view(), name="uploader_profile"),
     path("settings/", include(settings_urls)),
     path("favicon.ico", FaviconView.as_view()),
     path("djangoadmin/", admin.site.urls),
