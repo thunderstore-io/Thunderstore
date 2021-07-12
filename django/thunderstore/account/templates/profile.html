@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load thumbnail %}
 {% load arrow %}
+{% load social %}
 
 {% block title %}Test{% endblock %}
 
@@ -26,28 +27,18 @@
         gap: 8px;
         grid-template-columns: repeat(4, 1fr);
     }
-
-    .seperator {
-        background-color: #888;
-        margin-top: 8px;
-        margin-bottom: 8px;
-        padding-left: 8px;
-        padding-right: 8px;
-        height: 2px;
-    }
 </style>
 
 <div class="card bg-light mt-2 mb-2">
     <div class="card-header">
-        Uploader profile for <b>{{ user.name }}</b>
+        Uploader profile for <b>{{ user.username }}</b>
     </div>
     <div class="card-body">
         <div class="d-flex flex-row flex-wrap">
-            <!-- General info box TODO: Get the connections and avatar image somehow -->
             <div class="col-12 col-md-12 col-lg-8">
                 <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=256"
                     class="profile-avatar" />
-                <h3><b>{{ user.name }}</b></h3>
+                <h3><b>{{ user.username }}</b></h3>
                 <h4>
                     <i class="fas fa-box text-dark mr-1"></i>&nbsp;{{ package_count }}&nbsp;&nbsp;
                     <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ total_downloads}}&nbsp;&nbsp;
@@ -55,8 +46,9 @@
                 </h4>
                 <p>
                 <h5>Connections:</h5>
-                Discord: nrgill28#9007<br>
-                GitHub: <a href="">nrgill28</a>
+                {% for provider in social_providers %}
+                    <span class="text-capitalize">{{ provider.provider }}</span>: {% social_username user provider.provider %}<br>
+                {% endfor %}
                 </p>
             </div>
 
