@@ -438,6 +438,7 @@ REST_FRAMEWORK = {
         "thunderstore.account.authentication.TokenAuthentication",
         "thunderstore.account.authentication.UserSessionTokenAuthentication",
     ],
+    "EXCEPTION_HANDLER": "thunderstore.core.exception_handler.exception_handler",
 }
 
 # Thumbnails
