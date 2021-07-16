@@ -17,10 +17,7 @@ from thunderstore.usermedia.api.experimental.urls import (
 api_experimental_urls = [
     path(
         "",
-        include(
-            (repository_experimental_urls, "api-experimental"),
-            namespace="api-experimental",
-        ),
+        include(repository_experimental_urls),
     ),
     path(
         "",

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from thunderstore.repository.package_upload import MAX_README_SIZE
+from thunderstore.repository.validation.readme import MAX_README_SIZE
 
 
 class RenderMarkdownParamsSerializer(serializers.Serializer):

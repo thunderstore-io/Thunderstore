@@ -1,3 +1,7 @@
+import base64
+import binascii
+from typing import Optional
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db.models import QuerySet
@@ -81,3 +85,45 @@ class PackageVersionField(serializers.CharField):
         version_number_validator = VersionNumberValidator()
         self.validators.append(regex_validator)
         self.validators.append(version_number_validator)
+
+
+class Base64Field(serializers.CharField):
+    def __init__(self, **kwargs):
+        kwargs.update(
+            {
+                "allow_blank": False,
+                "trim_whitespace": False,
+                "min_length": None,
+                "max_length": None,
+            }
+        )
+        self.max_size = kwargs.pop("max_size", None)
+        self.min_size = kwargs.pop("min_size", None)
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data) -> Optional[bytes]:
+        if data is None:
+            if self.required:
+                raise serializers.ValidationError(_("This field is required."))
+            else:
+                return None
+        encoded_data = super().to_internal_value(data)
+        try:
+            decoded_data = base64.b64decode(encoded_data)
+        except (ValueError, binascii.Error):
+            raise serializers.ValidationError(_("Invalid base64 string."))
+
+        if self.max_size is not None and len(decoded_data) > self.max_size:
+            raise serializers.ValidationError(
+                _(f"Ensure this field has encoded at most {self.max_size} bytes.")
+            )
+        if self.min_size is not None and len(decoded_data) < self.min_size:
+            raise serializers.ValidationError(
+                _(f"Ensure this field has encoded at least {self.min_size} bytes.")
+            )
+        return decoded_data
+
+    def to_representation(self, value) -> Optional[str]:
+        if not value:
+            return None
+        return base64.b64encode(value).decode("utf-8")

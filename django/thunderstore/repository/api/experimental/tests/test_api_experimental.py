@@ -6,6 +6,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from PIL import Image
 
 from thunderstore.repository.models import (
@@ -108,7 +109,7 @@ def test_api_experimental_upload_package_success(
 
     api_client.force_authenticate(user=user)
     response = api_client.post(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         {
             "metadata": json.dumps(
                 {
@@ -144,7 +145,7 @@ def test_api_experimental_upload_package_fail_no_permission(
 
     api_client.force_authenticate(user=user)
     response = api_client.post(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         {
             "metadata": json.dumps(
                 {
@@ -189,7 +190,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
     api_client.force_authenticate(user=user)
     category_slug = f"invalid-{package_category.slug}"
     response = api_client.post(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         {
             "metadata": json.dumps(
                 {
@@ -219,7 +220,7 @@ def test_api_experimental_package_upload_info(
 ):
     api_client.force_authenticate(user=user)
     response = api_client.get(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         HTTP_ACCEPT="application/json",
     )
     assert response.status_code == 200
