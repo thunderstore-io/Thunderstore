@@ -29,33 +29,6 @@
                     {% endfor %}
                 </p>
             </div>
-
-            <!-- Badges box TODO: This. -->
-            <div class="col-12 col-md-12 col-lg-4" style="display:none;">
-                <h4>Badges</h4>
-                <div id="badges" class="w-100">
-                    <div title="Profile badge">
-                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
-                            class="profile-badge" />
-                    </div>
-                    <div title="Profile badge">
-                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
-                            class="profile-badge" />
-                    </div>
-                    <div title="Profile badge">
-                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
-                            class="profile-badge" />
-                    </div>
-                    <div title="Profile badge">
-                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
-                            class="profile-badge" />
-                    </div>
-                    <div title="Profile badge">
-                        <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=128"
-                            class="profile-badge" />
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -68,7 +41,7 @@
             Popular packages
         </h3>
         <h4 style="display:inline;float:right;">
-            <a href="{{ user.packagelisting_url }}">
+            <a href="{% url 'packages.list_by_owner' user.username %}">
                 See all packages from <b>{{ user.username }}</b>
             </a>
         </h4>
