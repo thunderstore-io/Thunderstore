@@ -3,7 +3,7 @@
 {% load arrow %}
 {% load social %}
 
-{% block title %}Test{% endblock %}
+{% block title %}{{ user.username }}{% endblock %}
 
 {% block content %}
 <div class="card bg-light mt-2 mb-2">
@@ -25,7 +25,7 @@
                     Join date: {{ user.date_joined|date:"DATE_FORMAT" }}
                     <h5>Connections:</h5>
                     {% for provider in social_providers %}
-                    <span class="text-capitalize">{{ provider.provider }}</span>: {% social_username user provider.provider %}<br>
+                        <span class="text-capitalize">{{ provider.provider }}</span>: {% social_username user provider.provider %}<br>
                     {% endfor %}
                 </p>
             </div>
@@ -37,9 +37,7 @@
 
 <div class="row">
     <div class="col-12 mt-4">
-        <h3 style="display:inline;">
-            Popular packages
-        </h3>
+        <h3 style="display:inline;">Popular packages</h3>
         <h4 style="display:inline;float:right;">
             <a href="{% url 'packages.list_by_owner' user.username %}">
                 See all packages from <b>{{ user.username }}</b>
@@ -50,13 +48,12 @@
 
 <div class="d-flex flex-row flex-wrap mb-3 package-list">
     {% for object in popular_packages %}
-    {% include "community/package.html" with object=object %}
+        {% include "community/package.html" with object=object %}
     {% endfor %}
-
 </div>
 
 {% else %}
-No packages have been uploaded by {{ user.username }} :(
+    No packages have been uploaded by {{ user.username }} :(
 {% endif %}
 
 {% endblock %}

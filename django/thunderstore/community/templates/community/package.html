@@ -7,11 +7,11 @@
 {% if object.is_deprecated %}text-dark deleted{% endif %}">
     <div class="p-0 bg-light">
         {% if object.is_pinned %}
-        <div class="pin w-100">
-            <div class="mr-2 p-1 px-2 bg-primary w-auto w-fit-content">
-                <span class="fa fa-thumbtack mr-2"></span> Pinned
+            <div class="pin w-100">
+                <div class="mr-2 p-1 px-2 bg-primary w-auto w-fit-content">
+                    <span class="fa fa-thumbtack mr-2"></span> Pinned
+                </div>
             </div>
-        </div>
         {% endif %}
         <a href="{{ object.get_absolute_url }}">
             <img class="w-100" src="{% thumbnail object.icon 256x256 crop %}" alt="{{ object. }} icon">
@@ -23,9 +23,11 @@
                 <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ object.downloads }}
             </div>
             <div class="col-6 text-right" title="Likes">
-                <span id="package-rating-{{ object.uuid4 }}">{{ object.rating_score }}</span>&nbsp;<i
-                    class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate"
-                    data-target="{{ object.uuid4 }}"></i>
+                <span id="package-rating-{{ object.uuid4 }}">
+                    {{ object.rating_score }}
+                </span>
+                &nbsp;
+                <i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.uuid4 }}"></i>
             </div>
         </div>
         <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ object.display_name }}">{{ object.display_name }}</h5>
@@ -37,8 +39,9 @@
     <div
         class="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
         {% for category in object.categories.all %}
-        <a href="{% url " packages.list" %}?included_categories={{ category.pk }}"><span
-                class="badge badge-pill badge-secondary category-badge">{{ category.name }}</span></a>
+            <a href="{% url " packages.list" %}?included_categories={{ category.pk }}">
+                <span class="badge badge-pill badge-secondary category-badge">{{ category.name }}</span>
+            </a>
         {% endfor %}
     </div>
     <div class="bg-light p-2">
