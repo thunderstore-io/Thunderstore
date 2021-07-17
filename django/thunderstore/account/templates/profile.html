@@ -36,7 +36,7 @@
     <div class="card-body">
         <div class="d-flex flex-row flex-wrap">
             <div class="col-12 col-md-12 col-lg-8">
-                <img src="https://cdn.discordapp.com/avatars/226680739570253824/fe9c4346987d53de5b817dd70e16cd2e.png?size=256"
+                <img src="https://www.gravatar.com/avatar/{{ email_hash }}?s=200"
                     class="profile-avatar" />
                 <h3><b>{{ user.username }}</b></h3>
                 <h4>
@@ -45,15 +45,16 @@
                     <i class="fas fa-thumbs-up text-dark mr-1"></i>&nbsp;{{ total_likes }}
                 </h4>
                 <p>
-                <h5>Connections:</h5>
-                {% for provider in social_providers %}
+                    Join date: {{ user.date_joined|date:"DATE_FORMAT" }}
+                    <h5>Connections:</h5>
+                    {% for provider in social_providers %}
                     <span class="text-capitalize">{{ provider.provider }}</span>: {% social_username user provider.provider %}<br>
-                {% endfor %}
+                    {% endfor %}
                 </p>
             </div>
 
             <!-- Badges box TODO: This. -->
-            <div class="col-12 col-md-12 col-lg-4">
+            <div class="col-12 col-md-12 col-lg-4" style="display:none;">
                 <h4>Badges</h4>
                 <div id="badges" class="w-100">
                     <div title="Profile badge">
@@ -99,7 +100,7 @@
 
 <div class="d-flex flex-row flex-wrap mb-3 package-list">
     {% for object in popular_packages %}
-        {% include "community/package.html" with object=object %}
+    {% include "community/package.html" with object=object %}
     {% endfor %}
 
 </div>
