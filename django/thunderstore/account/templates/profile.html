@@ -6,29 +6,6 @@
 {% block title %}Test{% endblock %}
 
 {% block content %}
-<style>
-    .profile-avatar {
-        display: block;
-        float: left;
-        width: 200px;
-        height: 200px;
-        margin-right: 16px;
-    }
-
-    .profile-badge {
-        max-width: 100%;
-    }
-
-    #badges {
-        border-radius: 4px;
-        background-color: #222;
-        padding: 8px;
-        display: grid;
-        gap: 8px;
-        grid-template-columns: repeat(4, 1fr);
-    }
-</style>
-
 <div class="card bg-light mt-2 mb-2">
     <div class="card-header">
         Uploader profile for <b>{{ user.username }}</b>

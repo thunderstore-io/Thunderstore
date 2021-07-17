@@ -1,0 +1,20 @@
+.profile-avatar {
+    display: block;
+    float: left;
+    width: 200px;
+    height: 200px;
+    margin-right: 16px;
+}
+
+.profile-badge {
+    max-width: 100%;
+}
+
+#badges {
+    border-radius: 4px;
+    background-color: #222;
+    padding: 8px;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+}
