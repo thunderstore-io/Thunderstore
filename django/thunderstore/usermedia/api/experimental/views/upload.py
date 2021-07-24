@@ -54,7 +54,6 @@ class UserMediaInitiateUploadApiView(GenericAPIView):
             user=request.user,
             client=get_s3_client(for_signing=True),
             user_media=user_media,
-            total_size=total_size,
         )
 
         serializer = self.get_serializer(

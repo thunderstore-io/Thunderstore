@@ -1,34 +1,29 @@
 from datetime import datetime
 from typing import IO, List, Optional, TypedDict, cast
 
-import ulid2
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import TemporaryUploadedFile
-from django.db import transaction
+from django.db import DEFAULT_DB_ALIAS, connections, transaction
 from mypy_boto3_s3 import Client
 from mypy_boto3_s3.type_defs import CompletedPartTypeDef
 
 from thunderstore.core.types import UserType
-from thunderstore.repository.package_upload import MAX_PACKAGE_SIZE, MIN_PACKAGE_SIZE
+from thunderstore.usermedia.consts import UPLOAD_PART_SIZE
 from thunderstore.usermedia.exceptions import (
     InvalidUploadStateException,
     S3BucketNameMissingException,
     S3FileKeyChangedException,
-    S3MultipartUploadSizeMismatchException,
     UploadNotExpiredException,
-    UploadTooLargeException,
-    UploadTooSmallException,
 )
 from thunderstore.usermedia.models import UserMedia
 from thunderstore.usermedia.models.usermedia import UserMediaStatus
 
-PART_SIZE = 1024 * 1024 * 50
-
 
 def create_upload(
     client: Client,
-    user: UserType,
+    user: Optional[UserType],
     filename: str,
     size: int,
     expiry: Optional[datetime] = None,
@@ -37,23 +32,12 @@ def create_upload(
     if not bucket_name:
         raise S3BucketNameMissingException()
 
-    if size > MAX_PACKAGE_SIZE:
-        raise UploadTooLargeException(size, MAX_PACKAGE_SIZE)
-
-    if size < MIN_PACKAGE_SIZE:
-        raise UploadTooSmallException(size, MIN_PACKAGE_SIZE)
-
-    user_media = UserMedia(
-        uuid=ulid2.generate_ulid_as_uuid(),
+    user_media = UserMedia.create_upload(
+        user=user,
         filename=filename,
         size=size,
-        status=UserMediaStatus.initial,
-        owner=user,
-        prefix=settings.USERMEDIA_S3_LOCATION,
         expiry=expiry,
     )
-    user_media.key = user_media.compute_key()
-    user_media.save()
 
     response = client.create_multipart_upload(
         Bucket=bucket_name,
@@ -74,23 +58,16 @@ UploadPartUrlTypeDef = TypedDict(
 
 
 def get_signed_upload_urls(
-    user: UserType,
+    user: Optional[UserType],
     client: Client,
     user_media: UserMedia,
-    total_size: int,
 ) -> List[UploadPartUrlTypeDef]:
     bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
     if not bucket_name:
         raise S3BucketNameMissingException()
 
-    if total_size > MAX_PACKAGE_SIZE:
-        raise UploadTooLargeException(total_size, MAX_PACKAGE_SIZE)
-
     if not user_media.can_user_write(user):
         raise PermissionDenied()
-
-    if user_media.size != total_size:
-        raise S3MultipartUploadSizeMismatchException()
 
     if user_media.status != UserMediaStatus.upload_created:
         raise InvalidUploadStateException(
@@ -99,12 +76,12 @@ def get_signed_upload_urls(
         )
 
     # Double negative = ceil integer division as opposed to floor
-    part_count = -(-total_size // PART_SIZE)
+    part_count = -(-user_media.size // UPLOAD_PART_SIZE)
 
     upload_urls = []
     for part_number in range(1, part_count + 1):
-        offset = (part_number - 1) * PART_SIZE
-        length = min(PART_SIZE, total_size - offset)
+        offset = (part_number - 1) * UPLOAD_PART_SIZE
+        length = min(UPLOAD_PART_SIZE, user_media.size - offset)
         upload_urls.append(
             {
                 "part_number": part_number,
@@ -128,12 +105,21 @@ def get_signed_upload_urls(
 
 
 def finalize_upload(
-    user: UserType,
+    user: Optional[UserType],
     client: Client,
     user_media: UserMedia,
     parts: List[CompletedPartTypeDef],
 ) -> None:
     bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
+
+    # We need to ensure any potential failure status is recorded to the database
+    # appropriately. Easiest way to do this is just to ensure we're not in a
+    # transaction, which could end up rolling back our failure status elsewhere
+    # from the database. It is not the best solution, but works in preventing
+    # accidental bugs due to mishandled transaction usage.
+    if connections[DEFAULT_DB_ALIAS].in_atomic_block:
+        raise RuntimeError("Must not be called during a transaction")
+
     if not bucket_name:
         raise S3BucketNameMissingException()
 
@@ -148,20 +134,19 @@ def finalize_upload(
 
     parts = sorted(parts, key=lambda x: x["PartNumber"])
 
-    result = client.complete_multipart_upload(
-        Bucket=bucket_name,
-        Key=user_media.key,
-        MultipartUpload={
-            "Parts": parts,
-        },
-        UploadId=user_media.upload_id,
-    )
+    try:
+        result = client.complete_multipart_upload(
+            Bucket=bucket_name,
+            Key=user_media.key,
+            MultipartUpload={
+                "Parts": parts,
+            },
+            UploadId=user_media.upload_id,
+        )
 
-    if result["Key"] != user_media.key:
-        user_media.status = UserMediaStatus.upload_error
-        user_media.save(update_fields=("status",))
-        raise S3FileKeyChangedException(user_media.key, result["Key"])
-    else:
+        if result["Key"] != user_media.key:
+            raise S3FileKeyChangedException(user_media.key, result["Key"])
+
         meta = client.head_object(
             Bucket=bucket_name,
             Key=user_media.key,
@@ -169,9 +154,15 @@ def finalize_upload(
         user_media.size = meta["ContentLength"]
         user_media.status = UserMediaStatus.upload_complete
         user_media.save(update_fields=("status", "size"))
+    except (ClientError, S3FileKeyChangedException) as e:
+        user_media.status = UserMediaStatus.upload_error
+        user_media.save(update_fields=("status",))
+        raise e
 
 
-def abort_upload(user: UserType, client: Client, user_media: UserMedia) -> None:
+def abort_upload(
+    user: Optional[UserType], client: Client, user_media: UserMedia
+) -> None:
     bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
     if not bucket_name:
         raise S3BucketNameMissingException()
@@ -200,7 +191,7 @@ def abort_upload(user: UserType, client: Client, user_media: UserMedia) -> None:
 
 
 def download_file(
-    user: UserType,
+    user: Optional[UserType],
     client: Client,
     user_media: UserMedia,
 ) -> TemporaryUploadedFile:
@@ -224,6 +215,7 @@ def download_file(
         charset=None,
     )
     client.download_fileobj(bucket_name, user_media.key, cast(IO, fileobj))
+    fileobj.seek(0)
     return fileobj
 
 

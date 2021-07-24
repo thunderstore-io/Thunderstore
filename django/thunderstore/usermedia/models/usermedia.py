@@ -1,4 +1,6 @@
 import copy
+from datetime import datetime
+from typing import Optional
 
 import ulid2
 from django.conf import settings
@@ -9,6 +11,11 @@ from django.utils import timezone
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum
+from thunderstore.usermedia.consts import MAX_UPLOAD_SIZE, MIN_UPLOAD_SIZE
+from thunderstore.usermedia.exceptions import (
+    UploadTooLargeException,
+    UploadTooSmallException,
+)
 
 
 class UserMediaQueryset(models.QuerySet):
@@ -50,6 +57,33 @@ class UserMedia(TimestampMixin, models.Model):
     )
     upload_id = models.TextField(blank=True, null=True)
 
+    @classmethod
+    def create_upload(
+        cls,
+        user: Optional[UserType],
+        filename: str,
+        size: int,
+        expiry: Optional[datetime] = None,
+    ) -> "UserMedia":
+        if size > MAX_UPLOAD_SIZE:
+            raise UploadTooLargeException(size, MAX_UPLOAD_SIZE)
+
+        if size < MIN_UPLOAD_SIZE:
+            raise UploadTooSmallException(size, MIN_UPLOAD_SIZE)
+
+        user_media = UserMedia(
+            uuid=ulid2.generate_ulid_as_uuid(),
+            filename=filename,
+            size=size,
+            status=UserMediaStatus.initial,
+            owner=user,
+            prefix=settings.USERMEDIA_S3_LOCATION,
+            expiry=expiry,
+        )
+        user_media.key = user_media.compute_key()
+        user_media.save()
+        return user_media
+
     def compute_key(self) -> str:
         return "/".join(
             [
@@ -82,7 +116,7 @@ class UserMedia(TimestampMixin, models.Model):
     def has_expired(self):
         return self.expiry and self.expiry < timezone.now()
 
-    def can_user_write(self, user: UserType):
+    def can_user_write(self, user: Optional[UserType]):
         return user == self.owner
 
     class Meta:

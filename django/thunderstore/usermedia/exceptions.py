@@ -1,19 +1,17 @@
-class S3ConfigurationException(Exception):
+from django.core.exceptions import ValidationError
+
+
+class S3ConfigurationException(AttributeError):
     def __init__(self):
         super().__init__("Invalid S3 storage configuration")
 
 
-class S3BucketNameMissingException(Exception):
+class S3BucketNameMissingException(AttributeError):
     def __init__(self):
         super().__init__("Invalid S3 storage bucket name")
 
 
-class S3MultipartUploadSizeMismatchException(Exception):
-    def __init__(self):
-        super().__init__("Invalid total file size declared")
-
-
-class S3FileKeyChangedException(Exception):
+class S3FileKeyChangedException(ValidationError):
     def __init__(self, expected: str, received: str):
         super().__init__(
             "S3 file key changed during upload.\n"
@@ -22,14 +20,14 @@ class S3FileKeyChangedException(Exception):
         )
 
 
-class InvalidUploadStateException(Exception):
+class InvalidUploadStateException(ValidationError):
     def __init__(self, current: str, expected: str):
         super().__init__(
             f"Invalid upload state. Expected: {expected}; found: {current}",
         )
 
 
-class UploadTooLargeException(Exception):
+class UploadTooLargeException(ValidationError):
     def __init__(self, size_received: int, max_size: int):
         super().__init__(
             "Upload size exceeds the maximum allowed size. "
@@ -37,7 +35,7 @@ class UploadTooLargeException(Exception):
         )
 
 
-class UploadTooSmallException(Exception):
+class UploadTooSmallException(ValidationError):
     def __init__(self, size_received: int, min_size: int):
         super().__init__(
             "Upload size is smaller than the minimum allowed size. "
@@ -45,6 +43,6 @@ class UploadTooSmallException(Exception):
         )
 
 
-class UploadNotExpiredException(Exception):
+class UploadNotExpiredException(ValidationError):
     def __init__(self):
         super().__init__("Upload has not yet expired")
