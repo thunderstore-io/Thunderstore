@@ -1,10 +1,10 @@
-FROM alpine as builder
+FROM --platform=linux/amd64 alpine as builder
 
 RUN apk add --no-cache wget
 RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc && \
     chmod +x /usr/bin/mc
 
-FROM minio/minio:RELEASE.2021-06-17T00-10-46Z@sha256:10107f503382588f4bc620ccf2fd929c16c04bcc5887e8028ace1e26bc6bc0b8
+FROM --platform=linux/amd64 minio/minio:RELEASE.2021-06-17T00-10-46Z@sha256:e6755f3359281f3a3032c26cdfa450945a5d88bdbce5f68a05bf96d900bf222e
 
 RUN microdnf install netcat
 

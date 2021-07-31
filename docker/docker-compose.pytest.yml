@@ -7,10 +7,26 @@ x-django-service: &django-service
     DATABASE_URL: "psql://django:django@dbpool/django"
     REDIS_URL: "redis://redis:6379/0"
     SECRET_KEY: "hunter2"
+    AWS_ACCESS_KEY_ID: "thunderstore"
+    AWS_SECRET_ACCESS_KEY: "thunderstore"
+    AWS_S3_REGION_NAME: ""
+    AWS_S3_ENDPOINT_URL: "http://minio:9000/"
+    AWS_S3_CUSTOM_DOMAIN: "localhost:9000/thunderstore"
+    AWS_STORAGE_BUCKET_NAME: "thunderstore"
+    AWS_LOCATION: "development"
+    AWS_S3_SECURE_URLS: "False"
+    USERMEDIA_S3_ENDPOINT_URL: "http://minio:9000/"
+    USERMEDIA_S3_SIGNING_ENDPOINT_URL: "http://localhost:9000/"
+    USERMEDIA_S3_ACCESS_KEY_ID: "thunderstore"
+    USERMEDIA_S3_SECRET_ACCESS_KEY: "thunderstore"
+    USERMEDIA_S3_REGION_NAME: ""
+    USERMEDIA_S3_STORAGE_BUCKET_NAME: "thunderstore"
+    USERMEDIA_S3_LOCATION: "development"
   depends_on:
     - db
     - redis
     - rabbitmq
+    - minio
 
 services:
   db:
@@ -39,6 +55,13 @@ services:
       RABBITMQ_DEFAULT_USER: django
       RABBITMQ_DEFAULT_PASS: django
       RABBITMQ_DEFAULT_VHOST: django
+
+  minio:
+    image: thunderstore/minio:latest
+    environment:
+      MINIO_ROOT_USER: thunderstore
+      MINIO_ROOT_PASSWORD: thunderstore
+    command: server /data
 
   django:
     <<: *django-service
