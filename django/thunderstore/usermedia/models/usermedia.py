@@ -6,11 +6,12 @@ import ulid2
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Now
 from django.utils import timezone
 
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import ChoiceEnum
+from thunderstore.core.utils import ChoiceEnum, sanitize_filename, sanitize_filepath
 from thunderstore.usermedia.consts import MAX_UPLOAD_SIZE, MIN_UPLOAD_SIZE
 from thunderstore.usermedia.exceptions import (
     UploadTooLargeException,
@@ -20,10 +21,10 @@ from thunderstore.usermedia.exceptions import (
 
 class UserMediaQueryset(models.QuerySet):
     def expired(self):
-        return self.exclude(Q(expiry=None) | Q(expiry__gt=timezone.now()))
+        return self.exclude(Q(expiry=None) | Q(expiry__gt=Now()))
 
     def active(self):
-        return self.exclude(Q(expiry__lte=timezone.now()))
+        return self.exclude(Q(expiry__lte=Now()))
 
 
 class UserMediaStatus(ChoiceEnum):
@@ -48,7 +49,12 @@ class UserMedia(TimestampMixin, models.Model):
     key = models.CharField(max_length=2048)
     size = models.PositiveIntegerField()
     uuid = models.UUIDField(default=ulid2.generate_ulid_as_uuid, primary_key=True)
+
+    # Prefix is the S3 storage bucket location prefix, only ever used for
+    # building the file key (filepath in s3), which is what the rest of the
+    # codebase should depend on.
     prefix = models.CharField(blank=True, null=True, max_length=256)
+
     expiry = models.DateTimeField(blank=True, null=True)
     status = models.CharField(
         default=UserMediaStatus.initial,
@@ -73,11 +79,11 @@ class UserMedia(TimestampMixin, models.Model):
 
         user_media = UserMedia(
             uuid=ulid2.generate_ulid_as_uuid(),
-            filename=filename,
+            filename=sanitize_filename(filename),
             size=size,
             status=UserMediaStatus.initial,
             owner=user,
-            prefix=settings.USERMEDIA_S3_LOCATION,
+            prefix=sanitize_filepath(settings.USERMEDIA_S3_LOCATION),
             expiry=expiry,
         )
         user_media.key = user_media.compute_key()
@@ -85,15 +91,17 @@ class UserMedia(TimestampMixin, models.Model):
         return user_media
 
     def compute_key(self) -> str:
+        prefix = sanitize_filepath(self.prefix)
+        filename = sanitize_filename(self.filename)
         return "/".join(
             [
                 x
                 for x in [
-                    self.prefix,
+                    prefix,
                     "usermedia",
-                    f"{self.uuid}-{self.filename}",
+                    f"{self.uuid}-{filename}",
                 ]
-                if x is not None
+                if x
             ],
         )
 
@@ -113,8 +121,8 @@ class UserMedia(TimestampMixin, models.Model):
         return params
 
     @property
-    def has_expired(self):
-        return self.expiry and self.expiry < timezone.now()
+    def has_expired(self) -> bool:
+        return bool(self.expiry and self.expiry <= timezone.now())
 
     def can_user_write(self, user: Optional[UserType]):
         return user == self.owner

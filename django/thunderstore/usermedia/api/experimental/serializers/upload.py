@@ -1,5 +1,3 @@
-import os
-
 from rest_framework import serializers
 
 from thunderstore.repository.package_upload import MIN_PACKAGE_SIZE
@@ -9,7 +7,8 @@ from thunderstore.usermedia.models import UserMedia
 class FilenameField(serializers.CharField):
     def to_internal_value(self, data):
         result = super().to_internal_value(data)
-        return os.path.basename(result)
+        split = result.replace("\\", "/").split("/")
+        return split[-1] if split else ""
 
 
 class UserMediaInitiateUploadParams(serializers.Serializer):

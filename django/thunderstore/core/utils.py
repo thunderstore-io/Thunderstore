@@ -1,3 +1,4 @@
+import re
 from typing import Callable, Optional
 
 from django.conf import settings
@@ -77,3 +78,33 @@ def make_full_url(request: Optional[HttpRequest], path: str):
     if settings.PROTOCOL == "https://" and url.startswith("http://"):
         url = f"https://{url[7:]}"
     return url
+
+
+FILENAME_SANITIZER_REGEX = re.compile(r"[^a-zA-Z0-9\_\-\.]+")
+
+
+def sanitize_filename(filename: Optional[str]) -> Optional[str]:
+    if filename is None:
+        return None
+    return re.sub(FILENAME_SANITIZER_REGEX, "", filename)
+
+
+def sanitize_filepath(filepath: Optional[str]) -> Optional[str]:
+    if filepath is None:
+        return None
+    return "/".join(
+        [
+            sanitize_filename(x)
+            for x in filepath.replace("\\", "/").split("/")
+            if sanitize_filename(x.replace(".", ""))
+        ]
+    )
+
+
+def validate_filepath_prefix(filepath: Optional[str]) -> Optional[str]:
+    stripped = sanitize_filepath(filepath)
+    if stripped != filepath:
+        raise ValidationError(
+            f"Invalid filepath prefix: {filepath}, should be: {stripped}"
+        )
+    return stripped

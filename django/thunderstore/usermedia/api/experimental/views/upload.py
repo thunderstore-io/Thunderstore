@@ -14,7 +14,6 @@ from thunderstore.usermedia.api.experimental.serializers import (
     UserMediaInitiateUploadResponseSerializer,
     UserMediaSerializer,
 )
-from thunderstore.usermedia.exceptions import InvalidUploadStateException
 from thunderstore.usermedia.models import UserMedia
 from thunderstore.usermedia.s3_client import get_s3_client
 from thunderstore.usermedia.s3_upload import (
@@ -28,7 +27,6 @@ from thunderstore.usermedia.s3_upload import (
 class UserMediaInitiateUploadApiView(GenericAPIView):
     queryset = UserMedia.objects.active()
     serializer_class = UserMediaInitiateUploadResponseSerializer
-    # TODO: Add test for permission check
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
@@ -73,7 +71,6 @@ class UserMediaFinishUploadApiView(GenericAPIView):
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
     serializer_class = UserMediaFinishUploadParamsSerializer
-    # TODO: Add test for permission check
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
@@ -88,18 +85,12 @@ class UserMediaFinishUploadApiView(GenericAPIView):
         validator = self.get_serializer(data=request.data)
         validator.is_valid(raise_exception=True)
 
-        try:
-            finalize_upload(
-                user=request.user,
-                client=client,
-                user_media=instance,
-                parts=validator.validated_data["parts"],
-            )
-        except InvalidUploadStateException as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        finalize_upload(
+            user=request.user,
+            client=client,
+            user_media=instance,
+            parts=validator.validated_data["parts"],
+        )
         serializer = UserMediaSerializer(instance)
         return Response(
             serializer.data,
@@ -111,7 +102,6 @@ class UserMediaAbortUploadApiView(GenericAPIView):
     queryset = UserMedia.objects.active()
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
-    # TODO: Add test for permission check
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
@@ -126,16 +116,11 @@ class UserMediaAbortUploadApiView(GenericAPIView):
         except ClientError as e:
             if e.__class__.__name__ == "NoSuchUpload":
                 return Response(
-                    {"error": "Upload not found"},
+                    {"detail": "Upload not found"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
             else:
                 raise
-        except InvalidUploadStateException as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         serializer = UserMediaSerializer(instance)
         return Response(
             serializer.data,

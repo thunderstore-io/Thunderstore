@@ -112,14 +112,6 @@ def finalize_upload(
 ) -> None:
     bucket_name = settings.USERMEDIA_S3_STORAGE_BUCKET_NAME
 
-    # We need to ensure any potential failure status is recorded to the database
-    # appropriately. Easiest way to do this is just to ensure we're not in a
-    # transaction, which could end up rolling back our failure status elsewhere
-    # from the database. It is not the best solution, but works in preventing
-    # accidental bugs due to mishandled transaction usage.
-    if connections[DEFAULT_DB_ALIAS].in_atomic_block:
-        raise RuntimeError("Must not be called during a transaction")
-
     if not bucket_name:
         raise S3BucketNameMissingException()
 
@@ -131,6 +123,14 @@ def finalize_upload(
             current=user_media.status,
             expected=UserMediaStatus.upload_created,
         )
+
+    # We need to ensure any potential failure status is recorded to the database
+    # appropriately. Easiest way to do this is just to ensure we're not in a
+    # transaction, which could end up rolling back our failure status elsewhere
+    # from the database. It is not the best solution, but works in preventing
+    # accidental bugs due to mishandled transaction usage.
+    if connections[DEFAULT_DB_ALIAS].in_atomic_block:
+        raise RuntimeError("Must not be called during a transaction")
 
     parts = sorted(parts, key=lambda x: x["PartNumber"])
 
