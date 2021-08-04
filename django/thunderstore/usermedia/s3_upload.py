@@ -129,7 +129,10 @@ def finalize_upload(
     # transaction, which could end up rolling back our failure status elsewhere
     # from the database. It is not the best solution, but works in preventing
     # accidental bugs due to mishandled transaction usage.
-    if connections[DEFAULT_DB_ALIAS].in_atomic_block:
+    if (
+        connections[DEFAULT_DB_ALIAS].in_atomic_block
+        and not settings.DISABLE_TRANSACTION_CHECKS
+    ):
         raise RuntimeError("Must not be called during a transaction")
 
     parts = sorted(parts, key=lambda x: x["PartNumber"])

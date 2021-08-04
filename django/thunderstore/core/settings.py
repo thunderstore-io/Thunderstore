@@ -91,6 +91,9 @@ if not os.path.exists(checkout_dir("manage.py")):
 DEBUG = env.bool("DEBUG")
 DEBUG_SIMULATED_LAG = env.int("DEBUG_SIMULATED_LAG")
 
+# Only used when creating certain test fixtures
+DISABLE_TRANSACTION_CHECKS = False
+
 SECRET_KEY = env.str("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
