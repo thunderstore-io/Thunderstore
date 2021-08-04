@@ -292,15 +292,6 @@ class TestUserTypes(ChoiceEnum):
     superuser = "superuser"
 
     @classmethod
-    def real_users(cls):
-        """ Returns only actual database-level user objects """
-        return (
-            cls.regular_user,
-            cls.service_account,
-            cls.superuser,
-        )
-
-    @classmethod
     def fake_users(cls):
         return (cls.no_user, cls.unauthenticated)
 
