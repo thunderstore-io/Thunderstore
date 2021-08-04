@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,7 +8,6 @@ from thunderstore.frontend.api.experimental.serializers.markdown import (
     RenderMarkdownResponseSerializer,
 )
 from thunderstore.markdown.templatetags.markdownify import render_markdown
-from thunderstore.repository.validation.readme import MAX_README_SIZE
 
 
 class RenderMarkdownApiView(APIView):
@@ -26,9 +24,6 @@ class RenderMarkdownApiView(APIView):
         validator.is_valid(raise_exception=True)
 
         markdown = validator.validated_data["markdown"]
-        if len(markdown) > MAX_README_SIZE:
-            raise ValidationError("Max markdown size exceeded")
-
         rendered = render_markdown(markdown)
 
         serializer = RenderMarkdownResponseSerializer(
