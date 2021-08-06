@@ -57,13 +57,16 @@ const apiUrl = (...path: string[]) => {
 
 class ApiUrls {
     static currentUser = () => apiUrl("current-user");
+    static currentCommunity = () => apiUrl("current-community");
     static initiateUpload = () => apiUrl("usermedia", "initiate-upload");
     static finishUpload = (usermediaId: string) =>
         apiUrl("usermedia", usermediaId, "finish-upload");
     static abortUpload = (usermediaId: string) =>
         apiUrl("usermedia", usermediaId, "abort-upload");
-    static submitPackage = () => apiUrl("package", "submit");
+    static submitPackage = () => apiUrl("submission", "submit");
     static listCommunities = () => apiUrl("community");
+    static listCategories = (communityIdentifier: string) =>
+        apiUrl("community", communityIdentifier, "category");
     static renderMarkdown = () => apiUrl("frontend", "render-markdown");
 }
 
@@ -144,10 +147,20 @@ interface CurrentUserInfo {
     teams: string[];
 }
 
+export interface PackageCategory {
+    name: string;
+    slug: string;
+}
+
 class ExperimentalApiImpl extends ThunderstoreApi {
     currentUser = async () => {
         const response = await this.get(ApiUrls.currentUser());
         return (await response.json()) as CurrentUserInfo;
+    };
+
+    currentCommunity = async () => {
+        const response = await this.get(ApiUrls.currentCommunity());
+        return (await response.json()) as Community;
     };
 
     initiateUpload = async (props: {
@@ -188,6 +201,17 @@ class ExperimentalApiImpl extends ThunderstoreApi {
     listCommunities = async (props?: { data?: { cursor?: string } }) => {
         const response = await this.get(ApiUrls.listCommunities(), props?.data);
         return (await response.json()) as PaginatedResult<Community>;
+    };
+
+    listCategories = async (props: {
+        communityIdentifier: string;
+        data?: { cursor?: string };
+    }) => {
+        const response = await this.get(
+            ApiUrls.listCategories(props.communityIdentifier),
+            props.data
+        );
+        return (await response.json()) as PaginatedResult<PackageCategory>;
     };
 
     renderMarkdown = async (props: { data: { markdown: string } }) => {

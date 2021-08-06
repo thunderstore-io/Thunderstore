@@ -15,6 +15,7 @@
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
         "react-hook-form": "^7.10.0",
+        "react-select": "^4.3.1",
         "slim-select": "^1.27.0"
     },
     "scripts": {
@@ -28,6 +29,8 @@
         "@types/node": "^14.14.37",
         "@types/react": "^17.0.3",
         "@types/react-dom": "^17.0.3",
+        "@types/react-select": "^4.0.17",
+        "@types/zip.js": "^2.0.29",
         "browserify": "^17.0.0",
         "gulp": "^4.0.2",
         "gulp-clean-css": "^4.2.0",

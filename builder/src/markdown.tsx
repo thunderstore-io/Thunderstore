@@ -25,3 +25,16 @@ export const MarkdownPreview: React.FC = () => {
         </div>
     );
 };
+
+interface ReadmePreviewProps {}
+export const ReadmePreview: React.FC<ReadmePreviewProps> = () => {
+    return (
+        <div className={"card bg-light mb-2"}>
+            <div className={"card-header"}>README Preview</div>
+            <div
+                className={"card-body markdown-body"}
+                dangerouslySetInnerHTML={{ __html: "" }}
+            />
+        </div>
+    );
+};
