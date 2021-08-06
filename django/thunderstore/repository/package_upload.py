@@ -2,6 +2,7 @@ from typing import Optional
 from zipfile import BadZipFile, ZipFile
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -13,9 +14,9 @@ from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.readme import validate_readme
 
-MAX_PACKAGE_SIZE = 1024 * 1024 * 500
+MAX_PACKAGE_SIZE = 1024 * 1024 * settings.REPOSITORY_MAX_PACKAGE_SIZE_MB
 MIN_PACKAGE_SIZE = 1  # Honestly impossible, but need to set some value
-MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * 500
+MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * settings.REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB
 
 
 class PackageUploadForm(forms.ModelForm):
