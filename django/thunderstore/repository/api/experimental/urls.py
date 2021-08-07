@@ -6,6 +6,12 @@ from thunderstore.repository.api.experimental.views import (
     PackageVersionDetailApiView,
     UploadPackageApiView,
 )
+from thunderstore.repository.api.experimental.views.submit import SubmitPackageApiView
+from thunderstore.repository.api.experimental.views.validators import (
+    IconValidatorApiView,
+    ManifestV1ValidatorApiView,
+    ReadmeValidatorApiView,
+)
 from thunderstore.social.api.experimental.views import CurrentUserExperimentalApiView
 
 urls = [
@@ -23,5 +29,25 @@ urls = [
         PackageVersionDetailApiView.as_view(),
         name="package-version-detail",
     ),
-    path("package/upload/", UploadPackageApiView.as_view(), name="package-upload"),
+    path(
+        "submission/submit/", SubmitPackageApiView.as_view(), name="submission.submit"
+    ),
+    path(
+        "submission/upload/", UploadPackageApiView.as_view(), name="submission.upload"
+    ),
+    path(
+        "submission/validate/readme/",
+        ReadmeValidatorApiView.as_view(),
+        name="submission.validate.readme",
+    ),
+    path(
+        "submission/validate/manifest-v1/",
+        ManifestV1ValidatorApiView.as_view(),
+        name="submission.validate.manifest-v1",
+    ),
+    path(
+        "submission/validate/icon/",
+        IconValidatorApiView.as_view(),
+        name="submission.validate.icon",
+    ),
 ]

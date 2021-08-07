@@ -4,6 +4,8 @@ import os
 
 import environ
 
+from thunderstore.core.utils import validate_filepath_prefix
+
 try:
     import debug_toolbar
 
@@ -56,6 +58,14 @@ env = environ.Env(
     AWS_AUTO_CREATE_BUCKET=(bool, False),
     AWS_LOCATION=(str, ""),
     AWS_QUERYSTRING_AUTH=(bool, False),
+    AWS_S3_SECURE_URLS=(bool, True),
+    USERMEDIA_S3_ENDPOINT_URL=(str, ""),
+    USERMEDIA_S3_ACCESS_KEY_ID=(str, ""),
+    USERMEDIA_S3_SECRET_ACCESS_KEY=(str, ""),
+    USERMEDIA_S3_SIGNING_ENDPOINT_URL=(str, ""),
+    USERMEDIA_S3_REGION_NAME=(str, ""),
+    USERMEDIA_S3_STORAGE_BUCKET_NAME=(str, ""),
+    USERMEDIA_S3_LOCATION=(str, ""),
     REDIS_URL=(str, ""),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
@@ -65,6 +75,8 @@ env = environ.Env(
     CELERY_BROKER_URL=(str, ""),
     CELERY_TASK_ALWAYS_EAGER=(bool, False),
     CELERY_EAGER_PROPAGATES_EXCEPTIONS=(bool, False),
+    REPOSITORY_MAX_PACKAGE_SIZE_MB=(int, 500),
+    REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB=(int, 1000),
 )
 
 SENTRY_DSN = env.str("SENTRY_DSN")
@@ -81,6 +93,9 @@ if not os.path.exists(checkout_dir("manage.py")):
 DEBUG = env.bool("DEBUG")
 DEBUG_SIMULATED_LAG = env.int("DEBUG_SIMULATED_LAG")
 
+# Only used when creating certain test fixtures
+DISABLE_TRANSACTION_CHECKS = False
+
 SECRET_KEY = env.str("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
@@ -94,7 +109,7 @@ DATABASE_QUERY_COUNT_HEADER = env.bool("DATABASE_QUERY_COUNT_HEADER")
 
 DATABASES = {"default": env.db()}
 DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = env.bool(
-    "DISABLE_SERVER_SIDE_CURSORS"
+    "DISABLE_SERVER_SIDE_CURSORS",
 )
 
 DB_CERT_DIR = env.str("DB_CERT_DIR")
@@ -169,7 +184,9 @@ INSTALLED_APPS = [
     "thunderstore.webhooks",
     "thunderstore.social",
     "thunderstore.community",
+    "thunderstore.usermedia",
     "thunderstore.account",
+    "thunderstore.markdown",
     "backblaze_b2",
 ]
 
@@ -276,6 +293,9 @@ CELERY_EAGER_PROPAGATES_EXCEPTIONS = env.bool("CELERY_EAGER_PROPAGATES_EXCEPTION
 LOGIN_REDIRECT_URL = "index"
 LOGOUT_REDIRECT_URL = "index"
 
+REPOSITORY_MAX_PACKAGE_SIZE_MB = env.int("REPOSITORY_MAX_PACKAGE_SIZE_MB")
+REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB = env.int("REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB")
+
 # Debug toolbar
 
 DEBUG_TOOLBAR_ENABLED = all(
@@ -283,7 +303,7 @@ DEBUG_TOOLBAR_ENABLED = all(
         DEBUG,
         DEBUG_TOOLBAR_AVAILABLE,
         env.bool("DEBUG_TOOLBAR_ENABLED"),
-    )
+    ),
 )
 
 
@@ -331,7 +351,7 @@ if REDIS_URL:
                 "SOCKET_CONNECT_TIMEOUT": 0.5,
                 "SOCKET_TIMEOUT": 5,
             },
-        }
+        },
     }
 
 CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
@@ -381,10 +401,11 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "social_auth_nonce",
         "social_auth_partial",
         "social_auth_usersocialauth",
+        "usermedia_usermedia",
         "webhooks_webhook",
         "webhooks_webhook_exclude_categories",
         "webhooks_webhook_require_categories",
-    )
+    ),
 )
 
 # if DEBUG and not DEBUG_SIMULATED_LAG:
@@ -427,6 +448,7 @@ REST_FRAMEWORK = {
         "thunderstore.account.authentication.TokenAuthentication",
         "thunderstore.account.authentication.UserSessionTokenAuthentication",
     ],
+    "EXCEPTION_HANDLER": "thunderstore.core.exception_handler.exception_handler",
 }
 
 # Thumbnails
@@ -450,13 +472,13 @@ GS_CREDENTIALS = env.str("GS_CREDENTIALS")
 if GS_CREDENTIALS:
     GS_CREDENTIALS = json.loads(base64.b64decode(GS_CREDENTIALS).decode("utf-8"))
     GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
-        GS_CREDENTIALS
+        GS_CREDENTIALS,
     )
 
 GS_AUTO_CREATE_BUCKET = env.str("GS_AUTO_CREATE_BUCKET")
 GS_AUTO_CREATE_ACL = env.str("GS_AUTO_CREATE_ACL")
 GS_DEFAULT_ACL = env.str("GS_DEFAULT_ACL")
-GS_LOCATION = env.str("GS_LOCATION")
+GS_LOCATION = validate_filepath_prefix(env.str("GS_LOCATION"))
 GS_FILE_OVERWRITE = env.bool("GS_FILE_OVERWRITE")
 
 if GS_CREDENTIALS and GS_PROJECT_ID and GS_BUCKET_NAME:
@@ -468,7 +490,7 @@ if GS_CREDENTIALS and GS_PROJECT_ID and GS_BUCKET_NAME:
 B2_KEY_ID = env.str("B2_KEY_ID")
 B2_KEY = env.str("B2_KEY")
 B2_BUCKET_ID = env.str("B2_BUCKET_ID")
-B2_LOCATION = env.str("B2_LOCATION")
+B2_LOCATION = validate_filepath_prefix(env.str("B2_LOCATION"))
 B2_FILE_OVERWRITE = env.str("B2_FILE_OVERWRITE")
 
 if B2_KEY_ID and B2_KEY and B2_BUCKET_ID:
@@ -486,15 +508,28 @@ AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
 AWS_DEFAULT_ACL = env.str("AWS_DEFAULT_ACL")
 AWS_BUCKET_ACL = env.str("AWS_BUCKET_ACL")
 AWS_AUTO_CREATE_BUCKET = env.bool("AWS_AUTO_CREATE_BUCKET")
-AWS_LOCATION = env.str("AWS_LOCATION")
+AWS_LOCATION = validate_filepath_prefix(env.str("AWS_LOCATION"))
 AWS_QUERYSTRING_AUTH = env.bool("AWS_QUERYSTRING_AUTH")
 AWS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=2592000",  # 30 days
 }
+AWS_S3_SECURE_URLS = env.bool("AWS_S3_SECURE_URLS")
 
-if all(
-    (AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)
-):
+# Usermedia S3 settings
+
+USERMEDIA_S3_ENDPOINT_URL = env.str("USERMEDIA_S3_ENDPOINT_URL")
+USERMEDIA_S3_ACCESS_KEY_ID = env.str("USERMEDIA_S3_ACCESS_KEY_ID")
+USERMEDIA_S3_SECRET_ACCESS_KEY = env.str("USERMEDIA_S3_SECRET_ACCESS_KEY")
+USERMEDIA_S3_SIGNING_ENDPOINT_URL = env.str("USERMEDIA_S3_SIGNING_ENDPOINT_URL")
+USERMEDIA_S3_REGION_NAME = env.str("USERMEDIA_S3_REGION_NAME")
+USERMEDIA_S3_STORAGE_BUCKET_NAME = env.str("USERMEDIA_S3_STORAGE_BUCKET_NAME")
+USERMEDIA_S3_LOCATION = validate_filepath_prefix(env.str("USERMEDIA_S3_LOCATION"))
+USERMEDIA_S3_OBJECT_PARAMETERS = {
+    "CacheControl": "max-age=2592000",  # 30 days
+}
+
+
+if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"

@@ -4,24 +4,46 @@
     "description": "",
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.15.2",
+        "@sentry/react": "^6.11.0",
+        "@sentry/types": "^6.11.0",
         "bootstrap": "^4.3.1",
+        "crypto-js": "^4.0.0",
         "github-markdown-css": "^4.0.0",
+        "jquery": "^3.5.1",
+        "mobx": "^6.3.2",
+        "mobx-react": "^7.2.0",
+        "node-sass": "^4.12.0",
+        "popper.js": "^1.16.1",
+        "react": "^17.0.2",
+        "react-dom": "^17.0.2",
+        "react-hook-form": "^7.10.0",
+        "react-select": "^4.3.1",
+        "slim-select": "^1.27.0"
+    },
+    "scripts": {
+        "watch": "yarn install --frozen-lockfile && gulp watch",
+        "start": "yarn install --frozen-lockfile && gulp",
+        "build": "yarn install --frozen-lockfile && gulp"
+    },
+    "author": "",
+    "devDependencies": {
+        "@types/crypto-js": "^4.0.1",
+        "@types/node": "^14.14.37",
+        "@types/react": "^17.0.3",
+        "@types/react-dom": "^17.0.3",
+        "@types/react-select": "^4.0.17",
+        "@types/zip.js": "^2.0.29",
+        "browserify": "^17.0.0",
         "gulp": "^4.0.2",
         "gulp-clean-css": "^4.2.0",
         "gulp-concat": "^2.6.1",
         "gulp-order": "^1.2.0",
         "gulp-sass": "^4.0.2",
         "gulp-uglify": "^3.0.2",
-        "jquery": "^3.5.1",
-        "node-sass": "^4.12.0",
-        "popper.js": "^1.16.1",
-        "slim-select": "^1.27.0"
-    },
-    "scripts": {
-        "watch": "npm install && gulp watch",
-        "start": "npm install && gulp",
-        "build": "npm install && gulp"
-    },
-    "author": "",
-    "devDependencies": {}
+        "merge-stream": "^2.0.0",
+        "tsify": "^5.0.2",
+        "typescript": "^4.2.4",
+        "vinyl-buffer": "^1.0.1",
+        "vinyl-source-stream": "^2.0.0"
+    }
 }

@@ -1,8 +1,11 @@
 from collections import OrderedDict
 
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from thunderstore.community.api.experimental.serializers import (
     CommunitySerializer,
@@ -64,3 +67,16 @@ class PackageCategoriesExperimentalApiView(CustomListAPIView):
         community_identifier = self.kwargs.get("community")
         community = get_object_or_404(Community, identifier=community_identifier)
         return community.package_categories
+
+
+class CurrentCommunityExperimentalApiView(APIView):
+    serializer_class = CommunitySerializer
+
+    @swagger_auto_schema(
+        responses={200: serializer_class()},
+        operation_id="experimental.community.current",
+        operation_description="Fetch the Community of the queried domain",
+    )
+    def get(self, request, *args, **kwargs):
+        serializer = CommunitySerializer(request.community)
+        return Response(serializer.data, status=status.HTTP_200_OK)

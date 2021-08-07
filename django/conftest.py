@@ -1,8 +1,13 @@
+import io
+import json
 from copy import copy
+from typing import Any
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
+from PIL import Image
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
@@ -16,6 +21,7 @@ from thunderstore.community.models import (
     PackageListingSection,
 )
 from thunderstore.core.factories import UserFactory
+from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.factories import (
     PackageFactory,
@@ -30,6 +36,7 @@ from thunderstore.repository.models import (
     UploaderIdentityMemberRole,
     Webhook,
 )
+from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
 
 
@@ -76,7 +83,7 @@ def package_version(package):
     )
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def manifest_v1_data():
     return {
         "name": "name",
@@ -214,6 +221,56 @@ def api_client(community_site) -> APIClient:
     return APIClient(HTTP_HOST=community_site.site.domain)
 
 
+@pytest.fixture(scope="session")
+def manifest_v1_package_bytes() -> bytes:
+    icon_raw = io.BytesIO()
+    icon = Image.new("RGB", (256, 256), "#FF0000")
+    icon.save(icon_raw, format="PNG")
+
+    readme = "# Test readme".encode("utf-8")
+    manifest = json.dumps(
+        {
+            "name": "name",
+            "version_number": "1.0.0",
+            "website_url": "",
+            "description": "",
+            "dependencies": [],
+        }
+    ).encode("utf-8")
+
+    files = [
+        ("README.md", readme),
+        ("icon.png", icon_raw.getvalue()),
+        ("manifest.json", manifest),
+    ]
+
+    zip_raw = io.BytesIO()
+    with ZipFile(zip_raw, "a", ZIP_DEFLATED, False) as zip_file:
+        for name, data in files:
+            zip_file.writestr(name, data)
+
+    return zip_raw.getvalue()
+
+
+@pytest.fixture(scope="function")
+def manifest_v1_package_upload_id(
+    manifest_v1_package_bytes: bytes,
+    api_client: APIClient,
+    user: UserType,
+    settings: Any,
+) -> str:
+    checks_disabled = settings.DISABLE_TRANSACTION_CHECKS
+    settings.DISABLE_TRANSACTION_CHECKS = True
+    upload_id = create_and_upload_usermedia(
+        api_client=api_client,
+        user=user,
+        settings=settings,
+        upload=manifest_v1_package_bytes,
+    )
+    settings.DISABLE_TRANSACTION_CHECKS = checks_disabled
+    return upload_id
+
+
 def create_test_service_account_user():
     identity_owner = UserFactory()
     identity = UploaderIdentityFactory()
@@ -233,15 +290,6 @@ class TestUserTypes(ChoiceEnum):
     deactivated_user = "deactivated_user"
     service_account = "service_account"
     superuser = "superuser"
-
-    @classmethod
-    def real_users(cls):
-        """ Returns only actual database-level user objects """
-        return (
-            cls.regular_user,
-            cls.service_account,
-            cls.superuser,
-        )
 
     @classmethod
     def fake_users(cls):

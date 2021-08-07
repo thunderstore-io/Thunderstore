@@ -33,6 +33,12 @@ To connect a site to a community, you will need to:
    connecting to your development environment
 4. Create a new Community Site object, linking the two together
 
+## Minio
+
+In local development, [minio](https://github.com/minio/minio) is used for S3
+compatible file storage. You can access it via http://localhost:9000/ with
+`thunderstore:thunderstore` credentials
+
 ## Mod package format
 
 Mod packages are `.zip` files, with at least the following contents:

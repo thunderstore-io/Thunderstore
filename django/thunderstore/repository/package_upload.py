@@ -1,40 +1,22 @@
-import io
-import json
 from typing import Optional
 from zipfile import BadZipFile, ZipFile
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import transaction
-from PIL import Image
 
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
-from thunderstore.repository.package_manifest import ManifestV1Serializer
+from thunderstore.repository.validation.icon import validate_icon
+from thunderstore.repository.validation.manifest import validate_manifest
+from thunderstore.repository.validation.readme import validate_readme
 
-MAX_PACKAGE_SIZE = 1024 * 1024 * 500
-MAX_ICON_SIZE = 1024 * 1024 * 6
-MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * 500
-
-
-def unpack_serializer_errors(field, errors, error_dict=None):
-    if error_dict is None:
-        error_dict = {}
-
-    if isinstance(errors, list) and len(errors) == 1:
-        errors = errors[0]
-
-    if isinstance(errors, dict):
-        for key, value in errors.items():
-            error_dict = unpack_serializer_errors(f"{field} {key}", value, error_dict)
-    elif isinstance(errors, list):
-        for index, entry in enumerate(errors):
-            error_dict = unpack_serializer_errors(f"{field} {index}", entry, error_dict)
-    else:
-        error_dict[field] = str(errors)
-    return error_dict
+MAX_PACKAGE_SIZE = 1024 * 1024 * settings.REPOSITORY_MAX_PACKAGE_SIZE_MB
+MIN_PACKAGE_SIZE = 1  # Honestly impossible, but need to set some value
+MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * settings.REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB
 
 
 class PackageUploadForm(forms.ModelForm):
@@ -85,69 +67,21 @@ class PackageUploadForm(forms.ModelForm):
         self.readme: Optional[str] = None
         self.file_size: Optional[int] = None
 
-    def validate_manifest(self, manifest_str):
-        try:
-            manifest_data = json.loads(manifest_str)
-        except UnicodeDecodeError as exc:
-            raise ValidationError(
-                [
-                    f"Unable to parse manifest.json: {exc}\n",
-                    "Make sure the manifest.json is UTF-8 compatible",
-                ]
-            )
-        except json.decoder.JSONDecodeError as exc:
-            raise ValidationError(f"Unable to parse manifest.json: {exc}")
-
-        serializer = ManifestV1Serializer(
+    def validate_manifest(self, manifest: bytes):
+        self.manifest = validate_manifest(
             user=self.user,
             uploader=self.cleaned_data.get("team"),
-            data=manifest_data,
+            manifest_data=manifest,
         )
-        if serializer.is_valid():
-            self.manifest = serializer.validated_data
-        else:
-            errors = unpack_serializer_errors("manifest.json", serializer.errors)
-            errors = ValidationError(
-                [f"{key}: {value}" for key, value in errors.items()]
-            )
-            self.add_error(None, errors)
 
-    def validate_icon(self, icon):
+    def validate_icon(self, icon: bytes):
+        self.icon = validate_icon(icon)
+
+    def validate_readme(self, readme: bytes):
         try:
-            self.icon = ContentFile(icon)
-        except Exception:
-            raise ValidationError("Unknown error while processing icon.png")
-
-        if self.icon.size > MAX_ICON_SIZE:
-            raise ValidationError(
-                f"icon.png filesize is too big, current maximum is {MAX_ICON_SIZE} bytes"
-            )
-
-        try:
-            image = Image.open(io.BytesIO(icon))
-        except Exception:
-            raise ValidationError("Unsupported or corrupt icon, must be png")
-
-        if image.format != "PNG":
-            raise ValidationError("Icon must be in png format")
-
-        if not (image.size[0] == 256 and image.size[1] == 256):
-            raise ValidationError("Invalid icon dimensions, must be 256x256")
-
-    def validate_readme(self, readme):
-        try:
-            readme = readme.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise ValidationError(
-                [
-                    f"Unable to parse README.md: {exc}\n",
-                    "Make sure the README.md is UTF-8 compatible",
-                ]
-            )
-        max_length = 32768
-        if len(readme) > max_length:
-            raise ValidationError(f"README.md is too long, max: {max_length}")
-        self.readme = readme
+            self.readme = validate_readme(readme)
+        except ValidationError as e:
+            self.add_error(None, e)
 
     def clean_file(self):
         file = self.cleaned_data.get("file", None)

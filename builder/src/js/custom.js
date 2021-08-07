@@ -18,7 +18,7 @@ function getCookie(name) {
 
 // This is pretty horrible state management to be honest, but whatever
 function ratePackage() {
-    $el = $(this);
+    var $el = $(this);
 
     // Already syncing
     if ($el.hasClass("fa-sync")) {
@@ -30,12 +30,12 @@ function ratePackage() {
         targetState = "unrated";
     }
 
-    var package = $el.data("target");
-    var url = "/api/v1/package/" + package + "/rate/";
+    var pkg = $el.data("target");
+    var url = "/api/v1/package/" + pkg + "/rate/";
     var payload = JSON.stringify({ target_state: targetState });
 
     $.post(url, payload, function (response) {
-        $score = $("#package-rating-" + package);
+        var $score = $("#package-rating-" + pkg);
         $score.text(response.score);
         if (response.state == "rated") {
             $el.addClass("rated");

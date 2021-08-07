@@ -1,0 +1,19 @@
+// import { observable } from "mobx";
+// import { FileUpload } from "./FileUpload";
+
+import { action, makeObservable, observable } from "mobx";
+
+
+export class PackageSubmission {
+    // @observable fileUpload: FileUpload | null;
+    @observable selectedFile: File | null = null;
+
+    constructor() {
+        makeObservable(this);
+    }
+
+    @action
+    public setFile(file: File | null) {
+        this.selectedFile = file;
+    }
+}

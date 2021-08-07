@@ -33,7 +33,7 @@ class ManifestV1Serializer(serializers.Serializer):
     )
     dependencies = serializers.ListField(
         child=DependencyField(),
-        max_length=100,
+        max_length=250,
         allow_empty=True,
     )
 
@@ -49,7 +49,9 @@ class ManifestV1Serializer(serializers.Serializer):
             self.uploader.name, result["name"], result["version_number"]
         )
         if reference.exists:
-            raise ValidationError("Package of the same name and version already exists")
+            raise ValidationError(
+                "Package of the same namespace, name and version already exists"
+            )
         if has_duplicate_packages(result["dependencies"]):
             raise ValidationError(
                 "Cannot depend on multiple versions of the same package"

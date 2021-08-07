@@ -38,3 +38,21 @@ def has_duplicate_packages(packages: List[PackageReference]) -> bool:
             if ref_a.without_version == ref_b.without_version:
                 return True
     return False
+
+
+def unpack_serializer_errors(field, errors, error_dict=None):
+    if error_dict is None:
+        error_dict = {}
+
+    if isinstance(errors, list) and len(errors) == 1:
+        errors = errors[0]
+
+    if isinstance(errors, dict):
+        for key, value in errors.items():
+            error_dict = unpack_serializer_errors(f"{field} {key}", value, error_dict)
+    elif isinstance(errors, list):
+        for index, entry in enumerate(errors):
+            error_dict = unpack_serializer_errors(f"{field} {index}", entry, error_dict)
+    else:
+        error_dict[field] = str(errors)
+    return error_dict

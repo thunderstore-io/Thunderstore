@@ -1,0 +1,65 @@
+import { makeObservable, observable } from "mobx";
+
+// TODO: Replace with node module https://www.npmjs.com/package/@zip.js/zip.js
+//       unfortunately it's extremely difficult to fit in to the build
+//       environment as of writing this. See
+//       https://github.com/gildas-lormeau/zip.js/discussions/258 for more
+/// <reference path="../vendor/zip-fs-full.d.ts" />
+const zip = require("../vendor/zip-fs-full");
+zip.configure({ useWebWorkers: false });
+
+
+// class ReadmeValidator {
+//
+//     constructor(readme: string) {
+//     }
+// }
+//
+//
+// class ManifestValidator {
+//
+//     constructor(manifest: string) {
+//     }
+// }
+//
+//
+// class IconValidator {
+//
+//     constructor(icon: Blob) {
+//     }
+// }
+
+
+export class PackageValidator {
+    @observable readme: string | null = null;
+    @observable manifest: string | null = null;
+    @observable icon: Blob | null = null;
+
+    constructor(file: File) {
+        makeObservable(this);
+        this.loadPackage(file);
+    }
+
+    private loadPackage(file: File) {
+        const reader = new zip.ZipReader(new zip.BlobReader(file));
+        reader.getEntries().then((entries: any) => {
+            for (const entry of entries) {
+                if (!entry.getData) continue;
+                if (entry.filename == "README.md") {
+                    entry.getData(new zip.TextWriter()).then((readme: any) => {
+                        this.readme = readme;
+                    })
+                } else if (entry.filename == "manifest.json") {
+                    entry.getData(new zip.TextWriter()).then((manifest: any) => {
+                        this.manifest = manifest;
+                    })
+                } else if (entry.filename == "icon.png") {
+                    entry.getData(new zip.BlobWriter()).then((icon: any) => {
+                        this.icon = icon;
+                    })
+                }
+            }
+        }).catch(() => {
+        });
+    }
+}

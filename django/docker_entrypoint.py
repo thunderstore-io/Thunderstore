@@ -21,7 +21,7 @@ class EnvironmentVariable:
 
     @value.setter
     def value(self, val):
-        if val is None:
+        if val is None and self.name in os.environ:
             del os.environ[self.name]
         else:
             os.environ[self.name] = str(val)

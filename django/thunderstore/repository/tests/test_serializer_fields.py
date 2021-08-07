@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as ValidationError
@@ -10,6 +12,7 @@ from thunderstore.repository.factories import (
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.serializer_fields import (
+    Base64Field,
     DependencyField,
     ModelChoiceField,
     PackageNameField,
@@ -53,7 +56,7 @@ def test_fields_dependency_valid(package_version):
 def test_fields_list_dependency_field():
     field = serializers.ListField(
         child=DependencyField(),
-        max_length=100,
+        max_length=250,
         allow_empty=True,
     )
     identity = UploaderIdentityFactory.create(name="tester")
@@ -178,3 +181,55 @@ def test_fields_model_choice_field_to_representation(package_version: PackageVer
     )
     representation = field.to_representation(package_version)
     assert representation == package_version.name
+
+
+def test_fields_base64_field_to_internal() -> None:
+    field = Base64Field()
+    testvalue = b"Testing"
+    internal = field.to_internal_value(base64.b64encode(testvalue).decode("utf-8"))
+    assert internal == testvalue
+
+
+def test_fields_base64_field_to_representation() -> None:
+    field = Base64Field()
+    testvalue = b"Testing"
+    representation = field.to_representation(testvalue)
+    assert representation == base64.b64encode(testvalue).decode("utf-8")
+
+
+@pytest.mark.parametrize("required", (True, False))
+def test_fields_base64_field_required(required: bool) -> None:
+    field = Base64Field(required=required)
+    if required:
+        with pytest.raises(
+            serializers.ValidationError, match="This field is required."
+        ):
+            field.to_internal_value(None)
+    else:
+        assert field.to_internal_value(None) is None
+
+
+def test_fields_base64_field_invalid_base64() -> None:
+    field = Base64Field()
+    with pytest.raises(serializers.ValidationError, match="Invalid base64 string."):
+        field.to_internal_value("¤!#)=(")
+
+
+def test_fields_base64_field_too_big_value() -> None:
+    field = Base64Field(max_size=10)
+    testvalue = base64.b64encode(bytearray(11)).decode("utf-8")
+    with pytest.raises(
+        serializers.ValidationError,
+        match="Ensure this field has encoded at most 10 bytes.",
+    ):
+        field.to_internal_value(testvalue)
+
+
+def test_fields_base64_field_too_small_value() -> None:
+    field = Base64Field(min_size=10)
+    testvalue = base64.b64encode(bytearray(9)).decode("utf-8")
+    with pytest.raises(
+        serializers.ValidationError,
+        match="Ensure this field has encoded at least 10 bytes.",
+    ):
+        field.to_internal_value(testvalue)

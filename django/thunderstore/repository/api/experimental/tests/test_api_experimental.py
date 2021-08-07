@@ -6,6 +6,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from PIL import Image
 
 from thunderstore.repository.models import (
@@ -67,7 +68,7 @@ def test_api_experimental_package_version_detail(api_client, package_version):
     assert result["full_name"] == package_version.full_version_name
 
 
-def _create_test_zip(manifest_data):
+def _create_test_zip(manifest_data) -> bytes:
     icon_raw = io.BytesIO()
     icon = Image.new("RGB", (256, 256), "#FF0000")
     icon.save(icon_raw, format="PNG")
@@ -93,13 +94,11 @@ def _create_test_zip(manifest_data):
 def test_api_experimental_upload_package_success(
     api_client,
     user,
-    manifest_v1_data,
+    manifest_v1_package_bytes,
     package_category,
     uploader_identity,
     community,
 ):
-    zip_data = _create_test_zip(manifest_v1_data)
-
     UploaderIdentityMember.objects.create(
         user=user,
         identity=uploader_identity,
@@ -108,7 +107,7 @@ def test_api_experimental_upload_package_success(
 
     api_client.force_authenticate(user=user)
     response = api_client.post(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         {
             "metadata": json.dumps(
                 {
@@ -118,7 +117,7 @@ def test_api_experimental_upload_package_success(
                     "has_nsfw_content": True,
                 },
             ),
-            "file": SimpleUploadedFile("mod.zip", zip_data),
+            "file": SimpleUploadedFile("mod.zip", manifest_v1_package_bytes),
         },
         HTTP_ACCEPT="application/json",
     )
@@ -135,16 +134,14 @@ def test_api_experimental_upload_package_success(
 def test_api_experimental_upload_package_fail_no_permission(
     api_client,
     user,
-    manifest_v1_data,
+    manifest_v1_package_bytes,
     package_category,
     uploader_identity,
     community,
 ):
-    zip_data = _create_test_zip(manifest_v1_data)
-
     api_client.force_authenticate(user=user)
     response = api_client.post(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         {
             "metadata": json.dumps(
                 {
@@ -154,7 +151,7 @@ def test_api_experimental_upload_package_fail_no_permission(
                     "has_nsfw_content": True,
                 },
             ),
-            "file": SimpleUploadedFile("mod.zip", zip_data),
+            "file": SimpleUploadedFile("mod.zip", manifest_v1_package_bytes),
         },
         HTTP_ACCEPT="application/json",
     )
@@ -173,13 +170,11 @@ def test_api_experimental_upload_package_fail_no_permission(
 def test_api_experimental_upload_package_fail_invalid_category(
     api_client,
     user,
-    manifest_v1_data,
+    manifest_v1_package_bytes,
     package_category,
     uploader_identity,
     community,
 ):
-    zip_data = _create_test_zip(manifest_v1_data)
-
     UploaderIdentityMember.objects.create(
         user=user,
         identity=uploader_identity,
@@ -189,7 +184,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
     api_client.force_authenticate(user=user)
     category_slug = f"invalid-{package_category.slug}"
     response = api_client.post(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         {
             "metadata": json.dumps(
                 {
@@ -199,7 +194,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
                     "has_nsfw_content": True,
                 },
             ),
-            "file": SimpleUploadedFile("mod.zip", zip_data),
+            "file": SimpleUploadedFile("mod.zip", manifest_v1_package_bytes),
         },
         HTTP_ACCEPT="application/json",
     )
@@ -219,7 +214,7 @@ def test_api_experimental_package_upload_info(
 ):
     api_client.force_authenticate(user=user)
     response = api_client.get(
-        "/api/experimental/package/upload/",
+        reverse("api:experimental:submission.upload"),
         HTTP_ACCEPT="application/json",
     )
     assert response.status_code == 200

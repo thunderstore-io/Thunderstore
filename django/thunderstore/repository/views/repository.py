@@ -6,7 +6,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.functional import cached_property
-from django.views.generic import View
+from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
@@ -72,13 +72,14 @@ class PackageListSearchView(ListView):
     def sections(self) -> List[PackageListingSection]:
         return list(
             self.request.community.package_listing_sections.order_by(
-                "-priority", "datetime_created"
-            )
+                "-priority",
+                "datetime_created",
+            ),
         )
 
     @cached_property
     def section_choices(self) -> List[Tuple[str, str]]:
-        return list((x.slug, x.name) for x in self.sections if x.is_listed)
+        return [(x.slug, x.name) for x in self.sections if x.is_listed]
 
     @cached_property
     def active_section(self) -> Optional[PackageListingSection]:
@@ -116,7 +117,7 @@ class PackageListSearchView(ListView):
         categories = set(self.get_included_categories())
         if self.active_section:
             categories.update(
-                self.active_section.require_categories.values_list("pk", flat=True)
+                self.active_section.require_categories.values_list("pk", flat=True),
             )
         return categories
 
@@ -128,7 +129,7 @@ class PackageListSearchView(ListView):
         categories = set(self.get_excluded_categories())
         if self.active_section:
             categories.update(
-                self.active_section.exclude_categories.values_list("pk", flat=True)
+                self.active_section.exclude_categories.values_list("pk", flat=True),
             )
         return categories
 
@@ -164,7 +165,7 @@ class PackageListSearchView(ListView):
             )
         if active_ordering == "most-downloaded":
             return queryset.annotate(
-                total_downloads=Sum("package__versions__downloads")
+                total_downloads=Sum("package__versions__downloads"),
             ).order_by(
                 "-package__is_pinned",
                 "package__is_deprecated",
@@ -172,7 +173,7 @@ class PackageListSearchView(ListView):
             )
         if active_ordering == "top-rated":
             return queryset.annotate(
-                total_rating=Count("package__package_ratings")
+                total_rating=Count("package__package_ratings"),
             ).order_by(
                 "-package__is_pinned",
                 "package__is_deprecated",
@@ -238,11 +239,11 @@ class PackageListSearchView(ListView):
 
         if self.request.community.require_package_listing_approval:
             queryset = queryset.exclude(
-                ~Q(review_status=PackageListingReviewStatus.approved)
+                ~Q(review_status=PackageListingReviewStatus.approved),
             )
         else:
             queryset = queryset.exclude(
-                review_status=PackageListingReviewStatus.rejected
+                review_status=PackageListingReviewStatus.rejected,
             )
 
         search_query = self.get_search_query()
@@ -255,11 +256,16 @@ class PackageListSearchView(ListView):
             {
                 "url": reverse_lazy("packages.list"),
                 "name": "Packages",
-            }
+            },
         ]
 
     def get_paginator(
-        self, queryset, per_page, orphans=0, allow_empty_first_page=True, **kwargs
+        self,
+        queryset,
+        per_page,
+        orphans=0,
+        allow_empty_first_page=True,
+        **kwargs,
     ):
         return self.paginator_class(
             queryset,
@@ -293,7 +299,7 @@ class PackageListSearchView(ListView):
 
 class PackageListView(PackageListSearchView):
     def get_page_title(self):
-        return f"All mods"
+        return "All mods"
 
     def get_cache_vary(self):
         return "all"
@@ -308,7 +314,7 @@ class PackageListByOwnerView(PackageListSearchView):
             {
                 "url": reverse_lazy("packages.list_by_owner", kwargs=self.kwargs),
                 "name": self.owner.name,
-            }
+            },
         ]
 
     def cache_owner(self):
@@ -320,7 +326,7 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community))
+            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community)),
         )
 
     def get_page_title(self):
@@ -356,7 +362,7 @@ class PackageListByDependencyView(PackageListSearchView):
 
     def get_base_queryset(self):
         return PackageListing.objects.exclude(
-            ~Q(package__in=get_package_dependants(self.package_listing.package.pk))
+            ~Q(package__in=get_package_dependants(self.package_listing.package.pk)),
         )
 
     def get_page_title(self):
@@ -368,7 +374,9 @@ class PackageListByDependencyView(PackageListSearchView):
 
 @cache_function_result(cache_until=CacheBustCondition.any_package_updated)
 def get_package_listing_or_404(
-    namespace: str, name: str, community_pk: int
+    namespace: str,
+    name: str,
+    community_pk: int,
 ) -> PackageListing:
     owner = get_object_or_404(UploaderIdentity, name=namespace)
     package_listing = (
@@ -436,16 +444,31 @@ class PackageVersionDetailView(DetailView):
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
-        version = get_object_or_404(
-            PackageVersion, package=listing.package, version_number=version
+        return get_object_or_404(
+            PackageVersion,
+            package=listing.package,
+            version_number=version,
         )
-        return version
 
 
-class PackageCreateView(CreateView):
+class PackageCreateView(TemplateView):
+    template_name = "repository/package_create.html"
+
+    def dispatch(self, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            return redirect("index")
+        return super().dispatch(*args, **kwargs)
+
+
+class PackageDocsView(TemplateView):
+    template_name = "repository/package_docs.html"
+
+
+# TODO: Remove once new UI is stable enough
+class PackageCreateOldView(CreateView):
     model = PackageVersion
     form_class = PackageUploadForm
-    template_name = "repository/package_create.html"
+    template_name = "repository/package_create_old.html"
 
     def dispatch(self, *args, **kwargs):
         if not self.request.user.is_authenticated:
@@ -455,7 +478,7 @@ class PackageCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["selectable_communities"] = Community.objects.filter(
-            Q(is_listed=True) | Q(pk=self.request.community.pk)
+            Q(is_listed=True) | Q(pk=self.request.community.pk),
         )
         return context
 
@@ -488,7 +511,9 @@ class PackageDownloadView(View):
             community=self.request.community,
         )
         version = get_object_or_404(
-            PackageVersion, package=listing.package, version_number=version
+            PackageVersion,
+            package=listing.package,
+            version_number=version,
         )
         version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))

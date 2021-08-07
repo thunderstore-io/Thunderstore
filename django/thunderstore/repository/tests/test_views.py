@@ -1,10 +1,13 @@
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 from thunderstore.core.factories import UserFactory
 
 from ...community.models import PackageListing, PackageListingReviewStatus
 from ..factories import PackageFactory, PackageVersionFactory, UploaderIdentityFactory
+from ..models import UploaderIdentity
+from ..package_upload import PackageUploadForm
 
 
 @pytest.mark.django_db
@@ -101,3 +104,56 @@ def test_package_create_view_logged_in(client, community_site):
     )
     assert response.status_code == 200
     assert b"Upload package" in response.content
+
+
+@pytest.mark.django_db
+def test_package_create_view_old_not_logged_in(client, community_site):
+    response = client.get(
+        reverse("packages.create.old"),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_package_create_view_old_logged_in(client, community_site):
+    user = UserFactory.create()
+    client.force_login(user)
+    response = client.get(
+        reverse("packages.create.old"),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    assert b"Upload package" in response.content
+
+
+@pytest.mark.django_db
+def test_package_download_view(user, client, community_site, manifest_v1_package_bytes):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    file_data = {"file": SimpleUploadedFile("mod.zip", manifest_v1_package_bytes)}
+    form = PackageUploadForm(
+        user=user,
+        files=file_data,
+        community=community_site.community,
+        data={
+            "team": identity.name,
+            "communities": [community_site.community.identifier],
+        },
+    )
+    assert form.is_valid()
+    version = form.save()
+    assert version.package.owner == identity
+
+    client.force_login(user)
+    response = client.get(
+        reverse(
+            "packages.download",
+            kwargs={
+                "owner": version.package.owner.name,
+                "name": version.package.name,
+                "version": version.version_number,
+            },
+        ),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302

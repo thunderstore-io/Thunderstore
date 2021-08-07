@@ -50,7 +50,7 @@ def test_manifest_v1_serializer_version_already_exists(
     )
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
-    assert "Package of the same name and version already exists" in str(
+    assert "Package of the same namespace, name and version already exists" in str(
         serializer.errors["non_field_errors"][0]
     )
 
@@ -148,7 +148,7 @@ def test_manifest_v1_serializer_unresolved_dependency(
 @pytest.mark.django_db
 def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
     identity = UploaderIdentity.get_or_create_for_user(user)
-    reference_strings = [f"user-package-{i}.{i}.{i}" for i in range(101)]
+    reference_strings = [f"user-package-{i}.{i}.{i}" for i in range(251)]
     manifest_v1_data["dependencies"] = reference_strings
     serializer = ManifestV1Serializer(
         user=user,
@@ -164,7 +164,7 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
     ]
     assert serializer.is_valid() is False
     assert len(serializer.errors["dependencies"]) == 1
-    assert "Ensure this field has no more than 100 elements." in str(
+    assert "Ensure this field has no more than 250 elements." in str(
         serializer.errors["dependencies"][0]
     )
 

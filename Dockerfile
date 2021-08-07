@@ -1,10 +1,10 @@
 FROM node:12-alpine as builder
 
 WORKDIR /app
-COPY ./builder/package.json ./builder/package-lock.json /app/
-RUN npm ci
+COPY ./builder/package.json ./builder/yarn.lock /app/
+RUN yarn install --frozen-lockfile
 COPY ./builder /app
-RUN npm run build
+RUN yarn run build
 
 FROM python:3.8-slim-buster@sha256:2516c4bc037b8144b6104e73e6bdd0c861725d9ed7bd05095dded22842991508
 
