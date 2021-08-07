@@ -145,46 +145,7 @@
 {% if object_list %}
     <div class="d-flex flex-row flex-wrap mb-3 package-list">
     {% for object in object_list %}
-        <div class="col-6 col-md-4 col-lg-3 mb-2 p-1 d-flex flex-column
-                    {% if object.package.is_deprecated %}text-dark deleted{% endif %}">
-            <div class="p-0 bg-light">
-                {% if object.package.is_pinned %}
-                <div class="pin w-100">
-                    <div class="mr-2 p-1 px-2 bg-primary w-auto w-fit-content">
-                        <span class="fa fa-thumbtack mr-2"></span> Pinned
-                    </div>
-                </div>
-                {% endif %}
-                <a href="{{ object.package.get_absolute_url }}">
-                    <img class="w-100" src="{% thumbnail object.package.icon 256x256 crop %}" alt="{{ object.package }} icon">
-                </a>
-            </div>
-            <div class="bg-light p-2">
-                <div class="row mb-1">
-                    <div class="col-6" title="Downloads">
-                        <i class="fas fa-download text-dark mr-1"></i>&nbsp;{{ object.total_downloads }}
-                    </div>
-                    <div class="col-6 text-right" title="Likes">
-                        <span id="package-rating-{{ object.package.uuid4 }}">{{ object.rating_score }}</span>&nbsp;<i class="fas fa-thumbs-up text-dark ml-1" data-action="package.rate" data-target="{{ object.package.uuid4 }}"></i>
-                    </div>
-                </div>
-                <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ object.package.display_name }}">{{ object.package.display_name }}</h5>
-                <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></div>
-            </div>
-            <div class="bg-light px-2 flex-grow-1">
-                {{ object.package.description }}
-            </div>
-            <div class="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
-                {% for category in object.categories.all %}
-                    <a href="{% url "packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary category-badge">{{ category.name }}</span></a>
-                {% endfor %}
-            </div>
-            <div class="bg-light p-2">
-                <div class="text-dark">
-                    <small>Last updated: {% humanize_timestamp object.package.date_updated %}</small>
-                </div>
-            </div>
-        </div>
+        {% include "community/package.html" with object=object.package %}
     {% endfor %}
     </div>
     {% if is_paginated %}

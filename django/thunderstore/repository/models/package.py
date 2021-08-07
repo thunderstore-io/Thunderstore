@@ -202,7 +202,7 @@ class Package(models.Model):
 
     @cached_property
     def owner_url(self):
-        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
+        return reverse("uploader_profile", kwargs={"user": self.owner.name})
 
     @cached_property
     def dependants_url(self):
