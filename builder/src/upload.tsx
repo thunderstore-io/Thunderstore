@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/browser";
 import React, { useEffect, useState } from "react";
 import {
     Community,
@@ -249,7 +250,6 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
             } catch (e) {
                 const errors = new FormErrors();
                 if (e instanceof ThunderstoreApiError) {
-                    console.log(e.errorObject);
                     const error = e.errorObject as SubmissionError | null;
                     if (error) {
                         if (error.upload_uuid) {
@@ -281,7 +281,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                         }
                     }
                 } else {
-                    // TODO: Log to sentry
+                    Sentry.captureException(e);
                     errors.generalError =
                         "Unknown error occurred while submitting package";
                     console.error(e);
@@ -290,8 +290,10 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                 setSubmissionStatus(SubmissionStatus.ERROR);
             }
         } catch (e) {
-            // TODO: Log to sentry
+            Sentry.captureException(e);
+            const errors = new FormErrors();
             errors.generalError = "Unknown error occurred while uploading file";
+            setFormErrors(errors);
             console.error(e);
         }
     };

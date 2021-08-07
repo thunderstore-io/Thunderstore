@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import {
     action,
     computed,
@@ -178,8 +179,8 @@ export class FileUpload {
                 try {
                     request.abort();
                 } catch (e) {
-                    // TODO: Capture to Sentry
-                    console.log(e, e.stack);
+                    Sentry.captureException(e);
+                    console.error(e, e.stack);
                 }
             }
             this._ongoingRequests = null;
@@ -190,8 +191,8 @@ export class FileUpload {
                     usermediaId: this._uploadInfo.user_media.uuid,
                 });
             } catch (e) {
-                // TODO: Capture to Sentry
-                console.log(e, e.stack);
+                Sentry.captureException(e);
+                console.error(e, e.stack);
             }
         }
     }
@@ -216,7 +217,7 @@ export class FileUpload {
             );
         } catch (e) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
-            // TODO: Capture to Sentry
+            Sentry.captureException(e);
             console.error(e, e.stack);
             return null;
         }
@@ -232,7 +233,7 @@ export class FileUpload {
             completedParts = await Promise.all(uploadPromises);
         } catch (e) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
-            // TODO: Capture to Sentry
+            Sentry.captureException(e);
             console.error(e, e.stack);
             return null;
         }
@@ -241,7 +242,7 @@ export class FileUpload {
             await this.finishUpload(uploadInfo, completedParts);
         } catch (e) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
-            // TODO: Capture to Sentry
+            Sentry.captureException(e);
             console.error(e, e.stack);
             return null;
         }
