@@ -101,6 +101,8 @@ running that command.
     `beta.thunderstore.io`
 -   `PROTOCOL`: The protocol which to use to build URLs to the server. Either
     `https://` or `http://`.
+-   `REPOSITORY_MAX_PACKAGE_SIZE_MB`: The maximum single package size
+-   `REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB`: The maximum total file size used by packages
 
 ### Gunicorn
 
@@ -188,9 +190,29 @@ At the very least set the following variables:
 -   `AWS_S3_ENDPOINT_URL`: Storage service endpoint
 -   `AWS_STORAGE_BUCKET_NAME`: Bucket name
 -   `AWS_LOCATION`: Location inside the bucket where to upload files
+-   `AWS_S3_SECURE_URLS`: Set to false to disable HTTPS, enabled by default
 
 _NOTE: Enabling AWS S3 will currently override all other cloud storages and
 will be used for all media storage_
+
+### Usermedia storage
+
+The usermedia APIs work by leveraging S3-compatible storage presigned URLs to
+handle the actual upload. As such, the usermedia backend must also be a S3
+compatible storage backend. Likewise, the usermedia storage backend can be
+configured with environment variables:
+
+-   `USERMEDIA_S3_ENDPOINT_URL`: Internally accessible storage service endpoint
+-   `USERMEDIA_S3_ACCESS_KEY_ID`: Auth key ID
+-   `USERMEDIA_S3_SECRET_ACCESS_KEY`: Auth key secret
+-   `USERMEDIA_S3_SIGNING_ENDPOINT_URL`: Publicly accessible storage service endpoint
+-   `USERMEDIA_S3_REGION_NAME`: Storage bucket region
+-   `USERMEDIA_S3_STORAGE_BUCKET_NAME`: Storage bucket name
+-   `USERMEDIA_S3_LOCATION`: Location inside the bucket where to upload files
+
+The largest difference compared to the AWS S3 configuration is the addition of
+a `USERMEDIA_S3_SIGNING_ENDPOINT_URL`. If provided, this will be used when
+generating pre-signed URLs. Can be used to bypass the CDN domain for example.
 
 ### Database
 
