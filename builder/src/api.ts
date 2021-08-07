@@ -253,20 +253,21 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         return (await response.json()) as PackageSubmissionResult;
     };
 
-    listCommunities = async (props?: { data?: { cursor?: string } }) => {
-        const response = await this.get(ApiUrls.listCommunities(), props?.data);
+    listCommunities = async () => {
+        const response = await this.get(ApiUrls.listCommunities());
         return (await response.json()) as PaginatedResult<Community>;
     };
 
-    listCategories = async (props: {
-        communityIdentifier: string;
-        data?: { cursor?: string };
-    }) => {
+    listCategories = async (props: { communityIdentifier: string }) => {
         const response = await this.get(
-            ApiUrls.listCategories(props.communityIdentifier),
-            props.data
+            ApiUrls.listCategories(props.communityIdentifier)
         );
         return (await response.json()) as PaginatedResult<PackageCategory>;
+    };
+
+    getNextPage = async <T>(cursor: string) => {
+        const response = await this.get(cursor);
+        return (await response.json()) as PaginatedResult<T>;
     };
 
     renderMarkdown = async (props: { data: { markdown: string } }) => {

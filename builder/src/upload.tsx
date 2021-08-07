@@ -307,16 +307,51 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
             ? 100
             : 0;
 
+    const enumerateCommunities = (current: Community[], cursor?: string) => {
+        const promise = cursor
+            ? ExperimentalApi.getNextPage<Community>(cursor)
+            : ExperimentalApi.listCommunities();
+
+        promise.then((result) => {
+            const next = current.concat(result.results);
+            setCommunities(next);
+            if (result.pagination.next_link) {
+                enumerateCommunities(next, result.pagination.next_link);
+            }
+        });
+    };
+
+    const enumerateCategories = (
+        current: PackageCategory[],
+        communityIdentifier: string,
+        cursor?: string
+    ) => {
+        const promise = cursor
+            ? ExperimentalApi.getNextPage<PackageCategory>(cursor)
+            : ExperimentalApi.listCategories({ communityIdentifier });
+
+        promise.then((result) => {
+            const next = current.concat(result.results);
+            setCategories(next);
+            if (result.pagination.next_link) {
+                enumerateCategories(
+                    next,
+                    communityIdentifier,
+                    result.pagination.next_link
+                );
+            }
+        });
+    };
+
     useEffect(() => {
         ExperimentalApi.listCommunities().then((r) =>
             setCommunities(r.results)
         );
+        enumerateCommunities([]);
         ExperimentalApi.currentUser().then((r) => setTeams(r.teams));
         ExperimentalApi.currentCommunity().then((community) => {
             setCurrentCommunity(community);
-            ExperimentalApi.listCategories({
-                communityIdentifier: community.identifier,
-            }).then((r) => setCategories(r.results));
+            enumerateCategories([], community.identifier);
         });
     }, []);
 
