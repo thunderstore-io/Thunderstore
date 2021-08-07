@@ -5,6 +5,7 @@ import {
     ExperimentalApi,
     PackageSubmissionResult,
     PackageAvailableCommunity,
+    ThunderstoreApiError,
 } from "./api";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
@@ -55,6 +56,17 @@ class FormErrors {
             this.generalError == null
         );
     }
+}
+
+interface SubmissionError {
+    upload_uuid?: string[];
+    author_name?: string[];
+    categories?: string[];
+    communities?: string[];
+    has_nsfw_content?: string[];
+    detail?: string;
+    file?: string[];
+    team?: string[];
 }
 
 interface FormRowProps {
@@ -173,6 +185,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         }
         setFileUpload(null);
         setSubmissionStatus(null);
+        setFormErrors(new FormErrors());
     };
 
     const upload = async (file: File | null) => {
@@ -218,23 +231,68 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         try {
             const uploadId = await upload(file);
             if (!uploadId) return;
-            setSubmissionStatus(SubmissionStatus.PROCESSING);
-            const result = await ExperimentalApi.submitPackage({
-                data: {
-                    upload_uuid: uploadId,
-                    author_name: uploadTeam,
-                    categories: uploadCategories,
-                    communities: uploadCommunities,
-                    has_nsfw_content: uploadNsfw,
-                },
-            });
-            setSubmissionStatus(SubmissionStatus.COMPLETE);
-            if (props.onSubmissionComplete) {
-                props.onSubmissionComplete(result);
+            try {
+                setSubmissionStatus(SubmissionStatus.PROCESSING);
+                const result = await ExperimentalApi.submitPackage({
+                    data: {
+                        upload_uuid: uploadId,
+                        author_name: uploadTeam,
+                        categories: uploadCategories,
+                        communities: uploadCommunities,
+                        has_nsfw_content: uploadNsfw,
+                    },
+                });
+                setSubmissionStatus(SubmissionStatus.COMPLETE);
+                if (props.onSubmissionComplete) {
+                    props.onSubmissionComplete(result);
+                }
+            } catch (e) {
+                const errors = new FormErrors();
+                if (e instanceof ThunderstoreApiError) {
+                    console.log(e.errorObject);
+                    const error = e.errorObject as SubmissionError | null;
+                    if (error) {
+                        if (error.upload_uuid) {
+                            errors.generalError = error.upload_uuid[0] || null;
+                        }
+                        if (error.author_name) {
+                            errors.teamError = error.author_name[0] || null;
+                        }
+                        if (error.team) {
+                            errors.teamError = error.team[0] || null;
+                        }
+                        if (error.categories) {
+                            errors.categoriesError =
+                                error.categories[0] || null;
+                        }
+                        if (error.communities) {
+                            errors.communitiesError =
+                                error.communities[0] || null;
+                        }
+                        if (error.has_nsfw_content) {
+                            errors.nsfwError =
+                                error.has_nsfw_content[0] || null;
+                        }
+                        if (error.detail) {
+                            errors.generalError = error.detail;
+                        }
+                        if (error.file) {
+                            errors.generalError = error.file[0] || null;
+                        }
+                    }
+                } else {
+                    // TODO: Log to sentry
+                    errors.generalError =
+                        "Unknown error occurred while submitting package";
+                    console.error(e);
+                }
+                setFormErrors(errors);
+                setSubmissionStatus(SubmissionStatus.ERROR);
             }
         } catch (e) {
-            setSubmissionStatus(SubmissionStatus.ERROR);
-            console.log(e);
+            // TODO: Log to sentry
+            errors.generalError = "Unknown error occurred while uploading file";
+            console.error(e);
         }
     };
 
@@ -394,6 +452,11 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                             className={submissionProgressBg}
                             progress={submissionProgress}
                         />
+                    )}
+                    {formErrors.generalError && (
+                        <div className="px-3 py-3 text-danger field-errors">
+                            <p>{formErrors.generalError}</p>
+                        </div>
                     )}
                 </form>
             ) : (

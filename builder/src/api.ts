@@ -1,5 +1,47 @@
 import { getCookie } from "./utils";
 
+type JSONValue =
+    | string
+    | number
+    | boolean
+    | null
+    | JSONValue[]
+    | { [key: string]: JSONValue };
+
+export class ThunderstoreApiError {
+    message: string;
+    response: Response;
+    errorObject: JSONValue | null;
+
+    constructor(
+        message: string,
+        response: Response,
+        errorObject: JSONValue | null
+    ) {
+        this.message = message;
+        this.response = response;
+        this.errorObject = errorObject;
+    }
+
+    static createFromResponse = async (message: string, response: Response) => {
+        let errorObject: JSONValue | null = null;
+        try {
+            errorObject = await response.json();
+        } catch (e) {
+            console.error(e);
+        }
+        return new ThunderstoreApiError(message, response, errorObject);
+    };
+
+    get statusCode(): number {
+        return this.response.status;
+    }
+
+    get statusText(): string {
+        return this.response.statusText;
+    }
+}
+
 class ThunderstoreApi {
     apiKey: string | null;
 
@@ -24,8 +66,10 @@ class ThunderstoreApi {
             body: body,
         });
         if (result.status < 200 || result.status >= 300) {
-            throw new Error(
-                `Invalid HTTP response status: ${result.status} ${result.statusText}`
+            const message = `Invalid HTTP response status: ${result.status} ${result.statusText}`;
+            throw await ThunderstoreApiError.createFromResponse(
+                message,
+                result
             );
         }
         return result;

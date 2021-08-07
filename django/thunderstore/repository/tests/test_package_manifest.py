@@ -50,7 +50,7 @@ def test_manifest_v1_serializer_version_already_exists(
     )
     assert serializer.is_valid() is False
     assert len(serializer.errors["non_field_errors"]) == 1
-    assert "Package of the same name and version already exists" in str(
+    assert "Package of the same namespace, name and version already exists" in str(
         serializer.errors["non_field_errors"][0]
     )
 
