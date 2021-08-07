@@ -2,6 +2,10 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField, empty
 
+from thunderstore.community.api.experimental.serializers import (
+    CommunitySerializer,
+    PackageCategorySerializer,
+)
 from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.core.utils import make_full_url
 from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
@@ -207,3 +211,14 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
 
 class PackageSubmissionMetadataSerializer(PackageUploadMetadataSerializer):
     upload_uuid = serializers.UUIDField()
+
+
+class AvailableCommunitySerializer(serializers.Serializer):
+    community = CommunitySerializer()
+    categories = PackageCategorySerializer(many=True)
+    url = serializers.CharField()
+
+
+class PackageSubmissionResult(serializers.Serializer):
+    package_version = PackageVersionSerializerExperimental()
+    available_communities = AvailableCommunitySerializer(many=True)

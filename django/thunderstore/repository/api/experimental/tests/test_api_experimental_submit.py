@@ -6,6 +6,10 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from thunderstore.community.api.experimental.serializers import (
+    CommunitySerializer,
+    PackageCategorySerializer,
+)
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
@@ -51,10 +55,18 @@ def test_api_experimental_submit_package_success(
     print(response.content)
     assert response.status_code == 200
     response_data = response.json()
-    assert response_data["namespace"] == uploader_identity.name
-    assert response_data["name"] == manifest_v1_data["name"]
-    assert response_data["version_number"] == manifest_v1_data["version_number"]
+    version_data = response_data["package_version"]
+    assert version_data["namespace"] == uploader_identity.name
+    assert version_data["name"] == manifest_v1_data["name"]
+    assert version_data["version_number"] == manifest_v1_data["version_number"]
     assert PackageReference(uploader_identity.name, "name", "1.0.0").exists is True
+
+    listing_data = response_data["available_communities"]
+    assert len(listing_data) == 1
+    listing = listing_data[0]
+    assert listing["community"] == CommunitySerializer(community).data
+    assert bool(listing["url"])
+    assert listing["categories"] == [PackageCategorySerializer(package_category).data]
 
 
 @pytest.mark.django_db

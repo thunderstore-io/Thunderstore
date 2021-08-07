@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from thunderstore.repository.api.experimental.serializers import (
     PackageSubmissionMetadataSerializer,
-    PackageVersionSerializerExperimental,
+    PackageSubmissionResult,
 )
 from thunderstore.repository.package_upload import PackageUploadForm
 from thunderstore.usermedia.models import UserMedia
@@ -27,7 +27,7 @@ class SubmitPackageApiView(APIView):
 
     @swagger_auto_schema(
         request_body=PackageSubmissionMetadataSerializer(),
-        responses={200: PackageVersionSerializerExperimental()},
+        responses={200: PackageSubmissionResult()},
         operation_id="experimental.package.submit",
     )
     def post(self, request):
@@ -41,8 +41,29 @@ class SubmitPackageApiView(APIView):
         if not form.is_valid():
             raise ValidationError(form.errors)
         package_version = form.save()
-        serializer = PackageVersionSerializerExperimental(
-            instance=package_version,
+
+        # TODO: Get rid of this logic once multiple subdomains no longer exist
+        listings = package_version.package.community_listings.active()
+        available_communities = []
+        for listing in listings:
+            site = listing.community.sites.first()
+            if not site:
+                continue
+            if not site.site:
+                continue
+            available_communities.append(
+                {
+                    "community": listing.community,
+                    "categories": listing.categories.all(),
+                    "url": package_version.package.get_full_url(site.site),
+                }
+            )
+
+        serializer = PackageSubmissionResult(
+            instance={
+                "package_version": package_version,
+                "available_communities": available_communities,
+            },
             context={"request": request},
         )
         return Response(serializer.data)

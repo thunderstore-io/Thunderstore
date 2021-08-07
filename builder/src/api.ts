@@ -152,6 +152,17 @@ export interface PackageCategory {
     slug: string;
 }
 
+export interface PackageAvailableCommunity {
+    community: Community;
+    categories: PackageCategory[];
+    url: string;
+}
+
+export interface PackageSubmissionResult {
+    package_version: PackageVersion;
+    available_communities: PackageAvailableCommunity[];
+}
+
 class ExperimentalApiImpl extends ThunderstoreApi {
     currentUser = async () => {
         const response = await this.get(ApiUrls.currentUser());
@@ -195,7 +206,7 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         };
     }) => {
         const response = await this.post(ApiUrls.submitPackage(), props.data);
-        return (await response.json()) as PackageVersion;
+        return (await response.json()) as PackageSubmissionResult;
     };
 
     listCommunities = async (props?: { data?: { cursor?: string } }) => {

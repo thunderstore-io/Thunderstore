@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Community, PackageCategory, ExperimentalApi } from "./api";
+import {
+    Community,
+    PackageCategory,
+    ExperimentalApi,
+    PackageSubmissionResult,
+    PackageAvailableCommunity,
+} from "./api";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import { DragDropFileInput } from "./components/DragDropFileInput";
 import { FileUpload, FileUploadStatus } from "./state/FileUpload";
 import { observer } from "mobx-react";
 import { useOnBeforeUnload } from "./state/OnBeforeUnload";
+import { PackageVersionHeader } from "./components/PackageVersionSummary";
 
 function getProgressBarColor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus) {
@@ -98,8 +105,10 @@ const UploadHandler: React.FC<UploadHandlerProps> = observer(
     }
 );
 
-interface UploadFormProps {}
-const UploadForm: React.FC<UploadFormProps> = () => {
+interface SubmissionFormProps {
+    onSubmissionComplete?: (result: PackageSubmissionResult) => void;
+}
+const SubmissionForm: React.FC<SubmissionFormProps> = (props) => {
     const [uploadId, setUploadId] = useState<string | null>(null);
     const [communities, setCommunities] = useState<Community[] | null>(null);
     const [categories, setCategories] = useState<PackageCategory[] | null>(
@@ -153,7 +162,7 @@ const UploadForm: React.FC<UploadFormProps> = () => {
 
         if (!uploadId) return;
         try {
-            await ExperimentalApi.submitPackage({
+            const result = await ExperimentalApi.submitPackage({
                 data: {
                     upload_uuid: uploadId,
                     author_name: uploadTeam,
@@ -162,6 +171,9 @@ const UploadForm: React.FC<UploadFormProps> = () => {
                     has_nsfw_content: uploadNsfw,
                 },
             });
+            if (props.onSubmissionComplete) {
+                props.onSubmissionComplete(result);
+            }
         } catch (e) {
             console.log(e);
         }
@@ -316,7 +328,9 @@ const UploadForm: React.FC<UploadFormProps> = () => {
                                         <kbd className="text-info">
                                             {currentCommunity.name}
                                         </kbd>{" "}
-                                        community.
+                                        community. If you need to add categories
+                                        to other communities, upload via their
+                                        respective site instead.
                                     </p>
                                 </div>
                             </div>
@@ -362,16 +376,100 @@ const UploadForm: React.FC<UploadFormProps> = () => {
     );
 };
 
-export const UploadPage: React.FC = () => {
+interface PackageAvailableCommunityProps {
+    info: PackageAvailableCommunity;
+}
+export const SubmissionResultRow: React.FC<PackageAvailableCommunityProps> = ({
+    info,
+}) => {
     return (
-        <div>
-            {/* Bottom margin will affect how select option dropdowns render */}
-            <div className="card bg-light" style={{ marginBottom: "96px" }}>
-                <div className="card-header">Upload Package</div>
-                <div className="card-body py-2 px-2">
-                    <UploadForm />
+        <tr>
+            <td>{info.community.name}</td>
+            <td>
+                <a href={info.url}>View listing</a>
+            </td>
+            <td>
+                <div className="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
+                    {info.categories.map((category) => {
+                        return (
+                            <span className="badge badge-pill badge-secondary category-badge">
+                                {category.name}
+                            </span>
+                        );
+                    })}
+                </div>
+            </td>
+        </tr>
+    );
+};
+
+interface SubmissionResultsProps {
+    result: PackageSubmissionResult;
+}
+export const SubmissionResults: React.FC<SubmissionResultsProps> = ({
+    result,
+}) => {
+    const communityCount = result.available_communities.length;
+    const resultText =
+        communityCount > 0
+            ? communityCount > 1
+                ? `The package is listed in ${communityCount} communities:`
+                : `The package is listed in 1 community:`
+            : `The package is not listed in any communities`;
+
+    return (
+        <React.Fragment>
+            <PackageVersionHeader version={result.package_version} />
+            <div className="card-body">
+                <div>
+                    <h3>Success!</h3>
+                    <p>{resultText}</p>
+                    <table className="table mb-0">
+                        <tr>
+                            <th>Community</th>
+                            <th>Link</th>
+                            <th>Categories</th>
+                        </tr>
+                        {result.available_communities.map((listingInfo) => (
+                            <SubmissionResultRow info={listingInfo} />
+                        ))}
+                    </table>
                 </div>
             </div>
+        </React.Fragment>
+    );
+};
+
+export const UploadPage: React.FC = () => {
+    const [
+        submissionResult,
+        setSubmissionResult,
+    ] = useState<PackageSubmissionResult | null>(null);
+
+    const onSubmissionComplete = (result: PackageSubmissionResult) => {
+        setSubmissionResult(result);
+    };
+
+    return (
+        <div style={{ marginBottom: "96px" }}>
+            {/* Bottom margin will affect how select option dropdowns render */}
+
+            <div className="card bg-light mb-3">
+                <div className="card-header">Submit Package</div>
+                <div className="card-body py-2 px-2">
+                    <SubmissionForm
+                        onSubmissionComplete={onSubmissionComplete}
+                    />
+                </div>
+            </div>
+            {submissionResult ? (
+                <div
+                    className="card bg-light mb-3"
+                    style={{ marginBottom: "96px" }}
+                >
+                    <SubmissionResults result={submissionResult} />
+                </div>
+            ) : null}
         </div>
     );
 };
