@@ -38,6 +38,13 @@ export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
         resetDragState();
     };
     const fileChange = () => {
+        if (!props.readonly) {
+            const inp = fileInputRef.current;
+            const files = inp?.files;
+            if (props.onChange && files) {
+                props.onChange(files);
+            }
+        }
         resetDragState();
     };
     const onDrop = (e: React.DragEvent) => {
