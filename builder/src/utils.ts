@@ -45,7 +45,7 @@ function parseXhrResponseHeaders(allHeaders: string): Headers {
         .map((value) => value.split(/: /))
         .forEach((kvp) => {
             if (kvp.length == 2 && kvp[0] && kvp[1]) {
-                result.set(kvp[0], kvp[1]);
+                result.set(kvp[0].toLowerCase(), kvp[1]);
             }
         });
     return result;

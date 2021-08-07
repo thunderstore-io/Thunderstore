@@ -166,7 +166,7 @@ export class FileUpload {
 
         this.setProgress(partInfo.part_number, 1);
         return {
-            ETag: completionInfo.headers.get("ETag")!,
+            ETag: completionInfo.headers.get("etag")!,
             PartNumber: partInfo.part_number,
         };
     }
