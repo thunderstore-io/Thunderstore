@@ -408,6 +408,21 @@ def test_manifest_v1_null_fields(user, manifest_v1_data, field):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("fieldname", ("description", "website_url"))
+@pytest.mark.parametrize("testdata", (42, 42.432, False, True))
+def test_manifest_v1_strict_char_fields(user, manifest_v1_data, fieldname, testdata):
+    identity = UploaderIdentity.get_or_create_for_user(user)
+    manifest_v1_data[fieldname] = testdata
+    serializer = ManifestV1Serializer(
+        user=user,
+        uploader=identity,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid() is False
+    assert "Not a valid string." in str(serializer.errors[fieldname][0])
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "field, empty_val, should_fail",
     [

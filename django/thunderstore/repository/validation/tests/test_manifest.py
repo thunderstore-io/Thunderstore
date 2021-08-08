@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -50,6 +50,28 @@ def test_validate_manifest_serializer_errors(
     with pytest.raises(
         ValidationError,
         match="name: This field is required.",
+    ):
+        validate_manifest(
+            user=uploader_identity_member.user,
+            uploader=uploader_identity_member.identity,
+            manifest_data=manifest,
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("fieldname", ("description", "website_url"))
+@pytest.mark.parametrize("testdata", (42, 42.432, False, True))
+def test_validate_manifest_number_in_charfield_fails(
+    uploader_identity_member: UploaderIdentityMember,
+    manifest_v1_data: Dict[str, Any],
+    fieldname: str,
+    testdata: Union[int, float, bool],
+) -> None:
+    manifest_v1_data[fieldname] = testdata
+    manifest = json.dumps(manifest_v1_data).encode("utf-8")
+    with pytest.raises(
+        ValidationError,
+        match=f"{fieldname}: Not a valid string.",
     ):
         validate_manifest(
             user=uploader_identity_member.user,

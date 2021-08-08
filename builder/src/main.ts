@@ -5,6 +5,7 @@ import { UploadPage } from "./upload";
 import React, { ComponentClass, FunctionComponent } from "react";
 import * as Sentry from "@sentry/react";
 import { MarkdownPreviewPage } from "./markdown";
+import { ManifestValidationPage } from "./manifest";
 
 Sentry.init({
     // TODO: Add as a build variable instead
@@ -24,4 +25,5 @@ const CreateComponent = (component: FunctionComponent | ComponentClass) => {
 (window as any).ts = {
     UploadPage: CreateComponent(UploadPage),
     MarkdownPreviewPage: CreateComponent(MarkdownPreviewPage),
+    ManifestValidationPage: CreateComponent(ManifestValidationPage),
 };

@@ -8,15 +8,14 @@ import {
     PackageAvailableCommunity,
     ThunderstoreApiError,
 } from "./api";
-import { useForm, Controller } from "react-hook-form";
-import Select from "react-select";
+import { useForm } from "react-hook-form";
 import { DragDropFileInput } from "./components/DragDropFileInput";
 import { FileUpload, FileUploadStatus } from "./state/FileUpload";
 import { observer } from "mobx-react";
 import { useOnBeforeUnload } from "./state/OnBeforeUnload";
 import { PackageVersionHeader } from "./components/PackageVersionSummary";
-import { Control } from "react-hook-form/dist/types";
 import { ProgressBar } from "./components/ProgressBar";
+import { FormSelectField } from "./components/FormSelectField";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus == FileUploadStatus.CANCELED) {
@@ -86,43 +85,6 @@ const FormRow: React.FC<FormRowProps> = (props) => {
             {props.error && (
                 <div className="text-danger field-errors">{props.error}</div>
             )}
-        </div>
-    );
-};
-
-interface FormSelectFieldProps<T> {
-    control: Control;
-    name: string;
-    data: T[];
-    getOption: (t: T) => { value: string; label: string };
-    default?: T;
-    isMulti?: boolean;
-}
-const FormSelectField: React.FC<FormSelectFieldProps<any>> = (props) => {
-    const defaultValue = props.default
-        ? props.isMulti
-            ? [props.getOption(props.default)]
-            : props.getOption(props.default)
-        : undefined;
-
-    return (
-        <div className="w-100">
-            <div style={{ color: "#666" }}>
-                <Controller
-                    name={props.name}
-                    control={props.control}
-                    defaultValue={defaultValue}
-                    render={({ field }) => (
-                        <Select
-                            {...field}
-                            isMulti={props.isMulti || false}
-                            defaultValue={defaultValue}
-                            options={props.data.map(props.getOption)}
-                        />
-                    )}
-                />
-            </div>
-            {props.children}
         </div>
     );
 };

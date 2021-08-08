@@ -3,28 +3,9 @@ import { ExperimentalApi } from "./api";
 import { ProgressBar } from "./components/ProgressBar";
 import { useDebounce } from "./debounce";
 import * as Sentry from "@sentry/react";
+import { CodeInputPanel } from "./components/CodeInputPanel";
 
 const LOCAL_STORAGE_KEY = "legacy.markdownPreview.markdown";
-
-interface MarkdownInputProps {
-    initial: string;
-    onChange: (value: string) => void;
-}
-const MarkdownInput: React.FC<MarkdownInputProps> = ({ initial, onChange }) => {
-    return (
-        <div className={"card bg-light mb-2"}>
-            <div className={"card-header"}>Markdown Input</div>
-            <div className={"card-body"}>
-                <textarea
-                    className={"code-input"}
-                    style={{ minHeight: "400px" }}
-                    value={initial}
-                    onChange={(evt) => onChange(evt.target.value)}
-                />
-            </div>
-        </div>
-    );
-};
 
 interface MarkdownPreviewProps {
     markdown: string;
@@ -58,7 +39,6 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
     useDebounce(
         600,
         () => {
-            console.log("doing api call");
             renderMarkdown();
         },
         [markdown],
@@ -87,7 +67,12 @@ export const MarkdownPreviewPage: React.FC = () => {
     );
     return (
         <div style={{ marginBottom: "96px" }}>
-            <MarkdownInput initial={markdown} onChange={setMarkdown} />
+            <CodeInputPanel
+                title={"Markdown Preview"}
+                initial={markdown}
+                onChange={setMarkdown}
+                textareaStyle={{ minHeight: "400px" }}
+            />
             <MarkdownPreview markdown={markdown} />
         </div>
     );

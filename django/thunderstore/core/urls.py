@@ -8,6 +8,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 from thunderstore.frontend.views import (
+    ManifestV1ValidatorView,
     MarkdownPreviewView,
     ads_txt_view,
     robots_txt_view,
@@ -39,6 +40,11 @@ urlpatterns = [
         "tools/markdown-preview/",
         MarkdownPreviewView.as_view(),
         name="tools.markdown-preview",
+    ),
+    path(
+        "tools/manifest-v1-validator/",
+        ManifestV1ValidatorView.as_view(),
+        name="tools.manifest-v1-validator",
     ),
 ]
 

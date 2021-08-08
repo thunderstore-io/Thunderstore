@@ -10,6 +10,7 @@
         "crypto-js": "^4.0.0",
         "github-markdown-css": "^4.0.0",
         "jquery": "^3.5.1",
+        "js-base64": "^3.6.1",
         "mobx": "^6.3.2",
         "mobx-react": "^7.2.0",
         "node-sass": "^4.12.0",
