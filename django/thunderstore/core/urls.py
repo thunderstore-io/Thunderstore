@@ -7,7 +7,11 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
-from thunderstore.frontend.views import ads_txt_view, robots_txt_view
+from thunderstore.frontend.views import (
+    MarkdownPreviewView,
+    ads_txt_view,
+    robots_txt_view,
+)
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
 
@@ -31,6 +35,11 @@ urlpatterns = [
     path("djangoadmin/", admin.site.urls),
     path("healthcheck/", healthcheck_view, name="healthcheck"),
     path("api/", include((api_urls, "api"), namespace="api")),
+    path(
+        "tools/markdown-preview/",
+        MarkdownPreviewView.as_view(),
+        name="tools.markdown-preview",
+    ),
 ]
 
 schema_view = get_schema_view(

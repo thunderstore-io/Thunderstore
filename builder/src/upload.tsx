@@ -16,6 +16,7 @@ import { observer } from "mobx-react";
 import { useOnBeforeUnload } from "./state/OnBeforeUnload";
 import { PackageVersionHeader } from "./components/PackageVersionSummary";
 import { Control } from "react-hook-form/dist/types";
+import { ProgressBar } from "./components/ProgressBar";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus == FileUploadStatus.CANCELED) {
@@ -88,29 +89,6 @@ const FormRow: React.FC<FormRowProps> = (props) => {
         </div>
     );
 };
-
-interface ProgressBarProps {
-    className: string;
-    progress: number;
-}
-const ProgressBar: React.FC<ProgressBarProps> = observer(
-    ({ className, progress }) => {
-        return (
-            <div className="progress my-2">
-                <div
-                    className={`progress-bar progress-bar-striped progress-bar-animated ${className}`}
-                    role="progressbar"
-                    aria-valuenow={progress}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    style={{
-                        width: `${progress}%`,
-                    }}
-                />
-            </div>
-        );
-    }
-);
 
 interface FormSelectFieldProps<T> {
     control: Control;
