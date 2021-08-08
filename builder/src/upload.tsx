@@ -117,7 +117,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     ] = useState<SubmissionStatus | null>(null);
 
     const { register, handleSubmit, control } = useForm();
-    useOnBeforeUnload(!!file);
+    useOnBeforeUnload(!!file && submissionStatus != SubmissionStatus.COMPLETE);
 
     const cancel = async () => {
         setFile(null);
@@ -455,7 +455,9 @@ export const SubmissionResultRow: React.FC<PackageAvailableCommunityProps> = ({
         <tr>
             <td>{info.community.name}</td>
             <td>
-                <a href={info.url}>View listing</a>
+                <a href={info.url} target={"_blank"}>
+                    View listing
+                </a>
             </td>
             <td>
                 <div className="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
