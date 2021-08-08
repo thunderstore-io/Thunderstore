@@ -7,6 +7,7 @@ from thunderstore.repository.serializer_fields import (
     DependencyField,
     PackageNameField,
     PackageVersionField,
+    StrictCharField,
 )
 from thunderstore.repository.utils import does_contain_package, has_duplicate_packages
 
@@ -23,11 +24,11 @@ class ManifestV1Serializer(serializers.Serializer):
 
     name = PackageNameField()
     version_number = PackageVersionField()
-    website_url = serializers.CharField(
+    website_url = StrictCharField(
         max_length=PackageVersion._meta.get_field("website_url").max_length,
         allow_blank=True,
     )
-    description = serializers.CharField(
+    description = StrictCharField(
         max_length=PackageVersion._meta.get_field("description").max_length,
         allow_blank=True,
     )

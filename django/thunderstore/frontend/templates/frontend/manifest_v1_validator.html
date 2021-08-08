@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Markdown Preview{% endblock %}
+
+{% block content_beginning %}{% endblock %}
+
+{% block content %}
+<h1 class="mt-4">Manifest Validator</h1>
+
+<div id="manifest-validator-page"></div>
+<script type="text/javascript">
+window.ts.ManifestValidationPage(document.getElementById("manifest-validator-page"));
+</script>
+
+{% endblock %}

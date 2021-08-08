@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Markdown Preview{% endblock %}
+
+{% block content_beginning %}{% endblock %}
+
+{% block content %}
+<h1 class="mt-4">Markdown Preview</h1>
+
+<div id="markdown-preview-page"></div>
+<script type="text/javascript">
+window.ts.MarkdownPreviewPage(document.getElementById("markdown-preview-page"));
+</script>
+
+{% endblock %}

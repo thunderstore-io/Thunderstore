@@ -112,6 +112,8 @@ class ApiUrls {
     static listCategories = (communityIdentifier: string) =>
         apiUrl("community", communityIdentifier, "category");
     static renderMarkdown = () => apiUrl("frontend", "render-markdown");
+    static validateManifestV1 = () =>
+        apiUrl("submission", "validate", "manifest-v1");
 }
 
 export interface UserMedia {
@@ -273,6 +275,16 @@ class ExperimentalApiImpl extends ThunderstoreApi {
     renderMarkdown = async (props: { data: { markdown: string } }) => {
         const response = await this.post(ApiUrls.renderMarkdown(), props.data);
         return (await response.json()) as RenderMarkdownResult;
+    };
+
+    validateManifestV1 = async (props: {
+        data: { namespace: string; manifest_data: string };
+    }) => {
+        const response = await this.post(
+            ApiUrls.validateManifestV1(),
+            props.data
+        );
+        return (await response.json()) as { success: boolean };
     };
 }
 

@@ -1,0 +1,22 @@
+.code-input {
+    width: 100%;
+    //minGeight: "400px"
+    overflow: scroll;
+    border-radius: 4px;
+    border-style: none;
+    font-family: "Courier New", monospace;
+    background-color: #191919;
+    color: #ffffff;
+    padding: 6px;
+
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+.code-input:focus-visible {
+    outline: none;
+}
+.code-input::-webkit-scrollbar {
+    /* WebKit */
+    width: 0;
+    height: 0;
+}

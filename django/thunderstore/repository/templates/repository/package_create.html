@@ -14,10 +14,20 @@
     </p>
 </div>
 <div class="mb-3 mt-3 alert alert-info" role="alert">
-    <p class="mb-0">
-        New upload handler not working?
-        <a href="{% url 'packages.create.old' %}">Try the old one here</a>
-    </p>
+    <ul class="mb-0 pl-3">
+        <li>
+            New upload handler not working?
+            <a href="{% url 'packages.create.old' %}">Try the old one here</a>
+        </li>
+        <li>
+            Preview your readme before upload using the
+            <a href="{% url 'tools.markdown-preview' %}">markdown preview tool</a>
+        </li>
+        <li>
+            Uploading a large file? Check your package manifest first with the
+            <a href="{% url 'tools.manifest-v1-validator' %}">package manifest validator</a>
+        </li>
+    </ul>
 </div>
 
 <div id="upload-page"></div>

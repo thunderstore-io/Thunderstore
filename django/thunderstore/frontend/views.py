@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.generic import TemplateView
 
 
 def handle404(request, exception):
@@ -15,3 +16,11 @@ def ads_txt_view(request):
 
 def robots_txt_view(request):
     return render(request, "robots.txt", locals())
+
+
+class MarkdownPreviewView(TemplateView):
+    template_name = "frontend/markdown_preview.html"
+
+
+class ManifestV1ValidatorView(TemplateView):
+    template_name = "frontend/manifest_v1_validator.html"

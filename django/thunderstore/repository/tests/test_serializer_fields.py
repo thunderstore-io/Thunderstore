@@ -17,6 +17,7 @@ from thunderstore.repository.serializer_fields import (
     ModelChoiceField,
     PackageNameField,
     PackageVersionField,
+    StrictCharField,
 )
 
 
@@ -233,3 +234,18 @@ def test_fields_base64_field_too_small_value() -> None:
         match="Ensure this field has encoded at least 10 bytes.",
     ):
         field.to_internal_value(testvalue)
+
+
+@pytest.mark.parametrize("testvalue", (42, 42.432, False, True))
+def test_fields_strict_char_field_fail(testvalue) -> None:
+    field = StrictCharField()
+    with pytest.raises(
+        serializers.ValidationError,
+        match="Not a valid string.",
+    ):
+        field.to_internal_value(testvalue)
+
+
+def test_fields_strict_char_field_success() -> None:
+    field = StrictCharField()
+    assert field.to_internal_value("test") == "test"
