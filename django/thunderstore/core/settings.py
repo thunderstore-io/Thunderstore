@@ -77,6 +77,7 @@ env = environ.Env(
     CELERY_EAGER_PROPAGATES_EXCEPTIONS=(bool, False),
     REPOSITORY_MAX_PACKAGE_SIZE_MB=(int, 500),
     REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB=(int, 1000),
+    SESSION_COOKIE_DOMAIN=(str, ""),
 )
 
 SENTRY_DSN = env.str("SENTRY_DSN")
@@ -280,8 +281,9 @@ USE_TZ = True
 # Session cookie used by React components during Django React transition
 SESSION_COOKIE_HTTPONLY = False
 
-# Celery
+SESSION_COOKIE_DOMAIN = env.str("SESSION_COOKIE_DOMAIN") or None
 
+# Celery
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_TIMEZONE = TIME_ZONE

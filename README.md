@@ -109,6 +109,10 @@ running that command.
 -   `GUNICORN_WORKER_COUNT`: Used to control how many workers gunicorn will spawn
 -   `GUNICORN_LOG_LEVEL`: Used to control gunicorn's logging level
 
+### Django
+-   `SESSION_COOKIE_DOMAIN`: To enable cross-site sessions set this as the public name of the server with an `.` prefix. e.g. `.thunderstore.io`
+**DEV NOTE: this does not work with `localhost` as the public name, set it to e.g. `thunderstore.temp` and edit your hosts file accordingly.**
+
 ### GitHub OAuth
 
 To set up GitHub OAuth, head to settings on GitHub (either personal or
