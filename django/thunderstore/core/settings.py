@@ -29,6 +29,8 @@ env = environ.Env(
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, []),
     PROTOCOL=(str, ""),
+    SOCIAL_AUTH_SANITIZE_REDIRECTS=(bool, True),
+    SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS=(list, []),
     SOCIAL_AUTH_DISCORD_KEY=(str, ""),
     SOCIAL_AUTH_DISCORD_SECRET=(str, ""),
     SOCIAL_AUTH_GITHUB_KEY=(str, ""),
@@ -572,6 +574,8 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.user.user_details",
 )
 SOCIAL_AUTH_STRATEGY = "thunderstore.community.social_auth.CommunitySocialAuthStrategy"
+SOCIAL_AUTH_SANITIZE_REDIRECTS = env.bool("SOCIAL_AUTH_SANITIZE_REDIRECTS")
+SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = env.list("SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS")
 
 PROTOCOL = env.str("PROTOCOL")
 if PROTOCOL == "https://":

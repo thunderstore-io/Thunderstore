@@ -114,6 +114,11 @@ running that command.
 -   `SESSION_COOKIE_DOMAIN`: To enable cross-site sessions set this as the public name of the server with an `.` prefix. e.g. `.thunderstore.io`
     **DEV NOTE: this does not work with `localhost` as the public name, set it to e.g. `thunderstore.temp` and edit your hosts file accordingly.**
 
+### Social Auth
+
+-   `SOCIAL_AUTH_SANITIZE_REDIRECTS`: Set to `True` if you want to restrict OAuth redirects to servers domain. (or any of the domain listed in `SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS`)
+-   `SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS`: List of domains that OAuth redirects will be able to go to
+
 ### GitHub OAuth
 
 To set up GitHub OAuth, head to settings on GitHub (either personal or

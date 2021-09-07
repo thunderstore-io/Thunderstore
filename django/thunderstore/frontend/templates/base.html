@@ -1,5 +1,5 @@
 {% load static %}
-{% load dynamic_html %}
+{% load dynamic_html auth_login %}
 
 <!doctype html>
 <html lang="en">
@@ -104,10 +104,10 @@
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a href="{% url "social:begin" "github" %}" class="nav-link"><span class="fab fa-github"></span> Log in with GitHub</a>
+                        <a href="{% add_auth_login_link "github" %}" class="nav-link"><span class="fab fa-github"></span> Log in with GitHub</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{% url "social:begin" "discord" %}" class="nav-link"><span class="fab fa-discord"></span> Log in with Discord</a>
+                        <a href="{% add_auth_login_link "discord" %}" class="nav-link"><span class="fab fa-discord"></span> Log in with Discord</a>
                     </li>
                 {% endif %}
             </ul>
