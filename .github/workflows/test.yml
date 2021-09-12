@@ -4,10 +4,6 @@ on: [push, pull_request]
 
 jobs:
   pre-commit:
-    # Do not run pull_request workflow if the head repo is not a fork
-    # These are already tested with the push event
-    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.head.repo.fork)
-
     name: Run pre-commit
     runs-on: ubuntu-latest
     steps:
