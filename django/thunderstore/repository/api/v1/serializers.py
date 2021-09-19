@@ -42,6 +42,7 @@ class PackageVersionSerializer(ModelSerializer):
             "website_url",
             "is_active",
             "uuid4",
+            "file_size",
         )
 
 
