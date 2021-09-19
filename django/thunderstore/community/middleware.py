@@ -1,5 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.urls import reverse
 
 from thunderstore.community.utils import get_community_site_for_request
@@ -29,5 +29,8 @@ class CommunitySiteMiddleware:
         request.site = None
         request.community = None
         if not request.path.startswith(reverse("admin:index")):
-            add_community_context_to_request(request)
+            try:
+                add_community_context_to_request(request)
+            except Http404:
+                return HttpResponse(content=b"Community not found", status=404)
         return self.get_response(request)
