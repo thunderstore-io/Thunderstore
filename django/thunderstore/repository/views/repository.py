@@ -193,7 +193,7 @@ class PackageListSearchView(ListView):
         )
 
         icontains_query = Q()
-        parts = search_query.split(" ")
+        parts = [x for x in search_query.split(" ") if x]
         for part in parts:
             for field in search_fields:
                 icontains_query &= ~Q(**{f"{field}__icontains": part})
