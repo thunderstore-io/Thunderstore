@@ -88,20 +88,24 @@ jobs:
           docker tag thunderstore:${GITHUB_SHA} thunderstore/thunderstore:${GITHUB_SHA}
           docker tag thunderstore:${GITHUB_SHA} ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}
       - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
         run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to Docker Hub
+        if: github.event_name != 'pull_request'
         run: |
           echo "Pushing thunderstore/thunderstore:${GITHUB_SHA}"
           docker push thunderstore/thunderstore:${GITHUB_SHA}
       - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         env:
           DOCKER_USERNAME: ${{ secrets.GHCR_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.GHCR_PAT }}
         run: docker login ghcr.io -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
       - name: Push image to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         run: |
           echo "Pushing ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}"
           docker push ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}
