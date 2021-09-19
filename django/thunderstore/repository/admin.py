@@ -148,6 +148,7 @@ class PackageAdmin(admin.ModelAdmin):
         "is_active",
         "is_deprecated",
         "is_pinned",
+        "file_size",
     )
     list_filter = (
         "is_active",
@@ -158,6 +159,9 @@ class PackageAdmin(admin.ModelAdmin):
         "name",
         "owner__name",
     )
+
+    def file_size(self, obj):
+        return obj.latest.file_size
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

@@ -36,7 +36,7 @@ class Command(BaseCommand):
             last = last_identity.pk
 
         uploaders = [
-            UploaderIdentity.objects.create(name=f"Test_Identity-{last + i}")
+            UploaderIdentity.objects.create(name=f"Test_Identity_{last + i}")
             for i in range(count)
         ]
         print("Creating packages...")
