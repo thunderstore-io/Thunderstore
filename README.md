@@ -14,10 +14,12 @@ Thunderstore is a mod database and API for downloading mods.
 
 ```python
 from django.contrib.sites.models import Site
-Site.objects.create(domain="localhost", name="Whatever")
+Site.objects.create(domain="thunderstore.localhost", name="Whatever")
 ```
 
-**Make sure to substitute `localhost` with what you use to connect to the site**
+**Make sure to substitute `localhost` with what you use to connect to the site!**
+In general, you should use `thunderstore.localhost` as the main domain to handle
+auth-scoping correctly (see `SESSION_COOKIE_DOMAIN` later on)
 
 You will also need to navigate to the admin panel (`/djangoadmin`)
 and configure a mapping from a site to a community. You can create a superuser
@@ -111,13 +113,33 @@ running that command.
 
 ### Django
 
--   `SESSION_COOKIE_DOMAIN`: To enable cross-site sessions set this as the public name of the server with an `.` prefix. e.g. `.thunderstore.io`
-    **DEV NOTE: this does not work with `localhost` as the public name, set it to e.g. `thunderstore.temp` and edit your hosts file accordingly.**
+-   `SESSION_COOKIE_DOMAIN`: If set, allows sessions to be shared within a domain
+    and its subdomains. For example: `thunderstore.io`
+
+For local testing, recommended values are:
+
+-   `SESSION_COOKIE_DOMAIN`: `thunderstore.localhost`
+
+Make sure also to have the Site objects point to `thunderstore.localhost` or some
+of its subdomains, such as `test.thunderstore.localhost`.
 
 ### Social Auth
 
--   `SOCIAL_AUTH_SANITIZE_REDIRECTS`: Set to `True` if you want to restrict OAuth redirects to servers domain. (or any of the domain listed in `SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS`)
--   `SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS`: List of domains that OAuth redirects will be able to go to
+-   `SOCIAL_AUTH_SANITIZE_REDIRECTS`: Set to `True` if you want to restrict OAuth redirect domains.
+-   `SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS`: List allowed OAuth redirect domains, used if
+    `SOCIAL_AUTH_SANITIZE_REDIRECTS` is enabled.
+-   `SOCIAL_AUTH_INIT_HOST`: The host used for social auth initializations and callbacks,
+    regardless of which host the user is currently on. If not set, defaults to the same
+    value as `AUTH_EXCLUSIVE_HOST`. If neither are set, defaults to the host
+    of the request.
+-   `AUTH_EXCLUSIVE_HOST`: A hostname/domain which will exclusively be used for
+    auth related logic, such as the social auth process. If not set, no host
+    is treated as the exclusive auth host.
+
+For local testing, recommended values are:
+
+-   `AUTH_EXCLUSIVE_HOST`: `auth.thunderstore.localhost`
+-   `SOCIAL_AUTH_SANITIZE_REDIRECTS`: `auth.thunderstore.localhost,thunderstore.localhost`
 
 ### GitHub OAuth
 

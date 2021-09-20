@@ -24,11 +24,13 @@ from .setting_urls import settings_urls
 handler404 = "thunderstore.frontend.views.handle404"
 handler500 = "thunderstore.frontend.views.handle500"
 
+AUTH_ROOT = "auth/"
+
 urlpatterns = [
     path("", PackageListView.as_view(), name="index"),
     path("ads.txt", ads_txt_view, name="ads.txt"),
     path("robots.txt", robots_txt_view, name="robots.txt"),
-    path("auth/", include("social_django.urls", namespace="social")),
+    path(AUTH_ROOT, include("social_django.urls", namespace="social")),
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
     path("package/", include(repository_urls)),
     path("settings/", include(settings_urls)),
