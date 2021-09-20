@@ -171,6 +171,8 @@ class PackageAdmin(admin.ModelAdmin):
     ) -> bool:
         return False
 
+    file_size.admin_order_field = "latest__file_size"
+
 
 @admin.register(DiscordUserBotPermission)
 class DiscordUserBotPermissionAdmin(admin.ModelAdmin):
