@@ -8,6 +8,7 @@ x-django-service: &django-service
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
     DATABASE_URL: "psql://django:django@dbpool/django"
     REDIS_URL: "redis://redis:6379/0"
+    PROTOCOL: "http://"
 
     AWS_ACCESS_KEY_ID: "thunderstore"
     AWS_SECRET_ACCESS_KEY: "thunderstore"
