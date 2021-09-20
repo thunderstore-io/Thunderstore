@@ -161,7 +161,7 @@ class PackageAdmin(admin.ModelAdmin):
     )
 
     def file_size(self, obj):
-        return obj.latest.file_size
+        return obj.latest.file_size if obj.latest else 0
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
