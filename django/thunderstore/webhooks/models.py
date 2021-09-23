@@ -1,13 +1,13 @@
 import json
 import uuid
 
-import requests
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from sentry_sdk import capture_exception
 
+from thunderstore.core.tasks import celery_post
 from thunderstore.core.utils import ChoiceEnum
 
 
@@ -134,11 +134,10 @@ class Webhook(models.Model):
         if not self.is_active:
             return
         try:
-            resp = requests.post(
+            celery_post.delay(
                 self.webhook_url,
                 data=json.dumps(webhook_data),
                 headers={"Content-Type": "application/json"},
             )
-            resp.raise_for_status()
         except Exception as e:
             capture_exception(e)
