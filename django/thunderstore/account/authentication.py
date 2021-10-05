@@ -4,10 +4,39 @@ from django.utils import timezone
 from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication as DRFTokenAuthentication
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import AuthenticationFailed
 
 from thunderstore.account.models import ServiceAccount
+from thunderstore.account.tokens import hash_service_account_api_token
 
 User = get_user_model()
+
+
+class ServiceAccountTokenAuthentication(DRFTokenAuthentication):
+    """
+    Authenticate with bearer token matching ServiceAccount's api_token
+    """
+
+    keyword = "Bearer"
+
+    def authenticate(self, request):
+        header = request.META.get("HTTP_AUTHORIZATION")
+
+        if header is None or not header.startswith("Bearer "):
+            return None
+
+        token = header[7:]
+        hashed = hash_service_account_api_token(token)
+
+        try:
+            sa = ServiceAccount.objects.select_related("user").get(api_token=hashed)
+        except ServiceAccount.DoesNotExist:
+            raise AuthenticationFailed("Invalid Service Account token")
+
+        sa.last_used = timezone.now()
+        sa.save(update_fields=("last_used",))
+
+        return (sa.user, token)
 
 
 class TokenAuthentication(DRFTokenAuthentication):

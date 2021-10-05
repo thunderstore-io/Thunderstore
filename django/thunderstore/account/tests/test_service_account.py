@@ -6,7 +6,6 @@ from thunderstore.account.forms import (
     CreateTokenForm,
     DeleteServiceAccountForm,
     EditServiceAccountForm,
-    create_service_account_username,
 )
 from thunderstore.account.models import ServiceAccount
 from thunderstore.core.factories import UserFactory
@@ -18,7 +17,7 @@ from thunderstore.repository.models import (
 
 @pytest.mark.django_db
 def test_service_account_fixture(service_account):
-    username = create_service_account_username(service_account.uuid.hex)
+    username = ServiceAccount.create_username(service_account.uuid.hex)
     assert username == service_account.user.username
 
 
@@ -35,9 +34,11 @@ def test_service_account_create(user, uploader_identity):
     )
     assert form.is_valid() is True
     service_account = form.save()
-    username = create_service_account_username(service_account.uuid.hex)
+    username = ServiceAccount.create_username(service_account.uuid.hex)
     assert username == service_account.user.username
     assert service_account.user.first_name == "Nickname"
+    assert service_account.api_token is not None
+    assert service_account.api_token.startswith("pbkdf2_sha256$524288$w520TEzFVlsO$")
     assert service_account.created_at is not None
     assert service_account.last_used is None
     assert (

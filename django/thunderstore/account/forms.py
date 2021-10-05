@@ -1,22 +1,10 @@
-import ulid2
 from django import forms
-from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework.authtoken.models import Token
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import (
-    UploaderIdentity,
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
-)
-
-User = get_user_model()
-
-
-def create_service_account_username(id_: str) -> str:
-    return f"{id_}.sa@thunderstore.io"
+from thunderstore.repository.models import UploaderIdentity
 
 
 class CreateServiceAccountForm(forms.Form):
@@ -36,22 +24,11 @@ class CreateServiceAccountForm(forms.Form):
 
     @transaction.atomic
     def save(self) -> ServiceAccount:
-        service_account_id = ulid2.generate_ulid_as_uuid()
-        username = create_service_account_username(service_account_id.hex)
-        user = User.objects.create_user(
-            username,
-            email=username,
-            first_name=self.cleaned_data["nickname"],
-        )
-        self.cleaned_data["identity"].add_member(
-            user=user,
-            role=UploaderIdentityMemberRole.member,
-        )
-        return ServiceAccount.objects.create(
-            uuid=service_account_id,
-            user=user,
-            owner=self.cleaned_data["identity"],
-        )
+        owner = self.cleaned_data["identity"]
+        nickname = self.cleaned_data["nickname"]
+        (service_account, token) = ServiceAccount.create(owner, nickname)
+        self.api_token = token
+        return service_account
 
 
 class DeleteServiceAccountForm(forms.Form):
