@@ -64,6 +64,15 @@ def uploader_identity_member(uploader_identity):
 
 
 @pytest.fixture()
+def uploader_identity_owner(uploader_identity):
+    return UploaderIdentityMember.objects.create(
+        identity=uploader_identity,
+        user=UserFactory(),
+        role=UploaderIdentityMemberRole.owner,
+    )
+
+
+@pytest.fixture()
 def package(uploader_identity):
     return Package.objects.create(
         owner=uploader_identity,

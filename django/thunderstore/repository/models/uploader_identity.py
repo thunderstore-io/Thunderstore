@@ -131,6 +131,13 @@ class UploaderIdentity(models.Model):
             kwargs={"name": self.name},
         )
 
+    @property
+    def service_accounts_url(self):
+        return reverse(
+            "settings.teams.detail.service_accounts",
+            kwargs={"name": self.name},
+        )
+
     def add_member(self, user: UserType, role: str) -> UploaderIdentityMember:
         return UploaderIdentityMember.objects.create(
             identity=self,

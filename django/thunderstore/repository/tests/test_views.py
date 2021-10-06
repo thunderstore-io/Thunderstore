@@ -157,3 +157,39 @@ def test_package_download_view(user, client, community_site, manifest_v1_package
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_service_account_list_view(
+    client, community_site, uploader_identity, uploader_identity_member
+):
+    client.force_login(uploader_identity_member.user)
+    kwargs = {"name": uploader_identity.name}
+    url = reverse("settings.teams.detail.service_accounts", kwargs=kwargs)
+    response = client.get(url, HTTP_HOST=community_site.site.domain)
+    assert response.status_code == 200
+    assert f"Team {uploader_identity.name} service accounts" in str(response.content)
+
+
+@pytest.mark.django_db
+def test_service_account_creation(
+    client, community_site, uploader_identity, uploader_identity_owner
+):
+    client.force_login(uploader_identity_owner.user)
+    kwargs = {"name": uploader_identity.name}
+
+    response = client.get(
+        reverse("settings.teams.detail.add_service_account", kwargs=kwargs),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    assert b"Enter a nickname for the service account" in response.content
+
+    response = client.post(
+        reverse("settings.teams.detail.add_service_account", kwargs=kwargs),
+        {"nickname": "Foo", "identity": uploader_identity.id},
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    assert b'New service account <kbd class="text-info">Foo</kbd>' in response.content
+    assert b'<pre class="important">tss_' in response.content
