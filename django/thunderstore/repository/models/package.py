@@ -16,6 +16,7 @@ from thunderstore.cache.cache import (
     cache_function_result,
     invalidate_cache,
 )
+from thunderstore.core.utils import build_url_from_site_object
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
 
@@ -224,11 +225,7 @@ class Package(models.Model):
         )
 
     def get_full_url(self, site: Site):
-        return "%(protocol)s%(hostname)s%(path)s" % {
-            "protocol": settings.PROTOCOL,
-            "hostname": site.domain,
-            "path": self.get_absolute_url(),
-        }
+        return build_url_from_site_object(self.get_absolute_url(), site)
 
     def recache_latest(self):
         old_latest = self.latest

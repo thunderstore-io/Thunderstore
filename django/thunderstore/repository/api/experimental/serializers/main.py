@@ -7,7 +7,7 @@ from thunderstore.community.api.experimental.serializers import (
     PackageCategorySerializer,
 )
 from thunderstore.community.models import Community, PackageCategory, PackageListing
-from thunderstore.core.utils import make_full_url
+from thunderstore.core.utils import build_url_from_request_object
 from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_upload import PackageUploadForm
 from thunderstore.repository.serializer_fields import ModelChoiceField
@@ -41,7 +41,9 @@ class PackageVersionSerializerExperimental(serializers.ModelSerializer):
     dependencies = SerializerMethodField()
 
     def get_download_url(self, instance):
-        return make_full_url(self.context["request"], instance.download_url)
+        return build_url_from_request_object(
+            instance.download_url, self.context["request"]
+        )
 
     def get_full_name(self, instance):
         return instance.full_version_name
@@ -93,7 +95,9 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
         return instance.owner.name
 
     def get_package_url(self, instance):
-        return make_full_url(self.context["request"], instance.get_absolute_url())
+        return build_url_from_request_object(
+            instance.get_absolute_url(), self.context["request"]
+        )
 
     def get_total_downloads(self, instance):
         return instance._total_downloads

@@ -4,9 +4,12 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
+from thunderstore.community.models.community_site import CommunitySite
 from thunderstore.core.utils import (
+    build_url_from_request_object,
+    build_url_from_site_object,
     check_validity,
-    make_full_url,
+    enforce_url_protocol,
     sanitize_filename,
     sanitize_filepath,
     validate_filepath_prefix,
@@ -25,15 +28,6 @@ def test_check_validity_success() -> None:
         pass
 
     assert check_validity(lambda: success_fn()) is True
-
-
-@pytest.mark.parametrize("scheme", ("http://", "https://"))
-def test_make_full_url(scheme: str, rf: RequestFactory, settings: Any) -> None:
-    settings.PROTOCOL = scheme
-    request = rf.get("")
-    expected = f"{scheme}testserver/test/path/"
-    assert make_full_url(request, "/test/path/") == expected
-    assert make_full_url(None, "/test/path/") == "/test/path/"
 
 
 @pytest.mark.parametrize(
@@ -101,3 +95,33 @@ def test_validate_filepath_prefix(filepath: Optional[str], should_fail: bool) ->
             validate_filepath_prefix(filepath)
     else:
         assert validate_filepath_prefix(filepath) == filepath
+
+
+@pytest.mark.parametrize("scheme", ("http://", "https://"))
+def test_build_url_from_request_object(scheme: str, rf: RequestFactory, settings: Any):
+    settings.PROTOCOL = scheme
+    request = rf.get("")
+    expected = f"{scheme}testserver/test/path/"
+    assert build_url_from_request_object("/test/path/", request) == expected
+    assert build_url_from_request_object("/test/path/", None) == "/test/path/"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("scheme", ("http://", "https://"))
+def test_build_url_from_site_object(
+    scheme: str, community_site: CommunitySite, settings: Any
+):
+    settings.PROTOCOL = scheme
+    assert (
+        build_url_from_site_object("/test/path", community_site.site)
+        == f"{settings.PROTOCOL}{community_site.site.domain}/test/path"
+    )
+
+
+def test_enforce_url_protocol(settings: Any) -> None:
+    settings.PROTOCOL = "https://"
+    assert enforce_url_protocol("testserver/test/path/") == "testserver/test/path/"
+    assert (
+        enforce_url_protocol("http://testserver/test/path/")
+        == "https://testserver/test/path/"
+    )

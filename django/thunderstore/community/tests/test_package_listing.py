@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
@@ -7,6 +8,7 @@ from thunderstore.community.models import (
     Community,
     CommunityMemberRole,
     CommunityMembership,
+    CommunitySite,
     PackageListing,
     PackageListingReviewStatus,
 )
@@ -144,3 +146,51 @@ def test_package_listing_ensure_can_be_viewed_by_user(
         elif listing.package.owner.can_user_access(user):
             assert result is True
             assert error is None
+
+
+@pytest.mark.django_db
+def test_get_full_url(
+    community_site: CommunitySite,
+    active_package: Package,
+    active_package_listing: PackageListing,
+):
+    # Just to make sure people test this in the future, if the logic is modified
+    community_2 = Community.objects.create(name="Test2", identifier="test2")
+    site_2 = Site.objects.create(domain="testsite2.test", name="Testsite2")
+    community_site_2 = CommunitySite.objects.create(site=site_2, community=community_2)
+
+    url = active_package_listing.get_full_url()
+    comparison_url = str(
+        community_site.full_url[:-1] + active_package_listing.get_absolute_url()
+    )
+    assert url == comparison_url
+
+    active_package_listing_2 = PackageListing.objects.create(
+        community=community_2, package=active_package
+    )
+    url = active_package_listing_2.get_full_url()
+    comparison_url = str(
+        community_site_2.full_url[:-1] + active_package_listing_2.get_absolute_url()
+    )
+    assert url == comparison_url
+
+    version_number = active_package_listing.package.versions.first().version_number
+    url = active_package_listing.get_full_url(version=version_number)
+    comparison_url = str(
+        community_site.full_url[:-1]
+        + active_package_listing.get_absolute_url()
+        + f"{version_number}/"
+    )
+    assert url == comparison_url
+
+
+@pytest.mark.django_db
+def test_get_package_version_absolute_url(
+    active_package_listing: PackageListing,
+):
+    version_number = active_package_listing.package.versions.first().version_number
+    url = active_package_listing.get_package_version_absolute_url(version_number)
+    comparison_url = str(
+        active_package_listing.get_absolute_url() + f"{version_number}/"
+    )
+    assert url == comparison_url

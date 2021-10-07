@@ -1,5 +1,12 @@
-from typing import List
+from typing import List, Union
 
+from django.db.models import Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+
+from thunderstore.cache.cache import CacheBustCondition, cache_function_result
+from thunderstore.community.models import Community, PackageListing
+from thunderstore.repository.models import Team
 from thunderstore.repository.package_reference import PackageReference
 
 
@@ -56,3 +63,56 @@ def unpack_serializer_errors(field, errors, error_dict=None):
     else:
         error_dict[field] = str(errors)
     return error_dict
+
+
+@cache_function_result(cache_until=CacheBustCondition.any_package_updated)
+def get_listing(
+    owner: Union[Team, str, None] = None,
+    name: Union[str, None] = None,
+    community: Union[Community, None] = None,
+) -> PackageListing:
+    filters = Q()
+    if owner:
+        team_name = owner.name if isinstance(owner, Team) else owner
+        filters.add(Q(package__owner__name=team_name), Q.AND)
+    if name:
+        filters.add(Q(package__name=name), Q.AND)
+    if community:
+        filters.add(Q(community=community), Q.AND)
+    package_listing = (
+        PackageListing.objects.active()
+        .filter(filters)
+        .select_related(
+            "package",
+            "package__owner",
+            "package__latest",
+        )
+        .prefetch_related(
+            "categories",
+        )
+        .first()
+    )
+    if not package_listing:
+        raise Http404("No matching package found")
+    return package_listing
+
+
+def solve_listing(
+    owner: Union[Team, str, None] = None,
+    name: Union[str, None] = None,
+    community: Union[Community, None] = None,
+):
+    try:
+        if community is None:
+            raise ValueError("Community is None, skip trying to fetch with it")
+        listing = get_listing(
+            owner=owner,
+            name=name,
+            community=community,
+        )
+    except (Http404, ValueError):  # Try to find in another community
+        listing = get_listing(
+            owner=owner,
+            name=name,
+        )
+    return listing

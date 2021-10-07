@@ -9,7 +9,11 @@ from django.utils.functional import cached_property
 from thunderstore.cache.cache import CacheBustCondition, invalidate_cache
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import ChoiceEnum, check_validity
+from thunderstore.core.utils import (
+    ChoiceEnum,
+    build_url_from_site_object,
+    check_validity,
+)
 
 
 class PackageListingQueryset(models.QuerySet):
@@ -92,6 +96,27 @@ class PackageListing(TimestampMixin, models.Model):
             "packages.detail",
             kwargs={"owner": self.package.owner.name, "name": self.package.name},
         )
+
+    def get_package_version_absolute_url(self, version):
+        return reverse(
+            "packages.version.detail",
+            kwargs={
+                "owner": self.package.owner.name,
+                "name": self.package.name,
+                "version": version,
+            },
+        )
+
+    def get_full_url(self, version=None):
+        if version:
+            return build_url_from_site_object(
+                self.get_package_version_absolute_url(version),
+                self.community.sites.first().site,
+            )
+        else:
+            return build_url_from_site_object(
+                self.get_absolute_url(), self.community.sites.first().site
+            )
 
     @cached_property
     def owner_url(self):

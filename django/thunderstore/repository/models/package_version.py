@@ -2,6 +2,7 @@ import re
 import uuid
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
@@ -10,6 +11,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
 
+from thunderstore.core.utils import build_url_from_site_object
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
 from thunderstore.webhooks.models import Webhook
@@ -144,6 +146,19 @@ class PackageVersion(models.Model):
                 "version": self.version_number,
             },
         )
+
+    def get_absolute_url(self):
+        return reverse(
+            "packages.version.detail",
+            kwargs={
+                "owner": self.package.owner.name,
+                "name": self.name,
+                "version": self.version_number,
+            },
+        )
+
+    def get_full_url(self, site: Site):
+        return build_url_from_site_object(self.get_absolute_url(), site)
 
     def get_install_url(self, request):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
