@@ -638,3 +638,36 @@ def test_uploader_identity_name_is_read_only(uploader_identity: UploaderIdentity
 @pytest.mark.django_db
 def test_uploader_identity_settings_url(uploader_identity: UploaderIdentity):
     assert bool(uploader_identity.settings_url)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("role", UploaderIdentityMemberRole.options() + [None])
+def test_uploader_identity_ensure_can_create_service_account(
+    uploader_identity: UploaderIdentity, user_type: str, role: str
+) -> None:
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user_type in TestUserTypes.fake_users():
+        with pytest.raises(ValidationError) as e:
+            uploader_identity.ensure_can_create_service_account(user)
+        assert "Must be authenticated" in str(e.value)
+    elif user_type == TestUserTypes.deactivated_user:
+        with pytest.raises(ValidationError) as e:
+            uploader_identity.ensure_can_create_service_account(user)
+        assert "User has been deactivated" in str(e.value)
+    elif role is None:
+        with pytest.raises(ValidationError) as e:
+            uploader_identity.ensure_can_create_service_account(user)
+        assert "Must be a member to create a service account" in str(e.value)
+    else:
+        UploaderIdentityMember.objects.create(
+            user=user,
+            identity=uploader_identity,
+            role=role,
+        )
+        if role == UploaderIdentityMemberRole.member:
+            with pytest.raises(ValidationError) as e:
+                uploader_identity.ensure_can_create_service_account(user)
+            assert "Must be an owner to create a service account" in str(e.value)
+        if role == UploaderIdentityMemberRole.owner:
+            assert uploader_identity.ensure_can_create_service_account(user) is None
