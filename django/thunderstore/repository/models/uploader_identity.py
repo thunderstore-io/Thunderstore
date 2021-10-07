@@ -121,8 +121,8 @@ class UploaderIdentity(models.Model):
         return super().save(*args, **kwargs)
 
     @property
-    def member_count(self):
-        return self.members.count()
+    def real_user_count(self):
+        return self.members.real_users().count()
 
     @property
     def settings_url(self):

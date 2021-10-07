@@ -4,6 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
+from thunderstore.account.factories import ServiceAccountFactory
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import (
@@ -231,14 +232,22 @@ def test_uploader_identity_member_manager_real_user_owners(
 
 
 @pytest.mark.django_db
-def test_uploader_identity_member_count(uploader_identity) -> None:
+def test_uploader_identity_real_user_count(uploader_identity) -> None:
     assert uploader_identity.members.count() == 0
-    assert uploader_identity.member_count == 0
+    assert uploader_identity.members.real_users().count() == 0
+    assert uploader_identity.real_user_count == 0
     UploaderIdentityMember.objects.create(
         user=UserFactory(), identity=uploader_identity
     )
     assert uploader_identity.members.count() == 1
-    assert uploader_identity.member_count == 1
+    assert uploader_identity.members.real_users().count() == 1
+    assert uploader_identity.real_user_count == 1
+    UploaderIdentityMember.objects.create(
+        user=ServiceAccountFactory().user, identity=uploader_identity
+    )
+    assert uploader_identity.members.count() == 2
+    assert uploader_identity.members.real_users().count() == 1
+    assert uploader_identity.real_user_count == 1
 
 
 @pytest.mark.django_db
