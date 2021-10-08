@@ -219,23 +219,6 @@ class UploaderIdentity(models.Model):
         if membership.role != UploaderIdentityMemberRole.owner:
             raise ValidationError("Must be an owner to delete a service account")
 
-    def ensure_can_generate_service_account_token(
-        self, user: Optional[UserType]
-    ) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        membership = self.get_membership_for_user(user)
-        if not membership:
-            raise ValidationError(
-                "Must be a member to generate a service account token",
-            )
-        if membership.role != UploaderIdentityMemberRole.owner:
-            raise ValidationError(
-                "Must be an owner to generate a service account token",
-            )
-
     def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
             raise ValidationError("Must be authenticated")

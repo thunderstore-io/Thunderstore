@@ -1,6 +1,5 @@
 from django import forms
 from django.db import transaction
-from rest_framework.authtoken.models import Token
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.core.types import UserType
@@ -68,23 +67,3 @@ class EditServiceAccountForm(forms.Form):
         service_account.user.first_name = self.cleaned_data["nickname"]
         service_account.user.save(update_fields=("first_name",))
         return service_account
-
-
-class CreateTokenForm(forms.Form):
-    def __init__(self, user: UserType, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.user = user
-        self.fields["service_account"] = forms.ModelChoiceField(
-            queryset=ServiceAccount.objects.filter(owner__members__user=user),
-        )
-
-    def clean_service_account(self) -> ServiceAccount:
-        service_account = self.cleaned_data["service_account"]
-        service_account.owner.ensure_can_generate_service_account_token(self.user)
-        return service_account
-
-    @transaction.atomic
-    def save(self) -> Token:
-        service_account_user = self.cleaned_data["service_account"].user
-        Token.objects.filter(user=service_account_user).delete()
-        return Token.objects.create(user=service_account_user)

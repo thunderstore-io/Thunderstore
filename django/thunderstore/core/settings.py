@@ -451,7 +451,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "thunderstore.account.authentication.TokenAuthentication",
+        "thunderstore.account.authentication.ServiceAccountTokenAuthentication",
         "thunderstore.account.authentication.UserSessionTokenAuthentication",
     ],
     "EXCEPTION_HANDLER": "thunderstore.core.exception_handler.exception_handler",
