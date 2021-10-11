@@ -444,6 +444,8 @@ class PackageVersionDetailView(DetailView):
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
+        if not listing.package.is_active:
+            raise Http404("Main package is deactivated")
         return get_object_or_404(
             PackageVersion,
             package=listing.package,

@@ -1,5 +1,9 @@
+from unittest import mock
+from urllib import request
+
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import Http404
 from django.urls import reverse
 
 from thunderstore.core.factories import UserFactory
@@ -8,6 +12,7 @@ from ...community.models import PackageListing, PackageListingReviewStatus
 from ..factories import PackageFactory, PackageVersionFactory, UploaderIdentityFactory
 from ..models import UploaderIdentity
 from ..package_upload import PackageUploadForm
+from ..views.repository import PackageVersionDetailView
 
 
 @pytest.mark.django_db
@@ -77,14 +82,98 @@ def test_package_detail_view(client, active_package, community_site):
 
 
 @pytest.mark.django_db
-def test_package_detail_version_view(client, active_version, community_site):
+def test_package_detail_version_view(
+    client, active_version_with_listing, community_site
+):
     response = client.get(
-        active_version.get_absolute_url(), HTTP_HOST=community_site.site.domain
+        active_version_with_listing.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
-    assert active_version.name in response_text
-    assert active_version.owner.name in response_text
+    assert "Page not found" not in response_text
+    assert active_version_with_listing.name in response_text
+    assert active_version_with_listing.owner.name in response_text
+
+
+@pytest.mark.django_db
+def test_package_detail_version_view_cannot_be_viewed_by_user(
+    client, uploader_identity_member, active_version_with_listing, community_site
+):
+    community_site.community.require_package_listing_approval = True
+    community_site.community.save()
+
+    client.force_login(user=uploader_identity_member.user)
+    response = client.get(
+        active_version_with_listing.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    response_text = response.content.decode("utf-8")
+    assert "Page not found" in response_text
+
+
+@pytest.mark.django_db
+def test_package_detail_version_view_can_be_viewed_by_user(
+    client, uploader_identity_member, active_version_with_listing, community_site
+):
+    community_site.community.require_package_listing_approval = True
+    community_site.community.save()
+    uploader_identity_member.identity = active_version_with_listing.owner
+    uploader_identity_member.save()
+
+    client.force_login(user=uploader_identity_member.user)
+    response = client.get(
+        active_version_with_listing.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    response_text = response.content.decode("utf-8")
+    assert "Page not found" not in response_text
+    assert active_version_with_listing.name in response_text
+    assert active_version_with_listing.owner.name in response_text
+
+
+@pytest.mark.django_db
+def test_package_detail_version_view_main_package_deactivated(
+    client, active_version_with_listing, community_site
+):
+    active_version_with_listing.package.is_active = False
+    active_version_with_listing.package.save()
+    response = client.get(
+        active_version_with_listing.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    response_text = response.content.decode("utf-8")
+    assert "Page not found" in response_text
+
+
+@pytest.mark.django_db
+def test_package_detail_version_view_get_object(
+    active_version_with_listing, uploader_identity_member, community_site
+):
+    owner = active_version_with_listing.package.owner
+    name = active_version_with_listing.package.name
+    version = active_version_with_listing
+    mock_request = mock.Mock(spec=request.Request)
+    mock_request.user = uploader_identity_member.user
+    mock_request.community = community_site.community
+    view = PackageVersionDetailView(
+        kwargs={"owner": owner, "name": name, "version": version}, request=mock_request
+    )
+
+    active_version_with_listing.package.is_active = False
+    active_version_with_listing.package.save()
+    with pytest.raises(Http404) as excinfo:
+        view.get_object()
+    assert "Main package is deactivated" in str(excinfo.value)
+
+    community_site.community.require_package_listing_approval = True
+    community_site.community.save()
+    with pytest.raises(Http404) as excinfo:
+        view.get_object()
+    assert "Package is waiting for approval or has been rejected" in str(excinfo.value)
 
 
 @pytest.mark.django_db

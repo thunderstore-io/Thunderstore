@@ -121,6 +121,15 @@ def active_version(active_package):
     return active_package.versions.first()
 
 
+@pytest.fixture(scope="function")
+def active_version_with_listing(community, active_package):
+    PackageListing.objects.create(
+        community=community,
+        package=active_package,
+    )
+    return active_package.versions.first()
+
+
 @pytest.fixture()
 def release_webhook(community_site):
     return Webhook.objects.create(
