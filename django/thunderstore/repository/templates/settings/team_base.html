@@ -9,10 +9,10 @@
     </div>
     <div class="card-body">
         <ul class="pl-3 mb-0">
-            <li><a href="{% url "settings.teams.detail" team.name %}">Members</a></li>
-        {# TODO: Implement    <li><a href="{% url "settings.teams.detail.service_accounts" team.name %}">Service Accounts</a></li>#}
-            <li><a href="{% url "settings.teams.detail.leave" team.name %}" class="text-danger">Leave</a></li>
-            <li><a href="{% url "settings.teams.detail.disband" team.name %}" class="text-danger">Disband</a></li>
+            <li><a href="{% url 'settings.teams.detail' team.name %}">Members</a></li>
+            <li><a href="{% url 'settings.teams.detail.service_accounts' team.name %}">Service Accounts</a></li>
+            <li><a href="{% url 'settings.teams.detail.leave' team.name %}" class="text-danger">Leave</a></li>
+            <li><a href="{% url 'settings.teams.detail.disband' team.name %}" class="text-danger">Disband</a></li>
         </ul>
     </div>
 </div>

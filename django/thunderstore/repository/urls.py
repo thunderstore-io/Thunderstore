@@ -13,11 +13,13 @@ from thunderstore.repository.views import (
 )
 from thunderstore.repository.views.team_settings import (
     SettingsTeamAddMemberView,
+    SettingsTeamAddServiceAccountView,
     SettingsTeamCreateView,
     SettingsTeamDetailView,
     SettingsTeamDisbandView,
     SettingsTeamLeaveView,
     SettingsTeamListView,
+    SettingsTeamServiceAccountView,
 )
 
 urlpatterns = [
@@ -73,12 +75,16 @@ settings_urls = [
         SettingsTeamAddMemberView.as_view(),
         name="settings.teams.detail.add_member",
     ),
-    # TODO: Enable
-    # path(
-    #     "teams/<str:name>/service-accounts/",
-    #     SettingsTeamDetailView.as_view(),
-    #     name="settings.teams.detail.service_accounts",
-    # ),
+    path(
+        "teams/<str:name>/service-accounts/",
+        SettingsTeamServiceAccountView.as_view(),
+        name="settings.teams.detail.service_accounts",
+    ),
+    path(
+        "teams/<str:name>/add-service-account/",
+        SettingsTeamAddServiceAccountView.as_view(),
+        name="settings.teams.detail.add_service_account",
+    ),
     path(
         "teams/<str:name>/leave/",
         SettingsTeamLeaveView.as_view(),

@@ -121,13 +121,20 @@ class UploaderIdentity(models.Model):
         return super().save(*args, **kwargs)
 
     @property
-    def member_count(self):
-        return self.members.count()
+    def real_user_count(self):
+        return self.members.real_users().count()
 
     @property
     def settings_url(self):
         return reverse(
             "settings.teams.detail",
+            kwargs={"name": self.name},
+        )
+
+    @property
+    def service_accounts_url(self):
+        return reverse(
+            "settings.teams.detail.service_accounts",
             kwargs={"name": self.name},
         )
 
@@ -218,23 +225,6 @@ class UploaderIdentity(models.Model):
             raise ValidationError("Must be a member to delete a service account")
         if membership.role != UploaderIdentityMemberRole.owner:
             raise ValidationError("Must be an owner to delete a service account")
-
-    def ensure_can_generate_service_account_token(
-        self, user: Optional[UserType]
-    ) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        membership = self.get_membership_for_user(user)
-        if not membership:
-            raise ValidationError(
-                "Must be a member to generate a service account token",
-            )
-        if membership.role != UploaderIdentityMemberRole.owner:
-            raise ValidationError(
-                "Must be an owner to generate a service account token",
-            )
 
     def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:

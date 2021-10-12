@@ -11,7 +11,7 @@ from PIL import Image
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
-from thunderstore.account.forms import CreateServiceAccountForm, CreateTokenForm
+from thunderstore.account.forms import CreateServiceAccountForm
 from thunderstore.account.models import ServiceAccount
 from thunderstore.community.models import (
     Community,
@@ -60,6 +60,15 @@ def uploader_identity_member(uploader_identity):
         identity=uploader_identity,
         user=UserFactory(),
         role=UploaderIdentityMemberRole.member,
+    )
+
+
+@pytest.fixture()
+def uploader_identity_owner(uploader_identity):
+    return UploaderIdentityMember.objects.create(
+        identity=uploader_identity,
+        user=UserFactory(),
+        role=UploaderIdentityMemberRole.owner,
     )
 
 
@@ -208,18 +217,6 @@ def service_account(user, uploader_identity) -> ServiceAccount:
     form = CreateServiceAccountForm(
         user,
         data={"identity": uploader_identity, "nickname": "Nickname"},
-    )
-    assert form.is_valid()
-    return form.save()
-
-
-@pytest.fixture()
-def service_account_token(service_account) -> Token:
-    member = service_account.owner.members.first()
-    assert member.role == UploaderIdentityMemberRole.owner
-    form = CreateTokenForm(
-        member.user,
-        data={"service_account": service_account},
     )
     assert form.is_valid()
     return form.save()
