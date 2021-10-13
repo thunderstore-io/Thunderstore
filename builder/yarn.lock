@@ -4145,9 +4145,9 @@ react-dom@^17.0.2:
     scheduler "^0.20.2"
 
 react-hook-form@^7.10.0:
-  version "7.10.0"
-  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.10.0.tgz#665c9897957a2a8bbf720cef9e913ba1b22b0e86"
-  integrity sha512-J6jJDw61TDNG0cEyLlYKUTPTwJH1Gfp8S8+m5Dt3mLY5vEy7UwKr60rl11ESofKmliFH8DconTVFnZgblhGvyg==
+  version "7.17.3"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.17.3.tgz#3ed85bed3a6aa4d013e0027a93799d668064c201"
+  integrity sha512-hUKOVtz6Wb319VJRl6OKV8vAhLo5P5raOQEG8lJZt/VXBMv6n2adgpIl1e+36rjX126Wq351ipM0goCgj4UUzQ==
 
 react-input-autosize@^3.0.0:
   version "3.0.0"
