@@ -1,4 +1,10 @@
+from typing import Generator
+
+import celery
 import pytest
+from django.test import override_settings
+
+from thunderstore.core.tasks import celery_post
 
 
 def test_celery_setup(celery_app):
@@ -22,6 +28,7 @@ KNOWN_CELERY_IDS = (
     "celery.chain",
     "celery.starmap",
     "celery.backend_cleanup",
+    "thunderstore.core.tasks.celery_post",
     "thunderstore.repository.tasks.update_api_caches",
     "thunderstore.usermedia.tasks.celery_cleanup_expired_uploads",
 )
@@ -86,3 +93,14 @@ def test_celery_task_removal_handled_correctly(celery_app):
             + "\n    ".join(removed_tasks)
             + "\nFollow the instructions written to this test's comments.",
         )
+
+
+@pytest.mark.django_db
+@override_settings(CELERY_ALWAYS_EAGER=True)
+def test_celery_post(
+    celery_app: celery.Celery, http_server: Generator[str, None, None]
+):
+    celery_response = celery_post.delay("http://localhost:8888")
+    assert celery_response.state == "SUCCESS"
+    assert celery_response.result.status_code == 200
+    assert isinstance(celery_response, celery.result.EagerResult)

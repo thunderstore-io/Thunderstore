@@ -1,6 +1,9 @@
 import io
 import json
+import threading
 from copy import copy
+from http.server import BaseHTTPRequestHandler
+from http.server import HTTPServer as SuperHTTPServer
 from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -38,6 +41,41 @@ from thunderstore.repository.models import (
 )
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
+
+
+class HTTPServer(SuperHTTPServer):
+    """
+    Class for wrapper to run SimpleHTTPServer on Thread.
+    Ctrl +Only Thread remains dead when terminated with C.
+    Keyboard Interrupt passes.
+    """
+
+    def run(self):
+        try:
+            self.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.server_close()
+
+
+class PostHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        self.send_response(200)
+        self.end_headers()
+        return
+
+
+@pytest.fixture()
+def http_server():
+    host, port = "localhost", 8888
+    url = f"http://{host}:{port}/"
+    server = HTTPServer((host, port), PostHTTPRequestHandler)
+    thread = threading.Thread(None, server.run)
+    thread.start()
+    yield url
+    server.shutdown()
+    thread.join()
 
 
 @pytest.fixture()
