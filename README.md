@@ -260,6 +260,12 @@ supported.
 -   `DB_SERVER_CA`: Base64 encoded server CA to use for the database connection.
     Will be placed to `server-ca.pem`
 
+The default local database configured in `docker-compose.yml` can be accessed:
+
+-   From shell: `docker-compose exec db psql -U django`
+-   From browser: navigate to `localhost:8080/?pgsql=db&username=django`
+    and use password `django`
+
 ### Redis caching
 
 You can enable caching to the redis backend by supplying a redis URL
