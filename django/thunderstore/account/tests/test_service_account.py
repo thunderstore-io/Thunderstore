@@ -8,10 +8,7 @@ from thunderstore.account.forms import (
 )
 from thunderstore.account.models import ServiceAccount
 from thunderstore.core.factories import UserFactory
-from thunderstore.repository.models import (
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
-)
+from thunderstore.repository.models import TeamMember, TeamMemberRole
 
 
 @pytest.mark.django_db
@@ -21,15 +18,15 @@ def test_service_account_fixture(service_account):
 
 
 @pytest.mark.django_db
-def test_service_account_create(user, uploader_identity):
-    UploaderIdentityMember.objects.create(
+def test_service_account_create(user, team):
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
     form = CreateServiceAccountForm(
         user,
-        data={"identity": uploader_identity, "nickname": "Nickname"},
+        data={"team": team, "nickname": "Nickname"},
     )
     assert form.is_valid() is True
     service_account = form.save()
@@ -41,24 +38,24 @@ def test_service_account_create(user, uploader_identity):
     assert service_account.created_at is not None
     assert service_account.last_used is None
     assert (
-        uploader_identity.members.filter(
+        team.members.filter(
             user=service_account.user,
-            role=UploaderIdentityMemberRole.member,
+            role=TeamMemberRole.member,
         ).exists()
         is True
     )
 
 
 @pytest.mark.django_db
-def test_service_account_create_nickname_too_long(user, uploader_identity):
-    UploaderIdentityMember.objects.create(
+def test_service_account_create_nickname_too_long(user, team):
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
     form = CreateServiceAccountForm(
         user,
-        data={"identity": uploader_identity, "nickname": "x" * 1000},
+        data={"team": team, "nickname": "x" * 1000},
     )
     assert form.is_valid() is False
     assert len(form.errors["nickname"]) == 1
@@ -69,40 +66,40 @@ def test_service_account_create_nickname_too_long(user, uploader_identity):
 
 
 @pytest.mark.django_db
-def test_service_account_create_not_member(user, uploader_identity):
-    assert uploader_identity.members.filter(user=user).exists() is False
+def test_service_account_create_not_member(user, team):
+    assert team.members.filter(user=user).exists() is False
     form = CreateServiceAccountForm(
         user,
-        data={"identity": uploader_identity, "nickname": "Nickname"},
+        data={"team": team, "nickname": "Nickname"},
     )
     assert form.is_valid() is False
-    assert len(form.errors["identity"]) == 1
+    assert len(form.errors["team"]) == 1
     assert (
-        form.errors["identity"][0]
+        form.errors["team"][0]
         == "Select a valid choice. That choice is not one of the available choices."
     )
 
 
 @pytest.mark.django_db
-def test_service_account_create_not_owner(user, uploader_identity):
-    UploaderIdentityMember.objects.create(
+def test_service_account_create_not_owner(user, team):
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.member,
+        team=team,
+        role=TeamMemberRole.member,
     )
     form = CreateServiceAccountForm(
         user,
-        data={"identity": uploader_identity, "nickname": "Nickname"},
+        data={"team": team, "nickname": "Nickname"},
     )
     assert form.is_valid() is False
-    assert len(form.errors["identity"]) == 1
-    assert form.errors["identity"][0] == "Must be an owner to create a service account"
+    assert len(form.errors["team"]) == 1
+    assert form.errors["team"][0] == "Must be an owner to create a service account"
 
 
 @pytest.mark.django_db
 def test_service_account_delete(django_user_model, service_account):
     member = service_account.owner.members.first()
-    assert member.role == UploaderIdentityMemberRole.owner
+    assert member.role == TeamMemberRole.owner
     assert django_user_model.objects.filter(pk=service_account.user.pk).exists() is True
     form = DeleteServiceAccountForm(
         member.user,
@@ -135,10 +132,10 @@ def test_service_account_delete_not_member(service_account):
 @pytest.mark.django_db
 def test_service_account_delete_not_owner(service_account):
     user = UserFactory.create()
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=service_account.owner,
-        role=UploaderIdentityMemberRole.member,
+        team=service_account.owner,
+        role=TeamMemberRole.member,
     )
     form = DeleteServiceAccountForm(
         user,
@@ -155,7 +152,7 @@ def test_service_account_delete_not_owner(service_account):
 @pytest.mark.django_db
 def test_service_account_edit_nickname(service_account):
     member = service_account.owner.members.first()
-    assert member.role == UploaderIdentityMemberRole.owner
+    assert member.role == TeamMemberRole.owner
     form = EditServiceAccountForm(
         member.user,
         data={"service_account": service_account, "nickname": "New nickname"},
@@ -174,7 +171,7 @@ def test_service_account_edit_nickname(service_account):
 @pytest.mark.django_db
 def test_service_account_edit_nickname_too_long(service_account):
     member = service_account.owner.members.first()
-    assert member.role == UploaderIdentityMemberRole.owner
+    assert member.role == TeamMemberRole.owner
     form = EditServiceAccountForm(
         member.user,
         data={"service_account": service_account, "nickname": "x" * 1000},
@@ -206,10 +203,10 @@ def test_service_account_edit_not_member(service_account):
 @pytest.mark.django_db
 def test_service_account_edit_not_owner(service_account):
     user = UserFactory.create()
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=service_account.owner,
-        role=UploaderIdentityMemberRole.member,
+        team=service_account.owner,
+        role=TeamMemberRole.member,
     )
     form = EditServiceAccountForm(
         user,

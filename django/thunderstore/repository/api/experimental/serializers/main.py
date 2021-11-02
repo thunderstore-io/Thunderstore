@@ -8,7 +8,7 @@ from thunderstore.community.api.experimental.serializers import (
 )
 from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.core.utils import make_full_url
-from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
+from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
 from thunderstore.repository.package_upload import PackageUploadForm
 from thunderstore.repository.serializer_fields import ModelChoiceField
 
@@ -130,8 +130,21 @@ class PackageUploadAuthorNameField(serializers.SlugRelatedField):
         super().__init__(*args, **kwargs)
 
     def get_queryset(self):
-        return UploaderIdentity.objects.exclude(
+        return Team.objects.exclude(
             ~Q(members__user=self.context["request"].user),
+        )
+
+
+class NamespaceField(serializers.SlugRelatedField):
+    """Namespace's name metadata field."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["slug_field"] = "name"
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        return Namespace.objects.exclude(
+            ~Q(teams__members__user=self.context["request"].user),
         )
 
 
@@ -161,6 +174,7 @@ class PackageUploadMetadataSerializer(serializers.Serializer):
     """Non-file fields used for package upload."""
 
     author_name = PackageUploadAuthorNameField()
+    namespace = NamespaceField()
     categories = serializers.ListField(
         child=CommunityFilteredModelChoiceField(
             queryset=PackageCategory.objects.all(),
@@ -192,6 +206,7 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
                 "categories": metadata.get("categories"),
                 "has_nsfw_content": metadata.get("has_nsfw_content"),
                 "team": metadata.get("author_name"),
+                "namespace": metadata.get("namespace"),
                 "communities": metadata.get("communities"),
             },
             files={"file": data.get("file")},
