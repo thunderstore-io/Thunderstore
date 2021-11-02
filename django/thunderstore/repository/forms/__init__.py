@@ -1,1 +1,1 @@
-from .uploader_identity import *
+from .team import *

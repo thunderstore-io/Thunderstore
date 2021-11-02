@@ -9,10 +9,10 @@ from thunderstore.account.tokens import (
     get_service_account_api_token,
     hash_service_account_api_token,
 )
-from thunderstore.repository.models import UploaderIdentityMemberRole
+from thunderstore.repository.models import TeamMemberRole
 
 if TYPE_CHECKING:
-    from thunderstore.repository.models import UploaderIdentity, UploaderIdentityMember
+    from thunderstore.repository.models import Team, TeamMember
 
 User = get_user_model()
 
@@ -25,7 +25,7 @@ class ServiceAccount(models.Model):
         on_delete=models.CASCADE,
     )
     owner = models.ForeignKey(
-        "repository.UploaderIdentity",
+        "repository.Team",
         related_name="service_accounts",
         on_delete=models.CASCADE,
     )
@@ -35,9 +35,7 @@ class ServiceAccount(models.Model):
 
     @classmethod
     @transaction.atomic
-    def create(
-        cls, owner: "UploaderIdentity", nickname: str
-    ) -> Tuple["ServiceAccount", str]:
+    def create(cls, owner: "Team", nickname: str) -> Tuple["ServiceAccount", str]:
         # All service accounts are bound to a dummy user account.
         service_account_id = ulid2.generate_ulid_as_uuid()
         username = cls.create_username(service_account_id.hex)
@@ -48,7 +46,7 @@ class ServiceAccount(models.Model):
         )
         owner.add_member(
             user=user,
-            role=UploaderIdentityMemberRole.member,
+            role=TeamMemberRole.member,
         )
 
         # Force token uniqueness.
@@ -73,7 +71,7 @@ class ServiceAccount(models.Model):
         return self.user.first_name
 
     @property
-    def owner_membership(self) -> "Optional[UploaderIdentityMember]":
+    def owner_membership(self) -> "Optional[TeamMember]":
         return self.owner.members.filter(user=self.user).first()
 
     @transaction.atomic

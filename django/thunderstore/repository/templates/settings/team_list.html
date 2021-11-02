@@ -21,9 +21,9 @@
             <tbody>
                 {% for membership in team_memberships %}
                 <tr>
-                    <td><a href="{{ membership.identity.settings_url }}">{{ membership.identity.name }}</a></td>
+                    <td><a href="{{ membership.team.settings_url }}">{{ membership.team.name }}</a></td>
                     <td>{{ membership.role }}</td>
-                    <td>{{ membership.identity.real_user_count }}</td>
+                    <td>{{ membership.team.real_user_count }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

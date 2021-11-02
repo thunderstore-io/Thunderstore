@@ -10,8 +10,8 @@ from thunderstore.repository.models import (
     Package,
     PackageRating,
     PackageVersion,
-    UploaderIdentity,
-    UploaderIdentityMember,
+    Team,
+    TeamMember,
 )
 
 
@@ -25,13 +25,13 @@ class PackageRatingAdmin(admin.ModelAdmin):
     )
 
 
-class UploaderIdentityMemberAdmin(admin.StackedInline):
-    model = UploaderIdentityMember
+class TeamMemberAdmin(admin.StackedInline):
+    model = TeamMember
     extra = 0
     raw_id_fields = ("user",)
     list_display = (
         "user",
-        "identity",
+        "team",
         "role",
     )
 
@@ -56,10 +56,10 @@ def activate(modeladmin, request, queryset: QuerySet):
 activate.short_description = "Activate"
 
 
-@admin.register(UploaderIdentity)
-class UploaderIdentityAdmin(admin.ModelAdmin):
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
     inlines = [
-        UploaderIdentityMemberAdmin,
+        TeamMemberAdmin,
     ]
 
     def get_readonly_fields(self, request, obj=None):

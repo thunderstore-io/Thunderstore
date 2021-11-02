@@ -40,7 +40,7 @@ def get_package_dependants_list(package_pk: int):
 class Package(models.Model):
     objects = PackageQueryset.as_manager()
     owner = models.ForeignKey(
-        "repository.UploaderIdentity",
+        "repository.Namespace",
         on_delete=models.PROTECT,
         related_name="owned_packages",
     )

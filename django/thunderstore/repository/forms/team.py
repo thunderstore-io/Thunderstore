@@ -5,24 +5,19 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import (
-    UploaderIdentity,
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
-    transaction,
-)
+from thunderstore.repository.models import Team, TeamMember, TeamMemberRole, transaction
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
 User = get_user_model()
 
 
-class CreateUploaderIdentityForm(forms.ModelForm):
+class CreateTeamForm(forms.ModelForm):
     name = forms.CharField(
         validators=[PackageReferenceComponentValidator("Author name")]
     )
 
     class Meta:
-        model = UploaderIdentity
+        model = Team
         fields = ["name"]
 
     def __init__(self, user: UserType, *args, **kwargs):
@@ -31,7 +26,7 @@ class CreateUploaderIdentityForm(forms.ModelForm):
 
     def clean_name(self):
         name = self.cleaned_data["name"]
-        if UploaderIdentity.objects.filter(name__iexact=name.lower()).exists():
+        if Team.objects.filter(name__iexact=name.lower()).exists():
             raise ValidationError(f"A team with the provided name already exists")
         return name
 
@@ -43,13 +38,13 @@ class CreateUploaderIdentityForm(forms.ModelForm):
         return super().clean()
 
     @transaction.atomic
-    def save(self, *args, **kwargs) -> UploaderIdentity:
+    def save(self, *args, **kwargs) -> Team:
         instance = super().save()
-        instance.add_member(user=self.user, role=UploaderIdentityMemberRole.owner)
+        instance.add_member(user=self.user, role=TeamMemberRole.owner)
         return instance
 
 
-class AddUploaderIdentityMemberForm(forms.ModelForm):
+class AddTeamMemberForm(forms.ModelForm):
     user = forms.ModelChoiceField(
         queryset=(User.objects.filter(service_account=None, is_active=True)),
         to_field_name="username",
@@ -57,35 +52,33 @@ class AddUploaderIdentityMemberForm(forms.ModelForm):
     user: Optional[UserType]
 
     class Meta:
-        model = UploaderIdentityMember
-        fields = ["role", "identity", "user"]
+        model = TeamMember
+        fields = ["role", "team", "user"]
 
     def __init__(self, user: Optional[UserType], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
         if user is not None and user.is_authenticated:
-            identity_qs = UploaderIdentity.objects.filter(members__user=user)
+            team_qs = Team.objects.filter(members__user=user)
         else:
-            identity_qs = UploaderIdentity.objects.none()
-        self.fields["identity"] = forms.ModelChoiceField(
-            queryset=identity_qs,
+            team_qs = Team.objects.none()
+        self.fields["team"] = forms.ModelChoiceField(
+            queryset=team_qs,
         )
-        self.fields["role"].initial = UploaderIdentityMemberRole.member
+        self.fields["role"].initial = TeamMemberRole.member
 
     def clean(self):
         result = super().clean()
-        identity = self.cleaned_data.get("identity")
-        if identity:
-            identity.ensure_user_can_manage_members(self.user)
+        team = self.cleaned_data.get("team")
+        if team:
+            team.ensure_user_can_manage_members(self.user)
         else:
-            raise ValidationError("Invalid uploader identity")
+            raise ValidationError("Invalid team")
         return result
 
 
-class RemoveUploaderIdentityMemberForm(forms.Form):
-    membership = forms.ModelChoiceField(
-        UploaderIdentityMember.objects.real_users(), required=True
-    )
+class RemoveTeamMemberForm(forms.Form):
+    membership = forms.ModelChoiceField(TeamMember.objects.real_users(), required=True)
 
     def __init__(self, user: Optional[UserType], *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -94,17 +87,17 @@ class RemoveUploaderIdentityMemberForm(forms.Form):
     def clean_membership(self):
         membership = self.cleaned_data["membership"]
         if membership.user != self.user:
-            membership.identity.ensure_user_can_manage_members(self.user)
-        membership.identity.ensure_member_can_be_removed(membership)
+            membership.team.ensure_user_can_manage_members(self.user)
+        membership.team.ensure_member_can_be_removed(membership)
         return membership
 
     def save(self):
         self.cleaned_data["membership"].delete()
 
 
-class EditUploaderIdentityMemberForm(forms.ModelForm):
+class EditTeamMemberForm(forms.ModelForm):
     class Meta:
-        model = UploaderIdentityMember
+        model = TeamMember
         fields = ["role"]
 
     def __init__(self, user: Optional[UserType], *args, **kwargs):
@@ -114,35 +107,35 @@ class EditUploaderIdentityMemberForm(forms.ModelForm):
     def clean_role(self):
         new_role = self.cleaned_data.get("role", None)
         try:
-            identity = self.instance.identity
+            team = self.instance.team
         except ObjectDoesNotExist:
-            identity = None
-        if identity:
-            identity.ensure_member_role_can_be_changed(
+            team = None
+        if team:
+            team.ensure_member_role_can_be_changed(
                 member=self.instance, new_role=new_role
             )
         else:
-            raise ValidationError("Uploader Identity is missing")
+            raise ValidationError("Team is missing")
         return new_role
 
     def clean(self):
         try:
-            identity = self.instance.identity
+            team = self.instance.team
         except ObjectDoesNotExist:
-            identity = None
-        if identity:
-            identity.ensure_user_can_manage_members(self.user)
+            team = None
+        if team:
+            team.ensure_user_can_manage_members(self.user)
         else:
-            raise ValidationError("Uploader Identity is missing")
+            raise ValidationError("Team is missing")
         return super().clean()
 
 
-class DisbandUploaderIdentityForm(forms.ModelForm):
+class DisbandTeamForm(forms.ModelForm):
     verification = forms.CharField()
-    instance: UploaderIdentity
+    instance: Team
 
     class Meta:
-        model = UploaderIdentity
+        model = Team
         fields = []
 
     def __init__(self, user: UserType, *args, **kwargs):
@@ -157,7 +150,7 @@ class DisbandUploaderIdentityForm(forms.ModelForm):
 
     def clean(self):
         if not self.instance.pk:
-            raise ValidationError("Missing uploader identity instance")
+            raise ValidationError("Missing team instance")
         self.instance.ensure_user_can_disband(self.user)
         return super().clean()
 

@@ -4,34 +4,42 @@ from factory.django import DjangoModelFactory
 from thunderstore.core.factories import UserFactory
 
 from .models import (
+    Namespace,
     Package,
     PackageVersion,
     PackageVersionDownloadEvent,
-    UploaderIdentity,
-    UploaderIdentityMember,
+    Team,
+    TeamMember,
 )
 
 
-class UploaderIdentityFactory(DjangoModelFactory):
+class TeamFactory(DjangoModelFactory):
     class Meta:
-        model = UploaderIdentity
+        model = Team
 
-    name = factory.Sequence(lambda n: f"TestIdentity{n}")
+    name = factory.Sequence(lambda n: f"TestTeam{n}")
 
 
-class UploaderIdentityMemberFactory(DjangoModelFactory):
+class TeamMemberFactory(DjangoModelFactory):
     class Meta:
-        model = UploaderIdentityMember
+        model = TeamMember
 
     user = factory.SubFactory(UserFactory)
-    identity = factory.SubFactory(UploaderIdentityFactory)
+    team = factory.SubFactory(TeamFactory)
+
+
+class NamespaceFactory(DjangoModelFactory):
+    class Meta:
+        model = Namespace
+
+    name = factory.Sequence(lambda n: f"TestNamespace{n}")
 
 
 class PackageFactory(DjangoModelFactory):
     class Meta:
         model = Package
 
-    owner = factory.SubFactory(UploaderIdentityFactory)
+    owner = factory.SubFactory(NamespaceFactory)
     name = factory.Faker("first_name")
 
 

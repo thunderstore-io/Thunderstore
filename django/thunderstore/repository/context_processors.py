@@ -1,8 +1,8 @@
-def uploader_identity(request):
+def team(request):
     if not request.user.is_authenticated:
         return {}
     name = request.user.username
-    membership = request.user.uploader_identities.first()
+    membership = request.user.teams.first()
     if membership:
-        name = membership.identity.name
-    return {"uploader_identity": name}
+        name = membership.team.name
+    return {"team": name}

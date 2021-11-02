@@ -18,7 +18,7 @@ class CurrentUserExperimentalApiView(APIView):
             rated_packages = request.user.package_ratings.select_related(
                 "package"
             ).values_list("package__uuid4", flat=True)
-            teams = request.user.uploader_identities.values_list("identity__name")
+            teams = request.user.teams.values_list("team__name")
             teams = [team[0] for team in teams]
         return Response(
             {

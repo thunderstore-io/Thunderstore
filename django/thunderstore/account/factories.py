@@ -7,7 +7,7 @@ from thunderstore.account.tokens import (
     hash_service_account_api_token,
 )
 from thunderstore.core.factories import UserFactory
-from thunderstore.repository.factories import UploaderIdentityFactory
+from thunderstore.repository.factories import TeamFactory
 
 
 class ServiceAccountFactory(DjangoModelFactory):
@@ -18,7 +18,7 @@ class ServiceAccountFactory(DjangoModelFactory):
         plaintext_token = None
 
     user = SubFactory(UserFactory)
-    owner = SubFactory(UploaderIdentityFactory)
+    owner = SubFactory(TeamFactory)
     api_token = LazyAttribute(
         lambda o: hash_service_account_api_token(
             o.plaintext_token or get_service_account_api_token()

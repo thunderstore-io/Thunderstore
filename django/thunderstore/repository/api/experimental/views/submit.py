@@ -91,6 +91,7 @@ class SubmitPackageApiView(APIView):
                 "categories": data.get("categories"),
                 "has_nsfw_content": data.get("has_nsfw_content"),
                 "team": data.get("author_name"),
+                "namespace": data.get("namespace"),
                 "communities": data.get("communities"),
             },
             files={"file": file},
