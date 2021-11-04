@@ -7,31 +7,31 @@ from .models import (
     Package,
     PackageVersion,
     PackageVersionDownloadEvent,
-    UploaderIdentity,
-    UploaderIdentityMember,
+    Team,
+    TeamMember,
 )
 
 
-class UploaderIdentityFactory(DjangoModelFactory):
+class TeamFactory(DjangoModelFactory):
     class Meta:
-        model = UploaderIdentity
+        model = Team
 
-    name = factory.Sequence(lambda n: f"TestIdentity{n}")
+    name = factory.Sequence(lambda n: f"TestTeam{n}")
 
 
-class UploaderIdentityMemberFactory(DjangoModelFactory):
+class TeamMemberFactory(DjangoModelFactory):
     class Meta:
-        model = UploaderIdentityMember
+        model = TeamMember
 
     user = factory.SubFactory(UserFactory)
-    identity = factory.SubFactory(UploaderIdentityFactory)
+    team = factory.SubFactory(TeamFactory)
 
 
 class PackageFactory(DjangoModelFactory):
     class Meta:
         model = Package
 
-    owner = factory.SubFactory(UploaderIdentityFactory)
+    owner = factory.SubFactory(TeamFactory)
     name = factory.Faker("first_name")
 
 

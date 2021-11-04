@@ -9,10 +9,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from PIL import Image
 
-from thunderstore.repository.models import (
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
-)
+from thunderstore.repository.models import TeamMember, TeamMemberRole
 from thunderstore.repository.package_reference import PackageReference
 
 
@@ -96,13 +93,13 @@ def test_api_experimental_upload_package_success(
     user,
     manifest_v1_package_bytes,
     package_category,
-    uploader_identity,
+    team,
     community,
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
 
     api_client.force_authenticate(user=user)
@@ -111,7 +108,7 @@ def test_api_experimental_upload_package_success(
         {
             "metadata": json.dumps(
                 {
-                    "author_name": uploader_identity.name,
+                    "author_name": team.name,
                     "categories": [package_category.slug],
                     "communities": [community.identifier],
                     "has_nsfw_content": True,
@@ -123,7 +120,7 @@ def test_api_experimental_upload_package_success(
     )
     assert response.status_code == 200
     response = response.json()
-    namespace = uploader_identity.name
+    namespace = team.name
     # From manifest_v1_data fixture
     name = "name"
     version = "1.0.0"
@@ -136,7 +133,7 @@ def test_api_experimental_upload_package_fail_no_permission(
     user,
     manifest_v1_package_bytes,
     package_category,
-    uploader_identity,
+    team,
     community,
 ):
     api_client.force_authenticate(user=user)
@@ -145,7 +142,7 @@ def test_api_experimental_upload_package_fail_no_permission(
         {
             "metadata": json.dumps(
                 {
-                    "author_name": uploader_identity.name,
+                    "author_name": team.name,
                     "categories": [package_category.slug],
                     "communities": [community.identifier],
                     "has_nsfw_content": True,
@@ -158,9 +155,9 @@ def test_api_experimental_upload_package_fail_no_permission(
     print(response.content)
     assert response.status_code == 400
     assert response.json() == {
-        "metadata": {"author_name": ["Object with name=Test_Identity does not exist."]}
+        "metadata": {"author_name": ["Object with name=Test_Team does not exist."]}
     }
-    namespace = uploader_identity.name
+    namespace = team.name
     name = "name"
     version = "1.0.0"
     assert PackageReference(namespace, name, version).exists is False
@@ -172,13 +169,13 @@ def test_api_experimental_upload_package_fail_invalid_category(
     user,
     manifest_v1_package_bytes,
     package_category,
-    uploader_identity,
+    team,
     community,
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
 
     api_client.force_authenticate(user=user)
@@ -188,7 +185,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
         {
             "metadata": json.dumps(
                 {
-                    "author_name": uploader_identity.name,
+                    "author_name": team.name,
                     "categories": [category_slug],
                     "communities": [community.identifier],
                     "has_nsfw_content": True,
@@ -201,7 +198,7 @@ def test_api_experimental_upload_package_fail_invalid_category(
     assert response.status_code == 400
     print(response.content)
     assert response.json() == {"metadata": {"categories": {"0": ["Object not found"]}}}
-    namespace = uploader_identity.name
+    namespace = team.name
     name = "name"
     version = "1.0.0"
     assert PackageReference(namespace, name, version).exists is False

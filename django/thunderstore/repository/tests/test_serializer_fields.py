@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError as ValidationError
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
-    UploaderIdentityFactory,
+    TeamFactory,
 )
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
@@ -60,10 +60,10 @@ def test_fields_list_dependency_field():
         max_length=250,
         allow_empty=True,
     )
-    identity = UploaderIdentityFactory.create(name="tester")
+    team = TeamFactory.create(name="tester")
     versions = [
         PackageVersionFactory.create(
-            package=PackageFactory.create(owner=identity, name=f"package_{i}"),
+            package=PackageFactory.create(owner=team, name=f"package_{i}"),
             name=f"package_{i}",
         )
         for i in range(10)

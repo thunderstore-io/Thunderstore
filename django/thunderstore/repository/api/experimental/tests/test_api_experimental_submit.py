@@ -13,11 +13,7 @@ from thunderstore.community.api.experimental.serializers import (
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import (
-    UploaderIdentity,
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
-)
+from thunderstore.repository.models import Team, TeamMember, TeamMemberRole
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.usermedia.models import UserMedia
 
@@ -28,14 +24,14 @@ def test_api_experimental_submit_package_success(
     user: UserType,
     manifest_v1_data: Dict[str, Any],
     package_category: PackageCategory,
-    uploader_identity: UploaderIdentity,
+    team: Team,
     community: Community,
     manifest_v1_package_upload_id: str,
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
 
     api_client.force_authenticate(user=user)
@@ -44,7 +40,7 @@ def test_api_experimental_submit_package_success(
         json.dumps(
             {
                 "upload_uuid": manifest_v1_package_upload_id,
-                "author_name": uploader_identity.name,
+                "author_name": team.name,
                 "categories": [package_category.slug],
                 "communities": [community.identifier],
                 "has_nsfw_content": True,
@@ -56,10 +52,10 @@ def test_api_experimental_submit_package_success(
     assert response.status_code == 200
     response_data = response.json()
     version_data = response_data["package_version"]
-    assert version_data["namespace"] == uploader_identity.name
+    assert version_data["namespace"] == team.name
     assert version_data["name"] == manifest_v1_data["name"]
     assert version_data["version_number"] == manifest_v1_data["version_number"]
-    assert PackageReference(uploader_identity.name, "name", "1.0.0").exists is True
+    assert PackageReference(team.name, "name", "1.0.0").exists is True
 
     listing_data = response_data["available_communities"]
     assert len(listing_data) == 1
@@ -73,17 +69,17 @@ def test_api_experimental_submit_package_success(
 def test_api_experimental_submit_package_wrong_user_for_submission(
     api_client: APIClient,
     package_category: PackageCategory,
-    uploader_identity: UploaderIdentity,
+    team: Team,
     community: Community,
     manifest_v1_package_upload_id: str,
 ):
     user_b = UserFactory()
     assert UserMedia.objects.get(uuid=manifest_v1_package_upload_id).owner != user_b
 
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user_b,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
     api_client.force_authenticate(user=user_b)
     response = api_client.post(
@@ -91,7 +87,7 @@ def test_api_experimental_submit_package_wrong_user_for_submission(
         json.dumps(
             {
                 "upload_uuid": manifest_v1_package_upload_id,
-                "author_name": uploader_identity.name,
+                "author_name": team.name,
                 "categories": [package_category.slug],
                 "communities": [community.identifier],
                 "has_nsfw_content": True,
@@ -104,7 +100,7 @@ def test_api_experimental_submit_package_wrong_user_for_submission(
     assert response.json() == {
         "detail": "Upload not found or user has insufficient access permissions"
     }
-    assert PackageReference(uploader_identity.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -112,13 +108,13 @@ def test_api_experimental_submit_package_invalid_upload_id(
     api_client: APIClient,
     user: UserType,
     package_category: PackageCategory,
-    uploader_identity: UploaderIdentity,
+    team: Team,
     community: Community,
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
     upload_id = str(uuid.uuid4())
     api_client.force_authenticate(user=user)
@@ -127,7 +123,7 @@ def test_api_experimental_submit_package_invalid_upload_id(
         json.dumps(
             {
                 "upload_uuid": upload_id,
-                "author_name": uploader_identity.name,
+                "author_name": team.name,
                 "categories": [package_category.slug],
                 "communities": [community.identifier],
                 "has_nsfw_content": True,
@@ -140,7 +136,7 @@ def test_api_experimental_submit_package_invalid_upload_id(
     assert response.json() == {
         "detail": "Upload not found or user has insufficient access permissions"
     }
-    assert PackageReference(uploader_identity.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -148,14 +144,14 @@ def test_api_experimental_submit_package_not_signed_in(
     api_client: APIClient,
     user: UserType,
     package_category: PackageCategory,
-    uploader_identity: UploaderIdentity,
+    team: Team,
     community: Community,
     manifest_v1_package_upload_id: str,
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
 
     api_client.force_authenticate(user=None)
@@ -164,7 +160,7 @@ def test_api_experimental_submit_package_not_signed_in(
         json.dumps(
             {
                 "upload_uuid": manifest_v1_package_upload_id,
-                "author_name": uploader_identity.name,
+                "author_name": team.name,
                 "categories": [package_category.slug],
                 "communities": [community.identifier],
                 "has_nsfw_content": True,
@@ -177,7 +173,7 @@ def test_api_experimental_submit_package_not_signed_in(
     assert response.json() == {
         "detail": "Authentication credentials were not provided."
     }
-    assert PackageReference(uploader_identity.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -185,7 +181,7 @@ def test_api_experimental_submit_package_no_team_permission(
     api_client: APIClient,
     user: UserType,
     package_category: PackageCategory,
-    uploader_identity: UploaderIdentity,
+    team: Team,
     community: Community,
     manifest_v1_package_upload_id: str,
 ):
@@ -195,7 +191,7 @@ def test_api_experimental_submit_package_no_team_permission(
         json.dumps(
             {
                 "upload_uuid": manifest_v1_package_upload_id,
-                "author_name": uploader_identity.name,
+                "author_name": team.name,
                 "categories": [package_category.slug],
                 "communities": [community.identifier],
                 "has_nsfw_content": True,
@@ -206,9 +202,9 @@ def test_api_experimental_submit_package_no_team_permission(
     print(response.content)
     assert response.status_code == 400
     assert response.json() == {
-        "author_name": ["Object with name=Test_Identity does not exist."]
+        "author_name": ["Object with name=Test_Team does not exist."]
     }
-    assert PackageReference(uploader_identity.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -216,14 +212,14 @@ def test_api_experimental_submit_package_invalid_category(
     api_client: APIClient,
     user: UserType,
     package_category: PackageCategory,
-    uploader_identity: UploaderIdentity,
+    team: Team,
     community: Community,
     manifest_v1_package_upload_id: str,
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
 
     api_client.force_authenticate(user=user)
@@ -233,7 +229,7 @@ def test_api_experimental_submit_package_invalid_category(
         json.dumps(
             {
                 "upload_uuid": manifest_v1_package_upload_id,
-                "author_name": uploader_identity.name,
+                "author_name": team.name,
                 "categories": [category_slug],
                 "communities": [community.identifier],
                 "has_nsfw_content": True,
@@ -244,4 +240,4 @@ def test_api_experimental_submit_package_invalid_category(
     print(response.content)
     assert response.status_code == 400
     assert response.json() == {"categories": {"0": ["Object not found"]}}
-    assert PackageReference(uploader_identity.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.name, "name", "1.0.0").exists is False

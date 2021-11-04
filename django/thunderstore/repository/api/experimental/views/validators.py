@@ -62,7 +62,7 @@ class ManifestV1ValidatorApiView(APIView):
 
         validate_manifest(
             user=request.user,
-            uploader=serializer.validated_data["namespace"],
+            team=serializer.validated_data["namespace"],
             manifest_data=serializer.validated_data["manifest_data"],
         )
 

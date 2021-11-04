@@ -20,11 +20,7 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
-from thunderstore.repository.models import (
-    PackageVersion,
-    UploaderIdentity,
-    get_package_dependants,
-)
+from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
 
 # Should be divisible by 4 and 3
@@ -306,7 +302,7 @@ class PackageListView(PackageListSearchView):
 
 
 class PackageListByOwnerView(PackageListSearchView):
-    owner: Optional[UploaderIdentity]
+    owner: Optional[Team]
 
     def get_breadcrumbs(self):
         breadcrumbs = super().get_breadcrumbs()
@@ -318,7 +314,7 @@ class PackageListByOwnerView(PackageListSearchView):
         ]
 
     def cache_owner(self):
-        self.owner = get_object_or_404(UploaderIdentity, name=self.kwargs["owner"])
+        self.owner = get_object_or_404(Team, name=self.kwargs["owner"])
 
     def dispatch(self, *args, **kwargs):
         self.cache_owner()
@@ -341,7 +337,7 @@ class PackageListByDependencyView(PackageListSearchView):
 
     def cache_package_listing(self):
         owner = self.kwargs["owner"]
-        owner = get_object_or_404(UploaderIdentity, name=owner)
+        owner = get_object_or_404(Team, name=owner)
         name = self.kwargs["name"]
         package_listing = (
             self.model.objects.active()
@@ -378,7 +374,7 @@ def get_package_listing_or_404(
     name: str,
     community_pk: int,
 ) -> PackageListing:
-    owner = get_object_or_404(UploaderIdentity, name=namespace)
+    owner = get_object_or_404(Team, name=namespace)
     package_listing = (
         PackageListing.objects.active()
         .filter(
@@ -489,7 +485,7 @@ class PackageCreateOldView(CreateView):
         kwargs["user"] = self.request.user
         kwargs["community"] = self.request.community
         kwargs["initial"] = {
-            "team": UploaderIdentity.get_default_for_user(self.request.user),
+            "team": Team.get_default_for_user(self.request.user),
             "communities": [self.request.community],
         }
         return kwargs

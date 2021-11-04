@@ -3,13 +3,13 @@ import pytest
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
-    UploaderIdentityFactory,
+    TeamFactory,
 )
 from thunderstore.repository.models import (
     PackageVersion,
-    UploaderIdentity,
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
+    Team,
+    TeamMember,
+    TeamMemberRole,
 )
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 from thunderstore.repository.package_reference import PackageReference
@@ -17,12 +17,10 @@ from thunderstore.repository.validators import PackageReferenceValidator
 
 
 @pytest.mark.django_db
-def test_manifest_v1_serializer_missing_privileges(
-    user, uploader_identity, manifest_v1_data
-):
+def test_manifest_v1_serializer_missing_privileges(user, team, manifest_v1_data):
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=uploader_identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -36,16 +34,16 @@ def test_manifest_v1_serializer_missing_privileges(
 def test_manifest_v1_serializer_version_already_exists(
     user, manifest_v1_data, package_version
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=package_version.owner,
-        role=UploaderIdentityMemberRole.owner,
+        team=package_version.owner,
+        role=TeamMemberRole.owner,
     )
     manifest_v1_data["name"] = package_version.name
     manifest_v1_data["version_number"] = package_version.version_number
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=package_version.owner,
+        team=package_version.owner,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -59,10 +57,10 @@ def test_manifest_v1_serializer_version_already_exists(
 def test_manifest_v1_serializer_duplicate_dependency(
     user, manifest_v1_data, package_version
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=package_version.owner,
-        role=UploaderIdentityMemberRole.owner,
+        team=package_version.owner,
+        role=TeamMemberRole.owner,
     )
     pkg = PackageFactory.create(
         owner=package_version.owner,
@@ -84,7 +82,7 @@ def test_manifest_v1_serializer_duplicate_dependency(
     ]
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=package_version.owner,
+        team=package_version.owner,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -98,10 +96,10 @@ def test_manifest_v1_serializer_duplicate_dependency(
 def test_manifest_v1_serializer_self_dependency(
     user, manifest_v1_data, package_version
 ):
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=package_version.owner,
-        role=UploaderIdentityMemberRole.owner,
+        team=package_version.owner,
+        role=TeamMemberRole.owner,
     )
     manifest_v1_data["name"] = package_version.name
     manifest_v1_data["version_number"] = "1" + package_version.version_number
@@ -110,7 +108,7 @@ def test_manifest_v1_serializer_self_dependency(
     ]
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=package_version.owner,
+        team=package_version.owner,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -124,7 +122,7 @@ def test_manifest_v1_serializer_self_dependency(
 def test_manifest_v1_serializer_unresolved_dependency(
     user, manifest_v1_data, package_version
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = [
         "invalid-package-1.0.0",
         str(package_version.reference),
@@ -132,7 +130,7 @@ def test_manifest_v1_serializer_unresolved_dependency(
     ]
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -147,12 +145,12 @@ def test_manifest_v1_serializer_unresolved_dependency(
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     reference_strings = [f"user-package-{i}.{i}.{i}" for i in range(251)]
     manifest_v1_data["dependencies"] = reference_strings
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     # Patch the validator because we don't want to generate 101 actual packages here
@@ -189,11 +187,11 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
 def test_manifest_v1_serializer_name_validation(
     user, manifest_v1_data, name: str, error: str
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["name"] = name
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     if error:
@@ -226,11 +224,11 @@ def test_manifest_v1_serializer_name_validation(
 def test_manifest_v1_serializer_version_number_validation(
     user, manifest_v1_data, version: str, error: str
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["version_number"] = version
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     if error:
@@ -260,11 +258,11 @@ def test_manifest_v1_serializer_version_number_validation(
 def test_manifest_v1_serializer_website_url_validation(
     user, manifest_v1_data, url: str, error: str
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["website_url"] = url
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     if error:
@@ -294,11 +292,11 @@ def test_manifest_v1_serializer_website_url_validation(
 def test_manifest_v1_serializer_description_validation(
     user, manifest_v1_data, description: str, error: str
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["description"] = description
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     if error:
@@ -325,11 +323,11 @@ def test_manifest_v1_serializer_description_validation(
 def test_manifest_v1_serializer_dependencies_invalid(
     user, manifest_v1_data, dependencies, error: str
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = dependencies
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     if error:
@@ -343,7 +341,7 @@ def test_manifest_v1_serializer_dependencies_valid(user, manifest_v1_data):
     reference = PackageReference.parse("actual_package-reference-1.0.0")
     PackageVersionFactory.create(
         package=PackageFactory.create(
-            owner=UploaderIdentityFactory.create(
+            owner=TeamFactory.create(
                 name=reference.namespace,
             ),
             name=reference.name,
@@ -351,11 +349,11 @@ def test_manifest_v1_serializer_dependencies_valid(user, manifest_v1_data):
         name=reference.name,
         version_number=reference.version_str,
     )
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = [str(reference)]
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is True
@@ -373,11 +371,11 @@ def test_manifest_v1_serializer_dependencies_valid(user, manifest_v1_data):
     ],
 )
 def test_manifest_v1_missing_fields(user, manifest_v1_data, field):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     del manifest_v1_data[field]
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -396,11 +394,11 @@ def test_manifest_v1_missing_fields(user, manifest_v1_data, field):
     ],
 )
 def test_manifest_v1_null_fields(user, manifest_v1_data, field):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data[field] = None
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -411,11 +409,11 @@ def test_manifest_v1_null_fields(user, manifest_v1_data, field):
 @pytest.mark.parametrize("fieldname", ("description", "website_url"))
 @pytest.mark.parametrize("testdata", (42, 42.432, False, True))
 def test_manifest_v1_strict_char_fields(user, manifest_v1_data, fieldname, testdata):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data[fieldname] = testdata
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid() is False
@@ -436,11 +434,11 @@ def test_manifest_v1_strict_char_fields(user, manifest_v1_data, fieldname, testd
 def test_manifest_v1_blank_fields(
     user, manifest_v1_data, field, empty_val, should_fail
 ):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data[field] = empty_val
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     if should_fail:
@@ -458,20 +456,20 @@ def test_manifest_v1_requires_user(manifest_v1_data):
     assert "Missing required key word parameter: user" in str(exc.value)
 
 
-def test_manifest_v1_requires_uploader(user, manifest_v1_data):
+def test_manifest_v1_requires_team(user, manifest_v1_data):
     with pytest.raises(AttributeError) as exc:
         _ = ManifestV1Serializer(
             data=manifest_v1_data,
             user=user,
         )
-    assert "Missing required key word parameter: uploader" in str(exc.value)
+    assert "Missing required key word parameter: team" in str(exc.value)
 
 
 def test_manifest_v1_create(user, manifest_v1_data):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid()
@@ -481,10 +479,10 @@ def test_manifest_v1_create(user, manifest_v1_data):
 
 
 def test_manifest_v1_update(user, manifest_v1_data):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert serializer.is_valid()
@@ -494,11 +492,11 @@ def test_manifest_v1_update(user, manifest_v1_data):
 
 
 def test_manifest_v1_deserialize_serialize(user, manifest_v1_data, package_version):
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     manifest_v1_data["dependencies"] = [str(package_version.reference)]
     deserializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=manifest_v1_data,
     )
     assert deserializer.is_valid()
@@ -509,7 +507,7 @@ def test_manifest_v1_deserialize_serialize(user, manifest_v1_data, package_versi
     serializer = ManifestV1Serializer(
         instance=validated_data,
         user=user,
-        uploader=identity,
+        team=team,
     )
     serialized_data = serializer.data
     assert serialized_data == manifest_v1_data
@@ -523,10 +521,10 @@ def test_manifest_v1_invalid_key_formatting(user):
         "description": "",
         "dependencies": [],
     }
-    identity = UploaderIdentity.get_or_create_for_user(user)
+    team = Team.get_or_create_for_user(user)
     deserializer = ManifestV1Serializer(
         user=user,
-        uploader=identity,
+        team=team,
         data=data,
     )
     assert deserializer.is_valid() is False

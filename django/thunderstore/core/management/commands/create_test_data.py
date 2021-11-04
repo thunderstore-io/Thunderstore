@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from thunderstore.repository.factories import PackageVersionFactory
-from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
+from thunderstore.repository.models import Package, PackageVersion, Team
 
 
 class Command(BaseCommand):
@@ -24,25 +24,24 @@ class Command(BaseCommand):
         PackageVersion.objects.all().delete()
         print("Deleting existing packages...")
         Package.objects.all().delete()
-        print("Deleting existing uploader identities...")
-        UploaderIdentity.objects.all().delete()
+        print("Deleting existing teams...")
+        Team.objects.all().delete()
 
     def create_data(self, count):
-        print("Creating uploaders...")
+        print("Creating teams...")
 
         last = 0
-        last_identity = UploaderIdentity.objects.order_by("-pk").first()
-        if last_identity:
-            last = last_identity.pk
+        last_team = Team.objects.order_by("-pk").first()
+        if last_team:
+            last = last_team.pk
 
-        uploaders = [
-            UploaderIdentity.objects.create(name=f"Test_Identity_{last + i}")
-            for i in range(count)
+        teams = [
+            Team.objects.create(name=f"Test_Team_{last + i}") for i in range(count)
         ]
         print("Creating packages...")
         packages = [
             Package.objects.create(
-                owner=uploaders[i],
+                owner=teams[i],
                 name=f"Test_Package_{i}",
             )
             for i in range(count)

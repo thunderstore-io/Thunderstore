@@ -10,18 +10,18 @@ from thunderstore.community.models import (
     PackageListing,
     PackageListingReviewStatus,
 )
-from thunderstore.repository.models import Package, UploaderIdentity
+from thunderstore.repository.models import Package, Team
 
 
 @pytest.mark.django_db
 def test_admin_package_listing_approve_listing(
-    uploader_identity: UploaderIdentity, community: Community
+    team: Team, community: Community
 ) -> None:
     listings = [
         PackageListing.objects.create(
             community=community,
             package=Package.objects.create(
-                owner=uploader_identity,
+                owner=team,
                 name=f"TestPackage{i}",
             ),
             review_status=PackageListingReviewStatus.unreviewed,
@@ -38,14 +38,12 @@ def test_admin_package_listing_approve_listing(
 
 
 @pytest.mark.django_db
-def test_admin_package_listing_reject_listing(
-    uploader_identity: UploaderIdentity, community: Community
-) -> None:
+def test_admin_package_listing_reject_listing(team: Team, community: Community) -> None:
     listings = [
         PackageListing.objects.create(
             community=community,
             package=Package.objects.create(
-                owner=uploader_identity,
+                owner=team,
                 name=f"TestPackage{i}",
             ),
             review_status=PackageListingReviewStatus.unreviewed,

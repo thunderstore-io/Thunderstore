@@ -10,11 +10,7 @@ from thunderstore.community.models import (
     PackageListing,
     PackageListingReviewStatus,
 )
-from thunderstore.repository.models import (
-    Package,
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
-)
+from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
 
 @pytest.mark.django_db
@@ -77,7 +73,7 @@ def test_package_listing_is_waiting_for_approval(
 @pytest.mark.parametrize("require_approval", (False, True))
 @pytest.mark.parametrize("review_status", PackageListingReviewStatus.options())
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
-@pytest.mark.parametrize("uploader_role", UploaderIdentityMemberRole.options() + [None])
+@pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
 @pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
 def test_package_listing_ensure_can_be_viewed_by_user(
     active_package_listing: PackageListing,
@@ -85,7 +81,7 @@ def test_package_listing_ensure_can_be_viewed_by_user(
     review_status: str,
     user_type: str,
     community_role: str,
-    uploader_role: str,
+    team_role: str,
 ):
     listing = active_package_listing
     listing.review_status = review_status
@@ -101,11 +97,11 @@ def test_package_listing_ensure_can_be_viewed_by_user(
             community=community,
             role=community_role,
         )
-    if uploader_role is not None and user_type not in TestUserTypes.fake_users():
-        UploaderIdentityMember.objects.create(
+    if team_role is not None and user_type not in TestUserTypes.fake_users():
+        TeamMember.objects.create(
             user=user,
-            identity=listing.package.owner,
-            role=uploader_role,
+            team=listing.package.owner,
+            role=team_role,
         )
 
     result = listing.can_be_viewed_by_user(user)

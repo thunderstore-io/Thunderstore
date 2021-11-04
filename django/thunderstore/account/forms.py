@@ -3,7 +3,7 @@ from django.db import transaction
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import UploaderIdentity
+from thunderstore.repository.models import Team
 
 
 class CreateServiceAccountForm(forms.Form):
@@ -12,18 +12,18 @@ class CreateServiceAccountForm(forms.Form):
     def __init__(self, user: UserType, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.user = user
-        self.fields["identity"] = forms.ModelChoiceField(
-            queryset=UploaderIdentity.objects.filter(members__user=user),
+        self.fields["team"] = forms.ModelChoiceField(
+            queryset=Team.objects.filter(members__user=user),
         )
 
-    def clean_identity(self) -> UploaderIdentity:
-        identity = self.cleaned_data["identity"]
-        identity.ensure_can_create_service_account(self.user)
-        return identity
+    def clean_team(self) -> Team:
+        team = self.cleaned_data["team"]
+        team.ensure_can_create_service_account(self.user)
+        return team
 
     @transaction.atomic
     def save(self) -> ServiceAccount:
-        owner = self.cleaned_data["identity"]
+        owner = self.cleaned_data["team"]
         nickname = self.cleaned_data["nickname"]
         (service_account, token) = ServiceAccount.create(owner, nickname)
         self.api_token = token

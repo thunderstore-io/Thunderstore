@@ -16,10 +16,10 @@ class ManifestV1Serializer(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         if "user" not in kwargs:
             raise AttributeError("Missing required key word parameter: user")
-        if "uploader" not in kwargs:
-            raise AttributeError("Missing required key word parameter: uploader")
+        if "team" not in kwargs:
+            raise AttributeError("Missing required key word parameter: team")
         self.user = kwargs.pop("user")
-        self.uploader = kwargs.pop("uploader")
+        self.team = kwargs.pop("team")
         super().__init__(*args, **kwargs)
 
     name = PackageNameField()
@@ -40,14 +40,14 @@ class ManifestV1Serializer(serializers.Serializer):
 
     def validate(self, data):
         result = super().validate(data)
-        if self.uploader is None:
+        if self.team is None:
             raise ValidationError("Unable to validate package when no team is selected")
-        if not self.uploader.can_user_upload(self.user):
+        if not self.team.can_user_upload(self.user):
             raise ValidationError(
-                f"Missing privileges to upload under author {self.uploader.name}"
+                f"Missing privileges to upload under author {self.team.name}"
             )
         reference = PackageReference(
-            self.uploader.name, result["name"], result["version_number"]
+            self.team.name, result["name"], result["version_number"]
         )
         if reference.exists:
             raise ValidationError(

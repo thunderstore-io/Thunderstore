@@ -9,7 +9,7 @@ from PIL import Image
 from rest_framework.test import APIClient
 
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import UploaderIdentityMember
+from thunderstore.repository.models import TeamMember
 
 
 @pytest.mark.django_db
@@ -38,7 +38,7 @@ def test_experimental_api_validate_readme(
 @pytest.mark.django_db
 def test_experimental_api_validate_manifest(
     api_client: APIClient,
-    uploader_identity_member: UploaderIdentityMember,
+    team_member: TeamMember,
     manifest_v1_data: Dict[str, Any],
     mocker,
 ) -> None:
@@ -46,11 +46,11 @@ def test_experimental_api_validate_manifest(
         "thunderstore.repository.api.experimental.views.validators.validate_manifest"
     )
 
-    api_client.force_authenticate(user=uploader_identity_member.user)
+    api_client.force_authenticate(user=team_member.user)
     manifest_data = json.dumps(manifest_v1_data).encode("utf-8")
     test_data = {
         "manifest_data": base64.b64encode(manifest_data).decode("utf-8"),
-        "namespace": uploader_identity_member.identity.name,
+        "namespace": team_member.team.name,
     }
     response = api_client.post(
         reverse("api:experimental:submission.validate.manifest-v1"),
@@ -61,8 +61,8 @@ def test_experimental_api_validate_manifest(
     assert json.loads(response.content.decode()) == {"success": True}
 
     mocked_validator.assert_called_with(
-        user=uploader_identity_member.user,
-        uploader=uploader_identity_member.identity,
+        user=team_member.user,
+        team=team_member.team,
         manifest_data=manifest_data,
     )
 
