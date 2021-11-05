@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from thunderstore.repository.factories import PackageVersionFactory
-from thunderstore.repository.models import Package, PackageVersion, Team
+from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
 
 
 class Command(BaseCommand):
@@ -24,6 +24,8 @@ class Command(BaseCommand):
         PackageVersion.objects.all().delete()
         print("Deleting existing packages...")
         Package.objects.all().delete()
+        print("Deleting existing namespaces...")
+        Namespace.objects.all().delete()
         print("Deleting existing teams...")
         Team.objects.all().delete()
 
@@ -35,9 +37,7 @@ class Command(BaseCommand):
         if last_team:
             last = last_team.pk
 
-        teams = [
-            Team.objects.create(name=f"Test_Team_{last + i}") for i in range(count)
-        ]
+        teams = [Team.create(name=f"Test_Team_{last + i}") for i in range(count)]
         print("Creating packages...")
         packages = [
             Package.objects.create(

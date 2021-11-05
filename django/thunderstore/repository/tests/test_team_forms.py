@@ -60,7 +60,7 @@ def test_form_create_team_valid_data(user_type: str) -> None:
 def test_form_create_team_team_name_conflict(
     user: UserType, name1: str, name2: str, should_fail: True
 ) -> None:
-    Team.objects.create(name=name1)
+    Team.create(name=name1)
     form = CreateTeamForm(
         user=user,
         data={"name": name2},
@@ -143,7 +143,7 @@ def test_form_add_team_member(
 
     adder = TestUserTypes.get_user_by_type(adder_type)
     added = TestUserTypes.get_user_by_type(added_type)
-    team = Team.objects.create(name="Test")
+    team = Team.create(name="Test")
 
     if adder is not None and adder.is_authenticated and adder_role is not None:
         TeamMember.objects.create(
@@ -219,7 +219,7 @@ def test_form_remove_team_member(
 
     remover = TestUserTypes.get_user_by_type(remover_type)
     removed = TestUserTypes.get_user_by_type(removed_type)
-    team = Team.objects.create(name="Test")
+    team = Team.create(name="Test")
 
     if remover is not None and remover.is_authenticated and remover_role is not None:
         TeamMember.objects.create(
@@ -255,7 +255,7 @@ def test_form_remove_team_member(
 @pytest.mark.parametrize("role", TeamMemberRole.options())
 def test_form_remove_team_member_works_on_self(role: str) -> None:
     user = UserFactory()
-    team = Team.objects.create(name="Test")
+    team = Team.create(name="Test")
     TeamMember.objects.create(
         user=UserFactory(),
         team=team,
@@ -278,7 +278,7 @@ def test_form_remove_team_member_works_on_self(role: str) -> None:
 @pytest.mark.django_db
 def test_form_remove_team_member_last_owner() -> None:
     user = UserFactory()
-    team = Team.objects.create(name="Test")
+    team = Team.create(name="Test")
     last_owner = TeamMember.objects.create(
         user=user,
         team=team,
@@ -344,7 +344,7 @@ def test_form_edit_team_member(
 
     editor = TestUserTypes.get_user_by_type(editor_type)
     edited = TestUserTypes.get_user_by_type(edited_type)
-    team = Team.objects.create(name="Test")
+    team = Team.create(name="Test")
 
     if editor is not None and editor.is_authenticated and editor_role is not None:
         TeamMember.objects.create(
@@ -380,7 +380,7 @@ def test_form_edit_team_member(
 @pytest.mark.django_db
 def test_form_edit_team_member_remove_last_owner() -> None:
     user = UserFactory()
-    team = Team.objects.create(name="Test")
+    team = Team.create(name="Test")
     last_owner = TeamMember.objects.create(
         user=user,
         team=team,

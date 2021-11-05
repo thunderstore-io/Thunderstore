@@ -88,7 +88,7 @@ def user(django_user_model):
 
 @pytest.fixture()
 def team():
-    return Team.objects.create(name="Test_Team")
+    return Team.create(name="Test_Team")
 
 
 @pytest.fixture()

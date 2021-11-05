@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
-from thunderstore.repository.models import Package
+from thunderstore.repository.models import Namespace, Package
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
 
@@ -89,6 +89,7 @@ class Team(models.Model):
     objects: "Manager[Team]"
     members: "TeamMemberManager[TeamMember]"
     owned_packages: "Manager[Package]"
+    namespaces: "Manager[Namespace]"
 
     name = models.CharField(
         max_length=64,
@@ -116,7 +117,7 @@ class Team(models.Model):
 
     def save(self, *args, **kwargs):
         self.validate()
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @property
     def real_user_count(self):
@@ -145,6 +146,17 @@ class Team(models.Model):
 
     @classmethod
     @transaction.atomic
+    def create(cls, name, **kwargs):
+        existing_ns = Namespace.objects.filter(name__iexact=name).first()
+        if existing_ns:
+            raise ValidationError("Namespace with the Teams name exists")
+        else:
+            team = cls.objects.create(name=name, **kwargs)
+            Namespace.objects.create(name=name, team=team)
+            return team
+
+    @classmethod
+    @transaction.atomic
     def get_or_create_for_user(cls, user: UserType) -> "Optional[Team]":
         name = strip_unsupported_characters(user.username)
         if not name:
@@ -157,7 +169,7 @@ class Team(models.Model):
             else:
                 return None
         else:
-            team = cls.objects.create(name=name)
+            team = cls.create(name=name)
             team.add_member(user=user, role=TeamMemberRole.owner)
             return team
 

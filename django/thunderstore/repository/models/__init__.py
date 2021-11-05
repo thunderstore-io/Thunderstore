@@ -1,4 +1,5 @@
 from .discord_bot import *
+from .namespace import *
 from .package import *
 from .package_download import *
 from .package_rating import *
