@@ -11,7 +11,6 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
 from PIL import Image
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from thunderstore.account.forms import CreateServiceAccountForm
