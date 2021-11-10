@@ -3,11 +3,11 @@ from django.views.generic import TemplateView
 
 
 def handle404(request, exception):
-    return render(request, "errors/404.html", locals())
+    return render(request, "errors/404.html", locals(), status=404)
 
 
 def handle500(request):
-    return render(request, "errors/500.html", locals())
+    return render(request, "errors/500.html", locals(), status=500)
 
 
 def ads_txt_view(request):
