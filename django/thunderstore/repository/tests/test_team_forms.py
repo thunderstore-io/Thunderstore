@@ -4,21 +4,21 @@ from conftest import TestUserTypes
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.repository.forms import (
-    AddUploaderIdentityMemberForm,
-    CreateUploaderIdentityForm,
-    DisbandUploaderIdentityForm,
-    EditUploaderIdentityMemberForm,
-    RemoveUploaderIdentityMemberForm,
-    UploaderIdentity,
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
+    AddTeamMemberForm,
+    CreateTeamForm,
+    DisbandTeamForm,
+    EditTeamMemberForm,
+    RemoveTeamMemberForm,
+    Team,
+    TeamMember,
+    TeamMemberRole,
 )
 from thunderstore.repository.models import Package
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
-def test_form_create_uploader_identity_valid_data(user_type: str) -> None:
+def test_form_create_team_valid_data(user_type: str) -> None:
     error_map = {
         TestUserTypes.no_user: "Must be authenticated to create teams",
         TestUserTypes.unauthenticated: "Must be authenticated to create teams",
@@ -30,7 +30,7 @@ def test_form_create_uploader_identity_valid_data(user_type: str) -> None:
     expected_error = error_map[user_type]
 
     user = TestUserTypes.get_user_by_type(user_type)
-    form = CreateUploaderIdentityForm(
+    form = CreateTeamForm(
         user=user,
         data={"name": "TeamName"},
     )
@@ -39,12 +39,12 @@ def test_form_create_uploader_identity_valid_data(user_type: str) -> None:
         assert expected_error in str(repr(form.errors))
     else:
         assert form.is_valid() is True
-        uploader_identity = form.save()
-        assert uploader_identity.name == "TeamName"
-        assert uploader_identity.members.count() == 1
-        member = uploader_identity.members.first()
+        team = form.save()
+        assert team.name == "TeamName"
+        assert team.members.count() == 1
+        member = team.members.first()
         assert member.user == user
-        assert member.role == UploaderIdentityMemberRole.owner
+        assert member.role == TeamMemberRole.owner
 
 
 @pytest.mark.django_db
@@ -57,11 +57,11 @@ def test_form_create_uploader_identity_valid_data(user_type: str) -> None:
         ("team", "team", True),
     ),
 )
-def test_form_create_uploader_identity_team_name_conflict(
+def test_form_create_team_team_name_conflict(
     user: UserType, name1: str, name2: str, should_fail: True
 ) -> None:
-    UploaderIdentity.objects.create(name=name1)
-    form = CreateUploaderIdentityForm(
+    Team.objects.create(name=name1)
+    form = CreateTeamForm(
         user=user,
         data={"name": name2},
     )
@@ -70,8 +70,8 @@ def test_form_create_uploader_identity_team_name_conflict(
         assert "A team with the provided name already exists" in str(repr(form.errors))
     else:
         assert form.is_valid() is True
-        uploader_identity = form.save()
-        assert uploader_identity.name == name2
+        team = form.save()
+        assert team.name == name2
 
 
 @pytest.mark.django_db
@@ -86,14 +86,14 @@ def test_form_create_uploader_identity_team_name_conflict(
         ("Team_", True),
     ),
 )
-def test_form_create_uploader_identity_team_name_validation(
+def test_form_create_team_team_name_validation(
     user: UserType, name: str, should_fail: True
 ) -> None:
     error = (
         "Author name can only contain a-z A-Z 0-9 _ "
         "characters and must not start or end with _"
     )
-    form = CreateUploaderIdentityForm(
+    form = CreateTeamForm(
         user=user,
         data={"name": name},
     )
@@ -102,16 +102,16 @@ def test_form_create_uploader_identity_team_name_validation(
         assert error in str(repr(form.errors))
     else:
         assert form.is_valid() is True
-        uploader_identity = form.save()
-        assert uploader_identity.name == name
+        team = form.save()
+        assert team.name == name
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("adder_type", TestUserTypes.options())
 @pytest.mark.parametrize("added_type", TestUserTypes.options())
-@pytest.mark.parametrize("adder_role", UploaderIdentityMemberRole.options() + [None])
-@pytest.mark.parametrize("added_role", UploaderIdentityMemberRole.options() + [None])
-def test_form_add_uploader_identity_member(
+@pytest.mark.parametrize("adder_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("added_role", TeamMemberRole.options() + [None])
+def test_form_add_team_member(
     adder_type: str, added_type: str, adder_role: str, added_role: str
 ) -> None:
     # TODO: Split to two maps (adder & added) if permissions become asymmetrical
@@ -129,34 +129,34 @@ def test_form_add_uploader_identity_member(
 
     adder_role_valid_map = {
         None: False,
-        UploaderIdentityMemberRole.member: False,
-        UploaderIdentityMemberRole.owner: True,
+        TeamMemberRole.member: False,
+        TeamMemberRole.owner: True,
     }
     adder_role_valid = adder_role_valid_map[adder_role] is True
 
     added_role_valid_map = {
         None: False,
-        UploaderIdentityMemberRole.member: True,
-        UploaderIdentityMemberRole.owner: True,
+        TeamMemberRole.member: True,
+        TeamMemberRole.owner: True,
     }
     added_role_valid = added_role_valid_map[added_role] is True
 
     adder = TestUserTypes.get_user_by_type(adder_type)
     added = TestUserTypes.get_user_by_type(added_type)
-    identity = UploaderIdentity.objects.create(name="Test")
+    team = Team.objects.create(name="Test")
 
     if adder is not None and adder.is_authenticated and adder_role is not None:
-        UploaderIdentityMember.objects.create(
-            identity=identity,
+        TeamMember.objects.create(
+            team=team,
             user=adder,
             role=adder_role,
         )
 
-    form = AddUploaderIdentityMemberForm(
+    form = AddTeamMemberForm(
         user=adder,
         data={
             "role": added_role,
-            "identity": identity.pk,
+            "team": team.pk,
             "user": added.username if added else None,
         },
     )
@@ -167,7 +167,7 @@ def test_form_add_uploader_identity_member(
         assert form.is_valid() is True
         membership = form.save()
         assert membership is not None
-        assert membership.identity == identity
+        assert membership.team == team
         assert membership.role == added_role
     else:
         assert form.is_valid() is False
@@ -177,9 +177,9 @@ def test_form_add_uploader_identity_member(
 @pytest.mark.django_db
 @pytest.mark.parametrize("remover_type", TestUserTypes.options())
 @pytest.mark.parametrize("removed_type", TestUserTypes.options())
-@pytest.mark.parametrize("remover_role", UploaderIdentityMemberRole.options() + [None])
-@pytest.mark.parametrize("removed_role", UploaderIdentityMemberRole.options() + [None])
-def test_form_remove_uploader_identity_member(
+@pytest.mark.parametrize("remover_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("removed_role", TeamMemberRole.options() + [None])
+def test_form_remove_team_member(
     remover_type: str, removed_type: str, remover_role: str, removed_role: str
 ) -> None:
     remover_type_valid_map = {
@@ -196,13 +196,13 @@ def test_form_remove_uploader_identity_member(
     }
     remover_role_valid_map = {
         None: False,
-        UploaderIdentityMemberRole.member: False,
-        UploaderIdentityMemberRole.owner: True,
+        TeamMemberRole.member: False,
+        TeamMemberRole.owner: True,
     }
     removed_role_valid_map = {
         None: False,
-        UploaderIdentityMemberRole.member: True,
-        UploaderIdentityMemberRole.owner: True,
+        TeamMemberRole.member: True,
+        TeamMemberRole.owner: True,
     }
     remover_valid = all(
         (
@@ -219,25 +219,25 @@ def test_form_remove_uploader_identity_member(
 
     remover = TestUserTypes.get_user_by_type(remover_type)
     removed = TestUserTypes.get_user_by_type(removed_type)
-    identity = UploaderIdentity.objects.create(name="Test")
+    team = Team.objects.create(name="Test")
 
     if remover is not None and remover.is_authenticated and remover_role is not None:
-        UploaderIdentityMember.objects.create(
-            identity=identity,
+        TeamMember.objects.create(
+            team=team,
             user=remover,
             role=remover_role,
         )
 
     if removed is not None and removed.is_authenticated and removed_role is not None:
-        membership = UploaderIdentityMember.objects.create(
-            identity=identity,
+        membership = TeamMember.objects.create(
+            team=team,
             user=removed,
             role=removed_role,
         ).pk
     else:
         membership = None
 
-    form = RemoveUploaderIdentityMemberForm(
+    form = RemoveTeamMemberForm(
         user=remover,
         data={"membership": membership},
     )
@@ -245,46 +245,46 @@ def test_form_remove_uploader_identity_member(
     if should_be_valid:
         assert form.is_valid() is True
         assert form.save() is None
-        assert UploaderIdentityMember.objects.filter(pk=membership).exists() is False
+        assert TeamMember.objects.filter(pk=membership).exists() is False
     else:
         assert form.is_valid() is False
         assert form.errors
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("role", UploaderIdentityMemberRole.options())
-def test_form_remove_uploader_identity_member_works_on_self(role: str) -> None:
+@pytest.mark.parametrize("role", TeamMemberRole.options())
+def test_form_remove_team_member_works_on_self(role: str) -> None:
     user = UserFactory()
-    identity = UploaderIdentity.objects.create(name="Test")
-    UploaderIdentityMember.objects.create(
+    team = Team.objects.create(name="Test")
+    TeamMember.objects.create(
         user=UserFactory(),
-        identity=identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
-    membership = UploaderIdentityMember.objects.create(
+    membership = TeamMember.objects.create(
         user=user,
-        identity=identity,
+        team=team,
         role=role,
     )
-    form = RemoveUploaderIdentityMemberForm(
+    form = RemoveTeamMemberForm(
         user=user,
         data={"membership": membership.pk},
     )
     assert form.is_valid() is True
     assert form.save() is None
-    assert UploaderIdentityMember.objects.filter(pk=membership.pk).exists() is False
+    assert TeamMember.objects.filter(pk=membership.pk).exists() is False
 
 
 @pytest.mark.django_db
-def test_form_remove_uploader_identity_member_last_owner() -> None:
+def test_form_remove_team_member_last_owner() -> None:
     user = UserFactory()
-    identity = UploaderIdentity.objects.create(name="Test")
-    last_owner = UploaderIdentityMember.objects.create(
+    team = Team.objects.create(name="Test")
+    last_owner = TeamMember.objects.create(
         user=user,
-        identity=identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
-    form = RemoveUploaderIdentityMemberForm(
+    form = RemoveTeamMemberForm(
         user=user,
         data={"membership": last_owner.pk},
     )
@@ -295,10 +295,10 @@ def test_form_remove_uploader_identity_member_last_owner() -> None:
 @pytest.mark.django_db
 @pytest.mark.parametrize("editor_type", TestUserTypes.options())
 @pytest.mark.parametrize("edited_type", TestUserTypes.options())
-@pytest.mark.parametrize("editor_role", UploaderIdentityMemberRole.options() + [None])
-@pytest.mark.parametrize("edited_role", UploaderIdentityMemberRole.options() + [None])
-@pytest.mark.parametrize("new_role", UploaderIdentityMemberRole.options() + [None])
-def test_form_edit_uploader_identity_member(
+@pytest.mark.parametrize("editor_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("edited_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("new_role", TeamMemberRole.options() + [None])
+def test_form_edit_team_member(
     editor_type: str,
     edited_type: str,
     editor_role: str,
@@ -319,13 +319,13 @@ def test_form_edit_uploader_identity_member(
     }
     editor_role_valid_map = {
         None: False,
-        UploaderIdentityMemberRole.member: False,
-        UploaderIdentityMemberRole.owner: True,
+        TeamMemberRole.member: False,
+        TeamMemberRole.owner: True,
     }
     edited_role_valid_map = {
         None: False,
-        UploaderIdentityMemberRole.member: True,
-        UploaderIdentityMemberRole.owner: True,
+        TeamMemberRole.member: True,
+        TeamMemberRole.owner: True,
     }
     editor_valid = all(
         (
@@ -344,25 +344,25 @@ def test_form_edit_uploader_identity_member(
 
     editor = TestUserTypes.get_user_by_type(editor_type)
     edited = TestUserTypes.get_user_by_type(edited_type)
-    identity = UploaderIdentity.objects.create(name="Test")
+    team = Team.objects.create(name="Test")
 
     if editor is not None and editor.is_authenticated and editor_role is not None:
-        UploaderIdentityMember.objects.create(
-            identity=identity,
+        TeamMember.objects.create(
+            team=team,
             user=editor,
             role=editor_role,
         )
 
     if edited is not None and edited.is_authenticated and edited_role is not None:
-        membership = UploaderIdentityMember.objects.create(
-            identity=identity,
+        membership = TeamMember.objects.create(
+            team=team,
             user=edited,
             role=edited_role,
         )
     else:
         membership = None
 
-    form = EditUploaderIdentityMemberForm(
+    form = EditTeamMemberForm(
         user=editor,
         instance=membership,
         data={"role": new_role},
@@ -378,18 +378,18 @@ def test_form_edit_uploader_identity_member(
 
 
 @pytest.mark.django_db
-def test_form_edit_uploader_identity_member_remove_last_owner() -> None:
+def test_form_edit_team_member_remove_last_owner() -> None:
     user = UserFactory()
-    identity = UploaderIdentity.objects.create(name="Test")
-    last_owner = UploaderIdentityMember.objects.create(
+    team = Team.objects.create(name="Test")
+    last_owner = TeamMember.objects.create(
         user=user,
-        identity=identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
-    form = EditUploaderIdentityMemberForm(
+    form = EditTeamMemberForm(
         user=user,
         instance=last_owner,
-        data={"role": UploaderIdentityMemberRole.member},
+        data={"role": TeamMemberRole.member},
     )
     assert form.is_valid() is False
     assert "Cannot remove last owner from team" in str(repr(form.errors))
@@ -397,11 +397,9 @@ def test_form_edit_uploader_identity_member_remove_last_owner() -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("disbander_type", TestUserTypes.options())
-@pytest.mark.parametrize(
-    "disbander_role", UploaderIdentityMemberRole.options() + [None]
-)
-def test_form_disband_uploader_identity_form(
-    uploader_identity: UploaderIdentity, disbander_type: str, disbander_role: str
+@pytest.mark.parametrize("disbander_role", TeamMemberRole.options() + [None])
+def test_form_disband_team_form(
+    team: Team, disbander_type: str, disbander_role: str
 ) -> None:
     disbander_type_valid_map = {
         TestUserTypes.no_user: False,
@@ -413,8 +411,8 @@ def test_form_disband_uploader_identity_form(
     }
     disbander_role_valid_map = {
         None: False,
-        UploaderIdentityMemberRole.member: False,
-        UploaderIdentityMemberRole.owner: True,
+        TeamMemberRole.member: False,
+        TeamMemberRole.owner: True,
     }
     should_succeed = all(
         (
@@ -429,77 +427,73 @@ def test_form_disband_uploader_identity_form(
         and disbander.is_authenticated
         and disbander_role is not None
     ):
-        UploaderIdentityMember.objects.create(
-            identity=uploader_identity,
+        TeamMember.objects.create(
+            team=team,
             user=disbander,
             role=disbander_role,
         )
 
-    form = DisbandUploaderIdentityForm(
+    form = DisbandTeamForm(
         user=disbander,
-        instance=uploader_identity,
-        data={"verification": uploader_identity.name},
+        instance=team,
+        data={"verification": team.name},
     )
 
     if should_succeed:
         assert form.is_valid() is True
         assert form.save() is None
-        assert (
-            UploaderIdentity.objects.filter(pk=uploader_identity.pk).exists() is False
-        )
+        assert Team.objects.filter(pk=team.pk).exists() is False
     else:
         assert form.is_valid() is False
         assert form.errors
 
 
 @pytest.mark.django_db
-def test_form_disband_uploader_identity_form_invalid_verification(
-    user: UserType, uploader_identity: UploaderIdentity
+def test_form_disband_team_form_invalid_verification(
+    user: UserType, team: Team
 ) -> None:
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
-    form = DisbandUploaderIdentityForm(
+    form = DisbandTeamForm(
         user=user,
-        instance=uploader_identity,
-        data={"verification": f"invalid-{uploader_identity.name}"},
+        instance=team,
+        data={"verification": f"invalid-{team.name}"},
     )
     assert form.is_valid() is False
     assert "Invalid verification" in str(repr(form.errors))
 
 
 @pytest.mark.django_db
-def test_form_disband_uploader_identity_form_packages_exist(
-    user: UserType, uploader_identity: UploaderIdentity, package: Package
+def test_form_disband_team_form_packages_exist(
+    user: UserType, team: Team, package: Package
 ) -> None:
-    UploaderIdentityMember.objects.create(
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
-    form = DisbandUploaderIdentityForm(
+    form = DisbandTeamForm(
         user=user,
-        instance=uploader_identity,
-        data={"verification": uploader_identity.name},
+        instance=team,
+        data={"verification": team.name},
     )
     assert form.is_valid() is False
     assert "Unable to disband teams with packages" in str(repr(form.errors))
 
 
 @pytest.mark.django_db
-def test_form_disband_uploader_identity_form_no_instance(
-    user: UserType, uploader_identity: UploaderIdentity
-) -> None:
-    UploaderIdentityMember.objects.create(
+def test_form_disband_team_form_no_instance(user: UserType, team: Team) -> None:
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
-    form = DisbandUploaderIdentityForm(
+    form = DisbandTeamForm(
         user=user,
         data={"verification": ""},
     )
     assert form.is_valid() is False
-    assert "Missing uploader identity instance" in str(repr(form.errors))
+    assert "Missing team instance" in str(repr(form.errors))

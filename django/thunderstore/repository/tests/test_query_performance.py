@@ -8,7 +8,7 @@ from thunderstore.repository.cache import get_package_listing_queryset
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
-    UploaderIdentityFactory,
+    TeamFactory,
 )
 
 
@@ -29,7 +29,7 @@ def test_package_query_count(
     with CaptureQueriesContext(connection) as context:
         for package_id in range(package_count):
             package = PackageFactory.create(
-                owner=UploaderIdentityFactory.create(name=f"uploader_{package_id}"),
+                owner=TeamFactory.create(name=f"team_{package_id}"),
                 name=f"package_{package_id}",
             )
             for version_id in range(version_count):

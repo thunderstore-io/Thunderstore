@@ -8,7 +8,7 @@ from thunderstore.community.api.experimental.serializers import (
 )
 from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.core.utils import make_full_url
-from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
+from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_upload import PackageUploadForm
 from thunderstore.repository.serializer_fields import ModelChoiceField
 
@@ -130,7 +130,7 @@ class PackageUploadAuthorNameField(serializers.SlugRelatedField):
         super().__init__(*args, **kwargs)
 
     def get_queryset(self):
-        return UploaderIdentity.objects.exclude(
+        return Team.objects.exclude(
             ~Q(members__user=self.context["request"].user),
         )
 

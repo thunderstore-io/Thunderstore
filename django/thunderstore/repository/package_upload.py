@@ -9,7 +9,7 @@ from django.db import transaction
 
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import Package, PackageVersion, UploaderIdentity
+from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.readme import validate_readme
@@ -25,7 +25,7 @@ class PackageUploadForm(forms.ModelForm):
         required=False,
     )
     team = forms.ModelChoiceField(
-        queryset=UploaderIdentity.objects.none(),
+        queryset=Team.objects.none(),
         to_field_name="name",
         required=True,
         empty_label=None,
@@ -57,7 +57,7 @@ class PackageUploadForm(forms.ModelForm):
             community=community
         )
         # TODO: Query only teams where the user has upload permission
-        self.fields["team"].queryset = UploaderIdentity.objects.filter(
+        self.fields["team"].queryset = Team.objects.filter(
             members__user=self.user,
         )
         # TODO: Move this to the frontent code somehow
@@ -70,7 +70,7 @@ class PackageUploadForm(forms.ModelForm):
     def validate_manifest(self, manifest: bytes):
         self.manifest = validate_manifest(
             user=self.user,
-            uploader=self.cleaned_data.get("team"),
+            team=self.cleaned_data.get("team"),
             manifest_data=manifest,
         )
 
@@ -141,10 +141,10 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
         self.instance.file_size = self.file_size
-        identity = self.cleaned_data["team"]
-        identity.ensure_can_upload_package(self.user)
+        team = self.cleaned_data["team"]
+        team.ensure_can_upload_package(self.user)
         self.instance.package = Package.objects.get_or_create(
-            owner=identity,
+            owner=team,
             name=self.instance.name,
         )[0]
 

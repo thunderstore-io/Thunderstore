@@ -29,14 +29,14 @@ from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
-    UploaderIdentityFactory,
-    UploaderIdentityMemberFactory,
+    TeamFactory,
+    TeamMemberFactory,
 )
 from thunderstore.repository.models import (
     Package,
-    UploaderIdentity,
-    UploaderIdentityMember,
-    UploaderIdentityMemberRole,
+    Team,
+    TeamMember,
+    TeamMemberRole,
     Webhook,
 )
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
@@ -88,32 +88,32 @@ def user(django_user_model):
 
 
 @pytest.fixture()
-def uploader_identity():
-    return UploaderIdentity.objects.create(name="Test_Identity")
+def team():
+    return Team.objects.create(name="Test_Team")
 
 
 @pytest.fixture()
-def uploader_identity_member(uploader_identity):
-    return UploaderIdentityMember.objects.create(
-        identity=uploader_identity,
+def team_member(team):
+    return TeamMember.objects.create(
+        team=team,
         user=UserFactory(),
-        role=UploaderIdentityMemberRole.member,
+        role=TeamMemberRole.member,
     )
 
 
 @pytest.fixture()
-def uploader_identity_owner(uploader_identity):
-    return UploaderIdentityMember.objects.create(
-        identity=uploader_identity,
+def team_owner(team):
+    return TeamMember.objects.create(
+        team=team,
         user=UserFactory(),
-        role=UploaderIdentityMemberRole.owner,
+        role=TeamMemberRole.owner,
     )
 
 
 @pytest.fixture()
-def package(uploader_identity):
+def package(team):
     return Package.objects.create(
-        owner=uploader_identity,
+        owner=team,
         name="Test_Package",
     )
 
@@ -246,15 +246,15 @@ def _use_static_files_storage(settings):
 
 
 @pytest.fixture()
-def service_account(user, uploader_identity) -> ServiceAccount:
-    UploaderIdentityMember.objects.create(
+def service_account(user, team) -> ServiceAccount:
+    TeamMember.objects.create(
         user=user,
-        identity=uploader_identity,
-        role=UploaderIdentityMemberRole.owner,
+        team=team,
+        role=TeamMemberRole.owner,
     )
     form = CreateServiceAccountForm(
         user,
-        data={"identity": uploader_identity, "nickname": "Nickname"},
+        data={"team": team, "nickname": "Nickname"},
     )
     assert form.is_valid()
     return form.save()
@@ -316,12 +316,12 @@ def manifest_v1_package_upload_id(
 
 
 def create_test_service_account_user():
-    identity_owner = UserFactory()
-    identity = UploaderIdentityFactory()
-    UploaderIdentityMemberFactory(user=identity_owner, identity=identity, role="owner")
+    team_owner = UserFactory()
+    team = TeamFactory()
+    TeamMemberFactory(user=team_owner, team=team, role="owner")
     form = CreateServiceAccountForm(
-        user=identity_owner,
-        data={"identity": identity, "nickname": "Nickname"},
+        user=team_owner,
+        data={"team": team, "nickname": "Nickname"},
     )
     assert form.is_valid()
     return form.save().user

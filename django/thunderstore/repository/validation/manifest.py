@@ -3,12 +3,12 @@ import json
 from django.core.exceptions import ValidationError
 
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import UploaderIdentity
+from thunderstore.repository.models import Team
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 from thunderstore.repository.utils import unpack_serializer_errors
 
 
-def validate_manifest(user: UserType, uploader: UploaderIdentity, manifest_data: bytes):
+def validate_manifest(user: UserType, team: Team, manifest_data: bytes):
     try:
         manifest_json = json.loads(manifest_data)
     except UnicodeDecodeError as exc:
@@ -23,7 +23,7 @@ def validate_manifest(user: UserType, uploader: UploaderIdentity, manifest_data:
 
     serializer = ManifestV1Serializer(
         user=user,
-        uploader=uploader,
+        team=team,
         data=manifest_json,
     )
     if serializer.is_valid():
