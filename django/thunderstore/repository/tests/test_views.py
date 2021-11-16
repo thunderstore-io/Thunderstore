@@ -71,14 +71,17 @@ def test_package_list_view(client, community_site, ordering):
 
 
 @pytest.mark.django_db
-def test_package_detail_view(client, active_package, community_site):
+def test_package_detail_view(
+    client, active_package_listing: PackageListing, community_site
+):
     response = client.get(
-        active_package.get_absolute_url(), HTTP_HOST=community_site.site.domain
+        active_package_listing.package.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     response_text = response.content.decode("utf-8")
-    assert active_package.name in response_text
-    assert active_package.owner.name in response_text
+    assert active_package_listing.package.name in response_text
+    assert active_package_listing.package.owner.name in response_text
 
 
 @pytest.mark.django_db
@@ -108,7 +111,7 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
         active_version_with_listing.get_absolute_url(),
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 200
+    assert response.status_code == 404
     response_text = response.content.decode("utf-8")
     assert "Page not found" in response_text
 
@@ -144,7 +147,7 @@ def test_package_detail_version_view_main_package_deactivated(
         active_version_with_listing.get_absolute_url(),
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 200
+    assert response.status_code == 404
     response_text = response.content.decode("utf-8")
     assert "Page not found" in response_text
 

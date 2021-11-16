@@ -4,7 +4,7 @@ from thunderstore.community.models import CommunitySite
 
 
 def community_site(request):
-    if request.community_site:
+    if hasattr(request, "community_site") and request.community_site:
         result = {
             "site_name": request.community_site.site.name,
             "site_slogan": request.community_site.slogan or "",

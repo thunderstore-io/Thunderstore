@@ -1,5 +1,5 @@
 def team(request):
-    if not request.user.is_authenticated:
+    if not (hasattr(request, "user") and request.user.is_authenticated):
         return {}
     name = request.user.username
     membership = request.user.teams.first()
