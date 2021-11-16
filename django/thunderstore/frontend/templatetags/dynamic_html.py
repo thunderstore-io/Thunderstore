@@ -17,5 +17,7 @@ def get_dynamic_html_content(community, placement):
 
 @register.simple_tag(takes_context=True)
 def dynamic_html(context, placement):
+    if not hasattr(context["request"], "community"):
+        return ""
     community = context["request"].community
     return mark_safe(get_dynamic_html_content(community, placement))

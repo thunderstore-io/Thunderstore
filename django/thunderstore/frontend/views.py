@@ -1,13 +1,23 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.views.generic import TemplateView
 
 
-def handle404(request, exception):
-    return render(request, "errors/404.html", locals(), status=404)
+def disable_cache_if_static_request(request, response):
+    if request.path.startswith(settings.STATIC_URL):
+        response["Cache-Control"] = "no-cache"
+
+
+def handle404(request, exception=None):
+    response = render(request, "errors/404.html", locals(), status=404)
+    disable_cache_if_static_request(request, response)
+    return response
 
 
 def handle500(request):
-    return render(request, "errors/500.html", locals(), status=500)
+    response = render(request, "errors/500.html", locals(), status=500)
+    disable_cache_if_static_request(request, response)
+    return response
 
 
 def ads_txt_view(request):
