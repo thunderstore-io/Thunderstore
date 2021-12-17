@@ -33,6 +33,7 @@ from thunderstore.repository.factories import (
 )
 from thunderstore.repository.models import (
     Package,
+    PackageVersion,
     Team,
     TeamMember,
     TeamMemberRole,
@@ -77,6 +78,20 @@ def http_server():
     thread.join()
 
 
+@pytest.mark.django_db
+@pytest.fixture(scope="session", autouse=True)
+def prime_testing_database(django_db_setup, django_db_blocker):
+    with django_db_blocker.unblock():
+        [x.delete() for x in PackageVersion.objects.all()]
+        [x.delete() for x in Package.objects.all()]
+        [x.delete() for x in PackageListing.objects.all()]
+        [x.delete() for x in PackageCategory.objects.all()]
+        [x.delete() for x in Webhook.objects.all()]
+        [x.delete() for x in CommunitySite.objects.all()]
+        [x.delete() for x in Community.objects.all()]
+        [x.delete() for x in Site.objects.all()]
+
+
 @pytest.fixture()
 def user(django_user_model):
     return django_user_model.objects.create_user(
@@ -88,7 +103,7 @@ def user(django_user_model):
 
 @pytest.fixture()
 def team():
-    return Team.objects.create(name="Test_Team")
+    return Team.create(name="Test_Team")
 
 
 @pytest.fixture()

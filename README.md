@@ -272,3 +272,9 @@ You can enable caching to the redis backend by supplying a redis URL
 
 -   `REDIS_URL`: The redis database URL to use for caching, e.g.
     `redis://some-host:6379/0`
+
+## Testing
+
+Tests can be run with this command: `docker-compose exec django pytest`
+If you need to recreate to database,
+use the following: `docker-compose exec django pytest --create-db --migrations`

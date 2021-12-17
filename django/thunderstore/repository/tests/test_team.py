@@ -9,6 +9,7 @@ from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import TeamFactory, TeamMemberFactory
 from thunderstore.repository.models import (
+    Namespace,
     Package,
     Team,
     TeamMember,
@@ -56,10 +57,21 @@ def test_team_can_user_upload(user, role, expected) -> None:
 def test_team_create(name: str, should_fail: bool) -> None:
     if should_fail:
         with pytest.raises(ValidationError):
-            Team.objects.create(name=name)
+            Team.create(name=name)
     else:
-        team = Team.objects.create(name=name)
+        team = Team.create(name=name)
         assert team.name == name
+
+
+@pytest.mark.django_db
+def test_team_create_namespace_creation() -> None:
+    team = Team.create(name="Test_Team")
+    assert len(Namespace.objects.filter(name="Test_Team")) == 1
+    ns = Namespace(name="taken_namespace", team=team)
+    ns.save()
+    with pytest.raises(ValidationError) as e:
+        Team.create(name="taken_namespace")
+    assert "Namespace with the Teams name exists" in str(e.value)
 
 
 @pytest.mark.django_db
@@ -98,7 +110,7 @@ def test_team_create_for_user(
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
 def test_team_create_for_user_name_taken(user: UserType, role: str) -> None:
     would_be_name = strip_unsupported_characters(user.username)
-    team = Team.objects.create(name=would_be_name)
+    team = Team.create(name=would_be_name)
     if role:
         TeamMember.objects.create(
             team=team,
@@ -119,7 +131,7 @@ def test_team_get_default_for_user(
 ) -> None:
     existing_team = None
     if existing_team_role:
-        existing_team = Team.objects.create(name="TestTeam")
+        existing_team = Team.create(name="TestTeam")
         TeamMember.objects.create(
             team=existing_team,
             user=user,
@@ -147,7 +159,7 @@ def test_team_get_default_for_user(
 def test_team_get_default_for_user_conflict(user_type: str):
     user = TestUserTypes.get_user_by_type(user_type)
     if user and user.is_authenticated:
-        Team.objects.create(name=strip_unsupported_characters(user.username))
+        Team.create(name=strip_unsupported_characters(user.username))
     default_team = Team.get_default_for_user(user)
     assert default_team is None
 
@@ -642,3 +654,11 @@ def test_team_ensure_can_create_service_account(
             assert "Must be an owner to create a service account" in str(e.value)
         if role == TeamMemberRole.owner:
             assert team.ensure_can_create_service_account(user) is None
+
+
+@pytest.mark.django_db
+def test_team_save():
+    team = Team.create(name="TestTeam")
+    team.save()
+    assert team.namespaces is not None
+    assert team.namespaces.first().name == team.name
