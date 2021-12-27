@@ -2,17 +2,30 @@ from unittest import mock
 from urllib import request
 
 import pytest
+from django.contrib.sites.models import Site
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
 from django.http import Http404
+from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from thunderstore.core.factories import UserFactory
 
-from ...community.models import PackageListing, PackageListingReviewStatus
+from ...community.models import (
+    Community,
+    CommunitySite,
+    PackageListing,
+    PackageListingReviewStatus,
+)
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team
 from ..package_upload import PackageUploadForm
-from ..views.repository import PackageVersionDetailView
+from ..views.repository import (
+    PackageDetailView,
+    PackageListSearchView,
+    PackageVersionDetailView,
+)
 
 
 @pytest.mark.django_db
@@ -71,6 +84,39 @@ def test_package_list_view(client, community_site, ordering):
 
 
 @pytest.mark.django_db
+def test_package_list_search_view_get_page_title():
+    assert PackageListSearchView().get_page_title() == ""
+
+
+@pytest.mark.django_db
+def test_package_list_search_view_get_cache_vary():
+    assert PackageListSearchView().get_cache_vary() == ""
+
+
+@override_settings(ALLOWED_HOSTS=["testsite.test", "testsite2.test"])
+@pytest.mark.django_db
+def test_package_detail_view_community_redirect(
+    client, active_package_listing, community_site
+):
+    community_2 = Community.objects.create(name="Test2", identifier="test2")
+    site_2 = Site.objects.create(domain="testsite2.test", name="Testsite2")
+    community_site_2 = CommunitySite.objects.create(site=site_2, community=community_2)
+    response = client.get(
+        active_package_listing.package.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    response_text = response.content.decode("utf-8")
+    assert active_package_listing.package.name in response_text
+    assert active_package_listing.package.owner.name in response_text
+    response = client.get(
+        active_package_listing.package.get_absolute_url(),
+        HTTP_HOST=community_site_2.site.domain,
+    )
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
 def test_package_detail_view(
     client, active_package_listing: PackageListing, community_site
 ):
@@ -82,6 +128,60 @@ def test_package_detail_view(
     response_text = response.content.decode("utf-8")
     assert active_package_listing.package.name in response_text
     assert active_package_listing.package.owner.name in response_text
+
+
+@pytest.mark.django_db
+def test_package_detail_view_get_object(
+    active_package_listing, team_member, community_site
+):
+    owner = active_package_listing.package.owner
+    name = active_package_listing.package.name
+    mock_request = mock.Mock(spec=request.Request)
+    mock_request.user = team_member.user
+    mock_request.community = community_site.community
+    view = PackageDetailView(
+        kwargs={"owner": owner, "name": name},
+        request=mock_request,
+    )
+    obj = view.get_object()
+    assert active_package_listing == obj
+
+    mock_request.community.require_package_listing_approval = True
+    mock_request.community.save()
+    active_package_listing.review_status = PackageListingReviewStatus.rejected
+    active_package_listing.save()
+    mock_request.user = None
+    view = PackageDetailView(
+        kwargs={"owner": owner, "name": name},
+        request=mock_request,
+    )
+    view.get_object.cache_clear()
+    with pytest.raises(Http404) as exc:
+        view.get_object()
+    assert "Package is waiting for approval or has been rejected" in str(exc.value)
+
+
+@override_settings(ALLOWED_HOSTS=["testsite.test", "testsite2.test"])
+@pytest.mark.django_db
+def test_package_detail_version_view_community_redirect(
+    client, active_version_with_listing, community_site
+):
+    community_2 = Community.objects.create(name="Test2", identifier="test2")
+    site_2 = Site.objects.create(domain="testsite2.test", name="Testsite2")
+    community_site_2 = CommunitySite.objects.create(site=site_2, community=community_2)
+    response = client.get(
+        active_version_with_listing.package.versions.first().get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    response_text = response.content.decode("utf-8")
+    assert active_version_with_listing.package.name in response_text
+    assert active_version_with_listing.package.owner.name in response_text
+    response = client.get(
+        active_version_with_listing.package.versions.first().get_absolute_url(),
+        HTTP_HOST=community_site_2.site.domain,
+    )
+    assert response.status_code == 302
 
 
 @pytest.mark.django_db
@@ -163,20 +263,101 @@ def test_package_detail_version_view_get_object(
     mock_request.user = team_member.user
     mock_request.community = community_site.community
     view = PackageVersionDetailView(
-        kwargs={"owner": owner, "name": name, "version": version}, request=mock_request
+        kwargs={"owner": owner, "name": name, "version": version.version_number},
+        request=mock_request,
     )
+    assert view.get_object() == active_version_with_listing
+
+
+@pytest.mark.django_db
+def test_package_detail_version_view_get_object_and_listing(
+    active_version_with_listing, team_member, community_site
+):
+    owner = active_version_with_listing.package.owner
+    name = active_version_with_listing.package.name
+    version = active_version_with_listing
+    mock_request = mock.Mock(spec=request.Request)
+    mock_request.user = team_member.user
+    mock_request.community = community_site.community
+    view = PackageVersionDetailView(
+        kwargs={"owner": owner, "name": name, "version": version.version_number},
+        request=mock_request,
+    )
+
+    found_version, listing = view.get_object_and_listing()
+    assert found_version == version
+
+    active_version_with_listing.is_active = False
+    active_version_with_listing.save()
+    view.get_object_and_listing.cache_clear()
+    with pytest.raises(Http404) as excinfo:
+        view.get_object_and_listing()
+    assert "No matching package found" in str(excinfo.value)
+    active_version_with_listing.is_active = True
+    active_version_with_listing.save()
 
     active_version_with_listing.package.is_active = False
     active_version_with_listing.package.save()
+    view.get_object_and_listing.cache_clear()
     with pytest.raises(Http404) as excinfo:
-        view.get_object()
-    assert "Main package is deactivated" in str(excinfo.value)
+        view.get_object_and_listing()
+    assert "No matching package found" in str(excinfo.value)
+    active_version_with_listing.package.is_active = True
+    active_version_with_listing.package.save()
 
     community_site.community.require_package_listing_approval = True
     community_site.community.save()
+    view.get_object_and_listing.cache_clear()
     with pytest.raises(Http404) as excinfo:
-        view.get_object()
+        view.get_object_and_listing()
     assert "Package is waiting for approval or has been rejected" in str(excinfo.value)
+
+
+@override_settings(DEBUG=True)
+@pytest.mark.django_db
+def test_package_detail_version_view_get_object_and_listing_cache(
+    active_version_with_listing, team_member, community_site
+):
+    owner = active_version_with_listing.package.owner
+    name = active_version_with_listing.package.name
+    version = active_version_with_listing
+    mock_request = mock.Mock(spec=request.Request)
+    mock_request.user = team_member.user
+    mock_request.community = community_site.community
+    view = PackageVersionDetailView(
+        kwargs={"owner": owner, "name": name, "version": version.version_number},
+        request=mock_request,
+    )
+    PackageVersionFactory.create(
+        name=active_version_with_listing.package.name,
+        package=active_version_with_listing.package,
+        is_active=True,
+        version_number="2.0.0",
+    )
+    second_view = PackageVersionDetailView(
+        kwargs={"owner": owner, "name": name, "version": "2.0.0"},
+        request=mock_request,
+    )
+
+    with CaptureQueriesContext(connection) as queries:
+        found_version, listing = view.get_object_and_listing()
+    assert found_version == version
+    assert len(queries.captured_queries) > 0
+
+    with CaptureQueriesContext(connection) as queries:
+        found_version, listing = view.get_object_and_listing()
+    assert found_version == version
+    assert len(queries.captured_queries) == 0
+
+    with CaptureQueriesContext(connection) as queries:
+        found_second_version, listing = second_view.get_object_and_listing()
+    assert found_second_version.version_number == "2.0.0"
+    assert len(queries.captured_queries) > 0
+
+    with CaptureQueriesContext(connection) as queries:
+        found_second_version, listing = second_view.get_object_and_listing()
+    assert found_second_version.version_number == "2.0.0"
+    assert len(queries.captured_queries) == 0
 
 
 @pytest.mark.django_db

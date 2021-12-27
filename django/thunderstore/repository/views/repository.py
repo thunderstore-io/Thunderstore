@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import List, Optional, Set, Tuple
 
 from django.db import transaction
@@ -20,8 +21,10 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
+from thunderstore.repository.exceptions import RedirectListingException
 from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
+from thunderstore.repository.utils import solve_listing
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -368,43 +371,22 @@ class PackageListByDependencyView(PackageListSearchView):
         return f"dependencies-{self.package_listing.package.id}"
 
 
-@cache_function_result(cache_until=CacheBustCondition.any_package_updated)
-def get_package_listing_or_404(
-    namespace: str,
-    name: str,
-    community_pk: int,
-) -> PackageListing:
-    owner = get_object_or_404(Team, name=namespace)
-    package_listing = (
-        PackageListing.objects.active()
-        .filter(
-            package__owner=owner,
-            package__name=name,
-            community=community_pk,
-        )
-        .select_related(
-            "package",
-            "package__owner",
-            "package__latest",
-        )
-        .prefetch_related(
-            "categories",
-        )
-        .first()
-    )
-    if not package_listing:
-        raise Http404("No matching package found")
-    return package_listing
-
-
 class PackageDetailView(DetailView):
     model = PackageListing
 
+    def get(self, *args, **kwargs):
+        listing = self.get_object(*args, **kwargs)
+        if listing.community != self.request.community:
+            return redirect(listing.get_full_url())
+        else:
+            return super().get(*args, **kwargs)
+
+    @lru_cache(maxsize=None)
     def get_object(self, *args, **kwargs):
-        listing = get_package_listing_or_404(
-            namespace=self.kwargs["owner"],
+        listing = solve_listing(
+            owner=self.kwargs["owner"],
             name=self.kwargs["name"],
-            community_pk=self.request.community.pk,
+            community=self.request.community,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -428,24 +410,38 @@ class PackageDetailView(DetailView):
 class PackageVersionDetailView(DetailView):
     model = PackageVersion
 
+    def get(self, *args, **kwargs):
+        package_version, listing = self.get_object_and_listing(*args, **kwargs)
+        if listing.community != self.request.community:
+            return redirect(
+                package_version.get_full_url(site=listing.community.sites.first().site)
+            )
+        else:
+            self.object = package_version
+            context = self.get_context_data(object=self.object)
+            return self.render_to_response(context)
+
     def get_object(self, *args, **kwargs):
-        owner = self.kwargs["owner"]
-        name = self.kwargs["name"]
+        obj, listing = self.get_object_and_listing(*args, **kwargs)
+        return obj
+
+    @lru_cache(maxsize=None)
+    def get_object_and_listing(self, *args, **kwargs):
         version = self.kwargs["version"]
-        listing = get_object_or_404(
-            PackageListing,
-            package__owner__name=owner,
-            package__name=name,
+        listing = solve_listing(
+            owner=self.kwargs["owner"],
+            name=self.kwargs["name"],
             community=self.request.community,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
-        if not listing.package.is_active:
-            raise Http404("Main package is deactivated")
-        return get_object_or_404(
-            PackageVersion,
-            package=listing.package,
-            version_number=version,
+        return (
+            get_object_or_404(
+                PackageVersion,
+                package=listing.package,
+                version_number=version,
+            ),
+            listing,
         )
 
 

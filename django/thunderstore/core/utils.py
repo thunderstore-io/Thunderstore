@@ -70,14 +70,35 @@ def capture_exception(*args, **kwargs):
     capture_sentry_exception(*args, **kwargs)
 
 
-def make_full_url(request: Optional[HttpRequest], path: str):
+def enforce_url_protocol(
+    url: str,
+):
+    if settings.PROTOCOL == "https://" and url.startswith("http://"):
+        url = f"https://{url[7:]}"
+    return url
+
+
+def build_url_from_request_object(
+    path: str,
+    request: Optional[HttpRequest],
+):
     """Build an URL relative to a request using the proper request scheme"""
     url = path
     if request:
         url = request.build_absolute_uri(url)
-    if settings.PROTOCOL == "https://" and url.startswith("http://"):
-        url = f"https://{url[7:]}"
-    return url
+    return enforce_url_protocol(url)
+
+
+def build_url_from_site_object(
+    path: str,
+    site,
+):
+    url = "%(protocol)s%(hostname)s%(path)s" % {
+        "protocol": settings.PROTOCOL,
+        "hostname": site.domain,
+        "path": path,
+    }
+    return enforce_url_protocol(url)
 
 
 FILENAME_SANITIZER_REGEX = re.compile(r"[^a-zA-Z0-9\_\-\.]+")
