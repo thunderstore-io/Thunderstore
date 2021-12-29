@@ -324,8 +324,10 @@ def show_debug_toolbar(request: HttpRequest) -> bool:
     )
 
 
-if DEBUG_TOOLBAR_ENABLED:
+if DEBUG_TOOLBAR_AVAILABLE:
     INSTALLED_APPS += ["debug_toolbar"]
+
+if DEBUG_TOOLBAR_ENABLED:
     MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
     DEBUG_TOOLBAR_PANELS = [
         "debug_toolbar.panels.history.HistoryPanel",
