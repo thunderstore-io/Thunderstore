@@ -4,4 +4,4 @@ exclude =
   .git,
   __pycache__,
   migrations
-ignore = E203,W503,PT003,PIE783
+ignore = E203,W503,PT003,PIE783,E501
