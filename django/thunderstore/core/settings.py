@@ -3,6 +3,7 @@ import json
 import os
 
 import environ
+from django.http import HttpRequest
 
 from thunderstore.core.utils import validate_filepath_prefix
 
@@ -21,6 +22,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
+    DEBUG_TOOLBAR_SUPERUSER_ONLY=(bool, True),
     DATABASE_LOGS=(bool, False),
     DATABASE_QUERY_COUNT_HEADER=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
@@ -307,15 +309,19 @@ REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB = env.int("REPOSITORY_MAX_PACKAGE_TOTAL_SIZ
 
 DEBUG_TOOLBAR_ENABLED = all(
     (
-        DEBUG,
         DEBUG_TOOLBAR_AVAILABLE,
         env.bool("DEBUG_TOOLBAR_ENABLED"),
     ),
 )
+DEBUG_TOOLBAR_SUPERUSER_ONLY = env.bool("DEBUG_TOOLBAR_SUPERUSER_ONLY")
 
 
-def show_debug_toolbar(request):
-    return DEBUG_TOOLBAR_ENABLED
+def show_debug_toolbar(request: HttpRequest) -> bool:
+    is_superuser = hasattr(request, "user") and request.user.is_superuser
+    return DEBUG_TOOLBAR_ENABLED and (
+        (DEBUG_TOOLBAR_SUPERUSER_ONLY and is_superuser)
+        or (DEBUG and not DEBUG_TOOLBAR_SUPERUSER_ONLY)
+    )
 
 
 if DEBUG_TOOLBAR_ENABLED:
