@@ -3,14 +3,11 @@ from django.core.cache import cache
 from django.db import transaction
 
 from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.core.utils import on_commit_or_immediate
 
 
 def invalidate_cache_on_commit_async(cache_bust_condition: str):
-    connection = transaction.get_connection()
-    if connection.in_atomic_block:
-        transaction.on_commit(lambda: invalidate_cache.delay(cache_bust_condition))
-    else:
-        invalidate_cache.delay(cache_bust_condition)
+    on_commit_or_immediate(lambda: invalidate_cache.delay(cache_bust_condition))
 
 
 @shared_task
