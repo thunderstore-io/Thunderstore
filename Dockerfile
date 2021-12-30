@@ -17,7 +17,7 @@ ENV DB_CERT_DIR /etc/ssl/private/db-certs/
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-    curl build-essential \
+    curl build-essential git \
  && rm -rf /var/lib/apt/lists/*
 
 COPY ./django/pyproject.toml ./django/poetry.lock /app/

@@ -32,6 +32,7 @@ django-cors-headers = "^3.7.0"
 boto3 = "^1.17.47"
 bleach = "^3.3.0"
 markdown-it-py = {extras = ["linkify"], version = "^1.1.0"}
+abyss = {git = "https://github.com/akx/abyss.git", rev = "4352e557f25a303f718ec1bf82ea0ca545ebc077"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
