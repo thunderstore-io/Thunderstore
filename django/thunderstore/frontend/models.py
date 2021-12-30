@@ -1,7 +1,8 @@
 from django.db import models
 from django.db.models import Q, signals
 
-from thunderstore.cache.cache import CacheBustCondition, invalidate_cache
+from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.utils import ChoiceEnum
 
 
@@ -61,7 +62,7 @@ class DynamicHTML(models.Model):
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
-        invalidate_cache(CacheBustCondition.dynamic_html_updated)
+        invalidate_cache_on_commit_async(CacheBustCondition.dynamic_html_updated)
 
     @classmethod
     def get_for_community(cls, community, placement):

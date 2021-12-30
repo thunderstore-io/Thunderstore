@@ -8,6 +8,8 @@ from django.urls import reverse
 
 from thunderstore.core.factories import UserFactory
 
+from ...cache.cache import CacheBustCondition
+from ...cache.tasks import invalidate_cache
 from ...community.models import PackageListing, PackageListingReviewStatus
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team
@@ -60,6 +62,8 @@ def test_package_list_view(client, community_site, ordering):
             community=community_site.community,
             review_status=PackageListingReviewStatus.rejected,
         )
+
+    invalidate_cache(cache_bust_condition=CacheBustCondition.any_package_updated)
 
     base_url = reverse("packages.list")
     url = f"{base_url}?ordering={ordering}"
