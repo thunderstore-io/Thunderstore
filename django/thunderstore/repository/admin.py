@@ -187,6 +187,10 @@ class PackageAdmin(admin.ModelAdmin):
         "name",
         "owner__name",
     )
+    list_select_related = (
+        "latest",
+        "owner",
+    )
 
     def file_size(self, obj):
         return obj.latest.file_size if obj.latest else 0
