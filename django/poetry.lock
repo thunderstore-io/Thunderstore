@@ -1,4 +1,19 @@
 [[package]]
+name = "abyss"
+version = "0.0.dev0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/akx/abyss.git"
+reference = "4352e557f25a303f718ec1bf82ea0ca545ebc077"
+resolved_reference = "4352e557f25a303f718ec1bf82ea0ca545ebc077"
+
+[[package]]
 name = "amqp"
 version = "5.0.5"
 description = "Low-level AMQP client for Python (fork of amqplib)."
@@ -467,7 +482,7 @@ redis = ">=3.0.0"
 
 [[package]]
 name = "django-storages"
-version = "1.11.1"
+version = "1.12.3"
 description = "Support for many storage backends in Django"
 category = "main"
 optional = false
@@ -476,13 +491,13 @@ python-versions = ">=3.5"
 [package.dependencies]
 boto3 = {version = ">=1.4.4", optional = true, markers = "extra == \"boto3\""}
 Django = ">=2.2"
-google-cloud-storage = {version = ">=1.15.0", optional = true, markers = "extra == \"google\""}
+google-cloud-storage = {version = ">=1.27.0", optional = true, markers = "extra == \"google\""}
 
 [package.extras]
-azure = ["azure-storage-blob (>=1.3.1,<12.0.0)"]
+azure = ["azure-storage-blob (>=12.0.0)"]
 boto3 = ["boto3 (>=1.4.4)"]
 dropbox = ["dropbox (>=7.2.1)"]
-google = ["google-cloud-storage (>=1.15.0)"]
+google = ["google-cloud-storage (>=1.27.0)"]
 libcloud = ["apache-libcloud"]
 sftp = ["paramiko"]
 
@@ -1765,9 +1780,10 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "a0846d71e19f88dbe4179e9385f9d4fbf135bce1d38707ed9974925a1ccfa032"
+content-hash = "276e9cccea2ecc53379a093d6ca6df39a03145da3169c54dbc16ad0d682affbf"
 
 [metadata.files]
+abyss = []
 amqp = [
     {file = "amqp-5.0.5-py3-none-any.whl", hash = "sha256:1e759a7f202d910939de6eca45c23a107f6b71111f41d1282c648e9ac3d21901"},
     {file = "amqp-5.0.5.tar.gz", hash = "sha256:affdd263d8b8eb3c98170b78bf83867cdb6a14901d586e00ddb65bfe2f0c4e60"},
@@ -2025,8 +2041,8 @@ django-redis = [
     {file = "django_redis-4.12.1-py3-none-any.whl", hash = "sha256:1133b26b75baa3664164c3f44b9d5d133d1b8de45d94d79f38d1adc5b1d502e5"},
 ]
 django-storages = [
-    {file = "django-storages-1.11.1.tar.gz", hash = "sha256:c823dbf56c9e35b0999a13d7e05062b837bae36c518a40255d522fbe3750fbb4"},
-    {file = "django_storages-1.11.1-py3-none-any.whl", hash = "sha256:f28765826d507a0309cfaa849bd084894bc71d81bf0d09479168d44785396f80"},
+    {file = "django-storages-1.12.3.tar.gz", hash = "sha256:a475edb2f0f04c4f7e548919a751ecd50117270833956ed5bd585c0575d2a5e7"},
+    {file = "django_storages-1.12.3-py3-none-any.whl", hash = "sha256:204a99f218b747c46edbfeeb1310d357f83f90fa6a6024d8d0a3f422570cee84"},
 ]
 django-stubs = [
     {file = "django-stubs-1.7.0.tar.gz", hash = "sha256:ddd190aca5b9adb4d30760d5c64f67cb3658703f5f42c3bb0c2c71ff4d752c39"},

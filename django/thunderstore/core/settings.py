@@ -65,6 +65,7 @@ env = environ.Env(
     AWS_LOCATION=(str, ""),
     AWS_QUERYSTRING_AUTH=(bool, False),
     AWS_S3_SECURE_URLS=(bool, True),
+    AWS_S3_FILE_OVERWRITE=(bool, False),
     USERMEDIA_S3_ENDPOINT_URL=(str, ""),
     USERMEDIA_S3_ACCESS_KEY_ID=(str, ""),
     USERMEDIA_S3_SECRET_ACCESS_KEY=(str, ""),
@@ -72,6 +73,16 @@ env = environ.Env(
     USERMEDIA_S3_REGION_NAME=(str, ""),
     USERMEDIA_S3_STORAGE_BUCKET_NAME=(str, ""),
     USERMEDIA_S3_LOCATION=(str, ""),
+    ABYSS_S3_ENDPOINT_URL=(str, ""),
+    ABYSS_S3_ACCESS_KEY_ID=(str, ""),
+    ABYSS_S3_SECRET_ACCESS_KEY=(str, ""),
+    ABYSS_S3_REGION_NAME=(str, ""),
+    ABYSS_S3_STORAGE_BUCKET_NAME=(str, ""),
+    ABYSS_S3_LOCATION=(str, ""),
+    ABYSS_S3_FILE_OVERWRITE=(bool, False),
+    ABYSS_S3_CUSTOM_DOMAIN=(str, ""),
+    ABYSS_S3_SECURE_URLS=(bool, True),
+    ABYSS_S3_DEFAULT_ACL=(str, "private"),
     REDIS_URL=(str, ""),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
@@ -211,6 +222,7 @@ MIDDLEWARE = [
     "thunderstore.community.middleware.CommunitySiteMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "thunderstore.abyss.middleware.TracingMiddleware",
 ]
 
 ROOT_URLCONF = "thunderstore.core.urls"
@@ -519,6 +531,7 @@ AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME")
 AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL")
 AWS_S3_HOST = env.str("AWS_S3_HOST")
 AWS_S3_CUSTOM_DOMAIN = env.str("AWS_S3_CUSTOM_DOMAIN")
+AWS_S3_FILE_OVERWRITE = env.bool("AWS_S3_FILE_OVERWRITE")
 AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
 AWS_DEFAULT_ACL = env.str("AWS_DEFAULT_ACL")
 AWS_BUCKET_ACL = env.str("AWS_BUCKET_ACL")
@@ -540,6 +553,22 @@ USERMEDIA_S3_REGION_NAME = env.str("USERMEDIA_S3_REGION_NAME")
 USERMEDIA_S3_STORAGE_BUCKET_NAME = env.str("USERMEDIA_S3_STORAGE_BUCKET_NAME")
 USERMEDIA_S3_LOCATION = validate_filepath_prefix(env.str("USERMEDIA_S3_LOCATION"))
 USERMEDIA_S3_OBJECT_PARAMETERS = {
+    "CacheControl": "max-age=2592000",  # 30 days
+}
+
+# Abyss S3 settings
+
+ABYSS_S3_ENDPOINT_URL = env.str("ABYSS_S3_ENDPOINT_URL")
+ABYSS_S3_ACCESS_KEY_ID = env.str("ABYSS_S3_ACCESS_KEY_ID")
+ABYSS_S3_SECRET_ACCESS_KEY = env.str("ABYSS_S3_SECRET_ACCESS_KEY")
+ABYSS_S3_REGION_NAME = env.str("ABYSS_S3_REGION_NAME")
+ABYSS_S3_STORAGE_BUCKET_NAME = env.str("ABYSS_S3_STORAGE_BUCKET_NAME")
+ABYSS_S3_LOCATION = validate_filepath_prefix(env.str("ABYSS_S3_LOCATION"))
+ABYSS_S3_FILE_OVERWRITE = env.bool("ABYSS_S3_FILE_OVERWRITE")
+ABYSS_S3_CUSTOM_DOMAIN = env.str("ABYSS_S3_CUSTOM_DOMAIN")
+ABYSS_S3_SECURE_URLS = env.bool("ABYSS_S3_SECURE_URLS")
+ABYSS_S3_DEFAULT_ACL = env.str("ABYSS_S3_DEFAULT_ACL")
+ABYSS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=2592000",  # 30 days
 }
 
