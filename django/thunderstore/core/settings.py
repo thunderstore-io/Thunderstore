@@ -89,6 +89,7 @@ env = environ.Env(
     DB_CLIENT_KEY=(str, ""),
     DB_SERVER_CA=(str, ""),
     SENTRY_DSN=(str, ""),
+    SENTRY_TRACES_SAMPLE_RATE=(float, 0.0),
     CELERY_BROKER_URL=(str, ""),
     CELERY_TASK_ALWAYS_EAGER=(bool, False),
     CELERY_EAGER_PROPAGATES_EXCEPTIONS=(bool, False),
@@ -98,11 +99,16 @@ env = environ.Env(
 )
 
 SENTRY_DSN = env.str("SENTRY_DSN")
+SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE")
 if SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
-    sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()])
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        integrations=[DjangoIntegration()],
+    )
 
 checkout_dir = environ.Path(__file__) - 3
 if not os.path.exists(checkout_dir("manage.py")):

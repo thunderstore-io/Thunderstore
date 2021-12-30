@@ -11,11 +11,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from thunderstore.cache.cache import (
-    CacheBustCondition,
-    cache_function_result,
-    invalidate_cache,
-)
+from thunderstore.cache.cache import CacheBustCondition, cache_function_result
+from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
 
@@ -254,11 +251,11 @@ class Package(models.Model):
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
-        invalidate_cache(CacheBustCondition.any_package_updated)
+        invalidate_cache_on_commit_async(CacheBustCondition.any_package_updated)
 
     @staticmethod
     def post_delete(sender, instance, **kwargs):
-        invalidate_cache(CacheBustCondition.any_package_updated)
+        invalidate_cache_on_commit_async(CacheBustCondition.any_package_updated)
 
 
 signals.post_save.connect(Package.post_save, sender=Package)

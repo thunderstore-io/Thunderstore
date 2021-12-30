@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
 
+from thunderstore.core.utils import on_commit_or_immediate
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
 from thunderstore.webhooks.models import Webhook
@@ -172,7 +173,7 @@ class PackageVersion(models.Model):
         webhooks = Webhook.get_for_package_release(self.package)
 
         for webhook in webhooks:
-            webhook.post_package_version_release(self)
+            on_commit_or_immediate(lambda: webhook.post_package_version_release(self))
 
     def maybe_increase_download_counter(self, request):
         client_ip, is_routable = get_client_ip(request)

@@ -114,13 +114,6 @@ def cache_get_or_set(key, default, default_args=(), default_kwargs=None, expiry=
     return result
 
 
-def invalidate_cache(cache_bust_condition):
-    if cache_bust_condition == CacheBustCondition.background_update_only:
-        raise AttributeError("Invalid cache bust condition")
-    if hasattr(cache, "delete_pattern"):
-        cache.delete_pattern(f"cache.{cache_bust_condition}.*")
-
-
 def get_cache_key(cache_bust_condition, cache_type, key, vary_on):
     if cache_bust_condition not in CacheBustCondition.options():
         raise ValueError(f"Invalid cache bust condition: {cache_bust_condition}")

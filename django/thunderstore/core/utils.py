@@ -3,6 +3,7 @@ from typing import Callable, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpRequest
 from sentry_sdk import capture_exception as capture_sentry_exception
 
@@ -108,3 +109,11 @@ def validate_filepath_prefix(filepath: Optional[str]) -> Optional[str]:
             f"Invalid filepath prefix: {filepath}, should be: {stripped}"
         )
     return stripped
+
+
+def on_commit_or_immediate(fn: Callable, using: Optional[str] = None):
+    connection = transaction.get_connection(using=using)
+    if connection.in_atomic_block:
+        transaction.on_commit(fn, using=using)
+    else:
+        fn()
