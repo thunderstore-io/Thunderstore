@@ -10,9 +10,9 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
 
-from thunderstore.core.utils import on_commit_or_immediate
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
+from thunderstore.utils.decorators import run_after_commit
 from thunderstore.webhooks.models import Webhook
 
 
@@ -169,11 +169,12 @@ class PackageVersion(models.Model):
     def get_total_used_disk_space(cls):
         return cls.objects.aggregate(total=Sum("file_size"))["total"] or 0
 
+    @run_after_commit
     def announce_release(self):
         webhooks = Webhook.get_for_package_release(self.package)
 
         for webhook in webhooks:
-            on_commit_or_immediate(lambda: webhook.post_package_version_release(self))
+            webhook.post_package_version_release(self)
 
     def maybe_increase_download_counter(self, request):
         client_ip, is_routable = get_client_ip(request)
