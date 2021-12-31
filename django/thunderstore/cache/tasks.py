@@ -1,13 +1,13 @@
 from celery import shared_task
 from django.core.cache import cache
-from django.db import transaction
 
 from thunderstore.cache.cache import CacheBustCondition
-from thunderstore.core.utils import on_commit_or_immediate
+from thunderstore.utils.decorators import run_after_commit
 
 
+@run_after_commit
 def invalidate_cache_on_commit_async(cache_bust_condition: str):
-    on_commit_or_immediate(lambda: invalidate_cache.delay(cache_bust_condition))
+    invalidate_cache.delay(cache_bust_condition)
 
 
 @shared_task
