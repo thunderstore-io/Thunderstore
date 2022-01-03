@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from sentry_sdk import capture_exception
 
-from thunderstore.security.utils import fetch_and_setup_public_key
+from thunderstore.special.utils import fetch_and_setup_public_key
 
 
 @csrf_exempt
@@ -29,7 +29,7 @@ def secret_scanning_endpoint(request):
     try:
         public_key = fetch_and_setup_public_key(key_identifier)
         # print(binascii.hexlify(public_key.public_bytes(Encoding.X962, PublicFormat.CompressedPoint)))
-        public_key.verify(signature, token, ECDSA(SHA256()))
+        public_key.verify(signature.encode(), token.encode(), ECDSA(SHA256()))
         return HttpResponse(status=200)
     except Exception as exc:
         raise exc

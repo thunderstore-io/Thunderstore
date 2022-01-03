@@ -15,7 +15,7 @@ from thunderstore.frontend.views import (
 )
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
-from thunderstore.security.urls import urlpatterns as security_urls
+from thunderstore.special.urls import special_urls as github_special_urls
 
 from ..community.views import FaviconView
 from .api_urls import api_urls
@@ -27,6 +27,10 @@ handler500 = "thunderstore.frontend.views.handle500"
 
 AUTH_ROOT = "auth/"
 
+special_urls = [
+    path("github/", include((github_special_urls, "github"), namespace="github")),
+]
+
 urlpatterns = [
     path("", PackageListView.as_view(), name="index"),
     path("ads.txt", ads_txt_view, name="ads.txt"),
@@ -35,7 +39,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
     path("package/", include(repository_urls)),
     path("settings/", include(settings_urls)),
-    path("_/", include(security_urls)),
+    path("_/", include((special_urls, "special"), namespace="special")),
     path("favicon.ico", FaviconView.as_view()),
     path("djangoadmin/", admin.site.urls),
     path("healthcheck/", healthcheck_view, name="healthcheck"),
