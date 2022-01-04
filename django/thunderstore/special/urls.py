@@ -1,11 +1,11 @@
 from django.urls import path
 
-from thunderstore.special import views
+from thunderstore.special.views import SecretScanningEndpoint
 
 special_urls = [
     path(
         "secret-scanning/validate/",
-        views.secret_scanning_endpoint,
+        SecretScanningEndpoint.as_view(),
         name="secret-scanning.validate",
     ),
 ]

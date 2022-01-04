@@ -1,10 +1,57 @@
 import base64
 import binascii
+import datetime
 import json
 
 import requests
 from cryptography.hazmat.backends.openssl.backend import backend
 from cryptography.hazmat.primitives.asymmetric import ec
+from django.utils import timezone
+
+from thunderstore.core.utils import capture_exception
+from thunderstore.special.models.keys import KeyProvider, KeyType, StoredPublicKey
+
+
+class KeyUpdateException(Exception):
+    ...
+
+
+def update_keys(provider):
+    public_key_endpoint = requests.request("GET", provider.provider_url)
+    for k in json.loads(public_key_endpoint.content)["public_keys"]:
+        stored_key, created = StoredPublicKey.objects.get_or_create(
+            provider=provider, key_identifier=k["key_identifier"]
+        )
+        if not created:
+            if stored_key.key != k["key"]:
+                capture_exception(
+                    KeyUpdateException("Identifiers new key does not match the old one")
+                )
+            if stored_key.is_active and k["is_current"] == "false":
+                stored_key.is_active == False
+                stored_key.save()
+            elif not stored_key.is_active and k["is_current"] == "true":
+                stored_key.is_active == True
+                stored_key.save()
+        else:
+            stored_key.key = k["key"]
+            stored_key.is_active = k["is_current"]
+            stored_key.key_type = KeyType.SECP256R1
+            stored_key.save()
+
+    provider.last_update_time = timezone.now()
+    provider.save()
+
+
+def solve_key(key_identifier, key_type, provider):
+    if (timezone.now() - provider.last_update_time) > datetime.timedelta(hours=24):
+        update_keys(provider)
+    return StoredPublicKey.objects.get(
+        provider=provider,
+        key_identifier=key_identifier,
+        key_type=key_type,
+        is_active=True,
+    )
 
 
 class UnDerException(Exception):
@@ -85,14 +132,6 @@ def ec_points_from_der(key):
     return binascii.unhexlify(der_data[4][1][6:].decode())
 
 
-def fetch_and_setup_public_key(key_identifier: str):
-    public_key_endpoint = requests.request(
-        "GET", "https://api.github.com/meta/public_keys/secret_scanning"
-    )
-    keys = json.loads(public_key_endpoint.content)["public_keys"]
-    for k in keys:
-        if k["key_identifier"] == key_identifier:
-            ec_points = ec_points_from_der(k["key"])
-            return backend.load_elliptic_curve_public_bytes(ec.SECP256R1(), ec_points)
-
-    raise Exception("Couldn't find a matching key")
+def setup_public_key(stored_public_key: StoredPublicKey):
+    ec_points = ec_points_from_der(stored_public_key.key)
+    return backend.load_elliptic_curve_public_bytes(ec.SECP256R1(), ec_points)
