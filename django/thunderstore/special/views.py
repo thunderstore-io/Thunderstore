@@ -1,14 +1,17 @@
+import base64
 import json
 from typing import Any
 
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.serialization import load_der_public_key
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from sentry_sdk import capture_exception
 
+from thunderstore.account.models import ServiceAccount
+from thunderstore.account.tokens import hash_service_account_api_token
 from thunderstore.special.models.keys import KeyProvider, KeyType
-from thunderstore.special.utils import setup_public_key, solve_key
+from thunderstore.special.utils import solve_key, unpem
 
 
 class SecretScanningEndpoint(APIView):
@@ -22,13 +25,7 @@ class SecretScanningEndpoint(APIView):
         super().__init__(**kwargs)
 
     def post(self, request, format=None, provider_name="github_secret_scanning"):
-        try:
-            provider = KeyProvider.objects.get(name=provider_name)
-        except KeyProvider.DoesNotExist as exc:
-            capture_exception(exc)
-            return Response(status=200)
-        public_key = None
-        signature = None
+        provider = KeyProvider.objects.get(name=provider_name)
         key_identifier = request.headers["Github-Public-Key-Identifier"]
         signature = request.headers["Github-Public-Key-Signature"]
         # Assuming there is only one token per request
@@ -38,16 +35,20 @@ class SecretScanningEndpoint(APIView):
         token_type = request_json["type"]
         token_url = request_json["url"]
 
-        try:
-            stored_public_key = solve_key(
-                key_identifier=key_identifier,
-                key_type=KeyType.SECP256R1,
-                provider=provider,
-            )
-            public_key = setup_public_key(stored_public_key)
-            public_key.verify(signature.encode(), token.encode(), ECDSA(SHA256()))
+        stored_public_key = solve_key(
+            key_identifier=key_identifier,
+            key_type=KeyType.SECP256R1,
+            provider=provider,
+        )
+        public_key = load_der_public_key(unpem(stored_public_key.key))
+        public_key.verify(base64.b64decode(signature), request.body, ECDSA(SHA256()))
+        hashed_payload_token = hash_service_account_api_token(token)
+        if ServiceAccount.objects.filter(
+            api_token__exact=hashed_payload_token
+        ).exists():
+            print("Yes is valid")
             # At this point we can do notifications or whatever, when a True positive is found
-            return Response(status=200)
-        except Exception as exc:
-            capture_exception(exc)
-            return Response(status=200)
+        else:
+            print("Is no valid")
+            # At this point we can ignore
+        return Response(status=200)

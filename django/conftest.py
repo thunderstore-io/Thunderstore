@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 import threading
@@ -8,8 +9,11 @@ from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
+from cryptography.hazmat.primitives._serialization import Encoding, PublicFormat
+from cryptography.hazmat.primitives.asymmetric import ec
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
+from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APIClient
 
@@ -39,6 +43,7 @@ from thunderstore.repository.models import (
     TeamMemberRole,
     Webhook,
 )
+from thunderstore.special.models.keys import KeyProvider, KeyType, StoredPublicKey
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
 
@@ -71,6 +76,38 @@ def http_server():
     host, port = "localhost", 8888
     url = f"http://{host}:{port}/"
     server = HTTPServer((host, port), PostHTTPRequestHandler)
+    thread = threading.Thread(None, server.run)
+    thread.start()
+    yield url
+    server.shutdown()
+    thread.join()
+
+
+class KeyProviderGetHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        keys = json.dumps(
+            {
+                "public_keys": [
+                    {
+                        "key_identifier": "FETCHED_KEY_IDENTIFIER",
+                        "key": "FETCHED_TEST_KEY",
+                        "is_current": True,
+                    }
+                ]
+            }
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(keys)
+        return
+
+
+@pytest.fixture()
+def http_server_for_provider_keys():
+    host, port = "localhost", 8888
+    url = f"http://{host}:{port}/"
+    server = HTTPServer((host, port), KeyProviderGetHTTPRequestHandler)
     thread = threading.Thread(None, server.run)
     thread.start()
     yield url
@@ -272,6 +309,36 @@ def service_account(user, team) -> ServiceAccount:
     )
     assert form.is_valid()
     return form.save()
+
+
+@pytest.fixture()
+def key_provider() -> KeyProvider:
+    return KeyProvider.objects.create(
+        name="github_secret_scanning",
+        provider_url="http://localhost:8888/",
+        last_update_time=timezone.now(),
+    )
+
+
+@pytest.fixture()
+def ec_private_key() -> ec.EllipticCurvePrivateKey:
+    return ec.generate_private_key(ec.SECP256R1())
+
+
+@pytest.fixture()
+def stored_public_key(key_provider, ec_private_key) -> StoredPublicKey:
+    b64key = base64.b64encode(
+        ec_private_key.public_key().public_bytes(
+            Encoding.DER, PublicFormat.SubjectPublicKeyInfo
+        )
+    )
+    return StoredPublicKey.objects.create(
+        provider=key_provider,
+        key_identifier="TEST_IDENTIFIER",
+        key_type=KeyType.SECP256R1,
+        key=b64key.decode(),
+        is_active=True,
+    )
 
 
 @pytest.fixture()
