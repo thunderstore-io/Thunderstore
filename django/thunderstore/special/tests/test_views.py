@@ -16,16 +16,18 @@ from thunderstore.special.views import SecretScanningEndpoint
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("service_account_exists", (True, False))
 def test_secret_scanning_endpoint_post_function(
-    ec_private_key, stored_public_key, service_account
+    ec_private_key, stored_public_key, service_account, service_account_exists
 ):
     clash = True
     while clash:
         new_token = get_service_account_api_token()
         hashed = hash_service_account_api_token(new_token)
         clash = ServiceAccount.objects.filter(api_token=hashed).exists()
-    service_account.api_token = hashed
-    service_account.save()
+    if service_account_exists:
+        service_account.api_token = hashed
+        service_account.save()
 
     mock_request = mock.Mock(spec=requests.Request)
     payload = (
@@ -47,16 +49,22 @@ def test_secret_scanning_endpoint_post_function(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("service_account_exists", (True, False))
 def test_secret_scanning_endpoint_api_post(
-    api_client, ec_private_key, stored_public_key, service_account
+    api_client,
+    ec_private_key,
+    stored_public_key,
+    service_account,
+    service_account_exists,
 ):
     clash = True
     while clash:
         new_token = get_service_account_api_token()
         hashed = hash_service_account_api_token(new_token)
         clash = ServiceAccount.objects.filter(api_token=hashed).exists()
-    service_account.api_token = hashed
-    service_account.save()
+    if service_account_exists:
+        service_account.api_token = hashed
+        service_account.save()
     payload = (
         '[{"token":"%s","type":"TEST_TOKEN_TYPE","url":"example.com"}]' % new_token
     ).encode()
