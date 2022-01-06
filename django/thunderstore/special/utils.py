@@ -24,7 +24,7 @@ def update_keys(provider):
         if not created:
             if stored_key.key != k["key"]:
                 raise KeyUpdateException(
-                    f"Provider: {provider.name} Key Identifier: {stored_key.key_identifier} Error: key value does not match the old one"
+                    f"Provider: {provider.name} Key Identifier: {stored_key.key_identifier} Error: key value {k['key']} does not match the old one {stored_key.key}"
                 )
             if stored_key.is_active and k["is_current"] == "false":
                 stored_key.is_active == False
