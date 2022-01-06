@@ -24,7 +24,7 @@ class SecretScanningEndpoint(APIView):
         self.schema = None
         super().__init__(**kwargs)
 
-    def post(self, request, format=None, provider_name="github_secret_scanning"):
+    def post(self, request, provider_name: str = "github_secret_scanning") -> Response:
         provider = KeyProvider.objects.get(name=provider_name)
         key_identifier = request.headers["Github-Public-Key-Identifier"]
         signature = request.headers["Github-Public-Key-Signature"]

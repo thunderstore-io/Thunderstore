@@ -326,7 +326,9 @@ def ec_private_key() -> ec.EllipticCurvePrivateKey:
 
 
 @pytest.fixture()
-def stored_public_key(key_provider, ec_private_key) -> StoredPublicKey:
+def stored_public_key(
+    key_provider: KeyProvider, ec_private_key: ec.EllipticCurvePrivateKey
+) -> StoredPublicKey:
     b64key = base64.b64encode(
         ec_private_key.public_key().public_bytes(
             Encoding.DER, PublicFormat.SubjectPublicKeyInfo

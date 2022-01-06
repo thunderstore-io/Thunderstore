@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.postgres.fields.citext import CICharField
 from django.db import models
 from django.db.models import Manager
@@ -23,7 +22,7 @@ class KeyProvider(models.Model):
         verbose_name = "key provider"
         verbose_name_plural = "key providers"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Name: {self.name} Provider URL: {self.provider_url}"
 
 
@@ -53,5 +52,5 @@ class StoredPublicKey(models.Model):
         verbose_name = "stored public key"
         verbose_name_plural = "stored public keys"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Identifier: {self.key_identifier} Key Type: {self.key_type} Active: {self.is_active} Key: {self.key}"

@@ -3,22 +3,26 @@ from unittest import mock
 
 import pytest
 import requests
-from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
+from cryptography.hazmat.primitives.asymmetric.ec import ECDSA, EllipticCurvePrivateKey
 from cryptography.hazmat.primitives.hashes import SHA256
+from rest_framework.test import APIClient
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.account.tokens import (
     get_service_account_api_token,
     hash_service_account_api_token,
 )
-from thunderstore.special.models.keys import KeyProvider
+from thunderstore.special.models.keys import KeyProvider, StoredPublicKey
 from thunderstore.special.views import SecretScanningEndpoint
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("service_account_exists", (True, False))
 def test_secret_scanning_endpoint_post_function(
-    ec_private_key, stored_public_key, service_account, service_account_exists
+    ec_private_key: EllipticCurvePrivateKey,
+    stored_public_key: StoredPublicKey,
+    service_account: ServiceAccount,
+    service_account_exists: bool,
 ):
     clash = True
     while clash:
@@ -51,11 +55,11 @@ def test_secret_scanning_endpoint_post_function(
 @pytest.mark.django_db
 @pytest.mark.parametrize("service_account_exists", (True, False))
 def test_secret_scanning_endpoint_api_post(
-    api_client,
-    ec_private_key,
-    stored_public_key,
-    service_account,
-    service_account_exists,
+    api_client: APIClient,
+    ec_private_key: EllipticCurvePrivateKey,
+    stored_public_key: StoredPublicKey,
+    service_account: ServiceAccount,
+    service_account_exists: bool,
 ):
     clash = True
     while clash:

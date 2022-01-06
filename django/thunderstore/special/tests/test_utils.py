@@ -15,9 +15,9 @@ from thunderstore.special.utils import KeyUpdateException, solve_key, unpem, upd
 def test_update_keys(
     key_provider: KeyProvider,
     http_server_for_provider_keys: Generator[str, None, None],
-    key_exists,
-    key_is_active,
-    key_key,
+    key_exists: bool,
+    key_is_active: bool,
+    key_key: str,
 ):
     if key_exists:
         stored_key = StoredPublicKey.objects.create(
@@ -44,8 +44,8 @@ def test_update_keys(
 
 @pytest.mark.django_db
 def test_solve_key(
-    key_provider,
-    stored_public_key,
+    key_provider: KeyProvider,
+    stored_public_key: StoredPublicKey,
     http_server_for_provider_keys: Generator[str, None, None],
 ):
     solved_key = solve_key(

@@ -1,21 +1,19 @@
 import base64
-import binascii
 import datetime
 import json
+from typing import Union
 
 import requests
-from cryptography.hazmat.backends.openssl.backend import backend
-from cryptography.hazmat.primitives.asymmetric import ec
 from django.utils import timezone
 
-from thunderstore.special.models.keys import KeyType, StoredPublicKey
+from thunderstore.special.models.keys import KeyProvider, KeyType, StoredPublicKey
 
 
 class KeyUpdateException(Exception):
     ...
 
 
-def update_keys(provider):
+def update_keys(provider: KeyProvider):
     public_key_endpoint = requests.request("GET", provider.provider_url)
     for k in json.loads(public_key_endpoint.content)["public_keys"]:
         stored_key, created = StoredPublicKey.objects.get_or_create(
@@ -42,7 +40,9 @@ def update_keys(provider):
     provider.save()
 
 
-def solve_key(key_identifier, key_type, provider):
+def solve_key(
+    key_identifier: str, key_type: str, provider: KeyProvider
+) -> StoredPublicKey:
     if (timezone.now() - provider.last_update_time) > datetime.timedelta(hours=24):
         update_keys(provider)
     return StoredPublicKey.objects.get(
@@ -53,7 +53,7 @@ def solve_key(key_identifier, key_type, provider):
     )
 
 
-def unpem(pem):
+def unpem(pem: Union[str, bytes]) -> bytes:
     pem_data = pem.encode() if isinstance(pem, str) else pem
 
     d = (b"").join(
