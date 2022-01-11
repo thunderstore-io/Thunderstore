@@ -1,1 +1,1 @@
-default_app_config = "thunderstore.special.apps.SpecialAppConfig"
+default_app_config = "thunderstore.github.apps.GithubAppConfig"

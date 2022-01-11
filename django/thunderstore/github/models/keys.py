@@ -28,7 +28,7 @@ class KeyProvider(models.Model):
 
 class StoredPublicKey(models.Model):
     provider = models.ForeignKey(
-        "special.KeyProvider",
+        "github.KeyProvider",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,

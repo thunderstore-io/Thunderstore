@@ -4,8 +4,8 @@ from typing import Generator
 
 import pytest
 
-from thunderstore.special.models.keys import KeyProvider, KeyType, StoredPublicKey
-from thunderstore.special.utils import KeyUpdateException, solve_key, unpem, update_keys
+from thunderstore.github.models.keys import KeyProvider, KeyType, StoredPublicKey
+from thunderstore.github.utils import KeyUpdateException, solve_key, unpem, update_keys
 
 
 @pytest.mark.django_db

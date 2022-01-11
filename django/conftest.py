@@ -29,6 +29,7 @@ from thunderstore.community.models import (
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum
+from thunderstore.github.models.keys import KeyProvider, KeyType, StoredPublicKey
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
@@ -43,7 +44,6 @@ from thunderstore.repository.models import (
     TeamMemberRole,
     Webhook,
 )
-from thunderstore.special.models.keys import KeyProvider, KeyType, StoredPublicKey
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
 

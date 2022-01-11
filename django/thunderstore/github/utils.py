@@ -6,7 +6,7 @@ from typing import Union
 import requests
 from django.utils import timezone
 
-from thunderstore.special.models.keys import KeyProvider, KeyType, StoredPublicKey
+from thunderstore.github.models.keys import KeyProvider, KeyType, StoredPublicKey
 
 
 class KeyUpdateException(Exception):

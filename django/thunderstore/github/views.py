@@ -10,8 +10,8 @@ from rest_framework.views import APIView
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.account.tokens import hash_service_account_api_token
-from thunderstore.special.models.keys import KeyProvider, KeyType
-from thunderstore.special.utils import solve_key, unpem
+from thunderstore.github.models.keys import KeyProvider, KeyType
+from thunderstore.github.utils import solve_key, unpem
 
 
 class SecretScanningEndpoint(APIView):

@@ -13,9 +13,9 @@ from thunderstore.frontend.views import (
     ads_txt_view,
     robots_txt_view,
 )
+from thunderstore.github.urls import github_urls
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
-from thunderstore.special.urls import special_urls as github_special_urls
 
 from ..community.views import FaviconView
 from .api_urls import api_urls
@@ -28,7 +28,7 @@ handler500 = "thunderstore.frontend.views.handle500"
 AUTH_ROOT = "auth/"
 
 special_urls = [
-    path("github/", include((github_special_urls, "github"), namespace="github")),
+    path("github/", include((github_urls, "github"), namespace="github")),
 ]
 
 urlpatterns = [
