@@ -4,12 +4,20 @@ from factory.django import DjangoModelFactory
 from thunderstore.core.factories import UserFactory
 
 from .models import (
+    Namespace,
     Package,
     PackageVersion,
     PackageVersionDownloadEvent,
     Team,
     TeamMember,
 )
+
+
+class NamespaceFactory(DjangoModelFactory):
+    class Meta:
+        model = Namespace
+
+    name = factory.Sequence(lambda n: f"TestNamespace{n}")
 
 
 class TeamFactory(DjangoModelFactory):
@@ -33,6 +41,9 @@ class PackageFactory(DjangoModelFactory):
 
     owner = factory.SubFactory(TeamFactory)
     name = factory.Faker("first_name")
+    namespace = factory.lazy_attribute(
+        lambda pkg: NamespaceFactory.create(name=pkg.owner.name, team=pkg.owner)
+    )
 
 
 class PackageVersionFactory(DjangoModelFactory):

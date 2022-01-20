@@ -110,7 +110,17 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     community_site.community.require_package_listing_approval = True
     community_site.community.save()
 
+    # Try with user that is member of owner team
     client.force_login(user=team_member.user)
+    response = client.get(
+        active_version_with_listing.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+
+    # Try with user that is not part of the owner team
+    user = UserFactory.create()
+    client.force_login(user=user)
     response = client.get(
         active_version_with_listing.get_absolute_url(),
         HTTP_HOST=community_site.site.domain,
@@ -176,6 +186,11 @@ def test_package_detail_version_view_get_object(
         view.get_object()
     assert "Main package is deactivated" in str(excinfo.value)
 
+    # Remove user from view, so that the view doesn't have permissions to view the listing
+    mock_request.user = None
+    view = PackageVersionDetailView(
+        kwargs={"owner": owner, "name": name, "version": version}, request=mock_request
+    )
     community_site.community.require_package_listing_approval = True
     community_site.community.save()
     with pytest.raises(Http404) as excinfo:

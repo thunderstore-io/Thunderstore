@@ -662,3 +662,9 @@ def test_team_save():
     team.save()
     assert team.namespaces is not None
     assert team.namespaces.first().name == team.name
+
+
+@pytest.mark.django_db
+def test_team_get_namespace(team):
+    team_named_ns = Namespace.objects.get_or_create(name=team.name, team=team)[0]
+    assert team.get_namespace() == team_named_ns

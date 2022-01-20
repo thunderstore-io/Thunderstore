@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as ValidationError
 
 from thunderstore.repository.factories import (
+    NamespaceFactory,
     PackageFactory,
     PackageVersionFactory,
     TeamFactory,
@@ -61,9 +62,12 @@ def test_fields_list_dependency_field():
         allow_empty=True,
     )
     team = TeamFactory.create(name="tester")
+    namespace = NamespaceFactory.create(name=team.name, team=team)
     versions = [
         PackageVersionFactory.create(
-            package=PackageFactory.create(owner=team, name=f"package_{i}"),
+            package=PackageFactory.create(
+                owner=team, name=f"package_{i}", namespace=namespace
+            ),
             name=f"package_{i}",
         )
         for i in range(10)

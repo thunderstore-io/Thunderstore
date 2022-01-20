@@ -10,6 +10,7 @@ from django.db import transaction
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package, PackageVersion, Team
+from thunderstore.repository.models.namespace import Namespace
 from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.readme import validate_readme
@@ -143,9 +144,13 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.file_size = self.file_size
         team = self.cleaned_data["team"]
         team.ensure_can_upload_package(self.user)
+        # We just take the namespace with team name for now
+        namespace = Namespace.objects.get_or_create(
+            team=team,
+            name=team.name,
+        )[0]
         self.instance.package = Package.objects.get_or_create(
-            owner=team,
-            name=self.instance.name,
+            owner=team, name=self.instance.name, namespace=namespace
         )[0]
 
         for community in self.cleaned_data.get("communities", []):

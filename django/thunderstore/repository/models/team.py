@@ -188,6 +188,9 @@ class Team(models.Model):
             capture_exception(e)
             return None
 
+    def get_namespace(self) -> Namespace:
+        return self.namespaces.get(name__iexact=self.name)
+
     def is_last_owner(self, member: Optional[TeamMember]) -> bool:
         if not member:
             return False

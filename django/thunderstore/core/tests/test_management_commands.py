@@ -5,6 +5,7 @@ from django.core.management.base import CommandError
 from django.db.models import Count
 from django.test import override_settings
 
+from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, PackageVersion, Team
 
 
@@ -35,7 +36,11 @@ def test_create_test_data_clear():
     assert settings.DEBUG == True
     team = Team(name="to_be_deleted_team")
     team.save()
-    package = Package(name="to_be_deleted_package", owner=team)
+    package = Package(
+        name="to_be_deleted_package",
+        owner=team,
+        namespace=NamespaceFactory.create(name=team.name, team=team),
+    )
     package.save()
     pv = PackageVersion(
         name="to_be_deleted_package",

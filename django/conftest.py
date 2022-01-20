@@ -26,6 +26,7 @@ from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.factories import (
+    NamespaceFactory,
     PackageFactory,
     PackageVersionFactory,
     TeamFactory,
@@ -39,6 +40,7 @@ from thunderstore.repository.models import (
     TeamMemberRole,
     Webhook,
 )
+from thunderstore.repository.models.namespace import Namespace
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
 
@@ -125,11 +127,13 @@ def team_owner(team):
 
 
 @pytest.fixture()
-def package(team):
-    return Package.objects.create(
-        owner=team,
-        name="Test_Package",
-    )
+def namespace(team) -> Namespace:
+    return NamespaceFactory.create(team=team)
+
+
+@pytest.fixture()
+def package(team, namespace) -> Package:
+    return Package.objects.create(owner=team, name="Test_Package", namespace=namespace)
 
 
 @pytest.fixture()
@@ -156,10 +160,10 @@ def manifest_v1_data():
 
 
 @pytest.fixture(scope="function")
-def active_package():
+def active_package(team) -> Package:
+    namespace = Namespace.objects.get_or_create(name=team.name, team=team)[0]
     package = PackageFactory.create(
-        is_active=True,
-        is_deprecated=False,
+        is_active=True, is_deprecated=False, owner=team, namespace=namespace
     )
     PackageVersionFactory.create(
         name=package.name,
@@ -183,12 +187,8 @@ def active_version(active_package):
 
 
 @pytest.fixture(scope="function")
-def active_version_with_listing(community, active_package):
-    PackageListing.objects.create(
-        community=community,
-        package=active_package,
-    )
-    return active_package.versions.first()
+def active_version_with_listing(active_package_listing):
+    return active_package_listing.package.versions.first()
 
 
 @pytest.fixture()
