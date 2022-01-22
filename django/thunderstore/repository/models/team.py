@@ -189,7 +189,10 @@ class Team(models.Model):
             return None
 
     def get_namespace(self) -> Namespace:
-        return self.namespaces.get(name__iexact=self.name)
+        try:
+            return Namespace.objects.get(name__iexact=self.name, team=self)
+        except Namespace.DoesNotExist:
+            return Namespace.objects.create(name=self.name, team=self)
 
     def is_last_owner(self, member: Optional[TeamMember]) -> bool:
         if not member:

@@ -43,9 +43,7 @@ class Command(BaseCommand):
             Package.objects.create(
                 owner=teams[i],
                 name=f"Test_Package_{i}",
-                namespace=Namespace.objects.get_or_create(
-                    name=teams[i].name, team=teams[i]
-                )[0],
+                namespace=teams[i].get_namespace(),
             )
             for i in range(count)
         ]

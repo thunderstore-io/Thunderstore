@@ -668,3 +668,9 @@ def test_team_save():
 def test_team_get_namespace(team):
     team_named_ns = Namespace.objects.get_or_create(name=team.name, team=team)[0]
     assert team.get_namespace() == team_named_ns
+    Namespace.objects.create(name="anotherone", team=team)
+    another_team = Team(name="anotherone")
+    another_team.save()
+    with pytest.raises(ValidationError) as exc:
+        another_team.get_namespace()
+    assert "The namespace name already exists" in str(exc.value)

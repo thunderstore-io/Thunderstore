@@ -161,7 +161,7 @@ def manifest_v1_data():
 
 @pytest.fixture(scope="function")
 def active_package(team) -> Package:
-    namespace = Namespace.objects.get_or_create(name=team.name, team=team)[0]
+    namespace = team.get_namespace()
     package = PackageFactory.create(
         is_active=True, is_deprecated=False, owner=team, namespace=namespace
     )

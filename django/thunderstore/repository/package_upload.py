@@ -145,10 +145,7 @@ class PackageUploadForm(forms.ModelForm):
         team = self.cleaned_data["team"]
         team.ensure_can_upload_package(self.user)
         # We just take the namespace with team name for now
-        namespace = Namespace.objects.get_or_create(
-            team=team,
-            name=team.name,
-        )[0]
+        namespace = team.get_namespace()
         self.instance.package = Package.objects.get_or_create(
             owner=team, name=self.instance.name, namespace=namespace
         )[0]
