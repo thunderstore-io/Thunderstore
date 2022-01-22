@@ -8,6 +8,7 @@ from PIL import Image
 
 from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.models import Team
+from thunderstore.repository.models.namespace import Namespace
 from thunderstore.repository.package_upload import PackageUploadForm
 
 
@@ -47,6 +48,8 @@ def test_package_upload(user, manifest_v1_data, community):
     version = form.save()
     assert version.name == manifest_v1_data["name"]
     assert version.package.owner == team
+    assert version.package.namespace == team.get_namespace()
+    assert version.package.namespace.name == team.name
 
 
 @pytest.mark.django_db

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.factories import NamespaceFactory, PackageVersionFactory
 from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
 
 
@@ -43,6 +43,7 @@ class Command(BaseCommand):
             Package.objects.create(
                 owner=teams[i],
                 name=f"Test_Package_{i}",
+                namespace=teams[i].get_namespace(),
             )
             for i in range(count)
         ]

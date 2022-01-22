@@ -167,11 +167,13 @@ class PackageAdmin(admin.ModelAdmin):
         "date_created",
         "downloads",
         "name",
+        "namespace",
         "owner",
         "latest",
     )
     list_display = (
         "name",
+        "namespace",
         "owner",
         "is_active",
         "is_deprecated",
@@ -185,6 +187,7 @@ class PackageAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "name",
+        "namespace",
         "owner__name",
     )
     list_select_related = (

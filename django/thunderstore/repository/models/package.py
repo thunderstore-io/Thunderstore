@@ -41,6 +41,11 @@ class Package(models.Model):
         on_delete=models.PROTECT,
         related_name="owned_packages",
     )
+    namespace = models.ForeignKey(
+        "repository.Namespace",
+        on_delete=models.PROTECT,
+        related_name="packages",
+    )
     name = models.CharField(
         max_length=128,
     )

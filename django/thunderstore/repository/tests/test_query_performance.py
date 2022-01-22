@@ -6,6 +6,7 @@ from thunderstore.community.models import PackageListing
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import get_package_listing_queryset
 from thunderstore.repository.factories import (
+    NamespaceFactory,
     PackageFactory,
     PackageVersionFactory,
     TeamFactory,
@@ -28,9 +29,11 @@ def test_package_query_count(
 ):
     with CaptureQueriesContext(connection) as context:
         for package_id in range(package_count):
+            team = TeamFactory.create(name=f"team_{package_id}")
             package = PackageFactory.create(
-                owner=TeamFactory.create(name=f"team_{package_id}"),
+                owner=team,
                 name=f"package_{package_id}",
+                namespace=NamespaceFactory.create(name=team.name, team=team),
             )
             for version_id in range(version_count):
                 PackageVersionFactory.create(

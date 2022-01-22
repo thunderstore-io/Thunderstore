@@ -10,6 +10,7 @@ from thunderstore.community.models import (
     PackageListing,
     PackageListingReviewStatus,
 )
+from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, Team
 
 
@@ -23,6 +24,7 @@ def test_admin_package_listing_approve_listing(
             package=Package.objects.create(
                 owner=team,
                 name=f"TestPackage{i}",
+                namespace=NamespaceFactory.create(team=team),
             ),
             review_status=PackageListingReviewStatus.unreviewed,
         )
@@ -45,6 +47,7 @@ def test_admin_package_listing_reject_listing(team: Team, community: Community) 
             package=Package.objects.create(
                 owner=team,
                 name=f"TestPackage{i}",
+                namespace=NamespaceFactory.create(team=team),
             ),
             review_status=PackageListingReviewStatus.unreviewed,
         )

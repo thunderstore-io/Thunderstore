@@ -1,6 +1,7 @@
 import pytest
 
 from thunderstore.repository.factories import (
+    NamespaceFactory,
     PackageFactory,
     PackageVersionFactory,
     TeamFactory,
@@ -55,7 +56,7 @@ def test_manifest_v1_serializer_version_already_exists(
 
 @pytest.mark.django_db
 def test_manifest_v1_serializer_duplicate_dependency(
-    user, manifest_v1_data, package_version
+    user, manifest_v1_data, package_version, namespace
 ):
     TeamMember.objects.create(
         user=user,
@@ -63,8 +64,7 @@ def test_manifest_v1_serializer_duplicate_dependency(
         role=TeamMemberRole.owner,
     )
     pkg = PackageFactory.create(
-        owner=package_version.owner,
-        name="somepackage",
+        owner=package_version.owner, name="somepackage", namespace=namespace
     )
     version1 = PackageVersionFactory.create(
         package=pkg,
@@ -339,12 +339,13 @@ def test_manifest_v1_serializer_dependencies_invalid(
 
 def test_manifest_v1_serializer_dependencies_valid(user, manifest_v1_data):
     reference = PackageReference.parse("actual_package-reference-1.0.0")
+    owner = TeamFactory.create(name=reference.namespace)
+    namespace = NamespaceFactory.create(name=owner.name, team=owner)
     PackageVersionFactory.create(
         package=PackageFactory.create(
-            owner=TeamFactory.create(
-                name=reference.namespace,
-            ),
+            owner=owner,
             name=reference.name,
+            namespace=namespace,
         ),
         name=reference.name,
         version_number=reference.version_str,
