@@ -120,7 +120,7 @@ class Webhook(models.Model):
                         "url": f"{settings.PROTOCOL}{self.community_site.site.domain}/",
                     },
                     "author": {
-                        "name": version.package.owner.name,
+                        "name": version.package.namespace.name,
                     },
                     "fields": fields,
                 }

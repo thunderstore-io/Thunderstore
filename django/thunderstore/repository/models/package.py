@@ -119,14 +119,14 @@ class Package(models.Model):
 
     @cached_property
     def full_package_name(self):
-        return f"{self.owner.name}-{self.name}"
+        return f"{self.namespace.name}-{self.name}"
 
     @cached_property
     def reference(self):
         from thunderstore.repository.package_reference import PackageReference
 
         return PackageReference(
-            namespace=self.owner.name,
+            namespace=self.namespace.name,
             name=self.name,
         )
 
@@ -150,10 +150,12 @@ class Package(models.Model):
                 "dependencies",
                 "dependencies__package",
                 "dependencies__package__owner",
+                "dependencies__package__namespace",
             )
             .select_related(
                 "package",
                 "package__owner",
+                "package__namespace",
             )
         )
 
@@ -203,15 +205,17 @@ class Package(models.Model):
         return get_package_dependants_list(self.pk)
 
     @cached_property
-    def owner_url(self):
-        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
+    def namespace_url(self):
+        return reverse(
+            "packages.list_by_namespace", kwargs={"namespace": self.namespace.name}
+        )
 
     @cached_property
     def dependants_url(self):
         return reverse(
             "packages.list_by_dependency",
             kwargs={
-                "owner": self.owner.name,
+                "namespace": self.namespace.name,
                 "name": self.name,
             },
         )
@@ -222,7 +226,8 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "packages.detail", kwargs={"owner": self.owner.name, "name": self.name}
+            "packages.detail",
+            kwargs={"namespace": self.namespace.name, "name": self.name},
         )
 
     def get_full_url(self, site: Site):

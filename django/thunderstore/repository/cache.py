@@ -18,6 +18,7 @@ def get_package_listing_queryset(community_site: CommunitySite):
         .select_related(
             "package",
             "package__owner",
+            "package__namespace",
             "package__latest",
         )
         .prefetch_related(

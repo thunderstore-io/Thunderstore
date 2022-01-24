@@ -7,7 +7,7 @@ from thunderstore.repository.views import (
     PackageDocsView,
     PackageDownloadView,
     PackageListByDependencyView,
-    PackageListByOwnerView,
+    PackageListByNamespaceView,
     PackageListView,
     PackageVersionDetailView,
 )
@@ -28,29 +28,29 @@ urlpatterns = [
     path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
     path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
     path(
-        "download/<str:owner>/<str:name>/<str:version>/",
+        "download/<str:namespace>/<str:name>/<str:version>/",
         PackageDownloadView.as_view(),
         name="packages.download",
     ),
     path(
-        "<str:owner>/<str:name>/",
+        "<str:namespace>/<str:name>/",
         PackageDetailView.as_view(),
         name="packages.detail",
     ),
     path(
-        "<str:owner>/<str:name>/dependants/",
+        "<str:namespace>/<str:name>/dependants/",
         PackageListByDependencyView.as_view(),
         name="packages.list_by_dependency",
     ),
     path(
-        "<str:owner>/<str:name>/<str:version>/",
+        "<str:namespace>/<str:name>/<str:version>/",
         PackageVersionDetailView.as_view(),
         name="packages.version.detail",
     ),
     path(
-        "<str:owner>/",
-        PackageListByOwnerView.as_view(),
-        name="packages.list_by_owner",
+        "<str:namespace>/",
+        PackageListByNamespaceView.as_view(),
+        name="packages.list_by_namespace",
     ),
 ]
 

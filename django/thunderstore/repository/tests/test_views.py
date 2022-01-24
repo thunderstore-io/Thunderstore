@@ -170,14 +170,15 @@ def test_package_detail_version_view_main_package_deactivated(
 def test_package_detail_version_view_get_object(
     active_version_with_listing, team_member, community_site
 ):
-    owner = active_version_with_listing.package.owner
+    namespace = active_version_with_listing.package.namespace
     name = active_version_with_listing.package.name
     version = active_version_with_listing
     mock_request = mock.Mock(spec=request.Request)
     mock_request.user = team_member.user
     mock_request.community = community_site.community
     view = PackageVersionDetailView(
-        kwargs={"owner": owner, "name": name, "version": version}, request=mock_request
+        kwargs={"namespace": namespace, "name": name, "version": version},
+        request=mock_request,
     )
 
     active_version_with_listing.package.is_active = False
@@ -189,7 +190,8 @@ def test_package_detail_version_view_get_object(
     # Remove user from view, so that the view doesn't have permissions to view the listing
     mock_request.user = None
     view = PackageVersionDetailView(
-        kwargs={"owner": owner, "name": name, "version": version}, request=mock_request
+        kwargs={"namespace": namespace, "name": name, "version": version},
+        request=mock_request,
     )
     community_site.community.require_package_listing_approval = True
     community_site.community.save()
@@ -260,7 +262,7 @@ def test_package_download_view(user, client, community_site, manifest_v1_package
         reverse(
             "packages.download",
             kwargs={
-                "owner": version.package.owner.name,
+                "namespace": version.package.namespace.name,
                 "name": version.package.name,
                 "version": version.version_number,
             },

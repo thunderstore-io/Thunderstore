@@ -47,8 +47,15 @@ class ManifestV1Serializer(serializers.Serializer):
                 f"Missing privileges to upload under author {self.team.name}"
             )
         reference = PackageReference(
-            self.team.name, result["name"], result["version_number"]
+            self.team.get_namespace().name, result["name"], result["version_number"]
         )
+        print(reference.__dict__)
+        print(reference.namespace)
+        print(reference.version_str)
+        print(reference.name)
+        print(reference.get_filter_kwargs())
+        print(reference.queryset)
+        print(reference.exists)
         if reference.exists:
             raise ValidationError(
                 "Package of the same namespace, name and version already exists"

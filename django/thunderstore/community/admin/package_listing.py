@@ -55,6 +55,7 @@ class PackageListingAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "package__owner__name",
+        "package__namespace__name",
         "package__name",
     )
     readonly_fields = (

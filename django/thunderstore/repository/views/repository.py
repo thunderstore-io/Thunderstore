@@ -20,7 +20,12 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
-from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
+from thunderstore.repository.models import (
+    Namespace,
+    PackageVersion,
+    Team,
+    get_package_dependants,
+)
 from thunderstore.repository.package_upload import PackageUploadForm
 
 # Should be divisible by 4 and 3
@@ -184,7 +189,7 @@ class PackageListSearchView(ListView):
     def perform_search(self, queryset, search_query):
         search_fields = (
             "package__name",
-            "package__owner__name",
+            "package__namespace__name",
             "package__latest__description",
         )
 
@@ -203,7 +208,7 @@ class PackageListSearchView(ListView):
             .select_related(
                 "package",
                 "package__latest",
-                "package__owner",
+                "package__namespace",
             )
             # .annotate(
             #     _total_downloads=Sum("package__versions__downloads"),
@@ -301,48 +306,51 @@ class PackageListView(PackageListSearchView):
         return "all"
 
 
-class PackageListByOwnerView(PackageListSearchView):
-    owner: Optional[Team]
+class PackageListByNamespaceView(PackageListSearchView):
+    namespace: Optional[Namespace]
 
     def get_breadcrumbs(self):
         breadcrumbs = super().get_breadcrumbs()
         return breadcrumbs + [
             {
-                "url": reverse_lazy("packages.list_by_owner", kwargs=self.kwargs),
-                "name": self.owner.name,
+                "url": reverse_lazy("packages.list_by_namespace", kwargs=self.kwargs),
+                "name": self.namespace.name,
             },
         ]
 
-    def cache_owner(self):
-        self.owner = get_object_or_404(Team, name=self.kwargs["owner"])
+    def cache_namespace(self):
+        self.namespace = get_object_or_404(Namespace, name=self.kwargs["namespace"])
 
     def dispatch(self, *args, **kwargs):
-        self.cache_owner()
+        self.cache_namespace()
         return super().dispatch(*args, **kwargs)
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community)),
+            ~Q(
+                Q(package__namespace=self.namespace)
+                & Q(community=self.request.community)
+            ),
         )
 
     def get_page_title(self):
-        return f"Mods uploaded by {self.owner.name}"
+        return f"Mods uploaded by {self.namespace.name}"
 
     def get_cache_vary(self):
-        return f"authorer-{self.owner.name}"
+        return f"authorer-{self.namespace.name}"
 
 
 class PackageListByDependencyView(PackageListSearchView):
     package_listing: PackageListing
 
     def cache_package_listing(self):
-        owner = self.kwargs["owner"]
-        owner = get_object_or_404(Team, name=owner)
+        namespace = self.kwargs["namespace"]
+        namespace = get_object_or_404(Namespace, name=namespace)
         name = self.kwargs["name"]
         package_listing = (
             self.model.objects.active()
             .filter(
-                package__owner=owner,
+                package__namespace=namespace,
                 package__name=name,
                 community=self.request.community,
             )
@@ -374,17 +382,17 @@ def get_package_listing_or_404(
     name: str,
     community_pk: int,
 ) -> PackageListing:
-    owner = get_object_or_404(Team, name=namespace)
+    namespace = get_object_or_404(Namespace, name=namespace)
     package_listing = (
         PackageListing.objects.active()
         .filter(
-            package__owner=owner,
+            package__namespace=namespace,
             package__name=name,
             community=community_pk,
         )
         .select_related(
             "package",
-            "package__owner",
+            "package__namespace",
             "package__latest",
         )
         .prefetch_related(
@@ -402,7 +410,7 @@ class PackageDetailView(DetailView):
 
     def get_object(self, *args, **kwargs):
         listing = get_package_listing_or_404(
-            namespace=self.kwargs["owner"],
+            namespace=self.kwargs["namespace"],
             name=self.kwargs["name"],
             community_pk=self.request.community.pk,
         )
@@ -429,12 +437,12 @@ class PackageVersionDetailView(DetailView):
     model = PackageVersion
 
     def get_object(self, *args, **kwargs):
-        owner = self.kwargs["owner"]
+        namespace = self.kwargs["namespace"]
         name = self.kwargs["name"]
         version = self.kwargs["version"]
         listing = get_object_or_404(
             PackageListing,
-            package__owner__name=owner,
+            package__namespace__name=namespace,
             package__name=name,
             community=self.request.community,
         )
@@ -498,13 +506,13 @@ class PackageCreateOldView(CreateView):
 
 class PackageDownloadView(View):
     def get(self, *args, **kwargs):
-        owner = kwargs["owner"]
+        namespace = kwargs["namespace"]
         name = kwargs["name"]
         version = kwargs["version"]
 
         listing = get_object_or_404(
             PackageListing,
-            package__owner__name=owner,
+            package__namespace__name=namespace,
             package__name=name,
             community=self.request.community,
         )
