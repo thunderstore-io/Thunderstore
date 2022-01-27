@@ -107,7 +107,7 @@ class Webhook(models.Model):
                     "title": f"{version.name} v{version.version_number}",
                     "type": "rich",
                     "description": version.description,
-                    "url": f"{version.package.get_full_url(self.community_site.site)}?utm_source=discord",
+                    "url": f"{version.package.get_full_url(self.community_site.community.identifier)}?utm_source=discord",
                     "timestamp": timezone.now().isoformat(),
                     "color": 4474879,
                     "thumbnail": {

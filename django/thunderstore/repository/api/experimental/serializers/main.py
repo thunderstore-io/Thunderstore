@@ -41,7 +41,10 @@ class PackageVersionSerializerExperimental(serializers.ModelSerializer):
     dependencies = SerializerMethodField()
 
     def get_download_url(self, instance):
-        return make_full_url(self.context["request"], instance.download_url)
+        return make_full_url(
+            self.context["request"],
+            instance.download_url(self.context["community_identifier"]),
+        )
 
     def get_full_name(self, instance):
         return instance.full_version_name
@@ -93,7 +96,10 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
         return instance.owner.name
 
     def get_package_url(self, instance):
-        return make_full_url(self.context["request"], instance.get_absolute_url())
+        return make_full_url(
+            self.context["request"],
+            instance.get_absolute_url(self.context["community_identifier"]),
+        )
 
     def get_total_downloads(self, instance):
         return instance._total_downloads

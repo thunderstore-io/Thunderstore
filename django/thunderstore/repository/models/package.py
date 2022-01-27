@@ -202,17 +202,22 @@ class Package(models.Model):
     def dependants_list(self):
         return get_package_dependants_list(self.pk)
 
-    @cached_property
-    def owner_url(self):
-        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
+    def owner_url(self, community_identifier):
+        return reverse(
+            "packages.list_by_owner",
+            kwargs={
+                "owner": self.owner.name,
+                "community_identifier": community_identifier,
+            },
+        )
 
-    @cached_property
-    def dependants_url(self):
+    def dependants_url(self, community_identifier):
         return reverse(
             "packages.list_by_dependency",
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
+                "community_identifier": community_identifier,
             },
         )
 
@@ -220,9 +225,14 @@ class Package(models.Model):
     def readme(self):
         return self.latest.readme
 
-    def get_absolute_url(self):
+    def get_absolute_url(self, community_identifier):
         return reverse(
-            "packages.detail", kwargs={"owner": self.owner.name, "name": self.name}
+            "packages.detail",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "community_identifier": community_identifier,
+            },
         )
 
     def get_full_url(self, site: Site):

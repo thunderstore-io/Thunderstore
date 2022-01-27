@@ -12,12 +12,14 @@ from thunderstore.cache.cache import BackgroundUpdatedCacheMixin
 from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import get_package_listing_queryset
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package, PackageRating
 from thunderstore.repository.permissions import ensure_can_rate_package
 
 
 class PackageViewSet(
     BackgroundUpdatedCacheMixin,
+    CommunityMixin,
     CommunitySiteSerializerContext,
     viewsets.ReadOnlyModelViewSet,
 ):

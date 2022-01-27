@@ -20,6 +20,7 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
 
@@ -27,13 +28,15 @@ from thunderstore.repository.package_upload import PackageUploadForm
 MODS_PER_PAGE = 24
 
 
-class PackageListSearchView(ListView):
+class PackageListSearchView(CommunityMixin, ListView):
     model = PackageListing
     paginate_by = MODS_PER_PAGE
     paginator_class = CachedPaginator
 
     def get_base_queryset(self):
-        return self.model.objects.active().exclude(~Q(community=self.request.community))
+        return self.model.objects.active().exclude(
+            ~Q(community__identifier=self.kwargs["community_identifier"])
+        )
 
     def get_page_title(self):
         return ""
@@ -42,11 +45,13 @@ class PackageListSearchView(ListView):
         return ""
 
     def get_categories(self):
-        return PackageCategory.objects.exclude(~Q(community=self.request.community))
+        return PackageCategory.objects.exclude(
+            ~Q(community__identifier=self.kwargs["community_identifier"])
+        )
 
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
-        cache_vary += f".{self.request.community.identifier}"
+        cache_vary += f".{self.get_community_identifier()}"
         cache_vary += f".{self.get_search_query()}"
         cache_vary += f".{self.get_active_ordering()}"
         cache_vary += f".{self.get_included_categories()}"
@@ -250,7 +255,12 @@ class PackageListSearchView(ListView):
     def get_breadcrumbs(self):
         return [
             {
-                "url": reverse_lazy("packages.list"),
+                "url": reverse_lazy(
+                    "packages.list",
+                    kwargs={
+                        "community_identifier": self.kwargs["community_identifier"]
+                    },
+                ),
                 "name": "Packages",
             },
         ]
@@ -322,7 +332,10 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community)),
+            ~Q(
+                Q(package__owner=self.owner)
+                & Q(community__identifier=self.kwargs["community_identifier"])
+            ),
         )
 
     def get_page_title(self):
@@ -397,7 +410,7 @@ def get_package_listing_or_404(
     return package_listing
 
 
-class PackageDetailView(DetailView):
+class PackageDetailView(CommunityMixin, DetailView):
     model = PackageListing
 
     def get_object(self, *args, **kwargs):
@@ -425,7 +438,7 @@ class PackageDetailView(DetailView):
         return context
 
 
-class PackageVersionDetailView(DetailView):
+class PackageVersionDetailView(CommunityMixin, DetailView):
     model = PackageVersion
 
     def get_object(self, *args, **kwargs):
@@ -449,7 +462,7 @@ class PackageVersionDetailView(DetailView):
         )
 
 
-class PackageCreateView(TemplateView):
+class PackageCreateView(CommunityMixin, TemplateView):
     template_name = "repository/package_create.html"
 
     def dispatch(self, *args, **kwargs):
@@ -463,7 +476,7 @@ class PackageDocsView(TemplateView):
 
 
 # TODO: Remove once new UI is stable enough
-class PackageCreateOldView(CreateView):
+class PackageCreateOldView(CommunityMixin, CreateView):
     model = PackageVersion
     form_class = PackageUploadForm
     template_name = "repository/package_create_old.html"
@@ -496,7 +509,7 @@ class PackageCreateOldView(CreateView):
         return redirect(instance)
 
 
-class PackageDownloadView(View):
+class PackageDownloadView(CommunityMixin, View):
     def get(self, *args, **kwargs):
         owner = kwargs["owner"]
         name = kwargs["name"]

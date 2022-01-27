@@ -95,13 +95,14 @@ class PackageVersion(models.Model):
             ),
         ]
 
-    def get_absolute_url(self):
+    def get_absolute_url(self, community_identifier):
         return reverse(
             "packages.version.detail",
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
                 "version": self.version_number,
+                "community_identifier": community_identifier,
             },
         )
 
@@ -109,9 +110,8 @@ class PackageVersion(models.Model):
     def display_name(self):
         return self.name.replace("_", " ")
 
-    @cached_property
-    def owner_url(self):
-        return self.package.owner_url
+    def owner_url(self, community_identifier):
+        return self.package.owner_url(community_identifier)
 
     @cached_property
     def owner(self):
@@ -135,14 +135,14 @@ class PackageVersion(models.Model):
             version=self.version_number,
         )
 
-    @cached_property
-    def download_url(self):
+    def download_url(self, community_identifier):
         return reverse(
             "packages.download",
             kwargs={
                 "owner": self.package.owner.name,
                 "name": self.package.name,
                 "version": self.version_number,
+                "community_identifier": community_identifier,
             },
         )
 

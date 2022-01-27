@@ -28,27 +28,27 @@ urlpatterns = [
     path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
     path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
     path(
-        "download/<str:owner>/<str:name>/<str:version>/",
+        "download/t/<str:owner>/p/<str:name>/v/<str:version>/",
         PackageDownloadView.as_view(),
         name="packages.download",
     ),
     path(
-        "<str:owner>/<str:name>/",
+        "t/<str:owner>/p/<str:name>/",
         PackageDetailView.as_view(),
         name="packages.detail",
     ),
     path(
-        "<str:owner>/<str:name>/dependants/",
+        "t/<str:owner>/p/<str:name>/dependants/",
         PackageListByDependencyView.as_view(),
         name="packages.list_by_dependency",
     ),
     path(
-        "<str:owner>/<str:name>/<str:version>/",
+        "t/<str:owner>/p/<str:name>/v/<str:version>/",
         PackageVersionDetailView.as_view(),
         name="packages.version.detail",
     ),
     path(
-        "<str:owner>/",
+        "t/<str:owner>/",
         PackageListByOwnerView.as_view(),
         name="packages.list_by_owner",
     ),

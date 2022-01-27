@@ -57,14 +57,6 @@
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'packages.list' community_identifier %}">Browse</a>
-                </li>
-                {% if request.user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'packages.create' community_identifier %}">Upload</a>
-                    </li>
-                {% endif %}
-                <li class="nav-item">
                     <div class="dropdown">
                         <a href="#" role="button" id="developersMenu" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false" class="nav-link dropdown-toggle">Developers</a>
@@ -74,7 +66,6 @@
                             {% endif %}
                             <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
                             <a class="dropdown-item" href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
-                            <a class="dropdown-item" href="{% url 'packages.create.docs' community_identifier %}">Package Format Docs</a>
                             <a class="dropdown-item" href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
                             <a class="dropdown-item" href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
                         </div>
