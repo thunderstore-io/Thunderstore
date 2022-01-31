@@ -471,7 +471,7 @@ class PackageCreateView(CommunityMixin, TemplateView):
         return super().dispatch(*args, **kwargs)
 
 
-class PackageDocsView(TemplateView):
+class PackageDocsView(CommunityMixin, TemplateView):
     template_name = "repository/package_docs.html"
 
 
@@ -491,6 +491,9 @@ class PackageCreateOldView(CommunityMixin, CreateView):
         context["selectable_communities"] = Community.objects.filter(
             Q(is_listed=True) | Q(pk=self.request.community.pk),
         )
+        context["current_community"] = context["selectable_communities"].filter(
+            identifier=self.kwargs["community_identifier"]
+        )[0]
         return context
 
     def get_form_kwargs(self, *args, **kwargs):

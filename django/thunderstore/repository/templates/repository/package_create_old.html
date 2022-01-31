@@ -10,12 +10,12 @@
 <div class="mb-3 mt-3 alert alert-info" role="alert">
     <p class="mb-0">
         Looking for package format documentation?
-        <a href="{% url 'packages.create.docs' %}">You can find it here</a>
+        <a href="{% url 'packages.create.docs' community_identifier %}">You can find it here</a>
     </p>
 </div>
 <div class="mb-3 mt-3 alert alert-info" role="alert">
     <p class="mb-0">
-        <a href="{% url 'packages.create' %}">Looking for the new upload handler?</a>
+        <a href="{% url 'packages.create' community_identifier %}">Looking for the new upload handler?</a>
     </p>
 </div>
 <form class="mt-2" method="post" enctype="multipart/form-data" novalidate>
@@ -51,7 +51,7 @@
                         {# Manual rendering due to different set being displayed than validated #}
                         <select class="slimselect-lg" name="communities" id="{{ form.communities.auto_id }}" multiple>
                             {% for community in selectable_communities %}
-                            <option value="{{ community.identifier }}" {% if community == request.community %}selected{% endif %}>{{ community.name }}</option>
+                            <option value="{{ community.identifier }}" {% if community.identifier == community_identifier %}selected{% endif %}>{{ community.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -66,7 +66,7 @@
                         {{ form.categories }}
                         <p class="mt-1 mb-2">
                             Note that the selected categories are applied only to the
-                            <kbd class="text-info">{{ request.community.name }}</kbd> community.
+                            <kbd class="text-info">{{ current_community }}</kbd> community.
                         </p>
                     </div>
                 </div>
