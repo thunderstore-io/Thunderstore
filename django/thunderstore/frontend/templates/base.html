@@ -50,19 +50,21 @@
                         {% if selectable_community_sites %}
                         <div class="dropdown-menu" aria-labelledby="communitiesMenu">
                             {% for site in selectable_community_sites %}
-                                <a class="dropdown-item" href="{{ site.full_url }}">{{ site.community.name }}</a>
+                                <a class="dropdown-item" href="{{ site.get_absolute_url }}">{{ site.community.name }}</a>
                             {% endfor %}
                         </div>
                         {% endif %}
                     </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'packages.list' community_identifier %}">Browse</a>
-                </li>
-                {% if request.user.is_authenticated %}
+                {% if community_identifier %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'packages.create' community_identifier %}">Upload</a>
+                        <a class="nav-link" href="{% url 'packages.list' community_identifier %}">Browse</a>
                     </li>
+                    {% if request.user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'packages.create' community_identifier %}">Upload</a>
+                        </li>
+                    {% endif %}
                 {% endif %}
                 <li class="nav-item">
                     <div class="dropdown">
@@ -74,7 +76,9 @@
                             {% endif %}
                             <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
                             <a class="dropdown-item" href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
+                            {% if community_identifier %}
                             <a class="dropdown-item" href="{% url 'packages.create.docs' community_identifier %}">Package Format Docs</a>
+                            {% endif %}
                             <a class="dropdown-item" href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
                             <a class="dropdown-item" href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
                         </div>
@@ -88,9 +92,15 @@
             </ul>
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}
+                    {% if community_identifier %}
                     <li class="nav-item">
                         <a href="{% url 'packages.list_by_owner' team community_identifier %}" class="nav-link text-dark">{{ request.user.username }}</a>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a href="{% url 'communities' %}" class="nav-link text-dark">{{ request.user.username }}</a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>
                     </li>

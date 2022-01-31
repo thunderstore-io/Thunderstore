@@ -7,6 +7,7 @@ from django.views.generic.list import ListView
 from thunderstore.cache.cache import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models import Community
+from thunderstore.community.models.community_site import CommunitySite
 from thunderstore.repository.mixins import CommunityMixin
 
 # Should be divisible by 4 and 3
@@ -14,7 +15,7 @@ MODS_PER_PAGE = 24
 
 
 class CommunitiesView(ListView):
-    model = Community
+    model = CommunitySite
     paginate_by = MODS_PER_PAGE
     paginator_class = CachedPaginator
     template_name = "community/communities_list.html"
@@ -74,13 +75,13 @@ class CommunitiesView(ListView):
 
     def order_queryset(self, queryset):
         return queryset.order_by(
-            "name",
+            "community__name",
         )
 
     def perform_search(self, queryset, search_query):
         search_fields = (
-            "name",
-            "identifier",
+            "community__name",
+            "community__identifier",
         )
 
         icontains_query = Q()

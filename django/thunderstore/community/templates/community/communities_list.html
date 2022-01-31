@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 {% load thumbnail %}
 {% load arrow %}
 {% load cache_until %}
@@ -143,8 +143,27 @@
     </div>
 </form>
 
-{% if object_list %}
 
+{% if selectable_community_sites %}
+    <div class="d-flex flex-row flex-wrap mb-3 package-list">
+    {% for site in selectable_community_sites %}
+        <div class="col-6 col-md-4 col-lg-3 mb-2 p-1 d-flex flex-column">
+            <div class="p-0 bg-light">
+                <a href="{{ site.get_absolute_url }}">
+                    <img class="w-100" src="{% thumbnail site.icon 256x256 crop %}" alt="{{ site.community.name }} icon">
+                </a>
+            </div>
+            <div class="bg-light p-2">
+                <a href="{{ site.get_absolute_url }}">
+                    <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ site.community.name }}">{{ site.community.name }}</h5>
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+    {% if is_paginated %}
+        {% include "repository/includes/pagination.html" with page_obj=page_obj paginator=paginator %}
+    {% endif %}
 {% else %}
     <li class="my-4">No mods found :(</li>
 {% endif %}

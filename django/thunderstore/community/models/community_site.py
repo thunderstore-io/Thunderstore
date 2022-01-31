@@ -1,7 +1,10 @@
+from functools import cached_property
+
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import QuerySet
+from django.urls import reverse
 
 from thunderstore.core.mixins import TimestampMixin
 
@@ -97,6 +100,15 @@ class CommunitySite(TimestampMixin, models.Model):
     @property
     def full_url(self) -> str:
         return f"{settings.PROTOCOL}{self.site.domain}/"
+
+    @cached_property
+    def get_absolute_url(self):
+        return reverse(
+            "packages.list",
+            kwargs={
+                "community_identifier": self.community.identifier,
+            },
+        )
 
     class Meta:
         verbose_name = "community site"
