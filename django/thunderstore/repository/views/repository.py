@@ -385,7 +385,7 @@ class PackageListByDependencyView(PackageListSearchView):
 def get_package_listing_or_404(
     namespace: str,
     name: str,
-    community_pk: int,
+    community_identifier: str,
 ) -> PackageListing:
     owner = get_object_or_404(Team, name=namespace)
     package_listing = (
@@ -393,7 +393,7 @@ def get_package_listing_or_404(
         .filter(
             package__owner=owner,
             package__name=name,
-            community=community_pk,
+            community__identifier=community_identifier,
         )
         .select_related(
             "package",
@@ -417,7 +417,7 @@ class PackageDetailView(CommunityMixin, DetailView):
         listing = get_package_listing_or_404(
             namespace=self.kwargs["owner"],
             name=self.kwargs["name"],
-            community_pk=self.request.community.pk,
+            community_identifier=self.kwargs["community_identifier"],
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -449,7 +449,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community=self.request.community,
+            community_identifier=self.kwargs["community_identifier"],
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
