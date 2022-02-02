@@ -34,7 +34,6 @@ api_experimental_urls = [
 ]
 
 api_urls = [
-    path("v1/", include((v1_urls, "v1"), namespace="v1")),
     path(
         "experimental/",
         include((api_experimental_urls, "experimental"), namespace="experimental"),

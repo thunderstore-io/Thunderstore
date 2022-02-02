@@ -449,7 +449,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community_identifier=self.kwargs["community_identifier"],
+            community__identifier=self.kwargs["community_identifier"],
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")

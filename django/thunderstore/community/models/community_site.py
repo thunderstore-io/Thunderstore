@@ -32,6 +32,7 @@ class CommunitySite(TimestampMixin, models.Model):
         on_delete=models.CASCADE,
     )
     is_listed = models.BooleanField(default=True)
+    is_pre_subdomain_change_site = models.BooleanField(default=False)
 
     slogan = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)

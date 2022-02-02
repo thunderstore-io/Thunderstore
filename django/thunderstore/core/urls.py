@@ -33,6 +33,7 @@ urlpatterns = [
     path("robots.txt", robots_txt_view, name="robots.txt"),
     path(AUTH_ROOT, include("social_django.urls", namespace="social")),
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
+    path("communities/", CommunitiesView.as_view(), name="communities"),
     path("c/", include(community_urls)),
     path("settings/", include(settings_urls)),
     path("favicon.ico", FaviconView.as_view()),
