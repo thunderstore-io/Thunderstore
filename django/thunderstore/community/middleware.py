@@ -24,6 +24,8 @@ OLD_URL_REGEXS = [
     ("packages.list_by_owner", "/package/([^/]*?)/$", 1),
 ]
 
+ACCEPTED_SUBDOMAINS = ["auth", "init"]
+
 
 class CommunityHttpRequest(HttpRequest):
     community_site: "Optional[CommunitySite]"
@@ -81,6 +83,7 @@ class CommunitySiteMiddleware:
             if not request.path.startswith(self.auth_path):
                 return self.get_404()
 
+        # Redirect old package URLS to new ones
         elif request.path.startswith("/package/"):
             # Remove this later, when request.community_site is removed
             try:
@@ -89,7 +92,6 @@ class CommunitySiteMiddleware:
                 return self.get_404()
             # Remove above later, when request.community_site is removed
 
-            # Resolve community
             split_host = request.META["HTTP_HOST"].split(".")
             if len(split_host) < 3:
                 community_identifier = "riskofrain2"
@@ -104,17 +106,28 @@ class CommunitySiteMiddleware:
             else:
                 return redirect_to
 
+        # Correct the user mistake of using sub domains
         elif len(request.META["HTTP_HOST"].split(".")) > 2:
+            # Remove this later, when request.community_site is removed
+            try:
+                add_community_context_to_request(request)
+            except Http404:
+                return self.get_404()
+            # Remove above later, when request.community_site is removed
+
+            # Handle accepted subdomains
+            if any(
+                [
+                    request.META["HTTP_HOST"].startswith(
+                        f"{subdomain}.{settings.SERVER_NAME}"
+                    )
+                    for subdomain in ACCEPTED_SUBDOMAINS
+                ]
+            ):
+                return self.get_response(request)
+
+            splitted_host = request.META["HTTP_HOST"].split(".")
             if request.path.startswith("/c/"):
-                # Remove this later, when request.community_site is removed
-                try:
-                    add_community_context_to_request(request)
-                except Http404:
-                    return self.get_404()
-                # Remove above later, when request.community_site is removed
-
-                splitted_host = request.META["HTTP_HOST"].split(".")
-
                 if len(splitted_host) < 4 and request.path.startswith(
                     f"/c/{splitted_host[0]}/"
                 ):
@@ -122,8 +135,20 @@ class CommunitySiteMiddleware:
                         "HTTP_HOST"
                     ] = f"{splitted_host[-2]}.{splitted_host[-1]}"
                     return HttpResponseRedirect(make_full_url(request))
+                elif not request.path.startswith(f"/c/{splitted_host[0]}/"):
+                    request.META[
+                        "HTTP_HOST"
+                    ] = f"{splitted_host[-2]}.{splitted_host[-1]}"
+
+                    # Replace /c/THIS_HERE with the sub domain that was given
+                    request.path = re.sub(
+                        "(?<=c\/)(.*?)(?=\/)", splitted_host[0], request.path
+                    )
+                    return HttpResponseRedirect(make_full_url(request))
+
             else:
-                return self.get_404()
+                request.META["HTTP_HOST"] = f"{splitted_host[-2]}.{splitted_host[-1]}"
+                return HttpResponseRedirect(make_full_url(request))
 
         elif not request.path.startswith(self.admin_path):
             try:

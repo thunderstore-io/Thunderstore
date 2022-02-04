@@ -65,7 +65,10 @@ def test_package_list_view(client, community_site, ordering):
 
     invalidate_cache(cache_bust_condition=CacheBustCondition.any_package_updated)
 
-    base_url = reverse("packages.list")
+    base_url = reverse(
+        "packages.list",
+        kwargs={"community_identifier": community_site.community.identifier},
+    )
     url = f"{base_url}?ordering={ordering}"
     response = client.get(url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
@@ -79,7 +82,9 @@ def test_package_detail_view(
     client, active_package_listing: PackageListing, community_site
 ):
     response = client.get(
-        active_package_listing.package.get_absolute_url(),
+        active_package_listing.package.get_absolute_url(
+            community_site.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -93,7 +98,9 @@ def test_package_detail_version_view(
     client, active_version_with_listing, community_site
 ):
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_absolute_url(
+            community_site.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -113,7 +120,9 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     # Try with user that is member of owner team
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_absolute_url(
+            community_site.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -122,7 +131,9 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     user = UserFactory.create()
     client.force_login(user=user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_absolute_url(
+            community_site.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
@@ -141,7 +152,9 @@ def test_package_detail_version_view_can_be_viewed_by_user(
 
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_absolute_url(
+            community_site.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -158,7 +171,9 @@ def test_package_detail_version_view_main_package_deactivated(
     active_version_with_listing.package.is_active = False
     active_version_with_listing.package.save()
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_absolute_url(
+            community_site.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
@@ -177,7 +192,13 @@ def test_package_detail_version_view_get_object(
     mock_request.user = team_member.user
     mock_request.community = community_site.community
     view = PackageVersionDetailView(
-        kwargs={"owner": owner, "name": name, "version": version}, request=mock_request
+        kwargs={
+            "community_identifier": community_site.community.identifier,
+            "owner": owner,
+            "name": name,
+            "version": version,
+        },
+        request=mock_request,
     )
 
     active_version_with_listing.package.is_active = False
@@ -189,7 +210,13 @@ def test_package_detail_version_view_get_object(
     # Remove user from view, so that the view doesn't have permissions to view the listing
     mock_request.user = None
     view = PackageVersionDetailView(
-        kwargs={"owner": owner, "name": name, "version": version}, request=mock_request
+        kwargs={
+            "community_identifier": community_site.community.identifier,
+            "owner": owner,
+            "name": name,
+            "version": version,
+        },
+        request=mock_request,
     )
     community_site.community.require_package_listing_approval = True
     community_site.community.save()
@@ -201,7 +228,11 @@ def test_package_detail_version_view_get_object(
 @pytest.mark.django_db
 def test_package_create_view_not_logged_in(client, community_site):
     response = client.get(
-        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+        reverse(
+            "packages.create",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 302
 
@@ -211,7 +242,11 @@ def test_package_create_view_logged_in(client, community_site):
     user = UserFactory.create()
     client.force_login(user)
     response = client.get(
-        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+        reverse(
+            "packages.create",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
+        HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     assert b"Upload package" in response.content
@@ -220,7 +255,10 @@ def test_package_create_view_logged_in(client, community_site):
 @pytest.mark.django_db
 def test_package_create_view_old_not_logged_in(client, community_site):
     response = client.get(
-        reverse("packages.create.old"),
+        reverse(
+            "packages.create.old",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 302
@@ -231,7 +269,10 @@ def test_package_create_view_old_logged_in(client, community_site):
     user = UserFactory.create()
     client.force_login(user)
     response = client.get(
-        reverse("packages.create.old"),
+        reverse(
+            "packages.create.old",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200

@@ -7,7 +7,7 @@ from thunderstore.repository.models import DiscordUserBotPermission
 
 
 @pytest.mark.django_db
-def test_bot_api_deprecate_mod_200(api_client, admin_user, package):
+def test_bot_api_deprecate_mod_200(api_client, admin_user, package, community_site):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
@@ -32,7 +32,10 @@ def test_bot_api_deprecate_mod_200(api_client, admin_user, package):
     )
 
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        reverse(
+            "bot.deprecate-mod",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
         data=encoded,
         content_type="application/jwt",
     )
@@ -44,9 +47,7 @@ def test_bot_api_deprecate_mod_200(api_client, admin_user, package):
 
 @pytest.mark.django_db
 def test_bot_api_deprecate_mod_403_thunderstore_perms(
-    api_client,
-    user,
-    package,
+    api_client, user, package, community_site
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -72,7 +73,10 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
     )
 
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        reverse(
+            "bot.deprecate-mod",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
         data=encoded,
         content_type="application/jwt",
     )
@@ -90,6 +94,7 @@ def test_bot_api_deprecate_mod_403_discord_perms(
     api_client,
     admin_user,
     package,
+    community_site,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -115,7 +120,10 @@ def test_bot_api_deprecate_mod_403_discord_perms(
     )
 
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        reverse(
+            "bot.deprecate-mod",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
         data=encoded,
         content_type="application/jwt",
     )
@@ -126,7 +134,7 @@ def test_bot_api_deprecate_mod_403_discord_perms(
 
 
 @pytest.mark.django_db
-def test_bot_api_deprecate_mod_404(api_client, admin_user):
+def test_bot_api_deprecate_mod_404(api_client, admin_user, community_site):
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
@@ -148,9 +156,11 @@ def test_bot_api_deprecate_mod_404(api_client, admin_user):
         algorithm=SecretTypeChoices.HS256,
         headers={"kid": str(auth.key_id)},
     )
-
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        reverse(
+            "bot.deprecate-mod",
+            kwargs={"community_identifier": community_site.community.identifier},
+        ),
         data=encoded,
         content_type="application/jwt",
     )

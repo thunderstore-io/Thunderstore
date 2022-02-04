@@ -1,7 +1,6 @@
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
-from thunderstore.community.views import CommunitiesView
 from thunderstore.repository.api.v1.urls import urls as v1_urls
 from thunderstore.repository.urls import urlpatterns as package_urls
 

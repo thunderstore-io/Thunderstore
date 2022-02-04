@@ -235,11 +235,11 @@ class Package(models.Model):
             },
         )
 
-    def get_full_url(self, site: Site):
+    def get_full_url(self, community_identifier: str):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
-            "hostname": site.domain,
-            "path": self.get_absolute_url(),
+            "hostname": settings.SERVER_NAME,
+            "path": self.get_absolute_url(community_identifier),
         }
 
     def recache_latest(self):
