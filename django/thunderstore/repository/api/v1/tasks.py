@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test.client import RequestFactory
 
 from thunderstore.community.middleware import add_community_context_to_request
@@ -15,12 +16,13 @@ def update_api_v1_caches():
 def update_api_v1_indexes():
     for community_site in CommunitySite.objects.all():
         request = RequestFactory().get(
-            "/api/v1/package/", SERVER_NAME=community_site.site.domain
+            f"/c/{community_site.community.identifier}/api/v1/package/",
+            SERVER_NAME=settings.SERVER_NAME,
         )
-        # TODO: Somehow use middleware instead
-        add_community_context_to_request(request)
         view = PackageViewSet.as_view({"get": "list"})
-        PackageViewSet.update_cache(view, request)
+        PackageViewSet.update_cache(
+            view, request, community_identifier=community_site.community.identifier
+        )
 
 
 def update_api_v1_details():
@@ -30,8 +32,12 @@ def update_api_v1_details():
         ):
             view = PackageViewSet.as_view({"get": "retrieve"})
             request = RequestFactory().get(
-                f"/api/v1/package/{uuid}/", SERVER_NAME=community_site.site.domain
+                f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/",
+                SERVER_NAME=settings.SERVER_NAME,
             )
-            # TODO: Somehow use middleware instead
-            add_community_context_to_request(request)
-            PackageViewSet.update_cache(view, request, uuid4=uuid)
+            PackageViewSet.update_cache(
+                view,
+                request,
+                uuid4=uuid,
+                community_identifier=community_site.community.identifier,
+            )

@@ -9,7 +9,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from thunderstore.cache.cache import BackgroundUpdatedCacheMixin
-from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import get_package_listing_queryset
 from thunderstore.repository.mixins import CommunityMixin
@@ -20,7 +19,6 @@ from thunderstore.repository.permissions import ensure_can_rate_package
 class PackageViewSet(
     BackgroundUpdatedCacheMixin,
     CommunityMixin,
-    CommunitySiteSerializerContext,
     viewsets.ReadOnlyModelViewSet,
 ):
     cache_database_fallback = False
@@ -37,7 +35,9 @@ class PackageViewSet(
         )
 
     def get_queryset(self):
-        return get_package_listing_queryset(community_site=self.request.community_site)
+        return get_package_listing_queryset(
+            community_identifier=self.kwargs["community_identifier"]
+        )
 
     @action(
         detail=True,
@@ -45,7 +45,7 @@ class PackageViewSet(
         authentication_classes=[SessionAuthentication, BasicAuthentication],
         permission_classes=[IsAuthenticated],
     )
-    def rate(self, request, uuid4=None):
+    def rate(self, request, uuid4=None, community_identifier=None):
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
         user = request.user
         ensure_can_rate_package(user, package)

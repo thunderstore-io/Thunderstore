@@ -5,7 +5,7 @@ import pytest
 def test_package_detail_view(client, active_package_listing, community_site):
     package = active_package_listing.package
     response = client.get(
-        active_package_listing.get_absolute_url(community_site.community.identifier),
+        active_package_listing.get_absolute_url(),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200

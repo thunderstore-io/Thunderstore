@@ -170,7 +170,10 @@ class BackgroundUpdatedCacheMixin(object):
             cache_bust_condition=CacheBustCondition.background_update_only,
             cache_type="view",
             key=get_view_cache_name(cls),
-            vary_on=args + tuple(kwargs.values()) + (request.community_site,),
+            vary_on=args
+            + tuple(
+                kwargs.values(),
+            ),
         )
 
     @classmethod

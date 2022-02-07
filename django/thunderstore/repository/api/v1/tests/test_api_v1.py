@@ -7,9 +7,11 @@ from thunderstore.repository.api.v1.tasks import update_api_v1_caches
 
 
 @pytest.mark.django_db
-def test_api_v1(api_client, active_package_listing):
+def test_api_v1(api_client, active_package_listing, community_site):
     update_api_v1_caches()
-    response = api_client.get("/api/v1/package/")
+    response = api_client.get(
+        f"/c/{community_site.community.identifier}/api/v1/package/"
+    )
     assert response.status_code == 200
     result = response.json()
     assert len(result) == 1
@@ -26,12 +28,12 @@ def test_api_v1(api_client, active_package_listing):
 
 
 @pytest.mark.django_db
-def test_api_v1_rate_package(api_client, active_package_listing):
+def test_api_v1_rate_package(api_client, active_package_listing, community_site):
     uuid = active_package_listing.package.uuid4
     user = UserFactory.create()
     api_client.force_authenticate(user)
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
@@ -41,7 +43,7 @@ def test_api_v1_rate_package(api_client, active_package_listing):
     assert result["score"] == 1
 
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "unrated"}),
         content_type="application/json",
     )
@@ -55,10 +57,11 @@ def test_api_v1_rate_package(api_client, active_package_listing):
 def test_api_v1_rate_package_permission_denied(
     api_client,
     active_package_listing,
+    community_site,
 ):
     uuid = active_package_listing.package.uuid4
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
