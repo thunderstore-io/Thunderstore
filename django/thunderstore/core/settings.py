@@ -392,6 +392,7 @@ if REDIS_URL:
         },
     }
 
+CACHALOT_TIMEOUT = 60 * 60  # 1 hour
 CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
     (
         "auth_group",
