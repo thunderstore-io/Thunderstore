@@ -336,9 +336,14 @@ DEBUG_TOOLBAR_SUPERUSER_ONLY = env.bool("DEBUG_TOOLBAR_SUPERUSER_ONLY")
 
 def show_debug_toolbar(request: HttpRequest) -> bool:
     is_superuser = hasattr(request, "user") and request.user.is_superuser
-    return DEBUG_TOOLBAR_ENABLED and (
-        (DEBUG_TOOLBAR_SUPERUSER_ONLY and is_superuser)
-        or (DEBUG and not DEBUG_TOOLBAR_SUPERUSER_ONLY)
+    should_show = bool(request.GET.get("debug", False))
+    return (
+        DEBUG_TOOLBAR_ENABLED
+        and (
+            (DEBUG_TOOLBAR_SUPERUSER_ONLY and is_superuser)
+            or (DEBUG and not DEBUG_TOOLBAR_SUPERUSER_ONLY)
+        )
+        and should_show
     )
 
 
