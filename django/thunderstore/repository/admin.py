@@ -187,12 +187,13 @@ class PackageAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "name",
-        "namespace",
+        "namespace__name",
         "owner__name",
     )
     list_select_related = (
         "latest",
         "owner",
+        "namespace",
     )
 
     def file_size(self, obj):
