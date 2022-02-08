@@ -435,6 +435,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "repository_packageversion_dependencies",
         "repository_team",
         "repository_teammember",
+        "repository_namespace",
         "social_auth_association",
         "social_auth_code",
         "social_auth_nonce",
