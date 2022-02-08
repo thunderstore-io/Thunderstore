@@ -1,7 +1,7 @@
 import hashlib
 import time
 import warnings
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from urllib.parse import quote
 
 from django.conf import settings
@@ -28,6 +28,7 @@ def try_regenerate_cache(
     old_key: str,
     generator: Callable,
     timeout: int,
+    old_timeout: int,
     version=None,
 ) -> Any:
     with cache.lock(
@@ -45,13 +46,15 @@ def try_regenerate_cache(
         cache.set(
             old_key,
             generated,
-            timeout=None,
+            timeout=old_timeout,
             version=version,
         )
         return generated
 
 
-def regenerate_cache(key: str, generator: Callable, timeout: int, version=None):
+def regenerate_cache(
+    key: str, generator: Callable, timeout: int, old_timeout: int, version=None
+):
     old_key = f"old.{key}"
     try:
         return try_regenerate_cache(
@@ -59,6 +62,7 @@ def regenerate_cache(key: str, generator: Callable, timeout: int, version=None):
             old_key=old_key,
             generator=generator,
             timeout=timeout,
+            old_timeout=old_timeout,
             version=version,
         )
     except (LockError, AttributeError):
@@ -98,7 +102,9 @@ def cache_get_or_set_by_key(
     )
 
 
-def cache_get_or_set(key, default, default_args=(), default_kwargs=None, expiry=None):
+def cache_get_or_set(
+    key, default, default_args=(), default_kwargs=None, expiry: Optional[int] = None
+):
     if default_kwargs is None:
         default_kwargs = {}
 
@@ -107,9 +113,15 @@ def cache_get_or_set(key, default, default_args=(), default_kwargs=None, expiry=
             time.sleep(settings.DEBUG_SIMULATED_LAG)
         return default(*default_args, **default_kwargs)
 
+    old_timeout = None
+    if expiry is not None:
+        old_timeout = expiry * 2
+
     result = cache.get(key, version=None)
     if result is None:
-        result = regenerate_cache(key=key, generator=call_default, timeout=expiry)
+        result = regenerate_cache(
+            key=key, generator=call_default, timeout=expiry, old_timeout=old_timeout
+        )
 
     return result
 

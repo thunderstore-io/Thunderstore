@@ -54,8 +54,15 @@ class PackageListingAdmin(admin.ModelAdmin):
         "package",
     )
     search_fields = (
+        "package__namespace__name",
         "package__owner__name",
         "package__name",
+    )
+    list_select_related = (
+        "package",
+        "package__owner",
+        "package__namespace",
+        "community",
     )
     readonly_fields = (
         "package",
