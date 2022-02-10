@@ -1,12 +1,15 @@
+import re
 from typing import List, Optional, Set, Tuple
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.http import Http404
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
 from django.views.generic import TemplateView, View
+from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
@@ -26,6 +29,39 @@ from thunderstore.repository.package_upload import PackageUploadForm
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
+
+OLD_URL_REGEXS = [
+    ("current-user.info", "/api/v1/current-user/info/$", 0),
+    ("package-rate", "/api/v1/package/([^/]*?)/rate/$", 69),
+    ("package-read", "/api/v1/package/([^/]*?)/$", 69),
+    ("package-list", "/api/v1/package/$", 0),
+    ("packages.download", "/package/download/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
+    ("packages.list_by_dependency", "/package/([^/]*?)/([^/]*?)/dependants/$", 2),
+    ("packages.version.detail", "/package/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
+    ("packages.detail", "/package/([^/]*?)/([^/]*?)/$", 2),
+    ("packages.list_by_owner", "/package/([^/]*?)/$", 1),
+    ("packages.list", "/package/$", 0),
+    ("packages.create.docs", "/package/create/docs/$", 0),
+    ("packages.create.old", "/package/create/old/$", 0),
+    ("packages.create", "/package/create/$", 0),
+]
+
+
+def solve_redirect(path, community_identifier):
+    for reverse_name, regex, kwarg_amount in OLD_URL_REGEXS:
+        result = re.search(regex, path)
+        if result:
+            kwargs = {"community_identifier": community_identifier}
+            if kwarg_amount > 0:
+                kwargs.update({"owner": result.group(1)})
+            if kwarg_amount > 1:
+                kwargs.update({"name": result.group(2)})
+            if kwarg_amount > 2:
+                kwargs.update({"version": result.group(3)})
+            if kwarg_amount == 69:
+                kwargs.update({"uuid4": result.group(1)})
+            return reverse_name, kwargs
+    return None
 
 
 class PackageListSearchView(CommunityMixin, ListView):
@@ -531,3 +567,32 @@ class PackageDownloadView(CommunityMixin, View):
         )
         version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))
+
+
+class NewPackageUrlsRedirectView(RedirectView):
+    def get(self, request, *args, **kwargs):
+        splitted_host = self.request.META["HTTP_HOST"].split(".")
+        if len(splitted_host) > 2:
+            community_identifier = splitted_host[0]
+        else:
+            community_identifier = "riskofrain2"
+        request.META["HTTP_HOST"] = f"{splitted_host[-2]}.{splitted_host[-1]}"
+
+        redirect_data = solve_redirect(
+            request.path, community_identifier=community_identifier
+        )
+
+        if redirect_data is None:
+            return HttpResponse(content=b"Site not found", status=404)
+
+        url = request.build_absolute_uri(
+            reverse(redirect_data[0], kwargs=redirect_data[1])
+        )
+        if settings.PROTOCOL == "https://" and url.startswith("http://"):
+            url = f"https://{url[7:]}"
+
+        args = self.request.META.get("QUERY_STRING", "")
+        if args:
+            url = "%s?%s" % (url, args)
+
+        return HttpResponseRedirect(url)

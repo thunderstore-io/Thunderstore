@@ -11,6 +11,7 @@ from thunderstore.repository.views import (
     PackageListView,
     PackageVersionDetailView,
 )
+from thunderstore.repository.views.repository import NewPackageUrlsRedirectView
 from thunderstore.repository.views.team_settings import (
     SettingsTeamAddMemberView,
     SettingsTeamAddServiceAccountView,
@@ -21,6 +22,33 @@ from thunderstore.repository.views.team_settings import (
     SettingsTeamListView,
     SettingsTeamServiceAccountView,
 )
+
+old_urlpatterns = [
+    path("", NewPackageUrlsRedirectView.as_view()),
+    path("create/", NewPackageUrlsRedirectView.as_view()),
+    path("create/old/", NewPackageUrlsRedirectView.as_view()),
+    path("create/docs/", NewPackageUrlsRedirectView.as_view()),
+    path(
+        "download/<str:owner>/<str:name>/<str:version>/",
+        NewPackageUrlsRedirectView.as_view(),
+    ),
+    path(
+        "<str:owner>/<str:name>/",
+        NewPackageUrlsRedirectView.as_view(),
+    ),
+    path(
+        "<str:owner>/<str:name>/dependants/",
+        NewPackageUrlsRedirectView.as_view(),
+    ),
+    path(
+        "<str:owner>/<str:name>/<str:version>/",
+        NewPackageUrlsRedirectView.as_view(),
+    ),
+    path(
+        "<str:owner>/",
+        NewPackageUrlsRedirectView.as_view(),
+    ),
+]
 
 urlpatterns = [
     path("", PackageListView.as_view(), name="packages.list"),
