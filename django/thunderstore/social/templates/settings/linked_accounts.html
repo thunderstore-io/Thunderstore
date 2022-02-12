@@ -1,5 +1,5 @@
 {% extends 'settings/base.html' %}
-{% load social %}
+{% load social auth_login %}
 
 {% block title %}Linked Accounts{% endblock %}
 
@@ -31,7 +31,7 @@
             <span class="fab fa-{{entry}} mr-3"></span><span class="text-capitalize">{{ entry }}</span>
         </div>
         <div class="col-3">
-            <a href="{% url "social:begin" entry %}" class="btn btn-outline-success">Connect</a>
+            <a href="{% add_auth_login_link entry %}" class="btn btn-outline-success">Connect</a>
         </div>
     </div>
 {% endfor %}
