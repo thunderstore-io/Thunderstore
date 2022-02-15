@@ -342,3 +342,160 @@ def test_service_account_creation(client, community_site, team, team_owner):
     assert response.status_code == 200
     assert b'New service account <kbd class="text-info">Foo</kbd>' in response.content
     assert b'<pre class="important">tss_' in response.content
+
+
+@pytest.mark.django_db
+def test_all_old_urls_for_package_views(
+    client, community, community_site, team, package, package_version
+):
+    response = client.post(
+        f"http://{community_site.site.domain}/api/v1/bot/deprecate-mod/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse("bot.deprecate-mod", kwargs={"community_identifier": "riskofrain2"})
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/api/v1/current-user/info/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse("current-user.info", kwargs={"community_identifier": "riskofrain2"})
+    )
+    response = client.post(
+        f"http://{community_site.site.domain}/api/v1/package/{package.uuid4}/rate/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse(
+            "package-rate",
+            kwargs={"community_identifier": "riskofrain2", "uuid4": package.uuid4},
+        )
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/api/v1/package/{package.uuid4}/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse(
+            "package-detail",
+            kwargs={"community_identifier": "riskofrain2", "uuid4": package.uuid4},
+        )
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/api/v1/package/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse("package-list", kwargs={"community_identifier": "riskofrain2"})
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/download/{team.name}/{package_version.package}/{package_version.version_number}/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse(
+            "packages.download",
+            kwargs={
+                "community_identifier": "riskofrain2",
+                "owner": team.name,
+                "name": package_version.package,
+                "version": package_version.version_number,
+            },
+        )
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/{team.name}/{package_version.package}/dependants/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse(
+            "packages.list_by_dependency",
+            kwargs={
+                "community_identifier": "riskofrain2",
+                "owner": team.name,
+                "name": package_version.package,
+            },
+        )
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/{team.name}/{package_version.package}/{package_version.version_number}/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse(
+            "packages.version.detail",
+            kwargs={
+                "community_identifier": "riskofrain2",
+                "owner": team.name,
+                "name": package_version.package,
+                "version": package_version.version_number,
+            },
+        )
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/{team.name}/{package_version.package}/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse(
+            "packages.detail",
+            kwargs={
+                "community_identifier": "riskofrain2",
+                "owner": team.name,
+                "name": package_version.package,
+            },
+        )
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/{team.name}/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse(
+            "packages.list_by_owner",
+            kwargs={"community_identifier": "riskofrain2", "owner": team.name},
+        )
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse("packages.list", kwargs={"community_identifier": "riskofrain2"})
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/create/docs/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse("packages.create.docs", kwargs={"community_identifier": "riskofrain2"})
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/create/old/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse("packages.create.old", kwargs={"community_identifier": "riskofrain2"})
+    )
+    response = client.get(
+        f"http://{community_site.site.domain}/package/create/",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    assert response.url.endswith(
+        reverse("packages.create", kwargs={"community_identifier": "riskofrain2"})
+    )

@@ -16,35 +16,11 @@ from thunderstore.core.utils import make_full_url
 if TYPE_CHECKING:
     from thunderstore.community.models import Community, CommunitySite
 
-OLD_URL_REGEXS = [
-    ("packages.download", "/package/download/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
-    ("packages.list_by_dependency", "/package/([^/]*?)/([^/]*?)/dependants/$", 2),
-    ("packages.version.detail", "/package/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
-    ("packages.detail", "/package/([^/]*?)/([^/]*?)/$", 2),
-    ("packages.list_by_owner", "/package/([^/]*?)/$", 1),
-]
-
-ACCEPTED_SUBDOMAINS = ["auth", "init"]
-
 
 class CommunityHttpRequest(HttpRequest):
     community_site: "Optional[CommunitySite]"
     site: "Optional[Site]"
     community: "Optional[Community]"
-
-
-def solve_redirect(path, community_identifier):
-    for reverse_name, regex, kwarg_amount in OLD_URL_REGEXS:
-        result = re.search(regex, path)
-        if result:
-            kwargs = {"community_identifier": community_identifier}
-            kwargs.update({"owner": result.group(1)})
-            if kwarg_amount > 1:
-                kwargs.update({"name": result.group(2)})
-            if kwarg_amount > 2:
-                kwargs.update({"version": result.group(3)})
-            return HttpResponseRedirect(reverse(reverse_name, kwargs=kwargs))
-    return None
 
 
 def add_community_context_to_request(request: CommunityHttpRequest):

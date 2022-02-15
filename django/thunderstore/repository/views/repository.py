@@ -31,19 +31,20 @@ from thunderstore.repository.package_upload import PackageUploadForm
 MODS_PER_PAGE = 24
 
 OLD_URL_REGEXS = [
+    ("bot.deprecate-mod", "/api/v1/bot/deprecate-mod/$", 0),
     ("current-user.info", "/api/v1/current-user/info/$", 0),
     ("package-rate", "/api/v1/package/([^/]*?)/rate/$", 69),
-    ("package-read", "/api/v1/package/([^/]*?)/$", 69),
+    ("package-detail", "/api/v1/package/([^/]*?)/$", 69),
     ("package-list", "/api/v1/package/$", 0),
     ("packages.download", "/package/download/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
+    ("packages.create.docs", "/package/create/docs/$", 0),
+    ("packages.create.old", "/package/create/old/$", 0),
+    ("packages.create", "/package/create/$", 0),
     ("packages.list_by_dependency", "/package/([^/]*?)/([^/]*?)/dependants/$", 2),
     ("packages.version.detail", "/package/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
     ("packages.detail", "/package/([^/]*?)/([^/]*?)/$", 2),
     ("packages.list_by_owner", "/package/([^/]*?)/$", 1),
     ("packages.list", "/package/$", 0),
-    ("packages.create.docs", "/package/create/docs/$", 0),
-    ("packages.create.old", "/package/create/old/$", 0),
-    ("packages.create", "/package/create/$", 0),
 ]
 
 
@@ -52,14 +53,15 @@ def solve_redirect(path, community_identifier):
         result = re.search(regex, path)
         if result:
             kwargs = {"community_identifier": community_identifier}
-            if kwarg_amount > 0:
-                kwargs.update({"owner": result.group(1)})
-            if kwarg_amount > 1:
-                kwargs.update({"name": result.group(2)})
-            if kwarg_amount > 2:
-                kwargs.update({"version": result.group(3)})
             if kwarg_amount == 69:
                 kwargs.update({"uuid4": result.group(1)})
+            else:
+                if kwarg_amount > 0:
+                    kwargs.update({"owner": result.group(1)})
+                if kwarg_amount > 1:
+                    kwargs.update({"name": result.group(2)})
+                if kwarg_amount > 2:
+                    kwargs.update({"version": result.group(3)})
             return reverse_name, kwargs
     return None
 
