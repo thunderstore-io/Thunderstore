@@ -32,43 +32,7 @@ class CommunitiesView(ListView):
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
         cache_vary += f".{self.get_search_query()}"
-        cache_vary += f".{self.get_included_categories()}"
-        cache_vary += f".{self.get_excluded_categories()}"
         return cache_vary
-
-    def _get_int_list(self, name: str) -> List[int]:
-        selections = self.request.GET.getlist(name, [])
-        result = []
-        for selection in selections:
-            try:
-                result.append(int(selection))
-            except ValueError:
-                pass
-        return result
-
-    def get_included_categories(self):
-        return self._get_int_list("included_categories")
-
-    @property
-    def filter_require_categories(self) -> Set[int]:
-        categories = set(self.get_included_categories())
-        if self.active_section:
-            categories.update(
-                self.active_section.require_categories.values_list("pk", flat=True),
-            )
-        return categories
-
-    def get_excluded_categories(self):
-        return self._get_int_list("excluded_categories")
-
-    @property
-    def filter_exclude_categories(self) -> Set[int]:
-        categories = set(self.get_excluded_categories())
-        if self.active_section:
-            categories.update(
-                self.active_section.exclude_categories.values_list("pk", flat=True),
-            )
-        return categories
 
     def get_search_query(self):
         return self.request.GET.get("q", "")
