@@ -57,7 +57,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="provider",
-                        to="github.keyprovider",
+                        to="ts_github.keyprovider",
                     ),
                 ),
             ],

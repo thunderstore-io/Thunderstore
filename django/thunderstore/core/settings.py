@@ -193,7 +193,7 @@ INSTALLED_APPS = [
     "thunderstore.usermedia",
     "thunderstore.account",
     "thunderstore.markdown",
-    "thunderstore.github",
+    "thunderstore.ts_github",
     "backblaze_b2",
 ]
 

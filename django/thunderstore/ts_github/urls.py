@@ -1,8 +1,8 @@
 from django.urls import path
 
-from thunderstore.github.views import SecretScanningEndpoint
+from thunderstore.ts_github.views import SecretScanningEndpoint
 
-github_urls = [
+system_urls = [
     path(
         "secret-scanning/validate/",
         SecretScanningEndpoint.as_view(),

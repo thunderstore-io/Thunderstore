@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from thunderstore.github.models.keys import KeyProvider
-from thunderstore.github.utils import update_keys
+from thunderstore.ts_github.models.keys import KeyProvider
+from thunderstore.ts_github.utils import update_keys
 
 
 class Command(BaseCommand):

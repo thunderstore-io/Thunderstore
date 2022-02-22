@@ -1,6 +1,6 @@
 import pytest
 
-from thunderstore.github.models.keys import KeyProvider
+from thunderstore.ts_github.models.keys import KeyProvider
 
 
 @pytest.mark.django_db

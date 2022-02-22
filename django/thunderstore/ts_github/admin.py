@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.db import transaction
 from django.db.models import QuerySet
 
-from thunderstore.github.models import KeyProvider, StoredPublicKey
+from thunderstore.ts_github.models import KeyProvider, StoredPublicKey
 
 
 @transaction.atomic

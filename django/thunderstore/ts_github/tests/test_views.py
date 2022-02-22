@@ -12,8 +12,8 @@ from thunderstore.account.tokens import (
     get_service_account_api_token,
     hash_service_account_api_token,
 )
-from thunderstore.github.models.keys import KeyProvider, StoredPublicKey
-from thunderstore.github.views import SecretScanningEndpoint
+from thunderstore.ts_github.models.keys import KeyProvider, StoredPublicKey
+from thunderstore.ts_github.views import SecretScanningEndpoint
 
 
 @pytest.mark.django_db
