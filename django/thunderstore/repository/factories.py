@@ -6,6 +6,7 @@ from thunderstore.core.factories import UserFactory
 from .models import (
     Namespace,
     Package,
+    PackageRating,
     PackageVersion,
     PackageVersionDownloadEvent,
     Team,
@@ -46,6 +47,14 @@ class PackageFactory(DjangoModelFactory):
     )
 
 
+class PackageRatingFactory(DjangoModelFactory):
+    class Meta:
+        model = PackageRating
+
+    rater = factory.lazy_attribute(lambda o: UserFactory())
+    package = factory.lazy_attribute(lambda o: PackageFactory())
+
+
 class PackageVersionFactory(DjangoModelFactory):
     class Meta:
         model = PackageVersion
@@ -53,6 +62,7 @@ class PackageVersionFactory(DjangoModelFactory):
     package = factory.lazy_attribute(lambda o: PackageFactory.create(name=o.name))
     icon = factory.django.ImageField(width=256, height=256)
     name = factory.Sequence(lambda n: f"Package_{n:04d}")
+    description = factory.Sequence(lambda n: f"Desc_{n:04d}")
     version_number = "1.0.0"
     file_size = 5242880
 
