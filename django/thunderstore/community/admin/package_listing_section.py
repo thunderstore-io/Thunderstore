@@ -1,29 +1,9 @@
 from django.contrib import admin
-from django.db import transaction
-from django.db.models import QuerySet
+
+from thunderstore.utils.admin import AdminActions
 
 from ..forms import PackageListingSectionForm
 from ..models import PackageListingSection
-
-
-@transaction.atomic
-def set_unlisted(modeladmin, request, queryset: QuerySet):
-    for obj in queryset:
-        obj.is_listed = False
-        obj.save(update_fields=("is_listed",))
-
-
-set_unlisted.short_description = "Set unlisted"
-
-
-@transaction.atomic
-def set_listed(modeladmin, request, queryset: QuerySet):
-    for obj in queryset:
-        obj.is_listed = True
-        obj.save(update_fields=("is_listed",))
-
-
-set_listed.short_description = "Set listed"
 
 
 @admin.register(PackageListingSection)
@@ -61,8 +41,8 @@ class PackageListingSectionAdmin(admin.ModelAdmin):
         "datetime_updated",
     )
     actions = (
-        set_listed,
-        set_unlisted,
+        AdminActions.set_listed,
+        AdminActions.set_unlisted,
     )
     form = PackageListingSectionForm
 

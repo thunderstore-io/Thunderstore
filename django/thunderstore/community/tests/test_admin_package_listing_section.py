@@ -2,10 +2,9 @@ import pytest
 
 from thunderstore.community.admin.package_listing_section import (
     PackageListingSectionAdmin,
-    set_listed,
-    set_unlisted,
 )
 from thunderstore.community.models import Community, PackageListingSection
+from thunderstore.utils.admin import AdminActions
 
 
 @pytest.mark.django_db
@@ -21,7 +20,7 @@ def test_admin_package_listing_section_set_unlisted(community: Community) -> Non
     ]
 
     modeladmin = PackageListingSectionAdmin(PackageListingSection, None)
-    set_unlisted(modeladmin, None, PackageListingSection.objects.all())
+    AdminActions.set_unlisted(modeladmin, None, PackageListingSection.objects.all())
 
     for entry in listings:
         entry.refresh_from_db()
@@ -41,7 +40,7 @@ def test_admin_package_listing_section_set_listed(community: Community) -> None:
     ]
 
     modeladmin = PackageListingSectionAdmin(PackageListingSection, None)
-    set_listed(modeladmin, None, PackageListingSection.objects.all())
+    AdminActions.set_listed(modeladmin, None, PackageListingSection.objects.all())
 
     for entry in listings:
         entry.refresh_from_db()
