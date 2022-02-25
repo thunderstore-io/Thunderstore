@@ -30,6 +30,20 @@ class PackageCategorySerializer(serializers.ModelSerializer):
         fields = ["name", "slug"]
 
 
+class PackageVersionSerializer(serializers.Serializer):
+    """
+    Data shown on "PackageVersions" component on frontend.
+    """
+
+    date_created = serializers.DateTimeField()
+    download_count = serializers.IntegerField(min_value=0)
+    download_url = serializers.CharField()
+    install_url = serializers.CharField()
+    version_number = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("version_number").max_length
+    )
+
+
 class PackageCardSerializer(serializers.Serializer):
     """
     Data shown on "PackageCard" component on frontend.
@@ -60,6 +74,31 @@ class PackageCardSerializer(serializers.Serializer):
     )
 
 
+class PackageDependencySerializer(serializers.Serializer):
+    """
+    Data shown on "PackageRequirements" component on frontend.
+    """
+
+    community_identifier = serializers.CharField(
+        allow_null=True,
+        max_length=Community._meta.get_field("identifier").max_length,
+    )
+    community_name = serializers.CharField(
+        allow_null=True,
+        max_length=Community._meta.get_field("name").max_length,
+    )
+    description = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("description").max_length
+    )
+    image_src = serializers.CharField(allow_null=True)
+    package_name = serializers.CharField(
+        max_length=Package._meta.get_field("name").max_length
+    )
+    version_number = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("version_number").max_length
+    )
+
+
 class CommunityPackageListSerializer(serializers.Serializer):
     """
     Data shown on Community's package list view on frontend.
@@ -81,6 +120,43 @@ class FrontPageContentSerializer(serializers.Serializer):
     communities = CommunityCardSerializer(many=True)
     download_count = serializers.IntegerField(min_value=0)
     package_count = serializers.IntegerField(min_value=0)
+
+
+class PackageDetailViewContentSerializer(serializers.Serializer):
+    """
+    Data shown on Package's detail view on frontend.
+    """
+
+    categories = PackageCategorySerializer(many=True)
+    community_identifier = serializers.CharField(
+        max_length=Community._meta.get_field("identifier").max_length
+    )
+    community_name = serializers.CharField(
+        max_length=Community._meta.get_field("name").max_length
+    )
+    dependant_count = serializers.IntegerField(min_value=0)
+    dependencies = PackageDependencySerializer(many=True)
+    dependency_string = serializers.CharField(max_length=210)
+    description = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("description").max_length
+    )
+    download_count = serializers.IntegerField(min_value=0)
+    download_url = serializers.CharField()
+    image_src = serializers.CharField(allow_null=True)
+    install_url = serializers.CharField()
+    last_updated = serializers.DateTimeField()
+    markdown = serializers.CharField()
+    package_name = serializers.CharField(
+        max_length=Package._meta.get_field("name").max_length
+    )
+    rating_score = serializers.IntegerField(min_value=0)
+    team_name = serializers.CharField(
+        max_length=Team._meta.get_field("name").max_length
+    )
+    versions = PackageVersionSerializer(many=True)
+    website = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("website_url").max_length
+    )
 
 
 class PackageSearchQueryParameterSerializer(serializers.Serializer):
