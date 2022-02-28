@@ -10,12 +10,12 @@ class StoredPublicKeyAdmin(admin.ModelAdmin, AdminActions):
         AdminActions.activate,
         AdminActions.deactivate,
     )
-    list_display = ("key_identifier", "key_type", "is_active")
-    list_filter = ("is_active", "key_type")
+    list_display = ("key_identifier", "key_type", "is_active", "provider")
+    list_filter = ("is_active", "key_type", "provider")
     search_fields = ("key_identifier", "key")
 
 
 @admin.register(KeyProvider)
 class KeyProviderAdmin(admin.ModelAdmin):
-    list_display = ("name", "last_update_time")
-    search_fields = ("name", "provider_url")
+    list_display = ("identifier", "datetime_last_synced")
+    search_fields = ("identifier", "provider_url")

@@ -36,7 +36,7 @@ def test_update_keys(
         with pytest.raises(KeyUpdateException) as exc:
             update_keys(key_provider)
         assert (
-            f"Provider: {key_provider.name} Key Identifier: {stored_key.key_identifier} Error: key value FETCHED_TEST_KEY does not match the old one {stored_key.key}"
+            f"Provider identifier: {key_provider.identifier} Key Identifier: {stored_key.key_identifier} Error: key value FETCHED_TEST_KEY does not match the old one {stored_key.key}"
             in str(exc.value)
         )
     elif key_exists:
@@ -57,7 +57,9 @@ def test_solve_key(
         stored_public_key.key_identifier, KeyType.SECP256R1, key_provider
     )
     assert solved_key == stored_public_key
-    key_provider.last_update_time = key_provider.last_update_time - timedelta(hours=25)
+    key_provider.datetime_last_synced = key_provider.datetime_last_synced - timedelta(
+        hours=25
+    )
     key_provider.save()
     solved_key = solve_key(
         stored_public_key.key_identifier, KeyType.SECP256R1, key_provider

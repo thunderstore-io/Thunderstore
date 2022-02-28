@@ -22,7 +22,7 @@ def update_keys(provider: KeyProvider):
         if not created:
             if stored_key.key != k["key"]:
                 raise KeyUpdateException(
-                    f"Provider: {provider.name} Key Identifier: {stored_key.key_identifier} Error: key value {k['key']} does not match the old one {stored_key.key}"
+                    f"Provider identifier: {provider.identifier} Key Identifier: {stored_key.key_identifier} Error: key value {k['key']} does not match the old one {stored_key.key}"
                 )
             if stored_key.is_active and k["is_current"] == "false":
                 stored_key.is_active == False
@@ -36,14 +36,14 @@ def update_keys(provider: KeyProvider):
             stored_key.key_type = KeyType.SECP256R1
             stored_key.save()
 
-    provider.last_update_time = timezone.now()
+    provider.datetime_last_synced = timezone.now()
     provider.save()
 
 
 def solve_key(
     key_identifier: str, key_type: str, provider: KeyProvider
 ) -> StoredPublicKey:
-    if (timezone.now() - provider.last_update_time) > datetime.timedelta(hours=24):
+    if (timezone.now() - provider.datetime_last_synced) > datetime.timedelta(hours=24):
         update_keys(provider)
     return StoredPublicKey.objects.get(
         provider=provider,

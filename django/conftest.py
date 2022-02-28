@@ -314,9 +314,9 @@ def service_account(user, team) -> ServiceAccount:
 @pytest.fixture()
 def key_provider() -> KeyProvider:
     return KeyProvider.objects.create(
-        name="github_secret_scanning",
+        identifier="github_secret_scanning",
         provider_url="http://localhost:8888/",
-        last_update_time=timezone.now(),
+        datetime_last_synced=timezone.now(),
     )
 
 

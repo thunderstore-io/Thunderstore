@@ -22,4 +22,4 @@ class Command(BaseCommand):
             print(f"Provider {kwargs['provider']} does not exist")
             return
         update_keys(key_provider)
-        print(f"Keys for {key_provider.name} has been updated")
+        print(f"Keys for {key_provider.identifier} has been updated")
