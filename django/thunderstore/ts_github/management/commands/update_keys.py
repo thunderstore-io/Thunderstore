@@ -5,21 +5,30 @@ from thunderstore.ts_github.utils import update_keys
 
 
 class Command(BaseCommand):
-    help = "Updates repository specific caches"
+    help = "Updates key provider specific keys e.g. github"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "provider",
+            "providers",
+            nargs="?",
             type=str,
-            help="Name of the key provider you want to update keys for",
+            default=False,
+            help="Identifiers of the key providers you want to update keys for",
         )
 
     def handle(self, *args, **kwargs):
-        key_provider = None
-        try:
-            key_provider = KeyProvider.objects.get(name=kwargs["provider"])
-        except KeyProvider.DoesNotExist:
-            print(f"Provider {kwargs['provider']} does not exist")
-            return
-        update_keys(key_provider)
-        print(f"Keys for {key_provider.identifier} has been updated")
+        if kwargs["providers"]:
+            for provider_str in kwargs["providers"]:
+                provider = None
+                try:
+                    provider = KeyProvider.objects.get(name=provider_str)
+                except KeyProvider.DoesNotExist:
+                    print(f"Provider {provider_str} does not exist")
+                    return
+            update_keys(provider)
+            print(f"Keys for {provider.identifier} has been updated")
+        else:
+            all_providers = KeyProvider.objects.all()
+            for provider in all_providers:
+                update_keys(provider)
+                print(f"Keys for {provider.identifier} has been updated")
