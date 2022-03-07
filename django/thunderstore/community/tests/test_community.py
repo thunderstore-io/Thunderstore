@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
-from thunderstore.community.factories import CommunityFactory
+from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
 from thunderstore.community.models import (
     Community,
     CommunityMemberRole,
@@ -66,3 +66,30 @@ def test_community_ensure_user_can_manage_packages(
     else:
         assert result is True
         assert error is None
+
+
+@pytest.mark.django_db
+def test_site_image_url_when_community_has_no_site():
+    community = CommunityFactory()
+
+    with pytest.raises(IndexError):
+        community.site_image_url
+
+
+@pytest.mark.django_db
+def test_site_image_url_when_community_site_has_no_image():
+    site = CommunitySiteFactory()
+
+    url = site.community.site_image_url
+
+    assert url is None
+
+
+@pytest.mark.django_db
+def test_site_image_url_when_community_site_has_image(dummy_image):
+    site = CommunitySiteFactory(background_image=dummy_image)
+
+    url = site.community.site_image_url
+
+    assert isinstance(url, str)
+    assert len(url) > 0

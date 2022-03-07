@@ -10,6 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
+from django.core.files.base import File
 from PIL import Image
 from rest_framework.test import APIClient
 
@@ -308,6 +309,15 @@ def manifest_v1_package_bytes() -> bytes:
             zip_file.writestr(name, data)
 
     return zip_raw.getvalue()
+
+
+@pytest.fixture(scope="function")
+def dummy_image() -> Image:
+    file_obj = io.BytesIO()
+    image = Image.new("RGB", (1, 1), "#C0FFEE")
+    image.save(file_obj, format="PNG")
+    file_obj.seek(0)
+    return File(file_obj, name="test.png")
 
 
 @pytest.fixture(scope="function")
