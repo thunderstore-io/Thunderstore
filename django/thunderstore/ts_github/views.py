@@ -1,17 +1,17 @@
-import base64
 import json
 from typing import Any
 
-from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
-from cryptography.hazmat.primitives.hashes import SHA256
-from cryptography.hazmat.primitives.serialization import load_der_public_key
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from thunderstore.account.models import ServiceAccount
-from thunderstore.account.tokens import hash_service_account_api_token
 from thunderstore.ts_github.models.keys import KeyProvider, KeyType
-from thunderstore.ts_github.utils import solve_key, unpem
+from thunderstore.ts_github.utils import (
+    build_response_data,
+    get_service_account,
+    handle_true_positive_match,
+    verify_key,
+)
 
 
 class SecretScanningEndpoint(APIView):
@@ -27,30 +27,30 @@ class SecretScanningEndpoint(APIView):
     def post(
         self, request, provider_identifier: str = "github_secret_scanning"
     ) -> Response:
-        provider = KeyProvider.objects.get(identifier=provider_identifier)
-        key_identifier = request.headers["Github-Public-Key-Identifier"]
-        signature = request.headers["Github-Public-Key-Signature"]
-        # Assuming there is only one token per request
-        request_json = json.loads(request.body)[0]
-        token = request_json["token"]
-        # TODO: TBD on what to do with these, github might send us the ec type or something have not seen it yet
-        token_type = request_json["type"]
-        token_url = request_json["url"]
+        try:
+            verify_key(
+                KeyType.SECP256R1,
+                KeyProvider.objects.get(identifier=provider_identifier),
+                request.headers["Github-Public-Key-Identifier"],
+                request.headers["Github-Public-Key-Signature"],
+                request.body,
+            )
+        except:
+            return Response(status=404)
 
-        stored_public_key = solve_key(
-            key_identifier=key_identifier,
-            key_type=KeyType.SECP256R1,
-            provider=provider,
+        response_data = []
+
+        for token in json.loads(request.body):
+            sa = get_service_account(token["token"])
+            if isinstance(sa, ServiceAccount):
+                handle_true_positive_match(sa, token["url"])
+                positive_match = "true_positive"
+            else:
+                positive_match = "false_positive"
+            response_data += build_response_data(
+                token["token"], token["type"], positive_match
+            )
+
+        return Response(
+            json.dumps(response_data), status=200, content_type="application/json"
         )
-        public_key = load_der_public_key(unpem(stored_public_key.key))
-        public_key.verify(base64.b64decode(signature), request.body, ECDSA(SHA256()))
-        hashed_payload_token = hash_service_account_api_token(token)
-        if ServiceAccount.objects.filter(
-            api_token__exact=hashed_payload_token
-        ).exists():
-            print("Yes is valid")
-            # At this point we can do notifications or whatever, when a True positive is found
-        else:
-            print("Is no valid")
-            # At this point we can ignore
-        return Response(status=200)
