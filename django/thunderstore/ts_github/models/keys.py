@@ -2,6 +2,7 @@ import ulid2
 from django.contrib.postgres.fields.citext import CICharField
 from django.db import models
 from django.db.models import Manager
+from django.utils import timezone
 
 from thunderstore.core.mixins import TimestampMixin
 
@@ -30,6 +31,10 @@ class KeyProvider(TimestampMixin, models.Model):
         return (
             f"Provider identifier: {self.identifier} Provider URL: {self.provider_url}"
         )
+
+    def record_update_timestamp(self):
+        self.datetime_last_synced = timezone.now()
+        self.save()
 
 
 class StoredPublicKey(TimestampMixin, models.Model):

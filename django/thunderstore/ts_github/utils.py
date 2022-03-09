@@ -1,13 +1,14 @@
 import base64
 import hashlib
 import json
-from typing import Union
+from typing import List, Union
 
 import requests
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.serialization import load_der_public_key
-from django.utils import timezone
+from pydantic import BaseModel, parse_obj_as
+from sentry_sdk import capture_exception
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.account.tokens import hash_service_account_api_token
@@ -18,31 +19,45 @@ class KeyUpdateException(Exception):
     pass
 
 
-def update_keys(provider: KeyProvider):
-    public_key_endpoint = requests.request("GET", provider.provider_url)
-    for k in json.loads(public_key_endpoint.content)["public_keys"]:
-        stored_key, created = StoredPublicKey.objects.get_or_create(
-            provider=provider, key_identifier=k["key_identifier"]
-        )
-        if not created:
-            if stored_key.key != k["key"]:
-                raise KeyUpdateException(
-                    f"Provider identifier: {provider.identifier} Key Identifier: {stored_key.key_identifier} Error: key value {k['key']} does not match the old one {stored_key.key}"
-                )
-            if stored_key.is_active and k["is_current"] == "false":
-                stored_key.is_active == False
-                stored_key.save()
-            elif not stored_key.is_active and k["is_current"] == "true":
-                stored_key.is_active == True
-                stored_key.save()
-        else:
-            stored_key.key = k["key"]
-            stored_key.is_active = k["is_current"]
-            stored_key.key_type = KeyType.SECP256R1
-            stored_key.save()
+class PrimitiveKey(BaseModel):
+    key_identifier: str
+    key: str
+    is_current: bool
 
-    provider.datetime_last_synced = timezone.now()
-    provider.save()
+
+def process_primitive_key(primitive_key: PrimitiveKey, provider: KeyProvider):
+    stored_key = StoredPublicKey.objects.filter(
+        provider=provider,
+        key_identifier=primitive_key.key_identifier,
+    ).first()
+
+    if stored_key:
+        if stored_key.key != primitive_key.key:
+            capture_exception(
+                KeyUpdateException(
+                    f"Provider identifier: {provider.identifier} Key Identifier: {stored_key.key_identifier} Error: key value {primitive_key.key} does not match the old one associated with the same key_identifier {stored_key.key} "
+                )
+            )
+    else:
+        StoredPublicKey.objects.create(
+            provider=provider,
+            key_identifier=primitive_key.key_identifier,
+            key_type=KeyType.SECP256R1,
+            key=primitive_key.key,
+            is_active=primitive_key.is_current,
+        )
+
+
+def update_keys(provider: KeyProvider):
+    primitive_keys = parse_obj_as(
+        List[PrimitiveKey],
+        requests.request("GET", provider.provider_url).json().get("public_keys"),
+    )
+
+    for primitive_key in primitive_keys:
+        process_primitive_key(primitive_key, provider)
+
+    provider.record_update_timestamp()
 
 
 def unpem(pem: Union[str, bytes]) -> bytes:
@@ -80,7 +95,7 @@ def get_service_account(token):
 
 
 def handle_true_positive_match(service_account: ServiceAccount, commit_url: str):
-    # Do something when true positive is found
+    # TODO: Do something when true positive is found
     pass
 
 
