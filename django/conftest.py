@@ -43,7 +43,12 @@ from thunderstore.repository.models import (
     TeamMemberRole,
     Webhook,
 )
-from thunderstore.ts_github.models.keys import KeyProvider, KeyType, StoredPublicKey
+from thunderstore.ts_github.models.keys import (
+    KeyProvider,
+    KeyType,
+    PrimitiveKey,
+    StoredPublicKey,
+)
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
 
@@ -76,38 +81,6 @@ def http_server():
     host, port = "localhost", 8888
     url = f"http://{host}:{port}/"
     server = HTTPServer((host, port), PostHTTPRequestHandler)
-    thread = threading.Thread(None, server.run)
-    thread.start()
-    yield url
-    server.shutdown()
-    thread.join()
-
-
-class KeyProviderGetHTTPRequestHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        keys = json.dumps(
-            {
-                "public_keys": [
-                    {
-                        "key_identifier": "FETCHED_KEY_IDENTIFIER",
-                        "key": "FETCHED_TEST_KEY",
-                        "is_current": True,
-                    }
-                ]
-            }
-        ).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(keys)
-        return
-
-
-@pytest.fixture
-def http_server_for_provider_keys():
-    host, port = "localhost", 8888
-    url = f"http://{host}:{port}/"
-    server = HTTPServer((host, port), KeyProviderGetHTTPRequestHandler)
     thread = threading.Thread(None, server.run)
     thread.start()
     yield url
@@ -312,10 +285,35 @@ def service_account(user, team) -> ServiceAccount:
 
 
 @pytest.fixture
-def key_provider() -> KeyProvider:
+def primitive_key() -> PrimitiveKey:
+    return PrimitiveKey(
+        key_identifier="FETCHED_KEY_IDENTIFIER",
+        key="FETCHED_TEST_KEY",
+        is_current=True,
+    )
+
+
+@pytest.fixture
+def key_provider_api_request_mock(requests_mock) -> Any:
+    keys = json.dumps(
+        {
+            "public_keys": [
+                {
+                    "key_identifier": "FETCHED_KEY_IDENTIFIER",
+                    "key": "FETCHED_TEST_KEY",
+                    "is_current": True,
+                }
+            ]
+        }
+    ).encode()
+    return requests_mock.get("http://localhost:8888/providers_api", content=keys)
+
+
+@pytest.fixture
+def key_provider(key_provider_api_request_mock) -> KeyProvider:
     return KeyProvider.objects.create(
         identifier="github_secret_scanning",
-        provider_url="http://localhost:8888/",
+        provider_url="http://localhost:8888/providers_api",
         datetime_last_synced=timezone.now(),
     )
 

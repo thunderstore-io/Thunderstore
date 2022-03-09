@@ -1,28 +1,26 @@
 import base64
 import hashlib
-import json
 from typing import List, Union
 
 import requests
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.serialization import load_der_public_key
-from pydantic import BaseModel, parse_obj_as
+from pydantic import parse_obj_as
 from sentry_sdk import capture_exception
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.account.tokens import hash_service_account_api_token
-from thunderstore.ts_github.models.keys import KeyProvider, KeyType, StoredPublicKey
+from thunderstore.ts_github.models.keys import (
+    KeyProvider,
+    KeyType,
+    PrimitiveKey,
+    StoredPublicKey,
+)
 
 
 class KeyUpdateException(Exception):
     pass
-
-
-class PrimitiveKey(BaseModel):
-    key_identifier: str
-    key: str
-    is_current: bool
 
 
 def process_primitive_key(primitive_key: PrimitiveKey, provider: KeyProvider):
@@ -35,7 +33,7 @@ def process_primitive_key(primitive_key: PrimitiveKey, provider: KeyProvider):
         if stored_key.key != primitive_key.key:
             capture_exception(
                 KeyUpdateException(
-                    f"Provider identifier: {provider.identifier} Key Identifier: {stored_key.key_identifier} Error: key value {primitive_key.key} does not match the old one associated with the same key_identifier {stored_key.key} "
+                    f"Provider identifier: {provider.identifier} Key Identifier: {stored_key.key_identifier} Error: new key value {primitive_key.key} does not match the old one associated with the same key_identifier {stored_key.key} "
                 )
             )
     else:
@@ -101,7 +99,7 @@ def handle_true_positive_match(service_account: ServiceAccount, commit_url: str)
 
 def build_response_data(token: str, type: str, positive_match: str):
     return {
-        "token_hash": hashlib.sha256(token),
+        "token_hash": hashlib.sha256(token.encode()).digest(),
         "token_type": type,
         "label": positive_match,
     }

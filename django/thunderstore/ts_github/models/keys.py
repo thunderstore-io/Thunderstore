@@ -3,8 +3,15 @@ from django.contrib.postgres.fields.citext import CICharField
 from django.db import models
 from django.db.models import Manager
 from django.utils import timezone
+from pydantic import BaseModel
 
 from thunderstore.core.mixins import TimestampMixin
+
+
+class PrimitiveKey(BaseModel):
+    key_identifier: str
+    key: str
+    is_current: bool
 
 
 class KeyType(models.TextChoices):
