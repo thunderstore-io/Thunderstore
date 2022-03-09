@@ -71,7 +71,7 @@ class PostHTTPRequestHandler(BaseHTTPRequestHandler):
         return
 
 
-@pytest.fixture()
+@pytest.fixture
 def http_server():
     host, port = "localhost", 8888
     url = f"http://{host}:{port}/"
@@ -103,7 +103,7 @@ class KeyProviderGetHTTPRequestHandler(BaseHTTPRequestHandler):
         return
 
 
-@pytest.fixture()
+@pytest.fixture
 def http_server_for_provider_keys():
     host, port = "localhost", 8888
     url = f"http://{host}:{port}/"
@@ -129,7 +129,7 @@ def prime_testing_database(django_db_setup, django_db_blocker):
         [x.delete() for x in Site.objects.all()]
 
 
-@pytest.fixture()
+@pytest.fixture
 def user(django_user_model):
     return django_user_model.objects.create_user(
         username="Test",
@@ -138,12 +138,12 @@ def user(django_user_model):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def team():
     return Team.create(name="Test_Team")
 
 
-@pytest.fixture()
+@pytest.fixture
 def team_member(team):
     return TeamMember.objects.create(
         team=team,
@@ -152,7 +152,7 @@ def team_member(team):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def team_owner(team):
     return TeamMember.objects.create(
         team=team,
@@ -161,7 +161,7 @@ def team_owner(team):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def package(team):
     return Package.objects.create(
         owner=team,
@@ -169,7 +169,7 @@ def package(team):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_version(package):
     return PackageVersionFactory.create(
         package=package,
@@ -228,7 +228,7 @@ def active_version_with_listing(community, active_package):
     return active_package.versions.first()
 
 
-@pytest.fixture()
+@pytest.fixture
 def release_webhook(community_site):
     return Webhook.objects.create(
         name="test",
@@ -239,12 +239,12 @@ def release_webhook(community_site):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def community():
     return Community.objects.create(name="Test", identifier="test")
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_category(community):
     return PackageCategory.objects.create(
         name="Test",
@@ -253,7 +253,7 @@ def package_category(community):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_listing_section(community):
     return PackageListingSection.objects.create(
         community=community,
@@ -263,17 +263,17 @@ def package_listing_section(community):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def site():
     return Site.objects.create(domain="testsite.test", name="Testsite")
 
 
-@pytest.fixture()
+@pytest.fixture
 def community_site(community, site):
     return CommunitySite.objects.create(site=site, community=community)
 
 
-@pytest.fixture()
+@pytest.fixture
 def celery_app():
     from celery import Celery, _state
 
@@ -296,7 +296,7 @@ def _use_static_files_storage(settings):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def service_account(user, team) -> ServiceAccount:
     TeamMember.objects.create(
         user=user,
@@ -311,7 +311,7 @@ def service_account(user, team) -> ServiceAccount:
     return form.save()
 
 
-@pytest.fixture()
+@pytest.fixture
 def key_provider() -> KeyProvider:
     return KeyProvider.objects.create(
         identifier="github_secret_scanning",
@@ -320,12 +320,12 @@ def key_provider() -> KeyProvider:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def ec_private_key() -> ec.EllipticCurvePrivateKey:
     return ec.generate_private_key(ec.SECP256R1())
 
 
-@pytest.fixture()
+@pytest.fixture
 def stored_public_key(
     key_provider: KeyProvider, ec_private_key: ec.EllipticCurvePrivateKey
 ) -> StoredPublicKey:
@@ -343,7 +343,7 @@ def stored_public_key(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def api_client(community_site) -> APIClient:
     return APIClient(HTTP_HOST=community_site.site.domain)
 
