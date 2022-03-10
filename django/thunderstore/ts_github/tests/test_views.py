@@ -46,8 +46,8 @@ def test_secret_scanning_endpoint_post_function(
     }
     endpoint = SecretScanningEndpoint()
     # Just test with non-existent provider
-    with pytest.raises(KeyProvider.DoesNotExist):
-        endpoint.post(mock_request, provider_name="wrong_provider")
+    response = endpoint.post(mock_request, provider_identifier="wrong_provider")
+    assert response.status_code == 404
     response = endpoint.post(mock_request)
     assert response.status_code == 200
 

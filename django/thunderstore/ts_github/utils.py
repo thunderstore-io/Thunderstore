@@ -99,7 +99,7 @@ def handle_true_positive_match(service_account: ServiceAccount, commit_url: str)
 
 def build_response_data(token: str, type: str, positive_match: str):
     return {
-        "token_hash": hashlib.sha256(token.encode()).digest(),
+        "token_hash": hashlib.sha256(token.encode()).hexdigest(),
         "token_type": type,
         "label": positive_match,
     }

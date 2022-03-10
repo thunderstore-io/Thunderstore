@@ -13,7 +13,4 @@ def test_key_provider_str(key_provider: KeyProvider):
 
 @pytest.mark.django_db
 def test_stored_public_key_str(stored_public_key: StoredPublicKey):
-    assert (
-        str(stored_public_key)
-        == f"Provider identifier: {stored_public_key.key_identifier}"
-    )
+    assert str(stored_public_key) == f"Identifier: {stored_public_key.key_identifier}"

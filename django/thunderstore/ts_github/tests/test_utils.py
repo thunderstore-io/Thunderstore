@@ -2,6 +2,9 @@ import base64
 import hashlib
 
 import pytest
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
+from cryptography.hazmat.primitives.hashes import SHA256
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.ts_github.models.keys import (
@@ -16,6 +19,7 @@ from thunderstore.ts_github.utils import (
     process_primitive_key,
     unpem,
     update_keys,
+    verify_key,
 )
 
 
@@ -54,9 +58,49 @@ def test_unpem():
 
 
 @pytest.mark.django_db
-def test_verify_key():
-    # TODO: todo
-    pass
+def test_verify_key(team, key_provider, stored_public_key, ec_private_key):
+    service_account, token = ServiceAccount.create(team, "TEST")
+    data = (
+        '[{"token":"%s","type":"TEST_TOKEN_TYPE","url":"example.com"}]' % token
+    ).encode()
+
+    # Test success
+    signature = ec_private_key.sign(data, ECDSA(SHA256()))
+    verify_key(
+        KeyType.SECP256R1,
+        key_provider,
+        stored_public_key.key_identifier,
+        base64.b64encode(signature),
+        data,
+    )
+
+    # Test bad signature fail
+    bad_signature = ec_private_key.sign(data + "BAD_SIGN".encode(), ECDSA(SHA256()))
+    with pytest.raises(InvalidSignature):
+        verify_key(
+            KeyType.SECP256R1,
+            key_provider,
+            stored_public_key.key_identifier,
+            base64.b64encode(bad_signature),
+            data,
+        )
+
+    # Test bad public key fail
+    stored_public_key.key = "BAD_PUBLIC_KEY"
+    stored_public_key.save()
+
+    with pytest.raises(ValueError) as e:
+        verify_key(
+            KeyType.SECP256R1,
+            key_provider,
+            stored_public_key.key_identifier,
+            base64.b64encode(signature),
+            data,
+        )
+    assert (
+        str(e.value)
+        == "Could not deserialize key data. The data may be in an incorrect format or it may be encrypted with an unsupported algorithm."
+    )
 
 
 @pytest.mark.django_db
@@ -74,6 +118,6 @@ def test_build_response_data(team):
         "test_token_type",
         "true_positive",
     )
-    assert response_data["token_hash"] == hashlib.sha256(token.encode()).digest()
+    assert response_data["token_hash"] == hashlib.sha256(token.encode()).hexdigest()
     assert response_data["token_type"] == "test_token_type"
     assert response_data["label"] == "true_positive"
