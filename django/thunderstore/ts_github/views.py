@@ -50,6 +50,4 @@ class SecretScanningEndpoint(APIView):
             response_data.append(
                 build_response_data(token["token"], token["type"], positive_match)
             )
-        return Response(
-            json.dumps(response_data), status=200, content_type="application/json"
-        )
+        return Response(response_data, status=200, content_type="application/json")
