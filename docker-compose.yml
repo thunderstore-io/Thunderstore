@@ -60,8 +60,8 @@ services:
       driver: none
 
   redis:
-    image: redis:6.2.1-alpine@sha256:daa795ebec4c206cc7f76e19c4bb26a98dfca671d7b5bedcb38862de078bdaa2
-    command: --maxmemory 200mb --maxmemory-policy allkeys-lru
+    image: redis:7.0-rc2-alpine3.15
+    command: --maxmemory 200mb --maxmemory-policy allkeys-lru --maxmemory-clients 10%
 
   adminer:
     image: adminer:4.7.5
