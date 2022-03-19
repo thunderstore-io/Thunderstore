@@ -238,7 +238,7 @@ class Package(models.Model):
     def get_full_url(self, community_identifier: str):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
-            "hostname": settings.SERVER_NAME,
+            "hostname": settings.PRIMARY_HOST,
             "path": self.get_absolute_url(community_identifier),
         }
 

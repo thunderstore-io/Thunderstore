@@ -17,7 +17,7 @@ def update_api_v1_indexes():
     for community_site in CommunitySite.objects.all():
         request = RequestFactory().get(
             f"/c/{community_site.community.identifier}/api/v1/package/",
-            SERVER_NAME=settings.SERVER_NAME,
+            PRIMARY_HOST=settings.PRIMARY_HOST,
         )
         view = PackageViewSet.as_view({"get": "list"})
         PackageViewSet.update_cache(
@@ -33,7 +33,7 @@ def update_api_v1_details():
             view = PackageViewSet.as_view({"get": "retrieve"})
             request = RequestFactory().get(
                 f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/",
-                SERVER_NAME=settings.SERVER_NAME,
+                PRIMARY_HOST=settings.PRIMARY_HOST,
             )
             PackageViewSet.update_cache(
                 view,
