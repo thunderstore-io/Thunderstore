@@ -18,6 +18,10 @@ class CommunityManager(models.Manager):
         return self.exclude(is_listed=False)
 
 
+def get_community_filepath(instance, filename):
+    return f"community/{instance.identifier}/{filename}"
+
+
 class Community(TimestampMixin, models.Model):
     objects: "CommunityManager[Community]" = CommunityManager()
     members: "Manager[CommunityMembership]"
@@ -28,6 +32,15 @@ class Community(TimestampMixin, models.Model):
     wiki_url = models.CharField(max_length=512, blank=True, null=True)
     is_listed = models.BooleanField(default=True)
     require_package_listing_approval = models.BooleanField(default=False)
+    thumbnail = models.ImageField(
+        upload_to=get_community_filepath,
+        width_field="thumbnail_width",
+        height_field="thumbnail_height",
+        blank=True,
+        null=True,
+    )
+    thumbnail_width = models.PositiveIntegerField(default=0)
+    thumbnail_height = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         if self.pk:
