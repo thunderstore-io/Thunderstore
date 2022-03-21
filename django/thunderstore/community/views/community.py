@@ -1,14 +1,9 @@
-from typing import List, Optional, Set, Tuple
-
-from django.db.models import Q
-from django.utils.functional import cached_property
+from django.db.models import Q, Sum
 from django.views.generic.list import ListView
 
 from thunderstore.cache.cache import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
-from thunderstore.community.models import Community
 from thunderstore.community.models.community_site import CommunitySite
-from thunderstore.repository.mixins import CommunityMixin
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -38,8 +33,17 @@ class CommunitiesView(ListView):
         return self.request.GET.get("q", "")
 
     def order_queryset(self, queryset):
-        return queryset.order_by(
-            "community__name",
+        return (
+            queryset.select_related()
+            .annotate(
+                total_downloads=Sum(
+                    "community__package_listings__package__versions__downloads"
+                )
+            )
+            .order_by(
+                "-total_downloads",
+                "community__name",
+            )
         )
 
     def perform_search(self, queryset, search_query):
