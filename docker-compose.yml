@@ -61,7 +61,7 @@ services:
 
   redis:
     image: redis:7.0-rc2-alpine3.15
-    command: --maxmemory 200mb --maxmemory-policy allkeys-lru --maxmemory-clients 10%
+    command: --maxmemory 2000mb --maxmemory-policy allkeys-lru --maxmemory-clients 10%
 
   adminer:
     image: adminer:4.7.5

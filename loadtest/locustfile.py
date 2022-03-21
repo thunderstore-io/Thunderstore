@@ -17,3 +17,8 @@ class AnonymousUser(HttpUser):
         url += f"&q={choice(QUERIES)}" if random() < 0.5 else ""
         url += f"&{choice(BOOLS)}=on" if random() < 0.5 else ""
         self.client.get(url)
+
+    @task
+    def api(self):
+        url = f"/api/v1/package/"
+        self.client.get(url)
