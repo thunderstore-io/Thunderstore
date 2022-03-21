@@ -17,7 +17,7 @@ md = MarkdownIt("gfm-like")
 def render_markdown(value: str):
     return mark_safe(
         bleach.clean(
-            text=md.render(value),
+            text=md.render(value.strip()),
             tags=ALLOWED_TAGS,
             protocols=ALLOWED_PROTOCOLS,
             attributes=ALLOWED_ATTRIBUTES,
