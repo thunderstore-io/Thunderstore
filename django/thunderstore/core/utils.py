@@ -68,6 +68,9 @@ def make_full_url(request: Optional[HttpRequest], path: Optional[str] = None):
     url = path
     if request:
         url = request.build_absolute_uri(url)
+        query_string = request.META.get("QUERY_STRING", "")
+        if query_string:
+            url = "%s?%s" % (url, query_string)
     if settings.PROTOCOL == "https://" and url.startswith("http://"):
         url = f"https://{url[7:]}"
     return url

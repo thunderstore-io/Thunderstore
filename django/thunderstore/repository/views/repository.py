@@ -23,6 +23,8 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
+from thunderstore.core.utils import make_full_url
+from thunderstore.repository.api.experimental.utils import solve_community_identifier
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
@@ -529,9 +531,7 @@ class PackageCreateOldView(CommunityMixin, CreateView):
         context["selectable_communities"] = Community.objects.filter(
             Q(is_listed=True) | Q(pk=self.request.community.pk),
         )
-        context["current_community"] = context["selectable_communities"].filter(
-            identifier=self.kwargs["community_identifier"]
-        )[0]
+        context["current_community"] = self.request.community
         return context
 
     def get_form_kwargs(self, *args, **kwargs):
@@ -571,30 +571,18 @@ class PackageDownloadView(CommunityMixin, View):
         return redirect(self.request.build_absolute_uri(version.file.url))
 
 
-class NewPackageUrlsRedirectView(RedirectView):
+class LegacyUrlRedirectView(RedirectView):
     def get(self, request, *args, **kwargs):
-        splitted_host = self.request.META["HTTP_HOST"].split(".")
-        if len(splitted_host) > 2:
-            community_identifier = splitted_host[0]
-        else:
-            community_identifier = "riskofrain2"
-        request.META["HTTP_HOST"] = f"{splitted_host[-2]}.{splitted_host[-1]}"
+        if len(request.get_host().split(".")) > 3:
+            return HttpResponse(content=b"Site not found", status=404)
 
         redirect_data = solve_redirect(
-            request.path, community_identifier=community_identifier
+            request.path, community_identifier=solve_community_identifier(request)
         )
 
         if redirect_data is None:
             return HttpResponse(content=b"Site not found", status=404)
 
-        url = request.build_absolute_uri(
-            reverse(redirect_data[0], kwargs=redirect_data[1])
-        )
-        if settings.PROTOCOL == "https://" and url.startswith("http://"):
-            url = f"https://{url[7:]}"
-
-        args = self.request.META.get("QUERY_STRING", "")
-        if args:
-            url = "%s?%s" % (url, args)
+        url = make_full_url(request, reverse(redirect_data[0], kwargs=redirect_data[1]))
 
         return HttpResponseRedirect(url)
