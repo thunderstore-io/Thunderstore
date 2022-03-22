@@ -1,12 +1,10 @@
-import re
 from typing import List, Optional, Set, Tuple
 
-from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.functional import cached_property
 from django.views.generic import TemplateView, View
 from django.views.generic.base import RedirectView
@@ -23,49 +21,13 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
-from thunderstore.core.utils import make_full_url
-from thunderstore.repository.api.experimental.utils import solve_community_identifier
+from thunderstore.redirects.utils import LegacyUrlHandler, RedirectNotFound
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
-
-OLD_URL_REGEXS = [
-    ("bot.deprecate-mod", "/api/v1/bot/deprecate-mod/$", 0),
-    ("current-user.info", "/api/v1/current-user/info/$", 0),
-    ("package-rate", "/api/v1/package/([^/]*?)/rate/$", 69),
-    ("package-detail", "/api/v1/package/([^/]*?)/$", 69),
-    ("package-list", "/api/v1/package/$", 0),
-    ("packages.download", "/package/download/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
-    ("packages.create.docs", "/package/create/docs/$", 0),
-    ("packages.create.old", "/package/create/old/$", 0),
-    ("packages.create", "/package/create/$", 0),
-    ("packages.list_by_dependency", "/package/([^/]*?)/([^/]*?)/dependants/$", 2),
-    ("packages.version.detail", "/package/([^/]*?)/([^/]*?)/([^/]*?)/$", 3),
-    ("packages.detail", "/package/([^/]*?)/([^/]*?)/$", 2),
-    ("packages.list_by_owner", "/package/([^/]*?)/$", 1),
-    ("packages.list", "/package/$", 0),
-]
-
-
-def solve_redirect(path, community_identifier):
-    for reverse_name, regex, kwarg_amount in OLD_URL_REGEXS:
-        result = re.search(regex, path)
-        if result:
-            kwargs = {"community_identifier": community_identifier}
-            if kwarg_amount == 69:
-                kwargs.update({"uuid4": result.group(1)})
-            else:
-                if kwarg_amount > 0:
-                    kwargs.update({"owner": result.group(1)})
-                if kwarg_amount > 1:
-                    kwargs.update({"name": result.group(2)})
-                if kwarg_amount > 2:
-                    kwargs.update({"version": result.group(3)})
-            return reverse_name, kwargs
-    return None
 
 
 class PackageListSearchView(CommunityMixin, ListView):
@@ -75,7 +37,7 @@ class PackageListSearchView(CommunityMixin, ListView):
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(community__identifier=self.kwargs["community_identifier"])
+            ~Q(community__identifier=self.get_community_identifier())
         )
 
     def get_page_title(self):
@@ -86,7 +48,7 @@ class PackageListSearchView(CommunityMixin, ListView):
 
     def get_categories(self):
         return PackageCategory.objects.exclude(
-            ~Q(community__identifier=self.kwargs["community_identifier"])
+            ~Q(community__identifier=self.get_community_identifier())
         )
 
     def get_full_cache_vary(self):
@@ -297,9 +259,7 @@ class PackageListSearchView(CommunityMixin, ListView):
             {
                 "url": reverse_lazy(
                     "packages.list",
-                    kwargs={
-                        "community_identifier": self.kwargs["community_identifier"]
-                    },
+                    kwargs={"community_identifier": self.get_community_identifier()},
                 ),
                 "name": "Packages",
             },
@@ -374,7 +334,7 @@ class PackageListByOwnerView(PackageListSearchView):
         return self.model.objects.active().exclude(
             ~Q(
                 Q(package__owner=self.owner)
-                & Q(community__identifier=self.kwargs["community_identifier"])
+                & Q(community__identifier=self.get_community_identifier())
             ),
         )
 
@@ -457,7 +417,7 @@ class PackageDetailView(CommunityMixin, DetailView):
         listing = get_package_listing_or_404(
             namespace=self.kwargs["owner"],
             name=self.kwargs["name"],
-            community_identifier=self.kwargs["community_identifier"],
+            community_identifier=self.get_community_identifier(),
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -489,7 +449,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community__identifier=self.kwargs["community_identifier"],
+            community__identifier=self.get_community_identifier(),
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -576,13 +536,9 @@ class LegacyUrlRedirectView(RedirectView):
         if len(request.get_host().split(".")) > 3:
             return HttpResponse(content=b"Site not found", status=404)
 
-        redirect_data = solve_redirect(
-            request.path, community_identifier=solve_community_identifier(request)
-        )
-
-        if redirect_data is None:
+        try:
+            url = LegacyUrlHandler(request).get_redirected_full_url()
+        except RedirectNotFound:
             return HttpResponse(content=b"Site not found", status=404)
-
-        url = make_full_url(request, reverse(redirect_data[0], kwargs=redirect_data[1]))
 
         return HttpResponseRedirect(url)
