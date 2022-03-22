@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^5.15.2",
+        "@fortawesome/fontawesome-free": "^6.1.1",
         "@sentry/react": "^6.11.0",
         "@sentry/types": "^6.11.0",
         "bootstrap": "^4.3.1",
