@@ -28,7 +28,7 @@
     <li class="breadcrumb-item"><a href="{% url "packages.list" community_identifier %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% url "packages.list_by_owner" community_identifier object.owner.name %}">{{ object.owner.name }}</a></li>
     {% if object.package.is_effectively_active %}
-    <li class="breadcrumb-item"><a href="{% get_absolute_url object.package %}">{{ object.package.display_name }}</a></li>
+    <li class="breadcrumb-item"><a href="{% get_community_specific_absolute_url object.package %}">{{ object.package.display_name }}</a></li>
     {% else %}
     <li class="breadcrumb-item text-dark">{{ object.package.display_name }}</li>
     {% endif %}
@@ -56,7 +56,7 @@
     {% endif %}
     <div class="alert alert-warning">
         You are viewing a potentially older version of this package.
-        <a href="{% get_absolute_url object.package %}">View all versions.</a>
+        <a href="{% get_community_specific_absolute_url object.package %}">View all versions.</a>
     </div>
 {% endif %}
 

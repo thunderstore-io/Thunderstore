@@ -1,13 +1,20 @@
 import json
 
 import pytest
+from rest_framework.test import APIClient
 
+from thunderstore.community.models.community_site import CommunitySite
+from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.api.v1.tasks import update_api_v1_caches
 
 
 @pytest.mark.django_db
-def test_api_v1(api_client, active_package_listing, community_site):
+def test_api_v1(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    community_site: CommunitySite,
+):
     update_api_v1_caches()
     response = api_client.get(
         f"/c/{community_site.community.identifier}/api/v1/package/"
@@ -28,7 +35,11 @@ def test_api_v1(api_client, active_package_listing, community_site):
 
 
 @pytest.mark.django_db
-def test_api_v1_rate_package(api_client, active_package_listing, community_site):
+def test_api_v1_rate_package(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    community_site: CommunitySite,
+):
     uuid = active_package_listing.package.uuid4
     user = UserFactory.create()
     api_client.force_authenticate(user)
@@ -55,9 +66,9 @@ def test_api_v1_rate_package(api_client, active_package_listing, community_site)
 
 @pytest.mark.django_db
 def test_api_v1_rate_package_permission_denied(
-    api_client,
-    active_package_listing,
-    community_site,
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    community_site: CommunitySite,
 ):
     uuid = active_package_listing.package.uuid4
     response = api_client.post(

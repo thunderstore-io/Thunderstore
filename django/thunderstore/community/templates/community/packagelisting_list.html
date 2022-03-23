@@ -156,7 +156,7 @@
                     </div>
                 </div>
                 {% endif %}
-                <a href="{% get_absolute_url object.package %}">
+                <a href="{% get_community_specific_absolute_url object.package %}">
                     <img class="w-100" src="{% thumbnail object.package.icon 256x256 crop %}" alt="{{ object.package }} icon">
                 </a>
             </div>
@@ -170,7 +170,7 @@
                     </div>
                 </div>
                 <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ object.package.display_name }}">{{ object.package.display_name }}</h5>
-                <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></div>
+                <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.get_owner_url }}">{{ object.package.owner.name }}</a></div>
             </div>
             <div class="bg-light px-2 flex-grow-1">
                 {{ object.package.description }}

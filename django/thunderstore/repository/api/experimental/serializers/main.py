@@ -44,7 +44,7 @@ class PackageVersionSerializerExperimental(serializers.ModelSerializer):
     def get_download_url(self, instance):
         return make_full_url(
             self.context["request"],
-            instance.download_url(solve_community_identifier(self.context["request"])),
+            instance.get_download_url(self.context["community_identifier"]),
         )
 
     def get_full_name(self, instance):
@@ -97,11 +97,10 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
         return instance.owner.name
 
     def get_package_url(self, instance):
-        print(self.context["request"].__dict__)
         return make_full_url(
             self.context["request"],
-            instance.get_absolute_url(
-                solve_community_identifier(self.context["request"])
+            instance.get_community_specific_absolute_url(
+                self.context["community_identifier"]
             ),
         )
 

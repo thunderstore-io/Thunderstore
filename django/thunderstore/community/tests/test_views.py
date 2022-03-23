@@ -37,7 +37,6 @@ def test_communities_view_get_base_queryset(community_site):
     CommunitySite.objects.create(
         site=Site.objects.create(domain="notlisted.testsite.test", name="NotListed"),
         community=Community.objects.create(name="Not Listed", identifier="notlisted"),
-        is_pre_subdomain_change_site=True,
         is_listed=False,
     )
     assert Counter(CommunitiesView().get_base_queryset()) == Counter(
@@ -77,7 +76,6 @@ def test_communities_view_order_queryset(community_site):
     CommunitySite.objects.create(
         site=Site.objects.create(domain="xcom.testsite.test", name="X Com"),
         community=Community.objects.create(name="X Com", identifier="xcom"),
-        is_pre_subdomain_change_site=True,
     )
     assert Counter(
         CommunitiesView().order_queryset(queryset=view.get_base_queryset())
@@ -91,7 +89,6 @@ def test_communities_view_perform_search(community_site):
     CommunitySite.objects.create(
         site=Site.objects.create(domain="xcom.testsite.test", name="X Com"),
         community=Community.objects.create(name="X Com", identifier="xcom"),
-        is_pre_subdomain_change_site=True,
     )
     view = CommunitiesView()
     view.request = Request(url="http://testsite.test/communities/")
@@ -110,7 +107,6 @@ def test_communities_view_get_queryset(community_site):
     CommunitySite.objects.create(
         site=Site.objects.create(domain="xcom.testsite.test", name="X Com"),
         community=Community.objects.create(name="X Com", identifier="xcom"),
-        is_pre_subdomain_change_site=True,
     )
     view = CommunitiesView()
     view.request = Request(url="http://testsite.test/communities/")
@@ -130,7 +126,6 @@ def test_communities_view_get_paginator(community_site):
     CommunitySite.objects.create(
         site=Site.objects.create(domain="xcom.testsite.test", name="X Com"),
         community=Community.objects.create(name="X Com", identifier="xcom"),
-        is_pre_subdomain_change_site=True,
     )
     view = CommunitiesView()
     view.request = Request(url="http://testsite.test/communities/")
@@ -148,7 +143,6 @@ def test_communities_view_get_context_data(community_site):
     CommunitySite.objects.create(
         site=Site.objects.create(domain="xcom.testsite.test", name="X Com"),
         community=Community.objects.create(name="X Com", identifier="xcom"),
-        is_pre_subdomain_change_site=True,
     )
     view = CommunitiesView()
     view.kwargs = {}

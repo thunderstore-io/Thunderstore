@@ -174,7 +174,9 @@ def active_package(team) -> Package:
 
 
 @pytest.fixture(scope="function")
-def active_package_listing(community, active_package):
+def active_package_listing(
+    community: Community, active_package: Package
+) -> PackageListing:
     return PackageListing.objects.create(
         community=community,
         package=active_package,

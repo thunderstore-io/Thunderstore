@@ -19,7 +19,7 @@ class CommunityManager(models.Manager):
 
 
 def get_community_filepath(instance, filename):
-    return f"community/{instance.identifier}/{filename}"
+    return f"community/{instance.pk}/{filename}"
 
 
 class Community(TimestampMixin, models.Model):

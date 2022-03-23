@@ -12,16 +12,9 @@ class PackageVersionSerializer(ModelSerializer):
     dependencies = SerializerMethodField()
 
     def get_download_url(self, instance):
+        url = instance.get_download_url(self.context["community_identifier"])
         if "request" in self.context:
-            url = self.context["request"].build_absolute_uri(
-                instance.download_url(
-                    self.context["view"].kwargs["community_identifier"]
-                )
-            )
-        else:
-            url = instance.download_url(
-                self.context["view"].kwargs["community_identifier"]
-            )
+            url = self.context["request"].build_absolute_uri(url)
         if settings.PROTOCOL == "https://" and url.startswith("http://"):
             url = f"https://{url[7:]}"
         return url

@@ -1,4 +1,6 @@
 import json
+from typing import Optional
+from urllib.request import Request
 
 from django.http import HttpResponse
 from rest_framework import viewsets
@@ -36,7 +38,7 @@ class PackageViewSet(
 
     def get_queryset(self):
         return get_package_listing_queryset(
-            community_identifier=self.kwargs["community_identifier"]
+            community_identifier=self.get_community_identifier
         )
 
     @action(
@@ -45,7 +47,12 @@ class PackageViewSet(
         authentication_classes=[SessionAuthentication, BasicAuthentication],
         permission_classes=[IsAuthenticated],
     )
-    def rate(self, request, uuid4=None, community_identifier=None):
+    def rate(
+        self,
+        request: Request,
+        uuid4: Optional[str] = None,
+        community_identifier: Optional[str] = None,
+    ) -> Response:
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
         user = request.user
         ensure_can_rate_package(user, package)

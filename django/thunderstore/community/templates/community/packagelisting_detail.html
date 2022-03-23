@@ -77,7 +77,7 @@
                 <h1 class="mt-0">{{ object.package.display_name }}</h1>
                 <p>{{ object.package.description }}</p>
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></h5>
+                    <h5 class="mb-1">By <a href="{{ object.get_owner_url }}">{{ object.package.owner.name }}</a></h5>
                     {% if object.package.website_url %}
                     <a class="text-nowrap" href="{{ object.package.website_url }}">
                       <span class="fa fa-globe-americas fa-fw"></span>

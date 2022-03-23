@@ -7,5 +7,7 @@ from thunderstore.repository.urls import urlpatterns as package_urls
 community_urls = [
     path("", RedirectView.as_view(pattern_name="communities")),
     path("<str:community_identifier>/", include(package_urls), name="community"),
-    path("<str:community_identifier>/api/v1/", include(v1_urls), name="api.v1"),
+    path(
+        "<str:community_identifier>/api/v1/", include((v1_urls, "v1"), namespace="v1")
+    ),
 ]

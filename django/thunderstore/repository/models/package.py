@@ -202,7 +202,7 @@ class Package(models.Model):
     def dependants_list(self):
         return get_package_dependants_list(self.pk)
 
-    def owner_url(self, community_identifier):
+    def get_owner_url(self, community_identifier: str) -> str:
         return reverse(
             "packages.list_by_owner",
             kwargs={
@@ -225,7 +225,7 @@ class Package(models.Model):
     def readme(self):
         return self.latest.readme
 
-    def get_absolute_url(self, community_identifier):
+    def get_community_specific_absolute_url(self, community_identifier: str) -> str:
         return reverse(
             "packages.detail",
             kwargs={
@@ -235,11 +235,20 @@ class Package(models.Model):
             },
         )
 
+    def get_absolute_url(self) -> str:
+        return reverse(
+            "packages.detail",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+            },
+        )
+
     def get_full_url(self, community_identifier: str):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
             "hostname": settings.PRIMARY_HOST,
-            "path": self.get_absolute_url(community_identifier),
+            "path": self.get_community_specific_absolute_url(community_identifier),
         }
 
     def recache_latest(self):
