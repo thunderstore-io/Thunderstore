@@ -1,4 +1,4 @@
-from django.db.models import Q, Sum
+from django.db.models import BigIntegerField, Count, Sum
 from django.views.generic.list import ListView
 
 from thunderstore.cache.cache import CacheBustCondition
@@ -26,19 +26,17 @@ class CommunitiesView(ListView):
 
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
-        cache_vary += f".{self.get_search_query()}"
         return cache_vary
-
-    def get_search_query(self):
-        return self.request.GET.get("q", "")
 
     def order_queryset(self, queryset):
         return (
-            queryset.select_related()
+            queryset.prefetch_related()
             .annotate(
                 total_downloads=Sum(
-                    "community__package_listings__package__versions__downloads"
-                )
+                    "community__package_listings__package__versions__downloads",
+                    output_field=BigIntegerField(),
+                ),
+                package_count=Count("community__package_listings"),
             )
             .order_by(
                 "-total_downloads",
@@ -46,27 +44,8 @@ class CommunitiesView(ListView):
             )
         )
 
-    def perform_search(self, queryset, search_query):
-        search_fields = (
-            "community__name",
-            "community__identifier",
-        )
-
-        icontains_query = Q()
-        parts = [x for x in search_query.split(" ") if x]
-        for part in parts:
-            for field in search_fields:
-                icontains_query &= ~Q(**{f"{field}__icontains": part})
-
-        return queryset.exclude(icontains_query).distinct()
-
     def get_queryset(self):
-        queryset = self.get_base_queryset()
-
-        search_query = self.get_search_query()
-        if search_query:
-            queryset = self.perform_search(queryset, search_query)
-        return self.order_queryset(queryset)
+        return self.order_queryset(self.get_base_queryset())
 
     def get_paginator(
         self,
@@ -90,5 +69,4 @@ class CommunitiesView(ListView):
         context = super().get_context_data(*args, **kwargs)
         context["cache_vary"] = self.get_full_cache_vary()
         context["page_title"] = self.get_page_title()
-        context["current_search"] = self.get_search_query()
         return context
