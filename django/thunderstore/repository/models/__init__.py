@@ -1,3 +1,4 @@
+from .cache import *
 from .discord_bot import *
 from .namespace import *
 from .package import *

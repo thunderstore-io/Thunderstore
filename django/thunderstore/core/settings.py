@@ -84,6 +84,16 @@ env = environ.Env(
     ABYSS_S3_CUSTOM_DOMAIN=(str, ""),
     ABYSS_S3_SECURE_URLS=(bool, True),
     ABYSS_S3_DEFAULT_ACL=(str, "private"),
+    CACHE_S3_ENDPOINT_URL=(str, ""),
+    CACHE_S3_ACCESS_KEY_ID=(str, ""),
+    CACHE_S3_SECRET_ACCESS_KEY=(str, ""),
+    CACHE_S3_REGION_NAME=(str, ""),
+    CACHE_S3_STORAGE_BUCKET_NAME=(str, ""),
+    CACHE_S3_LOCATION=(str, ""),
+    CACHE_S3_FILE_OVERWRITE=(bool, False),
+    CACHE_S3_CUSTOM_DOMAIN=(str, ""),
+    CACHE_S3_SECURE_URLS=(bool, True),
+    CACHE_S3_DEFAULT_ACL=(str, "private"),
     REDIS_URL=(str, ""),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
@@ -432,6 +442,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "frontend_dynamichtml",
         "frontend_dynamichtml_exclude_communities",
         "frontend_dynamichtml_require_communities",
+        "repository_api_v1_package_cache",
         "repository_discorduserbotpermission",
         "repository_package",
         "repository_packageversion_dependencies",
@@ -587,6 +598,22 @@ ABYSS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=2592000",  # 30 days
 }
 
+
+# Cache S3 settings
+
+CACHE_S3_ENDPOINT_URL = env.str("CACHE_S3_ENDPOINT_URL")
+CACHE_S3_ACCESS_KEY_ID = env.str("CACHE_S3_ACCESS_KEY_ID")
+CACHE_S3_SECRET_ACCESS_KEY = env.str("CACHE_S3_SECRET_ACCESS_KEY")
+CACHE_S3_REGION_NAME = env.str("CACHE_S3_REGION_NAME")
+CACHE_S3_STORAGE_BUCKET_NAME = env.str("CACHE_S3_STORAGE_BUCKET_NAME")
+CACHE_S3_LOCATION = validate_filepath_prefix(env.str("CACHE_S3_LOCATION"))
+CACHE_S3_FILE_OVERWRITE = env.bool("CACHE_S3_FILE_OVERWRITE")
+CACHE_S3_CUSTOM_DOMAIN = env.str("CACHE_S3_CUSTOM_DOMAIN")
+CACHE_S3_SECURE_URLS = env.bool("CACHE_S3_SECURE_URLS")
+CACHE_S3_DEFAULT_ACL = env.str("CACHE_S3_DEFAULT_ACL")
+CACHE_S3_OBJECT_PARAMETERS = {
+    "CacheControl": "max-age=2592000",  # 30 days
+}
 
 if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
