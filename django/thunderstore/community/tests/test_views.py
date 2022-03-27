@@ -55,19 +55,10 @@ def test_communities_view_get_cache_vary(community_site):
 
 
 @pytest.mark.django_db
-def test_communities_view_get_search_query(community_site):
-    view = CommunitiesView()
-    view.request = Request(url="http://testsite.test/communities/")
-    view.request.GET = QueryDict("q=test")
-    assert view.get_search_query() == "test"
-
-
-@pytest.mark.django_db
 def test_communities_view_get_full_cache_vary(community_site):
     view = CommunitiesView()
     view.request = Request(url="http://testsite.test/communities/")
-    view.request.GET = QueryDict("q=test")
-    assert view.get_full_cache_vary() == (view.get_cache_vary() + ".test")
+    assert view.get_full_cache_vary() == "communities"
 
 
 @pytest.mark.django_db
@@ -85,24 +76,6 @@ def test_communities_view_order_queryset(community_site):
 
 
 @pytest.mark.django_db
-def test_communities_view_perform_search(community_site):
-    CommunitySite.objects.create(
-        site=Site.objects.create(domain="xcom.testsite.test", name="X Com"),
-        community=Community.objects.create(name="X Com", identifier="xcom"),
-    )
-    view = CommunitiesView()
-    view.request = Request(url="http://testsite.test/communities/")
-    view.request.GET = QueryDict("q=test")
-    assert Counter(
-        view.perform_search(
-            queryset=view.get_base_queryset(), search_query=view.get_search_query()
-        )
-    ) == Counter(
-        CommunitySite.objects.filter(community__name__icontains="test").distinct()
-    )
-
-
-@pytest.mark.django_db
 def test_communities_view_get_queryset(community_site):
     CommunitySite.objects.create(
         site=Site.objects.create(domain="xcom.testsite.test", name="X Com"),
@@ -110,15 +83,7 @@ def test_communities_view_get_queryset(community_site):
     )
     view = CommunitiesView()
     view.request = Request(url="http://testsite.test/communities/")
-    view.request.GET = QueryDict("q=test")
-    assert Counter(view.get_queryset()) == Counter(
-        CommunitySite.objects.filter(
-            Q(Q(community__name="test") | Q(community__identifier="test")),
-            is_listed=True,
-        )
-        .distinct()
-        .order_by("community__name")
-    )
+    assert len(view.get_queryset()) == 2
 
 
 @pytest.mark.django_db
@@ -129,7 +94,6 @@ def test_communities_view_get_paginator(community_site):
     )
     view = CommunitiesView()
     view.request = Request(url="http://testsite.test/communities/")
-    view.request.GET = QueryDict("q=test")
     assert view.get_paginator(
         view.get_queryset(),
         1,
@@ -152,8 +116,6 @@ def test_communities_view_get_context_data(community_site):
     context = super(CommunitiesView, view).get_context_data()
     context["cache_vary"] = view.get_full_cache_vary()
     context["page_title"] = view.get_page_title()
-    context["current_search"] = view.get_search_query()
     view_context_data = view.get_context_data()
     assert context["cache_vary"] == view_context_data["cache_vary"]
     assert context["page_title"] == view_context_data["page_title"]
-    assert context["current_search"] == view_context_data["current_search"]

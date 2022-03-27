@@ -106,7 +106,7 @@ class PackageVersion(models.Model):
             },
         )
 
-    def get_absolute_url(self, community_identifier):
+    def get_absolute_url(self):
         return reverse(
             "packages.version.detail",
             kwargs={

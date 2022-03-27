@@ -82,7 +82,7 @@ def test_package_detail_view(
     client, active_package_listing: PackageListing, community_site
 ):
     response = client.get(
-        active_package_listing.package.get_absolute_url(
+        active_package_listing.package.get_community_specific_absolute_url(
             community_site.community.identifier
         ),
         HTTP_HOST=community_site.site.domain,
@@ -98,7 +98,7 @@ def test_package_detail_version_view(
     client, active_version_with_listing, community_site
 ):
     response = client.get(
-        active_version_with_listing.get_absolute_url(
+        active_version_with_listing.get_community_specific_absolute_url(
             community_site.community.identifier
         ),
         HTTP_HOST=community_site.site.domain,
@@ -120,7 +120,7 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     # Try with user that is member of owner team
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(
+        active_version_with_listing.get_community_specific_absolute_url(
             community_site.community.identifier
         ),
         HTTP_HOST=community_site.site.domain,
@@ -131,7 +131,7 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     user = UserFactory.create()
     client.force_login(user=user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(
+        active_version_with_listing.get_community_specific_absolute_url(
             community_site.community.identifier
         ),
         HTTP_HOST=community_site.site.domain,
@@ -152,7 +152,7 @@ def test_package_detail_version_view_can_be_viewed_by_user(
 
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(
+        active_version_with_listing.get_community_specific_absolute_url(
             community_site.community.identifier
         ),
         HTTP_HOST=community_site.site.domain,
@@ -171,7 +171,7 @@ def test_package_detail_version_view_main_package_deactivated(
     active_version_with_listing.package.is_active = False
     active_version_with_listing.package.save()
     response = client.get(
-        active_version_with_listing.get_absolute_url(
+        active_version_with_listing.get_community_specific_absolute_url(
             community_site.community.identifier
         ),
         HTTP_HOST=community_site.site.domain,
@@ -354,7 +354,7 @@ def test_all_old_urls_for_package_views(
     )
     assert response.status_code == 302
     assert response.url.endswith(
-        reverse("bot.deprecate-mod", kwargs={"community_identifier": "riskofrain2"})
+        reverse("v1:bot.deprecate-mod", kwargs={"community_identifier": "riskofrain2"})
     )
     response = client.get(
         f"http://{community_site.site.domain}/api/v1/current-user/info/",
@@ -362,7 +362,7 @@ def test_all_old_urls_for_package_views(
     )
     assert response.status_code == 302
     assert response.url.endswith(
-        reverse("current-user.info", kwargs={"community_identifier": "riskofrain2"})
+        reverse("v1:current-user.info", kwargs={"community_identifier": "riskofrain2"})
     )
     response = client.post(
         f"http://{community_site.site.domain}/api/v1/package/{package.uuid4}/rate/",
@@ -371,7 +371,7 @@ def test_all_old_urls_for_package_views(
     assert response.status_code == 302
     assert response.url.endswith(
         reverse(
-            "package-rate",
+            "v1:package-rate",
             kwargs={"community_identifier": "riskofrain2", "uuid4": package.uuid4},
         )
     )
@@ -382,7 +382,7 @@ def test_all_old_urls_for_package_views(
     assert response.status_code == 302
     assert response.url.endswith(
         reverse(
-            "package-detail",
+            "v1:package-detail",
             kwargs={"community_identifier": "riskofrain2", "uuid4": package.uuid4},
         )
     )
@@ -392,7 +392,7 @@ def test_all_old_urls_for_package_views(
     )
     assert response.status_code == 302
     assert response.url.endswith(
-        reverse("package-list", kwargs={"community_identifier": "riskofrain2"})
+        reverse("v1:package-list", kwargs={"community_identifier": "riskofrain2"})
     )
     response = client.get(
         f"http://{community_site.site.domain}/package/download/{team.name}/{package_version.package}/{package_version.version_number}/",

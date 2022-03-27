@@ -9,11 +9,11 @@ from thunderstore.repository.mixins import CommunityMixin
 
 OLD_URL_REGEXS = OrderedDict(
     {
-        "bot_deprecate_mod": ("/api/v1/bot/deprecate-mod/$", "bot.deprecate-mod"),
-        "current_user_info": ("/api/v1/current-user/info/$", "current-user.info"),
-        "package_rate": ("/api/v1/package/([^/]*?)/rate/$", "package-detail"),
-        "package_detail": ("/api/v1/package/([^/]*?)/$", "package-detail"),
-        "package_list": ("/api/v1/package/$", "package-list"),
+        "bot_deprecate_mod": ("/api/v1/bot/deprecate-mod/$", "v1:bot.deprecate-mod"),
+        "current_user_info": ("/api/v1/current-user/info/$", "v1:current-user.info"),
+        "package_rate": ("/api/v1/package/([^/]*?)/rate/$", "v1:package-rate"),
+        "package_detail": ("/api/v1/package/([^/]*?)/$", "v1:package-detail"),
+        "package_list": ("/api/v1/package/$", "v1:package-list"),
         "packages_download": (
             "/package/download/([^/]*?)/([^/]*?)/([^/]*?)/$",
             "packages.download",

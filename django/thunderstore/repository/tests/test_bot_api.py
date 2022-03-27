@@ -33,7 +33,7 @@ def test_bot_api_deprecate_mod_200(api_client, admin_user, package, community_si
 
     response = api_client.post(
         reverse(
-            "bot.deprecate-mod",
+            "v1:bot.deprecate-mod",
             kwargs={"community_identifier": community_site.community.identifier},
         ),
         data=encoded,
@@ -74,7 +74,7 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
 
     response = api_client.post(
         reverse(
-            "bot.deprecate-mod",
+            "v1:bot.deprecate-mod",
             kwargs={"community_identifier": community_site.community.identifier},
         ),
         data=encoded,
@@ -121,7 +121,7 @@ def test_bot_api_deprecate_mod_403_discord_perms(
 
     response = api_client.post(
         reverse(
-            "bot.deprecate-mod",
+            "v1:bot.deprecate-mod",
             kwargs={"community_identifier": community_site.community.identifier},
         ),
         data=encoded,
@@ -158,7 +158,7 @@ def test_bot_api_deprecate_mod_404(api_client, admin_user, community_site):
     )
     response = api_client.post(
         reverse(
-            "bot.deprecate-mod",
+            "v1:bot.deprecate-mod",
             kwargs={"community_identifier": community_site.community.identifier},
         ),
         data=encoded,
