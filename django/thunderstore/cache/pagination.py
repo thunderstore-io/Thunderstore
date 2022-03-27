@@ -2,7 +2,7 @@ from django.core.paginator import Page, Paginator
 from django.db.models import QuerySet
 from django.utils.functional import cached_property
 
-from thunderstore.cache.cache import cache_get_or_set_by_key
+from thunderstore.cache.cache import DEFAULT_CACHE_EXPIRY, cache_get_or_set_by_key
 
 
 class CachedPaginator(Paginator):
@@ -43,10 +43,11 @@ class CachedPaginator(Paginator):
     @cached_property
     def count(self):
         return cache_get_or_set_by_key(
-            self.cache_bust_condition,
-            f"{self.cache_key}.count",
-            self.cache_vary,
-            lambda: super(CachedPaginator, self).count,
+            condition=self.cache_bust_condition,
+            cache_key=f"{self.cache_key}.count",
+            cache_vary=self.cache_vary,
+            get_default=lambda: super(CachedPaginator, self).count,
+            expiry=DEFAULT_CACHE_EXPIRY,
         )
 
     def _check_object_list_is_ordered(self):
@@ -74,8 +75,9 @@ class CachedPage(Page):
     @cached_property
     def object_list(self):
         return cache_get_or_set_by_key(
-            self.cache_bust_condition,
-            f"{self.cache_key}.page.{self.number}",
-            self.cache_vary,
-            lambda: list(self._object_list),
+            condition=self.cache_bust_condition,
+            cache_key=f"{self.cache_key}.page.{self.number}",
+            cache_vary=self.cache_vary,
+            get_default=lambda: list(self._object_list),
+            expiry=DEFAULT_CACHE_EXPIRY,
         )
