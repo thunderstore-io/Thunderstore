@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import sys
 
 import environ
 from django.http import HttpRequest
@@ -614,6 +615,11 @@ CACHE_S3_DEFAULT_ACL = env.str("CACHE_S3_DEFAULT_ACL")
 CACHE_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=2592000",  # 30 days
 }
+
+if not all((CACHE_S3_ENDPOINT_URL, CACHE_S3_ACCESS_KEY_ID, CACHE_S3_SECRET_ACCESS_KEY)):
+    if sys.argv[0] != "manage.py":
+        raise RuntimeError("Invalid cache configuration")
+
 
 if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
