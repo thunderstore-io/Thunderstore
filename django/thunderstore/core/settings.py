@@ -27,6 +27,7 @@ env = environ.Env(
     DATABASE_QUERY_COUNT_HEADER=(bool, False),
     DATABASE_URL=(str, "sqlite:///database/default.db"),
     DISABLE_SERVER_SIDE_CURSORS=(bool, True),
+    DISABLED_CACHE_BUST_CONDITIONS=(list, []),
     SECRET_KEY=(str, ""),
     ALLOWED_HOSTS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, []),
@@ -376,6 +377,7 @@ if DEBUG_TOOLBAR_ENABLED:
 
 # Caching
 
+DISABLED_CACHE_BUST_CONDITIONS = env.list("DISABLED_CACHE_BUST_CONDITIONS")
 REDIS_URL = env.str("REDIS_URL")
 if REDIS_URL:
     CACHES = {
