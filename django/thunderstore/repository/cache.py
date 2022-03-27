@@ -1,15 +1,15 @@
 from thunderstore.community.models import (
-    CommunitySite,
+    Community,
     PackageListing,
     PackageListingReviewStatus,
     Q,
 )
 
 
-def get_package_listing_queryset(community_site: CommunitySite):
+def get_package_listing_queryset(community: Community):
     return (
         PackageListing.objects.active()
-        .exclude(~Q(community=community_site.community))
+        .exclude(~Q(community=community))
         .exclude(review_status=PackageListingReviewStatus.rejected)
         .exclude(
             Q(community__require_package_listing_approval=True)

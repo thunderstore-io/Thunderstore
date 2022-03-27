@@ -1,28 +1,47 @@
 import json
+from typing import Any
 
 from django.http import HttpResponse
+from django.utils.cache import get_conditional_response
+from django.utils.http import http_date
 from rest_framework import viewsets
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from thunderstore.cache.cache import BackgroundUpdatedCacheMixin
+from thunderstore.community.models import CommunitySite
+from thunderstore.core.types import HttpRequestType
 from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import get_package_listing_queryset
 from thunderstore.repository.models import Package, PackageRating
+from thunderstore.repository.models.cache import APIV1PackageCache
 from thunderstore.repository.permissions import ensure_can_rate_package
+
+PACKAGE_SERIALIZER = PackageListingSerializer
+
+
+def serialize_package_list_for_community(community_site: CommunitySite) -> bytes:
+    queryset = get_package_listing_queryset(community=community_site.community)
+    serializer = PACKAGE_SERIALIZER(
+        queryset,
+        many=True,
+        context={
+            "community_site": community_site,
+        },
+    )
+    return JSONRenderer().render(serializer.data)
 
 
 class PackageViewSet(
-    BackgroundUpdatedCacheMixin,
     CommunitySiteSerializerContext,
     viewsets.ReadOnlyModelViewSet,
 ):
     cache_database_fallback = False
-    serializer_class = PackageListingSerializer
+    serializer_class = PACKAGE_SERIALIZER
     lookup_field = "package__uuid4"
     lookup_url_kwarg = "uuid4"
 
@@ -35,7 +54,28 @@ class PackageViewSet(
         )
 
     def get_queryset(self):
-        return get_package_listing_queryset(community_site=self.request.community_site)
+        return get_package_listing_queryset(community=self.request.community)
+
+    def list(self, request: HttpRequestType, *args: Any, **kwargs: Any) -> HttpResponse:
+        cache = APIV1PackageCache.get_latest_for_community(community=request.community)
+        if not cache or not cache.data:
+            return self.get_no_cache_response()
+        last_modified = int(cache.last_modified.timestamp())
+
+        # TODO: Add ETag support if useful
+        # Check if we can return a 304 response, otherwise return full content
+        response = get_conditional_response(request, last_modified=last_modified)
+        if response is None:
+            # TODO: Stream directly from the S3 backend instead of buffering
+            # TODO: Should we support decompressing for non-gzip capable clients?
+            response = HttpResponse(
+                content=cache.data,
+                content_type=cache.content_type,
+            )
+            response["Last-Modified"] = http_date(last_modified)
+            response["Content-Encoding"] = cache.content_encoding
+
+        return response
 
     @action(
         detail=True,
