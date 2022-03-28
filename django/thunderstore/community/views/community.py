@@ -69,4 +69,5 @@ class CommunitiesView(ListView):
         context = super().get_context_data(*args, **kwargs)
         context["cache_vary"] = self.get_full_cache_vary()
         context["page_title"] = self.get_page_title()
+        context["game_count"] = len(self.object_list)
         return context

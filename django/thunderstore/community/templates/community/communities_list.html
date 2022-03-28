@@ -30,10 +30,10 @@
 {% endif %}
 
 <div class="row justify-content-center">
-    <h2 class="col-6 mt-4 text-center">Download the Mods you need for variety of games</h2>
+    <h2 class="col-10 mt-4 text-center">Download and share mods for, like, {{ game_count }} games</h2>
 </div>
 <div class="row justify-content-center mb-5">
-    <h5 class="col-4 mt-4 text-center">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis venenatis luctus dignissim. Suspendisse iaculis mauris quam. Aenean vitae ligula nisi.</h5>
+    <p class="col-6 mt-4 text-center">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and CLI tools that can be used to automate your workflow.</p>
 </div>
 
 {% if selectable_community_sites %}
@@ -69,15 +69,9 @@
 {% endif %}
 
 <div class="row justify-content-center">
-    <h4 class="col-6 mt-4 text-center">Thunderstore Mod Manager</h4>
+    <h6 class="col-6 mt-4 text-center">Missing a game you'd like to add? Message us on our <a href="https://discord.gg/UWpWhjZken">Discord</a> with more information and we'll see what we can do.</h6>
 </div>
-<div class="row justify-content-center">
-    <h5 class="col-6 mt-4 text-center">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis venenatis luctus dignissim. Suspendisse iaculis mauris quam.
-        Aenean vitae ligula nisi. Nullam justo ante, facilisis quis tincidunt vitae, ornare eget lorem. Sed elit ligula, vulputate nec eleifend nec, convallis nec dui.
-        Aliquam porttitor dolor in sodales semper. Proin non pretium metus. Nullam posuere nec neque eu tempus.
-    </h5>
-</div>
+
 <div class="row justify-content-center">
     <div class="col-6 col-md-4 col-lg-3 mb-2 p-1 mt-4 d-flex flex-column">
         <div class="p-0 bg-light">
@@ -87,8 +81,19 @@
         </div>
         <div class="bg-light p-2">
             <a href="https://www.overwolf.com/app/Thunderstore-Thunderstore_Mod_Manager">
-                <h5 class="mb-0 overflow-hidden text-nowrap w-100 text-center" title="Mod Manager">Mod Manager</h5>
+                <h5 class="mb-0 overflow-hidden text-nowrap w-100 text-center" title="Mod Manager">Thunderstore Mod Manager</h5>
             </a>
+            <div class="text-left">
+                <p class="mt-2 text-center">Thunderstore Mod Manager is an application for easily installing mods to your games.</p>
+                <p class="mt-2 text-center">Features included are:</p>
+                <li>A clean interface, designed to make modding as simple as possible</li>
+                <li>Downloading, Installing & Uninstalling Mods</li>
+                <li>Multiple mod profiles to switch between different sets of mods quickly & easily</li>
+                <li>Mod configuration editor</li>
+                <li>Easy sharing of mod setups</li>
+                <li>Automatic mod updates</li>
+                <li>And more</li>
+            </div>
         </div>
     </div>
 </div>
