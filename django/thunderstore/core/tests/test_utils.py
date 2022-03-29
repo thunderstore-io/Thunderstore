@@ -28,11 +28,25 @@ def test_check_validity_success() -> None:
 
 
 @pytest.mark.parametrize("scheme", ("http://", "https://"))
-def test_make_full_url(scheme: str, rf: RequestFactory, settings: Any) -> None:
+@pytest.mark.parametrize("query_string", ("test=string&isa=teststring", ""))
+def test_make_full_url(
+    scheme: str, query_string: str, rf: RequestFactory, settings: Any
+) -> None:
     settings.PROTOCOL = scheme
     request = rf.get("")
     expected = f"{scheme}testserver/test/path/"
     assert make_full_url(request, "/test/path/") == expected
+    request.META.update({"QUERY_STRING": query_string})
+    if query_string:
+        assert (
+            make_full_url(request, "/test/path/", transfer_query_string=True)
+            == expected + "?" + query_string
+        )
+    else:
+        assert (
+            make_full_url(request, "/test/path/", transfer_query_string=True)
+            == expected
+        )
     assert make_full_url(None, "/test/path/") == "/test/path/"
 
 

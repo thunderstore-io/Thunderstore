@@ -61,7 +61,9 @@ class LegacyUrlHandler(CommunityMixin):
         self.solve_view(self.request.path)
 
         return make_full_url(
-            self.request, reverse(self.reverse_name, kwargs=self.reverse_kwargs)
+            self.request,
+            reverse(self.reverse_name, kwargs=self.reverse_kwargs),
+            transfer_query_string=True,
         )
 
     def noop(self, result=None):
