@@ -3,6 +3,7 @@ from rest_framework.fields import Field
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from thunderstore.community.models import PackageListing
+from thunderstore.core.utils import make_full_url
 from thunderstore.repository.models import PackageVersion
 
 
@@ -12,12 +13,10 @@ class PackageVersionSerializer(ModelSerializer):
     dependencies = SerializerMethodField()
 
     def get_download_url(self, instance):
-        url = instance.get_download_url(self.context["community_identifier"])
-        if "request" in self.context:
-            url = self.context["request"].build_absolute_uri(url)
-        if settings.PROTOCOL == "https://" and url.startswith("http://"):
-            url = f"https://{url[7:]}"
-        return url
+        return make_full_url(
+            self.context["request"],
+            instance.file.url,
+        )
 
     def get_full_name(self, instance):
         return instance.full_version_name

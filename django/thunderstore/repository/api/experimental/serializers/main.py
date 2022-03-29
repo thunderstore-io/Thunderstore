@@ -44,7 +44,7 @@ class PackageVersionSerializerExperimental(serializers.ModelSerializer):
     def get_download_url(self, instance):
         return make_full_url(
             self.context["request"],
-            instance.get_download_url(self.context["community_identifier"]),
+            instance.file.url,
         )
 
     def get_full_name(self, instance):
@@ -81,7 +81,7 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
     owner = SerializerMethodField()
     full_name = SerializerMethodField()
     namespace = SerializerMethodField()
-    package_url = SerializerMethodField()
+    package_urls = SerializerMethodField()
     latest = PackageVersionSerializerExperimental()
     total_downloads = SerializerMethodField()
     rating_score = SerializerMethodField()
@@ -96,13 +96,14 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
     def get_namespace(self, instance):
         return instance.owner.name
 
-    def get_package_url(self, instance):
-        return make_full_url(
-            self.context["request"],
-            instance.get_community_specific_absolute_url(
-                self.context["community_identifier"]
-            ),
-        )
+    def get_package_urls(self, instance):
+        return [
+            make_full_url(
+                self.context["request"],
+                instance.get_community_specific_absolute_url(x.community.identifier),
+            )
+            for x in PackageListing.objects.filter(package=instance)
+        ]
 
     def get_total_downloads(self, instance):
         return instance._total_downloads
@@ -118,7 +119,7 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
             "name",
             "full_name",
             "owner",
-            "package_url",
+            "package_urls",
             "date_created",
             "date_updated",
             "rating_score",

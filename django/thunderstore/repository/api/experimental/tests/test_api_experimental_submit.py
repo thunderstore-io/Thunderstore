@@ -48,7 +48,6 @@ def test_api_experimental_submit_package_success(
         ),
         content_type="application/json",
     )
-    print(response.content)
     assert response.status_code == 200
     response_data = response.json()
     version_data = response_data["package_version"]
@@ -95,7 +94,6 @@ def test_api_experimental_submit_package_wrong_user_for_submission(
         ),
         content_type="application/json",
     )
-    print(response.content)
     assert response.status_code == 404
     assert response.json() == {
         "detail": "Upload not found or user has insufficient access permissions"
@@ -131,7 +129,6 @@ def test_api_experimental_submit_package_invalid_upload_id(
         ),
         content_type="application/json",
     )
-    print(response.content)
     assert response.status_code == 404
     assert response.json() == {
         "detail": "Upload not found or user has insufficient access permissions"
@@ -168,7 +165,6 @@ def test_api_experimental_submit_package_not_signed_in(
         ),
         content_type="application/json",
     )
-    print(response.content)
     assert response.status_code == 401
     assert response.json() == {
         "detail": "Authentication credentials were not provided."
@@ -199,7 +195,6 @@ def test_api_experimental_submit_package_no_team_permission(
         ),
         content_type="application/json",
     )
-    print(response.content)
     assert response.status_code == 400
     assert response.json() == {
         "author_name": ["Object with name=Test_Team does not exist."]
@@ -237,7 +232,6 @@ def test_api_experimental_submit_package_invalid_category(
         ),
         content_type="application/json",
     )
-    print(response.content)
     assert response.status_code == 400
     assert response.json() == {"categories": {"0": ["Object not found"]}}
     assert PackageReference(team.name, "name", "1.0.0").exists is False
