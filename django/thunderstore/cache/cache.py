@@ -81,7 +81,7 @@ def cache_get_or_set_by_key(
     get_default,
     default_args=(),
     default_kwargs=None,
-    expiry=None,
+    expiry=DEFAULT_CACHE_EXPIRY,
 ):
     if default_kwargs is None:
         default_kwargs = {}
