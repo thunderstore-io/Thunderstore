@@ -37,7 +37,7 @@ class PackageListSearchView(CommunityMixin, ListView):
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(community__identifier=self.get_community_identifier)
+            ~Q(community__identifier=self.community_identifier)
         )
 
     def get_page_title(self):
@@ -48,12 +48,12 @@ class PackageListSearchView(CommunityMixin, ListView):
 
     def get_categories(self):
         return PackageCategory.objects.exclude(
-            ~Q(community__identifier=self.get_community_identifier)
+            ~Q(community__identifier=self.community_identifier)
         )
 
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
-        cache_vary += f".{self.get_community_identifier}"
+        cache_vary += f".{self.community_identifier}"
         cache_vary += f".{self.get_search_query()}"
         cache_vary += f".{self.get_active_ordering()}"
         cache_vary += f".{self.get_included_categories()}"
@@ -259,7 +259,7 @@ class PackageListSearchView(CommunityMixin, ListView):
             {
                 "url": reverse_lazy(
                     "packages.list",
-                    kwargs={"community_identifier": self.get_community_identifier},
+                    kwargs={"community_identifier": self.community_identifier},
                 ),
                 "name": "Packages",
             },
@@ -334,7 +334,7 @@ class PackageListByOwnerView(PackageListSearchView):
         return self.model.objects.active().exclude(
             ~Q(
                 Q(package__owner=self.owner)
-                & Q(community__identifier=self.get_community_identifier)
+                & Q(community__identifier=self.community_identifier)
             ),
         )
 
@@ -417,7 +417,7 @@ class PackageDetailView(CommunityMixin, DetailView):
         listing = get_package_listing_or_404(
             namespace=self.kwargs["owner"],
             name=self.kwargs["name"],
-            community_identifier=self.get_community_identifier,
+            community_identifier=self.community_identifier,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -449,7 +449,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community__identifier=self.get_community_identifier,
+            community__identifier=self.community_identifier,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")

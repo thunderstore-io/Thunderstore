@@ -16,6 +16,7 @@ from thunderstore.frontend.views import (
     robots_txt_view,
 )
 from thunderstore.redirects.urls import legacy_package_urls
+from thunderstore.repository.views.repository import PackageDownloadView
 
 from ..community.views import FaviconView
 from .api_urls import api_urls
@@ -34,6 +35,11 @@ urlpatterns = [
     path(AUTH_ROOT, include("social_django.urls", namespace="social")),
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
     path("package/", include(legacy_package_urls)),
+    path(
+        "packages/download/t/<str:owner>/p/<str:name>/v/<str:version>/",
+        PackageDownloadView.as_view(),
+        name="packages.download",
+    ),
     path("communities/", CommunitiesView.as_view(), name="communities"),
     path("c/", include(community_urls)),
     path("settings/", include(settings_urls)),

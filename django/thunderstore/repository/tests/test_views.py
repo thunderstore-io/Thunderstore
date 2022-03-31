@@ -304,7 +304,6 @@ def test_package_download_view(user, client, community_site, manifest_v1_package
                 "owner": version.package.owner.name,
                 "name": version.package.name,
                 "version": version.version_number,
-                "community_identifier": community_site.community.identifier,
             },
         ),
         HTTP_HOST=community_site.site.domain,
@@ -403,7 +402,6 @@ def test_all_old_urls_for_package_views(
         reverse(
             "packages.download",
             kwargs={
-                "community_identifier": "riskofrain2",
                 "owner": team.name,
                 "name": package_version.package,
                 "version": package_version.version_number,

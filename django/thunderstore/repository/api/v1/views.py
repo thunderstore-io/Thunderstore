@@ -1,6 +1,6 @@
 from typing import Optional
-from urllib.request import Request
 
+from django.http import HttpRequest
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 
@@ -44,7 +44,7 @@ class DeprecateModApiView(JWTApiView):
 
     def post(
         self,
-        request: Request,
+        request: HttpRequest,
         format: Optional[str] = None,
         community_identifier: Optional[str] = None,
     ) -> Response:

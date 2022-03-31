@@ -82,6 +82,7 @@ class LegacyUrlHandler(CommunityMixin):
         self.reverse_kwargs.update({"uuid4": result.group(1)})
 
     def get_reverse_data_packages_download(self, result):
+        self.reverse_kwargs = {}
         self.reverse_kwargs.update({"owner": result.group(1)})
         self.reverse_kwargs.update({"name": result.group(2)})
         self.reverse_kwargs.update({"version": result.group(3)})

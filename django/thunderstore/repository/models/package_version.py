@@ -145,14 +145,13 @@ class PackageVersion(models.Model):
             version=self.version_number,
         )
 
-    def get_download_url(self, community_identifier: str) -> str:
+    def download_url(self) -> str:
         return reverse(
             "packages.download",
             kwargs={
                 "owner": self.package.owner.name,
                 "name": self.package.name,
                 "version": self.version_number,
-                "community_identifier": community_identifier,
             },
         )
 

@@ -42,10 +42,7 @@ class PackageVersionSerializerExperimental(serializers.ModelSerializer):
     dependencies = SerializerMethodField()
 
     def get_download_url(self, instance):
-        return make_full_url(
-            self.context["request"],
-            instance.file.url,
-        )
+        return make_full_url(self.context["request"], instance.download_url)
 
     def get_full_name(self, instance):
         return instance.full_version_name

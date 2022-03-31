@@ -17,7 +17,7 @@ def get_install_url(context: Dict, obj: PackageVersion) -> str:
 
 @register.simple_tag(takes_context=True)
 def get_download_url(context: Dict, obj: PackageVersion) -> str:
-    return obj.get_download_url(context["community_identifier"])
+    return obj.download_url()
 
 
 @register.simple_tag(takes_context=True)
@@ -28,7 +28,5 @@ def get_community_specific_absolute_url(
 
 
 @register.simple_tag(takes_context=True)
-def get_owner_url(
-    context: Dict, obj: Union[Package, PackageVersion, PackageListing]
-) -> str:
+def get_owner_url(context: Dict, obj: Union[Package, PackageVersion]) -> str:
     return obj.get_owner_url(context["community_identifier"])

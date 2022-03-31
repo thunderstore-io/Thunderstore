@@ -99,7 +99,7 @@ class PackageListing(TimestampMixin, models.Model):
         )
 
     @cached_property
-    def get_owner_url(self):
+    def owner_url(self):
         return reverse(
             "packages.list_by_owner",
             kwargs={

@@ -38,7 +38,7 @@ class PackageViewSet(
 
     def get_queryset(self):
         return get_package_listing_queryset(
-            community_identifier=self.get_community_identifier
+            community_identifier=self.community_identifier
         )
 
     @action(
