@@ -6,10 +6,100 @@
 {% load get_urls %}
 {% load static %}
 {% load dynamic_html %}
+{% load auth_login %}
 
-{% block title %}{{ page_title }}{% endblock %}
+{% block background %}
+    <div class="background">
+        <div class="image" style="background: url({% static "background.jpg" %});"></div>
+        <div class="tint"></div>
+    </div>
+{% endblock %}
+
+{% block title_override %}<title>Thunderstore</title>{% endblock %}
 {% block content_beginning %}
     {% dynamic_html "frontpage_beginning" %}
+{% endblock %}
+
+{% block navbar %}
+<div class="row justify-content-center">
+<div class="col-10 mt-4 text-center">
+<nav class="navbar navbar-expand-sm navbar-dark bg-primary rounded">
+    <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">
+        Thunderstore
+    </a>
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <div class="dropdown">
+                <a href="#" role="button" id="communitiesMenu" data-toggle="dropdown" aria-haspopup="true"
+                   aria-expanded="false" class="nav-link dropdown-toggle">Communities</a>
+                {% if selectable_community_sites %}
+                <div class="dropdown-menu" aria-labelledby="communitiesMenu">
+                    {% for site in selectable_community_sites %}
+                        <a class="dropdown-item" href="{{ site.get_absolute_url }}">{{ site.community.name }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'packages.list' 'riskofrain2' %}">Browse</a>
+        </li>
+        <li class="nav-item">
+            <div class="dropdown">
+                <a href="#" role="button" id="developersMenu" data-toggle="dropdown" aria-haspopup="true"
+                   aria-expanded="false" class="nav-link dropdown-toggle">Developers</a>
+                <div class="dropdown-menu" aria-labelledby="developersMenu">
+                    {% if site_wiki_url %}
+                    <a class="dropdown-item" href="{{ site_wiki_url }}">Modding Wiki</a>
+                    {% endif %}
+                    <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
+                    <a class="dropdown-item" href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
+                    {% if community_identifier %}
+                    <a class="dropdown-item" href="{% url 'packages.create.docs' community_identifier %}">Package Format Docs</a>
+                    {% endif %}
+                    <a class="dropdown-item" href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
+                    <a class="dropdown-item" href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
+                </div>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="https://discord.gg/UWpWhjZken"><span class="fab fa-discord"></span> &nbsp;Join our Discord</a>
+        </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+        {% if request.user.is_authenticated %}
+            {% if community_identifier %}
+            <li class="nav-item">
+                <a href="{% url 'packages.list_by_owner' team community_identifier %}" class="nav-link text-dark">{{ request.user.username }}</a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a href="{% url 'communities' %}" class="nav-link text-dark">{{ request.user.username }}</a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>
+            </li>
+            {% if request.user.is_staff %}
+            <li class="nav-item">
+                <a href="{% url "admin:index" %}" class="nav-link">Admin</a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a href="{% url "logout" %}" class="nav-link">Logout</a>
+            </li>
+        {% else %}
+            <li class="nav-item">
+                <a href="{% add_auth_login_link "github" %}" class="nav-link"><span class="fab fa-github"></span> Log in with GitHub</a>
+            </li>
+            <li class="nav-item">
+                <a href="{% add_auth_login_link "discord" %}" class="nav-link"><span class="fab fa-discord"></span> Log in with Discord</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+</div>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -40,12 +130,12 @@
     <div class="d-flex flex-row flex-wrap mb-3 package-list">
     {% for site in object_list %}
         <div class="col-6 col-md-4 col-lg-3 mb-2 p-1 d-flex flex-column">
-            <div class="p-0 bg-light">
+            <div class="p-0 bg-light card-round-top">
                 <a href="{{ site.get_absolute_url }}">
-                    <img class="w-100" src="{% if site.community.thumbnail %}{% thumbnail site.community.thumbnail 256x256 crop %}{% else %}{% static 'thumbnail_placeholder.jpg' 256x256 crop %}{% endif %}" alt="{{ site.community.name }} thumbnail">
+                    <img class="w-100 card-round-top" src="{% if site.community.thumbnail %}{% thumbnail site.community.thumbnail 256x256 crop %}{% else %}{% static 'thumbnail_placeholder.jpg' 256x256 crop %}{% endif %}" alt="{{ site.community.name }} thumbnail">
                 </a>
             </div>
-            <div class="bg-light p-2">
+            <div class="bg-light p-2 card-round-bottom">
                 <a href="{{ site.get_absolute_url }}">
                     <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ site.community.name }}">{{ site.community.name }}</h5>
                 </a>

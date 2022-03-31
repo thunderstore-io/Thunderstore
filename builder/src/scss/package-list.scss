@@ -1,5 +1,15 @@
 @import "./theme/_variables";
 
+.card-round-top {
+    border-top-left-radius: 1rem !important;
+    border-top-right-radius: 1rem !important;
+}
+
+.card-round-bottom {
+    border-bottom-left-radius: 1rem !important;
+    border-bottom-right-radius: 1rem !important;
+}
+
 .package-list {
     margin-left: -4px;
     margin-right: -4px;

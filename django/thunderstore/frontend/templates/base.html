@@ -6,7 +6,7 @@
     <head>
         {% dynamic_html "html_head" %}
 
-        <title>{% block title %}Mod List{% endblock %} | {{ site_name }}{% if site_slogan %} - {{ site_slogan }}{% endif %}</title>
+        {% block title_override %}<title>{% block title %}Mod List{% endblock %} | {{ site_name }}{% if site_slogan %} - {{ site_slogan }}{% endif %}</title>{% endblock %}
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="description" content="{% block description %}{{ site_description }}{% endblock %}">
         <link rel="icon" type="image/png" href="{{ site_favicon }}" />
@@ -30,17 +30,20 @@
         <script src="{% static 'js/all.js' %}"></script>
     </head>
     <body>
-        {% if request.community_site.background_image %}
+        {% block background %}
+            {% if request.community_site.background_image %}
             <div class="background">
                 <div class="image" style="background: url({{ request.community_site.background_image.url }});"></div>
                 <div class="tint"></div>
             </div>
-        {% endif %}
+            {% endif %}
+        {% endblock %}
 
         {% dynamic_html "html_body_beginning" %}
+        {% block navbar %}
         <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
             <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">
-                {{ site_name }}
+                Thunderstore
             </a>
             <ul class="navbar-nav">
                 <li class="nav-item">
@@ -122,6 +125,7 @@
                 {% endif %}
             </ul>
         </nav>
+        {% endblock %}
         <div class="container">
             {% for message in messages %}
                 <div class="alert mt-3 alert-{{ message.tags }}" role="alert"><p class="mb-0">{{ message }}</p></div>
