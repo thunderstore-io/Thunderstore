@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.templatetags.static import static
 
 from thunderstore.community.models import CommunitySite
@@ -12,6 +13,11 @@ def community_site(request):
             "site_discord_url": request.community_site.community.discord_url or "",
             "site_wiki_url": request.community_site.community.wiki_url or "",
         }
+        result.update(
+            {
+                "site_favicon": f"{settings.STATIC_URL}favicon.ico",
+            }
+        )
         if request.community_site.icon:
             url = request.community_site.icon.url
             if not (url.startswith("http://") or url.startswith("https://")):

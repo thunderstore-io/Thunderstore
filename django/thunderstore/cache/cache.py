@@ -6,8 +6,10 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.core.cache import cache
+from django.http import HttpResponse
 from redis.exceptions import LockError
 
+from thunderstore.cache.models import DatabaseCache
 from thunderstore.core.utils import ChoiceEnum
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
@@ -164,6 +166,68 @@ class ManualCacheMixin(object):
             default_args=args,
             default_kwargs=kwargs,
             expiry=self.cache_expiry,
+        )
+
+
+class BackgroundUpdatedCacheMixin(object):
+    cache_database_fallback = True
+
+    @classmethod
+    def get_no_cache_response(cls):
+        return HttpResponse("Cache missing")
+
+    @classmethod
+    def get_cache_key(cls, request, *args, **kwargs):
+        return get_cache_key(
+            cache_bust_condition=CacheBustCondition.background_update_only,
+            cache_type="view",
+            key=get_view_cache_name(cls),
+            vary_on=args
+            + tuple(
+                kwargs.values(),
+            ),
+        )
+
+    @classmethod
+    def get_cache(cls, key, default):
+        result = cache.get(key, None)
+        if result:
+            return result
+        elif cls.cache_database_fallback:
+            db_result = DatabaseCache.get(key, None)
+            if db_result:
+                cache.set(key, db_result, None)
+                return db_result
+        return default
+
+    @classmethod
+    def set_cache(cls, key, value, timeout):
+        result = cache.set(key, value, timeout)
+        if cls.cache_database_fallback:
+            DatabaseCache.set(key, value, timeout)
+        return result
+
+    def dispatch(self, *args, **kwargs):
+        if self.request.method != "GET" or kwargs.get("skip_cache", False) is True:
+            return (
+                super(BackgroundUpdatedCacheMixin, self)
+                .dispatch(*args, **kwargs)
+                .render()
+            )
+        return self.get_cache(
+            self.get_cache_key(*args, **kwargs),
+            self.get_no_cache_response(),
+        )
+
+    @classmethod
+    def update_cache(cls, view, *args, **kwargs):
+        kwargs.update({"skip_cache": True})
+        result = view(*args, **kwargs)
+        del kwargs["skip_cache"]
+        cls.set_cache(
+            key=cls.get_cache_key(*args, **kwargs),
+            value=result,
+            timeout=None,
         )
 
 

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from thunderstore.community.models import Community, PackageCategory
+from thunderstore.community.models import Community
 
 
 class CommunitySerializer(serializers.ModelSerializer):
@@ -12,13 +12,4 @@ class CommunitySerializer(serializers.ModelSerializer):
             "discord_url",
             "wiki_url",
             "require_package_listing_approval",
-        )
-
-
-class PackageCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PackageCategory
-        fields = (
-            "name",
-            "slug",
         )

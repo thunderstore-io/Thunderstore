@@ -7,11 +7,11 @@ from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.community.api.experimental.serializers import (
-    CommunitySerializer,
+from thunderstore.community.api.experimental.serializers import CommunitySerializer
+from thunderstore.community.models import Community
+from thunderstore.frontend.api.experimental.serializers.views import (
     PackageCategorySerializer,
 )
-from thunderstore.community.models import Community
 
 
 class CustomCursorPagination(CursorPagination):

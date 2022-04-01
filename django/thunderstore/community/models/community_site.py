@@ -1,8 +1,12 @@
+from functools import cached_property
+
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
+from django.urls import reverse
 
+from thunderstore.community.models.package_listing import PackageListingReviewStatus
 from thunderstore.core.mixins import TimestampMixin
 
 
@@ -97,6 +101,38 @@ class CommunitySite(TimestampMixin, models.Model):
     @property
     def full_url(self) -> str:
         return f"{settings.PROTOCOL}{self.site.domain}/"
+
+    @cached_property
+    def total_downloads(self):
+        annotated = getattr(self, "_total_downloads", None)
+        if annotated is not None:
+            return annotated
+        return sum(
+            [
+                x.total_downloads
+                for x in self.community.package_listings.filter(
+                    ~Q(review_status=PackageListingReviewStatus.rejected)
+                )
+            ]
+        )
+
+    @cached_property
+    def total_listings(self):
+        annotated = getattr(self, "_total_listings", None)
+        if annotated is not None:
+            return annotated
+        return self.community.package_listings.filter(
+            ~Q(review_status=PackageListingReviewStatus.rejected)
+        ).count()
+
+    @cached_property
+    def get_absolute_url(self):
+        return reverse(
+            "packages.list",
+            kwargs={
+                "community_identifier": self.community.identifier,
+            },
+        )
 
     class Meta:
         verbose_name = "community site"

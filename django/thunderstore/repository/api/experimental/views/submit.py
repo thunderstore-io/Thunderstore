@@ -55,7 +55,9 @@ class SubmitPackageApiView(APIView):
                 {
                     "community": listing.community,
                     "categories": listing.categories.all(),
-                    "url": package_version.package.get_full_url(site.site),
+                    "url": package_version.package.get_full_url(
+                        listing.community.identifier
+                    ),
                 }
             )
 

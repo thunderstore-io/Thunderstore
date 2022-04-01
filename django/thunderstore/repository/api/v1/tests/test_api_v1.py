@@ -9,7 +9,8 @@ from django.utils.http import http_date
 from rest_framework.renderers import JSONRenderer
 from rest_framework.test import APIClient
 
-from thunderstore.community.models import CommunitySite, PackageListing
+from thunderstore.community.models.community_site import CommunitySite
+from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.api.v1.tasks import update_api_v1_caches
 from thunderstore.repository.api.v1.viewsets import PACKAGE_SERIALIZER
@@ -122,12 +123,13 @@ def test_api_v1_package_detail(
 def test_api_v1_rate_package(
     api_client: APIClient,
     active_package_listing: PackageListing,
-) -> None:
+    community_site: CommunitySite,
+):
     uuid = active_package_listing.package.uuid4
     user = UserFactory.create()
     api_client.force_authenticate(user)
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
@@ -137,7 +139,7 @@ def test_api_v1_rate_package(
     assert result["score"] == 1
 
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "unrated"}),
         content_type="application/json",
     )
@@ -151,10 +153,11 @@ def test_api_v1_rate_package(
 def test_api_v1_rate_package_permission_denied(
     api_client: APIClient,
     active_package_listing: PackageListing,
-) -> None:
+    community_site: CommunitySite,
+):
     uuid = active_package_listing.package.uuid4
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )

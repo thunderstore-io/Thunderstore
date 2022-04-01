@@ -81,7 +81,7 @@ class PackageListingSerializer(ModelSerializer):
         return instance.package.full_package_name
 
     def get_package_url(self, instance):
-        return instance.package.get_full_url(self.context["community_site"].site)
+        return instance.package.get_full_url(instance.community.identifier)
 
     def get_categories(self, instance):
         return set(instance.categories.all().values_list("name", flat=True))

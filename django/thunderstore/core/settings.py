@@ -35,6 +35,7 @@ env = environ.Env(
     PROTOCOL=(str, "https://"),
     SOCIAL_AUTH_INIT_HOST=(str, ""),
     AUTH_EXCLUSIVE_HOST=(str, ""),
+    PRIMARY_HOST=(str, ""),
     SOCIAL_AUTH_SANITIZE_REDIRECTS=(bool, True),
     SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS=(list, []),
     SOCIAL_AUTH_DISCORD_KEY=(str, ""),
@@ -110,6 +111,7 @@ env = environ.Env(
     SESSION_COOKIE_DOMAIN=(str, ""),
 )
 
+
 SENTRY_DSN = env.str("SENTRY_DSN")
 SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE")
 if SENTRY_DSN:
@@ -135,6 +137,7 @@ DISABLE_TRANSACTION_CHECKS = False
 
 SECRET_KEY = env.str("SECRET_KEY")
 
+PRIMARY_HOST = env.str("PRIMARY_HOST")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
 if CORS_ALLOWED_ORIGINS == ["*"]:

@@ -2,12 +2,12 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField, empty
 
-from thunderstore.community.api.experimental.serializers import (
-    CommunitySerializer,
-    PackageCategorySerializer,
-)
+from thunderstore.community.api.experimental.serializers import CommunitySerializer
 from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.core.utils import make_full_url
+from thunderstore.frontend.api.experimental.serializers.views import (
+    PackageCategorySerializer,
+)
 from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_upload import PackageUploadForm
 from thunderstore.repository.serializer_fields import ModelChoiceField
@@ -77,7 +77,7 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
     owner = SerializerMethodField()
     full_name = SerializerMethodField()
     namespace = SerializerMethodField()
-    package_url = SerializerMethodField()
+    package_urls = SerializerMethodField()
     latest = PackageVersionSerializerExperimental()
     total_downloads = SerializerMethodField()
     rating_score = SerializerMethodField()
@@ -92,8 +92,14 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
     def get_namespace(self, instance):
         return instance.owner.name
 
-    def get_package_url(self, instance):
-        return make_full_url(self.context["request"], instance.get_absolute_url())
+    def get_package_urls(self, instance):
+        return [
+            make_full_url(
+                self.context["request"],
+                instance.get_community_specific_absolute_url(x.community.identifier),
+            )
+            for x in PackageListing.objects.filter(package=instance)
+        ]
 
     def get_total_downloads(self, instance):
         return instance._total_downloads
@@ -109,7 +115,7 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
             "name",
             "full_name",
             "owner",
-            "package_url",
+            "package_urls",
             "date_created",
             "date_updated",
             "rating_score",

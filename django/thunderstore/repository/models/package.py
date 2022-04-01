@@ -13,6 +13,7 @@ from django.utils.functional import cached_property
 
 from thunderstore.cache.cache import CacheBustCondition, cache_function_result
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
+from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
 
@@ -202,17 +203,22 @@ class Package(models.Model):
     def dependants_list(self):
         return get_package_dependants_list(self.pk)
 
-    @cached_property
-    def owner_url(self):
-        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
+    def get_owner_url(self, community_identifier: str) -> str:
+        return reverse(
+            "packages.list_by_owner",
+            kwargs={
+                "owner": self.owner.name,
+                "community_identifier": community_identifier,
+            },
+        )
 
-    @cached_property
-    def dependants_url(self):
+    def dependants_url(self, community_identifier):
         return reverse(
             "packages.list_by_dependency",
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
+                "community_identifier": community_identifier,
             },
         )
 
@@ -220,16 +226,26 @@ class Package(models.Model):
     def readme(self):
         return self.latest.readme
 
-    def get_absolute_url(self):
+    def get_community_specific_absolute_url(self, community_identifier: str) -> str:
         return reverse(
-            "packages.detail", kwargs={"owner": self.owner.name, "name": self.name}
+            "packages.detail",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "community_identifier": community_identifier,
+            },
         )
 
-    def get_full_url(self, site: Site):
+    def get_absolute_url(self) -> str:
+        return self.get_community_specific_absolute_url(
+            PackageListing.objects.filter(package=self).first().community.identifier
+        )
+
+    def get_full_url(self, community_identifier: str):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
-            "hostname": site.domain,
-            "path": self.get_absolute_url(),
+            "hostname": settings.PRIMARY_HOST,
+            "path": self.get_community_specific_absolute_url(community_identifier),
         }
 
     def recache_latest(self):

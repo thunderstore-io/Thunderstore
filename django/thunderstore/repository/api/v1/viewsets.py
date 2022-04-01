@@ -1,5 +1,6 @@
 import json
-from typing import Any
+from typing import Any, Optional
+from urllib.request import Request
 
 from django.http import HttpResponse
 from django.utils.cache import get_conditional_response
@@ -12,11 +13,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
+from thunderstore.cache.cache import BackgroundUpdatedCacheMixin
 from thunderstore.community.models import CommunitySite
 from thunderstore.core.types import HttpRequestType
-from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import get_package_listing_queryset
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package, PackageRating
 from thunderstore.repository.models.cache import APIV1PackageCache
 from thunderstore.repository.permissions import ensure_can_rate_package
@@ -37,7 +39,8 @@ def serialize_package_list_for_community(community_site: CommunitySite) -> bytes
 
 
 class PackageViewSet(
-    CommunitySiteSerializerContext,
+    BackgroundUpdatedCacheMixin,
+    CommunityMixin,
     viewsets.ReadOnlyModelViewSet,
 ):
     cache_database_fallback = False
@@ -83,7 +86,12 @@ class PackageViewSet(
         authentication_classes=[SessionAuthentication, BasicAuthentication],
         permission_classes=[IsAuthenticated],
     )
-    def rate(self, request, uuid4=None):
+    def rate(
+        self,
+        request: Request,
+        uuid4: Optional[str] = None,
+        community_identifier: Optional[str] = None,
+    ) -> Response:
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
         user = request.user
         ensure_can_rate_package(user, package)

@@ -51,13 +51,6 @@ def ensure_fields_editable_on_creation(readonly_fields, obj, editable_fields):
         return list(x for x in readonly_fields if x not in editable_fields)
 
 
-class CommunitySiteSerializerContext:
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["community_site"] = self.request.community_site
-        return context
-
-
 def check_validity(fn: Callable[[], None]) -> bool:
     try:
         fn()
@@ -70,11 +63,19 @@ def capture_exception(*args, **kwargs):
     capture_sentry_exception(*args, **kwargs)
 
 
-def make_full_url(request: Optional[HttpRequest], path: str):
+def make_full_url(
+    request: Optional[HttpRequest],
+    path: Optional[str] = None,
+    transfer_query_string: bool = False,
+):
     """Build an URL relative to a request using the proper request scheme"""
     url = path
     if request:
         url = request.build_absolute_uri(url)
+        if transfer_query_string:
+            query_string = request.META.get("QUERY_STRING", "")
+            if query_string:
+                url = "%s?%s" % (url, query_string)
     if settings.PROTOCOL == "https://" and url.startswith("http://"):
         url = f"https://{url[7:]}"
     return url

@@ -1,3 +1,6 @@
+from typing import Optional
+
+from django.http import HttpRequest
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 
@@ -39,7 +42,12 @@ class DeprecateModApiView(JWTApiView):
         if not permissions.can_deprecate:
             raise PermissionDenied("Insufficient Discord user permissions")
 
-    def post(self, request, format=None):
+    def post(
+        self,
+        request: HttpRequest,
+        format: Optional[str] = None,
+        community_identifier: Optional[str] = None,
+    ) -> Response:
         package = self.get_package(request.decoded.get("package"))
 
         if not request.user.has_perm("repository.change_package"):

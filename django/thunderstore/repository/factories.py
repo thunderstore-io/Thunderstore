@@ -65,6 +65,7 @@ class PackageVersionFactory(DjangoModelFactory):
     description = factory.Sequence(lambda n: f"Desc_{n:04d}")
     version_number = "1.0.0"
     file_size = 5242880
+    file = "test.zip"
 
 
 class PackageVersionDownloadEventFactory(DjangoModelFactory):
