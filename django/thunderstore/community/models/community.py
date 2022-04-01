@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Optional
 
 from django.core.exceptions import ValidationError
@@ -49,6 +50,20 @@ class Community(TimestampMixin, models.Model):
         if user.pk not in self.__membership_cache:
             self.__membership_cache[user.pk] = self.members.filter(user=user).first()
         return self.__membership_cache[user.pk]
+
+    @cached_property
+    def site_image_url(self) -> Optional[str]:
+        """
+        Return URL to site's background image if one exists.
+        """
+        # Access site via .all() to avoid extra database hits when sites
+        # have already be fetched with .prefetch_related().
+        site = self.sites.all()[0]
+        return (
+            None
+            if site is None or not bool(site.background_image)
+            else site.background_image.url
+        )
 
     def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:

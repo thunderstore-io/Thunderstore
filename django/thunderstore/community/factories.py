@@ -2,7 +2,9 @@ import factory
 from django.contrib.sites.models import Site
 from factory.django import DjangoModelFactory
 
-from .models import Community, CommunitySite
+from thunderstore.repository.factories import PackageVersionFactory
+
+from .models import Community, CommunitySite, PackageListing
 
 
 class SiteFactory(DjangoModelFactory):
@@ -27,3 +29,65 @@ class CommunitySiteFactory(DjangoModelFactory):
 
     community = factory.SubFactory(CommunityFactory)
     site = factory.SubFactory(SiteFactory)
+
+
+class PackageListingFactory(DjangoModelFactory):
+    class Meta:
+        model = PackageListing
+
+    class Params:
+        community_ = None
+        community_kwargs = {}
+        package_ = None
+        package_kwargs = {}
+        package_version_kwargs = {}
+
+    @factory.lazy_attribute
+    def community(self):
+        """
+        To use an existing community, pass it via community_ parameter.
+
+        To create a new package with custom values, pass the values via
+        community_kwargs parameter.
+        """
+        if self.community_:
+            return self.community_
+
+        site = CommunitySiteFactory()
+
+        if self.community_kwargs:
+            for attr, value in self.community_kwargs.items():
+                setattr(site.community, attr, value)
+
+            site.community.save()
+
+        return site.community
+
+    @factory.lazy_attribute
+    def package(self):
+        """
+        To use an existing package, pass it via package_ parameter.
+
+        To create a new package with custom values, pass the values via
+        package_kwargs parameter.
+        """
+        if self.package_:
+            return self.package_
+
+        ver = PackageVersionFactory(**self.package_version_kwargs)
+
+        if self.package_kwargs:
+            for attr, value in self.package_kwargs.items():
+                setattr(ver.package, attr, value)
+
+            ver.package.save()
+
+        return ver.package
+
+    @factory.post_generation
+    def categories(self, create, extracted, **kwargs):
+        """
+        Allow passing categories for M2M relation.
+        """
+        if create and extracted:
+            self.categories.set(extracted)
