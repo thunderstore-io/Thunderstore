@@ -2,6 +2,7 @@ from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.db import models, transaction
 from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
@@ -96,6 +97,12 @@ class Team(models.Model):
         unique=True,
         validators=[PackageReferenceComponentValidator("Author name")],
     )
+    donation_link = models.CharField(
+        max_length=1024,
+        blank=True,
+        null=True,
+        validators=[URLValidator(["https"])],
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -114,6 +121,9 @@ class Team(models.Model):
                 validator(self.name)
             if Team.objects.filter(name__iexact=self.name.lower()).exists():
                 raise ValidationError("The author name already exists")
+        if self.donation_link is not None:
+            for validator in self._meta.get_field("donation_link").validators:
+                validator(self.donation_link)
 
     def save(self, *args, **kwargs):
         self.validate()
