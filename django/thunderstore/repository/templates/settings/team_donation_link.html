@@ -1,0 +1,52 @@
+{% extends 'settings/team_base.html' %}
+
+{% block title %}Configure Donation Link{% endblock %}
+
+{% block settings_content %}
+<div class="alert alert-primary" role="alert">
+    <p class="mb-0">
+        This is a <b>placeholder feature</b> and <b>might be removed in the future</b>
+        when a more comprehensive solution is implemented.
+    </p>
+</div>
+<p>
+    You can configure a donation link for the team here. The donation link is
+    exposed via our API and might be shown on some UIs when viewing packages
+    owned by the team, although implementations vary.
+</p>
+<p>
+    Only HTTPS links are allowed for security reasons.
+</p>
+
+
+<form class="form-inline" method="post" action="{{ request.path }}">
+    {% csrf_token %}
+    <div class="col-12 p-0 mb-2">
+        <div class="d-flex">
+            <div>
+                <input
+                    type="text"
+                    class="form-control"
+                    name="donation_link"
+                    placeholder="https://"
+                    {% if not can_edit %}readonly{% endif %}
+                    {% if form.donation_link.initial %}value="{{ form.donation_link.initial }}"{% endif %}>
+                <div class="text-danger mt-2">{{ form.donation_link.errors }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="text-danger mb-2">
+        {{ form.non_field_errors }}
+    </div>
+    <div class="col-12 p-0">
+        <input
+            type="submit"
+            class="btn btn-primary{% if not can_edit %} disabled{% endif %}"
+            {% if not can_edit %}disabled{% endif %}
+            value="Save">
+        {% if not can_edit %}
+            <p class="text-danger mt-3 mb-0">Only the team owner can edit this field</p>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

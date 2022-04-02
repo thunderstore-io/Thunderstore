@@ -5,14 +5,19 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from django.urls import reverse
+from rest_framework.test import APIClient
 
 from thunderstore.core.factories import UserFactory
 
 from ...cache.cache import CacheBustCondition
 from ...cache.tasks import invalidate_cache
-from ...community.models import PackageListing, PackageListingReviewStatus
+from ...community.models import (
+    CommunitySite,
+    PackageListing,
+    PackageListingReviewStatus,
+)
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
-from ..models import Team
+from ..models import Team, TeamMember
 from ..package_upload import PackageUploadForm
 from ..views.repository import PackageVersionDetailView
 
@@ -300,3 +305,30 @@ def test_service_account_creation(client, community_site, team, team_owner):
     assert response.status_code == 200
     assert b'New service account <kbd class="text-info">Foo</kbd>' in response.content
     assert b'<pre class="important">tss_' in response.content
+
+
+@pytest.mark.django_db
+def test_team_settings_donation_link_view(
+    client: APIClient,
+    community_site: CommunitySite,
+    team: Team,
+    team_owner: TeamMember,
+) -> None:
+    client.force_login(team_owner.user)
+    kwargs = {"name": team.name}
+
+    response = client.get(
+        reverse("settings.teams.detail.donation_link", kwargs=kwargs),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    assert b"You can configure a donation link for the team here." in response.content
+
+    response = client.post(
+        reverse("settings.teams.detail.donation_link", kwargs=kwargs),
+        {"donation_link": "https://example.org/"},
+        HTTP_HOST=community_site.site.domain,
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert b"Donation link saved" in response.content

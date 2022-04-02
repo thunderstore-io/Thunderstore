@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pytest
 
 from conftest import TestUserTypes
@@ -7,6 +9,7 @@ from thunderstore.repository.forms import (
     AddTeamMemberForm,
     CreateTeamForm,
     DisbandTeamForm,
+    DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
     Team,
@@ -494,6 +497,105 @@ def test_form_disband_team_form_no_instance(user: UserType, team: Team) -> None:
     form = DisbandTeamForm(
         user=user,
         data={"verification": ""},
+    )
+    assert form.is_valid() is False
+    assert "Missing team instance" in str(repr(form.errors))
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
+def test_form_donation_link_team_form_permissions(
+    team: Team, user_type: str, role: str
+) -> None:
+    # Use 1:1 mapping to ensure the test fails if new roles or user types are added
+    valid_user_type_map = {
+        TestUserTypes.no_user: False,
+        TestUserTypes.unauthenticated: False,
+        TestUserTypes.regular_user: True,
+        TestUserTypes.deactivated_user: False,
+        TestUserTypes.service_account: False,
+        TestUserTypes.superuser: True,
+    }
+    valid_role_map = {
+        None: False,
+        TeamMemberRole.member: False,
+        TeamMemberRole.owner: True,
+    }
+    should_succeed = all(
+        (
+            valid_user_type_map[user_type],
+            valid_role_map[role],
+        )
+    )
+
+    user = TestUserTypes.get_user_by_type(user_type)
+    if role is not None and user_type not in TestUserTypes.fake_users():
+        TeamMember.objects.create(user=user, team=team, role=role)
+
+    link = "https://example.org/"
+    team.donation_link = None
+    team.save()
+    team.refresh_from_db()
+    assert team.donation_link is None
+
+    form = DonationLinkTeamForm(user=user, instance=team, data={"donation_link": link})
+    if should_succeed:
+        assert form.is_valid() is True
+        assert form.save() is team
+        team.refresh_from_db()
+        assert team.donation_link == link
+    else:
+        assert form.is_valid() is False
+        assert form.errors
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "value, should_succeed",
+    (
+        (None, True),
+        ("", True),
+        ("http://patreon.com/", False),
+        ("https://patreon.com/", True),
+    ),
+)
+def test_form_donation_link_team_form_input_validation(
+    team: Team,
+    user: UserType,
+    value: Optional[str],
+    should_succeed: bool,
+) -> None:
+    TeamMember.objects.create(
+        user=user,
+        team=team,
+        role=TeamMemberRole.owner,
+    )
+    form = DonationLinkTeamForm(
+        user=user,
+        instance=team,
+        data={"donation_link": value},
+    )
+    assert form.is_valid() is should_succeed
+    if should_succeed:
+        assert not form.errors
+    else:
+        assert "Enter a valid URL." in str(repr(form.errors))
+
+
+@pytest.mark.django_db
+def test_form_donation_link_team_form_no_instance(
+    team: Team,
+    user: UserType,
+) -> None:
+    TeamMember.objects.create(
+        user=user,
+        team=team,
+        role=TeamMemberRole.owner,
+    )
+    form = DonationLinkTeamForm(
+        user=user,
+        data={"donation_link": None},
     )
     assert form.is_valid() is False
     assert "Missing team instance" in str(repr(form.errors))
