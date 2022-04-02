@@ -674,3 +674,24 @@ def test_team_get_namespace(team):
     with pytest.raises(ValidationError) as exc:
         another_team.get_namespace()
     assert "The namespace name already exists" in str(exc.value)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "value, should_fail",
+    (
+        (None, False),
+        ("", True),
+        ("http://patreon.com/", True),
+        ("https://patreon.com/", False),
+    ),
+)
+def test_team_donation_link_validation(
+    team: Team, value: str, should_fail: bool
+) -> None:
+    team.donation_link = value
+    if should_fail:
+        with pytest.raises(ValidationError, match="Enter a valid URL."):
+            team.save()
+    else:
+        team.save()
