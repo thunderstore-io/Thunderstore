@@ -6,6 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from django.urls import reverse
 
+from thunderstore.community.models.community_site import CommunitySite
 from thunderstore.core.factories import UserFactory
 
 from ...cache.cache import CacheBustCondition
@@ -21,7 +22,8 @@ from ..views.repository import PackageVersionDetailView
 @pytest.mark.parametrize(
     "ordering", ("last-updated", "newest", "most-downloaded", "top-rated")
 )
-def test_package_list_view(client, community_site, ordering):
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_package_list_view(client, community_site, ordering: str, old_urls: bool):
     for i in range(4):
         team = TeamFactory.create(
             name=f"Tester_{i}",
@@ -65,7 +67,13 @@ def test_package_list_view(client, community_site, ordering):
 
     invalidate_cache(cache_bust_condition=CacheBustCondition.any_package_updated)
 
-    base_url = reverse("old_urls:packages.list")
+    if old_urls:
+        base_url = reverse("old_urls:packages.list")
+    else:
+        base_url = reverse(
+            "communities:community:packages.list",
+            kwargs={"community_identifier": community_site.community.identifier},
+        )
     url = f"{base_url}?ordering={ordering}"
     response = client.get(url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
@@ -199,47 +207,102 @@ def test_package_detail_version_view_get_object(
 
 
 @pytest.mark.django_db
-def test_package_create_view_not_logged_in(client, community_site):
-    response = client.get(
-        reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
-    )
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_package_create_view_not_logged_in(
+    client, community_site: CommunitySite, old_urls: bool
+):
+    if old_urls:
+        response = client.get(
+            reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
+        )
+    else:
+        response = client.get(
+            reverse(
+                "communities:community:packages.create",
+                kwargs={"community_identifier": community_site.community.identifier},
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
     assert response.status_code == 302
 
 
 @pytest.mark.django_db
-def test_package_create_view_logged_in(client, community_site):
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_package_create_view_logged_in(
+    client, community_site: CommunitySite, old_urls: bool
+):
     user = UserFactory.create()
     client.force_login(user)
-    response = client.get(
-        reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
-    )
+    if old_urls:
+        response = client.get(
+            reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
+        )
+    else:
+        response = client.get(
+            reverse(
+                "communities:community:packages.create",
+                kwargs={"community_identifier": community_site.community.identifier},
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
     assert response.status_code == 200
     assert b"Upload package" in response.content
 
 
 @pytest.mark.django_db
-def test_package_create_view_old_not_logged_in(client, community_site):
-    response = client.get(
-        reverse("old_urls:packages.create.old"),
-        HTTP_HOST=community_site.site.domain,
-    )
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_package_create_view_old_not_logged_in(
+    client, community_site: CommunitySite, old_urls: bool
+):
+    if old_urls:
+        response = client.get(
+            reverse("old_urls:packages.create.old"),
+            HTTP_HOST=community_site.site.domain,
+        )
+    else:
+        response = client.get(
+            reverse(
+                "communities:community:packages.create.old",
+                kwargs={"community_identifier": community_site.community.identifier},
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
     assert response.status_code == 302
 
 
 @pytest.mark.django_db
-def test_package_create_view_old_logged_in(client, community_site):
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_package_create_view_old_logged_in(
+    client, community_site: CommunitySite, old_urls: bool
+):
     user = UserFactory.create()
     client.force_login(user)
-    response = client.get(
-        reverse("old_urls:packages.create.old"),
-        HTTP_HOST=community_site.site.domain,
-    )
+    if old_urls:
+        response = client.get(
+            reverse("old_urls:packages.create.old"),
+            HTTP_HOST=community_site.site.domain,
+        )
+    else:
+        response = client.get(
+            reverse(
+                "communities:community:packages.create.old",
+                kwargs={"community_identifier": community_site.community.identifier},
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
     assert response.status_code == 200
     assert b"Upload package" in response.content
 
 
 @pytest.mark.django_db
-def test_package_download_view(user, client, community_site, manifest_v1_package_bytes):
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_package_download_view(
+    user,
+    client,
+    community_site: CommunitySite,
+    manifest_v1_package_bytes: bytes,
+    old_urls: bool,
+):
     team = Team.get_or_create_for_user(user)
     file_data = {"file": SimpleUploadedFile("mod.zip", manifest_v1_package_bytes)}
     form = PackageUploadForm(
@@ -256,17 +319,31 @@ def test_package_download_view(user, client, community_site, manifest_v1_package
     assert version.package.owner == team
 
     client.force_login(user)
-    response = client.get(
-        reverse(
-            "old_urls:packages.download",
-            kwargs={
-                "owner": version.package.owner.name,
-                "name": version.package.name,
-                "version": version.version_number,
-            },
-        ),
-        HTTP_HOST=community_site.site.domain,
-    )
+    if old_urls:
+        response = client.get(
+            reverse(
+                "old_urls:packages.download",
+                kwargs={
+                    "owner": version.package.owner.name,
+                    "name": version.package.name,
+                    "version": version.version_number,
+                },
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
+    else:
+        response = client.get(
+            reverse(
+                "packages.download",
+                kwargs={
+                    "owner": version.package.owner.name,
+                    "name": version.package.name,
+                    "version": version.version_number,
+                },
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
+
     assert response.status_code == 302
 
 

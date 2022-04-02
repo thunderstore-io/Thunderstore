@@ -24,6 +24,7 @@ def test_views_manifest_v1_validator(client, community_site):
 @pytest.mark.parametrize("auth_init_host", (None, "init.localhost"))
 @pytest.mark.parametrize("auth_exclusive_host", (None, "auth.localhost"))
 @pytest.mark.parametrize("secure", (False, True))
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_views_auth_login_link_generation(
     client,
     community_site,
@@ -31,40 +32,82 @@ def test_views_auth_login_link_generation(
     auth_init_host: str,
     auth_exclusive_host: str,
     secure: bool,
+    old_urls: bool,
 ) -> None:
     settings.SOCIAL_AUTH_INIT_HOST = auth_init_host
     settings.AUTH_EXCLUSIVE_HOST = auth_exclusive_host
     prefix = f"http{'s' if secure else ''}://{(auth_init_host or auth_exclusive_host) or community_site.site.domain}"
-    response = client.get(
-        reverse("old_urls:packages.list"),
-        HTTP_HOST=community_site.site.domain,
-        secure=secure,
-    )
-    assert (
-        f"{prefix}/auth/login/github/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fpackage%2F".encode()
-        in response.content
-    )
-    assert (
-        f"{prefix}/auth/login/discord/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fpackage%2F".encode()
-        in response.content
-    )
+    if old_urls:
+        response = client.get(
+            reverse("old_urls:packages.list"),
+            HTTP_HOST=community_site.site.domain,
+            secure=secure,
+        )
+        assert (
+            f"{prefix}/auth/login/github/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fpackage%2F".encode()
+            in response.content
+        )
+        assert (
+            f"{prefix}/auth/login/discord/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fpackage%2F".encode()
+            in response.content
+        )
+    else:
+        response = client.get(
+            reverse(
+                "communities:community:packages.list",
+                kwargs={"community_identifier": community_site.community.identifier},
+            ),
+            HTTP_HOST=community_site.site.domain,
+            secure=secure,
+        )
+        assert (
+            f"{prefix}/auth/login/github/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fc%2F{community_site.community.identifier}%2F".encode()
+            in response.content
+        )
+        assert (
+            f"{prefix}/auth/login/discord/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fc%2F{community_site.community.identifier}%2F".encode()
+            in response.content
+        )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("backend", ("discord", "github"))
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_views_disabled_for_auth_exclusive_host(
-    client, community_site, settings, backend: str
+    client,
+    community_site,
+    settings,
+    backend: str,
+    old_urls: bool,
 ):
-    response = client.get(
-        reverse("old_urls:packages.list"),
-        HTTP_HOST=community_site.site.domain,
-    )
+    if old_urls:
+        response = client.get(
+            reverse("old_urls:packages.list"),
+            HTTP_HOST=community_site.site.domain,
+        )
+    else:
+        response = client.get(
+            reverse(
+                "communities:community:packages.list",
+                kwargs={"community_identifier": community_site.community.identifier},
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
     assert response.status_code == 200
     settings.AUTH_EXCLUSIVE_HOST = community_site.site.domain
-    response = client.get(
-        reverse("old_urls:packages.list"),
-        HTTP_HOST=community_site.site.domain,
-    )
+    if old_urls:
+        response = client.get(
+            reverse("old_urls:packages.list"),
+            HTTP_HOST=community_site.site.domain,
+        )
+    else:
+        response = client.get(
+            reverse(
+                "communities:community:packages.list",
+                kwargs={"community_identifier": community_site.community.identifier},
+            ),
+            HTTP_HOST=community_site.site.domain,
+        )
     assert response.status_code == 404
     assert response.content == b"Community not found"
     response = client.get(
