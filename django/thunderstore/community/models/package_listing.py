@@ -90,20 +90,20 @@ class PackageListing(TimestampMixin, models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "packages.detail",
+            "old_urls:packages.detail",
             kwargs={"owner": self.package.owner.name, "name": self.package.name},
         )
 
     @cached_property
     def owner_url(self):
         return reverse(
-            "packages.list_by_owner", kwargs={"owner": self.package.owner.name}
+            "old_urls:packages.list_by_owner", kwargs={"owner": self.package.owner.name}
         )
 
     @cached_property
     def dependants_url(self):
         return reverse(
-            "packages.list_by_dependency",
+            "old_urls:packages.list_by_dependency",
             kwargs={
                 "owner": self.package.owner.name,
                 "name": self.package.name,

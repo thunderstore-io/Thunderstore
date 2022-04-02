@@ -204,12 +204,14 @@ class Package(models.Model):
 
     @cached_property
     def owner_url(self):
-        return reverse("packages.list_by_owner", kwargs={"owner": self.owner.name})
+        return reverse(
+            "old_urls:packages.list_by_owner", kwargs={"owner": self.owner.name}
+        )
 
     @cached_property
     def dependants_url(self):
         return reverse(
-            "packages.list_by_dependency",
+            "old_urls:packages.list_by_dependency",
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
@@ -222,7 +224,8 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "packages.detail", kwargs={"owner": self.owner.name, "name": self.name}
+            "old_urls:packages.detail",
+            kwargs={"owner": self.owner.name, "name": self.name},
         )
 
     def get_full_url(self, site: Site):

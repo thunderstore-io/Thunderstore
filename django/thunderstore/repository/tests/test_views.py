@@ -65,7 +65,7 @@ def test_package_list_view(client, community_site, ordering):
 
     invalidate_cache(cache_bust_condition=CacheBustCondition.any_package_updated)
 
-    base_url = reverse("packages.list")
+    base_url = reverse("old_urls:packages.list")
     url = f"{base_url}?ordering={ordering}"
     response = client.get(url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
@@ -201,7 +201,7 @@ def test_package_detail_version_view_get_object(
 @pytest.mark.django_db
 def test_package_create_view_not_logged_in(client, community_site):
     response = client.get(
-        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+        reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
     )
     assert response.status_code == 302
 
@@ -211,7 +211,7 @@ def test_package_create_view_logged_in(client, community_site):
     user = UserFactory.create()
     client.force_login(user)
     response = client.get(
-        reverse("packages.create"), HTTP_HOST=community_site.site.domain
+        reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
     )
     assert response.status_code == 200
     assert b"Upload package" in response.content
@@ -220,7 +220,7 @@ def test_package_create_view_logged_in(client, community_site):
 @pytest.mark.django_db
 def test_package_create_view_old_not_logged_in(client, community_site):
     response = client.get(
-        reverse("packages.create.old"),
+        reverse("old_urls:packages.create.old"),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 302
@@ -231,7 +231,7 @@ def test_package_create_view_old_logged_in(client, community_site):
     user = UserFactory.create()
     client.force_login(user)
     response = client.get(
-        reverse("packages.create.old"),
+        reverse("old_urls:packages.create.old"),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -258,7 +258,7 @@ def test_package_download_view(user, client, community_site, manifest_v1_package
     client.force_login(user)
     response = client.get(
         reverse(
-            "packages.download",
+            "old_urls:packages.download",
             kwargs={
                 "owner": version.package.owner.name,
                 "name": version.package.name,

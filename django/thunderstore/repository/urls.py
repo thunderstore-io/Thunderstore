@@ -22,10 +22,14 @@ from thunderstore.repository.views.team_settings import (
     SettingsTeamServiceAccountView,
 )
 
-urlpatterns = [
+legacy_package_urls = [
     path("", PackageListView.as_view(), name="packages.list"),
     path("create/", PackageCreateView.as_view(), name="packages.create"),
-    path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
+    path(
+        "create/old/",
+        PackageCreateOldView.as_view(),
+        name="packages.create.old",
+    ),
     path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
     path(
         "download/<str:owner>/<str:name>/<str:version>/",

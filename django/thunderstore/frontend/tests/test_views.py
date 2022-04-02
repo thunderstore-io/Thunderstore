@@ -36,7 +36,7 @@ def test_views_auth_login_link_generation(
     settings.AUTH_EXCLUSIVE_HOST = auth_exclusive_host
     prefix = f"http{'s' if secure else ''}://{(auth_init_host or auth_exclusive_host) or community_site.site.domain}"
     response = client.get(
-        reverse("packages.list"),
+        reverse("old_urls:packages.list"),
         HTTP_HOST=community_site.site.domain,
         secure=secure,
     )
@@ -56,13 +56,13 @@ def test_views_disabled_for_auth_exclusive_host(
     client, community_site, settings, backend: str
 ):
     response = client.get(
-        reverse("packages.list"),
+        reverse("old_urls:packages.list"),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
     settings.AUTH_EXCLUSIVE_HOST = community_site.site.domain
     response = client.get(
-        reverse("packages.list"),
+        reverse("old_urls:packages.list"),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
