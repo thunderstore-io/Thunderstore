@@ -7,6 +7,7 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
+from thunderstore.community.urls import community_urls
 from thunderstore.frontend.views import (
     ManifestV1ValidatorView,
     MarkdownPreviewView,
@@ -15,6 +16,7 @@ from thunderstore.frontend.views import (
 )
 from thunderstore.repository.urls import urlpatterns as repository_urls
 from thunderstore.repository.views import PackageListView
+from thunderstore.repository.views.repository import PackageDownloadView
 
 from ..community.views import FaviconView
 from .api_urls import api_urls
@@ -32,7 +34,13 @@ urlpatterns = [
     path("robots.txt", robots_txt_view, name="robots.txt"),
     path(AUTH_ROOT, include("social_django.urls", namespace="social")),
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
+    path(
+        "packages/download/t/<str:owner>/p/<str:name>/v/<str:version>/",
+        PackageDownloadView.as_view(),
+        name="packages.download",
+    ),
     path("package/", include(repository_urls)),
+    path("c/", include((community_urls, "communities"), namespace="communities")),
     path("settings/", include(settings_urls)),
     path("favicon.ico", FaviconView.as_view()),
     path("djangoadmin/", admin.site.urls),
