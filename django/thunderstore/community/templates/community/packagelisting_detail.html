@@ -132,6 +132,13 @@
             <i class="fa fa-download mr-2" aria-hidden="true"></i>Manual Download
         </a>
     </div>
+    {% if object.package.owner.donation_link %}
+    <div class="col-12 mt-2">
+        <a href="{{ object.package.owner.donation_link }}" target="_blank" rel="noopener" type="button" class="btn btn-info w-100 text-large">
+            <i class="fa fa-heart mr-2" aria-hidden="true"></i>Support the creator
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 {% with object.package.dependencies as dependencies %}
