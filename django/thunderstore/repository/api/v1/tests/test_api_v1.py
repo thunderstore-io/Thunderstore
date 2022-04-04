@@ -18,14 +18,21 @@ from thunderstore.repository.models.cache import APIV1PackageCache
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_api_v1_package_list(
     api_client: APIClient,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
+    old_urls: str,
 ) -> None:
     active_package_listing.package.owner.donation_link = "https://example.org/"
     active_package_listing.package.owner.save()
-    response = api_client.get("/api/v1/package/")
+    if old_urls:
+        response = api_client.get("/api/v1/package/")
+    else:
+        response = api_client.get(
+            f"/c/{community_site.community.identifier}/api/v1/package/"
+        )
     assert response.status_code == 503
 
     assert (
@@ -37,7 +44,12 @@ def test_api_v1_package_list(
     assert cache is not None
 
     # Should get a full response
-    response = api_client.get("/api/v1/package/")
+    if old_urls:
+        response = api_client.get("/api/v1/package/")
+    else:
+        response = api_client.get(
+            f"/c/{community_site.community.identifier}/api/v1/package/"
+        )
     assert response.status_code == 200
 
     # The response is gzipped
@@ -55,10 +67,16 @@ def test_api_v1_package_list(
     assert response["Content-Encoding"] == cache.content_encoding
 
     # Should get a 304 since Last-Modified matches
-    response = api_client.get(
-        path="/api/v1/package/",
-        HTTP_IF_MODIFIED_SINCE=last_modified,
-    )
+    if old_urls:
+        response = api_client.get(
+            path="/api/v1/package/",
+            HTTP_IF_MODIFIED_SINCE=last_modified,
+        )
+    else:
+        response = api_client.get(
+            path=f"/c/{community_site.community.identifier}/api/v1/package/",
+            HTTP_IF_MODIFIED_SINCE=last_modified,
+        )
     assert response.status_code == 304
 
     # We need to sleep at least 0.5 seconds to ensure differing timestamp
@@ -73,9 +91,16 @@ def test_api_v1_package_list(
     assert new_cache.last_modified > cache.last_modified
 
     # Should get a 200 since cache was regenerated
-    response = api_client.get(
-        path="/api/v1/package/", HTTP_IF_MODIFIED_SINCE=last_modified
-    )
+    if old_urls:
+        response = api_client.get(
+            path="/api/v1/package/",
+            HTTP_IF_MODIFIED_SINCE=last_modified,
+        )
+    else:
+        response = api_client.get(
+            path=f"/c/{community_site.community.identifier}/api/v1/package/",
+            HTTP_IF_MODIFIED_SINCE=last_modified,
+        )
     assert response.status_code == 200
     assert response["Last-Modified"] != last_modified
     assert response["Last-Modified"] == http_date(
@@ -94,14 +119,21 @@ def test_api_v1_package_list(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_api_v1_package_detail(
     api_client: APIClient,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
+    old_urls: str,
 ) -> None:
-    response = api_client.get(
-        f"/api/v1/package/{active_package_listing.package.uuid4}/",
-    )
+    if old_urls:
+        response = api_client.get(
+            f"/api/v1/package/{active_package_listing.package.uuid4}/",
+        )
+    else:
+        response = api_client.get(
+            f"/c/{community_site.community.identifier}/api/v1/package/{active_package_listing.package.uuid4}/",
+        )
     assert community_site.community == active_package_listing.community
     assert response.status_code == 200
     result = response.json()
@@ -124,9 +156,12 @@ def test_api_v1_package_detail(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_api_v1_rate_package(
     api_client: APIClient,
+    community_site: CommunitySite,
     active_package_listing: PackageListing,
+    old_urls: str,
 ) -> None:
     uuid = active_package_listing.package.uuid4
     user = UserFactory.create()
@@ -136,6 +171,18 @@ def test_api_v1_rate_package(
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
+    if old_urls:
+        response = api_client.post(
+            f"/api/v1/package/{uuid}/rate/",
+            json.dumps({"target_state": "rated"}),
+            content_type="application/json",
+        )
+    else:
+        response = api_client.post(
+            f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
+            json.dumps({"target_state": "rated"}),
+            content_type="application/json",
+        )
     assert response.status_code == 200
     result = response.json()
     assert result["state"] == "rated"
@@ -153,16 +200,26 @@ def test_api_v1_rate_package(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_api_v1_rate_package_permission_denied(
     api_client: APIClient,
+    community_site: CommunitySite,
     active_package_listing: PackageListing,
+    old_urls: str,
 ) -> None:
     uuid = active_package_listing.package.uuid4
-    response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
-        json.dumps({"target_state": "rated"}),
-        content_type="application/json",
-    )
+    if old_urls:
+        response = api_client.post(
+            f"/api/v1/package/{uuid}/rate/",
+            json.dumps({"target_state": "rated"}),
+            content_type="application/json",
+        )
+    else:
+        response = api_client.post(
+            f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
+            json.dumps({"target_state": "rated"}),
+            content_type="application/json",
+        )
     assert response.status_code == 403
     assert response.json()["detail"] == "Authentication credentials were not provided."
 
