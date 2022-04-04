@@ -22,16 +22,26 @@ class APIV1PackageCache(S3FileMixin):
 
     @classmethod
     def get_latest_for_community(
-        cls, community: Optional[Community]
+        cls,
+        community: Optional[Community] = None,
+        community_identifier: Optional[str] = None,
     ) -> Optional["APIV1PackageCache"]:
-        if community is None:
+        if community_identifier:
+            return (
+                APIV1PackageCache.objects.active()
+                .filter(community__identifier=community_identifier)
+                .order_by("-last_modified")
+                .first()
+            )
+        elif community:
+            return (
+                APIV1PackageCache.objects.active()
+                .filter(community=community)
+                .order_by("-last_modified")
+                .first()
+            )
+        else:
             return None
-        return (
-            APIV1PackageCache.objects.active()
-            .filter(community=community)
-            .order_by("-last_modified")
-            .first()
-        )
 
     @classmethod
     def update_for_community(
