@@ -1,5 +1,6 @@
-from django.urls import path
+from django.urls import include, path
 
+from thunderstore.repository.api.v1.urls import urls as v1_urls
 from thunderstore.repository.views import (
     PackageCreateOldView,
     PackageCreateView,
@@ -61,6 +62,7 @@ legacy_package_urls = [
 
 package_urls = [
     path("", PackageListView.as_view(), name="packages.list"),
+    path("api/v1/", include((v1_urls, "api"), namespace="api")),
     path("create/", PackageCreateView.as_view(), name="packages.create"),
     path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
     path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),

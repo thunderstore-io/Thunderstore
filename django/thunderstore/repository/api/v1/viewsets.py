@@ -83,7 +83,7 @@ class PackageViewSet(
         authentication_classes=[SessionAuthentication, BasicAuthentication],
         permission_classes=[IsAuthenticated],
     )
-    def rate(self, request, uuid4=None):
+    def rate(self, request, uuid4=None, community_identifier=None):
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
         user = request.user
         ensure_can_rate_package(user, package)
