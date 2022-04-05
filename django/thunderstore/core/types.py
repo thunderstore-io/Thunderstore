@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     class HttpRequestType(HttpRequest):
         community: "Optional[Community]"
 
-
 else:
     UserType = None
     HttpRequestType = None

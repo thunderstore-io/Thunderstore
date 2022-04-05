@@ -53,14 +53,10 @@ def test_community_ensure_user_can_manage_packages(
     elif user_type == TestUserTypes.service_account:
         assert result is False
         assert "Service accounts are unable to manage packages" in error
-    elif (
-        role
-        not in (
-            CommunityMemberRole.moderator,
-            CommunityMemberRole.owner,
-        )
-        and not (user.is_superuser or user.is_staff)
-    ):
+    elif role not in (
+        CommunityMemberRole.moderator,
+        CommunityMemberRole.owner,
+    ) and not (user.is_superuser or user.is_staff):
         assert result is False
         assert "Must be a moderator or higher to manage packages" in error
     else:
