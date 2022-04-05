@@ -1,6 +1,6 @@
 import pytest
 
-from thunderstore.community.api.experimental.serializers import CommunitySerializer
+from thunderstore.frontend.api.experimental.serializers.views import CommunitySerializer
 
 
 @pytest.mark.django_db

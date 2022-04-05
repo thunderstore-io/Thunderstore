@@ -8,6 +8,18 @@ from thunderstore.community.models import (
 from thunderstore.repository.models import Package, PackageVersion, Team
 
 
+class CommunitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Community
+        fields = (
+            "identifier",
+            "name",
+            "discord_url",
+            "wiki_url",
+            "require_package_listing_approval",
+        )
+
+
 class CommunityCardSerializer(serializers.Serializer):
     """
     Data shown on "CommunityCard" component on frontend.
