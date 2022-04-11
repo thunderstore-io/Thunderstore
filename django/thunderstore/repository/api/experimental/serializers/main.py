@@ -2,12 +2,12 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField, empty
 
-from thunderstore.community.api.experimental.serializers import (
+from thunderstore.community.models import Community, PackageCategory, PackageListing
+from thunderstore.core.utils import make_full_url
+from thunderstore.frontend.api.experimental.serializers.views import (
     CommunitySerializer,
     PackageCategorySerializer,
 )
-from thunderstore.community.models import Community, PackageCategory, PackageListing
-from thunderstore.core.utils import make_full_url
 from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_upload import PackageUploadForm
 from thunderstore.repository.serializer_fields import ModelChoiceField

@@ -6,13 +6,13 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.community.api.experimental.serializers import (
-    CommunitySerializer,
-    PackageCategorySerializer,
-)
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
+from thunderstore.frontend.api.experimental.serializers.views import (
+    CommunitySerializer,
+    PackageCategorySerializer,
+)
 from thunderstore.repository.models import Team, TeamMember, TeamMemberRole
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.usermedia.models import UserMedia
