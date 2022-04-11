@@ -2,6 +2,7 @@ import gzip
 import json
 import time
 from io import BytesIO
+from typing import Optional
 
 import pytest
 from django.conf import settings
@@ -22,6 +23,8 @@ def test_api_v1_package_list(
     community_site: CommunitySite,
     active_package_listing: PackageListing,
 ) -> None:
+    active_package_listing.package.owner.donation_link = "https://example.org/"
+    active_package_listing.package.owner.save()
     response = api_client.get("/api/v1/package/")
     assert response.status_code == 503
 
@@ -45,6 +48,7 @@ def test_api_v1_package_list(
     assert len(result) == 1
     assert result[0]["name"] == active_package_listing.package.name
     assert result[0]["full_name"] == active_package_listing.package.full_package_name
+    assert result[0]["donation_link"] == "https://example.org/"
     last_modified = response["Last-Modified"]
     assert last_modified == http_date(int(cache.last_modified.timestamp()))
     assert response["Content-Type"] == cache.content_type
@@ -80,6 +84,7 @@ def test_api_v1_package_list(
     assert len(result) == 1
     assert result[0]["name"] == active_package_listing.package.name
     assert result[0]["full_name"] == active_package_listing.package.full_package_name
+    assert result[0]["donation_link"] == "https://example.org/"
     assert result[0]["package_url"].startswith(
         f"{settings.PROTOCOL}{community_site.site.domain}"
     )
@@ -160,3 +165,38 @@ def test_api_v1_rate_package_permission_denied(
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "Authentication credentials were not provided."
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "donation_link, should_exist",
+    (
+        (None, False),
+        ("https://example.org/", True),
+    ),
+)
+def test_api_v1_package_listing_serializer_donation_link_omission(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    donation_link: Optional[str],
+    should_exist: bool,
+) -> None:
+    active_package_listing.package.owner.donation_link = donation_link
+    active_package_listing.package.owner.save()
+    update_api_v1_caches()
+    response = api_client.get("/api/v1/package/")
+    assert response.status_code == 200
+
+    # The response is gzipped
+    content = BytesIO(response.content)
+    with gzip.GzipFile(fileobj=content, mode="r") as f:
+        result = json.loads(f.read())
+
+    assert len(result) == 1
+    assert result[0]["name"] == active_package_listing.package.name
+    assert result[0]["full_name"] == active_package_listing.package.full_package_name
+    if should_exist:
+        assert "donation_link" in result[0]
+        assert result[0]["donation_link"] == donation_link
+    else:
+        assert "donation_link" not in result[0]

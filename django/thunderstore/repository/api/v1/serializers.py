@@ -61,6 +61,7 @@ class PackageListingSerializer(ModelSerializer):
     full_name = SerializerMethodField()
     owner = SerializerMethodField()
     package_url = SerializerMethodField()
+    donation_link = SerializerMethodField()
     date_created = RelatedObjectField(relation_name="package")
     date_updated = RelatedObjectField(relation_name="package")
     uuid4 = RelatedObjectField(relation_name="package")
@@ -83,8 +84,20 @@ class PackageListingSerializer(ModelSerializer):
     def get_package_url(self, instance):
         return instance.package.get_full_url(self.context["community_site"].site)
 
+    def get_donation_link(self, instance):
+        return instance.package.owner.donation_link
+
     def get_categories(self, instance):
         return set(instance.categories.all().values_list("name", flat=True))
+
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        # To ensure backwards compatibility is not broken if this field is
+        # removed in the future, omit the key entirely if it's not set, forcing
+        # clients to support it not existing.
+        if not result["donation_link"]:
+            del result["donation_link"]
+        return result
 
     class Meta:
         model = PackageListing
@@ -93,6 +106,7 @@ class PackageListingSerializer(ModelSerializer):
             "full_name",
             "owner",
             "package_url",
+            "donation_link",
             "date_created",
             "date_updated",
             "uuid4",
