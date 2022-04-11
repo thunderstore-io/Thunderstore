@@ -58,23 +58,14 @@ class PackageViewSet(
         )
 
     def get_queryset(self):
-        if self.community_identifier:
-            return get_package_listing_queryset(
-                community_identifier=self.community_identifier
-            )
         return get_package_listing_queryset(
-            community_identifier=self.request.community.identifier
+            community_identifier=self.community_identifier
         )
 
     def list(self, request: HttpRequestType, *args: Any, **kwargs: Any) -> HttpResponse:
-        if self.community_identifier:
-            cache = APIV1PackageCache.get_latest_for_community(
-                community_identifier=self.community_identifier
-            )
-        else:
-            cache = APIV1PackageCache.get_latest_for_community(
-                community=request.community
-            )
+        cache = APIV1PackageCache.get_latest_for_community(
+            community_identifier=self.community_identifier
+        )
         if not cache or not cache.data:
             return self.get_no_cache_response()
         last_modified = int(cache.last_modified.timestamp())
