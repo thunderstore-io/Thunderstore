@@ -34,11 +34,6 @@ urlpatterns = [
     path("robots.txt", robots_txt_view, name="robots.txt"),
     path(AUTH_ROOT, include("social_django.urls", namespace="social")),
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
-    path(
-        "packages/download/t/<str:owner>/p/<str:name>/v/<str:version>/",
-        PackageDownloadView.as_view(),
-        name="packages.download",
-    ),
     path("package/", include((legacy_package_urls, "old_urls"), namespace="old_urls")),
     path("c/", include((community_urls, "communities"), namespace="communities")),
     path("settings/", include(settings_urls)),

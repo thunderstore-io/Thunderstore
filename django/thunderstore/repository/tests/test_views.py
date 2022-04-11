@@ -289,13 +289,11 @@ def test_package_create_view_old_logged_in(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("old_urls", (False, True))
 def test_package_download_view(
     user,
     client,
     community_site: CommunitySite,
     manifest_v1_package_bytes: bytes,
-    old_urls: bool,
 ):
     team = Team.get_or_create_for_user(user)
     file_data = {"file": SimpleUploadedFile("mod.zip", manifest_v1_package_bytes)}
@@ -313,24 +311,14 @@ def test_package_download_view(
     assert version.package.owner == team
 
     client.force_login(user)
-    if old_urls:
-        url = reverse(
-            "old_urls:packages.download",
-            kwargs={
-                "owner": version.package.owner.name,
-                "name": version.package.name,
-                "version": version.version_number,
-            },
-        )
-    else:
-        url = reverse(
-            "packages.download",
-            kwargs={
-                "owner": version.package.owner.name,
-                "name": version.package.name,
-                "version": version.version_number,
-            },
-        )
+    url = reverse(
+        "old_urls:packages.download",
+        kwargs={
+            "owner": version.package.owner.name,
+            "name": version.package.name,
+            "version": version.version_number,
+        },
+    )
     response = client.get(
         url,
         HTTP_HOST=community_site.site.domain,
