@@ -3,11 +3,12 @@ from typing import TYPE_CHECKING, Optional
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from thunderstore.community.utils import get_community_site_for_request
 from thunderstore.core.urls import AUTH_ROOT
+from thunderstore.core.utils import make_full_url
 
 if TYPE_CHECKING:
     from thunderstore.community.models import Community, CommunitySite
@@ -41,6 +42,12 @@ class CommunitySiteMiddleware:
         self.auth_path = f"/{AUTH_ROOT}"
 
     def get_404(self) -> HttpResponse:
+        # TODO: Replace with absolute link to main page instead of guessing
+        main_site_domain = settings.SESSION_COOKIE_DOMAIN
+        if main_site_domain is not None:
+            # TODO: Replace with unified URL building utility
+            main_site_url = f"{settings.PROTOCOL}{main_site_domain}"
+            return HttpResponseRedirect(redirect_to=main_site_url)
         return HttpResponse(content=b"Community not found", status=404)
 
     def __call__(self, request: CommunityHttpRequest) -> HttpResponse:
