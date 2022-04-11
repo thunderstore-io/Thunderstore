@@ -17,6 +17,7 @@ from thunderstore.repository.views.team_settings import (
     SettingsTeamCreateView,
     SettingsTeamDetailView,
     SettingsTeamDisbandView,
+    SettingsTeamDonationLinkView,
     SettingsTeamLeaveView,
     SettingsTeamListView,
     SettingsTeamServiceAccountView,
@@ -94,5 +95,10 @@ settings_urls = [
         "teams/<str:name>/disband/",
         SettingsTeamDisbandView.as_view(),
         name="settings.teams.detail.disband",
+    ),
+    path(
+        "teams/<str:name>/donation-link/",
+        SettingsTeamDonationLinkView.as_view(),
+        name="settings.teams.detail.donation_link",
     ),
 ]

@@ -141,6 +141,13 @@ class Team(models.Model):
         )
 
     @property
+    def donation_link_url(self):
+        return reverse(
+            "settings.teams.detail.donation_link",
+            kwargs={"name": self.name},
+        )
+
+    @property
     def service_accounts_url(self):
         return reverse(
             "settings.teams.detail.service_accounts",
@@ -316,6 +323,17 @@ class Team(models.Model):
         if self.owned_packages.exists():
             raise ValidationError("Unable to disband teams with packages")
 
+    def ensure_user_can_edit_info(self, user: Optional[UserType]):
+        if not user or not user.is_authenticated:
+            raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
+        if hasattr(user, "service_account"):
+            raise ValidationError("Service accounts are unable to edit team info")
+        membership = self.get_membership_for_user(user)
+        if not membership or membership.role != TeamMemberRole.owner:
+            raise ValidationError("Must be an owner to edit team info")
+
     def can_user_upload(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_upload_package(user))
 
@@ -343,3 +361,6 @@ class Team(models.Model):
 
     def can_user_disband(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_disband(user))
+
+    def can_user_edit_info(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_edit_info(user))

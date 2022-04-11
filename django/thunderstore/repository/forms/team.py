@@ -158,3 +158,26 @@ class DisbandTeamForm(forms.ModelForm):
     def save(self, **kwargs):
         self.instance.ensure_user_can_disband(self.user)
         self.instance.delete()
+
+
+class DonationLinkTeamForm(forms.ModelForm):
+    instance: Team
+
+    class Meta:
+        model = Team
+        fields = ["donation_link"]
+
+    def __init__(self, user: UserType, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def clean(self):
+        if not self.instance.pk:
+            raise ValidationError("Missing team instance")
+        self.instance.ensure_user_can_edit_info(self.user)
+        return super().clean()
+
+    @transaction.atomic
+    def save(self, **kwargs):
+        self.instance.ensure_user_can_edit_info(self.user)
+        return super().save(**kwargs)

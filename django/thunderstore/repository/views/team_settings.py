@@ -4,7 +4,13 @@ from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation, ValidationError
 from django.db import transaction
 from django.shortcuts import redirect, render
-from django.views.generic import CreateView, DetailView, FormView, TemplateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    FormView,
+    TemplateView,
+    UpdateView,
+)
 
 from thunderstore.account.forms import (
     CreateServiceAccountForm,
@@ -16,6 +22,7 @@ from thunderstore.repository.forms import (
     AddTeamMemberForm,
     CreateTeamForm,
     DisbandTeamForm,
+    DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
     TeamMemberRole,
@@ -250,3 +257,21 @@ class SettingsTeamAddServiceAccountView(TeamDetailView, UserFormKwargs, FormView
         context["api_token"] = form.api_token
         context["nickname"] = form.cleaned_data["nickname"]
         return render(self.request, self.template_name, context)
+
+
+class SettingsTeamDonationLinkView(TeamDetailView, UserFormKwargs, UpdateView):
+    template_name = "settings/team_donation_link.html"
+    form_class = DonationLinkTeamForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = f"Team {self.object.name} Donation Link"
+        context["can_edit"] = self.object.can_user_edit_info(self.request.user)
+        return context
+
+    def get_success_url(self):
+        return self.object.donation_link_url
+
+    def form_valid(self, form: DonationLinkTeamForm):
+        messages.success(self.request, "Donation link saved")
+        return super().form_valid(form)
