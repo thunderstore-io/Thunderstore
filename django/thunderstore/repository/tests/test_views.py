@@ -212,17 +212,16 @@ def test_package_create_view_not_logged_in(
     client, community_site: CommunitySite, old_urls: bool
 ):
     if old_urls:
-        response = client.get(
-            reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
-        )
+        url = reverse("old_urls:packages.create")
     else:
-        response = client.get(
-            reverse(
-                "communities:community:packages.create",
-                kwargs={"community_identifier": community_site.community.identifier},
-            ),
-            HTTP_HOST=community_site.site.domain,
+        url = reverse(
+            "communities:community:packages.create",
+            kwargs={"community_identifier": community_site.community.identifier},
         )
+    response = client.get(
+        url,
+        HTTP_HOST=community_site.site.domain,
+    )
     assert response.status_code == 302
 
 
@@ -234,17 +233,16 @@ def test_package_create_view_logged_in(
     user = UserFactory.create()
     client.force_login(user)
     if old_urls:
-        response = client.get(
-            reverse("old_urls:packages.create"), HTTP_HOST=community_site.site.domain
-        )
+        url = reverse("old_urls:packages.create")
     else:
-        response = client.get(
-            reverse(
-                "communities:community:packages.create",
-                kwargs={"community_identifier": community_site.community.identifier},
-            ),
-            HTTP_HOST=community_site.site.domain,
+        url = reverse(
+            "communities:community:packages.create",
+            kwargs={"community_identifier": community_site.community.identifier},
         )
+    response = client.get(
+        url,
+        HTTP_HOST=community_site.site.domain,
+    )
     assert response.status_code == 200
     assert b"Upload package" in response.content
 
@@ -255,18 +253,16 @@ def test_package_create_view_old_not_logged_in(
     client, community_site: CommunitySite, old_urls: bool
 ):
     if old_urls:
-        response = client.get(
-            reverse("old_urls:packages.create.old"),
-            HTTP_HOST=community_site.site.domain,
-        )
+        url = reverse("old_urls:packages.create.old")
     else:
-        response = client.get(
-            reverse(
-                "communities:community:packages.create.old",
-                kwargs={"community_identifier": community_site.community.identifier},
-            ),
-            HTTP_HOST=community_site.site.domain,
+        url = reverse(
+            "communities:community:packages.create.old",
+            kwargs={"community_identifier": community_site.community.identifier},
         )
+    response = client.get(
+        url,
+        HTTP_HOST=community_site.site.domain,
+    )
     assert response.status_code == 302
 
 
@@ -278,18 +274,16 @@ def test_package_create_view_old_logged_in(
     user = UserFactory.create()
     client.force_login(user)
     if old_urls:
-        response = client.get(
-            reverse("old_urls:packages.create.old"),
-            HTTP_HOST=community_site.site.domain,
-        )
+        url = reverse("old_urls:packages.create.old")
     else:
-        response = client.get(
-            reverse(
-                "communities:community:packages.create.old",
-                kwargs={"community_identifier": community_site.community.identifier},
-            ),
-            HTTP_HOST=community_site.site.domain,
+        url = reverse(
+            "communities:community:packages.create.old",
+            kwargs={"community_identifier": community_site.community.identifier},
         )
+    response = client.get(
+        url,
+        HTTP_HOST=community_site.site.domain,
+    )
     assert response.status_code == 200
     assert b"Upload package" in response.content
 
@@ -320,29 +314,27 @@ def test_package_download_view(
 
     client.force_login(user)
     if old_urls:
-        response = client.get(
-            reverse(
-                "old_urls:packages.download",
-                kwargs={
-                    "owner": version.package.owner.name,
-                    "name": version.package.name,
-                    "version": version.version_number,
-                },
-            ),
-            HTTP_HOST=community_site.site.domain,
+        url = reverse(
+            "old_urls:packages.download",
+            kwargs={
+                "owner": version.package.owner.name,
+                "name": version.package.name,
+                "version": version.version_number,
+            },
         )
     else:
-        response = client.get(
-            reverse(
-                "packages.download",
-                kwargs={
-                    "owner": version.package.owner.name,
-                    "name": version.package.name,
-                    "version": version.version_number,
-                },
-            ),
-            HTTP_HOST=community_site.site.domain,
+        url = reverse(
+            "packages.download",
+            kwargs={
+                "owner": version.package.owner.name,
+                "name": version.package.name,
+                "version": version.version_number,
+            },
         )
+    response = client.get(
+        url,
+        HTTP_HOST=community_site.site.domain,
+    )
 
     assert response.status_code == 302
 

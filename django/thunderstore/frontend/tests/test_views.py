@@ -81,33 +81,22 @@ def test_views_disabled_for_auth_exclusive_host(
     old_urls: bool,
 ):
     if old_urls:
-        response = client.get(
-            reverse("old_urls:packages.list"),
-            HTTP_HOST=community_site.site.domain,
-        )
+        url = reverse("old_urls:packages.list")
     else:
-        response = client.get(
-            reverse(
-                "communities:community:packages.list",
-                kwargs={"community_identifier": community_site.community.identifier},
-            ),
-            HTTP_HOST=community_site.site.domain,
+        url = reverse(
+            "communities:community:packages.list",
+            kwargs={"community_identifier": community_site.community.identifier},
         )
+    response = client.get(
+        url,
+        HTTP_HOST=community_site.site.domain,
+    )
     assert response.status_code == 200
     settings.AUTH_EXCLUSIVE_HOST = community_site.site.domain
-    if old_urls:
-        response = client.get(
-            reverse("old_urls:packages.list"),
-            HTTP_HOST=community_site.site.domain,
-        )
-    else:
-        response = client.get(
-            reverse(
-                "communities:community:packages.list",
-                kwargs={"community_identifier": community_site.community.identifier},
-            ),
-            HTTP_HOST=community_site.site.domain,
-        )
+    response = client.get(
+        url,
+        HTTP_HOST=community_site.site.domain,
+    )
     assert response.status_code == 404
     assert response.content == b"Community not found"
     response = client.get(
