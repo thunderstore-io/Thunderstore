@@ -23,33 +23,31 @@ def test_api_v1_package_list(
     api_client: APIClient,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
-    old_urls: str,
+    old_urls: bool,
 ) -> None:
     active_package_listing.package.owner.donation_link = "https://example.org/"
     active_package_listing.package.owner.save()
     if old_urls:
-        response = api_client.get("/api/v1/package/")
+        url = "/api/v1/package/"
     else:
-        response = api_client.get(
-            f"/c/{community_site.community.identifier}/api/v1/package/"
-        )
+        url = f"/c/{community_site.community.identifier}/api/v1/package/"
+    response = api_client.get(url)
     assert response.status_code == 503
 
     assert (
-        APIV1PackageCache.get_latest_for_community(active_package_listing.community)
+        APIV1PackageCache.get_latest_for_community(
+            community_identifier=active_package_listing.community.identifier
+        )
         is None
     )
     update_api_v1_caches()
-    cache = APIV1PackageCache.get_latest_for_community(active_package_listing.community)
+    cache = APIV1PackageCache.get_latest_for_community(
+        community_identifier=active_package_listing.community.identifier
+    )
     assert cache is not None
 
     # Should get a full response
-    if old_urls:
-        response = api_client.get("/api/v1/package/")
-    else:
-        response = api_client.get(
-            f"/c/{community_site.community.identifier}/api/v1/package/"
-        )
+    response = api_client.get(url)
     assert response.status_code == 200
 
     # The response is gzipped
@@ -85,22 +83,16 @@ def test_api_v1_package_list(
     time.sleep(1)
     update_api_v1_caches()
     new_cache = APIV1PackageCache.get_latest_for_community(
-        active_package_listing.community
+        community_identifier=active_package_listing.community.identifier
     )
     assert new_cache != cache
     assert new_cache.last_modified > cache.last_modified
 
     # Should get a 200 since cache was regenerated
-    if old_urls:
-        response = api_client.get(
-            path="/api/v1/package/",
-            HTTP_IF_MODIFIED_SINCE=last_modified,
-        )
-    else:
-        response = api_client.get(
-            path=f"/c/{community_site.community.identifier}/api/v1/package/",
-            HTTP_IF_MODIFIED_SINCE=last_modified,
-        )
+    response = api_client.get(
+        path=url,
+        HTTP_IF_MODIFIED_SINCE=last_modified,
+    )
     assert response.status_code == 200
     assert response["Last-Modified"] != last_modified
     assert response["Last-Modified"] == http_date(
@@ -124,16 +116,13 @@ def test_api_v1_package_detail(
     api_client: APIClient,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
-    old_urls: str,
+    old_urls: bool,
 ) -> None:
     if old_urls:
-        response = api_client.get(
-            f"/api/v1/package/{active_package_listing.package.uuid4}/",
-        )
+        url = f"/api/v1/package/{active_package_listing.package.uuid4}/"
     else:
-        response = api_client.get(
-            f"/c/{community_site.community.identifier}/api/v1/package/{active_package_listing.package.uuid4}/",
-        )
+        url = f"/c/{community_site.community.identifier}/api/v1/package/{active_package_listing.package.uuid4}/"
+    response = api_client.get(url)
     assert community_site.community == active_package_listing.community
     assert response.status_code == 200
     result = response.json()
@@ -161,35 +150,27 @@ def test_api_v1_rate_package(
     api_client: APIClient,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
-    old_urls: str,
+    old_urls: bool,
 ) -> None:
     uuid = active_package_listing.package.uuid4
     user = UserFactory.create()
     api_client.force_authenticate(user)
+    if old_urls:
+        url = f"/api/v1/package/{uuid}/rate/"
+    else:
+        url = f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/"
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        url,
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
-    if old_urls:
-        response = api_client.post(
-            f"/api/v1/package/{uuid}/rate/",
-            json.dumps({"target_state": "rated"}),
-            content_type="application/json",
-        )
-    else:
-        response = api_client.post(
-            f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
-            json.dumps({"target_state": "rated"}),
-            content_type="application/json",
-        )
     assert response.status_code == 200
     result = response.json()
     assert result["state"] == "rated"
     assert result["score"] == 1
 
     response = api_client.post(
-        f"/api/v1/package/{uuid}/rate/",
+        url,
         json.dumps({"target_state": "unrated"}),
         content_type="application/json",
     )
@@ -205,21 +186,18 @@ def test_api_v1_rate_package_permission_denied(
     api_client: APIClient,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
-    old_urls: str,
+    old_urls: bool,
 ) -> None:
     uuid = active_package_listing.package.uuid4
     if old_urls:
-        response = api_client.post(
-            f"/api/v1/package/{uuid}/rate/",
-            json.dumps({"target_state": "rated"}),
-            content_type="application/json",
-        )
+        url = f"/api/v1/package/{uuid}/rate/"
     else:
-        response = api_client.post(
-            f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
-            json.dumps({"target_state": "rated"}),
-            content_type="application/json",
-        )
+        url = f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/"
+    response = api_client.post(
+        url,
+        json.dumps({"target_state": "rated"}),
+        content_type="application/json",
+    )
     assert response.status_code == 403
     assert response.json()["detail"] == "Authentication credentials were not provided."
 

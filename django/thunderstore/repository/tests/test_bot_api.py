@@ -15,7 +15,7 @@ def test_bot_api_deprecate_mod_200(
     admin_user,
     package: Package,
     community: Community,
-    old_urls: str,
+    old_urls: bool,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -41,20 +41,17 @@ def test_bot_api_deprecate_mod_200(
     )
 
     if old_urls:
-        response = api_client.post(
-            reverse("api:v1:bot.deprecate-mod"),
-            data=encoded,
-            content_type="application/jwt",
-        )
+        url = reverse("api:v1:bot.deprecate-mod")
     else:
-        response = api_client.post(
-            reverse(
-                "communities:community:api:bot.deprecate-mod",
-                kwargs={"community_identifier": community.identifier},
-            ),
-            data=encoded,
-            content_type="application/jwt",
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
         )
+    response = api_client.post(
+        url,
+        data=encoded,
+        content_type="application/jwt",
+    )
     assert response.status_code == 200
     assert response.content == b'{"success":true}'
     package.refresh_from_db()
@@ -68,7 +65,7 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
     user,
     package: Package,
     community: Community,
-    old_urls: str,
+    old_urls: bool,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -94,20 +91,17 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
     )
 
     if old_urls:
-        response = api_client.post(
-            reverse("api:v1:bot.deprecate-mod"),
-            data=encoded,
-            content_type="application/jwt",
-        )
+        url = reverse("api:v1:bot.deprecate-mod")
     else:
-        response = api_client.post(
-            reverse(
-                "communities:community:api:bot.deprecate-mod",
-                kwargs={"community_identifier": community.identifier},
-            ),
-            data=encoded,
-            content_type="application/jwt",
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
         )
+    response = api_client.post(
+        url,
+        data=encoded,
+        content_type="application/jwt",
+    )
     assert response.status_code == 403
     assert (
         response.content
@@ -124,7 +118,7 @@ def test_bot_api_deprecate_mod_403_discord_perms(
     admin_user,
     package: Package,
     community: Community,
-    old_urls: str,
+    old_urls: bool,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -150,20 +144,17 @@ def test_bot_api_deprecate_mod_403_discord_perms(
     )
 
     if old_urls:
-        response = api_client.post(
-            reverse("api:v1:bot.deprecate-mod"),
-            data=encoded,
-            content_type="application/jwt",
-        )
+        url = reverse("api:v1:bot.deprecate-mod")
     else:
-        response = api_client.post(
-            reverse(
-                "communities:community:api:bot.deprecate-mod",
-                kwargs={"community_identifier": community.identifier},
-            ),
-            data=encoded,
-            content_type="application/jwt",
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
         )
+    response = api_client.post(
+        url,
+        data=encoded,
+        content_type="application/jwt",
+    )
     assert response.status_code == 403
     assert response.content == b'{"detail":"Insufficient Discord user permissions"}'
     package.refresh_from_db()
@@ -176,7 +167,7 @@ def test_bot_api_deprecate_mod_404(
     api_client: APIClient,
     admin_user,
     community: Community,
-    old_urls: str,
+    old_urls: bool,
 ):
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
@@ -201,19 +192,16 @@ def test_bot_api_deprecate_mod_404(
     )
 
     if old_urls:
-        response = api_client.post(
-            reverse("api:v1:bot.deprecate-mod"),
-            data=encoded,
-            content_type="application/jwt",
-        )
+        url = reverse("api:v1:bot.deprecate-mod")
     else:
-        response = api_client.post(
-            reverse(
-                "communities:community:api:bot.deprecate-mod",
-                kwargs={"community_identifier": community.identifier},
-            ),
-            data=encoded,
-            content_type="application/jwt",
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
         )
+    response = api_client.post(
+        url,
+        data=encoded,
+        content_type="application/jwt",
+    )
     assert response.status_code == 404
     assert response.content == b'{"detail":"Not found."}'
