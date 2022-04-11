@@ -164,18 +164,6 @@ def test_api_v1_rate_package(
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
-    if old_urls:
-        response = api_client.post(
-            f"/api/v1/package/{uuid}/rate/",
-            json.dumps({"target_state": "rated"}),
-            content_type="application/json",
-        )
-    else:
-        response = api_client.post(
-            f"/c/{community_site.community.identifier}/api/v1/package/{uuid}/rate/",
-            json.dumps({"target_state": "rated"}),
-            content_type="application/json",
-        )
     assert response.status_code == 200
     result = response.json()
     assert result["state"] == "rated"
