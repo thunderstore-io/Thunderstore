@@ -38,11 +38,13 @@ class PackageVersionDetailApiView(ManualCacheMixin, RetrieveAPIView):
             .select_related(
                 "package",
                 "package__owner",
+                "package__namespace",
             )
             .prefetch_related(
                 "dependencies",
                 "dependencies__package",
                 "dependencies__package__owner",
+                "dependencies__package__namespace",
             )
             .order_by(
                 "-package__is_pinned",

@@ -12,6 +12,7 @@ from thunderstore.repository.models import (
     TeamMember,
     TeamMemberRole,
 )
+from thunderstore.repository.models.package import Package
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.validators import PackageReferenceValidator
@@ -32,12 +33,21 @@ def test_manifest_v1_serializer_missing_privileges(user, team, manifest_v1_data)
 
 
 @pytest.mark.django_db
-def test_manifest_v1_serializer_version_already_exists(
-    user, manifest_v1_data, package_version
-):
+def test_manifest_v1_serializer_version_already_exists(user, manifest_v1_data, team):
+    package = Package.objects.create(
+        owner=team, name="Test_Package", namespace=team.get_namespace()
+    )
+    package_version = PackageVersionFactory.create(
+        package=package,
+        name=package.name,
+        version_number="1.0.0",
+        website_url="https://example.org",
+        description="Example mod",
+        readme="# This is an example mod",
+    )
     TeamMember.objects.create(
         user=user,
-        team=package_version.owner,
+        team=package_version.package.owner,
         role=TeamMemberRole.owner,
     )
     manifest_v1_data["name"] = package_version.name
@@ -93,9 +103,18 @@ def test_manifest_v1_serializer_duplicate_dependency(
 
 
 @pytest.mark.django_db
-def test_manifest_v1_serializer_self_dependency(
-    user, manifest_v1_data, package_version
-):
+def test_manifest_v1_serializer_self_dependency(user, manifest_v1_data, team):
+    package = Package.objects.create(
+        owner=team, name="Test_Package", namespace=team.get_namespace()
+    )
+    package_version = PackageVersionFactory.create(
+        package=package,
+        name=package.name,
+        version_number="1.0.0",
+        website_url="https://example.org",
+        description="Example mod",
+        readme="# This is an example mod",
+    )
     TeamMember.objects.create(
         user=user,
         team=package_version.owner,

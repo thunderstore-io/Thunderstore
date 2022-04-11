@@ -52,10 +52,10 @@ def test_api_experimental_submit_package_success(
     assert response.status_code == 200
     response_data = response.json()
     version_data = response_data["package_version"]
-    assert version_data["namespace"] == team.name
+    assert version_data["namespace"] == team.get_namespace().name
     assert version_data["name"] == manifest_v1_data["name"]
     assert version_data["version_number"] == manifest_v1_data["version_number"]
-    assert PackageReference(team.name, "name", "1.0.0").exists is True
+    assert PackageReference(team.get_namespace().name, "name", "1.0.0").exists is True
 
     listing_data = response_data["available_communities"]
     assert len(listing_data) == 1
@@ -100,7 +100,7 @@ def test_api_experimental_submit_package_wrong_user_for_submission(
     assert response.json() == {
         "detail": "Upload not found or user has insufficient access permissions"
     }
-    assert PackageReference(team.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.get_namespace().name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -136,7 +136,7 @@ def test_api_experimental_submit_package_invalid_upload_id(
     assert response.json() == {
         "detail": "Upload not found or user has insufficient access permissions"
     }
-    assert PackageReference(team.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.get_namespace().name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -173,7 +173,7 @@ def test_api_experimental_submit_package_not_signed_in(
     assert response.json() == {
         "detail": "Authentication credentials were not provided."
     }
-    assert PackageReference(team.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.get_namespace().name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -204,7 +204,7 @@ def test_api_experimental_submit_package_no_team_permission(
     assert response.json() == {
         "author_name": ["Object with name=Test_Team does not exist."]
     }
-    assert PackageReference(team.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.get_namespace().name, "name", "1.0.0").exists is False
 
 
 @pytest.mark.django_db
@@ -240,4 +240,4 @@ def test_api_experimental_submit_package_invalid_category(
     print(response.content)
     assert response.status_code == 400
     assert response.json() == {"categories": {"0": ["Object not found"]}}
-    assert PackageReference(team.name, "name", "1.0.0").exists is False
+    assert PackageReference(team.get_namespace().name, "name", "1.0.0").exists is False

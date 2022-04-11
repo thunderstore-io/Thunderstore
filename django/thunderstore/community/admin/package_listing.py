@@ -56,6 +56,7 @@ class PackageListingAdmin(admin.ModelAdmin):
     search_fields = (
         "package__namespace__name",
         "package__owner__name",
+        "package__namespace__name",
         "package__name",
     )
     list_select_related = (

@@ -99,7 +99,7 @@ class PackageVersion(models.Model):
         return reverse(
             "packages.version.detail",
             kwargs={
-                "owner": self.owner.name,
+                "namespace": self.namespace.name,
                 "name": self.name,
                 "version": self.version_number,
             },
@@ -110,12 +110,16 @@ class PackageVersion(models.Model):
         return self.name.replace("_", " ")
 
     @cached_property
-    def owner_url(self):
-        return self.package.owner_url
-
-    @cached_property
     def owner(self):
         return self.package.owner
+
+    @property
+    def namespace_url(self):
+        return self.package.namespace_url
+
+    @property
+    def namespace(self):
+        return self.package.namespace
 
     @cached_property
     def is_deprecated(self):
@@ -130,7 +134,7 @@ class PackageVersion(models.Model):
         from thunderstore.repository.package_reference import PackageReference
 
         return PackageReference(
-            namespace=self.owner.name,
+            namespace=self.namespace.name,
             name=self.name,
             version=self.version_number,
         )
@@ -140,19 +144,22 @@ class PackageVersion(models.Model):
         return reverse(
             "packages.download",
             kwargs={
-                "owner": self.package.owner.name,
+                "namespace": self.package.namespace.name,
                 "name": self.package.name,
                 "version": self.version_number,
             },
         )
 
     def get_install_url(self, request):
-        return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
-            "hostname": request.site.domain,
-            "owner": self.package.owner.name,
-            "name": self.package.name,
-            "version": self.version_number,
-        }
+        return (
+            "ror2mm://v1/install/%(hostname)s/%(namespace)s/%(name)s/%(version)s/"
+            % {
+                "hostname": request.site.domain,
+                "namespace": self.package.namespace.name,
+                "name": self.package.name,
+                "version": self.version_number,
+            }
+        )
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):

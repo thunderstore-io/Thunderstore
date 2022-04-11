@@ -20,11 +20,12 @@ def get_package_queryset() -> "QuerySet[Package]":
             "latest",
             "latest__package",
             "latest__package__owner",
+            "latest__package__namespace",
         )
         .prefetch_related(
             "latest__dependencies",
             "latest__dependencies__package",
-            "latest__dependencies__package__owner",
+            "latest__dependencies__package__namespace",
             "community_listings",
             "community_listings__categories",
             "community_listings__community",

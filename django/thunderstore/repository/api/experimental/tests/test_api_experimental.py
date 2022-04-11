@@ -36,12 +36,12 @@ def test_api_experimental_package_detail(api_client, active_package_listing):
     # TODO: Create dependencies and multiple versions
     with CaptureQueriesContext(connection) as context:
         response = api_client.get(
-            f"/api/experimental/package/{active_package_listing.package.owner.name}/{active_package_listing.package.name}/",
+            f"/api/experimental/package/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/",
         )
     assert len(context) <= 10
     assert response.status_code == 200
     result = response.json()
-    assert result["namespace"] == active_package_listing.package.owner.name
+    assert result["namespace"] == active_package_listing.package.namespace.name
     assert result["name"] == active_package_listing.package.name
     assert result["full_name"] == active_package_listing.package.full_package_name
 
@@ -52,14 +52,14 @@ def test_api_experimental_package_version_detail(api_client, package_version):
     with CaptureQueriesContext(connection) as context:
         response = api_client.get(
             f"/api/experimental/package/"
-            f"{package_version.package.owner.name}/"
+            f"{package_version.package.namespace.name}/"
             f"{package_version.package.name}/"
             f"{package_version.version_number}/"
         )
     assert response.status_code == 200
     assert len(context) <= 10
     result = response.json()
-    assert result["namespace"] == package_version.package.owner.name
+    assert result["namespace"] == package_version.package.namespace.name
     assert result["name"] == package_version.package.name
     assert result["version_number"] == package_version.version_number
     assert result["full_name"] == package_version.full_version_name
@@ -120,11 +120,10 @@ def test_api_experimental_upload_package_success(
     )
     assert response.status_code == 200
     response = response.json()
-    namespace = team.name
     # From manifest_v1_data fixture
     name = "name"
     version = "1.0.0"
-    assert PackageReference(namespace, name, version).exists
+    assert PackageReference(team.get_namespace().name, name, version).exists
 
 
 @pytest.mark.django_db
@@ -157,10 +156,9 @@ def test_api_experimental_upload_package_fail_no_permission(
     assert response.json() == {
         "metadata": {"author_name": ["Object with name=Test_Team does not exist."]}
     }
-    namespace = team.name
     name = "name"
     version = "1.0.0"
-    assert PackageReference(namespace, name, version).exists is False
+    assert PackageReference(team.get_namespace().name, name, version).exists is False
 
 
 @pytest.mark.django_db
@@ -198,10 +196,9 @@ def test_api_experimental_upload_package_fail_invalid_category(
     assert response.status_code == 400
     print(response.content)
     assert response.json() == {"metadata": {"categories": {"0": ["Object not found"]}}}
-    namespace = team.name
     name = "name"
     version = "1.0.0"
-    assert PackageReference(namespace, name, version).exists is False
+    assert PackageReference(team.get_namespace().name, name, version).exists is False
 
 
 @pytest.mark.django_db

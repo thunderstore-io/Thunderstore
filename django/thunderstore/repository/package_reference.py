@@ -202,13 +202,13 @@ class PackageReference:
         """
         if self.version:
             return dict(
-                package__owner__name=self.namespace,
+                package__namespace__name=self.namespace,
                 package__name=self.name,
                 version_number=self.version_str,
             )
         else:
             return dict(
-                owner__name=self.namespace,
+                namespace__name=self.namespace,
                 name=self.name,
             )
 

@@ -47,7 +47,7 @@ class PackageVersionSerializerExperimental(serializers.ModelSerializer):
         return instance.full_version_name
 
     def get_namespace(self, instance):
-        return instance.package.owner.name
+        return instance.package.namespace.name
 
     def get_dependencies(self, instance):
         return [
@@ -90,7 +90,7 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
         return instance.full_package_name
 
     def get_namespace(self, instance):
-        return instance.owner.name
+        return instance.namespace.name
 
     def get_package_url(self, instance):
         return make_full_url(self.context["request"], instance.get_absolute_url())

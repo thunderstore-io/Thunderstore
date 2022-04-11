@@ -25,7 +25,7 @@
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{% url "packages.list" %}">Packages</a></li>
-    <li class="breadcrumb-item"><a href="{% url "packages.list_by_owner" object.owner.name %}">{{ object.owner.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{% url "packages.list_by_namespace" object.namespace.name %}">{{ object.namespace.name }}</a></li>
     {% if object.package.is_effectively_active %}
     <li class="breadcrumb-item"><a href="{{ object.package.get_absolute_url }}">{{ object.package.display_name }}</a></li>
     {% else %}
@@ -67,7 +67,7 @@
                 <h1 class="mt-0">{{ object.display_name }}</h1>
                 <p>{{ object.description }}</p>
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></h5>
+                    <h5 class="mb-1">By <a href="{{ object.namespace_url }}">{{ object.namespace.name }}</a></h5>
                     {% if object.website_url %}
                     <a href="{{ object.website_url }}">{{ object.website_url }}</a>
                     {% endif %}

@@ -347,12 +347,12 @@ def test_get_filter_kwargs(namespace: str, name: str, version: Optional[str]) ->
     kwargs = reference.get_filter_kwargs()
     if version is not None:
         assert len(kwargs) == 3
-        assert kwargs["package__owner__name"] == namespace
+        assert kwargs["package__namespace__name"] == namespace
         assert kwargs["package__name"] == name
         assert kwargs["version_number"] == version
     else:
         assert len(kwargs) == 2
-        assert kwargs["owner__name"] == namespace
+        assert kwargs["namespace__name"] == namespace
         assert kwargs["name"] == name
 
 
