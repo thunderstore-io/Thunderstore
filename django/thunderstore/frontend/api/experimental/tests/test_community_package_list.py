@@ -419,12 +419,36 @@ def test_pagination(api_client: APIClient) -> None:
     data = __query_api(api_client, site.community.identifier)
 
     assert len(data["packages"]) == 24
+    assert data["has_more_pages"]
 
     page1_packages = [p["package_name"] for p in data["packages"]]
     data = __query_api(api_client, site.community.identifier, "page=2")
 
     assert len(data["packages"]) == 1
     assert data["packages"][0]["package_name"] not in page1_packages
+    assert not data["has_more_pages"]
+
+
+@pytest.mark.django_db
+def test_page_index_error(api_client: APIClient) -> None:
+    site = CommunitySiteFactory()
+    url = reverse(
+        "api:experimental:frontend.community.packages",
+        kwargs={"community_identifier": site.community.identifier},
+    )
+
+    response = api_client.get(f"{url}?page=2")
+
+    assert response.status_code == 400
+    assert response.json()["detail"].startswith("Page index error")
+
+    for i in range(25):
+        PackageListingFactory(community_=site.community)
+
+    invalidate_cache(CacheBustCondition.any_package_updated)
+    response = api_client.get(f"{url}?page=2")
+
+    assert response.status_code == 200
 
 
 def __assert_packages_by_listings(
