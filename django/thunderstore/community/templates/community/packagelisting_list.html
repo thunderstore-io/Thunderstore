@@ -62,7 +62,7 @@
                     <button class="btn btn-success w-100" type="submit">Search</button>
                 </div>
                 <div class="col-2 m-0 p-0">
-                    <a href="{% url 'packages.list' %}" class="btn btn-success w-100">Clear</a>
+                    <a href="{% url 'old_urls:packages.list' %}" class="btn btn-success w-100">Clear</a>
                 </div>
                 <button class="btn m-0 p-0 search-options-btn" type="button" data-toggle="collapse" data-target="#advancedSearch"
                         aria-expanded="{% if included_categories or excluded_categories or nsfw_included or deprecated_included %}true{% else %}false{% endif %}"
@@ -176,7 +176,7 @@
             </div>
             <div class="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
                 {% for category in object.categories.all %}
-                    <a href="{% url "packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary category-badge">{{ category.name }}</span></a>
+                    <a href="{% url "old_urls:packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary category-badge">{{ category.name }}</span></a>
                 {% endfor %}
             </div>
             <div class="bg-light p-2">

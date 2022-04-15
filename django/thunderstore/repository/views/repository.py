@@ -250,7 +250,7 @@ class PackageListSearchView(ListView):
     def get_breadcrumbs(self):
         return [
             {
-                "url": reverse_lazy("packages.list"),
+                "url": reverse_lazy("old_urls:packages.list"),
                 "name": "Packages",
             },
         ]
@@ -308,7 +308,9 @@ class PackageListByOwnerView(PackageListSearchView):
         breadcrumbs = super().get_breadcrumbs()
         return breadcrumbs + [
             {
-                "url": reverse_lazy("packages.list_by_owner", kwargs=self.kwargs),
+                "url": reverse_lazy(
+                    "old_urls:packages.list_by_owner", kwargs=self.kwargs
+                ),
                 "name": self.owner.name,
             },
         ]

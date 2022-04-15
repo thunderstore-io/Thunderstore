@@ -23,10 +23,14 @@ from thunderstore.repository.views.team_settings import (
     SettingsTeamServiceAccountView,
 )
 
-urlpatterns = [
+legacy_package_urls = [
     path("", PackageListView.as_view(), name="packages.list"),
     path("create/", PackageCreateView.as_view(), name="packages.create"),
-    path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
+    path(
+        "create/old/",
+        PackageCreateOldView.as_view(),
+        name="packages.create.old",
+    ),
     path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
     path(
         "download/<str:owner>/<str:name>/<str:version>/",
@@ -50,6 +54,33 @@ urlpatterns = [
     ),
     path(
         "<str:owner>/",
+        PackageListByOwnerView.as_view(),
+        name="packages.list_by_owner",
+    ),
+]
+
+package_urls = [
+    path("", PackageListView.as_view(), name="packages.list"),
+    path("create/", PackageCreateView.as_view(), name="packages.create"),
+    path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
+    path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
+    path(
+        "p/<str:owner>/<str:name>/",
+        PackageDetailView.as_view(),
+        name="packages.detail",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/dependants/",
+        PackageListByDependencyView.as_view(),
+        name="packages.list_by_dependency",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/v/<str:version>/",
+        PackageVersionDetailView.as_view(),
+        name="packages.version.detail",
+    ),
+    path(
+        "p/<str:owner>/",
         PackageListByOwnerView.as_view(),
         name="packages.list_by_owner",
     ),

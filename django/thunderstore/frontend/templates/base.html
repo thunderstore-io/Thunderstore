@@ -57,11 +57,11 @@
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'packages.list' %}">Browse</a>
+                    <a class="nav-link" href="{% url 'old_urls:packages.list' %}">Browse</a>
                 </li>
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'packages.create' %}">Upload</a>
+                        <a class="nav-link" href="{% url 'old_urls:packages.create' %}">Upload</a>
                     </li>
                 {% endif %}
                 <li class="nav-item">
@@ -74,7 +74,7 @@
                             {% endif %}
                             <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
                             <a class="dropdown-item" href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
-                            <a class="dropdown-item" href="{% url 'packages.create.docs' %}">Package Format Docs</a>
+                            <a class="dropdown-item" href="{% url 'old_urls:packages.create.docs' %}">Package Format Docs</a>
                             <a class="dropdown-item" href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
                             <a class="dropdown-item" href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
                         </div>
@@ -89,7 +89,7 @@
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="{% url 'packages.list_by_owner' team %}" class="nav-link text-dark">{{ request.user.username }}</a>
+                        <a href="{% url 'old_urls:packages.list_by_owner' team %}" class="nav-link text-dark">{{ request.user.username }}</a>
                     </li>
                     <li class="nav-item">
                         <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>

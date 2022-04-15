@@ -97,7 +97,7 @@ class PackageVersion(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "packages.version.detail",
+            "old_urls:packages.version.detail",
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
@@ -138,7 +138,7 @@ class PackageVersion(models.Model):
     @cached_property
     def download_url(self):
         return reverse(
-            "packages.download",
+            "old_urls:packages.download",
             kwargs={
                 "owner": self.package.owner.name,
                 "name": self.package.name,
