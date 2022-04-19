@@ -6,11 +6,12 @@ from thunderstore.cache.cache import CacheBustCondition, ManualCacheMixin
 from thunderstore.repository.api.experimental.serializers import (
     PackageVersionSerializerExperimental,
 )
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 
 
-class PackageVersionDetailApiView(ManualCacheMixin, RetrieveAPIView):
+class PackageVersionDetailApiView(ManualCacheMixin, RetrieveAPIView, CommunityMixin):
     """
     Get a single package version
     """

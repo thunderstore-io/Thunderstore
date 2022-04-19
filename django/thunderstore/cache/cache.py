@@ -158,7 +158,7 @@ class ManualCacheMixin(object):
                 cache_bust_condition=self.cache_until,
                 cache_type="view",
                 key=get_view_cache_name(type(self)),
-                vary_on=args + tuple(kwargs.values()) + (self.request.community_site,),
+                vary_on=args + tuple(kwargs.values()) + (self.community_identifier,),
             ),
             default=get_default,
             default_args=args,

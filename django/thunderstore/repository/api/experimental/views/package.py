@@ -8,6 +8,7 @@ from thunderstore.cache.cache import CacheBustCondition, ManualCacheMixin
 from thunderstore.repository.api.experimental.serializers import (
     PackageSerializerExperimental,
 )
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package
 from thunderstore.repository.package_reference import PackageReference
 
@@ -43,7 +44,7 @@ class CustomCursorPagination(CursorPagination):
     page_size = 5
 
 
-class PackageListApiView(ManualCacheMixin, ListAPIView):
+class PackageListApiView(ManualCacheMixin, ListAPIView, CommunityMixin):
     """
     Lists all available packages
     """
@@ -56,7 +57,7 @@ class PackageListApiView(ManualCacheMixin, ListAPIView):
         return get_package_queryset()
 
 
-class PackageDetailApiView(ManualCacheMixin, RetrieveAPIView):
+class PackageDetailApiView(ManualCacheMixin, RetrieveAPIView, CommunityMixin):
     """
     Get a single package
     """
