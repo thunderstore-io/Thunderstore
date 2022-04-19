@@ -10,7 +10,7 @@ class CurrentUserInfoView(APIView):
 
     authentication_classes = [SessionAuthentication, BasicAuthentication]
 
-    def get(self, request, format=None):
+    def get(self, request, format=None, community_identifier=None):
         capabilities = set()
         rated_packages = []
         if request.user.is_authenticated:

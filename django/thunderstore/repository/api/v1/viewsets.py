@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Optional
 
 from django.http import HttpResponse
 from django.utils.cache import get_conditional_response
@@ -91,7 +91,12 @@ class PackageViewSet(
         authentication_classes=[SessionAuthentication, BasicAuthentication],
         permission_classes=[IsAuthenticated],
     )
-    def rate(self, request, uuid4=None, community_identifier=None):
+    def rate(
+        self,
+        request: HttpRequestType,
+        uuid4: Optional[str] = None,
+        community_identifier: Optional[str] = None,
+    ) -> Response:
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
         user = request.user
         ensure_can_rate_package(user, package)
