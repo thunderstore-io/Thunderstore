@@ -202,12 +202,23 @@ class Package(models.Model):
     def dependants_list(self):
         return get_package_dependants_list(self.pk)
 
+    # TODO: Remove in the end of TS-272
     @cached_property
     def owner_url(self):
         return reverse(
             "old_urls:packages.list_by_owner", kwargs={"owner": self.owner.name}
         )
 
+    def get_owner_url(self, community_identifier: str) -> str:
+        return reverse(
+            "communities:community:packages.list_by_owner",
+            kwargs={
+                "owner": self.owner.name,
+                "community_identifier": community_identifier,
+            },
+        )
+
+    # TODO: Remove in the end of TS-272
     @cached_property
     def dependants_url(self):
         return reverse(
@@ -215,6 +226,16 @@ class Package(models.Model):
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
+            },
+        )
+
+    def get_dependants_url(self, community_identifier: str) -> str:
+        return reverse(
+            "communities:community:packages.list_by_dependency",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "community_identifier": community_identifier,
             },
         )
 
@@ -226,6 +247,16 @@ class Package(models.Model):
         return reverse(
             "old_urls:packages.detail",
             kwargs={"owner": self.owner.name, "name": self.name},
+        )
+
+    def get_community_specific_absolute_url(self, community_identifier: str) -> str:
+        return reverse(
+            "communities:community:packages.detail",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "community_identifier": community_identifier,
+            },
         )
 
     def get_full_url(self, site: Site):

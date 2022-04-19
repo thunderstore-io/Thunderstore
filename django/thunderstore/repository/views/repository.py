@@ -20,6 +20,7 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
 
@@ -27,7 +28,7 @@ from thunderstore.repository.package_upload import PackageUploadForm
 MODS_PER_PAGE = 24
 
 
-class PackageListSearchView(ListView):
+class PackageListSearchView(CommunityMixin, ListView):
     model = PackageListing
     paginate_by = MODS_PER_PAGE
     paginator_class = CachedPaginator
@@ -399,7 +400,7 @@ def get_package_listing_or_404(
     return package_listing
 
 
-class PackageDetailView(DetailView):
+class PackageDetailView(CommunityMixin, DetailView):
     model = PackageListing
 
     def get_object(self, *args, **kwargs):
@@ -427,7 +428,7 @@ class PackageDetailView(DetailView):
         return context
 
 
-class PackageVersionDetailView(DetailView):
+class PackageVersionDetailView(CommunityMixin, DetailView):
     model = PackageVersion
 
     def get_object(self, *args, **kwargs):
@@ -451,7 +452,7 @@ class PackageVersionDetailView(DetailView):
         )
 
 
-class PackageCreateView(TemplateView):
+class PackageCreateView(CommunityMixin, TemplateView):
     template_name = "repository/package_create.html"
 
     def dispatch(self, *args, **kwargs):
@@ -460,12 +461,12 @@ class PackageCreateView(TemplateView):
         return super().dispatch(*args, **kwargs)
 
 
-class PackageDocsView(TemplateView):
+class PackageDocsView(CommunityMixin, TemplateView):
     template_name = "repository/package_docs.html"
 
 
 # TODO: Remove once new UI is stable enough
-class PackageCreateOldView(CreateView):
+class PackageCreateOldView(CommunityMixin, CreateView):
     model = PackageVersion
     form_class = PackageUploadForm
     template_name = "repository/package_create_old.html"
@@ -498,7 +499,7 @@ class PackageCreateOldView(CreateView):
         return redirect(instance)
 
 
-class PackageDownloadView(View):
+class PackageDownloadView(CommunityMixin, View):
     def get(self, *args, **kwargs):
         owner = kwargs["owner"]
         name = kwargs["name"]
