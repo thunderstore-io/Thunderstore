@@ -122,6 +122,7 @@ class CommunityPackageListSerializer(serializers.Serializer):
         max_length=Community._meta.get_field("name").max_length
     )
     packages = PackageCardSerializer(many=True)
+    has_more_pages = serializers.BooleanField()
 
 
 class FrontPageContentSerializer(serializers.Serializer):

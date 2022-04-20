@@ -1,9 +1,11 @@
 from typing import Optional, OrderedDict
 
+from django.core.paginator import EmptyPage, Page
 from django.db.models import Count, Prefetch, Q, QuerySet, Sum
 from django.http import HttpRequest, HttpResponse
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.exceptions import ParseError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -50,8 +52,8 @@ class CommunityPackageListApiView(APIView):
         package_qs = self.filter_by_section(params.get("section"), package_qs)
         package_qs = self.filter_by_query(params.get("q"), package_qs)
         package_qs = self.order_queryset(params["ordering"], package_qs)
-        package_qs = self.paginate(params, package_qs)
-        serializer = self.serialize_results(community, package_qs)
+        package_page = self.paginate(params, package_qs)
+        serializer = self.serialize_results(community, package_page)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -67,6 +69,7 @@ class CommunityPackageListApiView(APIView):
         cache_vary += f".{params.get('section', '-')}"
         cache_vary += f".{params.get('q', '-')}"
         cache_vary += f".{params['ordering']}"
+        cache_vary += f".{params['page']}"
         return cache_vary
 
     def get_queryset(self, community: Community) -> QuerySet[Package]:
@@ -212,9 +215,7 @@ class CommunityPackageListApiView(APIView):
 
         return queryset.order_by("-is_pinned", "is_deprecated", order_arg)
 
-    def paginate(
-        self, params: OrderedDict, queryset: QuerySet[Package]
-    ) -> QuerySet[Package]:
+    def paginate(self, params: OrderedDict, queryset: QuerySet[Package]) -> Page:
         """
         Slice queryset based on the requested page.
         """
@@ -225,10 +226,18 @@ class CommunityPackageListApiView(APIView):
             cache_vary=self.get_full_cache_vary(params),
             cache_bust_condition=CacheBustCondition.any_package_updated,
         )
-        return paginator.get_page(params["page"]).object_list
+
+        # PageNotAnInteger error won't be raised here since deserializer
+        # has already checked that the page parameter is an integer.
+        try:
+            page = paginator.page(params["page"])
+        except EmptyPage:
+            raise ParseError("Page index error: no results on requested page")
+
+        return page
 
     def serialize_results(
-        self, community: Community, package_qs: QuerySet[Package]
+        self, community: Community, package_page: Page
     ) -> CommunityPackageListSerializer:
         """
         Format results to transportation.
@@ -252,7 +261,7 @@ class CommunityPackageListApiView(APIView):
                 "is_pinned": p.is_pinned,
                 "team_name": p.owner.name,
             }
-            for p in package_qs
+            for p in package_page.object_list
         ]
 
         return CommunityPackageListSerializer(
@@ -264,5 +273,6 @@ class CommunityPackageListApiView(APIView):
                 ],
                 "community_name": community.name,
                 "packages": packages,
+                "has_more_pages": package_page.has_next(),
             },
         )
