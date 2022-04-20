@@ -1,5 +1,6 @@
 import pytest
 
+from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import PackageVersion
 
@@ -21,3 +22,26 @@ def test_package_version_manager_active():
     active_versions = PackageVersion.objects.active()
     assert p1 in active_versions
     assert p2 not in active_versions
+
+
+@pytest.mark.django_db
+def test_package_version_get_community_specific_absolute_url(
+    active_package_listing: PackageListing,
+) -> None:
+    owner_url = (
+        active_package_listing.package.latest.get_community_specific_absolute_url(
+            active_package_listing.community.identifier
+        )
+    )
+    assert (
+        owner_url
+        == f"/c/test/p/Test_Team/{active_package_listing.package.name}/v/{active_package_listing.package.latest.version_number}/"
+    )
+
+
+@pytest.mark.django_db
+def test_package_version_get_owner_url(active_package_listing: PackageListing) -> None:
+    owner_url = active_package_listing.package.latest.get_owner_url(
+        active_package_listing.community.identifier
+    )
+    assert owner_url == "/c/test/p/Test_Team/"
