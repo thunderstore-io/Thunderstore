@@ -5,7 +5,7 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListingSection,
 )
-from thunderstore.repository.models import Package, PackageVersion, Team
+from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
 
 
 class CommunitySerializer(serializers.ModelSerializer):
@@ -77,6 +77,9 @@ class PackageCardSerializer(serializers.Serializer):
     is_nsfw = serializers.BooleanField()
     is_pinned = serializers.BooleanField()
     last_updated = serializers.DateTimeField()
+    namespace = serializers.CharField(
+        max_length=Namespace._meta.get_field("name").max_length
+    )
     package_name = serializers.CharField(
         max_length=Package._meta.get_field("name").max_length
     )

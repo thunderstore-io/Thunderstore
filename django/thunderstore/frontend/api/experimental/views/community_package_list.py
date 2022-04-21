@@ -98,7 +98,7 @@ class CommunityPackageListApiView(APIView):
                 "community_listings__categories",
                 "community_listings__community",
             )
-            .select_related("latest", "owner")
+            .select_related("latest", "namespace", "owner")
             .annotate(total_downloads=Sum("versions__downloads"))
             .annotate(total_rating=Count("package_ratings"))
         )
@@ -255,6 +255,7 @@ class CommunityPackageListApiView(APIView):
                 "download_count": p.total_downloads,
                 "image_src": p.latest.icon.url if bool(p.latest.icon) else None,
                 "last_updated": p.date_updated,
+                "namespace": p.namespace.name,
                 "rating_score": p.total_rating,
                 "is_nsfw": p.community_listings.all()[0].has_nsfw_content,
                 "package_name": p.name,
