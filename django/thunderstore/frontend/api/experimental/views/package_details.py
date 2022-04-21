@@ -54,13 +54,13 @@ class PackageDetailApiView(APIView):
         return (
             PackageListing.objects.active()
             .select_related(
-                "community",
                 "package",
                 "package__latest",
                 "package__owner",
             )
             .prefetch_related(
                 "categories",
+                "community__sites",
                 "package__latest__dependencies__package__community_listings__community",
             )
             .annotate(package_dependant_count=Count("package__latest__dependants"))
@@ -98,6 +98,7 @@ class PackageDetailApiView(APIView):
 
         return PackageDetailViewContentSerializer(
             {
+                "bg_image_src": listing.community.site_image_url,
                 "categories": [
                     PackageCategorySerializer(c).data for c in listing.categories.all()
                 ],
