@@ -14,7 +14,7 @@ urls = [
         name="frontend.community.packages",
     ),
     path(
-        "frontend/c/<slug:community_identifier>/p/<slug:package_name>/",
+        "frontend/c/<slug:community_identifier>/p/<slug:package_namespace>/<slug:package_name>/",
         PackageDetailApiView.as_view(),
         name="frontend.community.package",
     ),

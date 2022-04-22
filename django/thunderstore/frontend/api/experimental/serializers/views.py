@@ -106,6 +106,9 @@ class PackageDependencySerializer(serializers.Serializer):
         max_length=PackageVersion._meta.get_field("description").max_length
     )
     image_src = serializers.CharField(allow_null=True)
+    namespace = serializers.CharField(
+        max_length=Namespace._meta.get_field("name").max_length
+    )
     package_name = serializers.CharField(
         max_length=Package._meta.get_field("name").max_length
     )
@@ -163,6 +166,9 @@ class PackageDetailViewContentSerializer(serializers.Serializer):
     install_url = serializers.CharField()
     last_updated = serializers.DateTimeField()
     markdown = serializers.CharField()
+    namespace = serializers.CharField(
+        max_length=Namespace._meta.get_field("name").max_length
+    )
     package_name = serializers.CharField(
         max_length=Package._meta.get_field("name").max_length
     )

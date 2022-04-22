@@ -220,6 +220,7 @@ def __url_for_listing(listing: PackageListing) -> str:
         "api:experimental:frontend.community.package",
         kwargs={
             "community_identifier": listing.community.identifier,
+            "package_namespace": listing.package.namespace.name,
             "package_name": listing.package.name,
         },
     )
