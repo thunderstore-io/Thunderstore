@@ -14,6 +14,7 @@ class QurlNode(Node):
 
     def render(self, context):
         request = context["request"]
+        community_site = context["community_site"]
         params = request.GET.copy()
         params.setlist(self.param_key, [self.param_val.resolve(context)])
         for entry in self.removals:
@@ -21,7 +22,7 @@ class QurlNode(Node):
                 params.pop(entry)
             except KeyError:
                 pass
-        return f"{request.path}?{urlencode(params, True)}"
+        return f"{community_site.get_absolute_url}?{urlencode(params, True)}"
 
 
 @register.tag("qurl")
