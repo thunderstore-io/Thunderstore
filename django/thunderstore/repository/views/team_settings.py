@@ -27,10 +27,11 @@ from thunderstore.repository.forms import (
     RemoveTeamMemberForm,
     TeamMemberRole,
 )
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Team, TeamMember, reverse
 
 
-class SettingsTeamListView(RequireAuthenticationMixin, TemplateView):
+class SettingsTeamListView(RequireAuthenticationMixin, CommunityMixin, TemplateView):
     template_name = "settings/team_list.html"
 
     def get_context_data(self, *args, **kwargs):
@@ -42,7 +43,7 @@ class SettingsTeamListView(RequireAuthenticationMixin, TemplateView):
         return context
 
 
-class TeamDetailView(DetailView):
+class TeamDetailView(CommunityMixin, DetailView):
     model = Team
     slug_field = "name"
     slug_url_kwarg = "name"
@@ -134,7 +135,9 @@ class SettingsTeamAddMemberView(TeamDetailView, UserFormKwargs, FormView):
         return redirect(self.object.settings_url)
 
 
-class SettingsTeamCreateView(RequireAuthenticationMixin, UserFormKwargs, CreateView):
+class SettingsTeamCreateView(
+    RequireAuthenticationMixin, CommunityMixin, UserFormKwargs, CreateView
+):
     model = Team
     form_class = CreateTeamForm
     template_name = "settings/team_create.html"
