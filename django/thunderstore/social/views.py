@@ -3,13 +3,14 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 
 from thunderstore.core.mixins import RequireAuthenticationMixin
+from thunderstore.repository.mixins import CommunityMixin
 
 
 class LinkedAccountDisconnectForm(forms.Form):
     provider = forms.CharField()
 
 
-class LinkedAccountsView(RequireAuthenticationMixin, FormView):
+class LinkedAccountsView(RequireAuthenticationMixin, CommunityMixin, FormView):
     template_name = "settings/linked_accounts.html"
     form_class = LinkedAccountDisconnectForm
     success_url = reverse_lazy("settings.linked-accounts")
@@ -49,7 +50,7 @@ class DeleteAccountForm(forms.Form):
         return data
 
 
-class DeleteAccountView(RequireAuthenticationMixin, FormView):
+class DeleteAccountView(RequireAuthenticationMixin, CommunityMixin, FormView):
     template_name = "settings/delete_account.html"
     form_class = DeleteAccountForm
     success_url = reverse_lazy("index")
