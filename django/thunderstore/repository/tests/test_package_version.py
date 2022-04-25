@@ -25,13 +25,11 @@ def test_package_version_manager_active():
 
 
 @pytest.mark.django_db
-def test_package_version_get_community_specific_absolute_url(
+def test_package_version_get_page_url(
     active_package_listing: PackageListing,
 ) -> None:
-    owner_url = (
-        active_package_listing.package.latest.get_community_specific_absolute_url(
-            active_package_listing.community.identifier
-        )
+    owner_url = active_package_listing.package.latest.get_page_url(
+        active_package_listing.community.identifier
     )
     assert (
         owner_url

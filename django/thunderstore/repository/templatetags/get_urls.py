@@ -21,10 +21,8 @@ def get_download_url(context: Dict, obj: PackageVersion) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def get_community_specific_absolute_url(
-    context: Dict, obj: Union[Package, PackageVersion]
-) -> str:
-    return obj.get_community_specific_absolute_url(context["community_identifier"])
+def get_page_url(context: Dict, obj: Union[Package, PackageVersion]) -> str:
+    return obj.get_page_url(context["community_identifier"])
 
 
 @register.simple_tag(takes_context=True)

@@ -249,7 +249,7 @@ class Package(models.Model):
             kwargs={"owner": self.owner.name, "name": self.name},
         )
 
-    def get_community_specific_absolute_url(self, community_identifier: str) -> str:
+    def get_page_url(self, community_identifier: str) -> str:
         return reverse(
             "communities:community:packages.detail",
             kwargs={
