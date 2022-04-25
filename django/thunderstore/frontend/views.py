@@ -2,6 +2,8 @@ from django.conf import settings
 from django.shortcuts import render
 from django.views.generic import TemplateView
 
+from thunderstore.repository.mixins import CommunityMixin
+
 
 def disable_cache_if_static_request(request, response):
     if request.path.startswith(settings.STATIC_URL):
@@ -28,9 +30,9 @@ def robots_txt_view(request):
     return render(request, "robots.txt", locals())
 
 
-class MarkdownPreviewView(TemplateView):
+class MarkdownPreviewView(CommunityMixin, TemplateView):
     template_name = "frontend/markdown_preview.html"
 
 
-class ManifestV1ValidatorView(TemplateView):
+class ManifestV1ValidatorView(CommunityMixin, TemplateView):
     template_name = "frontend/manifest_v1_validator.html"
