@@ -3,6 +3,7 @@
 {% load arrow %}
 {% load cache_until %}
 {% load qurl %}
+{% load get_urls %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
@@ -62,7 +63,7 @@
                     <button class="btn btn-success w-100" type="submit">Search</button>
                 </div>
                 <div class="col-2 m-0 p-0">
-                    <a href="{% url 'old_urls:packages.list' %}" class="btn btn-success w-100">Clear</a>
+                    <a href="{% url 'communities:community:packages.list' community_identifier %}" class="btn btn-success w-100">Clear</a>
                 </div>
                 <button class="btn m-0 p-0 search-options-btn" type="button" data-toggle="collapse" data-target="#advancedSearch"
                         aria-expanded="{% if included_categories or excluded_categories or nsfw_included or deprecated_included %}true{% else %}false{% endif %}"
@@ -155,7 +156,7 @@
                     </div>
                 </div>
                 {% endif %}
-                <a href="{{ object.package.get_absolute_url }}">
+                <a href="{% get_page_url object.package %}">
                     <img class="w-100" src="{% thumbnail object.package.icon 256x256 crop %}" alt="{{ object.package }} icon">
                 </a>
             </div>
@@ -169,14 +170,14 @@
                     </div>
                 </div>
                 <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ object.package.display_name }}">{{ object.package.display_name }}</h5>
-                <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></div>
+                <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url_with_community_identifier }}">{{ object.package.owner.name }}</a></div>
             </div>
             <div class="bg-light px-2 flex-grow-1">
                 {{ object.package.description }}
             </div>
             <div class="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
                 {% for category in object.categories.all %}
-                    <a href="{% url "old_urls:packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary category-badge">{{ category.name }}</span></a>
+                    <a href="{% url "communities:community:packages.list" community_identifier %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary category-badge">{{ category.name }}</span></a>
                 {% endfor %}
             </div>
             <div class="bg-light p-2">

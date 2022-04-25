@@ -10,14 +10,14 @@
 <div class="mb-3 mt-3 alert alert-info" role="alert">
     <p class="mb-0">
         Looking for package format documentation?
-        <a href="{% url 'old_urls:packages.create.docs' %}">You can find it here</a>
+        <a href="{% url 'communities:community:packages.create.docs' community_identifier %}">You can find it here</a>
     </p>
 </div>
 <div class="mb-3 mt-3 alert alert-info" role="alert">
     <ul class="mb-0 pl-3">
         <li>
             New upload handler not working?
-            <a href="{% url 'old_urls:packages.create.old' %}">Try the old one here</a>
+            <a href="{% url 'communities:community:packages.create.old' community_identifier %}">Try the old one here</a>
         </li>
         <li>
             Preview your readme before upload using the
