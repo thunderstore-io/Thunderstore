@@ -48,11 +48,11 @@ class FrontPageApiView(APIView):
     ) -> FrontPageContentSerializer:
         communities = [
             {
-                "download_count": c.package_downloads_total or 0,
                 "bg_image_src": c.site_image_url,
+                "download_count": c.package_downloads_total or 0,
                 "identifier": c.identifier,
-                "package_count": c.package_count,
                 "name": c.name,
+                "package_count": c.package_count,
             }
             for c in queryset
         ]

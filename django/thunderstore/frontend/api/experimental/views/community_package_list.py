@@ -248,18 +248,18 @@ class CommunityPackageListApiView(APIView):
                     PackageCategorySerializer(c).data
                     for c in p.community_listings.all()[0].categories.all()
                 ],
-                "community_name": community.name,
                 "community_identifier": community.identifier,
-                "is_deprecated": p.is_deprecated,
+                "community_name": community.name,
                 "description": p.latest.description,
                 "download_count": p.total_downloads,
                 "image_src": p.latest.icon.url if bool(p.latest.icon) else None,
+                "is_deprecated": p.is_deprecated,
+                "is_nsfw": p.community_listings.all()[0].has_nsfw_content,
+                "is_pinned": p.is_pinned,
                 "last_updated": p.date_updated,
                 "namespace": p.namespace.name,
-                "rating_score": p.total_rating,
-                "is_nsfw": p.community_listings.all()[0].has_nsfw_content,
                 "package_name": p.name,
-                "is_pinned": p.is_pinned,
+                "rating_score": p.total_rating,
                 "team_name": p.owner.name,
             }
             for p in package_page.object_list
