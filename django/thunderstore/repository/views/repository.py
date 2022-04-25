@@ -258,7 +258,10 @@ class PackageListSearchView(CommunityMixin, ListView):
     def get_breadcrumbs(self):
         return [
             {
-                "url": reverse_lazy("old_urls:packages.list"),
+                "url": reverse_lazy(
+                    "communities:community:packages.list",
+                    kwargs={"community_identifier": self.community_identifier},
+                ),
                 "name": "Packages",
             },
         ]
@@ -317,7 +320,7 @@ class PackageListByOwnerView(PackageListSearchView):
         return breadcrumbs + [
             {
                 "url": reverse_lazy(
-                    "old_urls:packages.list_by_owner", kwargs=self.kwargs
+                    "communities:community:packages.list_by_owner", kwargs=self.kwargs
                 ),
                 "name": self.owner.name,
             },
