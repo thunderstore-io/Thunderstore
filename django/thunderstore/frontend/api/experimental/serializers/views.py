@@ -140,6 +140,7 @@ class PackageDetailViewContentSerializer(serializers.Serializer):
     Data shown on Package's detail view on frontend.
     """
 
+    bg_image_src = serializers.CharField(allow_null=True)
     categories = PackageCategorySerializer(many=True)
     community_identifier = serializers.CharField(
         max_length=Community._meta.get_field("identifier").max_length
