@@ -34,9 +34,7 @@ class PackageListSearchView(CommunityMixin, ListView):
     paginator_class = CachedPaginator
 
     def get_base_queryset(self):
-        return self.model.objects.active().exclude(
-            ~Q(community__identifier=self.community_identifier)
-        )
+        return self.model.objects.active().exclude(~Q(community=self.community))
 
     def get_page_title(self):
         return ""
@@ -45,9 +43,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         return ""
 
     def get_categories(self):
-        return PackageCategory.objects.exclude(
-            ~Q(community__identifier=self.community_identifier)
-        )
+        return PackageCategory.objects.exclude(~Q(community=self.community))
 
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
@@ -72,7 +68,7 @@ class PackageListSearchView(CommunityMixin, ListView):
     @cached_property
     def sections(self) -> List[PackageListingSection]:
         return list(
-            self.solved_community_from_identifier.package_listing_sections.order_by(
+            self.community.package_listing_sections.order_by(
                 "-priority",
                 "datetime_created",
             ),
@@ -238,7 +234,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         if not self.get_is_deprecated_included():
             queryset = queryset.exclude(package__is_deprecated=True)
 
-        if self.solved_community_from_identifier.require_package_listing_approval:
+        if self.community.require_package_listing_approval:
             queryset = queryset.exclude(
                 ~Q(review_status=PackageListingReviewStatus.approved),
             )
@@ -329,10 +325,7 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(
-                Q(package__owner=self.owner)
-                & Q(community__identifier=self.community_identifier)
-            ),
+            ~Q(Q(package__owner=self.owner) & Q(community=self.community)),
         )
 
     def get_page_title(self):
@@ -354,7 +347,7 @@ class PackageListByDependencyView(PackageListSearchView):
             .filter(
                 package__owner=owner,
                 package__name=name,
-                community__identifier=self.community_identifier,
+                community=self.community,
             )
             .first()
         )
@@ -382,7 +375,7 @@ class PackageListByDependencyView(PackageListSearchView):
 def get_package_listing_or_404(
     namespace: str,
     name: str,
-    community_identifier: str,
+    community: Community,
 ) -> PackageListing:
     owner = get_object_or_404(Team, name=namespace)
     package_listing = (
@@ -390,7 +383,7 @@ def get_package_listing_or_404(
         .filter(
             package__owner=owner,
             package__name=name,
-            community__identifier=community_identifier,
+            community=community,
         )
         .select_related(
             "package",
@@ -414,7 +407,7 @@ class PackageDetailView(CommunityMixin, DetailView):
         listing = get_package_listing_or_404(
             namespace=self.kwargs["owner"],
             name=self.kwargs["name"],
-            community_identifier=self.community_identifier,
+            community=self.community,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -446,7 +439,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community__identifier=self.community_identifier,
+            community=self.community,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -486,18 +479,18 @@ class PackageCreateOldView(CommunityMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["selectable_communities"] = Community.objects.filter(
-            Q(is_listed=True) | Q(pk=self.solved_community_from_identifier.pk),
+            Q(is_listed=True) | Q(pk=self.community.pk),
         )
-        context["current_community"] = self.solved_community_from_identifier
+        context["current_community"] = self.community
         return context
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs["user"] = self.request.user
-        kwargs["community"] = self.solved_community_from_identifier
+        kwargs["community"] = self.community
         kwargs["initial"] = {
             "team": Team.get_default_for_user(self.request.user),
-            "communities": [self.solved_community_from_identifier],
+            "communities": [self.community],
         }
         return kwargs
 
@@ -517,7 +510,7 @@ class PackageDownloadView(CommunityMixin, View):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community__identifier=self.community_identifier,
+            community=self.community,
         )
         version = get_object_or_404(
             PackageVersion,
