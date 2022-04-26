@@ -29,12 +29,17 @@ class PackageDetailApiView(APIView):
         operation_id="experimental.frontend.community.package",
     )
     def get(
-        self, request: HttpRequest, community_identifier: str, package_name: str
+        self,
+        request: HttpRequest,
+        community_identifier: str,
+        package_namespace: str,
+        package_name: str,
     ) -> HttpResponse:
         listing = get_object_or_404(
             self.get_listing_queryset(),
             community__identifier=community_identifier,
             community__is_listed=True,
+            package__namespace__name=package_namespace,
             package__name=package_name,
         )
 
@@ -56,12 +61,14 @@ class PackageDetailApiView(APIView):
             .select_related(
                 "package",
                 "package__latest",
+                "package__namespace",
                 "package__owner",
             )
             .prefetch_related(
                 "categories",
                 "community__sites",
                 "package__latest__dependencies__package__community_listings__community",
+                "package__latest__dependencies__package__namespace",
             )
             .annotate(package_dependant_count=Count("package__latest__dependants"))
             .annotate(package_total_downloads=Sum("package__versions__downloads"))
@@ -90,6 +97,7 @@ class PackageDetailApiView(APIView):
                         else None,
                         "description": d.description,
                         "image_src": d.icon.url if bool(d.icon) else None,
+                        "namespace": d.package.namespace.name,
                         "package_name": d.name,
                         "version_number": d.version_number,
                     }
@@ -114,6 +122,7 @@ class PackageDetailApiView(APIView):
                 "install_url": latest.get_install_url(self.request),
                 "last_updated": listing.package.date_updated,
                 "markdown": latest.readme,
+                "namespace": listing.package.namespace.name,
                 "package_name": listing.package.name,
                 "rating_score": listing.package_total_rating,
                 "team_name": listing.package.owner.name,

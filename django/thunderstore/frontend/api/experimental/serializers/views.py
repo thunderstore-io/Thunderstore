@@ -5,7 +5,7 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListingSection,
 )
-from thunderstore.repository.models import Package, PackageVersion, Team
+from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
 
 
 class CommunitySerializer(serializers.ModelSerializer):
@@ -25,15 +25,15 @@ class CommunityCardSerializer(serializers.Serializer):
     Data shown on "CommunityCard" component on frontend.
     """
 
-    download_count = serializers.IntegerField(min_value=0)
     bg_image_src = serializers.CharField(allow_null=True)
+    download_count = serializers.IntegerField(min_value=0)
     identifier = serializers.CharField(
         max_length=Community._meta.get_field("identifier").max_length
     )
-    package_count = serializers.IntegerField(min_value=0)
     name = serializers.CharField(
         max_length=Community._meta.get_field("name").max_length
     )
+    package_count = serializers.IntegerField(min_value=0)
 
 
 class PackageCategorySerializer(serializers.ModelSerializer):
@@ -77,6 +77,9 @@ class PackageCardSerializer(serializers.Serializer):
     is_nsfw = serializers.BooleanField()
     is_pinned = serializers.BooleanField()
     last_updated = serializers.DateTimeField()
+    namespace = serializers.CharField(
+        max_length=Namespace._meta.get_field("name").max_length
+    )
     package_name = serializers.CharField(
         max_length=Package._meta.get_field("name").max_length
     )
@@ -103,6 +106,9 @@ class PackageDependencySerializer(serializers.Serializer):
         max_length=PackageVersion._meta.get_field("description").max_length
     )
     image_src = serializers.CharField(allow_null=True)
+    namespace = serializers.CharField(
+        max_length=Namespace._meta.get_field("name").max_length
+    )
     package_name = serializers.CharField(
         max_length=Package._meta.get_field("name").max_length
     )
@@ -121,8 +127,8 @@ class CommunityPackageListSerializer(serializers.Serializer):
     community_name = serializers.CharField(
         max_length=Community._meta.get_field("name").max_length
     )
-    packages = PackageCardSerializer(many=True)
     has_more_pages = serializers.BooleanField()
+    packages = PackageCardSerializer(many=True)
 
 
 class FrontPageContentSerializer(serializers.Serializer):
@@ -160,6 +166,9 @@ class PackageDetailViewContentSerializer(serializers.Serializer):
     install_url = serializers.CharField()
     last_updated = serializers.DateTimeField()
     markdown = serializers.CharField()
+    namespace = serializers.CharField(
+        max_length=Namespace._meta.get_field("name").max_length
+    )
     package_name = serializers.CharField(
         max_length=Package._meta.get_field("name").max_length
     )
