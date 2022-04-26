@@ -2,16 +2,15 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 
-from thunderstore.cache.cache import CacheBustCondition, ManualCacheMixin
+from thunderstore.cache.cache import CacheBustCondition, ManualCacheCommunityMixin
 from thunderstore.repository.api.experimental.serializers import (
     PackageVersionSerializerExperimental,
 )
-from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 
 
-class PackageVersionDetailApiView(ManualCacheMixin, RetrieveAPIView, CommunityMixin):
+class PackageVersionDetailApiView(ManualCacheCommunityMixin, RetrieveAPIView):
     """
     Get a single package version
     """

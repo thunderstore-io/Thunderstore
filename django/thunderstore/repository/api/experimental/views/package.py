@@ -4,11 +4,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.pagination import CursorPagination
 
-from thunderstore.cache.cache import CacheBustCondition, ManualCacheMixin
+from thunderstore.cache.cache import CacheBustCondition, ManualCacheCommunityMixin
 from thunderstore.repository.api.experimental.serializers import (
     PackageSerializerExperimental,
 )
-from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package
 from thunderstore.repository.package_reference import PackageReference
 
@@ -44,7 +43,7 @@ class CustomCursorPagination(CursorPagination):
     page_size = 5
 
 
-class PackageListApiView(ManualCacheMixin, ListAPIView, CommunityMixin):
+class PackageListApiView(ManualCacheCommunityMixin, ListAPIView):
     """
     Lists all available packages
     """
@@ -57,7 +56,7 @@ class PackageListApiView(ManualCacheMixin, ListAPIView, CommunityMixin):
         return get_package_queryset()
 
 
-class PackageDetailApiView(ManualCacheMixin, RetrieveAPIView, CommunityMixin):
+class PackageDetailApiView(ManualCacheCommunityMixin, RetrieveAPIView):
     """
     Get a single package
     """

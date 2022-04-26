@@ -21,6 +21,10 @@ class CacheBustCondition(ChoiceEnum):
     dynamic_html_updated = "dynamic_html_updated"
 
 
+# Move this here to avoid circular import of CacheBustCondition
+from thunderstore.repository.mixins import CommunityMixin
+
+
 def try_regenerate_cache(
     key: str,
     old_key: str,
@@ -146,6 +150,9 @@ class ManualCacheMixin(object):
     cache_until = None
     cache_expiry = DEFAULT_CACHE_EXPIRY
 
+    def get_extra_cache_vary(self):
+        return set()
+
     def dispatch(self, *args, **kwargs):
         def get_default(*a, **kw):
             return super(ManualCacheMixin, self).dispatch(*a, **kw).render()
@@ -158,13 +165,18 @@ class ManualCacheMixin(object):
                 cache_bust_condition=self.cache_until,
                 cache_type="view",
                 key=get_view_cache_name(type(self)),
-                vary_on=args + tuple(kwargs.values()) + (self.community_identifier,),
+                vary_on=args + tuple(kwargs.values()) + self.get_extra_cache_vary(),
             ),
             default=get_default,
             default_args=args,
             default_kwargs=kwargs,
             expiry=self.cache_expiry,
         )
+
+
+class ManualCacheCommunityMixin(CommunityMixin, ManualCacheMixin):
+    def get_extra_cache_vary(self):
+        return (self.community_identifier,)
 
 
 def cache_function_result(cache_until, expiry=DEFAULT_CACHE_EXPIRY):
