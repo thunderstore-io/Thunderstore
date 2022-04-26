@@ -24,4 +24,5 @@ class CommunityMixin:
         context = super().get_context_data(*args, **kwargs)
         context["community_identifier"] = self.community_identifier
         context["community"] = self.community
+        context["community_site"] = self.community_site
         return context
