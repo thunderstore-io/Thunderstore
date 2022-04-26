@@ -1,10 +1,9 @@
-from functools import cached_property
-
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import QuerySet
 from django.urls import reverse
+from django.utils.functional import cached_property
 
 from thunderstore.core.mixins import TimestampMixin
 
