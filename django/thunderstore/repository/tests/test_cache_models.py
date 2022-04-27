@@ -20,7 +20,7 @@ def test_api_v1_package_cache_get_latest_for_community_without_community(
 ) -> None:
     # Make sure a community is in the DB to ensure a random one isn't returned
     assert community.pk
-    assert APIV1PackageCache.get_latest_for_community(None) is None
+    assert APIV1PackageCache.get_latest_for_community(community_identifier=None) is None
 
 
 @pytest.mark.django_db
@@ -28,34 +28,65 @@ def test_api_v1_package_cache_get_latest_for_community(settings: Any) -> None:
     settings.DISABLE_TRANSACTION_CHECKS = True
     community_a = CommunityFactory()
     community_b = CommunityFactory()
-    assert APIV1PackageCache.get_latest_for_community(community_a) is None
-    assert APIV1PackageCache.get_latest_for_community(community_b) is None
+    assert (
+        APIV1PackageCache.get_latest_for_community(
+            community_identifier=community_a.identifier
+        )
+        is None
+    )
+    assert (
+        APIV1PackageCache.get_latest_for_community(
+            community_identifier=community_b.identifier
+        )
+        is None
+    )
 
     APIV1PackageCache.update_for_community(community_a, b"")
     APIV1PackageCache.update_for_community(community_b, b"")
-    assert APIV1PackageCache.get_latest_for_community(None) is None
-    cache_a = APIV1PackageCache.get_latest_for_community(community_a)
-    cache_b = APIV1PackageCache.get_latest_for_community(community_b)
+    assert APIV1PackageCache.get_latest_for_community(community_identifier=None) is None
+    cache_a = APIV1PackageCache.get_latest_for_community(
+        community_identifier=community_a.identifier
+    )
+    cache_b = APIV1PackageCache.get_latest_for_community(
+        community_identifier=community_b.identifier
+    )
     assert cache_a.pk != cache_b.pk
     assert cache_a.community == community_a
     assert cache_b.community == community_b
 
     APIV1PackageCache.update_for_community(community_a, b"")
-    cache_a2 = APIV1PackageCache.get_latest_for_community(community_a)
+    cache_a2 = APIV1PackageCache.get_latest_for_community(
+        community_identifier=community_a.identifier
+    )
     assert cache_a2.pk != cache_a.pk
     cache_b.delete()
-    assert APIV1PackageCache.get_latest_for_community(community_b) is None
+    assert (
+        APIV1PackageCache.get_latest_for_community(
+            community_identifier=community_b.identifier
+        )
+        is None
+    )
 
 
 @pytest.mark.django_db
 def test_api_v1_packge_cache_update_for_community(community: Community) -> None:
     content = b"this is a test message"
-    assert APIV1PackageCache.get_latest_for_community(community) is None
+    assert (
+        APIV1PackageCache.get_latest_for_community(
+            community_identifier=community.identifier
+        )
+        is None
+    )
     latest = APIV1PackageCache.update_for_community(community, content=content)
     assert latest.content_type == "application/json"
     assert latest.content_encoding == "gzip"
     assert latest.community.pk == community.pk
-    assert APIV1PackageCache.get_latest_for_community(community).pk == latest.pk
+    assert (
+        APIV1PackageCache.get_latest_for_community(
+            community_identifier=community.identifier
+        ).pk
+        == latest.pk
+    )
     with gzip.GzipFile(fileobj=latest.data, mode="r") as f:
         result = f.read()
     assert result == content

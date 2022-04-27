@@ -1,13 +1,22 @@
 import jwt
 import pytest
 from django.urls import reverse
+from rest_framework.test import APIClient
 
+from thunderstore.community.models.community import Community
 from thunderstore.core.models import IncomingJWTAuthConfiguration, SecretTypeChoices
-from thunderstore.repository.models import DiscordUserBotPermission
+from thunderstore.repository.models import DiscordUserBotPermission, Package
 
 
 @pytest.mark.django_db
-def test_bot_api_deprecate_mod_200(api_client, admin_user, package):
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_bot_api_deprecate_mod_200(
+    api_client: APIClient,
+    admin_user,
+    package: Package,
+    community: Community,
+    old_urls: bool,
+):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
@@ -31,8 +40,15 @@ def test_bot_api_deprecate_mod_200(api_client, admin_user, package):
         headers={"kid": str(auth.key_id)},
     )
 
+    if old_urls:
+        url = reverse("api:v1:bot.deprecate-mod")
+    else:
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
+        )
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        url,
         data=encoded,
         content_type="application/jwt",
     )
@@ -43,10 +59,13 @@ def test_bot_api_deprecate_mod_200(api_client, admin_user, package):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_bot_api_deprecate_mod_403_thunderstore_perms(
-    api_client,
+    api_client: APIClient,
     user,
-    package,
+    package: Package,
+    community: Community,
+    old_urls: bool,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -71,8 +90,15 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
         headers={"kid": str(auth.key_id)},
     )
 
+    if old_urls:
+        url = reverse("api:v1:bot.deprecate-mod")
+    else:
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
+        )
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        url,
         data=encoded,
         content_type="application/jwt",
     )
@@ -86,10 +112,13 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_bot_api_deprecate_mod_403_discord_perms(
-    api_client,
+    api_client: APIClient,
     admin_user,
-    package,
+    package: Package,
+    community: Community,
+    old_urls: bool,
 ):
     assert package.is_deprecated is False
     jwt_secret = "superSecret"
@@ -114,8 +143,15 @@ def test_bot_api_deprecate_mod_403_discord_perms(
         headers={"kid": str(auth.key_id)},
     )
 
+    if old_urls:
+        url = reverse("api:v1:bot.deprecate-mod")
+    else:
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
+        )
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        url,
         data=encoded,
         content_type="application/jwt",
     )
@@ -126,7 +162,13 @@ def test_bot_api_deprecate_mod_403_discord_perms(
 
 
 @pytest.mark.django_db
-def test_bot_api_deprecate_mod_404(api_client, admin_user):
+@pytest.mark.parametrize("old_urls", (False, True))
+def test_bot_api_deprecate_mod_404(
+    api_client: APIClient,
+    admin_user,
+    community: Community,
+    old_urls: bool,
+):
     jwt_secret = "superSecret"
     auth = IncomingJWTAuthConfiguration.objects.create(
         name="Test configuration",
@@ -149,8 +191,15 @@ def test_bot_api_deprecate_mod_404(api_client, admin_user):
         headers={"kid": str(auth.key_id)},
     )
 
+    if old_urls:
+        url = reverse("api:v1:bot.deprecate-mod")
+    else:
+        url = reverse(
+            "communities:community:api:bot.deprecate-mod",
+            kwargs={"community_identifier": community.identifier},
+        )
     response = api_client.post(
-        reverse("api:v1:bot.deprecate-mod"),
+        url,
         data=encoded,
         content_type="application/jwt",
     )

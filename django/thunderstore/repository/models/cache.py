@@ -22,16 +22,18 @@ class APIV1PackageCache(S3FileMixin):
 
     @classmethod
     def get_latest_for_community(
-        cls, community: Optional[Community]
+        cls,
+        community_identifier: Optional[str] = None,
     ) -> Optional["APIV1PackageCache"]:
-        if community is None:
+        if community_identifier:
+            return (
+                APIV1PackageCache.objects.active()
+                .filter(community__identifier=community_identifier)
+                .order_by("-last_modified")
+                .first()
+            )
+        else:
             return None
-        return (
-            APIV1PackageCache.objects.active()
-            .filter(community=community)
-            .order_by("-last_modified")
-            .first()
-        )
 
     @classmethod
     def update_for_community(
@@ -59,7 +61,9 @@ class APIV1PackageCache(S3FileMixin):
     @classmethod
     def drop_stale_cache(cls):
         for community in Community.objects.all().iterator():
-            latest = cls.get_latest_for_community(community)
+            latest = cls.get_latest_for_community(
+                community_identifier=community.identifier
+            )
             cutoff = latest.last_modified - timedelta(hours=1)
             stale = cls.objects.filter(last_modified__lte=cutoff, community=community)
             for entry in stale.iterator():

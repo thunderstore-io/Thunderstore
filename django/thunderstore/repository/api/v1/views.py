@@ -39,7 +39,7 @@ class DeprecateModApiView(JWTApiView):
         if not permissions.can_deprecate:
             raise PermissionDenied("Insufficient Discord user permissions")
 
-    def post(self, request, format=None):
+    def post(self, request, format=None, community_identifier=None):
         package = self.get_package(request.decoded.get("package"))
 
         if not request.user.has_perm("repository.change_package"):
