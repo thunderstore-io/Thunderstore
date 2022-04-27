@@ -6,7 +6,7 @@ from django.db.models import Q, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 
-from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType

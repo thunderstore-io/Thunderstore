@@ -10,7 +10,7 @@ from rest_framework.test import APIClient
 from thunderstore.community.models.community_site import CommunitySite
 from thunderstore.core.factories import UserFactory
 
-from ...cache.cache import CacheBustCondition
+from ...cache.enums import CacheBustCondition
 from ...cache.tasks import invalidate_cache
 from ...community.models import (
     CommunitySite,

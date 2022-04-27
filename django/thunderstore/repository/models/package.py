@@ -11,7 +11,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from thunderstore.cache.cache import CacheBustCondition, cache_function_result
+from thunderstore.cache.cache import cache_function_result
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 

@@ -8,21 +8,11 @@ from django.conf import settings
 from django.core.cache import cache
 from redis.exceptions import LockError
 
-from thunderstore.core.utils import ChoiceEnum
+from thunderstore.cache.enums import CacheBustCondition
+from thunderstore.repository.mixins import CommunityMixin
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
 CACHE_LOCK_TIMEOUT = 30
-
-
-# TODO: Support parameters in cache bust conditions (e.g. specific package update)
-class CacheBustCondition(ChoiceEnum):
-    background_update_only = "manual_update_only"
-    any_package_updated = "any_package_updated"
-    dynamic_html_updated = "dynamic_html_updated"
-
-
-# Move this here to avoid circular import of CacheBustCondition
-from thunderstore.repository.mixins import CommunityMixin
 
 
 def try_regenerate_cache(

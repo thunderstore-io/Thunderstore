@@ -11,7 +11,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 
-from thunderstore.cache.cache import CacheBustCondition, cache_function_result
+from thunderstore.cache.cache import cache_function_result
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models import (
     Community,

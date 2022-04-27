@@ -2,7 +2,7 @@ from celery import shared_task
 from django.conf import settings
 from django.core.cache import cache
 
-from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.utils.decorators import run_after_commit
 
 

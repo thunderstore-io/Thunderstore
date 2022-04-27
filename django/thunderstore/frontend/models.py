@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q, signals
 
-from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.utils import ChoiceEnum
 
