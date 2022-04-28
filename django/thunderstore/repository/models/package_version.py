@@ -154,7 +154,7 @@ class PackageVersion(models.Model):
     @cached_property
     def download_url(self):
         return reverse(
-            "old_urls:packages.download",
+            "packages.download",
             kwargs={
                 "owner": self.package.owner.name,
                 "name": self.package.name,
