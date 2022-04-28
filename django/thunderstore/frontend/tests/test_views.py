@@ -43,14 +43,7 @@ def test_views_auth_login_link_generation(
             HTTP_HOST=community_site.site.domain,
             secure=secure,
         )
-        assert (
-            f"{prefix}/auth/login/github/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fpackage%2F".encode()
-            in response.content
-        )
-        assert (
-            f"{prefix}/auth/login/discord/?next=http{'s' if secure else ''}%3A%2F%2Ftestsite.test%2Fpackage%2F".encode()
-            in response.content
-        )
+        assert response.status_code == 302
     else:
         response = client.get(
             reverse(
@@ -91,7 +84,11 @@ def test_views_disabled_for_auth_exclusive_host(
         url,
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     settings.AUTH_EXCLUSIVE_HOST = community_site.site.domain
     response = client.get(
         url,

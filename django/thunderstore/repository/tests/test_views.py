@@ -81,7 +81,11 @@ def test_package_list_view(client, community_site, ordering: str, old_urls: bool
         )
     url = f"{base_url}?ordering={ordering}"
     response = client.get(url, HTTP_HOST=community_site.site.domain)
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
 
     for i in range(4):
         assert f"test_{i}".encode("utf-8") in response.content
@@ -248,7 +252,11 @@ def test_package_create_view_logged_in(
         url,
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     assert b"Upload package" in response.content
 
 
@@ -289,7 +297,11 @@ def test_package_create_view_old_logged_in(
         url,
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     assert b"Upload package" in response.content
 
 
@@ -317,7 +329,7 @@ def test_package_download_view(
 
     client.force_login(user)
     url = reverse(
-        "old_urls:packages.download",
+        "packages.download",
         kwargs={
             "owner": version.package.owner.name,
             "name": version.package.name,

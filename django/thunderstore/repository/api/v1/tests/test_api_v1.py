@@ -32,7 +32,11 @@ def test_api_v1_package_list(
     else:
         url = f"/c/{community_site.community.identifier}/api/v1/package/"
     response = api_client.get(url)
-    assert response.status_code == 503
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 503
 
     assert (
         APIV1PackageCache.get_latest_for_community(
@@ -124,7 +128,11 @@ def test_api_v1_package_detail(
         url = f"/c/{community_site.community.identifier}/api/v1/package/{active_package_listing.package.uuid4}/"
     response = api_client.get(url)
     assert community_site.community == active_package_listing.community
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     result = response.json()
     assert result == json.loads(
         JSONRenderer().render(
@@ -164,7 +172,11 @@ def test_api_v1_rate_package(
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     result = response.json()
     assert result["state"] == "rated"
     assert result["score"] == 1
@@ -198,7 +210,11 @@ def test_api_v1_rate_package_permission_denied(
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
-    assert response.status_code == 403
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 403
     assert response.json()["detail"] == "Authentication credentials were not provided."
 
 
@@ -210,17 +226,28 @@ def test_api_v1_rate_package_permission_denied(
         ("https://example.org/", True),
     ),
 )
+@pytest.mark.parametrize("old_urls", (False, True))
 def test_api_v1_package_listing_serializer_donation_link_omission(
     api_client: APIClient,
+    community_site: CommunitySite,
     active_package_listing: PackageListing,
     donation_link: Optional[str],
     should_exist: bool,
+    old_urls: bool,
 ) -> None:
     active_package_listing.package.owner.donation_link = donation_link
     active_package_listing.package.owner.save()
     update_api_v1_caches()
-    response = api_client.get("/api/v1/package/")
-    assert response.status_code == 200
+    if old_urls:
+        url = f"/api/v1/package/"
+    else:
+        url = f"/c/{community_site.community.identifier}/api/v1/package/"
+    response = api_client.get(url)
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
 
     # The response is gzipped
     content = BytesIO(response.content)
