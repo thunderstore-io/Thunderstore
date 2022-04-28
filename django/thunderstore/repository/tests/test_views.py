@@ -96,7 +96,9 @@ def test_package_detail_view(
     client, active_package_listing: PackageListing, community_site
 ):
     response = client.get(
-        active_package_listing.package.get_absolute_url(),
+        active_package_listing.package.get_page_url(
+            active_package_listing.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -110,7 +112,7 @@ def test_package_detail_version_view(
     client, active_version_with_listing, community_site
 ):
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -130,7 +132,7 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     # Try with user that is member of owner team
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -139,7 +141,7 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     user = UserFactory.create()
     client.force_login(user=user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
@@ -158,7 +160,7 @@ def test_package_detail_version_view_can_be_viewed_by_user(
 
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -175,7 +177,7 @@ def test_package_detail_version_view_main_package_deactivated(
     active_version_with_listing.package.is_active = False
     active_version_with_listing.package.save()
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
