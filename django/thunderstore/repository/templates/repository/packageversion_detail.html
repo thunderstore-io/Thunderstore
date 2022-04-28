@@ -68,7 +68,7 @@
                 <h1 class="mt-0">{{ object.display_name }}</h1>
                 <p>{{ object.description }}</p>
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></h5>
+                    <h5 class="mb-1">By <a href="{% get_owner_url object %}">{{ object.owner.name }}</a></h5>
                     {% if object.website_url %}
                     <a href="{{ object.website_url }}">{{ object.website_url }}</a>
                     {% endif %}
