@@ -3,7 +3,8 @@ from urllib import request
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http import Http404
+from django.http import Http404, HttpRequest
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -20,7 +21,7 @@ from ...community.models import (
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team, TeamMember
 from ..package_upload import PackageUploadForm
-from ..views.repository import PackageVersionDetailView
+from ..views.repository import LegacyUrlRedirectView, PackageVersionDetailView
 
 
 @pytest.mark.django_db
@@ -403,3 +404,34 @@ def test_team_settings_donation_link_view(
     )
     assert response.status_code == 200
     assert b"Donation link saved" in response.content
+
+
+@pytest.mark.django_db
+@override_settings(ALLOWED_HOSTS=["testsite.test", "breaking.subdomain.testsite.test"])
+def test_legacy_url_redirect_view(
+    client: APIClient,
+    community_site: CommunitySite,
+) -> None:
+    view = LegacyUrlRedirectView()
+
+    # Scenario one: works correctly
+    response = client.get(
+        reverse("old_urls:packages.list"),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+
+    # Scenario two: sub sub domains borke
+    r = HttpRequest()
+    r.META["HTTP_HOST"] = f"breaking.subdomain.{community_site.site.domain}"
+    response = view.get(r)
+    assert response.status_code == 404
+    assert b"Site not found" in response.content
+
+    # Scenario three: get_redirect_full_url borkes
+    r = HttpRequest()
+    r.META["HTTP_HOST"] = f"{community_site.site.domain}"
+    r.path = "/bad/path/"
+    response = view.get(r)
+    assert response.status_code == 404
+    assert b"Site not found" in response.content
