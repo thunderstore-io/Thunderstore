@@ -86,6 +86,13 @@ def test_package_list_view(client, community_site, ordering: str, old_urls: bool
     for i in range(4):
         assert f"test_{i}".encode("utf-8") in response.content
 
+    bad_url = reverse(
+        "communities:community:packages.list",
+        kwargs={"community_identifier": "bad"},
+    )
+    response = client.get(bad_url, HTTP_HOST=community_site.site.domain)
+    assert response.status_code == 404
+
 
 @pytest.mark.django_db
 def test_package_detail_view(
