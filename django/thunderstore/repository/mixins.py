@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.utils.functional import cached_property
 
 from thunderstore.community.models.community import Community
@@ -14,7 +15,10 @@ class CommunityMixin:
 
     @cached_property
     def community(self):
-        return Community.objects.get(identifier=self.community_identifier)
+        try:
+            return Community.objects.get(identifier=self.community_identifier)
+        except Community.DoesNotExist:
+            raise Http404()
 
     @cached_property
     def community_site(self):
