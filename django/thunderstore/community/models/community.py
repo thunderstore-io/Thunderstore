@@ -1,9 +1,9 @@
-from functools import cached_property
 from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Manager, QuerySet
+from django.utils.functional import cached_property
 
 from thunderstore.community.models.community_membership import (
     CommunityMemberRole,

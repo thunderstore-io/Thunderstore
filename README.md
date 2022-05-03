@@ -99,7 +99,7 @@ running that command.
     Should remain secret, as is implied by the name.
 -   `ALLOWED_HOSTS`: Comma separated list of hostnames this server can be
     connected with. For example `beta.thunderstore.io`
--   `SERVER_NAME`: The public name of the server, such as
+-   `PRIMARY_HOST`: The public name of the server, such as
     `beta.thunderstore.io`
 -   `PROTOCOL`: The protocol which to use to build URLs to the server. Either
     `https://` or `http://`.

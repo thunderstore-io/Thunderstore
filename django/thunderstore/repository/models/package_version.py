@@ -95,6 +95,7 @@ class PackageVersion(models.Model):
             ),
         ]
 
+    # TODO: Remove in the end of TS-272
     def get_absolute_url(self):
         return reverse(
             "old_urls:packages.version.detail",
@@ -105,13 +106,28 @@ class PackageVersion(models.Model):
             },
         )
 
+    def get_page_url(self, community_identifier: str) -> str:
+        return reverse(
+            "communities:community:packages.version.detail",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "version": self.version_number,
+                "community_identifier": community_identifier,
+            },
+        )
+
     @cached_property
     def display_name(self):
         return self.name.replace("_", " ")
 
+    # TODO: Remove in the end of TS-272
     @cached_property
     def owner_url(self):
         return self.package.owner_url
+
+    def get_owner_url(self, community_identifier: str) -> str:
+        return self.package.get_owner_url(community_identifier)
 
     @cached_property
     def owner(self):

@@ -11,7 +11,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 
-from thunderstore.cache.cache import CacheBustCondition, cache_function_result
+from thunderstore.cache.cache import cache_function_result
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models import (
     Community,
@@ -20,6 +21,7 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
+from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
 
@@ -27,13 +29,13 @@ from thunderstore.repository.package_upload import PackageUploadForm
 MODS_PER_PAGE = 24
 
 
-class PackageListSearchView(ListView):
+class PackageListSearchView(CommunityMixin, ListView):
     model = PackageListing
     paginate_by = MODS_PER_PAGE
     paginator_class = CachedPaginator
 
     def get_base_queryset(self):
-        return self.model.objects.active().exclude(~Q(community=self.request.community))
+        return self.model.objects.active().exclude(~Q(community=self.community))
 
     def get_page_title(self):
         return ""
@@ -42,11 +44,11 @@ class PackageListSearchView(ListView):
         return ""
 
     def get_categories(self):
-        return PackageCategory.objects.exclude(~Q(community=self.request.community))
+        return PackageCategory.objects.exclude(~Q(community=self.community))
 
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
-        cache_vary += f".{self.request.community.identifier}"
+        cache_vary += f".{self.community_identifier}"
         cache_vary += f".{self.get_search_query()}"
         cache_vary += f".{self.get_active_ordering()}"
         cache_vary += f".{self.get_included_categories()}"
@@ -67,7 +69,7 @@ class PackageListSearchView(ListView):
     @cached_property
     def sections(self) -> List[PackageListingSection]:
         return list(
-            self.request.community.package_listing_sections.order_by(
+            self.community.package_listing_sections.order_by(
                 "-priority",
                 "datetime_created",
             ),
@@ -233,7 +235,7 @@ class PackageListSearchView(ListView):
         if not self.get_is_deprecated_included():
             queryset = queryset.exclude(package__is_deprecated=True)
 
-        if self.request.community.require_package_listing_approval:
+        if self.community.require_package_listing_approval:
             queryset = queryset.exclude(
                 ~Q(review_status=PackageListingReviewStatus.approved),
             )
@@ -324,7 +326,7 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def get_base_queryset(self):
         return self.model.objects.active().exclude(
-            ~Q(Q(package__owner=self.owner) & Q(community=self.request.community)),
+            ~Q(Q(package__owner=self.owner) & Q(community=self.community)),
         )
 
     def get_page_title(self):
@@ -346,7 +348,7 @@ class PackageListByDependencyView(PackageListSearchView):
             .filter(
                 package__owner=owner,
                 package__name=name,
-                community=self.request.community,
+                community=self.community,
             )
             .first()
         )
@@ -374,7 +376,7 @@ class PackageListByDependencyView(PackageListSearchView):
 def get_package_listing_or_404(
     namespace: str,
     name: str,
-    community_pk: int,
+    community: Community,
 ) -> PackageListing:
     owner = get_object_or_404(Team, name=namespace)
     package_listing = (
@@ -382,7 +384,7 @@ def get_package_listing_or_404(
         .filter(
             package__owner=owner,
             package__name=name,
-            community=community_pk,
+            community=community,
         )
         .select_related(
             "package",
@@ -399,14 +401,14 @@ def get_package_listing_or_404(
     return package_listing
 
 
-class PackageDetailView(DetailView):
+class PackageDetailView(CommunityMixin, DetailView):
     model = PackageListing
 
     def get_object(self, *args, **kwargs):
         listing = get_package_listing_or_404(
             namespace=self.kwargs["owner"],
             name=self.kwargs["name"],
-            community_pk=self.request.community.pk,
+            community=self.community,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -427,7 +429,7 @@ class PackageDetailView(DetailView):
         return context
 
 
-class PackageVersionDetailView(DetailView):
+class PackageVersionDetailView(CommunityMixin, DetailView):
     model = PackageVersion
 
     def get_object(self, *args, **kwargs):
@@ -438,7 +440,7 @@ class PackageVersionDetailView(DetailView):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community=self.request.community,
+            community=self.community,
         )
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
@@ -451,7 +453,7 @@ class PackageVersionDetailView(DetailView):
         )
 
 
-class PackageCreateView(TemplateView):
+class PackageCreateView(CommunityMixin, TemplateView):
     template_name = "repository/package_create.html"
 
     def dispatch(self, *args, **kwargs):
@@ -460,12 +462,12 @@ class PackageCreateView(TemplateView):
         return super().dispatch(*args, **kwargs)
 
 
-class PackageDocsView(TemplateView):
+class PackageDocsView(CommunityMixin, TemplateView):
     template_name = "repository/package_docs.html"
 
 
 # TODO: Remove once new UI is stable enough
-class PackageCreateOldView(CreateView):
+class PackageCreateOldView(CommunityMixin, CreateView):
     model = PackageVersion
     form_class = PackageUploadForm
     template_name = "repository/package_create_old.html"
@@ -478,17 +480,18 @@ class PackageCreateOldView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["selectable_communities"] = Community.objects.filter(
-            Q(is_listed=True) | Q(pk=self.request.community.pk),
+            Q(is_listed=True) | Q(pk=self.community.pk),
         )
+        context["current_community"] = self.community
         return context
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs["user"] = self.request.user
-        kwargs["community"] = self.request.community
+        kwargs["community"] = self.community
         kwargs["initial"] = {
             "team": Team.get_default_for_user(self.request.user),
-            "communities": [self.request.community],
+            "communities": [self.community],
         }
         return kwargs
 
@@ -498,7 +501,7 @@ class PackageCreateOldView(CreateView):
         return redirect(instance)
 
 
-class PackageDownloadView(View):
+class PackageDownloadView(CommunityMixin, View):
     def get(self, *args, **kwargs):
         owner = kwargs["owner"]
         name = kwargs["name"]
@@ -508,7 +511,7 @@ class PackageDownloadView(View):
             PackageListing,
             package__owner__name=owner,
             package__name=name,
-            community=self.request.community,
+            community=self.community,
         )
         version = get_object_or_404(
             PackageVersion,

@@ -4,7 +4,7 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache
 from thunderstore.community.factories import CommunitySiteFactory, PackageListingFactory
 from thunderstore.community.models import (

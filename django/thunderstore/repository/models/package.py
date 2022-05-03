@@ -11,7 +11,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from thunderstore.cache.cache import CacheBustCondition, cache_function_result
+from thunderstore.cache.cache import cache_function_result
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
@@ -202,12 +203,23 @@ class Package(models.Model):
     def dependants_list(self):
         return get_package_dependants_list(self.pk)
 
+    # TODO: Remove in the end of TS-272
     @cached_property
     def owner_url(self):
         return reverse(
             "old_urls:packages.list_by_owner", kwargs={"owner": self.owner.name}
         )
 
+    def get_owner_url(self, community_identifier: str) -> str:
+        return reverse(
+            "communities:community:packages.list_by_owner",
+            kwargs={
+                "owner": self.owner.name,
+                "community_identifier": community_identifier,
+            },
+        )
+
+    # TODO: Remove in the end of TS-272
     @cached_property
     def dependants_url(self):
         return reverse(
@@ -215,6 +227,16 @@ class Package(models.Model):
             kwargs={
                 "owner": self.owner.name,
                 "name": self.name,
+            },
+        )
+
+    def get_dependants_url(self, community_identifier: str) -> str:
+        return reverse(
+            "communities:community:packages.list_by_dependency",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "community_identifier": community_identifier,
             },
         )
 
@@ -226,6 +248,16 @@ class Package(models.Model):
         return reverse(
             "old_urls:packages.detail",
             kwargs={"owner": self.owner.name, "name": self.name},
+        )
+
+    def get_page_url(self, community_identifier: str) -> str:
+        return reverse(
+            "communities:community:packages.detail",
+            kwargs={
+                "owner": self.owner.name,
+                "name": self.name,
+                "community_identifier": community_identifier,
+            },
         )
 
     def get_full_url(self, site: Site):

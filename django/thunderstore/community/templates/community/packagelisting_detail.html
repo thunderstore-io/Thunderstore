@@ -2,7 +2,7 @@
 {% load thumbnail %}
 {% load arrow %}
 {% load markdownify %}
-{% load get_install_url %}
+{% load get_urls %}
 {% load cache_until %}
 
 {% block title %}{{ object.package.display_name }}{% endblock %}
@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk request.community.pk %}
+{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk community_identifier %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">

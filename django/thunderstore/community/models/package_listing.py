@@ -6,7 +6,7 @@ from django.db.models import Q, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 
-from thunderstore.cache.cache import CacheBustCondition
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
@@ -88,6 +88,7 @@ class PackageListing(TimestampMixin, models.Model):
     def __str__(self):
         return self.package.name
 
+    # TODO: Remove in the end of TS-272
     def get_absolute_url(self):
         return reverse(
             "old_urls:packages.detail",
@@ -95,11 +96,34 @@ class PackageListing(TimestampMixin, models.Model):
         )
 
     @cached_property
+    def get_absolute_url_with_community_identifier(self):
+        return reverse(
+            "communities:community:packages.detail",
+            kwargs={
+                "owner": self.package.owner.name,
+                "name": self.package.name,
+                "community_identifier": self.community.identifier,
+            },
+        )
+
+    # TODO: Remove in the end of TS-272
+    @cached_property
     def owner_url(self):
         return reverse(
             "old_urls:packages.list_by_owner", kwargs={"owner": self.package.owner.name}
         )
 
+    @cached_property
+    def owner_url_with_community_identifier(self):
+        return reverse(
+            "communities:community:packages.list_by_owner",
+            kwargs={
+                "owner": self.package.owner.name,
+                "community_identifier": self.community.identifier,
+            },
+        )
+
+    # TODO: Remove in the end of TS-272
     @cached_property
     def dependants_url(self):
         return reverse(
@@ -107,6 +131,17 @@ class PackageListing(TimestampMixin, models.Model):
             kwargs={
                 "owner": self.package.owner.name,
                 "name": self.package.name,
+            },
+        )
+
+    @cached_property
+    def dependants_url_with_community_identifier(self):
+        return reverse(
+            "communities:community:packages.list_by_dependency",
+            kwargs={
+                "owner": self.package.owner.name,
+                "name": self.package.name,
+                "community_identifier": self.community.identifier,
             },
         )
 

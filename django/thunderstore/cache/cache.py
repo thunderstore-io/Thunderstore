@@ -8,17 +8,11 @@ from django.conf import settings
 from django.core.cache import cache
 from redis.exceptions import LockError
 
-from thunderstore.core.utils import ChoiceEnum
+from thunderstore.cache.enums import CacheBustCondition
+from thunderstore.repository.mixins import CommunityMixin
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
 CACHE_LOCK_TIMEOUT = 30
-
-
-# TODO: Support parameters in cache bust conditions (e.g. specific package update)
-class CacheBustCondition(ChoiceEnum):
-    background_update_only = "manual_update_only"
-    any_package_updated = "any_package_updated"
-    dynamic_html_updated = "dynamic_html_updated"
 
 
 def try_regenerate_cache(
@@ -146,6 +140,9 @@ class ManualCacheMixin(object):
     cache_until = None
     cache_expiry = DEFAULT_CACHE_EXPIRY
 
+    def get_extra_cache_vary(self):
+        return set()
+
     def dispatch(self, *args, **kwargs):
         def get_default(*a, **kw):
             return super(ManualCacheMixin, self).dispatch(*a, **kw).render()
@@ -158,13 +155,18 @@ class ManualCacheMixin(object):
                 cache_bust_condition=self.cache_until,
                 cache_type="view",
                 key=get_view_cache_name(type(self)),
-                vary_on=args + tuple(kwargs.values()) + (self.request.community_site,),
+                vary_on=args + tuple(kwargs.values()) + self.get_extra_cache_vary(),
             ),
             default=get_default,
             default_args=args,
             default_kwargs=kwargs,
             expiry=self.cache_expiry,
         )
+
+
+class ManualCacheCommunityMixin(CommunityMixin, ManualCacheMixin):
+    def get_extra_cache_vary(self):
+        return (self.community_identifier,)
 
 
 def cache_function_result(cache_until, expiry=DEFAULT_CACHE_EXPIRY):

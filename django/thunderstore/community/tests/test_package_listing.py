@@ -14,6 +14,36 @@ from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
 
 @pytest.mark.django_db
+def test_package_listing_get_absolute_url_with_community_identifier(
+    active_package_listing: PackageListing,
+) -> None:
+    assert (
+        active_package_listing.get_absolute_url_with_community_identifier
+        == f"/c/{active_package_listing.community.identifier}/p/{active_package_listing.package.owner.name}/{active_package_listing.package.name}/"
+    )
+
+
+@pytest.mark.django_db
+def test_package_listing_owner_url_with_community_identifier(
+    active_package_listing: PackageListing,
+) -> None:
+    assert (
+        active_package_listing.owner_url_with_community_identifier
+        == f"/c/{active_package_listing.community.identifier}/p/{active_package_listing.package.owner.name}/"
+    )
+
+
+@pytest.mark.django_db
+def test_package_listing_dependants_url_with_community_identifier(
+    active_package_listing: PackageListing,
+) -> None:
+    assert (
+        active_package_listing.dependants_url_with_community_identifier
+        == f"/c/{active_package_listing.community.identifier}/p/{active_package_listing.package.owner.name}/{active_package_listing.package.name}/dependants/"
+    )
+
+
+@pytest.mark.django_db
 def test_package_listing_only_one_per_community(
     active_package: Package, community: Community
 ) -> None:
