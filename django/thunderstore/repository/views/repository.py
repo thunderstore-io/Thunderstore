@@ -2,11 +2,12 @@ from typing import List, Optional, Set, Tuple
 
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.http import Http404
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.functional import cached_property
 from django.views.generic import TemplateView, View
+from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
@@ -21,6 +22,7 @@ from thunderstore.community.models import (
     PackageListingReviewStatus,
     PackageListingSection,
 )
+from thunderstore.redirects.utils import LegacyUrlHandler, RedirectNotFound
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
 from thunderstore.repository.package_upload import PackageUploadForm
@@ -523,3 +525,16 @@ class PackageDownloadView(CommunityMixin, View):
         )
         version.maybe_increase_download_counter(self.request)
         return redirect(self.request.build_absolute_uri(version.file.url))
+
+
+class LegacyUrlRedirectView(RedirectView):
+    def get(self, request, *args, **kwargs):
+        if len(request.get_host().split(".")) > 3:
+            return HttpResponse(content=b"Site not found", status=404)
+
+        try:
+            url = LegacyUrlHandler(request).get_redirected_full_url()
+        except RedirectNotFound:
+            return HttpResponse(content=b"Site not found", status=404)
+
+        return HttpResponseRedirect(url)

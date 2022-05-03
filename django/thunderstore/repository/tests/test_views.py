@@ -3,7 +3,8 @@ from urllib import request
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http import Http404
+from django.http import Http404, HttpRequest
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -20,7 +21,7 @@ from ...community.models import (
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team, TeamMember
 from ..package_upload import PackageUploadForm
-from ..views.repository import PackageVersionDetailView
+from ..views.repository import LegacyUrlRedirectView, PackageVersionDetailView
 
 
 @pytest.mark.django_db
@@ -81,7 +82,11 @@ def test_package_list_view(client, community_site, ordering: str, old_urls: bool
         )
     url = f"{base_url}?ordering={ordering}"
     response = client.get(url, HTTP_HOST=community_site.site.domain)
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
 
     for i in range(4):
         assert f"test_{i}".encode("utf-8") in response.content
@@ -92,7 +97,9 @@ def test_package_detail_view(
     client, active_package_listing: PackageListing, community_site
 ):
     response = client.get(
-        active_package_listing.package.get_absolute_url(),
+        active_package_listing.package.get_page_url(
+            active_package_listing.community.identifier
+        ),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -106,7 +113,7 @@ def test_package_detail_version_view(
     client, active_version_with_listing, community_site
 ):
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -126,7 +133,7 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     # Try with user that is member of owner team
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -135,7 +142,7 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     user = UserFactory.create()
     client.force_login(user=user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
@@ -154,7 +161,7 @@ def test_package_detail_version_view_can_be_viewed_by_user(
 
     client.force_login(user=team_member.user)
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
@@ -171,7 +178,7 @@ def test_package_detail_version_view_main_package_deactivated(
     active_version_with_listing.package.is_active = False
     active_version_with_listing.package.save()
     response = client.get(
-        active_version_with_listing.get_absolute_url(),
+        active_version_with_listing.get_page_url(community_site.community.identifier),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
@@ -248,7 +255,11 @@ def test_package_create_view_logged_in(
         url,
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     assert b"Upload package" in response.content
 
 
@@ -289,7 +300,11 @@ def test_package_create_view_old_logged_in(
         url,
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     assert b"Upload package" in response.content
 
 
@@ -317,7 +332,7 @@ def test_package_download_view(
 
     client.force_login(user)
     url = reverse(
-        "old_urls:packages.download",
+        "packages.download",
         kwargs={
             "owner": version.package.owner.name,
             "name": version.package.name,
@@ -389,3 +404,34 @@ def test_team_settings_donation_link_view(
     )
     assert response.status_code == 200
     assert b"Donation link saved" in response.content
+
+
+@pytest.mark.django_db
+@override_settings(ALLOWED_HOSTS=["testsite.test", "breaking.subdomain.testsite.test"])
+def test_legacy_url_redirect_view(
+    client: APIClient,
+    community_site: CommunitySite,
+) -> None:
+    view = LegacyUrlRedirectView()
+
+    # Scenario one: works correctly
+    response = client.get(
+        reverse("old_urls:packages.list"),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+
+    # Scenario two: sub sub domains borke
+    r = HttpRequest()
+    r.META["HTTP_HOST"] = f"breaking.subdomain.{community_site.site.domain}"
+    response = view.get(r)
+    assert response.status_code == 404
+    assert b"Site not found" in response.content
+
+    # Scenario three: get_redirect_full_url borkes
+    r = HttpRequest()
+    r.META["HTTP_HOST"] = f"{community_site.site.domain}"
+    r.path = "/bad/path/"
+    response = view.get(r)
+    assert response.status_code == 404
+    assert b"Site not found" in response.content

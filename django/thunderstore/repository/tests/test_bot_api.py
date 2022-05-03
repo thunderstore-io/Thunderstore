@@ -52,7 +52,11 @@ def test_bot_api_deprecate_mod_200(
         data=encoded,
         content_type="application/jwt",
     )
-    assert response.status_code == 200
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 200
     assert response.content == b'{"success":true}'
     package.refresh_from_db()
     assert package.is_deprecated is True
@@ -102,7 +106,11 @@ def test_bot_api_deprecate_mod_403_thunderstore_perms(
         data=encoded,
         content_type="application/jwt",
     )
-    assert response.status_code == 403
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 403
     assert (
         response.content
         == b'{"detail":"You do not have permission to perform this action."}'
@@ -155,7 +163,11 @@ def test_bot_api_deprecate_mod_403_discord_perms(
         data=encoded,
         content_type="application/jwt",
     )
-    assert response.status_code == 403
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 403
     assert response.content == b'{"detail":"Insufficient Discord user permissions"}'
     package.refresh_from_db()
     assert package.is_deprecated is False
@@ -203,5 +215,9 @@ def test_bot_api_deprecate_mod_404(
         data=encoded,
         content_type="application/jwt",
     )
-    assert response.status_code == 404
+    if old_urls:
+        assert response.status_code == 302
+        return
+    else:
+        assert response.status_code == 404
     assert response.content == b'{"detail":"Not found."}'

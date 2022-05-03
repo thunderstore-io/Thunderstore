@@ -6,7 +6,6 @@ from thunderstore.repository.views import (
     PackageCreateView,
     PackageDetailView,
     PackageDocsView,
-    PackageDownloadView,
     PackageListByDependencyView,
     PackageListByOwnerView,
     PackageListView,
@@ -23,42 +22,6 @@ from thunderstore.repository.views.team_settings import (
     SettingsTeamListView,
     SettingsTeamServiceAccountView,
 )
-
-legacy_package_urls = [
-    path("", PackageListView.as_view(), name="packages.list"),
-    path("create/", PackageCreateView.as_view(), name="packages.create"),
-    path(
-        "create/old/",
-        PackageCreateOldView.as_view(),
-        name="packages.create.old",
-    ),
-    path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
-    path(
-        "download/<str:owner>/<str:name>/<str:version>/",
-        PackageDownloadView.as_view(),
-        name="packages.download",
-    ),
-    path(
-        "<str:owner>/<str:name>/",
-        PackageDetailView.as_view(),
-        name="packages.detail",
-    ),
-    path(
-        "<str:owner>/<str:name>/dependants/",
-        PackageListByDependencyView.as_view(),
-        name="packages.list_by_dependency",
-    ),
-    path(
-        "<str:owner>/<str:name>/<str:version>/",
-        PackageVersionDetailView.as_view(),
-        name="packages.version.detail",
-    ),
-    path(
-        "<str:owner>/",
-        PackageListByOwnerView.as_view(),
-        name="packages.list_by_owner",
-    ),
-]
 
 package_urls = [
     path("", PackageListView.as_view(), name="packages.list"),
