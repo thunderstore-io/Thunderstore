@@ -122,7 +122,7 @@ class LegacyUrlHandler(CommunityMixin):
 
 def solve_community_identifier(request):
     # TODO: This is shitty
-    if len(request.get_host().split(".")) < 3:
-        return "riskofrain2"
-    else:
+    if len(request.get_host().split(".")) == 3:
         return request.get_host().split(".")[0]
+    else:
+        return "riskofrain2"
