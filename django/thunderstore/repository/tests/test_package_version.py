@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from thunderstore.community.models.package_listing import PackageListing
@@ -43,3 +45,23 @@ def test_package_version_get_owner_url(active_package_listing: PackageListing) -
         active_package_listing.community.identifier
     )
     assert owner_url == "/c/test/p/Test_Team/"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("protocol", ("http://", "https://"))
+@pytest.mark.parametrize(
+    "primary_host", ("primary.example.org", "secondary.example.org")
+)
+def test_package_version_full_download_url(
+    active_package_listing: PackageListing,
+    protocol: str,
+    primary_host: str,
+    settings: Any,
+) -> None:
+    settings.PRIMARY_HOST = primary_host
+    settings.PROTOCOL = protocol
+    package = active_package_listing.package
+    namespace = package.namespace.name
+    version = package.latest
+    expected = f"{protocol}{primary_host}/package/download/{namespace}/{package.name}/{version.version_number}/"
+    assert version.full_download_url == expected

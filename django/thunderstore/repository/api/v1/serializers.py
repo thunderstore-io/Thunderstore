@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework.fields import Field
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
@@ -12,7 +11,7 @@ class PackageVersionSerializer(ModelSerializer):
     dependencies = SerializerMethodField()
 
     def get_download_url(self, instance):
-        return f"{settings.PROTOCOL}{self.context['community_site'].site.domain}{instance.download_url}"
+        return instance.full_download_url
 
     def get_full_name(self, instance):
         return instance.full_version_name
