@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.fields import Field
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
@@ -81,7 +82,15 @@ class PackageListingSerializer(ModelSerializer):
         return instance.package.full_package_name
 
     def get_package_url(self, instance):
-        return instance.package.get_full_url(self.context["community_site"].site)
+        if (community_site := self.context.get("community_site")) is not None:
+            return instance.package.get_full_url(site=community_site.site)
+        elif (community := self.context.get("community")) is not None:
+            path = instance.package.get_page_url(
+                community_identifier=community.identifier
+            )
+            return f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{path}"
+        else:
+            return instance.package.get_full_url(site=None)
 
     def get_donation_link(self, instance):
         return instance.package.owner.donation_link
