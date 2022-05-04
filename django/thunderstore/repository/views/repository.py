@@ -1,5 +1,6 @@
 from typing import List, Optional, Set, Tuple
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import Http404
@@ -22,7 +23,12 @@ from thunderstore.community.models import (
     PackageListingSection,
 )
 from thunderstore.repository.mixins import CommunityMixin
-from thunderstore.repository.models import PackageVersion, Team, get_package_dependants
+from thunderstore.repository.models import (
+    Package,
+    PackageVersion,
+    Team,
+    get_package_dependants,
+)
 from thunderstore.repository.package_upload import PackageUploadForm
 
 # Should be divisible by 4 and 3
@@ -507,15 +513,22 @@ class PackageDownloadView(CommunityMixin, View):
         name = kwargs["name"]
         version = kwargs["version"]
 
-        listing = get_object_or_404(
-            PackageListing,
-            package__owner__name=owner,
-            package__name=name,
-            community=self.community,
-        )
+        if self.request.get_host() == settings.PRIMARY_HOST:
+            package = get_object_or_404(
+                Package,
+                owner__name=owner,
+                name=name,
+            )
+        else:
+            package = get_object_or_404(
+                PackageListing,
+                package__owner__name=owner,
+                package__name=name,
+                community=self.community,
+            ).package
         version = get_object_or_404(
             PackageVersion,
-            package=listing.package,
+            package=package,
             version_number=version,
         )
         version.maybe_increase_download_counter(self.request)
