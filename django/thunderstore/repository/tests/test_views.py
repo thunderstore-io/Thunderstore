@@ -1,22 +1,25 @@
+from typing import Any
 from unittest import mock
 from urllib import request
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
+from django.test import Client
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.community.models.community_site import CommunitySite
 from thunderstore.core.factories import UserFactory
 
 from ...cache.enums import CacheBustCondition
 from ...cache.tasks import invalidate_cache
+from ...community.factories import CommunitySiteFactory, SiteFactory
 from ...community.models import (
     CommunitySite,
     PackageListing,
     PackageListingReviewStatus,
 )
+from ...core.types import UserType
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team, TeamMember
 from ..package_upload import PackageUploadForm
@@ -302,20 +305,32 @@ def test_package_create_view_old_logged_in(
 
 @pytest.mark.django_db
 def test_package_download_view(
-    user,
-    client,
-    community_site: CommunitySite,
+    user: UserType,
+    client: Client,
     manifest_v1_package_bytes: bytes,
-):
+    settings: Any,
+) -> None:
+    primary_domain = "primary.example.org"
+    community_domain_a = "community-a.example.org"
+    community_domain_b = "community-b.example.org"
+    primary_site = CommunitySiteFactory(site=SiteFactory(domain=primary_domain))
+    package_site = CommunitySiteFactory(site=SiteFactory(domain=community_domain_a))
+    random_site = CommunitySiteFactory(site=SiteFactory(domain=community_domain_b))
+    assert community_domain_a != community_domain_b
+    assert primary_domain != community_domain_a
+    assert primary_domain != community_domain_b
+    settings.PRIMARY_HOST = primary_domain
+    settings.ALLOWED_HOSTS = [primary_domain, community_domain_a, community_domain_b]
+
     team = Team.get_or_create_for_user(user)
     file_data = {"file": SimpleUploadedFile("mod.zip", manifest_v1_package_bytes)}
     form = PackageUploadForm(
         user=user,
         files=file_data,
-        community=community_site.community,
+        community=package_site.community,
         data={
             "team": team.name,
-            "communities": [community_site.community.identifier],
+            "communities": [package_site.community.identifier],
         },
     )
     assert form.is_valid()
@@ -331,12 +346,20 @@ def test_package_download_view(
             "version": version.version_number,
         },
     )
-    response = client.get(
-        url,
-        HTTP_HOST=community_site.site.domain,
-    )
 
+    # Should be accessible on the community's own domain
+    response = client.get(url, HTTP_HOST=package_site.site.domain)
     assert response.status_code == 302
+    assert response["Location"].startswith("http://localhost:9000/")
+
+    # Should not be accessible in another community's domain
+    response = client.get(url, HTTP_HOST=random_site.site.domain)
+    assert response.status_code == 404
+
+    # Should be accessible on the primary domain
+    response = client.get(url, HTTP_HOST=primary_site.site.domain)
+    assert response.status_code == 302
+    assert response["Location"].startswith("http://localhost:9000/")
 
 
 @pytest.mark.django_db
