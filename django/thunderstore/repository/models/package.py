@@ -1,6 +1,7 @@
 import re
 import uuid
 from distutils.version import StrictVersion
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -260,10 +261,11 @@ class Package(models.Model):
             },
         )
 
-    def get_full_url(self, site: Site):
+    def get_full_url(self, site: Optional[Site] = None):
+        hostname = settings.PRIMARY_HOST if site is None else site.domain
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
-            "hostname": site.domain,
+            "hostname": hostname,
             "path": self.get_absolute_url(),
         }
 
