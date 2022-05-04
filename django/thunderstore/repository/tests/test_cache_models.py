@@ -130,6 +130,13 @@ def test_api_v1_package_cache_drop_stale_cache(
 
 
 @pytest.mark.django_db
+def test_api_v1_package_cache_drop_stale_cache_none(settings: Any) -> None:
+    settings.DISABLE_TRANSACTION_CHECKS = True
+    CommunityFactory()  # Create a community without a community site
+    assert APIV1PackageCache.drop_stale_cache() is None  # Ensure no crash
+
+
+@pytest.mark.django_db
 def test_api_v1_package_cache_delete_file_transactions_disabled(community: Community):
     cache = APIV1PackageCache.update_for_community(community, b"")
     with pytest.raises(RuntimeError, match="Must not be called during a transaction"):
