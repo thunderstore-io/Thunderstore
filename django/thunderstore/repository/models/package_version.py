@@ -162,6 +162,14 @@ class PackageVersion(models.Model):
             },
         )
 
+    @cached_property
+    def full_download_url(self) -> str:
+        return "%(protocol)s%(hostname)s%(path)s" % {
+            "protocol": settings.PROTOCOL,
+            "hostname": settings.PRIMARY_HOST,
+            "path": self.download_url,
+        }
+
     def get_install_url(self, request):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
             "hostname": request.site.domain,

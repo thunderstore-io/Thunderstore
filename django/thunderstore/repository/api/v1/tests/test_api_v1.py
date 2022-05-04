@@ -2,7 +2,7 @@ import gzip
 import json
 import time
 from io import BytesIO
-from typing import Optional
+from typing import Any, Optional
 
 import pytest
 from django.conf import settings
@@ -24,7 +24,9 @@ def test_api_v1_package_list(
     community_site: CommunitySite,
     active_package_listing: PackageListing,
     old_urls: bool,
+    settings: Any,
 ) -> None:
+    settings.PRIMARY_HOST = "example.org"
     active_package_listing.package.owner.donation_link = "https://example.org/"
     active_package_listing.package.owner.save()
     if old_urls:
@@ -105,8 +107,9 @@ def test_api_v1_package_list(
     assert result[0]["package_url"].startswith(
         f"{settings.PROTOCOL}{community_site.site.domain}"
     )
+    assert settings.PRIMARY_HOST != community_site.site.domain
     assert result[0]["versions"][0]["download_url"].startswith(
-        f"{settings.PROTOCOL}{community_site.site.domain}"
+        f"{settings.PROTOCOL}{settings.PRIMARY_HOST}"
     )
 
 
@@ -117,7 +120,9 @@ def test_api_v1_package_detail(
     community_site: CommunitySite,
     active_package_listing: PackageListing,
     old_urls: bool,
+    settings: Any,
 ) -> None:
+    settings.PRIMARY_HOST = "example.org"
     if old_urls:
         url = f"/api/v1/package/{active_package_listing.package.uuid4}/"
     else:
@@ -139,8 +144,9 @@ def test_api_v1_package_detail(
     assert result["package_url"].startswith(
         f"{settings.PROTOCOL}{community_site.site.domain}"
     )
+    assert settings.PRIMARY_HOST != community_site.site.domain
     assert result["versions"][0]["download_url"].startswith(
-        f"{settings.PROTOCOL}{community_site.site.domain}"
+        f"{settings.PROTOCOL}{settings.PRIMARY_HOST}"
     )
 
 
