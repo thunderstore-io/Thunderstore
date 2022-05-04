@@ -64,6 +64,8 @@ class APIV1PackageCache(S3FileMixin):
             latest = cls.get_latest_for_community(
                 community_identifier=community.identifier
             )
+            if latest is None:
+                continue
             cutoff = latest.last_modified - timedelta(hours=1)
             stale = cls.objects.filter(last_modified__lte=cutoff, community=community)
             for entry in stale.iterator():
