@@ -278,3 +278,10 @@ You can enable caching to the redis backend by supplying a redis URL
 Tests can be run with this command: `docker-compose exec django pytest`
 If you need to recreate to database,
 use the following: `docker-compose exec django pytest --create-db --migrations`
+
+The CI pipeline checks that new PRs don't lower the test coverage. Since this
+process is rather slow, you might want to check the coverage locally before
+submitting a PR.
+
+-   To update coverage file, run `docker-compose exec django coverage run -m pytest`
+-   To see the coverage report, run `docker-compose exec django coverage report -m`
