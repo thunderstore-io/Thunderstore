@@ -19,9 +19,36 @@ class CommunityManager(models.Manager):
         return self.exclude(is_listed=False)
 
 
+def get_community_filepath(instance: "Community", filename: str) -> str:
+    return f"community/{instance.identifier}/{filename}"
+
+
 class Community(TimestampMixin, models.Model):
     objects: "CommunityManager[Community]" = CommunityManager()
     members: "Manager[CommunityMembership]"
+
+    slogan = models.CharField(max_length=512, blank=True, null=True)
+    description = models.CharField(max_length=512, blank=True, null=True)
+
+    icon = models.ImageField(
+        upload_to=get_community_filepath,
+        width_field="icon_width",
+        height_field="icon_height",
+        blank=True,
+        null=True,
+    )
+    icon_width = models.PositiveIntegerField(default=0)
+    icon_height = models.PositiveIntegerField(default=0)
+
+    background_image = models.ImageField(
+        upload_to=get_community_filepath,
+        width_field="background_image_width",
+        height_field="background_image_height",
+        blank=True,
+        null=True,
+    )
+    background_image_width = models.PositiveIntegerField(default=0)
+    background_image_height = models.PositiveIntegerField(default=0)
 
     identifier = models.CharField(max_length=256, unique=True, db_index=True)
     name = models.CharField(max_length=256)
