@@ -29,3 +29,8 @@ class CommunityMixin:
         context["community_identifier"] = self.community_identifier
         context["community"] = self.community
         return context
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.setdefault("community", self.community)
+        return context

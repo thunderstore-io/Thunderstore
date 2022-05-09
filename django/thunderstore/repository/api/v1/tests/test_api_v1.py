@@ -5,7 +5,6 @@ from io import BytesIO
 from typing import Any, Optional
 
 import pytest
-from django.conf import settings
 from django.utils.http import http_date
 from rest_framework.renderers import JSONRenderer
 from rest_framework.test import APIClient
