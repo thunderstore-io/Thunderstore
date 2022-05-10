@@ -8,7 +8,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-list" 300 page_obj.number cache_vary %}
+{% cache_until "any_package_updated" "mod-list" 300 page_obj.number cache_vary community_identifier use_old_urls %}
 
 {% if breadcrumbs %}
 <nav class="mt-3" aria-label="breadcrumb">
@@ -170,7 +170,7 @@
                     </div>
                 </div>
                 <h5 class="mb-0 overflow-hidden text-nowrap w-100" title="{{ object.package.display_name }}">{{ object.package.display_name }}</h5>
-                <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url_with_community_identifier }}">{{ object.package.owner.name }}</a></div>
+                <div class="overflow-hidden text-nowrap w-100">By <a href="{% get_owner_url object %}">{{ object.package.owner.name }}</a></div>
             </div>
             <div class="bg-light px-2 flex-grow-1">
                 {{ object.package.description }}

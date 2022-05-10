@@ -26,5 +26,13 @@ def get_page_url(context: Dict, obj: Union[Package, PackageVersion]) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def get_owner_url(context: Dict, obj: Union[Package, PackageVersion]) -> str:
-    return obj.get_owner_url(context["community_identifier"])
+def get_owner_url(
+    context: Dict, obj: Union[Package, PackageVersion, PackageListing]
+) -> str:
+    if context["use_old_urls"]:
+        return obj.owner_url
+    else:
+        if isinstance(obj, PackageListing):
+            return obj.owner_url_with_community_identifier
+        else:
+            return obj.get_owner_url(context["community_identifier"])
