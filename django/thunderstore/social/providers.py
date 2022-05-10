@@ -1,8 +1,27 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Type
+from typing import Dict, List, Optional, Type, TypeVar
 
 import requests
 from django.conf import settings
+from pydantic import BaseModel
+
+
+class AuthResponseSchema(BaseModel):
+    access_token: str
+    expires_in: Optional[int] = None
+    refresh_token: Optional[str] = None
+    scope: str
+    token_type: str
+
+
+class UserInfoSchema(BaseModel):
+    email: str
+    name: str
+    uid: str
+    username: str
+
+
+BaseModelSubtype = TypeVar("BaseModelSubtype", bound=BaseModel)
 
 
 class BaseOauthHelper(ABC):
@@ -54,11 +73,11 @@ class BaseOauthHelper(ABC):
         headers = {"Accept": "application/json"}
 
         response = requests.post(self.OAUTH_URL, data, headers=headers)
-        response_data = response.json()
-        self.token = response_data["access_token"]
+        response_data = AuthResponseSchema.parse_obj(response.json())
+        self.token = response_data.access_token
 
     @abstractmethod
-    def get_user_info(self) -> Dict:
+    def get_user_info(self) -> UserInfoSchema:
         """
         Fetch user info from a public API.
         """
@@ -72,13 +91,18 @@ class BaseOauthHelper(ABC):
 
         return token
 
-    def _fetch_from_api(self, token: str, url: str) -> Dict:
+    def _fetch_from_api(
+        self,
+        token: str,
+        url: str,
+        ResponseType: Type[BaseModelSubtype],
+    ) -> BaseModelSubtype:
         """
         Use access token to fetch info from provider's public API.
         """
         headers = {"Authorization": f"{self.AUTH_HEADER_KEYWORD} {token}"}
         response = requests.get(url, headers=headers)
-        return response.json()
+        return ResponseType.parse_obj(response.json())
 
 
 class DiscordOauthHelper(BaseOauthHelper):
@@ -91,21 +115,35 @@ class DiscordOauthHelper(BaseOauthHelper):
     CLIENT_SECRET = settings.SOCIAL_AUTH_DISCORD_SECRET
     OAUTH_URL = "https://discord.com/api/v8/oauth2/token"
 
-    def get_user_info(self) -> Dict:
+    def get_user_info(self) -> UserInfoSchema:
         """
         Fetch user info from Discord's API using the access token.
 
-        https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md
         """
         token = self._raise_for_token(self.token)
         url = "https://discord.com/api/v8/users/@me"
-        data = self._fetch_from_api(token, url)
 
-        return {
-            "email": data["email"],
-            "name": "",
-            "username": f"{data['username']}#{data['discriminator']}",
-        }
+        class PartialResponseSchema(BaseModel):
+            """
+            For full schema see
+            https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md
+            """
+
+            discriminator: int
+            email: str
+            id: str
+            username: str
+
+        data = self._fetch_from_api(token, url, PartialResponseSchema)
+
+        return UserInfoSchema.parse_obj(
+            {
+                "email": data.email,
+                "name": "",
+                "uid": data.id,
+                "username": f"{data.username}#{data.discriminator}",
+            }
+        )
 
 
 class GitHubOauthHelper(BaseOauthHelper):
@@ -125,34 +163,60 @@ class GitHubOauthHelper(BaseOauthHelper):
         If user has chosen to make their email hidden, it won't be
         included in the user's basic information, but it can be fetched
         with a separate request.
-
-        https://docs.github.com/en/rest/users/emails
         """
         token = self._raise_for_token(self.token)
         url = "https://api.github.com/user/emails"
-        emails = self._fetch_from_api(token, url)
-        primary = next((email for email in emails if email["primary"]), None)
 
-        if primary is None or not primary["verified"]:
+        class PartialEmail(BaseModel):
+            """
+            For full schema see https://docs.github.com/en/rest/users/emails
+            """
+
+            email: str
+            primary: bool
+            verified: bool
+
+        class EmailList(BaseModel):
+            __root__: List[PartialEmail]
+
+            def __iter__(self):
+                return iter(self.__root__)
+
+        emails = self._fetch_from_api(token, url, EmailList)
+        primary = next((email for email in emails if email.primary), None)
+
+        if primary is None or not primary.verified:
             raise Exception("User has no email available")
 
-        return primary["email"]
+        return primary.email
 
-    def get_user_info(self) -> Dict:
+    def get_user_info(self) -> UserInfoSchema:
         """
         Fetch user info from GitHub's API using the access token.
-
-        https://docs.github.com/en/rest/users/users
         """
         token = self._raise_for_token(self.token)
         url = "https://api.github.com/user"
-        data = self._fetch_from_api(token, url)
 
-        return {
-            "email": data["email"] or self.get_user_email(),
-            "name": data["name"],
-            "username": data["login"],
-        }
+        class PartialResponseSchema(BaseModel):
+            """
+            For full schema see https://docs.github.com/en/rest/users/users
+            """
+
+            email: Optional[str] = None
+            id: str
+            login: str
+            name: str
+
+        data = self._fetch_from_api(token, url, PartialResponseSchema)
+
+        return UserInfoSchema.parse_obj(
+            {
+                "email": data.email or self.get_user_email(),
+                "name": data.name,
+                "uid": data.id,
+                "username": data.login,
+            }
+        )
 
 
 def get_helper(provider: str) -> Optional[Type[BaseOauthHelper]]:
