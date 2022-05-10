@@ -8,6 +8,7 @@ from thunderstore.community.models import (
     CommunityMemberRole,
     CommunityMembership,
 )
+from thunderstore.community.models.community import get_community_filepath
 from thunderstore.community.models.community_site import CommunitySite
 
 
@@ -95,3 +96,11 @@ def test_site_image_url_when_community_site_has_image(dummy_image):
 @pytest.mark.django_db
 def test_community_site_get_absolute_url(community_site: CommunitySite) -> None:
     assert community_site.get_absolute_url == "/c/test/"
+
+
+@pytest.mark.django_db
+def test_community_get_community_filepath(community: Community) -> None:
+    assert (
+        get_community_filepath(community, "lol.png")
+        == f"community/{community.identifier}/lol.png"
+    )
