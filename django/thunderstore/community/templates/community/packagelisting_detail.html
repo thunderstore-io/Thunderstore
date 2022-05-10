@@ -25,8 +25,13 @@
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
+    {% if use_old_urls %}
+    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list" %}">Packages</a></li>
+    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list_by_owner" object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+    {% else %}
     <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list" community_identifier %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list_by_owner" community_identifier object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+    {% endif %}
     <li class="breadcrumb-item active" aria-current="page">{{ object.package.display_name }}</li>
   </ol>
 </nav>
@@ -104,9 +109,15 @@
             <tr>
                 <td>Categories</td>
                 <td>
+                    {% if use_old_urls %}
+                    {% for category in object.categories.all %}
+                        <a href="{% url "old_urls:packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
+                    {% endfor %}
+                    {% else %}
                     {% for category in object.categories.all %}
                         <a href="{% url "communities:community:packages.list" community_identifier %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
                     {% endfor %}
+                    {% endif %}
                 </td>
             </tr>
             <tr>
@@ -115,7 +126,11 @@
             </tr>
             <tr>
                 <td>Dependants</td>
+                {% if use_old_urls %}
+                <td><a href="{{ object.dependants_url }}">{{ dependants_string }}</a>
+                {% else %}
                 <td><a href="{{ object.dependants_url_with_community_identifier }}">{{ dependants_string }}</a>
+                {% endif %}
             </tr>
         </table>
     </div>

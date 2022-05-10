@@ -25,8 +25,13 @@
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
+    {% if use_old_urls %}
+    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list" %}">Packages</a></li>
+    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list_by_owner" object.owner.name %}">{{ object.owner.name }}</a></li>
+    {% else %}
     <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list" community_identifier %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list_by_owner" community_identifier object.owner.name %}">{{ object.owner.name }}</a></li>
+    {% endif %}
     {% if object.package.is_effectively_active %}
     <li class="breadcrumb-item"><a href="{% get_page_url object.package %}">{{ object.package.display_name }}</a></li>
     {% else %}
