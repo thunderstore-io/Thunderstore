@@ -2,7 +2,6 @@ from typing import Dict, Union
 
 from django import template
 
-from thunderstore.community.models.community_site import CommunitySite
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import Package
 from thunderstore.repository.models.package_version import PackageVersion
@@ -22,7 +21,7 @@ def get_download_url(context: Dict, obj: PackageVersion) -> str:
 
 @register.simple_tag(takes_context=True)
 def get_page_url(context: Dict, obj: Union[Package, PackageVersion]) -> str:
-    if context["use_old_urls"]:
+    if context.get("use_old_urls", None):
         return obj.get_absolute_url()
     else:
         return obj.get_page_url(context["community_identifier"])
@@ -32,7 +31,7 @@ def get_page_url(context: Dict, obj: Union[Package, PackageVersion]) -> str:
 def get_owner_url(
     context: Dict, obj: Union[Package, PackageVersion, PackageListing]
 ) -> str:
-    if context["use_old_urls"]:
+    if context.get("use_old_urls", None):
         return obj.owner_url
     else:
         if isinstance(obj, PackageListing):
