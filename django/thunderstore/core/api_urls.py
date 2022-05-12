@@ -10,6 +10,7 @@ from thunderstore.repository.api.experimental.urls import (
     urls as repository_experimental_urls,
 )
 from thunderstore.repository.api.v1.urls import urls as v1_urls
+from thunderstore.social.api.experimental.urls import urls as social_experimental_urls
 from thunderstore.usermedia.api.experimental.urls import (
     urls as usermedia_experimental_urls,
 )
@@ -30,6 +31,10 @@ api_experimental_urls = [
     path(
         "",
         include(frontend_experimental_urls),
+    ),
+    path(
+        "",
+        include(social_experimental_urls),
     ),
 ]
 

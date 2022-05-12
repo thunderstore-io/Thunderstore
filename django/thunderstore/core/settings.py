@@ -109,6 +109,7 @@ env = environ.Env(
     REPOSITORY_MAX_PACKAGE_SIZE_MB=(int, 500),
     REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB=(int, 1000),
     SESSION_COOKIE_DOMAIN=(str, ""),
+    OAUTH_SHARED_SECRET=(str, ""),
 )
 
 SENTRY_DSN = env.str("SENTRY_DSN")
@@ -675,3 +676,7 @@ if PROTOCOL == "https://":
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_REDIRECT_EXEMPT = "/healthcheck/"
+
+# Token shared between Thunderstore apps to restrict access to OAuth
+# related endpoints.
+OAUTH_SHARED_SECRET = env.str("OAUTH_SHARED_SECRET")
