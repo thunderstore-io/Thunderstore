@@ -24,11 +24,16 @@ class CommunityMixin:
     def community_site(self):
         return CommunitySite.objects.get(community=self.community)
 
+    @cached_property
+    def use_old_urls(self):
+        return False if self.kwargs.get("community_identifier", None) else True
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["community_identifier"] = self.community_identifier
         context["community"] = self.community
         context["community_site"] = self.community_site
+        context["use_old_urls"] = self.use_old_urls
         return context
 
     def get_serializer_context(self):

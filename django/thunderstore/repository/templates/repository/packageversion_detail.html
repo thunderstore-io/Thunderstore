@@ -21,12 +21,17 @@
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-version-detail" 300 object.pk %}
+{% cache_until "any_package_updated" "mod-version-detail" 300 object.pk community_identifier use_old_urls %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
+    {% if use_old_urls %}
+    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list" %}">Packages</a></li>
+    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list_by_owner" object.owner.name %}">{{ object.owner.name }}</a></li>
+    {% else %}
     <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list" community_identifier %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list_by_owner" community_identifier object.owner.name %}">{{ object.owner.name }}</a></li>
+    {% endif %}
     {% if object.package.is_effectively_active %}
     <li class="breadcrumb-item"><a href="{% get_page_url object.package %}">{{ object.package.display_name }}</a></li>
     {% else %}
@@ -68,7 +73,7 @@
                 <h1 class="mt-0">{{ object.display_name }}</h1>
                 <p>{{ object.description }}</p>
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">By <a href="{{ object.owner_url_with_community_identifier }}">{{ object.owner.name }}</a></h5>
+                    <h5 class="mb-1">By <a href="{% get_owner_url object %}">{{ object.owner.name }}</a></h5>
                     {% if object.website_url %}
                     <a href="{{ object.website_url }}">{{ object.website_url }}</a>
                     {% endif %}

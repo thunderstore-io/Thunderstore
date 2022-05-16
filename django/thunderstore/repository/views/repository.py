@@ -256,15 +256,23 @@ class PackageListSearchView(CommunityMixin, ListView):
         return self.order_queryset(queryset)
 
     def get_breadcrumbs(self):
-        return [
-            {
-                "url": reverse_lazy(
-                    "communities:community:packages.list",
-                    kwargs={"community_identifier": self.community_identifier},
-                ),
-                "name": "Packages",
-            },
-        ]
+        if self.kwargs.get("community_identifier", False):
+            return [
+                {
+                    "url": reverse_lazy(
+                        "communities:community:packages.list",
+                        kwargs={"community_identifier": self.community_identifier},
+                    ),
+                    "name": "Packages",
+                },
+            ]
+        else:
+            return [
+                {
+                    "url": reverse_lazy("old_urls:packages.list"),
+                    "name": "Packages",
+                },
+            ]
 
     def get_paginator(
         self,
@@ -317,14 +325,25 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def get_breadcrumbs(self):
         breadcrumbs = super().get_breadcrumbs()
-        return breadcrumbs + [
-            {
-                "url": reverse_lazy(
-                    "communities:community:packages.list_by_owner", kwargs=self.kwargs
-                ),
-                "name": self.owner.name,
-            },
-        ]
+        if self.kwargs.get("community_identifier", False):
+            return breadcrumbs + [
+                {
+                    "url": reverse_lazy(
+                        "communities:community:packages.list_by_owner",
+                        kwargs=self.kwargs,
+                    ),
+                    "name": self.owner.name,
+                },
+            ]
+        else:
+            return breadcrumbs + [
+                {
+                    "url": reverse_lazy(
+                        "old_urls:packages.list_by_owner", kwargs=self.kwargs
+                    ),
+                    "name": self.owner.name,
+                },
+            ]
 
     def cache_owner(self):
         self.owner = get_object_or_404(Team, name=self.kwargs["owner"])
