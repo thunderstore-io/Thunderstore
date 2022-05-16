@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 import requests
 from django.conf import settings
@@ -16,6 +16,7 @@ class AuthResponseSchema(BaseModel):
 
 class UserInfoSchema(BaseModel):
     email: str
+    extra_data: Dict[str, Any]
     name: str
     uid: str
     username: str
@@ -91,18 +92,13 @@ class BaseOauthHelper(ABC):
 
         return token
 
-    def _fetch_from_api(
-        self,
-        token: str,
-        url: str,
-        ResponseType: Type[BaseModelSubtype],
-    ) -> BaseModelSubtype:
+    def _fetch_from_api(self, token: str, url: str) -> Dict[str, Any]:
         """
         Use access token to fetch info from provider's public API.
         """
         headers = {"Authorization": f"{self.AUTH_HEADER_KEYWORD} {token}"}
         response = requests.get(url, headers=headers)
-        return ResponseType.parse_obj(response.json())
+        return response.json()
 
 
 class DiscordOauthHelper(BaseOauthHelper):
@@ -133,11 +129,13 @@ class DiscordOauthHelper(BaseOauthHelper):
             id: str
             username: str
 
-        data = self._fetch_from_api(token, url, PartialResponseSchema)
+        response_json = self._fetch_from_api(token, url)
+        data = PartialResponseSchema.parse_obj(response_json)
 
         return UserInfoSchema.parse_obj(
             {
                 "email": data.email,
+                "extra_data": response_json,
                 "name": "",
                 "uid": data.id,
                 "username": data.username,
@@ -181,7 +179,8 @@ class GitHubOauthHelper(BaseOauthHelper):
             def __iter__(self):
                 return iter(self.__root__)
 
-        emails = self._fetch_from_api(token, url, EmailList)
+        response_json = self._fetch_from_api(token, url)
+        emails = EmailList.parse_obj(response_json)
         primary = next((email for email in emails if email.primary), None)
 
         if primary is None or not primary.verified:
@@ -206,11 +205,13 @@ class GitHubOauthHelper(BaseOauthHelper):
             login: str
             name: str
 
-        data = self._fetch_from_api(token, url, PartialResponseSchema)
+        response_json = self._fetch_from_api(token, url)
+        data = PartialResponseSchema.parse_obj(response_json)
 
         return UserInfoSchema.parse_obj(
             {
                 "email": data.email or self.get_user_email(),
+                "extra_data": response_json,
                 "name": data.name,
                 "uid": data.id,
                 "username": data.login,

@@ -1,4 +1,3 @@
-import json
 from typing import List, Optional, Type
 from unittest.mock import Mock, patch
 
@@ -11,21 +10,6 @@ from thunderstore.social.providers import (
     GitHubOauthHelper,
     get_helper,
 )
-
-SECRET = "ABC123"
-PAYLOAD = json.dumps(
-    {
-        "code": "code",
-        "redirect_uri": "redirect_uri",
-        "secret": SECRET,
-    }
-)
-RETURN_VALUE = {
-    "email": "foo@bar.com",
-    "name": "Foo Bar",
-    "id": "5678",
-    "username": "Foo",
-}
 
 
 @patch.object(
@@ -76,6 +60,7 @@ def test_api_methods_check_for_token(
         json=lambda: {
             "email": "foo@bar.com",
             "id": "5678",
+            "something": "extra",
             "username": "Foo",
         }
     ),
@@ -88,6 +73,10 @@ def test_discord_get_user_info(mocked_request_get) -> None:
 
     mocked_request_get.assert_called_once()
     assert info.email == "foo@bar.com"
+    assert info.extra_data["email"] == "foo@bar.com"
+    assert info.extra_data["id"] == "5678"
+    assert info.extra_data["something"] == "extra"
+    assert info.extra_data["username"] == "Foo"
     assert info.name == ""
     assert info.uid == "5678"
     assert info.username == "Foo"
@@ -102,6 +91,7 @@ def test_discord_get_user_info(mocked_request_get) -> None:
             "id": "5678",
             "login": "Foo",
             "name": "Foo Bar",
+            "something": "extra",
         }
     ),
 )
@@ -113,6 +103,11 @@ def test_github_get_user_info_with_public_email(mocked_request_get) -> None:
 
     mocked_request_get.assert_called_once()
     assert info.email == "foo@bar.com"
+    assert info.extra_data["email"] == "foo@bar.com"
+    assert info.extra_data["id"] == "5678"
+    assert info.extra_data["login"] == "Foo"
+    assert info.extra_data["name"] == "Foo Bar"
+    assert info.extra_data["something"] == "extra"
     assert info.name == "Foo Bar"
     assert info.uid == "5678"
     assert info.username == "Foo"
