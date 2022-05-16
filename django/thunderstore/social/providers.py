@@ -129,7 +129,6 @@ class DiscordOauthHelper(BaseOauthHelper):
             https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md
             """
 
-            discriminator: int
             email: str
             id: str
             username: str
@@ -141,7 +140,7 @@ class DiscordOauthHelper(BaseOauthHelper):
                 "email": data.email,
                 "name": "",
                 "uid": data.id,
-                "username": f"{data.username}#{data.discriminator}",
+                "username": data.username,
             }
         )
 
