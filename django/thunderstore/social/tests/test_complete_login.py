@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.sessions.models import Session
 from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -213,12 +214,13 @@ def test_unknown_providers_are_rejected(api_client: APIClient) -> None:
 @pytest.mark.django_db
 @pytest.mark.parametrize("provider", ("github", "discord"))
 def test_valid_request(api_client: APIClient, provider: str) -> None:
+    assert not Session.objects.exists()
     url = _get_url(provider)
 
     response = _post(api_client, url)
 
     assert (response.status_code) == 200
-    assert (response.json()["session_id"]) == "TODO"
+    assert Session.objects.filter(pk=response.json()["session_id"]).exists()
 
 
 def test_get_unique_username_rejects_empty_usernames() -> None:
