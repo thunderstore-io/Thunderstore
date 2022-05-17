@@ -7,7 +7,11 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.social.providers import DiscordOauthHelper, GitHubOauthHelper
+from thunderstore.social.providers import (
+    DiscordOauthHelper,
+    GitHubOauthHelper,
+    UserInfoSchema,
+)
 
 SECRET = "ABC123"
 PAYLOAD = json.dumps(
@@ -17,11 +21,14 @@ PAYLOAD = json.dumps(
         "secret": SECRET,
     }
 )
-RETURN_VALUE = {
-    "email": "foo@bar.com",
-    "name": "Foo Bar",
-    "username": "Foo",
-}
+RETURN_VALUE = UserInfoSchema.parse_obj(
+    {
+        "email": "foo@bar.com",
+        "name": "Foo Bar",
+        "uid": "1234",
+        "username": "Foo",
+    }
+)
 
 
 @override_settings(OAUTH_SHARED_SECRET="")

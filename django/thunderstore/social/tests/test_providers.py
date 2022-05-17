@@ -23,12 +23,21 @@ PAYLOAD = json.dumps(
 RETURN_VALUE = {
     "email": "foo@bar.com",
     "name": "Foo Bar",
+    "id": "5678",
     "username": "Foo",
 }
 
 
 @patch.object(
-    requests, "post", return_value=Mock(json=lambda: {"access_token": "mellon"})
+    requests,
+    "post",
+    return_value=Mock(
+        json=lambda: {
+            "access_token": "mellon",
+            "scope": "read:user,user:email",
+            "token_type": "bearer",
+        }
+    ),
 )
 def test_complete_login_sets_access_token(mocked_request_post) -> None:
     helper = GitHubOauthHelper("code", "redirect_uri")
@@ -67,6 +76,7 @@ def test_api_methods_check_for_token(
         json=lambda: {
             "discriminator": "1234",
             "email": "foo@bar.com",
+            "id": "5678",
             "username": "Foo",
         }
     ),
@@ -78,16 +88,22 @@ def test_discord_get_user_info(mocked_request_get) -> None:
     info = helper.get_user_info()
 
     mocked_request_get.assert_called_once()
-    assert info["email"] == "foo@bar.com"
-    assert info["name"] == ""
-    assert info["username"] == "Foo#1234"
+    assert info.email == "foo@bar.com"
+    assert info.name == ""
+    assert info.uid == "5678"
+    assert info.username == "Foo#1234"
 
 
 @patch.object(
     requests,
     "get",
     return_value=Mock(
-        json=lambda: {"email": "foo@bar.com", "login": "Foo", "name": "Foo Bar"}
+        json=lambda: {
+            "email": "foo@bar.com",
+            "id": "5678",
+            "login": "Foo",
+            "name": "Foo Bar",
+        }
     ),
 )
 def test_github_get_user_info_with_public_email(mocked_request_get) -> None:
@@ -97,9 +113,10 @@ def test_github_get_user_info_with_public_email(mocked_request_get) -> None:
     info = helper.get_user_info()
 
     mocked_request_get.assert_called_once()
-    assert info["email"] == "foo@bar.com"
-    assert info["name"] == "Foo Bar"
-    assert info["username"] == "Foo"
+    assert info.email == "foo@bar.com"
+    assert info.name == "Foo Bar"
+    assert info.uid == "5678"
+    assert info.username == "Foo"
 
 
 @patch.object(
