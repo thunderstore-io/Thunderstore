@@ -23,7 +23,7 @@ from ...core.types import UserType
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team, TeamMember
 from ..package_upload import PackageUploadForm
-from ..views.repository import PackageVersionDetailView
+from ..views.repository import PackageListByOwnerView, PackageVersionDetailView
 
 
 @pytest.mark.django_db
@@ -95,6 +95,40 @@ def test_package_list_view(client, community_site, ordering: str, old_urls: bool
     )
     response = client.get(bad_url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("use_old_urls", (True, False))
+def test_package_list_search_view_get_breadcrumbs(
+    active_version_with_listing, team_member, community_site, use_old_urls
+):
+    owner = active_version_with_listing.package.owner
+    mock_request = mock.Mock(spec=request.Request)
+    mock_request.user = team_member.user
+    mock_request.community = community_site.community
+    if use_old_urls:
+        view = PackageListByOwnerView(kwargs={"owner": owner}, request=mock_request)
+        view.cache_owner()
+        assert view.get_breadcrumbs() == [
+            {"url": "/package/", "name": "Packages"},
+            {"url": f"/package/{owner.name}/", "name": owner.name},
+        ]
+    else:
+        view = PackageListByOwnerView(
+            kwargs={
+                "community_identifier": community_site.community.identifier,
+                "owner": owner.name,
+            },
+            request=mock_request,
+        )
+        view.cache_owner()
+        assert view.get_breadcrumbs() == [
+            {"url": f"/c/{community_site.community.identifier}/", "name": "Packages"},
+            {
+                "url": f"/c/{community_site.community.identifier}/p/{owner}/",
+                "name": owner.name,
+            },
+        ]
 
 
 @pytest.mark.django_db

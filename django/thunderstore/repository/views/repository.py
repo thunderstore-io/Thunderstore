@@ -259,17 +259,17 @@ class PackageListSearchView(CommunityMixin, ListView):
         if self.use_old_urls:
             return [
                 {
-                    "url": reverse_lazy(
-                        "communities:community:packages.list",
-                        kwargs={"community_identifier": self.community_identifier},
-                    ),
+                    "url": reverse_lazy("old_urls:packages.list"),
                     "name": "Packages",
                 },
             ]
         else:
             return [
                 {
-                    "url": reverse_lazy("old_urls:packages.list"),
+                    "url": reverse_lazy(
+                        "communities:community:packages.list",
+                        kwargs={"community_identifier": self.community_identifier},
+                    ),
                     "name": "Packages",
                 },
             ]
@@ -329,8 +329,7 @@ class PackageListByOwnerView(PackageListSearchView):
             return breadcrumbs + [
                 {
                     "url": reverse_lazy(
-                        "communities:community:packages.list_by_owner",
-                        kwargs=self.kwargs,
+                        "old_urls:packages.list_by_owner", kwargs=self.kwargs
                     ),
                     "name": self.owner.name,
                 },
@@ -339,7 +338,8 @@ class PackageListByOwnerView(PackageListSearchView):
             return breadcrumbs + [
                 {
                     "url": reverse_lazy(
-                        "old_urls:packages.list_by_owner", kwargs=self.kwargs
+                        "communities:community:packages.list_by_owner",
+                        kwargs=self.kwargs,
                     ),
                     "name": self.owner.name,
                 },
