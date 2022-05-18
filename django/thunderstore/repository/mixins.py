@@ -26,7 +26,7 @@ class CommunityMixin:
 
     @cached_property
     def use_old_urls(self):
-        return False if self.kwargs.get("community_identifier", None) else True
+        return not bool(self.kwargs.get("community_identifier", False))
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

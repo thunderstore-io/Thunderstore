@@ -256,7 +256,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         return self.order_queryset(queryset)
 
     def get_breadcrumbs(self):
-        if self.kwargs.get("community_identifier", False):
+        if self.use_old_urls:
             return [
                 {
                     "url": reverse_lazy(
@@ -325,7 +325,7 @@ class PackageListByOwnerView(PackageListSearchView):
 
     def get_breadcrumbs(self):
         breadcrumbs = super().get_breadcrumbs()
-        if self.kwargs.get("community_identifier", False):
+        if self.use_old_urls:
             return breadcrumbs + [
                 {
                     "url": reverse_lazy(

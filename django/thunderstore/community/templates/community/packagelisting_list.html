@@ -8,7 +8,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-list" 300 page_obj.number cache_vary community_identifier use_old_urls %}
+{% cache_until "any_package_updated" "mod-list" 300 page_obj.number cache_vary use_old_urls %}
 
 {% if breadcrumbs %}
 <nav class="mt-3" aria-label="breadcrumb">
