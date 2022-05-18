@@ -1,5 +1,6 @@
 import json
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional, Tuple
 from unittest.mock import Mock, patch
 
 import pytest
@@ -33,11 +34,19 @@ PAYLOAD = json.dumps(
 RETURN_VALUE = UserInfoSchema.parse_obj(
     {
         "email": "foo@bar.com",
+        "extra_data": {"foo": "bar"},
         "name": "Foo Bar",
         "uid": "1234",
         "username": "Foo",
     }
 )
+USER_INFO = {
+    "email": "x@example.org",
+    "extra_data": {"x": "y"},
+    "name": "X Y",
+    "uid": "uid",
+    "username": "x",
+}
 
 
 @patch.object(OauthSharedSecretPermission, "SHARED_SECRET", "")
@@ -240,7 +249,7 @@ def test_get_unique_username_adds_random_suffixes_only_when_needed() -> None:
 
 @pytest.mark.django_db
 def test_get_or_create_auth_user_creates_user_without_password() -> None:
-    ui = UserInfoSchema(email="x@example.org", name="X Y", uid="uid", username="x")
+    ui = UserInfoSchema.parse_obj(USER_INFO)
 
     user = get_or_create_auth_user("github", ui)
 
@@ -253,7 +262,7 @@ def test_get_or_create_auth_user_creates_user_only_when_needed() -> None:
     assert _get_social_auth_row_count() == 0
 
     # Create original user.
-    ui = UserInfoSchema(email="x@example.org", name="X Y", uid="uid", username="x")
+    ui = UserInfoSchema.parse_obj(USER_INFO)
     user1 = get_or_create_auth_user("github", ui)
     assert User.objects.count() == 1
     assert _get_social_auth_row_count() == 1
@@ -275,6 +284,24 @@ def test_get_or_create_auth_user_creates_user_only_when_needed() -> None:
     assert _get_latest_social_auth_rows_user_FK() == user3.pk
 
 
+@pytest.mark.django_db
+def test_get_or_create_auth_user_updates_extra_data() -> None:
+    assert _get_social_auth_row_count() == 0
+
+    ui = UserInfoSchema.parse_obj(USER_INFO)
+    get_or_create_auth_user("github", ui)
+    (extra1, modified1) = _get_latest_social_auth_rows_extra_data()
+    assert _get_social_auth_row_count() == 1
+    assert extra1["x"] == "y"
+
+    ui.extra_data = {"x": "z"}
+    get_or_create_auth_user("github", ui)
+    (extra2, modified2) = _get_latest_social_auth_rows_extra_data()
+    assert _get_social_auth_row_count() == 1
+    assert extra2["x"] == "z"
+    assert modified2 > modified1
+
+
 def _get_social_auth_row_count() -> int:
     with connection.cursor() as cursor:
         cursor.execute("SELECT COUNT(*) FROM social_auth_usersocialauth;")
@@ -287,6 +314,17 @@ def _get_latest_social_auth_rows_user_FK() -> int:
             "SELECT user_id FROM social_auth_usersocialauth ORDER BY id DESC LIMIT 1;"
         )
         return cursor.fetchone()[0]
+
+
+def _get_latest_social_auth_rows_extra_data() -> Tuple[Dict[str, Any], datetime]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT extra_data, modified FROM social_auth_usersocialauth ORDER BY id DESC LIMIT 1;"
+        )
+        data = cursor.fetchone()
+
+    extra = json.loads(data[0])
+    return (extra, data[1])
 
 
 def _get_url(provider: str = "github") -> str:

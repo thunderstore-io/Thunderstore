@@ -1,3 +1,4 @@
+import json
 from typing import Sequence, Type
 from uuid import uuid4
 
@@ -86,25 +87,24 @@ def get_or_create_auth_user(provider: str, user_info: UserInfoSchema) -> DjangoU
         )
         row = cursor.fetchone()
 
-    user = User.objects.get(pk=row[0]) if row else None
-
-    if user is None:
-        username = get_unique_username(user_info.username)
-        full = user_info.name
-        first, last = full.split(" ", 1) if " " in full else (full, "")
-
-        user = User(
-            email=user_info.email,
-            first_name=first,
-            last_name=last,
-            username=username,
-        )
-        user.set_unusable_password()
-        user.save()
-
+        user = User.objects.get(pk=row[0]) if row else None
+        extra = json.dumps(user_info.extra_data)
         now = timezone.now()
 
-        with connection.cursor() as cursor:
+        if user is None:
+            username = get_unique_username(user_info.username)
+            full = user_info.name
+            first, last = full.split(" ", 1) if " " in full else (full, "")
+
+            user = User(
+                email=user_info.email,
+                first_name=first,
+                last_name=last,
+                username=username,
+            )
+            user.set_unusable_password()
+            user.save()
+
             cursor.execute(
                 """
                 INSERT INTO social_auth_usersocialauth
@@ -112,7 +112,16 @@ def get_or_create_auth_user(provider: str, user_info: UserInfoSchema) -> DjangoU
                 VALUES
                     (%s, %s, %s, %s, %s, %s);
                 """,
-                [provider, user_info.uid, '""', user.id, now, now],
+                [provider, user_info.uid, extra, user.id, now, now],
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE social_auth_usersocialauth
+                SET extra_data=%s, modified=%s
+                WHERE provider=%s AND uid=%s;
+                """,
+                [extra, now, provider, user_info.uid],
             )
 
     return user
