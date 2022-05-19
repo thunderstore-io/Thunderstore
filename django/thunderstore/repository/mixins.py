@@ -32,7 +32,8 @@ class CommunityMixin:
         context = super().get_context_data(*args, **kwargs)
         context["community_identifier"] = self.community_identifier
         context["community"] = self.community
-        context["community_site"] = self.community_site
+        if self.community.sites.first():
+            context["community_site"] = self.community_site
         context["use_old_urls"] = self.use_old_urls
         return context
 

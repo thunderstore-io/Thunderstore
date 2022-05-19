@@ -47,15 +47,15 @@
                     <div class="dropdown">
                         <a href="#" role="button" id="communitiesMenu" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false" class="nav-link dropdown-toggle">Communities</a>
-                        {% if selectable_community_sites %}
+                        {% if selectable_communities %}
                         <div class="dropdown-menu" aria-labelledby="communitiesMenu">
                             {% if use_old_urls %}
-                            {% for site in selectable_community_sites %}
-                                <a class="dropdown-item" href="{{ site.full_url }}">{{ site.community.name }}</a>
+                            {% for community in selectable_communities %}
+                                <a class="dropdown-item" href="{{ community.old_full_url }}">{{ community.name }}</a>
                             {% endfor %}
                             {% else %}
-                            {% for site in selectable_community_sites %}
-                                <a class="dropdown-item" href="{% url 'communities:community:packages.list' site.community.identifier %}">{{ site.community.name }}</a>
+                            {% for community in selectable_communities %}
+                                <a class="dropdown-item" href="{% url 'communities:community:packages.list' community.identifier %}">{{ community.name }}</a>
                             {% endfor %}
                             {% endif %}
                         </div>

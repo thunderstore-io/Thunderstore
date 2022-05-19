@@ -1,6 +1,6 @@
 from django.templatetags.static import static
 
-from thunderstore.community.models import CommunitySite
+from thunderstore.community.models.community import Community
 
 
 def community_site(request):
@@ -45,9 +45,5 @@ def community_site(request):
         }
 
 
-def selectable_sites(request):
-    return {
-        "selectable_community_sites": CommunitySite.objects.exclude(
-            is_listed=False
-        ).select_related("community", "site")
-    }
+def selectable_communities(request):
+    return {"selectable_communities": Community.objects.exclude(is_listed=False)}
