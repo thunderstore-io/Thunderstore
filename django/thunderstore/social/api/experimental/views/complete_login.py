@@ -1,19 +1,15 @@
-from typing import Sequence, Type, Union
+from typing import Sequence, Type
 
-from django.conf import settings
 from django.http import HttpResponse
 from drf_yasg.utils import swagger_auto_schema  # type: ignore
 from rest_framework import serializers
-from rest_framework.permissions import (
-    BasePermission,
-    OperandHolder,
-    SingleOperandHolder,
-)
+from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 
+from thunderstore.social.permissions import OauthSharedSecretPermission
 from thunderstore.social.providers import get_helper
 
 
@@ -23,9 +19,6 @@ class RequestBody(serializers.Serializer):
     )
     redirect_uri = serializers.CharField(
         label="Redirect URI used when the authentication flow was initiated on client"
-    )
-    secret = serializers.CharField(
-        label="Token shared between Thunderstore services to authenticate OAuth requests"
     )
 
 
@@ -38,9 +31,7 @@ class CompleteLoginApiView(APIView):
     Complete OAuth login process initiated by a client.
     """
 
-    permission_classes: Sequence[
-        Union[Type[BasePermission], OperandHolder, SingleOperandHolder]
-    ] = []
+    permission_classes: Sequence[Type[BasePermission]] = [OauthSharedSecretPermission]
 
     @swagger_auto_schema(
         operation_id="experimental.auth.complete",
@@ -48,17 +39,10 @@ class CompleteLoginApiView(APIView):
         responses={200: ResponseBody()},
     )
     def post(self, request: Request, provider: str) -> HttpResponse:
-        if not settings.OAUTH_SHARED_SECRET:
-            return Response("Improperly configured", HTTP_500_INTERNAL_SERVER_ERROR)
-
         request_data = RequestBody(data=request.data)
         request_data.is_valid(raise_exception=True)
         code: str = request_data.validated_data["code"]
         redirect_uri: str = request_data.validated_data["redirect_uri"]
-        secret: str = request_data.validated_data["secret"]
-
-        if secret != settings.OAUTH_SHARED_SECRET:
-            return Response("Invalid secret", HTTP_400_BAD_REQUEST)
 
         helper_class = get_helper(provider)
         if not helper_class:
