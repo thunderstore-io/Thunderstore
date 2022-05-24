@@ -74,7 +74,6 @@ def test_api_methods_check_for_token(
     "get",
     return_value=Mock(
         json=lambda: {
-            "discriminator": "1234",
             "email": "foo@bar.com",
             "id": "5678",
             "username": "Foo",
@@ -91,7 +90,7 @@ def test_discord_get_user_info(mocked_request_get) -> None:
     assert info.email == "foo@bar.com"
     assert info.name == ""
     assert info.uid == "5678"
-    assert info.username == "Foo#1234"
+    assert info.username == "Foo"
 
 
 @patch.object(
