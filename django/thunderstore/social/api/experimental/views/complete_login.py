@@ -60,13 +60,13 @@ class CompleteLoginApiView(APIView):
         helper = helper_class(code, redirect_uri)
         helper.complete_login()
         user_info = helper.get_user_info()
-        user = get_or_create_auth_user(provider, user_info)
+        user = get_or_create_auth_user(user_info)
 
         return Response({"session_id": "TODO"})
 
 
 @transaction.atomic
-def get_or_create_auth_user(provider: str, user_info: UserInfoSchema) -> UserType:
+def get_or_create_auth_user(user_info: UserInfoSchema) -> UserType:
     """
     Return local user object based on OAuth user data.
 
@@ -76,7 +76,7 @@ def get_or_create_auth_user(provider: str, user_info: UserInfoSchema) -> UserTyp
     """
     try:
         sa_user: UserSocialAuth = UserSocialAuth.objects.get(
-            provider=provider,
+            provider=user_info.provider,
             uid=user_info.uid,
         )
     except UserSocialAuth.DoesNotExist:
@@ -95,7 +95,7 @@ def get_or_create_auth_user(provider: str, user_info: UserInfoSchema) -> UserTyp
 
         sa_user = UserSocialAuth.objects.create(
             extra_data=user_info.extra_data,
-            provider=provider,
+            provider=user_info.provider,
             uid=user_info.uid,
             user=user,
         )

@@ -18,6 +18,7 @@ class UserInfoSchema(BaseModel):
     email: str
     extra_data: Dict[str, Any]
     name: str
+    provider: str
     uid: str
     username: str
 
@@ -54,6 +55,13 @@ class BaseOauthHelper(ABC):
     def OAUTH_URL(self) -> str:
         """
         URL for exchanging an authorization code for an access token.
+        """
+
+    @property
+    @abstractmethod
+    def PROVIDER_NAME(self) -> str:
+        """
+        Human-readable name for the OAuth provider service.
         """
 
     def __init__(self, code: str, redirect_uri: str) -> None:
@@ -110,6 +118,7 @@ class DiscordOauthHelper(BaseOauthHelper):
     CLIENT_ID = settings.SOCIAL_AUTH_DISCORD_KEY
     CLIENT_SECRET = settings.SOCIAL_AUTH_DISCORD_SECRET
     OAUTH_URL = "https://discord.com/api/v8/oauth2/token"
+    PROVIDER_NAME = "discord"
 
     def get_user_info(self) -> UserInfoSchema:
         """
@@ -137,6 +146,7 @@ class DiscordOauthHelper(BaseOauthHelper):
                 "email": data.email,
                 "extra_data": response_json,
                 "name": "",
+                "provider": self.PROVIDER_NAME,
                 "uid": data.id,
                 "username": data.username,
             }
@@ -152,6 +162,7 @@ class GitHubOauthHelper(BaseOauthHelper):
     CLIENT_ID = settings.SOCIAL_AUTH_GITHUB_KEY
     CLIENT_SECRET = settings.SOCIAL_AUTH_GITHUB_SECRET
     OAUTH_URL = "https://github.com/login/oauth/access_token"
+    PROVIDER_NAME = "github"
 
     def get_user_email(self) -> str:
         """
@@ -213,6 +224,7 @@ class GitHubOauthHelper(BaseOauthHelper):
                 "email": data.email or self.get_user_email(),
                 "extra_data": response_json,
                 "name": data.name,
+                "provider": self.PROVIDER_NAME,
                 "uid": data.id,
                 "username": data.login,
             }

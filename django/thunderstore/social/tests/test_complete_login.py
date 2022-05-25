@@ -35,6 +35,7 @@ RETURN_VALUE = UserInfoSchema.parse_obj(
         "email": "foo@bar.com",
         "extra_data": {"foo": "bar"},
         "name": "Foo Bar",
+        "provider": "github",
         "uid": "1234",
         "username": "Foo",
     }
@@ -43,6 +44,7 @@ USER_INFO = {
     "email": "x@example.org",
     "extra_data": {"x": "y"},
     "name": "X Y",
+    "provider": "github",
     "uid": "uid",
     "username": "x",
 }
@@ -250,7 +252,7 @@ def test_get_unique_username_adds_random_suffixes_only_when_needed() -> None:
 def test_get_or_create_auth_user_creates_user_without_password() -> None:
     ui = UserInfoSchema.parse_obj(USER_INFO)
 
-    user = get_or_create_auth_user("github", ui)
+    user = get_or_create_auth_user(ui)
 
     assert not user.has_usable_password()
 
@@ -262,13 +264,13 @@ def test_get_or_create_auth_user_creates_user_only_when_needed() -> None:
 
     # Create original user.
     ui = UserInfoSchema.parse_obj(USER_INFO)
-    user1 = get_or_create_auth_user("github", ui)
+    user1 = get_or_create_auth_user(ui)
     assert User.objects.count() == 1
     assert UserSocialAuth.objects.count() == 1
     assert UserSocialAuth.objects.latest("modified").user_id == user1.pk
 
     # Using the same information should return the original user.
-    user2 = get_or_create_auth_user("github", ui)
+    user2 = get_or_create_auth_user(ui)
     assert User.objects.count() == 1
     assert UserSocialAuth.objects.count() == 1
     assert user2.pk == user1.pk
@@ -276,7 +278,8 @@ def test_get_or_create_auth_user_creates_user_only_when_needed() -> None:
 
     # We can't know if user "x" in GitHub is the same person as user "x"
     # in Discord, so we need to create another user.
-    user3 = get_or_create_auth_user("discord", ui)
+    ui.provider = "discord"
+    user3 = get_or_create_auth_user(ui)
     assert User.objects.count() == 2
     assert UserSocialAuth.objects.count() == 2
     assert user3.pk != user1.pk
@@ -288,13 +291,13 @@ def test_get_or_create_auth_user_updates_extra_data() -> None:
     assert UserSocialAuth.objects.count() == 0
 
     ui = UserInfoSchema.parse_obj(USER_INFO)
-    get_or_create_auth_user("github", ui)
+    get_or_create_auth_user(ui)
     assert UserSocialAuth.objects.count() == 1
     usa1 = UserSocialAuth.objects.get()
     assert usa1.extra_data["x"] == "y"
 
     ui.extra_data = {"x": "z"}
-    get_or_create_auth_user("github", ui)
+    get_or_create_auth_user(ui)
     assert UserSocialAuth.objects.count() == 1
     usa2 = UserSocialAuth.objects.get()
     assert usa2.extra_data["x"] == "z"
