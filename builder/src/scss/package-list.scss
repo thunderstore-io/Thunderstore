@@ -1,5 +1,74 @@
 @import "./theme/_variables";
 
+.lander-column-margins {
+    margin-top: 8%;
+    margin-bottom: 8%;
+}
+
+.mod-count-box > img {
+    max-width: 96px;
+    max-height: 96px;
+}
+
+.modspic {
+    max-width: 500px;
+    max-height: 500px;
+}
+
+.mod-manager-pic {
+    max-width: 10rem;
+    max-height: 10rem;
+}
+
+.mod-count-box > p {
+    margin-bottom: 0;
+}
+
+.ts-primary-button {
+    font-size: 14px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-weight: bold;
+    background-color: #00d2ff;
+    color: #000001;
+}
+
+.ts-secondary-button {
+    font-size: 14px;
+    padding-left: 3%;
+    padding-right: 3%;
+    padding-top: 1%;
+    padding-bottom: 1%;
+    font-weight: bold;
+    background-color: #00000100;
+    border-width: 0;
+}
+
+.highlighted-text {
+    color: #2f8ec4;
+    padding-left: 0.5%;
+    padding-right: 0.5%;
+}
+
+.ts-card {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 12rem;
+    height: 20rem;
+    flex-grow: 1;
+    border-top-left-radius: 1rem !important;
+    border-top-right-radius: 1rem !important;
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}
+
+.ts-card > div > a > h5 {
+    color: white !important;
+}
+
 .package-list {
     margin-left: -4px;
     margin-right: -4px;

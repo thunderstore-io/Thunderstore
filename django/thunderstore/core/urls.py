@@ -8,6 +8,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 from thunderstore.community.urls import community_urls
+from thunderstore.community.views.community import CommunitiesView
 from thunderstore.frontend.views import (
     ManifestV1ValidatorView,
     MarkdownPreviewView,
@@ -28,7 +29,7 @@ handler500 = "thunderstore.frontend.views.handle500"
 AUTH_ROOT = "auth/"
 
 urlpatterns = [
-    path("", PackageListView.as_view(), name="index"),
+    path("", CommunitiesView.as_view(), name="index"),
     path("ads.txt", ads_txt_view, name="ads.txt"),
     path("robots.txt", robots_txt_view, name="robots.txt"),
     path(AUTH_ROOT, include("social_django.urls", namespace="social")),

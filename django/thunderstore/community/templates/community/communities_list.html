@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% load arrow %}
+{% load cache_until %}
+{% load qurl %}
+{% load get_urls %}
+{% load static %}
+{% load dynamic_html %}
+{% load auth_login %}
+
+{% block background %}
+    <div class="background">
+        <div class="image" style="background: url({% static "background.jpg" %});"></div>
+        <div class="tint"></div>
+    </div>
+{% endblock %}
+
+{% block title_override %}<title>Thunderstore</title>{% endblock %}
+{% block content_beginning %}
+    {% dynamic_html "frontpage_beginning" %}
+{% endblock %}
+
+{% block navbar %}
+<div class="row justify-content-center">
+<div class="col-10 mt-4 text-center">
+<nav class="navbar navbar-expand-sm navbar-dark bg-primary rounded">
+    <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">
+        Thunderstore
+    </a>
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <div class="dropdown">
+                <a href="#" role="button" id="communitiesMenu" data-toggle="dropdown" aria-haspopup="true"
+                   aria-expanded="false" class="nav-link dropdown-toggle">Communities</a>
+                {% if selectable_community_sites %}
+                <div class="dropdown-menu" aria-labelledby="communitiesMenu">
+                    {% for site in selectable_community_sites %}
+                        <a class="dropdown-item" href="{{ site.get_absolute_url }}">{{ site.community.name }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse</a>
+        </li>
+        <li class="nav-item">
+            <div class="dropdown">
+                <a href="#" role="button" id="developersMenu" data-toggle="dropdown" aria-haspopup="true"
+                   aria-expanded="false" class="nav-link dropdown-toggle">Developers</a>
+                <div class="dropdown-menu" aria-labelledby="developersMenu">
+                    {% if site_wiki_url %}
+                    <a class="dropdown-item" href="{{ site_wiki_url }}">Modding Wiki</a>
+                    {% endif %}
+                    <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
+                    <a class="dropdown-item" href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
+                    {% if community_identifier %}
+                    <a class="dropdown-item" href="{% url 'packages.create.docs' community_identifier %}">Package Format Docs</a>
+                    {% endif %}
+                    <a class="dropdown-item" href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
+                    <a class="dropdown-item" href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
+                </div>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="https://discord.gg/UWpWhjZken"><span class="fab fa-discord"></span> &nbsp;Join our Discord</a>
+        </li>
+    </ul>
+    <ul class="navbar-nav ml-auto">
+        {% if request.user.is_authenticated %}
+            {% if community_identifier %}
+            <li class="nav-item">
+                <a href="{% url "communities:community:packages.list_by_owner" team community_identifier %}" class="nav-link text-dark">{{ request.user.username }}</a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a href="{% url "communities:community:packages.list" "riskofrain2" %}" class="nav-link text-dark">{{ request.user.username }}</a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>
+            </li>
+            {% if request.user.is_staff %}
+            <li class="nav-item">
+                <a href="{% url "admin:index" %}" class="nav-link">Admin</a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a href="{% url "logout" %}" class="nav-link">Logout</a>
+            </li>
+        {% else %}
+            <li class="nav-item">
+                <a href="{% add_auth_login_link "github" %}" class="nav-link"><span class="fab fa-github"></span> Log in with GitHub</a>
+            </li>
+            <li class="nav-item">
+                <a href="{% add_auth_login_link "discord" %}" class="nav-link"><span class="fab fa-discord"></span> Log in with Discord</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+</div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% cache_until "any_package_updated" "mod-list" 1 page_obj.number cache_vary %}
+
+<div class="row mb-5 mt-5">
+    <div class="col-8">
+        <div class="row justify-content-left ml-0 align-text-bottom mod-count-box">
+            <img class="d-flex align-items-end" src="{% static 'icon.png' %}">
+            <p class="col-10 mt-4 d-flex align-items-end">Distributing INSERT MOD COUNT HERE mods, across {{ game_count }} games</p>
+        </div>
+        <div class="row justify-content-left mb-10">
+            <h1 class="col-10 mt-4 d-flex align-items-end">Download and share mods with friends</h1>
+        </div>
+        <div class="row justify-content-left mb-5">
+            <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and CLI tools that can be used to automate your workflow.</p>
+        </div>
+        <div class="row justify-content-left ml-0">
+            <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
+            <a class="btn btn-secondary ml-2 ts-secondary-button">Learn More</a>
+        </div>
+    </div>
+    <div class="col-4">
+        <img class="modspic float-right" src="{% static 'Modspic.png' %}">
+    </div>
+</div>
+<div class="flex-row mt-5">
+    <div class="row mb-2 ml-2 mr-2">
+        <div class="col-8">
+            <div class="row justify-content-left">
+                <h3 class="mb-1" >Find your game</h3>
+                <p class="d-flex align-items-end text-dark mb-2 ml-4" >Missing a game you'd like to see? Message us on Discord.</p>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="row justify-content-left ml-0 align-text-bottom justify-content-end">
+                <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
+            </div>
+        </div>
+    </div>
+
+    {% if selectable_community_sites %}
+        <div class="d-flex flex-row flex-wrap package-list">
+        {% for site in object_list %}
+            <a href="{{ site.get_absolute_url }}">
+                <div class="ts-card mb-4 ml-2 mr-2 p-1 d-flex flex-column-reverse" style='background-image: url("{% if site.community.icon %}{% thumbnail site.community.icon 1200x500 HIGH_RESOLUTION %}{% else %}{% static 'thumbnail_placeholder.jpg' 1200x500 %}{% endif %}")'>
+                    <div class="p-2 text-center w-100 d-flex flex-column">
+                        <a class="d-flex flex-row" href="{{ site.get_absolute_url }}">
+                            <h5 class="mb-0 overflow-hidden font-weight-bolder word-wrap w-100 text-center" title="{{ site.community.name }}">{{ site.community.name }}</h5>
+                        </a>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+        </div>
+        {% if is_paginated %}
+            {% include "repository/includes/pagination.html" with page_obj=page_obj paginator=paginator %}
+        {% endif %}
+    {% else %}
+        <li class="my-4">No communities found :(</li>
+    {% endif %}
+
+    <div class="row mb-2 ml-2 mr-2">
+        <div class="col-12">
+            <div class="d-flex flex-row justify-content-end">
+                <p class="text-dark mb-2 ml-4" >Missing a game you'd like to see? Message us on <a href="https://discord.gg/UWpWhjZken">Discord</a>.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="d-flex mb-5 mt-5">
+    <div class="d-flex flex-column">
+        <img class="mod-manager-pic float-left" src="{% static 'icon.png' %}">
+    </div>
+    <div class="d-flex flex-column">
+        <div class="flex-row-reverse justify-content-right mb-10">
+            <h1 class="col-10 mt-4 d-flex align-items-end">Download and share mods with friends</h1>
+        </div>
+        <div class="flex-row-reverse justify-content-right">
+            <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and CLI tools that can be used to automate your workflow.</p>
+        </div>
+        <div class="flex-row-reverse justify-content-right ml-0">
+            <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
+            <a class="btn btn-secondary ml-2 ts-secondary-button">Learn More</a>
+        </div>
+    </div>
+</div>
+<div class="d-flex flex-row">
+    <div class="flex-row-reverse justify-content-right mb-10">
+        <h1 class="col-10 mt-4 d-flex align-items-end">Download and share mods with friends</h1>
+    </div>
+    <div class="flex-row-reverse justify-content-right mb-5">
+        <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and CLI tools that can be used to automate your workflow.</p>
+    </div>
+    <div class="flex-row-reverse justify-content-right ml-0">
+        <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
+        <a class="btn btn-secondary ml-2 ts-secondary-button">Learn More</a>
+    </div>
+</div>
+
+{% endcache %}
+{% endblock %}
+{% block content_end %}
+    {% dynamic_html "frontpage_end" %}
+{% endblock %}
