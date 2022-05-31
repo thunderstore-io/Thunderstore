@@ -1,7 +1,7 @@
 from typing import Sequence, Type
 from uuid import uuid4
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils.text import slugify
@@ -56,13 +56,13 @@ class CompleteLoginApiView(APIView):
         if not helper_class:
             return Response("Unsupported OAuth provider", HTTP_400_BAD_REQUEST)
 
-        # TODO: create a new session for the user and return session id.
         helper = helper_class(code, redirect_uri)
         helper.complete_login()
         user_info = helper.get_user_info()
         user = get_or_create_auth_user(user_info)
+        login(request, user, "django.contrib.auth.backends.ModelBackend")
 
-        return Response({"session_id": "TODO"})
+        return Response({"session_id": request.session.session_key})
 
 
 @transaction.atomic
