@@ -7,6 +7,7 @@ from django.views.generic.list import ListView
 from thunderstore.cache.cache import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models.community_site import CommunitySite
+from thunderstore.repository.models.package import Package
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -73,6 +74,7 @@ class CommunitiesView(ListView):
         context["cache_vary"] = self.get_full_cache_vary()
         context["page_title"] = self.get_page_title()
         context["game_count"] = len(self.object_list)
+        context["mod_count"] = Package.objects.all().count()
         return context
 
 

@@ -16,8 +16,15 @@
 }
 
 .mod-manager-pic {
-    max-width: 10rem;
-    max-height: 10rem;
+    width: 12rem;
+    height: 12rem;
+}
+
+.mod-man-banner {
+    max-width: 60%;
+    max-height: 15rem;
+    margin: 2rem auto 5rem auto;
+    position: relative;
 }
 
 .mod-count-box > p {
@@ -46,23 +53,63 @@
     border-width: 0;
 }
 
-.highlighted-text {
-    color: #2f8ec4;
-    padding-left: 0.5%;
-    padding-right: 0.5%;
-}
-
 .ts-card {
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
+    position: relative;
+    font-size: 16px;
+    overflow: hidden;
     width: 12rem;
     height: 20rem;
     flex-grow: 1;
-    border-top-left-radius: 1rem !important;
-    border-top-right-radius: 1rem !important;
-    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    border-radius: 0.4rem !important;
+    object-fit: cover;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.ts-card-bg {
+    border-radius: 0.4rem !important;
+    height: 100%;
+}
+
+.ts-card-content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 5em 2em 2em 2em;
+    background: linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.5) 20%,
+        rgba(0, 0, 0, 0.3) 30%,
+        rgba(0, 0, 0, 0) 60%
+    );
+}
+
+.community-list-footer {
+    background: rgb(15, 15, 15);
+    border-top-left-radius: 0.4rem !important;
+    border-top-right-radius: 0.4rem !important;
+    border-bottom-left-radius: 0.4rem !important;
+    border-bottom-right-radius: 0.4rem !important;
+    padding: 1.5rem 0.5rem 1.5rem 0.5rem;
+    margin-bottom: 6rem;
+}
+
+.ts-rounded {
+    border-radius: 0.4rem !important;
+}
+
+.footer-item {
+    font-size: 14px;
+}
+
+.ts-text-highlight {
+    color: #2f8ec4;
 }
 
 .ts-card > div > a > h5 {

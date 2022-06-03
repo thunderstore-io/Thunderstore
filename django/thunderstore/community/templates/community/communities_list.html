@@ -23,7 +23,7 @@
 {% block navbar %}
 <div class="row justify-content-center">
 <div class="col-10 mt-4 text-center">
-<nav class="navbar navbar-expand-sm navbar-dark bg-primary rounded">
+<nav class="navbar navbar-expand-sm navbar-dark bg-primary rounded ts-rounded">
     <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">
         Thunderstore
     </a>
@@ -109,17 +109,16 @@
     <div class="col-8">
         <div class="row justify-content-left ml-0 align-text-bottom mod-count-box">
             <img class="d-flex align-items-end" src="{% static 'icon.png' %}">
-            <p class="col-10 mt-4 d-flex align-items-end">Distributing INSERT MOD COUNT HERE mods, across {{ game_count }} games</p>
+            <p class="col-10 mt-4 d-flex align-items-end">Distributing <span class="ts-text-highlight pl-1 pr-1">{{ mod_count }}</span> mods, across <span class="ts-text-highlight pl-1 pr-1">{{ game_count }}</span> games</p>
         </div>
         <div class="row justify-content-left mb-10">
             <h1 class="col-10 mt-4 d-flex align-items-end">Download and share mods with friends</h1>
         </div>
-        <div class="row justify-content-left mb-5">
-            <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and CLI tools that can be used to automate your workflow.</p>
+        <div class="row justify-content-left mb-3">
+            <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and <a href="https://github.com/thunderstore-io/thunderstore-cli">CLI</a> tools that can be used to automate your workflow.</p>
         </div>
         <div class="row justify-content-left ml-0">
-            <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
-            <a class="btn btn-secondary ml-2 ts-secondary-button">Learn More</a>
+            <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="#mod-manager">Mod manager</a>
         </div>
     </div>
     <div class="col-4">
@@ -131,12 +130,7 @@
         <div class="col-8">
             <div class="row justify-content-left">
                 <h3 class="mb-1" >Find your game</h3>
-                <p class="d-flex align-items-end text-dark mb-2 ml-4" >Missing a game you'd like to see? Message us on Discord.</p>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="row justify-content-left ml-0 align-text-bottom justify-content-end">
-                <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
+                <p class="align-items-end text-dark mt-2 ml-4" >Missing a game you'd like to see? Message us on <a href="https://discord.gg/UWpWhjZken">Discord</a>.</p>
             </div>
         </div>
     </div>
@@ -146,7 +140,7 @@
         {% for site in object_list %}
             <a href="{{ site.get_absolute_url }}">
                 <div class="ts-card mb-4 ml-2 mr-2 p-1 d-flex flex-column-reverse" style='background-image: url("{% if site.community.icon %}{% thumbnail site.community.icon 1200x500 HIGH_RESOLUTION %}{% else %}{% static 'thumbnail_placeholder.jpg' 1200x500 %}{% endif %}")'>
-                    <div class="p-2 text-center w-100 d-flex flex-column">
+                    <div class="ts-card-content text-center w-100 d-flex flex-column">
                         <a class="d-flex flex-row" href="{{ site.get_absolute_url }}">
                             <h5 class="mb-0 overflow-hidden font-weight-bolder word-wrap w-100 text-center" title="{{ site.community.name }}">{{ site.community.name }}</h5>
                         </a>
@@ -170,33 +164,47 @@
         </div>
     </div>
 </div>
-<div class="d-flex mb-5 mt-5">
-    <div class="d-flex flex-column">
-        <img class="mod-manager-pic float-left" src="{% static 'icon.png' %}">
+<div class="flex-d flex-row mod-man-banner" id="mod-manager">
+    <img class="mod-manager-pic float-left mr-5 mt-3" src="{% static 'icon.png' %}">
+    <div class="row justify-content-right text-wrap">
+        <h1 class="align-items-end">Get Thunderstore mod manager <span class="ts-text-highlight">today</span></h1>
     </div>
-    <div class="d-flex flex-column">
-        <div class="flex-row-reverse justify-content-right mb-10">
-            <h1 class="col-10 mt-4 d-flex align-items-end">Download and share mods with friends</h1>
-        </div>
-        <div class="flex-row-reverse justify-content-right">
-            <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and CLI tools that can be used to automate your workflow.</p>
-        </div>
-        <div class="flex-row-reverse justify-content-right ml-0">
-            <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
-            <a class="btn btn-secondary ml-2 ts-secondary-button">Learn More</a>
-        </div>
+    <div class="row justify-content-right">
+        <p class="mt-2 text-left text-muted">The perfect application for easily installing mods to your games.</p>
+        <a class="btn btn-primary ml-0 ts-primary-button" href="https://www.overwolf.com/app/Thunderstore-Thunderstore_Mod_Manager">Download</a>
     </div>
 </div>
-<div class="d-flex flex-row">
-    <div class="flex-row-reverse justify-content-right mb-10">
-        <h1 class="col-10 mt-4 d-flex align-items-end">Download and share mods with friends</h1>
+
+<div class="row justify-content-center">
+    <div class="col-12 mt-4 text-center">
+    <div class="navbar navbar-expand-sm navbar-dark rounded community-list-footer">
+        <ul class="navbar-nav nav-fill w-100">
+            <span class="footer-item ml-5 mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 18 18"><defs><clipPath id="a"><rect width="18" height="18" transform="translate(441 1062)" fill="#fff" stroke="#707070" stroke-width="1"/></clipPath></defs><g transform="translate(-441 -1062)" clip-path="url(#a)"><path d="M16.855,2.689a.675.675,0,0,0-.664.684v1.4A8.093,8.093,0,1,0,9.569,18.8a.675.675,0,0,0,.2-1.334A6.745,6.745,0,1,1,15.359,5.847H13.718a.675.675,0,1,0,0,1.349h3.167l.049,0,.061-.009.052-.012.013,0,.006,0,.023-.009.04-.015q.028-.012.055-.026l.005,0q.027-.015.053-.032l.005,0q.025-.017.048-.037l.005,0q.023-.02.045-.041l0,0q.021-.022.04-.046l0-.005.011-.015q.015-.019.028-.04a.674.674,0,0,0,.033-.059q.014-.027.026-.055l0-.006q.011-.029.019-.058l0-.006q.008-.03.014-.06V6.63q0-.031.007-.061V6.554q0-.016,0-.033V3.373a.675.675,0,0,0-.685-.684Zm-3.353,9a1.807,1.807,0,0,0-1.809,1.8v5.4a1.8,1.8,0,0,0,1.8,1.8l5.394-.008a1.8,1.8,0,0,0,1.8-1.8l0-5.387a1.8,1.8,0,0,0-1.8-1.8Zm5.387,2.241a.45.45,0,0,1,.318.768l-3.6,3.6a.45.45,0,0,1-.636,0l-1.8-1.8a.45.45,0,0,1,.636-.636l1.481,1.481,3.28-3.28A.448.448,0,0,1,18.89,13.935Z" transform="translate(438.306 1059.311)" fill="#fff"/></g></svg>
+            </span>
+            <p class="footer-item text-muted mr-2 mb-0">Mod Updates</p>
+            <span class="footer-item ml-5 mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 18 18"><defs><clipPath id="a"><rect width="18" height="18" transform="translate(441 1062)" fill="#fff" stroke="#707070" stroke-width="1"/></clipPath></defs><g transform="translate(-441 -1062)" clip-path="url(#a)"><path d="M4.974,2.842a2.613,2.613,0,0,0-.266.014,2.586,2.586,0,0,0-.506.1A2.617,2.617,0,0,0,2.486,4.676a2.586,2.586,0,0,0-.1.506s0,0,0,0a2.613,2.613,0,0,0-.014.265V17.289a2.616,2.616,0,0,0,2.605,2.605H17.763a2.616,2.616,0,0,0,2.605-2.605V5.447a2.617,2.617,0,0,0-.117-.772A2.617,2.617,0,0,0,18.535,2.96a2.586,2.586,0,0,0-.506-.1h0a2.585,2.585,0,0,0-.265-.014Zm0,1.421a.711.711,0,1,1-.711.711A.711.711,0,0,1,4.974,4.263Zm2.368,0a.711.711,0,1,1-.711.711A.711.711,0,0,1,7.342,4.263Zm2.842,0h7.579a.711.711,0,0,1,0,1.421H10.184a.711.711,0,0,1,0-1.421ZM3.789,7.105H18.947V17.289a1.174,1.174,0,0,1-1.184,1.184H4.974a1.174,1.174,0,0,1-1.184-1.184Zm4.489.937a.711.711,0,0,0-.7.721v8.053a.711.711,0,1,0,1.421,0V8.763a.711.711,0,0,0-.722-.721Zm6.158,0a.711.711,0,0,0-.7.721v8.053a.711.711,0,1,0,1.421,0V8.763a.711.711,0,0,0-.722-.721Z" transform="translate(438.632 1059.632)" fill="#fff"/></g></svg>
+            </span>
+            <p class="footer-item text-muted mr-2 mb-0">Clean Interface</p>
+            <span class="footer-item ml-5 mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 18 18"><defs><clipPath id="a"><rect width="18" height="18" transform="translate(441 1062)" fill="#fff" stroke="#707070" stroke-width="1"/></clipPath></defs><g transform="translate(-441 -1062)" clip-path="url(#a)"><path d="M17.053,2.368a3.327,3.327,0,0,0-3.316,3.316,3.163,3.163,0,0,0,.159.784L8.216,9.309A3.264,3.264,0,0,0,5.684,8.053a3.316,3.316,0,1,0,0,6.632,3.264,3.264,0,0,0,2.532-1.256l5.68,2.841a3.163,3.163,0,0,0-.159.784,3.316,3.316,0,1,0,3.316-3.316,3.264,3.264,0,0,0-2.532,1.256l-5.68-2.841A3.163,3.163,0,0,0,9,11.368a3.163,3.163,0,0,0-.159-.784l5.68-2.841A3.264,3.264,0,0,0,17.053,9a3.316,3.316,0,1,0,0-6.632Zm0,1.421a1.895,1.895,0,1,1-1.895,1.895A1.884,1.884,0,0,1,17.053,3.789ZM5.684,9.474a1.895,1.895,0,1,1-1.895,1.895A1.884,1.884,0,0,1,5.684,9.474Zm11.368,5.684a1.895,1.895,0,1,1-1.895,1.895A1.884,1.884,0,0,1,17.053,15.158Z" transform="translate(438.632 1059.632)" fill="#fff"/></g></svg>
+            </span>
+            <p class="footer-item text-muted mr-2 mb-0">Share Mods</p>
+            <span class="footer-item ml-5 mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 18 18"><defs><clipPath id="a"><rect width="18" height="18" transform="translate(441 1062)" fill="#fff" stroke="#707070" stroke-width="1"/></clipPath></defs><g transform="translate(-441 -1062)" clip-path="url(#a)"><path d="M11.981,2.987a.75.75,0,0,0-.738.76V14.431L9.525,12.712a.75.75,0,1,0-1.06,1.06l3,3a.75.75,0,0,0,1.06,0l3-3a.75.75,0,1,0-1.06-1.06l-1.719,1.719V3.748a.75.75,0,0,0-.761-.76ZM3.736,15.48A.75.75,0,0,0,3,16.24v2a2.76,2.76,0,0,0,2.748,2.748H18.239a2.76,2.76,0,0,0,2.748-2.748v-2a.75.75,0,1,0-1.5,0v2a1.238,1.238,0,0,1-1.249,1.249H5.747A1.238,1.238,0,0,1,4.5,18.239v-2a.75.75,0,0,0-.761-.76Z" transform="translate(438.007 1059.013)" fill="#fff"/></g></svg>
+            </span>
+            <p class="footer-item text-muted mr-2 mb-0">Seamless Installs</p>
+            <span class="footer-item ml-5 mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 18 18"><defs><clipPath id="a"><rect width="18" height="18" transform="translate(441 1062)" fill="#fff" stroke="#707070" stroke-width="1"/></clipPath></defs><g transform="translate(-441 -1062)" clip-path="url(#a)"><path d="M10.345,1.825A8.606,8.606,0,0,0,8.4,2.051a.684.684,0,0,0-.517.582L7.753,3.866a1.246,1.246,0,0,1-.608.935,1.23,1.23,0,0,1-1.116.06L4.9,4.366a.669.669,0,0,0-.763.155A8.572,8.572,0,0,0,2.189,7.874a.677.677,0,0,0,.246.737l1,.737a1.235,1.235,0,0,1,0,1.992l-1,.737a.677.677,0,0,0-.246.737,8.529,8.529,0,0,0,1.948,3.353.668.668,0,0,0,.758.155l1.134-.495a1.231,1.231,0,0,1,1.724.995l.134,1.229a.689.689,0,0,0,.517.586,8.656,8.656,0,0,0,1.939.228h.03a1.7,1.7,0,0,1-.03-.332V17.515a7.208,7.208,0,0,1-1.168-.1l-.082-.742a2.58,2.58,0,0,0-3.607-2.082l-.681.3a7.1,7.1,0,0,1-1.173-2.022l.6-.444a2.58,2.58,0,0,0,0-4.163l-.6-.444A7.1,7.1,0,0,1,4.806,5.8l.681.3A2.58,2.58,0,0,0,9.093,4.013l.082-.742a6.861,6.861,0,0,1,2.337,0l.082.742A2.58,2.58,0,0,0,15.2,6.094l.681-.3a7.1,7.1,0,0,1,1.173,2.022l-.6.444a2.592,2.592,0,0,0-1.056,2.082,2.859,2.859,0,0,0,.035.431h1.391a1.212,1.212,0,0,1-.077-.431,1.243,1.243,0,0,1,.5-1l1-.737a.677.677,0,0,0,.246-.737,8.572,8.572,0,0,0-1.944-3.353.676.676,0,0,0-.763-.155l-1.134.495a1.231,1.231,0,0,1-1.724-.995L12.8,2.637a.689.689,0,0,0-.517-.586A8.562,8.562,0,0,0,10.345,1.825Zm0,5.071a3.448,3.448,0,0,0,0,6.9v-.862a2.442,2.442,0,0,1,.043-.435.145.145,0,0,1-.043,0A2.155,2.155,0,1,1,12.5,10.343a2.442,2.442,0,0,1-.043.435.145.145,0,0,1,.043,0h1.267a3.561,3.561,0,0,0,.026-.431A3.452,3.452,0,0,0,10.343,6.9ZM12.5,11.636a1.293,1.293,0,0,0-1.293,1.293v5.6A1.293,1.293,0,0,0,12.5,19.825h6.034a1.293,1.293,0,0,0,1.293-1.293v-5.6a1.293,1.293,0,0,0-1.293-1.293Zm5.631,2.156a.431.431,0,0,1,.255.755l-3.448,3.017a.43.43,0,0,1-.588-.02L12.625,15.82a.431.431,0,0,1,.609-.609l1.439,1.439L17.817,13.9A.427.427,0,0,1,18.13,13.792Z" transform="translate(439.007 1060.175)" fill="#fff"/></g></svg>
+            </span>
+            <p class="footer-item text-muted mr-2 mb-0">Easy Management</p>
+            <span class="footer-item ml-5 mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 18 18"><defs><clipPath id="a"><rect width="18" height="18" transform="translate(441 1062)" fill="#fff" stroke="#707070" stroke-width="1"/></clipPath></defs><g transform="translate(-441 -1062)" clip-path="url(#a)"><path d="M5.357,1.714A1.931,1.931,0,0,0,3.429,3.643V16.929a1.931,1.931,0,0,0,1.929,1.929h9.857a1.93,1.93,0,0,0,.537-.076l-1.21-1.21H5.357a.644.644,0,0,1-.643-.643V3.643A.644.644,0,0,1,5.357,3h4.929V6.643a1.931,1.931,0,0,0,1.929,1.929h3.643V10.84a3.706,3.706,0,0,1,1.286,1.378V7.929a.641.641,0,0,0-.188-.454L11.383,1.9a.64.64,0,0,0-.454-.188Zm6.214,2.195,3.377,3.377H12.214a.644.644,0,0,1-.643-.643ZM14.1,11.148a2.759,2.759,0,0,0-1.066.146.259.259,0,0,0-.1.428l1.387,1.387a.857.857,0,0,1-.049,1.258.894.894,0,0,1-1.2-.083l-1.35-1.35a.259.259,0,0,0-.428.1,2.779,2.779,0,0,0,3.471,3.553l2.755,2.755a1.286,1.286,0,1,0,1.818-1.818l-2.755-2.755A2.777,2.777,0,0,0,14.477,11.2,2.9,2.9,0,0,0,14.1,11.148Z" transform="translate(438.429 1060.286)" fill="#fff"/></g></svg>
+            </span>
+            <p class="footer-item text-muted mr-5 mb-0">Config Editor</p>
+        </ul>
     </div>
-    <div class="flex-row-reverse justify-content-right mb-5">
-        <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and CLI tools that can be used to automate your workflow.</p>
-    </div>
-    <div class="flex-row-reverse justify-content-right ml-0">
-        <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse Games</a>
-        <a class="btn btn-secondary ml-2 ts-secondary-button">Learn More</a>
     </div>
 </div>
 
