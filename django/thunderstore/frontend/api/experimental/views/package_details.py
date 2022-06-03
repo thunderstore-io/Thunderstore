@@ -1,6 +1,5 @@
-from django.core.exceptions import PermissionDenied
 from django.db.models import Count, QuerySet, Sum
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
@@ -44,7 +43,7 @@ class PackageDetailApiView(APIView):
         )
 
         if not listing.can_be_viewed_by_user(request.user):
-            raise PermissionDenied()
+            raise Http404()
 
         serializer = self.serialize_results(listing)
 

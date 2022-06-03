@@ -46,9 +46,9 @@ def test_unlisted_community_returns_404(api_client: APIClient) -> None:
         (PackageListingReviewStatus.approved, False, 200),
         (PackageListingReviewStatus.approved, True, 200),
         (PackageListingReviewStatus.unreviewed, False, 200),
-        (PackageListingReviewStatus.unreviewed, True, 403),
-        (PackageListingReviewStatus.rejected, False, 403),
-        (PackageListingReviewStatus.rejected, True, 403),
+        (PackageListingReviewStatus.unreviewed, True, 404),
+        (PackageListingReviewStatus.rejected, False, 404),
+        (PackageListingReviewStatus.rejected, True, 404),
     ),
 )
 def test_listing_approval_status_is_checked(
