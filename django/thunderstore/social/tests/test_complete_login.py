@@ -6,6 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
 from django.urls import reverse
+from django.utils.text import slugify
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 from social_django.models import UserSocialAuth  # type: ignore
@@ -218,9 +219,12 @@ def test_valid_request(api_client: APIClient, provider: str) -> None:
     url = _get_url(provider)
 
     response = _post(api_client, url)
+    data = response.json()
 
     assert (response.status_code) == 200
-    assert Session.objects.filter(pk=response.json()["session_id"]).exists()
+    assert Session.objects.filter(pk=data["session_id"]).exists()
+    assert data["email"] == RETURN_VALUE.email
+    assert data["username"] == slugify(RETURN_VALUE.username)
 
 
 def test_get_unique_username_rejects_empty_usernames() -> None:
