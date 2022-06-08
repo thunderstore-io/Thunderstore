@@ -10,6 +10,28 @@
     max-height: 96px;
 }
 
+@media screen and (max-width: 991px) {
+    .sm-hide {
+        visibility: hidden;
+        clear: both;
+        display: none;
+    }
+
+    .text-sm-center {
+        text-align: center;
+    }
+
+    .ts-justify-content {
+        justify-content: center !important;
+    }
+}
+
+@media screen and (min-width: 992px) {
+    .ts-justify-content {
+        justify-content: left !important;
+    }
+}
+
 .modspic {
     max-width: 500px;
     max-height: 500px;
@@ -20,11 +42,10 @@
     height: 12rem;
 }
 
-.mod-man-banner {
-    max-width: 60%;
-    max-height: 15rem;
-    margin: 2rem auto 5rem auto;
-    position: relative;
+@media screen and (max-width: 1200px) {
+    .ts-text-align-center {
+        text-align: center !important;
+    }
 }
 
 .mod-count-box > p {
