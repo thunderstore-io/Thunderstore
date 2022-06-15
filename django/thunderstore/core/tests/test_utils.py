@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
 from thunderstore.core.utils import (
+    capture_exception,
     check_validity,
     make_full_url,
     sanitize_filename,
@@ -101,3 +102,11 @@ def test_validate_filepath_prefix(filepath: Optional[str], should_fail: bool) ->
             validate_filepath_prefix(filepath)
     else:
         assert validate_filepath_prefix(filepath) == filepath
+
+
+def test_capture_exception_always_raise(settings: Any):
+    settings.ALWAYS_RAISE_EXCEPTIONS = False
+    capture_exception(Exception("test"))
+    settings.ALWAYS_RAISE_EXCEPTIONS = True
+    with pytest.raises(Exception, match="test"):
+        capture_exception(Exception("test"))

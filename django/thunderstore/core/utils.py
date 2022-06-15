@@ -67,8 +67,10 @@ def check_validity(fn: Callable[[], None]) -> bool:
         return False
 
 
-def capture_exception(*args, **kwargs):
-    capture_sentry_exception(*args, **kwargs)
+def capture_exception(error=None, *args, **kwargs):
+    if settings.ALWAYS_RAISE_EXCEPTIONS:
+        raise error
+    capture_sentry_exception(error, *args, **kwargs)
 
 
 def make_full_url(request: Optional[HttpRequest], path: str):
