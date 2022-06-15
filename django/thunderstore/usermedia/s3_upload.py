@@ -239,11 +239,16 @@ def cleanup_expired_upload(user_media: UserMedia, client: Client):
             UserMediaStatus.upload_aborted,
             UserMediaStatus.upload_complete,
         ):
-            client.abort_multipart_upload(
-                Bucket=bucket_name,
-                Key=user_media.key,
-                UploadId=user_media.upload_id,
-            )
+            try:
+                client.abort_multipart_upload(
+                    Bucket=bucket_name,
+                    Key=user_media.key,
+                    UploadId=user_media.upload_id,
+                )
+            except ClientError as e:
+                code = e.response.get("Error", {}).get("Code", None)
+                if code != "NoSuchUpload":  # pragma: no cover
+                    raise e
 
         if user_media.status == UserMediaStatus.upload_complete:
             client.delete_object(
