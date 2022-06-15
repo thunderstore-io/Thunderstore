@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView
 
 
@@ -28,9 +30,11 @@ def robots_txt_view(request):
     return render(request, "robots.txt", locals())
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class MarkdownPreviewView(TemplateView):
     template_name = "frontend/markdown_preview.html"
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class ManifestV1ValidatorView(TemplateView):
     template_name = "frontend/manifest_v1_validator.html"
