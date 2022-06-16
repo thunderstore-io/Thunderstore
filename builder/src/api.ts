@@ -8,6 +8,33 @@ type JSONValue =
     | JSONValue[]
     | { [key: string]: JSONValue };
 
+export const stringifyError = (
+    val: JSONValue,
+    parents?: string[]
+): string[] => {
+    if (val === null) {
+        return [];
+    } else if (typeof val === "object") {
+        const result = [];
+        if (Array.isArray(val)) {
+            for (const entry of val) {
+                result.push(...stringifyError(entry, parents));
+            }
+        } else {
+            Object.keys(val).forEach((key) => {
+                result.push(
+                    ...stringifyError(val[key]!, (parents || []).concat(key))
+                );
+            });
+        }
+        return result;
+    } else {
+        return [
+            `${parents?.join(": ")}${parents ? ": " : ""}${val.toString()}`,
+        ];
+    }
+};
+
 export class ThunderstoreApiError {
     message: string;
     response: Response;

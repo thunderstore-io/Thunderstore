@@ -45,7 +45,7 @@ class FormErrors {
     communitiesError: string | null = null;
     categoriesError: string | null = null;
     nsfwError: string | null = null;
-    generalError: string | null = null;
+    generalErrors: string[] = [];
 
     get hasErrors(): boolean {
         return !(
@@ -54,7 +54,7 @@ class FormErrors {
             this.communitiesError == null &&
             this.categoriesError == null &&
             this.nsfwError == null &&
-            this.generalError == null
+            this.generalErrors.length == 0
         );
     }
 }
@@ -68,6 +68,7 @@ interface SubmissionError {
     detail?: string;
     file?: string[];
     team?: string[];
+    __all__?: string[];
 }
 
 interface FormRowProps {
@@ -193,7 +194,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                     const error = e.errorObject as SubmissionError | null;
                     if (error) {
                         if (error.upload_uuid) {
-                            errors.generalError = error.upload_uuid[0] || null;
+                            errors.generalErrors.push(...error.upload_uuid);
                         }
                         if (error.author_name) {
                             errors.teamError = error.author_name[0] || null;
@@ -214,16 +215,26 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                                 error.has_nsfw_content[0] || null;
                         }
                         if (error.detail) {
-                            errors.generalError = error.detail;
+                            errors.generalErrors.push(error.detail);
                         }
                         if (error.file) {
-                            errors.generalError = error.file[0] || null;
+                            errors.generalErrors.push(...error.file);
                         }
+                        if (error.__all__) {
+                            errors.generalErrors.push(...error.__all__);
+                        }
+                    } else {
+                        Sentry.captureException(e);
+                        errors.generalErrors.push(
+                            "Unknown error occurred while submitting package"
+                        );
+                        console.error(e);
                     }
                 } else {
                     Sentry.captureException(e);
-                    errors.generalError =
-                        "Unknown error occurred while submitting package";
+                    errors.generalErrors.push(
+                        "Unknown error occurred while submitting package"
+                    );
                     console.error(e);
                 }
                 setFormErrors(errors);
@@ -232,11 +243,23 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         } catch (e) {
             Sentry.captureException(e);
             const errors = new FormErrors();
-            errors.generalError = "Unknown error occurred while uploading file";
+            errors.generalErrors.push(
+                "Unknown error occurred while uploading file"
+            );
             setFormErrors(errors);
             console.error(e);
         }
     };
+
+    const hasErrors =
+        (fileUpload?.uploadErrors ?? []).length > 0 ||
+        formErrors.generalErrors.length > 0;
+
+    const hasEtagError =
+        fileUpload &&
+        fileUpload.uploadErrors.some(
+            (x) => x.indexOf("ETag: This field is required.") > 0
+        );
 
     const uploadProgressBg = getUploadProgressBarcolor(
         fileUpload?.uploadStatus
@@ -430,9 +453,26 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                             progress={submissionProgress}
                         />
                     )}
-                    {formErrors.generalError && (
-                        <div className="px-3 py-3 text-danger field-errors">
-                            <p>{formErrors.generalError}</p>
+                    {hasErrors && (
+                        <div className="mb-0 px-3 py-3 alert alert-danger field-errors">
+                            <ul className="mx-0 my-0 pl-3">
+                                {formErrors.generalErrors.map((e, idx) => (
+                                    <li key={`general-${idx}`}>{e}</li>
+                                ))}
+                                {fileUpload?.uploadErrors.map((e, idx) => (
+                                    <li key={`upload-${idx}`}>{e}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {hasEtagError && (
+                        <div className="mb-0 mt-2 px-3 py-3 alert alert-info field-errors">
+                            <p className="mx-0 my-0">
+                                Some browser extensions such as ClearURLs strip
+                                ETag response headers. Make sure this is not
+                                happening e.g. by disabling extensions and try
+                                again.
+                            </p>
                         </div>
                     )}
                 </form>

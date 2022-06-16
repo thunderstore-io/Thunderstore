@@ -9,6 +9,8 @@ import {
 import {
     CompletedPart,
     ExperimentalApi,
+    stringifyError,
+    ThunderstoreApiError,
     UploadPartUrl,
     UserMediaInitiateUploadResponse,
 } from "../api";
@@ -25,6 +27,7 @@ export enum FileUploadStatus {
 }
 
 export class FileUpload {
+    @observable uploadErrors: string[] = [];
     @observable uploadStatus: FileUploadStatus = FileUploadStatus.NEW;
     @observable private _progress: Map<number, number> | null = null;
     @observable
@@ -39,6 +42,7 @@ export class FileUpload {
     @action
     resetState = () => {
         this.uploadStatus = FileUploadStatus.NEW;
+        this.uploadErrors = [];
         this._progress = null;
     };
 
@@ -46,6 +50,23 @@ export class FileUpload {
     private setUploadStatus(status: FileUploadStatus) {
         if (this.uploadStatus != FileUploadStatus.CANCELED) {
             this.uploadStatus = status;
+        }
+    }
+
+    @action
+    private logErrors(...errors: string[]) {
+        this.uploadErrors.push(...errors);
+        console.error(errors);
+    }
+
+    @action
+    private logApiError(error: Error | ThunderstoreApiError) {
+        if (error instanceof ThunderstoreApiError) {
+            const flattened = stringifyError(error.errorObject);
+            this.logErrors(...flattened);
+        } else {
+            this.logErrors(error.message);
+            console.error(error, error.stack);
         }
     }
 
@@ -201,7 +222,7 @@ export class FileUpload {
         if (this.uploadStatus != FileUploadStatus.NEW) return null;
         if (file.size <= 0) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
-            console.error("Attempted to upload a file with 0 size");
+            this.logErrors("Attempted to upload a file with 0 size");
             return null;
         }
 
@@ -218,7 +239,7 @@ export class FileUpload {
         } catch (e) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
             Sentry.captureException(e);
-            console.error(e, e.stack);
+            this.logApiError(e);
             return null;
         }
 
@@ -234,7 +255,7 @@ export class FileUpload {
         } catch (e) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
             Sentry.captureException(e);
-            console.error(e, e.stack);
+            this.logApiError(e);
             return null;
         }
 
@@ -243,7 +264,7 @@ export class FileUpload {
         } catch (e) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
             Sentry.captureException(e);
-            console.error(e, e.stack);
+            this.logApiError(e);
             return null;
         }
         return uploadInfo.user_media.uuid;
