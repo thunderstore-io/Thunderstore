@@ -72,12 +72,14 @@ def test_views_auth_login_link_generation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("backend", ("discord", "github"))
+@pytest.mark.parametrize("as_primary", (False, True))
 @pytest.mark.parametrize("old_urls", (False, True))
 def test_views_disabled_for_auth_exclusive_host(
     client,
     community_site,
     settings,
     backend: str,
+    as_primary: bool,
     old_urls: bool,
 ):
     if old_urls:
@@ -93,12 +95,24 @@ def test_views_disabled_for_auth_exclusive_host(
     )
     assert response.status_code == 200
     settings.AUTH_EXCLUSIVE_HOST = community_site.site.domain
+
+    if as_primary:
+        settings.PRIMARY_HOST = community_site.site.domain
+    else:
+        settings.PRIMARY_HOST = community_site.site.domain + "test"
+
     response = client.get(
         url,
         HTTP_HOST=community_site.site.domain,
     )
-    assert response.status_code == 404
-    assert response.content == b"Community not found"
+
+    if as_primary:
+        assert response.status_code == 404
+        assert response.content == b"Community not found"
+    else:
+        assert response.status_code == 302
+        assert response["Location"] == f"{settings.PROTOCOL}{settings.PRIMARY_HOST}/"
+
     response = client.get(
         reverse("social:begin", kwargs={"backend": backend}),
         HTTP_HOST=community_site.site.domain,

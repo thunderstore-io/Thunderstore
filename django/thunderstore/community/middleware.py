@@ -41,12 +41,11 @@ class CommunitySiteMiddleware:
         self.admin_path = reverse("admin:index")
         self.auth_path = f"/{AUTH_ROOT}"
 
-    def get_404(self) -> HttpResponse:
-        # TODO: Replace with absolute link to main page instead of guessing
-        main_site_domain = settings.SESSION_COOKIE_DOMAIN
-        if main_site_domain is not None:
+    def get_404(self, request: CommunityHttpRequest) -> HttpResponse:
+        main_site_domain = settings.PRIMARY_HOST
+        if main_site_domain is not None and main_site_domain != request.get_host():
             # TODO: Replace with unified URL building utility
-            main_site_url = f"{settings.PROTOCOL}{main_site_domain}"
+            main_site_url = f"{settings.PROTOCOL}{main_site_domain}/"
             return HttpResponseRedirect(redirect_to=main_site_url)
         return HttpResponse(content=b"Community not found", status=404)
 
@@ -60,10 +59,10 @@ class CommunitySiteMiddleware:
             and request_host == settings.AUTH_EXCLUSIVE_HOST
         ):
             if not request.path.startswith(self.auth_path):
-                return self.get_404()
+                return self.get_404(request)
         elif not request.path.startswith(self.admin_path):
             try:
                 add_community_context_to_request(request)
             except Http404:
-                return self.get_404()
+                return self.get_404(request)
         return self.get_response(request)

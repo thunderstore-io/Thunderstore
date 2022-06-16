@@ -118,12 +118,13 @@ SENTRY_DSN = env.str("SENTRY_DSN")
 SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE")
 if SENTRY_DSN:
     import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
-        integrations=[DjangoIntegration()],
+        integrations=[DjangoIntegration(), CeleryIntegration()],
     )
 
 checkout_dir = environ.Path(__file__) - 3

@@ -34,10 +34,18 @@ def test_usermedia_cleanup() -> None:
             client, None, "a", MIN_UPLOAD_SIZE, timezone.now() + timedelta(days=400)
         ),
     ]
+    invalid_upload = UserMedia.create_upload(
+        None, "nonexistent", 12, timezone.now() - timedelta(seconds=1)
+    )
+    invalid_upload.upload_id = "hunter2"
+    invalid_upload.save()
+    assert invalid_upload.has_expired
+    assert invalid_upload in UserMedia.objects.expired()
     cleanup_expired_uploads()
     assert UserMedia.objects.filter(pk__in=[x.pk for x in expired]).count() == 0
     assert UserMedia.objects.filter(pk__in=[x.pk for x in active]).count() == 3
-    for entry in expired:
+    assert UserMedia.objects.filter(pk=invalid_upload.pk).exists() is False
+    for entry in expired + [invalid_upload]:
         with pytest.raises(
             ClientError,
             match=re.escape(
