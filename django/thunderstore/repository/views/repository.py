@@ -6,7 +6,9 @@ from django.db.models import Count, Q, Sum
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
@@ -35,6 +37,7 @@ from thunderstore.repository.package_upload import PackageUploadForm
 MODS_PER_PAGE = 24
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageListSearchView(CommunityMixin, ListView):
     model = PackageListing
     paginate_by = MODS_PER_PAGE
@@ -301,6 +304,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         return context
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageListView(PackageListSearchView):
     def get_page_title(self):
         return "All mods"
@@ -309,6 +313,7 @@ class PackageListView(PackageListSearchView):
         return "all"
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageListByOwnerView(PackageListSearchView):
     owner: Optional[Team]
 
@@ -342,6 +347,7 @@ class PackageListByOwnerView(PackageListSearchView):
         return f"authorer-{self.owner.name}"
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageListByDependencyView(PackageListSearchView):
     package_listing: PackageListing
 
@@ -407,6 +413,7 @@ def get_package_listing_or_404(
     return package_listing
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageDetailView(CommunityMixin, DetailView):
     model = PackageListing
 
@@ -435,6 +442,7 @@ class PackageDetailView(CommunityMixin, DetailView):
         return context
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageVersionDetailView(CommunityMixin, DetailView):
     model = PackageVersion
 
@@ -459,6 +467,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
         )
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageCreateView(CommunityMixin, TemplateView):
     template_name = "repository/package_create.html"
 
@@ -473,6 +482,7 @@ class PackageDocsView(CommunityMixin, TemplateView):
 
 
 # TODO: Remove once new UI is stable enough
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageCreateOldView(CommunityMixin, CreateView):
     model = PackageVersion
     form_class = PackageUploadForm
