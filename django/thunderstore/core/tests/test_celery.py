@@ -103,5 +103,4 @@ def test_celery_post(
 ):
     celery_response = celery_post.delay("http://localhost:8888")
     assert celery_response.state == "SUCCESS"
-    assert celery_response.result.status_code == 200
     assert isinstance(celery_response, celery.result.EagerResult)
