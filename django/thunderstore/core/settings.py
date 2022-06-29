@@ -2,10 +2,12 @@ import base64
 import json
 import os
 import sys
+from typing import Tuple
 
 import environ
 from django.http import HttpRequest
 
+from thunderstore.core.storage import S3MirrorConfig
 from thunderstore.core.utils import validate_filepath_prefix
 
 try:
@@ -631,6 +633,16 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
+    # {
+    #     "AWS_ACCESS_KEY_ID": env.str("..."),
+    #     "AWS_SECRET_ACCESS_KEY": env.str("..."),
+    #     "AWS_STORAGE_BUCKET_NAME": env.str("..."),
+    #     "AWS_S3_ENDPOINT_URL": env.str("..."),
+    #     "AWS_S3_REGION_NAME": env.str("..."),
+    # },
+)
 
 # Social auth
 
