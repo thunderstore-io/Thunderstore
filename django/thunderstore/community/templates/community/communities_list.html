@@ -1,23 +1,16 @@
 {% extends 'base.html' %}
-{% load thumbnail %}
-{% load arrow %}
-{% load cache_until %}
-{% load qurl %}
-{% load get_urls %}
-{% load static %}
-{% load dynamic_html %}
-{% load auth_login %}
+{% load arrow auth_login cache_until dynamic_html get_urls qurl static thumbnail %}
 
 {% block background %}
     <div class="background">
-        <div class="image" style="background: url({% static "background.jpg" %});"></div>
+        <div class="image" style="background: url({% static 'background.jpg' %});"></div>
         <div class="tint"></div>
     </div>
 {% endblock %}
 
 {% block title_override %}<title>Thunderstore</title>{% endblock %}
 {% block content_beginning %}
-    {% dynamic_html "frontpage_beginning" %}
+{% dynamic_html "frontpage_beginning" %}
 {% endblock %}
 
 {% block navbar %}
@@ -35,14 +28,14 @@
                 {% if selectable_community_sites %}
                 <div class="dropdown-menu" aria-labelledby="communitiesMenu">
                     {% for site in selectable_community_sites %}
-                        <a class="dropdown-item" href="{{ site.get_absolute_url }}">{{ site.community.name }}</a>
+                    <a class="dropdown-item" href="{{ site.get_absolute_url }}">{{ site.community.name }}</a>
                     {% endfor %}
                 </div>
                 {% endif %}
             </div>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url "communities:community:packages.list" "riskofrain2" %}">Browse</a>
+            <a class="nav-link" href="{% url 'communities:community:packages.list' 'riskofrain2' %}">Browse</a>
         </li>
         <li class="nav-item">
             <div class="dropdown">
@@ -68,33 +61,33 @@
     </ul>
     <ul class="navbar-nav ml-auto">
         {% if request.user.is_authenticated %}
-            {% if community_identifier %}
-            <li class="nav-item">
-                <a href="{% url "communities:community:packages.list_by_owner" team community_identifier %}" class="nav-link text-dark">{{ request.user.username }}</a>
-            </li>
-            {% else %}
-            <li class="nav-item">
-                <a href="{% url "communities:community:packages.list" "riskofrain2" %}" class="nav-link text-dark">{{ request.user.username }}</a>
-            </li>
-            {% endif %}
-            <li class="nav-item">
-                <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>
-            </li>
-            {% if request.user.is_staff %}
-            <li class="nav-item">
-                <a href="{% url "admin:index" %}" class="nav-link">Admin</a>
-            </li>
-            {% endif %}
-            <li class="nav-item">
-                <a href="{% url "logout" %}" class="nav-link">Logout</a>
-            </li>
+        {% if community_identifier %}
+        <li class="nav-item">
+            <a href="{% url 'communities:community:packages.list_by_owner' team community_identifier %}" class="nav-link text-dark">{{ request.user.username }}</a>
+        </li>
         {% else %}
-            <li class="nav-item">
-                <a href="{% add_auth_login_link "github" %}" class="nav-link"><span class="fab fa-github"></span> Log in with GitHub</a>
-            </li>
-            <li class="nav-item">
-                <a href="{% add_auth_login_link "discord" %}" class="nav-link"><span class="fab fa-discord"></span> Log in with Discord</a>
-            </li>
+        <li class="nav-item">
+            <a href="{% url 'communities:community:packages.list' 'riskofrain2' %}" class="nav-link text-dark">{{ request.user.username }}</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a href="{% url 'settings.linked-accounts' %}" class="nav-link">Settings</a>
+        </li>
+        {% if request.user.is_staff %}
+        <li class="nav-item">
+            <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a href="{% url 'logout' %}" class="nav-link">Logout</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+            <a href="{% add_auth_login_link 'github' %}" class="nav-link"><span class="fab fa-github"></span> Log in with GitHub</a>
+        </li>
+        <li class="nav-item">
+            <a href="{% add_auth_login_link 'discord' %}" class="nav-link"><span class="fab fa-discord"></span> Log in with Discord</a>
+        </li>
         {% endif %}
     </ul>
 </nav>
@@ -115,13 +108,15 @@
             <h1 class="col-10 mt-4 d-flex align-items-end">Download and share mods with friends</h1>
         </div>
         <div class="flex-row justify-content-left mb-3">
-            <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for <b>almost</b> every game on the market. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and <a href="https://github.com/thunderstore-io/thunderstore-cli">CLI</a> tools that can be used to automate your workflow.</p>
+            <p class="col-10 mt-4 text-left text-muted">Thunderstore hosts a massive collection of mods for, like, {{ game_count }} games. Using mods is easy with our mod manager (see more below). For the developers we offer an <a href="{% url 'swagger' %}">API</a> and <a href="https://github.com/thunderstore-io/thunderstore-cli">CLI</a> tools that can be used to automate your workflow.</p>
         </div>
         <div class="flex-row justify-content-left ml-0">
-            <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="#mod-manager">Mod manager</a>
+            <div class="col">
+                <a class="btn btn-primary mr-2 ml-0 ts-primary-button" href="#mod-manager">Mod manager</a>
+            </div>
         </div>
     </div>
-    <div class="flex-col sm-hide">
+    <div class="flex-column sm-hide">
         <img class="modspic float-right" src="{% static 'Modspic.png' %}">
     </div>
 </div>
@@ -129,29 +124,29 @@
     <div class="row mb-2 ml-2 mr-2">
         <div class="col-8">
             <div class="row justify-content-left">
-                <h3 class="mb-1" >Find your game</h3>
+                <h3 class="mb-1">Find your game</h3>
                 <p class="align-items-end text-dark mt-2 ml-4" >Missing a game you'd like to see? Message us on <a href="https://discord.gg/UWpWhjZken">Discord</a>.</p>
             </div>
         </div>
     </div>
 
     {% if selectable_community_sites %}
-        <div class="d-flex flex-row flex-wrap package-list">
+    <div class="d-flex flex-row flex-wrap">
         {% for site in object_list %}
-            <a href="{{ site.get_absolute_url }}">
-                <div class="ts-card mb-4 ml-2 mr-2 p-1 d-flex flex-column-reverse" style='background-image: url("{% if site.community.icon %}{% thumbnail site.community.icon 1200x500 HIGH_RESOLUTION %}{% else %}{% static 'thumbnail_placeholder.jpg' 1200x500 %}{% endif %}")'>
-                    <div class="ts-card-content text-center w-100 d-flex flex-column">
-                        <a class="d-flex flex-row" href="{{ site.get_absolute_url }}">
-                            <h5 class="mb-0 overflow-hidden font-weight-bolder word-wrap w-100 text-center" title="{{ site.community.name }}">{{ site.community.name }}</h5>
-                        </a>
-                    </div>
+        <a href="{{ site.get_absolute_url }}">
+            <div class="ts-card mb-4 ml-2 mr-2 p-1 d-flex flex-column-reverse" style='background-image: url("{% if site.community.icon %}{% thumbnail site.community.icon 1200x500 HIGH_RESOLUTION %}{% else %}{% static 'thumbnail_placeholder.jpg' 1200x500 %}{% endif %}")'>
+                <div class="ts-card-content text-center w-100 d-flex flex-column">
+                    <a class="d-flex flex-row" href="{{ site.get_absolute_url }}">
+                        <h5 class="mb-0 overflow-hidden font-weight-bolder word-wrap w-100 text-center" title="{{ site.community.name }}">{{ site.community.name }}</h5>
+                    </a>
                 </div>
-            </a>
+            </div>
+        </a>
         {% endfor %}
-        </div>
-        {% if is_paginated %}
-            {% include "repository/includes/pagination.html" with page_obj=page_obj paginator=paginator %}
-        {% endif %}
+    </div>
+    {% if is_paginated %}
+    {% include "repository/includes/pagination.html" with page_obj=page_obj paginator=paginator %}
+    {% endif %}
     {% else %}
         <li class="my-4">No communities found :(</li>
     {% endif %}
@@ -159,7 +154,7 @@
     <div class="row mb-2 ml-2 mr-2">
         <div class="col-12">
             <div class="d-flex flex-row justify-content-end">
-                <p class="text-dark mb-2 ml-4" >Missing a game you'd like to see? Message us on <a href="https://discord.gg/UWpWhjZken">Discord</a>.</p>
+                <p class="text-dark mb-2 ml-4">Missing a game you'd like to see? Message us on <a href="https://discord.gg/UWpWhjZken">Discord</a>.</p>
             </div>
         </div>
     </div>
@@ -205,5 +200,5 @@
 {% endcache %}
 {% endblock %}
 {% block content_end %}
-    {% dynamic_html "frontpage_end" %}
+{% dynamic_html "frontpage_end" %}
 {% endblock %}

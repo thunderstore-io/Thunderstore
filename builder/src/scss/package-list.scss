@@ -33,6 +33,7 @@
 }
 
 .modspic {
+    position: relative;
     max-width: 500px;
     max-height: 500px;
 }
@@ -54,24 +55,10 @@
 
 .ts-primary-button {
     font-size: 14px;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
     font-weight: bold;
     background-color: #00d2ff;
-    color: #000001;
-}
-
-.ts-secondary-button {
-    font-size: 14px;
-    padding-left: 3%;
-    padding-right: 3%;
-    padding-top: 1%;
-    padding-bottom: 1%;
-    font-weight: bold;
-    background-color: #00000100;
-    border-width: 0;
+    color: #000;
 }
 
 .ts-card {
@@ -81,16 +68,11 @@
     width: 12rem;
     height: 20rem;
     flex-grow: 1;
-    border-radius: 0.4rem !important;
+    border-radius: 0.4rem;
     object-fit: cover;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-}
-
-.ts-card-bg {
-    border-radius: 0.4rem !important;
-    height: 100%;
 }
 
 .ts-card-content {

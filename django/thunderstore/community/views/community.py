@@ -9,18 +9,18 @@ from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models.community_site import CommunitySite
 from thunderstore.repository.models.package import Package
 
-# Should be divisible by 4 and 3
-MODS_PER_PAGE = 24
+# Should be divisible by 5, 3 and 2
+GAMES_PER_PAGE = 30
 
 
 class CommunitiesView(ListView):
     model = CommunitySite
-    paginate_by = MODS_PER_PAGE
+    paginate_by = GAMES_PER_PAGE
     paginator_class = CachedPaginator
     template_name = "community/communities_list.html"
 
     def get_base_queryset(self):
-        return self.model.objects.exclude(is_listed=False)
+        return self.model.objects.exclude(is_listed=False).prefetch_related()
 
     def get_page_title(self):
         return "Communities"
@@ -28,24 +28,15 @@ class CommunitiesView(ListView):
     def get_cache_vary(self):
         return "communities"
 
-    def get_full_cache_vary(self):
-        cache_vary = self.get_cache_vary()
-        return cache_vary
-
     def order_queryset(self, queryset):
-        return (
-            queryset.prefetch_related()
-            .annotate(
-                total_downloads=Sum(
-                    "community__package_listings__package__versions__downloads",
-                    output_field=BigIntegerField(),
-                ),
-                package_count=Count("community__package_listings"),
-            )
-            .order_by(
-                "-total_downloads",
-                "community__name",
-            )
+        return queryset.annotate(
+            total_downloads=Sum(
+                "community__package_listings__package__versions__downloads",
+                output_field=BigIntegerField(),
+            ),
+        ).order_by(
+            "-total_downloads",
+            "community__name",
         )
 
     def get_queryset(self):
@@ -63,7 +54,7 @@ class CommunitiesView(ListView):
             queryset,
             per_page,
             cache_key="community.communities.paginator",
-            cache_vary=self.get_full_cache_vary(),
+            cache_vary=self.get_cache_vary(),
             cache_bust_condition=CacheBustCondition.dynamic_html_updated,
             orphans=orphans,
             allow_empty_first_page=allow_empty_first_page,
@@ -71,10 +62,10 @@ class CommunitiesView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["cache_vary"] = self.get_full_cache_vary()
+        context["cache_vary"] = self.get_cache_vary()
         context["page_title"] = self.get_page_title()
         context["game_count"] = len(self.object_list)
-        context["mod_count"] = Package.objects.all().count()
+        context["mod_count"] = Package.objects.filter(is_active=True).count()
         return context
 
 
