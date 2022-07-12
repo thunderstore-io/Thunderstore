@@ -6,7 +6,7 @@ authors = ["Mythic <mythicmaniac@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Django = "^3.1"
+Django = "4.0.6"
 django-environ = "^0.4"
 arrow = "^0.17"
 Pillow = "^8.3"
@@ -18,7 +18,7 @@ social-auth-core = "^4.1"
 whitenoise = "^5.0"
 django-storages = { version = "^1.11", extras = ["google", "boto3"] }
 djangorestframework = "^3.11"
-drf-yasg = "^1.17"
+drf-yasg = {git = "https://github.com/axnsan12/drf-yasg.git", rev = "1795ed15031dc742a09b95c3ee55ac52d66fa796"}
 django-ipware = "^3.0"
 sentry_sdk = "^1.5"
 django-redis = "^4.11"

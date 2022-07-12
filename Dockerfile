@@ -30,7 +30,7 @@ RUN pip install -U pip poetry~=1.1.4 --no-cache-dir && \
 COPY --from=builder /app/build /app/static_built
 COPY ./django /app
 
-RUN SECRET_KEY=x python manage.py collectstatic --noinput
+# RUN SECRET_KEY=x python manage.py collectstatic --noinput
 
 HEALTHCHECK --interval=5s --timeout=8s --retries=3 \
     CMD python readycheck.py || exit 1
