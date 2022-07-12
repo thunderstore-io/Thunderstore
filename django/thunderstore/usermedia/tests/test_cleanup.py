@@ -41,6 +41,13 @@ def test_usermedia_cleanup() -> None:
     invalid_upload.save()
     assert invalid_upload.has_expired
     assert invalid_upload in UserMedia.objects.expired()
+    bad_upload_id_upload = UserMedia.create_upload(
+        None, "bad-upload-id", 12, timezone.now() - timedelta(seconds=1)
+    )
+    bad_upload_id_upload.upload_id = None
+    bad_upload_id_upload.save()
+    assert invalid_upload.has_expired
+    assert invalid_upload in UserMedia.objects.expired()
     cleanup_expired_uploads()
     assert UserMedia.objects.filter(pk__in=[x.pk for x in expired]).count() == 0
     assert UserMedia.objects.filter(pk__in=[x.pk for x in active]).count() == 3
@@ -68,4 +75,18 @@ def test_usermedia_cleanup() -> None:
                 UploadId=entry.upload_id,
             )
             is not None
+        )
+    with pytest.raises(
+        ClientError,
+        match=re.escape(
+            "An error occurred (NoSuchUpload) when calling the ListParts "
+            "operation: The specified multipart upload does not exist. The "
+            "upload ID may be invalid, or the upload may have been aborted "
+            "or completed."
+        ),
+    ):
+        client.list_parts(
+            Bucket=settings.USERMEDIA_S3_STORAGE_BUCKET_NAME,
+            Key=bad_upload_id_upload.key,
+            UploadId="",
         )
