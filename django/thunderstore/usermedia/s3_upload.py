@@ -222,21 +222,22 @@ def download_file(
     return fileobj
 
 
-def ensure_multipart_upload_aborted(client, bucket_name, user_media):
-    if user_media.upload_id is not None:
-        try:
-            client.abort_multipart_upload(
-                Bucket=bucket_name,
-                Key=user_media.key,
-                UploadId=user_media.upload_id,
-            )
-        except ClientError as e:
-            code = e.response.get("Error", {}).get("Code", None)
-            if code != "NoSuchUpload":  # pragma: no cover
-                raise e
-    # Upload has never existed so just pass
-    else:
-        pass
+def ensure_multipart_upload_aborted(
+    client: Client, bucket_name: str, user_media: UserMedia
+):
+    if user_media.upload_id is None:
+        # Upload has never existed so just pass
+        return
+    try:
+        client.abort_multipart_upload(
+            Bucket=bucket_name,
+            Key=user_media.key,
+            UploadId=user_media.upload_id,
+        )
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", None)
+        if code != "NoSuchUpload":  # pragma: no cover
+            raise e
 
 
 def cleanup_expired_upload(user_media: UserMedia, client: Client):

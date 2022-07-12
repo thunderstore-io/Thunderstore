@@ -90,3 +90,4 @@ def test_usermedia_cleanup() -> None:
             Key=bad_upload_id_upload.key,
             UploadId="",
         )
+    assert bad_upload_id_upload not in UserMedia.objects.all()
