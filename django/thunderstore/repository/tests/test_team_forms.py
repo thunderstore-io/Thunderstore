@@ -28,6 +28,7 @@ def test_form_create_team_valid_data(user_type: str) -> None:
         TestUserTypes.regular_user: None,
         TestUserTypes.deactivated_user: "Must be authenticated to create teams",
         TestUserTypes.service_account: "Service accounts cannot create teams",
+        TestUserTypes.site_admin: None,
         TestUserTypes.superuser: None,
     }
     expected_error = error_map[user_type]
@@ -125,6 +126,7 @@ def test_form_add_team_member(
         TestUserTypes.regular_user: True,
         TestUserTypes.deactivated_user: False,
         TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
         TestUserTypes.superuser: True,
     }
     adder_type_valid = user_type_valid_map[adder_type] is True
@@ -191,6 +193,7 @@ def test_form_remove_team_member(
         TestUserTypes.regular_user: True,
         TestUserTypes.deactivated_user: False,
         TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
         TestUserTypes.superuser: True,
     }
     removed_type_valid_map = {
@@ -314,6 +317,7 @@ def test_form_edit_team_member(
         TestUserTypes.regular_user: True,
         TestUserTypes.deactivated_user: False,
         TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
         TestUserTypes.superuser: True,
     }
     edited_type_valid_map = {
@@ -410,6 +414,7 @@ def test_form_disband_team_form(
         TestUserTypes.regular_user: True,
         TestUserTypes.deactivated_user: False,
         TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
         TestUserTypes.superuser: True,
     }
     disbander_role_valid_map = {
@@ -515,6 +520,7 @@ def test_form_donation_link_team_form_permissions(
         TestUserTypes.regular_user: True,
         TestUserTypes.deactivated_user: False,
         TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
         TestUserTypes.superuser: True,
     }
     valid_role_map = {

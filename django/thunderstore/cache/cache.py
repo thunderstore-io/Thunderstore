@@ -185,6 +185,18 @@ def cache_function_result(cache_until, expiry=DEFAULT_CACHE_EXPIRY):
                 expiry=expiry,
             )
 
+        def clear_cache_with_args(*args, **kwargs):
+            key = get_cache_key(
+                cache_bust_condition=cache_until,
+                cache_type="func",
+                key=original_function.__name__,
+                vary_on=args + tuple(kwargs.values()),
+            )
+            old_key = f"old.{key}"
+            cache.delete(key)
+            cache.delete(old_key)
+
+        wrapper.clear_cache_with_args = clear_cache_with_args
         return wrapper
 
     return decorator

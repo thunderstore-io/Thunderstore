@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from unittest import mock
 from urllib import request
 
@@ -9,6 +9,7 @@ from django.test import Client
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from conftest import TestUserTypes
 from thunderstore.core.factories import UserFactory
 
 from ...cache.enums import CacheBustCondition
@@ -21,7 +22,7 @@ from ...community.models import (
 )
 from ...core.types import UserType
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
-from ..models import Team, TeamMember
+from ..models import Team, TeamMember, TeamMemberRole
 from ..package_upload import PackageUploadForm
 from ..views.repository import PackageVersionDetailView
 
@@ -419,3 +420,287 @@ def test_team_settings_donation_link_view(
     )
     assert response.status_code == 200
     assert b"Donation link saved" in response.content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_view_package_detail_management_option_visibility_without_team(
+    client: APIClient,
+    user_type: str,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+) -> None:
+    assert community_site.community == active_package_listing.community
+
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user_type not in TestUserTypes.fake_users():
+        client.force_login(user)
+
+    response = client.get(
+        path=active_package_listing.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+
+    expected_management_visibility = {
+        TestUserTypes.no_user: False,
+        TestUserTypes.unauthenticated: False,
+        TestUserTypes.regular_user: False,
+        TestUserTypes.deactivated_user: False,
+        TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
+        TestUserTypes.superuser: True,
+    }[user_type]
+    expected_unlist_visibility = {
+        TestUserTypes.no_user: False,
+        TestUserTypes.unauthenticated: False,
+        TestUserTypes.regular_user: False,
+        TestUserTypes.deactivated_user: False,
+        TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: False,
+        TestUserTypes.superuser: True,
+    }[user_type]
+
+    expected = b"Manage package deprecation"
+    if expected_management_visibility is False:
+        assert expected not in response.content
+    else:
+        assert expected in response.content
+
+    expected = (
+        b'<input type="submit" class="btn btn-danger" name="unlist" value="Unlist">'
+    )
+    if expected_unlist_visibility is False:
+        assert expected not in response.content
+    else:
+        assert expected in response.content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize(
+    "superuser",
+    (
+        False,
+        True,
+    ),
+)
+def test_view_package_detail_management_option_visibility_with_team(
+    user: UserType,
+    client: APIClient,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+    role: Optional[str],
+    superuser: bool,
+) -> None:
+    assert community_site.community == active_package_listing.community
+
+    client.force_login(user)
+    if role is not None:
+        TeamMember.objects.create(
+            user=user,
+            team=active_package_listing.package.owner,
+            role=role,
+        )
+    if superuser:
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+
+    response = client.get(
+        path=active_package_listing.get_absolute_url(),
+        HTTP_HOST=community_site.site.domain,
+    )
+
+    expected_management_visibility = {
+        None: False,
+        TeamMemberRole.owner: True,
+        TeamMemberRole.member: True,
+    }[role] or superuser is True
+
+    expected = b"Manage package deprecation"
+    if expected_management_visibility is False:
+        assert expected not in response.content
+    else:
+        assert expected in response.content
+
+    expected = (
+        b'<input type="submit" class="btn btn-danger" name="unlist" value="Unlist">'
+    )
+    if superuser is False:
+        assert expected not in response.content
+    else:
+        assert expected in response.content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "is_deprecated",
+    (
+        False,
+        True,
+    ),
+)
+def test_view_package_detail_management_deprecate(
+    admin_client: APIClient,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+    is_deprecated: bool,
+) -> None:
+    package = active_package_listing.package
+    package.is_deprecated = is_deprecated
+    package.save()
+
+    response = admin_client.post(
+        path=active_package_listing.get_absolute_url(),
+        data={"deprecate": "Deprecate"},
+        HTTP_HOST=community_site.site.domain,
+    )
+    if is_deprecated is False:
+        assert response.status_code == 302
+    else:
+        assert response.status_code == 403
+    package.refresh_from_db()
+    assert package.is_deprecated is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_view_package_detail_management_deprecate_permissions(
+    client: APIClient,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+    user_type: str,
+) -> None:
+    package = active_package_listing.package
+    assert package.is_deprecated is False
+
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user_type not in TestUserTypes.fake_users():
+        client.force_login(user)
+
+    response = client.post(
+        path=active_package_listing.get_absolute_url(),
+        data={"deprecate": "Deprecate"},
+        HTTP_HOST=community_site.site.domain,
+    )
+    if user_type not in (TestUserTypes.superuser, TestUserTypes.site_admin):
+        assert response.status_code == 403
+        package.refresh_from_db()
+        assert package.is_deprecated is False
+    else:
+        assert response.status_code == 302
+        package.refresh_from_db()
+        assert package.is_deprecated is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "is_deprecated",
+    (
+        False,
+        True,
+    ),
+)
+def test_view_package_detail_management_undeprecate(
+    admin_client: APIClient,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+    is_deprecated: bool,
+) -> None:
+    package = active_package_listing.package
+    package.is_deprecated = is_deprecated
+    package.save()
+
+    response = admin_client.post(
+        path=active_package_listing.get_absolute_url(),
+        data={"undeprecate": "Undeprecate"},
+        HTTP_HOST=community_site.site.domain,
+    )
+    if is_deprecated is True:
+        assert response.status_code == 302
+    else:
+        assert response.status_code == 403
+    package.refresh_from_db()
+    assert package.is_deprecated is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_view_package_detail_management_undeprecate_permissions(
+    client: APIClient,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+    user_type: str,
+) -> None:
+    package = active_package_listing.package
+    package.is_deprecated = True
+    package.save()
+    package.refresh_from_db()
+    assert package.is_deprecated is True
+
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user_type not in TestUserTypes.fake_users():
+        client.force_login(user)
+
+    response = client.post(
+        path=active_package_listing.get_absolute_url(),
+        data={"undeprecate": "Undeprecate"},
+        HTTP_HOST=community_site.site.domain,
+    )
+    if user_type not in (TestUserTypes.superuser, TestUserTypes.site_admin):
+        assert response.status_code == 403
+        package.refresh_from_db()
+        assert package.is_deprecated is True
+    else:
+        assert response.status_code == 302
+        package.refresh_from_db()
+        assert package.is_deprecated is False
+
+
+@pytest.mark.django_db
+def test_view_package_detail_management_unlist(
+    admin_client: APIClient,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+) -> None:
+    package = active_package_listing.package
+    assert package.is_active is True
+
+    response = admin_client.post(
+        path=active_package_listing.get_absolute_url(),
+        data={"unlist": "Unlist"},
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+    package.refresh_from_db()
+    assert package.is_active is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_view_package_detail_management_unlist_permissions(
+    client: APIClient,
+    community_site: CommunitySite,
+    active_package_listing: PackageListing,
+    user_type: str,
+) -> None:
+    package = active_package_listing.package
+    assert package.is_active is True
+
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user_type not in TestUserTypes.fake_users():
+        client.force_login(user)
+
+    response = client.post(
+        path=active_package_listing.get_absolute_url(),
+        data={"unlist": "Unlist"},
+        HTTP_HOST=community_site.site.domain,
+    )
+    if user_type not in (TestUserTypes.superuser,):
+        assert response.status_code == 403
+        package.refresh_from_db()
+        assert package.is_active is True
+    else:
+        assert response.status_code == 302
+        package.refresh_from_db()
+        assert package.is_active is False
