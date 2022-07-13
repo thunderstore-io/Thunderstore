@@ -5,6 +5,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from thunderstore.repository.models import TeamMember
+from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.repository.validation.manifest import validate_manifest
 
 
@@ -18,6 +19,7 @@ def test_validate_manifest_unicode_error(
         match="Make sure the manifest.json is UTF-8 compatible",
     ):
         validate_manifest(
+            format_spec=PackageFormats.v0_1,
             user=team_member.user,
             team=team_member.team,
             manifest_data=manifest,
@@ -34,6 +36,7 @@ def test_validate_manifest_invalid_json(
         match="Unable to parse manifest.json:",
     ):
         validate_manifest(
+            format_spec=PackageFormats.v0_1,
             user=team_member.user,
             team=team_member.team,
             manifest_data=manifest,
@@ -52,6 +55,7 @@ def test_validate_manifest_serializer_errors(
         match="name: This field is required.",
     ):
         validate_manifest(
+            format_spec=PackageFormats.v0_1,
             user=team_member.user,
             team=team_member.team,
             manifest_data=manifest,
@@ -74,6 +78,7 @@ def test_validate_manifest_number_in_charfield_fails(
         match=f"{fieldname}: Not a valid string.",
     ):
         validate_manifest(
+            format_spec=PackageFormats.v0_1,
             user=team_member.user,
             team=team_member.team,
             manifest_data=manifest,
@@ -88,9 +93,25 @@ def test_validate_manifest_pass(
     manifest = json.dumps(manifest_v1_data).encode("utf-8")
     assert isinstance(
         validate_manifest(
+            format_spec=PackageFormats.v0_1,
             user=team_member.user,
             team=team_member.team,
             manifest_data=manifest,
         ),
         dict,
     )
+
+
+@pytest.mark.parametrize("format_spec", PackageFormats.values)
+def test_validate_manifest_fail_for_unsupported_formats(
+    format_spec: PackageFormats,
+) -> None:
+    if format_spec == PackageFormats.v0_1:
+        return  # Skip the currently active format as it should work
+    with pytest.raises(ValidationError, match="Unsupported package format"):
+        validate_manifest(
+            format_spec=format_spec,
+            user=None,  # type: ignore
+            team=None,  # type: ignore
+            manifest_data=b"",
+        )
