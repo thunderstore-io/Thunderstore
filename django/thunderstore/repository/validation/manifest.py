@@ -4,11 +4,17 @@ from django.core.exceptions import ValidationError
 
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Team
+from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.repository.package_manifest import ManifestV1Serializer
 from thunderstore.repository.utils import unpack_serializer_errors
 
 
-def validate_manifest(user: UserType, team: Team, manifest_data: bytes):
+def validate_manifest(
+    format_spec: PackageFormats, user: UserType, team: Team, manifest_data: bytes
+):
+    if format_spec != PackageFormats.v0_1:
+        raise ValidationError(f"Unsupported package format: {format_spec}")
+
     try:
         manifest_json = json.loads(manifest_data)
     except UnicodeDecodeError as exc:

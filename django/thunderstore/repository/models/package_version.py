@@ -5,13 +5,14 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
-from django.db.models import Manager, QuerySet, Sum, signals
+from django.db.models import Manager, Q, QuerySet, Sum, Value, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
 
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
+from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
 from thunderstore.webhooks.models import Webhook
 
@@ -45,6 +46,12 @@ class PackageVersion(models.Model):
     )
     downloads = models.PositiveIntegerField(default=0)
 
+    format_spec = models.TextField(
+        choices=PackageFormats.choices,
+        blank=True,
+        null=True,
+        help_text="Used to track the latest package format spec this package is compatible with",
+    )
     name = models.CharField(
         max_length=Package._meta.get_field("name").max_length,
     )
@@ -92,6 +99,13 @@ class PackageVersion(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("package", "version_number"), name="unique_version_per_package"
+            ),
+            models.CheckConstraint(
+                check=PackageFormats.as_query_filter(
+                    field_name="format_spec",
+                    allow_none=True,
+                ),
+                name="valid_package_format",
             ),
         ]
 

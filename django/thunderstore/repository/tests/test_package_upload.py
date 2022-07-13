@@ -8,7 +8,7 @@ from PIL import Image
 
 from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.models import Team
-from thunderstore.repository.models.namespace import Namespace
+from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.repository.package_upload import PackageUploadForm
 
 
@@ -48,6 +48,7 @@ def test_package_upload(user, manifest_v1_data, community):
     version = form.save()
     assert version.name == manifest_v1_data["name"]
     assert version.package.owner == team
+    assert version.format_spec == PackageFormats.v0_1
     assert version.package.namespace == team.get_namespace()
     assert version.package.namespace.name == team.name
 
@@ -96,6 +97,7 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data):
     version = form.save()
     assert version.name == manifest_v1_data["name"]
     assert version.package.owner == team
+    assert version.format_spec == PackageFormats.v0_1
     listing = PackageListing.objects.filter(package=version.package).first()
     assert listing.categories.count() == 1
     assert listing.categories.first() == category

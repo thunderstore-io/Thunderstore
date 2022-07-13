@@ -10,7 +10,7 @@ from django.db import transaction
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package, PackageVersion, Team
-from thunderstore.repository.models.namespace import Namespace
+from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.readme import validate_readme
@@ -21,6 +21,12 @@ MAX_TOTAL_SIZE = 1024 * 1024 * 1024 * settings.REPOSITORY_MAX_PACKAGE_TOTAL_SIZE
 
 
 class PackageUploadForm(forms.ModelForm):
+    # TODO: Convert the package validation process to a more functionally
+    #       pure solution to reduce the probability of validation bugs when
+    #       multiple formats are supported simultaneously.
+    # TODO: Utilize the format spec in the entirety of the validation pipeline
+    #       and make it impossible to avoid doing so (in code).
+    format_spec = PackageFormats.v0_1
     categories = forms.ModelMultipleChoiceField(
         queryset=PackageCategory.objects.none(),
         required=False,
@@ -70,6 +76,7 @@ class PackageUploadForm(forms.ModelForm):
 
     def validate_manifest(self, manifest: bytes):
         self.manifest = validate_manifest(
+            format_spec=self.format_spec,
             user=self.user,
             team=self.cleaned_data.get("team"),
             manifest_data=manifest,
@@ -142,6 +149,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
         self.instance.file_size = self.file_size
+        self.instance.format_spec = self.format_spec
         team = self.cleaned_data["team"]
         team.ensure_can_upload_package(self.user)
         # We just take the namespace with team name for now

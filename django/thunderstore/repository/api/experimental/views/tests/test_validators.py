@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import TeamMember
+from thunderstore.repository.package_formats import PackageFormats
 
 
 @pytest.mark.django_db
@@ -61,6 +62,7 @@ def test_experimental_api_validate_manifest(
     assert json.loads(response.content.decode()) == {"success": True}
 
     mocked_validator.assert_called_with(
+        format_spec=PackageFormats.v0_1,
         user=team_member.user,
         team=team_member.team,
         manifest_data=manifest_data,
