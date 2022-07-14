@@ -1,7 +1,7 @@
 import io
 import json
 import threading
-from copy import copy
+from copy import copy, deepcopy
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer as SuperHTTPServer
 from typing import Any
@@ -233,6 +233,53 @@ def site():
     return Site.objects.create(domain="testsite.test", name="Testsite")
 
 
+@pytest.fixture(autouse=True, scope="session")
+def setup_cache(request):
+    """
+    This fixture will ensure each (even if parallel) test runner will use a
+    different redis database (hopefully).
+
+    It's assumed that redis is in use and that the max worker ID doesn't go over
+    14, as 15 is the default amount of redis databases.
+    """
+    from django.conf import settings
+    from django.core.cache import DEFAULT_CACHE_ALIAS, _create_cache, caches
+
+    xdist_suffix = getattr(request.config, "workerinput", {}).get("workerid")
+    if xdist_suffix:
+        db_id = int("".join(x for x in xdist_suffix if x.isdigit())) + 1
+    else:
+        db_id = 1
+    assert (
+        settings.CACHES[DEFAULT_CACHE_ALIAS]["BACKEND"]
+        == "django_redis.cache.RedisCache"
+    )
+    new_caches = deepcopy(settings.CACHES)
+    parts = new_caches[DEFAULT_CACHE_ALIAS]["LOCATION"].split("/")
+    assert parts[-1] == "0"
+    parts[-1] = str(db_id)
+    new_caches[DEFAULT_CACHE_ALIAS]["LOCATION"] = "/".join(parts)
+    settings.CACHES = new_caches
+    caches._caches.caches[DEFAULT_CACHE_ALIAS] = _create_cache(DEFAULT_CACHE_ALIAS)
+
+
+@pytest.fixture(scope="session")
+def django_db_setup(setup_cache, django_db_setup):
+    # We have to override this as to set up the test cache before db calls are
+    # made, as django-cachalot uses the cache already during setup.
+    pass
+
+
+@pytest.fixture(scope="function", autouse=True)
+def autoclear_cache(settings, worker_id) -> None:
+    # The cache_id assertion is just a sanity check to ensure we don't have
+    # cache conflicts when the test run is parallelized across multiple workers
+    cache_id = settings.CACHES["default"]["LOCATION"].split("/")[-1]
+    worker_num = int("".join(x for x in worker_id if x.isdigit()) or "0") + 1
+    assert cache_id == str(worker_num)
+    cache.clear()
+
+
 @pytest.fixture()
 def community_site(community, site):
     return CommunitySite.objects.create(site=site, community=community)
@@ -319,11 +366,6 @@ def dummy_image() -> Image:
     image.save(file_obj, format="PNG")
     file_obj.seek(0)
     return File(file_obj, name="test.png")
-
-
-@pytest.fixture(scope="function", autouse=True)
-def autoclear_cache() -> None:
-    cache.clear()
 
 
 @pytest.fixture(scope="function")

@@ -77,5 +77,8 @@ services:
       --cov-report=xml:coverage_results/coverage.xml
       --cov-report=term
       --cov /app/
+      --splits ${PYTEST_SPLITS:-1}
+      --group ${PYTEST_GROUP:-1}
+      -n ${PYTEST_NUM_WORKERS:-1}
     volumes:
       - ../coverage_results:/app/coverage_results

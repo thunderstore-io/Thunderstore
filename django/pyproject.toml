@@ -65,6 +65,8 @@ watchdog = {extras = ["watchmedo"], version = "^1.0.2"}
 mypy-boto3-s3 = "^1.17.47"
 pytest-freezegun = "^0.4.2"
 pydantic = "^1.9.0"
+pytest-xdist = "^2.5.0"
+pytest-split = "^0.8.0"
 
 [tool.black]
 target-version = ["py38"]
