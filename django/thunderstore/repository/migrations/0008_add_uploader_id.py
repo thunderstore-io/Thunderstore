@@ -4,8 +4,8 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import backblaze_b2.storage
 import thunderstore.repository.models
+import thunderstore.utils.makemigrations
 
 
 class Migration(migrations.Migration):
@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
             model_name="packageversion",
             name="file",
             field=models.FileField(
-                storage=backblaze_b2.storage.BackblazeB2Storage(),
+                storage=thunderstore.utils.makemigrations.StubStorage(),
                 upload_to=thunderstore.repository.models.get_version_zip_filepath,
             ),
         ),

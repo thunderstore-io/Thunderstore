@@ -9,9 +9,8 @@ class StubStorage(Storage):
     pass
 
 
-def is_makemigrations_check() -> bool:
-    return (
-        len(sys.argv) >= 2
-        and sys.argv[0] == "manage.py"
-        and sys.argv[1] == "makemigrations"
+def is_migrate_check() -> bool:
+    return len(sys.argv) >= 2 and (
+        (sys.argv[0] == "manage.py" and sys.argv[1] == "makemigrations")
+        or (sys.argv[0] == "manage.py" and sys.argv[1] == "migrate")
     )

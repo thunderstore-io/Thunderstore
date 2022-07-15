@@ -6,6 +6,7 @@ import sys
 import environ
 from django.http import HttpRequest
 
+from thunderstore.core.storage import get_storage_class_or_stub
 from thunderstore.core.utils import validate_filepath_prefix
 
 try:
@@ -631,6 +632,12 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+
+# Storage Defaults
+DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
+THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
+PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
 
 # Social auth
 
