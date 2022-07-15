@@ -7,7 +7,7 @@ jobs:
     name: Run pre-commit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Python 3.8
         id: setup-python
         uses: actions/setup-python@v2
@@ -49,13 +49,39 @@ jobs:
           cd django/
           poetry run pre-commit run --show-diff-on-failure --color=always --all-files
   build:
-    name: Build and test
+    name: Build docker image
     runs-on: ubuntu-latest
-    needs: pre-commit
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build Docker image
         run: docker build --pull -t thunderstore:${GITHUB_SHA} .
+      - name: Export Docker image
+        run: docker save --output /tmp/thunderstore.tar thunderstore:${GITHUB_SHA}
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-image
+          path: /tmp/thunderstore.tar
+  test-pytest:
+    name: Test pytest
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        group: [1, 2, 3]
+    env:
+      PYTEST_SPLITS: 3
+      PYTEST_GROUP: ${{ matrix.group }}
+      PYTEST_NUM_WORKERS: auto
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Docker image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+          path: /tmp
+      - name: Load Docker image
+        run: docker load --input /tmp/thunderstore.tar
       - name: Run pytest
         run: |
           DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
@@ -65,6 +91,19 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage_results/coverage.xml
+  test-mypy:
+    name: Test mypy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Docker image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+          path: /tmp
+      - name: Load Docker image
+        run: docker load --input /tmp/thunderstore.tar
       - name: Run mypy
         run: >
           docker run --rm
@@ -74,6 +113,19 @@ jobs:
           thunderstore:${GITHUB_SHA}
           /app/
           || :
+  test-missing-migrations:
+    name: Test missing migrations
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Docker image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+          path: /tmp
+      - name: Load Docker image
+        run: docker load --input /tmp/thunderstore.tar
       - name: Check for missing migrations
         run: >
           docker run --rm
@@ -83,10 +135,22 @@ jobs:
           --no-healthcheck
           thunderstore:${GITHUB_SHA}
           manage.py makemigrations --check
+  publish-dockerhub:
+    name: Publish to Docker Hub
+    runs-on: ubuntu-latest
+    needs: [test-pytest, test-mypy, test-missing-migrations, pre-commit]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Docker image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+          path: /tmp
+      - name: Load Docker image
+        run: docker load --input /tmp/thunderstore.tar
       - name: Tag image
         run: |
           docker tag thunderstore:${GITHUB_SHA} thunderstore/thunderstore:${GITHUB_SHA}
-          docker tag thunderstore:${GITHUB_SHA} ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request'
         env:
@@ -98,6 +162,22 @@ jobs:
         run: |
           echo "Pushing thunderstore/thunderstore:${GITHUB_SHA}"
           docker push thunderstore/thunderstore:${GITHUB_SHA}
+  publish-github:
+    name: Publish to GitHub
+    runs-on: ubuntu-latest
+    needs: [test-pytest, test-mypy, test-missing-migrations, pre-commit]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Docker image
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+          path: /tmp
+      - name: Load Docker image
+        run: docker load --input /tmp/thunderstore.tar
+      - name: Tag image
+        run: |
+          docker tag thunderstore:${GITHUB_SHA} ghcr.io/thunderstore-io/thunderstore:${GITHUB_SHA}
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         env:
