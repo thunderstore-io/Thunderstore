@@ -8,8 +8,9 @@ from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, Permission
 from django.contrib.sites.models import Site
+from django.core.cache import cache
 from django.core.files.base import File
 from PIL import Image
 from rest_framework.test import APIClient
@@ -320,6 +321,11 @@ def dummy_image() -> Image:
     return File(file_obj, name="test.png")
 
 
+@pytest.fixture(scope="function", autouse=True)
+def autoclear_cache() -> None:
+    cache.clear()
+
+
 @pytest.fixture(scope="function")
 def manifest_v1_package_upload_id(
     manifest_v1_package_bytes: bytes,
@@ -357,6 +363,7 @@ class TestUserTypes(ChoiceEnum):
     regular_user = "regular_user"
     deactivated_user = "deactivated_user"
     service_account = "service_account"
+    site_admin = "site_admin"
     superuser = "superuser"
 
     @classmethod
@@ -375,6 +382,14 @@ class TestUserTypes(ChoiceEnum):
             return UserFactory.create(is_active=False)
         if usertype == TestUserTypes.service_account:
             return create_test_service_account_user()
+        if usertype == TestUserTypes.site_admin:
+            user = UserFactory.create(is_staff=True)
+            perm = Permission.objects.get(
+                content_type__app_label="repository",
+                codename="change_package",
+            )
+            user.user_permissions.add(perm)
+            return user
         if usertype == TestUserTypes.superuser:
             return UserFactory.create(is_staff=True, is_superuser=True)
         raise AttributeError(f"Invalid useretype: {usertype}")

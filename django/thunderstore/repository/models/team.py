@@ -289,6 +289,17 @@ class Team(models.Model):
                 "The team has been deactivated and as such cannot receive new packages"
             )
 
+    def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
+        if not user or not user.is_authenticated:
+            raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
+        if hasattr(user, "service_account"):
+            raise ValidationError("Service accounts are unable to manage packages")
+        membership = self.get_membership_for_user(user)
+        if not membership:
+            raise ValidationError("Must be a member of team to manage packages")
+
     def ensure_member_can_be_removed(self, member: Optional[TeamMember]) -> None:
         if not member:
             raise ValidationError("Invalid member")
@@ -336,6 +347,9 @@ class Team(models.Model):
 
     def can_user_upload(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_upload_package(user))
+
+    def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_manage_packages(user))
 
     def can_user_manage_members(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_members(user))

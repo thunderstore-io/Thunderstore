@@ -1,6 +1,8 @@
+import time
 from typing import List, Optional, Set, Tuple
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import Http404
@@ -8,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
+from django.utils.http import urlencode
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
@@ -416,8 +419,9 @@ def get_package_listing_or_404(
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageDetailView(CommunityMixin, DetailView):
     model = PackageListing
+    object: Optional[PackageListing]
 
-    def get_object(self, *args, **kwargs):
+    def get_object(self, *args, **kwargs) -> PackageListing:
         listing = get_package_listing_or_404(
             namespace=self.kwargs["owner"],
             name=self.kwargs["name"],
@@ -426,6 +430,22 @@ class PackageDetailView(CommunityMixin, DetailView):
         if not listing.can_be_viewed_by_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
         return listing
+
+    @property
+    def can_manage(self):
+        return self.object.package.can_user_manage_deprecation(self.request.user)
+
+    @property
+    def can_deprecate(self):
+        return self.can_manage and self.object.package.is_deprecated is False
+
+    @property
+    def can_undeprecate(self):
+        return self.can_manage and self.object.package.is_deprecated is True
+
+    @property
+    def can_unlist(self):
+        return self.request.user.is_superuser
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -439,7 +459,44 @@ class PackageDetailView(CommunityMixin, DetailView):
             dependants_string = f"{dependant_count} other mods depend on this mod"
 
         context["dependants_string"] = dependants_string
+
+        context["can_manage"] = self.can_manage
+        context["can_deprecate"] = self.can_deprecate
+        context["can_undeprecate"] = self.can_undeprecate
+        context["can_unlist"] = self.can_unlist
         return context
+
+    def post_deprecate(self):
+        if not self.can_deprecate:
+            raise PermissionDenied()
+        self.object.package.deprecate()
+
+    def post_undeprecate(self):
+        if not self.can_undeprecate:
+            raise PermissionDenied()
+        self.object.package.undeprecate()
+
+    def post_unlist(self):
+        if not self.can_unlist:
+            raise PermissionDenied()
+        self.object.package.deactivate()
+
+    def post(self, request, **kwargs):
+        self.object = self.get_object()
+        if not self.can_manage:
+            raise PermissionDenied()
+        if "deprecate" in request.POST:
+            self.post_deprecate()
+        elif "undeprecate" in request.POST:
+            self.post_undeprecate()
+        elif "unlist" in request.POST:
+            self.post_unlist()
+        get_package_listing_or_404.clear_cache_with_args(
+            namespace=self.kwargs["owner"],
+            name=self.kwargs["name"],
+            community=self.community,
+        )
+        return redirect(self.object)
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")

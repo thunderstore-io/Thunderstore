@@ -15,6 +15,8 @@ from django.utils.functional import cached_property
 from thunderstore.cache.cache import cache_function_result
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
+from thunderstore.core.types import UserType
+from thunderstore.core.utils import check_validity
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
 
@@ -287,6 +289,48 @@ class Package(models.Model):
 
     def handle_deleted_version(self, version):
         self.recache_latest()
+
+    def deprecate(self):
+        self.is_deprecated = True
+        self.date_updated = timezone.now()
+        self.save(
+            update_fields=(
+                "is_deprecated",
+                "date_updated",
+            )
+        )
+
+    def undeprecate(self):
+        self.is_deprecated = False
+        self.date_updated = timezone.now()
+        self.save(
+            update_fields=(
+                "is_deprecated",
+                "date_updated",
+            )
+        )
+
+    def deactivate(self):
+        self.is_active = False
+        self.date_updated = timezone.now()
+        self.save(
+            update_fields=(
+                "is_active",
+                "date_updated",
+            )
+        )
+
+    def ensure_user_can_manage_deprecation(self, user: Optional[UserType]) -> None:
+        if not user or not user.is_authenticated:
+            raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
+        if user.is_staff and user.has_perm("repository.change_package"):
+            return
+        self.owner.ensure_user_can_manage_packages(user)
+
+    def can_user_manage_deprecation(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_manage_deprecation(user))
 
     def __str__(self):
         return self.full_package_name
