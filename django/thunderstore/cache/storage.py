@@ -1,13 +1,13 @@
 from django.conf import settings
 from storages.backends.s3boto3 import S3Boto3Storage
 
-from thunderstore.utils.makemigrations import StubStorage, is_makemigrations_check
+from thunderstore.utils.makemigrations import StubStorage, is_migrate_check
 
 
 def get_cache_storage():
     # Required as a placeholder stub for migrations, otherwise Django thinks
     # something keeps changing due to settings being different.
-    if is_makemigrations_check():
+    if is_migrate_check():
         return StubStorage()
     return S3Boto3Storage(
         **{

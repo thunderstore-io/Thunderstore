@@ -1,6 +1,6 @@
 import pytest
 
-from thunderstore.utils.makemigrations import StubStorage, is_makemigrations_check
+from thunderstore.utils.makemigrations import StubStorage, is_migrate_check
 
 
 def test_utils_stub_storage():
@@ -9,11 +9,13 @@ def test_utils_stub_storage():
         storage.save("test", b"test")
 
 
-def test_utils_is_makemigrations_check_true(mocker):
+def test_utils_is_migrate_check_true(mocker):
+    mocker.patch("sys.argv", ["manage.py", "migrate"])
+    assert is_migrate_check() is True
     mocker.patch("sys.argv", ["manage.py", "makemigrations"])
-    assert is_makemigrations_check() is True
+    assert is_migrate_check() is True
 
 
-def test_utils_is_makemigrations_check_false(mocker):
+def test_utils_is_migrate_check_false(mocker):
     mocker.patch("sys.argv", ["manage.py", "runserver"])
-    assert is_makemigrations_check() is False
+    assert is_migrate_check() is False

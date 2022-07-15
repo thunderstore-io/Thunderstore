@@ -7,6 +7,7 @@ import django.core.validators
 from django.db import migrations, models
 
 import thunderstore.repository.models.package_version
+import thunderstore.utils.makemigrations
 
 
 class Migration(migrations.Migration):
@@ -20,7 +21,7 @@ class Migration(migrations.Migration):
             model_name="packageversion",
             name="file",
             field=models.FileField(
-                storage=django.core.files.storage.FileSystemStorage(),
+                storage=thunderstore.utils.makemigrations.StubStorage(),
                 upload_to=thunderstore.repository.models.package_version.get_version_zip_filepath,
             ),
         ),
