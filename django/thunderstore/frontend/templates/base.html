@@ -49,7 +49,7 @@
                            aria-expanded="false" class="nav-link dropdown-toggle">Communities</a>
                         {% if selectable_community_sites %}
                         <div class="dropdown-menu" aria-labelledby="communitiesMenu">
-                            {% for site in selectable_community_sites %}
+                            {% for site in selectable_community_sites|dictsort:"community.name" %}
                                 <a class="dropdown-item" href="{{ site.full_url }}">{{ site.community.name }}</a>
                             {% endfor %}
                         </div>
