@@ -292,33 +292,15 @@ class Package(models.Model):
 
     def deprecate(self):
         self.is_deprecated = True
-        self.date_updated = timezone.now()
-        self.save(
-            update_fields=(
-                "is_deprecated",
-                "date_updated",
-            )
-        )
+        self.save(update_fields=("is_deprecated",))
 
     def undeprecate(self):
         self.is_deprecated = False
-        self.date_updated = timezone.now()
-        self.save(
-            update_fields=(
-                "is_deprecated",
-                "date_updated",
-            )
-        )
+        self.save(update_fields=("is_deprecated",))
 
     def deactivate(self):
         self.is_active = False
-        self.date_updated = timezone.now()
-        self.save(
-            update_fields=(
-                "is_active",
-                "date_updated",
-            )
-        )
+        self.save(update_fields=("is_active",))
 
     def ensure_user_can_manage_deprecation(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:

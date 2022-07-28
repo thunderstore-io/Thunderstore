@@ -72,7 +72,7 @@ def test_package_deprecate() -> None:
     assert package.is_deprecated is False
     package.deprecate()
     assert package.is_deprecated is True
-    assert package.date_updated > old_updated
+    assert package.date_updated == old_updated
 
 
 @pytest.mark.django_db
@@ -82,7 +82,7 @@ def test_package_undeprecate() -> None:
     assert package.is_deprecated is True
     package.undeprecate()
     assert package.is_deprecated is False
-    assert package.date_updated > old_updated
+    assert package.date_updated == old_updated
 
 
 @pytest.mark.django_db
@@ -92,7 +92,7 @@ def test_package_deactivate() -> None:
     assert package.is_active is True
     package.deactivate()
     assert package.is_active is False
-    assert package.date_updated > old_updated
+    assert package.date_updated == old_updated
 
 
 @pytest.mark.django_db
