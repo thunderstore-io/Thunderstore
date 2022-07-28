@@ -35,7 +35,7 @@ def forwards(apps, schema_editor):
                     "date_created"
                 )[:1]
             ),
-        ),
+        )
 
 
 class Migration(migrations.Migration):

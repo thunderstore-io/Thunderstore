@@ -34,6 +34,10 @@ class CommunityAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "identifier",
+        "background_image_width",
+        "background_image_height",
+        "icon_width",
+        "icon_height",
         "datetime_created",
         "datetime_updated",
     )
