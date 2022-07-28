@@ -684,7 +684,6 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
 )
-SOCIAL_AUTH_STRATEGY = "thunderstore.community.social_auth.CommunitySocialAuthStrategy"
 SOCIAL_AUTH_SANITIZE_REDIRECTS = env.bool("SOCIAL_AUTH_SANITIZE_REDIRECTS")
 SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = env.list("SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS")
 SOCIAL_AUTH_INIT_HOST = env.str("SOCIAL_AUTH_INIT_HOST") or None
