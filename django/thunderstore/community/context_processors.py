@@ -5,22 +5,23 @@ from thunderstore.community.models import CommunitySite
 
 def community_site(request):
     if hasattr(request, "community_site") and request.community_site:
+        community = request.community_site.community
         result = {
             "site_name": request.community_site.site.name,
-            "site_slogan": request.community_site.slogan or "",
-            "site_description": request.community_site.description or "",
-            "site_discord_url": request.community_site.community.discord_url or "",
-            "site_wiki_url": request.community_site.community.wiki_url or "",
+            "site_slogan": community.slogan or "",
+            "site_description": community.description or "",
+            "site_discord_url": community.discord_url or "",
+            "site_wiki_url": community.wiki_url or "",
         }
-        if request.community.icon:
-            url = request.community.icon.url
+        if community.icon:
+            url = community.icon.url
             if not (url.startswith("http://") or url.startswith("https://")):
                 url = f"{request.scheme}://{request.get_host()}{url}"
             result.update(
                 {
                     "site_icon": url,
-                    "site_icon_width": request.community.icon_width,
-                    "site_icon_height": request.community.icon_height,
+                    "site_icon_width": community.icon_width,
+                    "site_icon_height": community.icon_height,
                 }
             )
         else:
