@@ -37,6 +37,12 @@ env = environ.Env(
     SOCIAL_AUTH_INIT_HOST=(str, ""),
     AUTH_EXCLUSIVE_HOST=(str, ""),
     PRIMARY_HOST=(str, ""),
+    SITE_NAME=(str, "Thunderstore"),
+    SITE_DESCRIPTION=(
+        str,
+        "Thunderstore is a mod database and API for downloading mods",
+    ),
+    SITE_SLOGAN=(str, "The Open Source Mod Database"),
     SOCIAL_AUTH_SANITIZE_REDIRECTS=(bool, True),
     SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS=(list, []),
     SOCIAL_AUTH_DISCORD_KEY=(str, ""),
@@ -335,6 +341,10 @@ CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER")
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = env.bool("CELERY_EAGER_PROPAGATES_EXCEPTIONS")
 
 # Custom settings
+
+SITE_NAME = env.str("SITE_NAME")
+SITE_DESCRIPTION = env.str("SITE_DESCRIPTION")
+SITE_SLOGAN = env.str("SITE_SLOGAN")
 
 LOGIN_REDIRECT_URL = "index"
 LOGOUT_REDIRECT_URL = "index"
@@ -674,7 +684,6 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
 )
-SOCIAL_AUTH_STRATEGY = "thunderstore.community.social_auth.CommunitySocialAuthStrategy"
 SOCIAL_AUTH_SANITIZE_REDIRECTS = env.bool("SOCIAL_AUTH_SANITIZE_REDIRECTS")
 SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS = env.list("SOCIAL_AUTH_ALLOWED_REDIRECT_HOSTS")
 SOCIAL_AUTH_INIT_HOST = env.str("SOCIAL_AUTH_INIT_HOST") or None

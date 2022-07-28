@@ -8,7 +8,6 @@ from django.urls import reverse
 
 from thunderstore.community.utils import get_community_site_for_request
 from thunderstore.core.urls import AUTH_ROOT
-from thunderstore.core.utils import make_full_url
 
 if TYPE_CHECKING:
     from thunderstore.community.models import Community, CommunitySite

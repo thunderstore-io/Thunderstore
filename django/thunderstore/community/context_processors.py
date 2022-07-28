@@ -1,26 +1,28 @@
+from django.conf import settings
 from django.templatetags.static import static
 
 from thunderstore.community.models import CommunitySite
 
 
 def community_site(request):
-    if hasattr(request, "community_site") and request.community_site:
+    if hasattr(request, "community") and request.community:
+        community = request.community
         result = {
-            "site_name": request.community_site.site.name,
-            "site_slogan": request.community_site.slogan or "",
-            "site_description": request.community_site.description or "",
-            "site_discord_url": request.community_site.community.discord_url or "",
-            "site_wiki_url": request.community_site.community.wiki_url or "",
+            "site_name": settings.SITE_NAME,
+            "site_slogan": community.slogan or "",
+            "site_description": community.description or "",
+            "site_discord_url": community.discord_url or "",
+            "site_wiki_url": community.wiki_url or "",
         }
-        if request.community_site.icon:
-            url = request.community_site.icon.url
+        if community.icon:
+            url = community.icon.url
             if not (url.startswith("http://") or url.startswith("https://")):
                 url = f"{request.scheme}://{request.get_host()}{url}"
             result.update(
                 {
                     "site_icon": url,
-                    "site_icon_width": request.community_site.icon_width,
-                    "site_icon_height": request.community_site.icon_height,
+                    "site_icon_width": community.icon_width,
+                    "site_icon_height": community.icon_height,
                 }
             )
         else:
@@ -34,9 +36,9 @@ def community_site(request):
         return result
     else:
         return {
-            "site_name": "Thunderstore",
-            "site_slogan": "The Risk of Rain 2 Mod Database",
-            "site_description": "Thunderstore is a mod database and API for downloading Risk of Rain 2 mods",
+            "site_name": settings.SITE_NAME,
+            "site_slogan": settings.SITE_SLOGAN,
+            "site_description": settings.SITE_DESCRIPTION,
             "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
             "site_icon_width": "1000",
             "site_icon_height": "1000",

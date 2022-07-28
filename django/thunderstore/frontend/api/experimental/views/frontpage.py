@@ -48,7 +48,7 @@ class FrontPageApiView(APIView):
     ) -> FrontPageContentSerializer:
         communities = [
             {
-                "bg_image_src": c.site_image_url,
+                "bg_image_src": c.background_image_url,
                 "download_count": c.package_downloads_total or 0,
                 "identifier": c.identifier,
                 "name": c.name,

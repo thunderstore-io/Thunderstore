@@ -2,8 +2,6 @@ from typing import Dict, Union
 
 from django import template
 
-from thunderstore.community.models.community_site import CommunitySite
-from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import Package
 from thunderstore.repository.models.package_version import PackageVersion
 
