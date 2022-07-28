@@ -67,28 +67,16 @@ def test_community_ensure_user_can_manage_packages(
 
 
 @pytest.mark.django_db
-def test_site_image_url_when_community_has_no_site():
+def test_background_image_url_when_community_has_no_image():
     community = CommunityFactory()
-
-    with pytest.raises(IndexError):
-        community.site_image_url
-
-
-@pytest.mark.django_db
-def test_site_image_url_when_community_site_has_no_image():
-    site = CommunitySiteFactory()
-
-    url = site.community.site_image_url
-
+    url = community.background_image_url
     assert url is None
 
 
 @pytest.mark.django_db
-def test_site_image_url_when_community_site_has_image(dummy_image):
-    site = CommunitySiteFactory(background_image=dummy_image)
-
-    url = site.community.site_image_url
-
+def test_background_image_url_when_community_has_image(dummy_image):
+    community = CommunityFactory(background_image=dummy_image)
+    url = community.background_image_url
     assert isinstance(url, str)
     assert len(url) > 0
 

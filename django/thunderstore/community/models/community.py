@@ -62,6 +62,28 @@ class Community(TimestampMixin, models.Model):
             in_db = type(self).objects.get(pk=self.pk)
             if in_db.identifier != self.identifier:
                 raise ValidationError("Field 'identifier' is read only")
+        if not self.icon:
+            self.icon_width = 0
+            self.icon_height = 0
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = set(
+                    kwargs["update_fields"]
+                    + (
+                        "icon_width",
+                        "icon_height",
+                    )
+                )
+        if not self.background_image:
+            self.background_image_width = 0
+            self.background_image_height = 0
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = set(
+                    kwargs["update_fields"]
+                    + (
+                        "background_image_width",
+                        "background_image_height",
+                    )
+                )
         return super().save(*args, **kwargs)
 
     def __str__(self):
@@ -79,18 +101,11 @@ class Community(TimestampMixin, models.Model):
         return self.__membership_cache[user.pk]
 
     @cached_property
-    def site_image_url(self) -> Optional[str]:
+    def background_image_url(self) -> Optional[str]:
         """
-        Return URL to site's background image if one exists.
+        Return URL to the community's background image if one exists.
         """
-        # Access site via .all() to avoid extra database hits when sites
-        # have already be fetched with .prefetch_related().
-        site = self.sites.all()[0]
-        return (
-            None
-            if site is None or not bool(site.background_image)
-            else site.background_image.url
-        )
+        return None if not bool(self.background_image) else self.background_image.url
 
     def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:
