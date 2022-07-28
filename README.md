@@ -14,7 +14,7 @@ Thunderstore is a mod database and API for downloading mods.
 
 ```python
 from django.contrib.sites.models import Site
-Site.objects.create(domain="thunderstore.localhost", name="Whatever")
+Site.objects.create(domain="thunderstore.localhost", name="Thunderstore")
 ```
 
 **Make sure to substitute `localhost` with what you use to connect to the site!**
@@ -40,32 +40,6 @@ To connect a site to a community, you will need to:
 In local development, [minio](https://github.com/minio/minio) is used for S3
 compatible file storage. You can access it via http://localhost:9000/ with
 `thunderstore:thunderstore` credentials
-
-## Mod package format
-
-Mod packages are `.zip` files, with at least the following contents:
-
--   `/icon.png` - A PNG icon for the mod, must be 256x256 resolution.
--   `/README.md` - A readme file to be rendered on the mod's page.
--   `/manifest.json` - A `.json` file with the mod's metadata. Required filds are:
-    -   `name` - Name of the mod. Allowed characters: `a-z A-Z 0-9 _`. No spaces.
-    -   `description` - A short description of the mod, shown on the mod list. Max
-        250 characters
-    -   `website_url` - URL of the mod's website (e.g. GitHub repo). Can be empty,
-        but the key must still exists (use an empty string for example).
-    -   `version_number` - Version number of the mod, following the semantic version
-        format `Major.Minor.Patch`. For example: `1.3.2`.
-
-Example `manifest.json` contents:
-
-```json
-{
-    "name": "TestMod",
-    "version_number": "1.1.0",
-    "website_url": "https://github.com/thunderstore-io",
-    "description": "This is a description for a mod. Max length is 250 characters"
-}
-```
 
 ## REST API docs
 
@@ -146,11 +120,12 @@ For local testing, recommended values are:
 To set up GitHub OAuth, head to settings on GitHub (either personal or
 organization settings), and from under `Developer Settings` select `OAuth Apps`.
 
-Create a new OAuth Application, and use `{server}/auth/complete/github/` as the
-Authorization callback URL, where `{server}` is replaced with the protocol and
-server name that is accessible. For example for local you could use
-`http://localhost/auth/complete/github/`, whereas for a live environment
-`https://beta.thunderstore.io/auth/complete/github/`
+Create a new OAuth Application, and use
+`{AUTH_EXCLUSIVE_HOST}/auth/complete/github/` as the Authorization callback
+URL, where `{AUTH_EXCLUSIVE_HOST}` is replaced with the value that was used for
+the `AUTH_EXCLUSIVE_HOST` setting. For example for local you could use
+`http://auth.localhost/auth/complete/github/`, whereas for a live environment
+`https://auth.thunderstore.dev/auth/complete/github/`
 
 After creating the OAuth application, you must also provide the following
 environment variables to the application:
@@ -161,49 +136,18 @@ environment variables to the application:
 ### Discord OAuth
 
 To set up a Discord OAuth, head to the Discord developer panel, and create a new
-OAuth application. Add a callback URL to `{server}/auth/complete/discord/`,
-where `{server}` is replaced with the protocol and server name that is
-accessible. For example for local you could use
-`http://localhost/auth/complete/discord/`, whereas for a live environment
-`https://beta.thunderstore.io/auth/complete/discord/`
+OAuth application. Add a callback URL to
+`{AUTH_EXCLUSIVE_HOST}/auth/complete/discord/`, where `{AUTH_EXCLUSIVE_HOST}`
+is replaced with the value that was used for the `AUTH_EXCLUSIVE_HOST` setting.
+For example for local you could use
+`http://auth.localhost/auth/complete/discord/`, whereas for a live environment
+`https://auth.thunderstore.dev/auth/complete/discord/`
 
 -   `SOCIAL_AUTH_DISCORD_KEY`: The `Client ID` value of the OAuth application
 -   `SOCIAL_AUTH_DISCORD_SECRET` The `Client Secret` value of the OAuth
     application
 
-### Google Cloud Media Storage
-
-You need to set up a google cloud storage bucket and create a service account
-that has access to the storage bucket.
-
-Set the following variables:
-
--   `GS_BUCKET_NAME`: The name/id of the storage bucket
--   `GS_PROJECT_ID`: The ID of the project the bucket resides in
--   `GS_LOCATION`: The subfolder under which the files should be stored in the
-    bucket. Can be left empty or undefined.
--   `GS_CREDENTIALS`: Base64 encoded (with no newlines) string of the service
-    account credentials json file, that can be downloaded from google cloud console.
-
-_NOTE: Google Cloud Storage is currently configured to only store package icons_
-
-### Backblaze B2 Media Storage
-
-You need to set up a backblaze b2 account (and bucket) and create an auth key
-with access to it correspondingly.
-
-Set the following variables:
-
--   `B2_KEY_ID`: The id of the auth key
--   `B2_KEY`: The auth key secret
--   `B2_BUCKET_ID`: Backblaze b2 bucket ID
--   `B2_LOCATION`: Location inside the bucket where to upload files
--   `B2_FILE_OVERWRITE`: Allow file overwriting. True is recommended, backblaze b2
-    retains all file versions regardless.
-
-_NOTE: Backblaze B2 is currently configured to only store package zips_
-
-### AWS S3 and other Boto3 compatible storages
+### Storage
 
 The AWS S3 / Boto3 protocol is supported by multiple vendors and services, and
 such the implementation may vary depending on the provider.
@@ -223,9 +167,6 @@ At the very least set the following variables:
 -   `AWS_STORAGE_BUCKET_NAME`: Bucket name
 -   `AWS_LOCATION`: Location inside the bucket where to upload files
 -   `AWS_S3_SECURE_URLS`: Set to false to disable HTTPS, enabled by default
-
-_NOTE: Enabling AWS S3 will currently override all other cloud storages and
-will be used for all media storage_
 
 ### Usermedia storage
 
