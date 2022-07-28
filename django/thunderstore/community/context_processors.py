@@ -12,15 +12,15 @@ def community_site(request):
             "site_discord_url": request.community_site.community.discord_url or "",
             "site_wiki_url": request.community_site.community.wiki_url or "",
         }
-        if request.community_site.icon:
-            url = request.community_site.icon.url
+        if request.community.icon:
+            url = request.community.icon.url
             if not (url.startswith("http://") or url.startswith("https://")):
                 url = f"{request.scheme}://{request.get_host()}{url}"
             result.update(
                 {
                     "site_icon": url,
-                    "site_icon_width": request.community_site.icon_width,
-                    "site_icon_height": request.community_site.icon_height,
+                    "site_icon_width": request.community.icon_width,
+                    "site_icon_height": request.community.icon_height,
                 }
             )
         else:
