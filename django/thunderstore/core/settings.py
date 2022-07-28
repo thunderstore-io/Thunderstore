@@ -16,8 +16,6 @@ try:
 except ImportError:
     DEBUG_TOOLBAR_AVAILABLE = False
 
-from google.oauth2 import service_account
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 env = environ.Env(
@@ -49,19 +47,6 @@ env = environ.Env(
     SOCIAL_AUTH_DISCORD_SECRET=(str, ""),
     SOCIAL_AUTH_GITHUB_KEY=(str, ""),
     SOCIAL_AUTH_GITHUB_SECRET=(str, ""),
-    GS_BUCKET_NAME=(str, ""),
-    GS_PROJECT_ID=(str, ""),
-    GS_CREDENTIALS=(str, ""),
-    GS_AUTO_CREATE_BUCKET=(bool, False),
-    GS_AUTO_CREATE_ACL=(str, "publicRead"),
-    GS_DEFAULT_ACL=(str, "publicRead"),
-    GS_LOCATION=(str, ""),
-    GS_FILE_OVERWRITE=(bool, False),
-    B2_KEY_ID=(str, ""),
-    B2_KEY=(str, ""),
-    B2_BUCKET_ID=(str, ""),
-    B2_LOCATION=(str, ""),
-    B2_FILE_OVERWRITE=(bool, True),
     AWS_ACCESS_KEY_ID=(str, ""),
     AWS_SECRET_ACCESS_KEY=(str, ""),
     AWS_S3_REGION_NAME=(str, ""),
@@ -237,7 +222,6 @@ INSTALLED_APPS = [
     "thunderstore.usermedia",
     "thunderstore.account",
     "thunderstore.markdown",
-    "backblaze_b2",
 ]
 
 MIDDLEWARE = [
@@ -432,7 +416,6 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "auth_user_groups",
         "auth_user_user_permissions",
         "authtoken_token",
-        "backblaze_b2_backblazeb2file",
         "community_community",
         "community_communitymembership",
         "community_communitysite",
@@ -533,39 +516,6 @@ THUMBNAIL_QUALITY = 95
 DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 THUMBNAIL_DEFAULT_STORAGE = "django.core.files.storage.FileSystemStorage"
 PACKAGE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-
-# Google Cloud Storage
-
-GS_BUCKET_NAME = env.str("GS_BUCKET_NAME")
-GS_PROJECT_ID = env.str("GS_PROJECT_ID")
-
-GS_CREDENTIALS = env.str("GS_CREDENTIALS")
-if GS_CREDENTIALS:
-    GS_CREDENTIALS = json.loads(base64.b64decode(GS_CREDENTIALS).decode("utf-8"))
-    GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
-        GS_CREDENTIALS,
-    )
-
-GS_AUTO_CREATE_BUCKET = env.str("GS_AUTO_CREATE_BUCKET")
-GS_AUTO_CREATE_ACL = env.str("GS_AUTO_CREATE_ACL")
-GS_DEFAULT_ACL = env.str("GS_DEFAULT_ACL")
-GS_LOCATION = validate_filepath_prefix(env.str("GS_LOCATION"))
-GS_FILE_OVERWRITE = env.bool("GS_FILE_OVERWRITE")
-
-if GS_CREDENTIALS and GS_PROJECT_ID and GS_BUCKET_NAME:
-    DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-    THUMBNAIL_DEFAULT_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-
-# Backblaze B2 Cloud Storage for packages
-
-B2_KEY_ID = env.str("B2_KEY_ID")
-B2_KEY = env.str("B2_KEY")
-B2_BUCKET_ID = env.str("B2_BUCKET_ID")
-B2_LOCATION = validate_filepath_prefix(env.str("B2_LOCATION"))
-B2_FILE_OVERWRITE = env.str("B2_FILE_OVERWRITE")
-
-if B2_KEY_ID and B2_KEY and B2_BUCKET_ID:
-    PACKAGE_FILE_STORAGE = "backblaze_b2.storage.BackblazeB2Storage"
 
 # AWS S3 for everything, can be used with S3 compatible providers
 
