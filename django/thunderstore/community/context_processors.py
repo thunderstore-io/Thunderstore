@@ -1,13 +1,14 @@
+from django.conf import settings
 from django.templatetags.static import static
 
 from thunderstore.community.models import CommunitySite
 
 
 def community_site(request):
-    if hasattr(request, "community_site") and request.community_site:
-        community = request.community_site.community
+    if hasattr(request, "community") and request.community:
+        community = request.community
         result = {
-            "site_name": request.community_site.site.name,
+            "site_name": settings.SITE_NAME,
             "site_slogan": community.slogan or "",
             "site_description": community.description or "",
             "site_discord_url": community.discord_url or "",
@@ -35,9 +36,9 @@ def community_site(request):
         return result
     else:
         return {
-            "site_name": "Thunderstore",
-            "site_slogan": "The Risk of Rain 2 Mod Database",
-            "site_description": "Thunderstore is a mod database and API for downloading Risk of Rain 2 mods",
+            "site_name": settings.SITE_NAME,
+            "site_slogan": settings.SITE_SLOGAN,
+            "site_description": settings.SITE_DESCRIPTION,
             "site_icon": f"{request.scheme}://{request.get_host()}{static('icon.png')}",
             "site_icon_width": "1000",
             "site_icon_height": "1000",

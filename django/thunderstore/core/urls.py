@@ -54,7 +54,7 @@ urlpatterns = [
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Thunderstore API",
+        title=f"{settings.SITE_NAME} API",
         default_version="v1",
         description=("Schema is automatically generated and not completely accurate."),
         contact=openapi.Contact(
