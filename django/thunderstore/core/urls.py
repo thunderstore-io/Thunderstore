@@ -16,7 +16,6 @@ from thunderstore.frontend.views import (
 )
 from thunderstore.repository.urls import legacy_package_urls
 from thunderstore.repository.views import PackageListView
-from thunderstore.repository.views.repository import PackageDownloadView
 
 from ..community.views import FaviconView
 from .api_urls import api_urls
