@@ -287,7 +287,7 @@ class ExperimentalApiImpl extends ThunderstoreApi {
     submitPackage = async (props: {
         data: {
             author_name: string;
-            categories: string[];
+            community_categories: { [key: string]: string[] };
             communities: string[];
             has_nsfw_content: boolean;
             upload_uuid: string;

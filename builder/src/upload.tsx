@@ -2,10 +2,10 @@ import * as Sentry from "@sentry/browser";
 import React, { useEffect, useState } from "react";
 import {
     Community,
-    PackageCategory,
     ExperimentalApi,
-    PackageSubmissionResult,
     PackageAvailableCommunity,
+    PackageCategory,
+    PackageSubmissionResult,
     ThunderstoreApiError,
 } from "./api";
 import { useForm } from "react-hook-form";
@@ -16,6 +16,8 @@ import { useOnBeforeUnload } from "./state/OnBeforeUnload";
 import { PackageVersionHeader } from "./components/PackageVersionSummary";
 import { ProgressBar } from "./components/ProgressBar";
 import { FormSelectField } from "./components/FormSelectField";
+import { CommunityCategorySelector } from "./components/CommunitySelector";
+import { FormRow } from "./components/FormRow";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus == FileUploadStatus.CANCELED) {
@@ -71,25 +73,6 @@ interface SubmissionError {
     __all__?: string[];
 }
 
-interface FormRowProps {
-    label: string;
-    labelFor: string;
-    error: string | null;
-}
-const FormRow: React.FC<FormRowProps> = (props) => {
-    return (
-        <div className="field-wrapper">
-            <div className="field-row">
-                <label htmlFor={props.labelFor}>{props.label}</label>
-                {props.children}
-            </div>
-            {props.error && (
-                <div className="text-danger field-errors">{props.error}</div>
-            )}
-        </div>
-    );
-};
-
 enum SubmissionStatus {
     UPLOADING = "UPLOADING",
     PROCESSING = "PROCESSING",
@@ -117,7 +100,28 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         setSubmissionStatus,
     ] = useState<SubmissionStatus | null>(null);
 
-    const { register, handleSubmit, control } = useForm();
+    const { register, handleSubmit, control, watch } = useForm();
+    const {
+        control: categoriesControl,
+        getValues: getCategoriesFormValues,
+    } = useForm<{
+        [key: string]: { label: string; value: string }[] | undefined;
+    }>();
+
+    const transformSelectedCategories = () => {
+        const untransformed = getCategoriesFormValues();
+        const result: { [key: string]: string[] } = {};
+        for (const [community, categories] of Object.entries(untransformed)) {
+            if (!categories) continue;
+            result[community] = categories.map((x) => x.value);
+        }
+        return result;
+    };
+
+    const selectedCommunities:
+        | { value: string; label: string }[]
+        | undefined = watch("communities", undefined);
+
     useOnBeforeUnload(!!file && submissionStatus != SubmissionStatus.COMPLETE);
 
     const cancel = async () => {
@@ -151,9 +155,8 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         const uploadCommunities = data.communities
             ? data.communities.map((com: any) => com.value)
             : [];
-        const uploadCategories = data.categories
-            ? data.categories.map((cat: any) => cat.value)
-            : [];
+
+        const uploadCategories = transformSelectedCategories();
         const uploadNsfw = !!data.has_nsfw_content;
 
         if (uploadTeam == null) {
@@ -179,7 +182,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                     data: {
                         upload_uuid: uploadId,
                         author_name: uploadTeam,
-                        categories: uploadCategories,
+                        community_categories: uploadCategories,
                         communities: uploadCommunities,
                         has_nsfw_content: uploadNsfw,
                     },
@@ -383,29 +386,17 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                             labelFor={"categories"}
                             error={formErrors.categoriesError}
                         >
-                            <FormSelectField
-                                control={control}
-                                name={"categories"}
-                                data={categories}
-                                getOption={(x) => {
-                                    return {
-                                        value: x.slug,
-                                        label: x.name,
-                                    };
-                                }}
-                                isMulti={true}
-                            >
-                                <p className="mt-1 mb-2">
-                                    Note that the selected categories are
-                                    applied only to the
-                                    <kbd className="text-info">
-                                        {currentCommunity.name}
-                                    </kbd>{" "}
-                                    community. If you need to add categories to
-                                    other communities, upload via their
-                                    respective site instead.
-                                </p>
-                            </FormSelectField>
+                            <CommunityCategorySelector
+                                selectedCommunities={
+                                    selectedCommunities ?? [
+                                        {
+                                            value: currentCommunity.identifier,
+                                            label: currentCommunity.name,
+                                        },
+                                    ]
+                                }
+                                control={categoriesControl}
+                            />
                         </FormRow>
 
                         <FormRow
