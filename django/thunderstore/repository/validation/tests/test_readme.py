@@ -23,7 +23,7 @@ def test_validate_readme_too_long() -> None:
 
 
 def test_validate_readme_has_bom() -> None:
-    readme = str.encode("\ufeff", encoding="utf8")
+    readme = str.encode("", encoding="utf-8-sig")
     with pytest.raises(
         ValidationError,
         match="UTF-8 BOM",
