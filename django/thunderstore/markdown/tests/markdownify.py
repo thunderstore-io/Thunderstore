@@ -23,6 +23,7 @@ EDGE_CASE_MARKUP = (
     "markdown, expected",
     (
         ("", ""),
+        ("\ufeff", ""),
         ("This is some text", "<p>This is some text</p>\n"),
         (EDGE_CASE_MARKDOWN, EDGE_CASE_MARKUP),
     ),
