@@ -15,5 +15,9 @@ def validate_readme(readme_data: bytes) -> str:
         )
     if len(readme) > MAX_README_SIZE:
         raise ValidationError(f"README.md is too long, max: {MAX_README_SIZE}")
+    if readme_data.startswith(bytes.fromhex("EF BB BF")):
+        raise ValidationError(
+            "README starts with a UTF-8 BOM, please try to re-save the file without a BOM.",
+        )
 
     return readme
