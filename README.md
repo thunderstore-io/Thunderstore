@@ -35,6 +35,15 @@ To connect a site to a community, you will need to:
    connecting to your development environment
 4. Create a new Community Site object, linking the two together
 
+### Test data population
+
+There's a script for populating the local database with test data. You can run
+it as follows:
+
+```bash
+docker-compose exec django python manage.py create_test_data
+```
+
 ## Minio
 
 In local development, [minio](https://github.com/minio/minio) is used for S3

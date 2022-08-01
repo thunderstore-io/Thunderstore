@@ -3,10 +3,11 @@ from dataclasses import dataclass, field
 from typing import Collection, Dict, List, Optional, OrderedDict, Type
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import signals
 
-from thunderstore.community.models import Community, PackageListing
+from thunderstore.community.models import Community, CommunitySite, PackageListing
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
 from thunderstore.utils.iterators import print_progress
@@ -18,6 +19,7 @@ class ContentPopulatorContext:
     packages: Collection[Package] = field(default_factory=list)
     communities: Collection[Community] = field(default_factory=list)
 
+    community_count: int = 0
     dependency_count: int = 0
     version_count: int = 0
     team_count: int = 0
@@ -35,6 +37,67 @@ class ContentPopulator(ABC):
         ...
 
 
+class CommunityPopulator(ContentPopulator):
+    communities: Optional[List[Community]] = None
+    identifier_prefix = "test-community-"
+    name_prefix = "Test Community "
+
+    def populate(self, context: ContentPopulatorContext) -> None:
+        print("Populating communities...")
+
+        last = last_obj.pk if (last_obj := Community.objects.last()) else 0
+
+        existing = list(
+            Community.objects.filter(name__startswith=self.name_prefix)[
+                : context.community_count
+            ]
+        )
+        remainder = context.community_count - len(existing)
+
+        self.communities = existing + [
+            Community.objects.create(
+                name=f"{self.name_prefix}{last + i}",
+                identifier=f"{self.identifier_prefix}{last + i}",
+            )
+            for i in print_progress(range(remainder), remainder)
+        ]
+
+    def update_context(self, context) -> None:
+        if self.communities is not None:
+            context.communities = self.communities
+        else:
+            context.communities = Community.objects.filter(
+                name__startswith=self.name_prefix
+            )[: context.community_count]
+
+    def clear(self) -> None:
+        print("Deleting existing test communities...")
+        Community.objects.filter(name__startswith=self.name_prefix).delete()
+
+
+class CommunitySitePopulator(ContentPopulator):
+    def populate(self, context: ContentPopulatorContext) -> None:
+        print("Populating community sites...")
+
+        for community in context.communities:
+            community_site = CommunitySite.objects.filter(community=community).first()
+            if community_site:
+                continue
+            CommunitySite.objects.create(
+                community=community,
+                site=Site.objects.create(
+                    name="Thunderstore",
+                    domain=f"{community.identifier}.thunderstore.localhost",
+                ),
+            )
+
+    def update_context(self, context) -> None:
+        pass
+
+    def clear(self) -> None:
+        pass
+
+
 class TeamPopulator(ContentPopulator):
     teams: Optional[List[Team]] = None
     name_prefix = "Test_Team_"
@@ -42,10 +105,7 @@ class TeamPopulator(ContentPopulator):
     def populate(self, context: ContentPopulatorContext) -> None:
         print("Populating teams...")
 
-        last = 0
-        last_team = Team.objects.order_by("-pk").first()
-        if last_team:
-            last = last_team.pk
+        last = last_team.pk if (last_team := Team.objects.last()) else 0
 
         existing = list(
             Team.objects.filter(name__startswith=self.name_prefix)[: context.team_count]
@@ -170,6 +230,7 @@ class PackageVersionPopulator(ContentPopulator):
 class DependencyPopulator(ContentPopulator):
     def populate(self, context: ContentPopulatorContext) -> None:
         print("Linking dependencies...")
+        PackageVersion.dependencies.through.objects.all().delete()
         dependencies = [
             x.latest.id for x in context.packages[: context.dependency_count]
         ]
@@ -213,6 +274,8 @@ CONTENT_POPULATORS: Dict[str, Type[ContentPopulator]] = OrderedDict[
     str, ContentPopulator
 ](
     [
+        ("community", CommunityPopulator),
+        ("community_site", CommunitySitePopulator),
         ("team", TeamPopulator),
         ("package", PackagePopulator),
         ("version", PackageVersionPopulator),
@@ -230,6 +293,7 @@ class Command(BaseCommand):
         super().__init__(*args, **kwargs)
 
     def add_arguments(self, parser) -> None:
+        parser.add_argument("--community-count", type=int, default=20)
         parser.add_argument("--team-count", type=int, default=10)
         parser.add_argument("--package-count", type=int, default=1)
         parser.add_argument("--version-count", type=int, default=3)
@@ -289,6 +353,6 @@ class Command(BaseCommand):
             version_count=kwargs.get("version_count", 0),
             team_count=kwargs.get("team_count", 0),
             dependency_count=kwargs.get("dependency_count", 0),
-            communities=Community.objects.all()[:1],
+            community_count=kwargs.get("community_count", 0),
         )
         self.populate(context)

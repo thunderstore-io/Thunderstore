@@ -5,7 +5,7 @@ from django.core.management.base import CommandError
 from django.db.models import Count
 from django.test import override_settings
 
-from thunderstore.community.models import Community, PackageListing
+from thunderstore.community.models import Community, CommunitySite, PackageListing
 from thunderstore.core.management.commands.create_test_data import CONTENT_POPULATORS
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, PackageVersion, Team
@@ -71,60 +71,82 @@ def test_create_test_data_clear() -> None:
 @override_settings(DEBUG=True)
 @pytest.mark.parametrize("team_count", (1, 2))
 @pytest.mark.parametrize("package_count", (2, 4))
+@pytest.mark.parametrize("community_count", (2, 4))
 @pytest.mark.parametrize("version_count", (2, 4))
 @pytest.mark.parametrize("dependency_count", (1, 2))
 def test_create_test_data_create_data(
     community: Community,
     team_count: int,
     package_count: int,
+    community_count: int,
     version_count: int,
     dependency_count: int,
 ) -> None:
     assert settings.DEBUG is True
-    call_command(
+
+    def assert_counts():
+        created_teams = Team.objects.filter(name__icontains="Test_Team_")
+        created_packages = Package.objects.filter(name__icontains="Test_Package_")
+        created_package_versions = PackageVersion.objects.filter(
+            name__icontains="Test_Package_"
+        )
+        created_communities = Community.objects.filter(
+            identifier__startswith="test-community-"
+        )
+        created_community_sites = CommunitySite.objects.filter(
+            community__identifier__startswith="test-community-"
+        )
+        assert created_teams.count() == team_count
+        assert created_packages.count() == team_count * package_count
+        assert created_communities.count() == community_count
+        assert created_community_sites.count() == community_count
+        assert (
+            created_package_versions.count()
+            == team_count * package_count * version_count
+        )
+        assert (
+            PackageVersion.dependencies.through.objects.count()
+            == (team_count * package_count - dependency_count) * dependency_count
+        )
+        assert (
+            PackageListing.objects.filter(package__in=created_packages).count()
+            == team_count * package_count * community_count
+        )
+        for t in created_teams:
+            assert t.owned_packages.all().count() == package_count
+        assert (
+            Package.objects.annotate(c=Count("latest__dependencies"))
+            .filter(c__exact=0)
+            .count()
+            == dependency_count
+        )
+        assert Package.objects.annotate(c=Count("latest__dependencies")).filter(
+            c__exact=dependency_count
+        ).count() == (team_count * package_count - dependency_count)
+        versions = [f"{vernum}.0.0" for vernum in range(version_count)]
+        for pv in created_package_versions:
+            assert pv.name == pv.package.name
+            assert pv.version_number in versions
+
+    args = [
         "create_test_data",
         "--team-count",
         team_count,
         "--package-count",
         package_count,
+        "--community-count",
+        community_count,
         "--version-count",
         version_count,
         "--dependency-count",
         dependency_count,
-    )
-    created_teams = Team.objects.filter(name__icontains="Test_Team_")
-    created_packages = Package.objects.filter(name__icontains="Test_Package_")
-    created_package_versions = PackageVersion.objects.filter(
-        name__icontains="Test_Package_"
-    )
-    assert created_teams.count() == team_count
-    assert created_packages.count() == team_count * package_count
-    assert (
-        created_package_versions.count() == team_count * package_count * version_count
-    )
-    assert (
-        PackageVersion.dependencies.through.objects.count()
-        == (team_count * package_count - dependency_count) * dependency_count
-    )
-    assert (
-        PackageListing.objects.filter(package__in=created_packages).count()
-        == team_count * package_count
-    )
-    for t in created_teams:
-        assert t.owned_packages.all().count() == package_count
-    assert (
-        Package.objects.annotate(c=Count("latest__dependencies"))
-        .filter(c__exact=0)
-        .count()
-        == dependency_count
-    )
-    assert Package.objects.annotate(c=Count("latest__dependencies")).filter(
-        c__exact=dependency_count
-    ).count() == (team_count * package_count - dependency_count)
-    versions = [f"{vernum}.0.0" for vernum in range(version_count)]
-    for pv in created_package_versions:
-        assert pv.name == pv.package.name
-        assert pv.version_number in versions
+    ]
+    call_command(*args)
+    assert_counts()
+    # The data creation should be idempotent, so calling it again should result
+    # in the same data distribution.
+    call_command(*args)
+    assert_counts()
 
 
 @override_settings(DEBUG=True)
