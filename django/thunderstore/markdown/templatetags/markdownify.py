@@ -15,6 +15,8 @@ md = MarkdownIt("gfm-like")
 
 
 def render_markdown(value: str):
+    if value.startswith("\ufeff"):
+        value = value[1:]
     return mark_safe(
         bleach.clean(
             text=md.render(value.strip()),
