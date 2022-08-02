@@ -1,0 +1,40 @@
+.communities-dropdown {
+    padding: 0;
+    margin: 0;
+
+    .section {
+        padding: 1.5rem 1.75rem;
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 1rem;
+
+            @media (max-width: 720px) {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-item {
+                padding: 0.25rem 0.25rem;
+                color: white;
+                text-decoration: none;
+                min-width: 300px;
+
+                &:hover {
+                    background-color: #375a7f;
+                    text-decoration: none;
+                }
+            }
+        }
+
+        &:not(:first-child) {
+            border-top: 1px solid #444;
+        }
+
+        .title {
+            padding: 0 0.25rem;
+            opacity: 0.5;
+            margin-bottom: 0.75rem;
+        }
+    }
+}

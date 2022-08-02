@@ -14,11 +14,14 @@
 
 // Custom Markdown
 @import "./markdown";
+
+// Other custom
 @import "./settings";
 @import "./general";
 @import "./package-list";
 @import "./forms";
 @import "./slimselect";
+@import "./navbar";
 
 // Code Input
 @import "./code-input";

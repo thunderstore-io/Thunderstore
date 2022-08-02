@@ -48,10 +48,25 @@
                         <a href="#" role="button" id="communitiesMenu" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false" class="nav-link dropdown-toggle">Communities</a>
                         {% if selectable_community_sites %}
-                        <div class="dropdown-menu" aria-labelledby="communitiesMenu">
-                            {% for site in selectable_community_sites|dictsort:"community.name" %}
-                                <a class="dropdown-item" href="{{ site.full_url }}">{{ site.community.name }}</a>
-                            {% endfor %}
+                        <div class="dropdown-menu communities-dropdown" aria-labelledby="communitiesMenu">
+                            <div class="section">
+                                <h6 class="title">Popular communities</h6>
+                                <div class="grid">
+                                    {% for site in selectable_community_sites|slice:":6"|dictsort:"community.name" %}
+                                        <a class="grid-item" href="{{ site.full_url }}">{{ site.community.name }}</a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% if selectable_community_sites|length > 6 %}
+                                <div class="section">
+                                    <h6 class="title">Other communities</h6>
+                                    <div class="grid">
+                                        {% for site in selectable_community_sites|slice:"6:"|dictsort:"community.name" %}
+                                            <a class="grid-item" href="{{ site.full_url }}">{{ site.community.name }}</a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
