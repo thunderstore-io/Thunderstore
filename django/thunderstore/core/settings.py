@@ -2,11 +2,12 @@ import base64
 import json
 import os
 import sys
+from typing import Tuple
 
 import environ
 from django.http import HttpRequest
 
-from thunderstore.core.storage import get_storage_class_or_stub
+from thunderstore.core.storage import S3MirrorConfig, get_storage_class_or_stub
 from thunderstore.core.utils import validate_filepath_prefix
 
 try:
@@ -598,6 +599,23 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
 DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
 THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
 PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
+
+# For uploading files to multiple buckets at once.
+S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
+    # {
+    #     "access_key": env.str("..."),
+    #     "secret_key": env.str("..."),
+    #     "region_name": env.str("..."),
+    #     "bucket_name": env.str("..."),
+    #     "location": env.str("..."),
+    #     "custom_domain": env.str("..."),
+    #     "endpoint_url": env.str("..."),
+    #     "secure_urls": env.bool("..."),
+    #     "file_overwrite": env.bool("..."),
+    #     "default_acl": env.str("..."),
+    #     "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+    # },
+)
 
 # Social auth
 
