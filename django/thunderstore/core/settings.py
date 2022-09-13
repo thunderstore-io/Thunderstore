@@ -89,6 +89,16 @@ env = environ.Env(
     CACHE_S3_CUSTOM_DOMAIN=(str, ""),
     CACHE_S3_SECURE_URLS=(bool, True),
     CACHE_S3_DEFAULT_ACL=(str, "private"),
+    MIRROR_S3_ENDPOINT_URL=(str, ""),
+    MIRROR_S3_ACCESS_KEY_ID=(str, ""),
+    MIRROR_S3_SECRET_ACCESS_KEY=(str, ""),
+    MIRROR_S3_REGION_NAME=(str, ""),
+    MIRROR_S3_STORAGE_BUCKET_NAME=(str, ""),
+    MIRROR_S3_LOCATION=(str, ""),
+    MIRROR_S3_FILE_OVERWRITE=(bool, False),
+    MIRROR_S3_CUSTOM_DOMAIN=(str, ""),
+    MIRROR_S3_SECURE_URLS=(bool, True),
+    MIRROR_S3_DEFAULT_ACL=(str, "private"),
     REDIS_URL=(str, ""),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
@@ -594,12 +604,6 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
-
-# Storage Defaults
-DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
-THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
-PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
-
 # For uploading files to multiple buckets at once.
 S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
     # {
@@ -616,6 +620,39 @@ S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
     #     "object_parameters": AWS_S3_OBJECT_PARAMETERS,
     # },
 )
+
+if all(
+    (
+        env.str("MIRROR_S3_ACCESS_KEY_ID"),
+        env.str("MIRROR_S3_SECRET_ACCESS_KEY"),
+        env.str("MIRROR_S3_ENDPOINT_URL"),
+        env.str("MIRROR_S3_STORAGE_BUCKET_NAME"),
+    ),
+):
+    mirror = Tuple[S3MirrorConfig, ...] = (
+        {
+            "access_key": env.str("MIRROR_S3_ACCESS_KEY_ID"),
+            "secret_key": env.str("MIRROR_S3_SECRET_ACCESS_KEY"),
+            "region_name": env.str("MIRROR_S3_REGION_NAME"),
+            "bucket_name": env.str("MIRROR_S3_STORAGE_BUCKET_NAME"),
+            "location": validate_filepath_prefix(env.str("MIRROR_S3_LOCATION")),
+            "custom_domain": env.str("MIRROR_S3_CUSTOM_DOMAIN"),
+            "endpoint_url": env.str("MIRROR_S3_ENDPOINT_URL"),
+            "secure_urls": env.bool("MIRROR_S3_SECURE_URLS"),
+            "file_overwrite": env.bool("MIRROR_S3_FILE_OVERWRITE"),
+            "default_acl": env.str("MIRROR_S3_DEFAULT_ACL"),
+            "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+        },
+    )
+    S3_MIRRORS = S3_MIRRORS + mirror
+    DEFAULT_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    THUMBNAIL_DEFAULT_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+
+# Storage Defaults
+DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
+THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
+PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
 
 # Social auth
 
