@@ -238,10 +238,10 @@
   resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-4.0.1.tgz#3a4bd24518b0e6c5940da4e2659eeb2ef0806963"
   integrity sha512-6+OPzqhKX/cx5xh+yO8Cqg3u3alrkhoxhE5ZOdSEv0DOzJ13lwJ6laqGU0Kv6+XDMFmlnGId04LtY22PsFLQUw==
 
-"@types/node@^14.14.37":
-  version "14.14.37"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.37.tgz#a3dd8da4eb84a996c36e331df98d82abd76b516e"
-  integrity sha512-XYmBiy+ohOR4Lh5jE379fV2IU+6Jn4g5qASinhitfyO71b/sCo6MKsMLF5tc7Zf2CE8hViVQyYSobJNke8OvUw==
+"@types/node@^18.7.17":
+  version "18.7.17"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.7.17.tgz#52438111ea98f77475470fc62d79b9eb96bb2c92"
+  integrity sha512-0UyfUnt02zIuqp7yC8RYtDkp/vo8bFaQ13KkSEvUAohPOAlnVNbj5Fi3fgPSuwzakS+EvvnnZ4x9y7i6ASaSPQ==
 
 "@types/prop-types@*":
   version "15.7.3"
