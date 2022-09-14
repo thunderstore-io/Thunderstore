@@ -629,7 +629,7 @@ if all(
         env.str("MIRROR_S3_STORAGE_BUCKET_NAME"),
     ),
 ):
-    mirror = Tuple[S3MirrorConfig, ...] = (
+    mirror: Tuple[S3MirrorConfig, ...] = (
         {
             "access_key": env.str("MIRROR_S3_ACCESS_KEY_ID"),
             "secret_key": env.str("MIRROR_S3_SECRET_ACCESS_KEY"),
