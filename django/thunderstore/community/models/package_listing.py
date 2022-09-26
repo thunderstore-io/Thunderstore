@@ -2,7 +2,8 @@ from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q, signals
+from django.db.models import F, Q, Value, signals
+from django.db.models.functions import Concat
 from django.urls import reverse
 from django.utils.functional import cached_property
 
@@ -17,6 +18,17 @@ class PackageListingQueryset(models.QuerySet):
     def active(self):
         return self.exclude(package__is_active=False).exclude(
             ~Q(package__versions__is_active=True)
+        )
+
+    def annotate_canonical_name(self):
+        return self.annotate(
+            canonical_name=Concat(
+                F("package__owner__name"),
+                Value("-"),
+                F("package__name"),
+                Value("-"),
+                F("package__versions__version_number"),
+            )
         )
 
     def approved(self):
