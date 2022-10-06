@@ -58,6 +58,18 @@
     }
 }
 
+.main_content_left,
+.main_content_right {
+    flex-grow: 1;
+    flex-basis: 0;
+}
+.main {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    width: 100%;
+}
+
 @keyframes rotate {
     to {
         transform: rotate(360deg);

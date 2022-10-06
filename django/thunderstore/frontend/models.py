@@ -13,6 +13,8 @@ class DynamicPlacement(ChoiceEnum):
     html_body_beginning = "html_body_beginning"
     content_beginning = "content_beginning"
     content_end = "content_end"
+    main_content_left = "main_content_left"
+    main_content_right = "main_content_right"
 
 
 class DynamicHTML(models.Model):
