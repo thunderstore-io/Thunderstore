@@ -127,18 +127,25 @@
                 {% endif %}
             </ul>
         </nav>
-        <div class="container">
-            {% for message in messages %}
-                <div class="alert mt-3 alert-{{ message.tags }}" role="alert"><p class="mb-0">{{ message }}</p></div>
-            {% endfor %}
-            {% block content_beginning %}
-                {% dynamic_html "content_beginning" %}
-            {% endblock %}
-            {% block content %}
-            {% endblock %}
-            {% block content_end %}
-                {% dynamic_html "content_end" %}
-            {% endblock %}
+        <div class="main">
+            <div class="main_content_left">{% block main_content_left %}{% dynamic_html "main_content_left" %}{% endblock %}</div>
+            <div class="container">
+                {% for message in messages %}
+                    <div class="alert mt-3 alert-{{ message.tags }}" role="alert"><p class="mb-0">{{ message }}</p></div>
+                {% endfor %}
+
+                {% block content_beginning %}
+                    {% dynamic_html "content_beginning" %}
+                {% endblock %}
+
+                {% block content %}
+                {% endblock %}
+
+                {% block content_end %}
+                    {% dynamic_html "content_end" %}
+                {% endblock %}
+            </div>
+            <div class="main_content_right">{% block main_content_right %}{% dynamic_html "main_content_right" %}{% endblock %}</div>
         </div>
     </body>
 </html>
