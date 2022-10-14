@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Manifest Validator{% endblock %}
-
+{% block main_content_left %}{% endblock %}
 {% block content_beginning %}{% endblock %}
 
 {% block content %}
@@ -9,7 +9,9 @@
 
 <div id="manifest-validator-page"></div>
 <script type="text/javascript">
-window.ts.ManifestValidationPage(document.getElementById("manifest-validator-page"));
+    window.ts.ManifestValidationPage(document.getElementById("manifest-validator-page"));
 </script>
 
 {% endblock %}
+{% block content_end %}{% endblock %}
+{% block main_content_right %}{% endblock %}

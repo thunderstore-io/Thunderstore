@@ -2,6 +2,7 @@
 
 {% block title %}Markdown Preview{% endblock %}
 
+{% block main_content_left %}{% endblock %}
 {% block content_beginning %}{% endblock %}
 
 {% block content %}
@@ -9,7 +10,9 @@
 
 <div id="markdown-preview-page"></div>
 <script type="text/javascript">
-window.ts.MarkdownPreviewPage(document.getElementById("markdown-preview-page"));
+    window.ts.MarkdownPreviewPage(document.getElementById("markdown-preview-page"));
 </script>
 
 {% endblock %}
+{% block content_end %}{% endblock %}
+{% block main_content_right %}{% endblock %}
