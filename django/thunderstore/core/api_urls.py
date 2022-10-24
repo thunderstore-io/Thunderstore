@@ -6,6 +6,9 @@ from thunderstore.community.api.experimental.urls import (
 from thunderstore.frontend.api.experimental.urls import (
     urls as frontend_experimental_urls,
 )
+from thunderstore.modpacks.api.experimental.urls import (
+    urls as modpacks_experimental_urls,
+)
 from thunderstore.repository.api.experimental.urls import (
     urls as repository_experimental_urls,
 )
@@ -35,6 +38,10 @@ api_experimental_urls = [
     path(
         "",
         include(social_experimental_urls),
+    ),
+    path(
+        "",
+        include(modpacks_experimental_urls),
     ),
 ]
 

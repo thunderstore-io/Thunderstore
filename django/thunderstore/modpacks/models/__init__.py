@@ -1,0 +1,1 @@
+from .legacyprofile import LegacyProfile
