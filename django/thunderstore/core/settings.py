@@ -111,6 +111,7 @@ env = environ.Env(
     CELERY_EAGER_PROPAGATES_EXCEPTIONS=(bool, False),
     REPOSITORY_MAX_PACKAGE_SIZE_MB=(int, 500),
     REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB=(int, 1000),
+    LEGACYPROFILE_MAX_TOTAL_SIZE_GB=(int, 1000),
     SESSION_COOKIE_DOMAIN=(str, ""),
     OAUTH_SHARED_SECRET=(str, ""),
     ALWAYS_RAISE_EXCEPTIONS=(bool, False),
@@ -233,6 +234,7 @@ INSTALLED_APPS = [
     "thunderstore.usermedia",
     "thunderstore.account",
     "thunderstore.markdown",
+    "thunderstore.modpacks",
 ]
 
 MIDDLEWARE = [
@@ -346,6 +348,7 @@ LOGOUT_REDIRECT_URL = "index"
 
 REPOSITORY_MAX_PACKAGE_SIZE_MB = env.int("REPOSITORY_MAX_PACKAGE_SIZE_MB")
 REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB = env.int("REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB")
+LEGACYPROFILE_MAX_TOTAL_SIZE_GB = env.int("LEGACYPROFILE_MAX_TOTAL_SIZE_GB")
 
 # Debug toolbar
 
@@ -527,6 +530,7 @@ THUMBNAIL_QUALITY = 95
 DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 THUMBNAIL_DEFAULT_STORAGE = "django.core.files.storage.FileSystemStorage"
 PACKAGE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+MODPACK_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
 # AWS S3 for everything, can be used with S3 compatible providers
 
@@ -603,6 +607,7 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    MODPACK_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # For uploading files to multiple buckets at once.
 S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
@@ -648,11 +653,13 @@ if all(
     DEFAULT_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     THUMBNAIL_DEFAULT_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
 
 # Storage Defaults
 DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
 THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
 PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
+MODPACK_FILE_STORAGE = get_storage_class_or_stub(MODPACK_FILE_STORAGE)
 
 # Social auth
 
