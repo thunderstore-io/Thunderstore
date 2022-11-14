@@ -83,7 +83,13 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding: 50px 0px 25px 0px;
+    padding: 50px 25px 25px 25px;
+
+    @media (max-width: 575px) {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
 }
 
 .footer_content_left > h1 {
@@ -93,9 +99,20 @@
 .footer_links {
     display: flex;
     justify-content: space-between;
-    padding: 15px 0px 15px 0px;
+    align-items: center;
+    padding: 15px;
     color: #4c4c4c;
     border-top: 0.1rem solid #3c3c3c !important;
+
+    @media (max-width: 575px) {
+        flex-direction: column-reverse;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+.footer_links > p {
+    margin: 0;
 }
 
 .footer_links > div > a {
