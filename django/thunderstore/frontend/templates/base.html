@@ -145,9 +145,9 @@
             <div class="main_content_right">{% block main_content_right %}{% dynamic_html "main_content_right" %}{% endblock %}</div>
         </div>
         <div class="footer">
-            <div class="end_dynamic_html">
-                {% block content_end %}
-                    {% dynamic_html "content_end" %}
+            <div class="content_footer_dynamic_html">
+                {% block content_footer %}
+                    {% dynamic_html "content_footer" %}
                 {% endblock %}
             </div>
             <div class="container footer_content">
@@ -172,5 +172,8 @@
                 </div>
             </div>
         </div>
+        {% block content_end %}
+            {% dynamic_html "content_end" %}
+        {% endblock %}
     </body>
 </html>
