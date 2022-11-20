@@ -145,14 +145,17 @@
             <div class="main_content_right">{% block main_content_right %}{% dynamic_html "main_content_right" %}{% endblock %}</div>
         </div>
         <div class="footer">
-            <div class="content_footer_dynamic_html">
-                {% block content_footer %}
-                    {% dynamic_html "content_footer" %}
+            <div class="footer_top">
+                {% block footer_top %}
+                    {% dynamic_html "footer_top" %}
                 {% endblock %}
             </div>
             <div class="container footer_content">
                 <div class="footer_content_left">
                     <h1>Thunderstore</h1>
+                    {% block footer_bottom %}
+                        {% dynamic_html "footer_bottom" %}
+                    {% endblock %}
                 </div>
                 <div class="footer_content_right">
                     <div class="footer_right_developers">
