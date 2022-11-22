@@ -141,6 +141,9 @@
                 {% block content %}
                 {% endblock %}
 
+                {% block content_end %}
+                    {% dynamic_html "content_end" %}
+                {% endblock %}
             </div>
             <div class="main_content_right">{% block main_content_right %}{% dynamic_html "main_content_right" %}{% endblock %}</div>
         </div>
@@ -175,8 +178,5 @@
                 </div>
             </div>
         </div>
-        {% block content_end %}
-            {% dynamic_html "content_end" %}
-        {% endblock %}
     </body>
 </html>
