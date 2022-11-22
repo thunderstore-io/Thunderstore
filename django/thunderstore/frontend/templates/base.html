@@ -147,5 +147,36 @@
             </div>
             <div class="main_content_right">{% block main_content_right %}{% dynamic_html "main_content_right" %}{% endblock %}</div>
         </div>
+        <div class="footer">
+            <div class="footer_top">
+                {% block footer_top %}
+                    {% dynamic_html "footer_top" %}
+                {% endblock %}
+            </div>
+            <div class="container footer_content">
+                <div class="footer_content_left">
+                    <img class="thunderstore_logo" src="{% static '/ts-logo-horizontal.svg' %}" />
+                    {% block footer_bottom %}
+                        {% dynamic_html "footer_bottom" %}
+                    {% endblock %}
+                </div>
+                <div class="footer_content_right">
+                    <div class="footer_right_developers">
+                        <h2>Developers</h2>
+                        <a href="{% url 'swagger' %}">API Docs</a>
+                        <a href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
+                        <a href="{% url 'old_urls:packages.create.docs' %}">Package Format Docs</a>
+                        <a href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
+                        <a href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
+                    </div>
+                </div>
+            </div>
+            <div class="container footer_links">
+                <p>Thunderstore 2022</p>
+                <div>
+                    <a class="nav-link" href="https://discord.gg/UWpWhjZken"><span class="fab fa-discord"></span></a>
+                </div>
+            </div>
+        </div>
     </body>
 </html>
