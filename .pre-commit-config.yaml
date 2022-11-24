@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: prettier
         exclude: "^(django/|builder/src/[a-z]+/vendor/)"
-  - repo: https://gitlab.com/PyCQA/flake8
+  - repo: https://github.com/PyCQA/flake8
     rev: "3.8.4"
     hooks:
       - id: flake8
