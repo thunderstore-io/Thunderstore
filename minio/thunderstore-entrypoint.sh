@@ -6,8 +6,8 @@ sleep 2
 mc alias set thunderstore http://127.0.0.1:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
 mc mb thunderstore/thunderstore;
 mc mb thunderstore/test;
-mc policy set download thunderstore/thunderstore;
-mc policy set download thunderstore/test;
+mc anonymous set download thunderstore/thunderstore;
+mc anonymous set download thunderstore/test;
 kill $MINIO_PID
 wait $MINIO_PID
 source /usr/bin/docker-entrypoint.sh "$@"
