@@ -3,6 +3,7 @@ node/
 .vscode/settings.json
 package/
 .env
+**/*.sql
 *.service-account.json
 kubernetes/deployment.yaml
 package-example/
