@@ -2,16 +2,21 @@ from collections import OrderedDict
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import GenericAPIView, ListAPIView, get_object_or_404
 from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.community.models import Community
+from thunderstore.community.api.experimental.serializers import (
+    PackageListingUpdateRequestSerializer,
+)
+from thunderstore.community.models import Community, PackageListing
 from thunderstore.frontend.api.experimental.serializers.views import (
     CommunitySerializer,
     PackageCategorySerializer,
 )
+from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 
 
 class CustomCursorPagination(CursorPagination):
@@ -80,3 +85,32 @@ class CurrentCommunityExperimentalApiView(APIView):
     def get(self, request, *args, **kwargs):
         serializer = CommunitySerializer(request.community)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PackageListingUpdateApiView(GenericAPIView):
+    queryset = PackageListing.objects.active().select_related(
+        "community",
+        "package",
+    )
+    serializer_class = PackageListingSerializer
+
+    @swagger_auto_schema(
+        operation_id="experimental.package_listing.update",
+        request_body=PackageListingUpdateRequestSerializer,
+        responses={200: serializer_class()},
+    )
+    def post(self, request, *args, **kwargs):
+        listing: PackageListing = self.get_object()
+        request_serializer = PackageListingUpdateRequestSerializer(
+            data=request.data, context={"community": listing.community}
+        )
+        request_serializer.is_valid(raise_exception=True)
+        if listing.check_update_categories_permission(request.user):
+            listing.update_categories(
+                agent=request.user,
+                categories=request_serializer.validated_data["categories"],
+            )
+            serializer = self.serializer_class(instance=listing)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            raise PermissionDenied()

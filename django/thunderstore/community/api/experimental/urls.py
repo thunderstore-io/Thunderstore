@@ -4,6 +4,7 @@ from thunderstore.community.api.experimental.views import (
     CommunitiesExperimentalApiView,
     CurrentCommunityExperimentalApiView,
     PackageCategoriesExperimentalApiView,
+    PackageListingUpdateApiView,
 )
 
 urls = [
@@ -21,5 +22,10 @@ urls = [
         "current-community/",
         CurrentCommunityExperimentalApiView.as_view(),
         name="current-community",
+    ),
+    path(
+        "package-listing/<int:pk>/update/",
+        PackageListingUpdateApiView.as_view(),
+        name="package-listing.update",
     ),
 ]

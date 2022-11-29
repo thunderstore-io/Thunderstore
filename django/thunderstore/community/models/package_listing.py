@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -11,6 +11,9 @@ from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, check_validity
+
+if TYPE_CHECKING:
+    from thunderstore.community.models import PackageCategory
 
 
 class PackageListingQueryset(models.QuerySet):
@@ -177,6 +180,31 @@ class PackageListing(TimestampMixin, models.Model):
     @property
     def is_rejected(self):
         return self.review_status == PackageListingReviewStatus.rejected
+
+    def update_categories(self, agent: UserType, categories: List["PackageCategory"]):
+        self.ensure_update_categories_permission(agent)
+        for category in categories:
+            if category.community_id != self.community_id:
+                raise ValidationError(
+                    "Community mismatch between package listing and category"
+                )
+        self.categories.set(categories)
+
+    def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
+        if not user or not user.is_authenticated:
+            raise ValidationError("Must be authenticated")
+        if not user.is_active:
+            raise ValidationError("User has been deactivated")
+        if hasattr(user, "service_account"):
+            raise ValidationError("Service accounts are unable to perform this action")
+        is_allowed = self.community.can_user_manage_packages(
+            user
+        ) or self.package.owner.can_user_manage_packages(user)
+        if not is_allowed:
+            raise ValidationError("Must have package management permission")
+
+    def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_update_categories_permission(user))
 
     def ensure_can_be_viewed_by_user(self, user: Optional[UserType]) -> None:
         def get_has_perms() -> bool:
