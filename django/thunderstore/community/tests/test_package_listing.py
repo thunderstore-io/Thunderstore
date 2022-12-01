@@ -3,10 +3,12 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from conftest import TestUserTypes
+from thunderstore.community.factories import CommunityFactory
 from thunderstore.community.models import (
     Community,
     CommunityMemberRole,
     CommunityMembership,
+    PackageCategory,
     PackageListing,
     PackageListingReviewStatus,
 )
@@ -174,3 +176,102 @@ def test_package_listing_ensure_can_be_viewed_by_user(
         elif listing.package.owner.can_user_access(user):
             assert result is True
             assert error is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
+def test_package_listing_ensure_update_categories_permission(
+    active_package_listing: PackageListing,
+    user_type: str,
+    community_role: str,
+    team_role: str,
+):
+    listing = active_package_listing
+    community = active_package_listing.community
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    if community_role is not None and user_type not in TestUserTypes.fake_users():
+        CommunityMembership.objects.create(
+            user=user,
+            community=community,
+            role=community_role,
+        )
+    if team_role is not None and user_type not in TestUserTypes.fake_users():
+        TeamMember.objects.create(
+            user=user,
+            team=listing.package.owner,
+            role=team_role,
+        )
+
+    result = listing.check_update_categories_permission(user)
+    error = None
+    try:
+        listing.ensure_update_categories_permission(user)
+    except ValidationError as e:
+        error = e.message
+
+    has_perms = any(
+        (
+            team_role == TeamMemberRole.owner,
+            team_role == TeamMemberRole.member,
+            community_role == CommunityMemberRole.owner,
+            community_role == CommunityMemberRole.moderator,
+        )
+    )
+
+    error_map = {
+        TestUserTypes.no_user: "Must be authenticated",
+        TestUserTypes.unauthenticated: "Must be authenticated",
+        TestUserTypes.regular_user: (
+            None if has_perms else "Must have package management permission"
+        ),
+        TestUserTypes.deactivated_user: "User has been deactivated",
+        TestUserTypes.service_account: "Service accounts are unable to perform this action",
+        TestUserTypes.site_admin: None,
+        TestUserTypes.superuser: None,
+    }
+    expected_error = error_map[user_type]
+
+    if expected_error:
+        assert result is False
+        assert error == expected_error
+    else:
+        assert result is True
+        assert error is None
+
+
+@pytest.mark.django_db
+def test_package_listing_update_categories(
+    active_package_listing: PackageListing,
+    package_category: PackageCategory,
+    team_owner: TeamMember,
+    mocker,
+):
+    assert package_category.community == active_package_listing.community
+    assert active_package_listing.package.owner == team_owner.team
+    assert active_package_listing.categories.count() == 0
+    mocked_permission_check = mocker.patch.object(
+        active_package_listing, "ensure_update_categories_permission"
+    )
+    active_package_listing.update_categories(
+        agent=team_owner.user,
+        categories=[package_category],
+    )
+    mocked_permission_check.assert_called_with(team_owner.user)
+    assert package_category in active_package_listing.categories.all()
+
+    invalid_category = PackageCategory.objects.create(
+        name="Test",
+        slug="test",
+        community=CommunityFactory(),
+    )
+    assert invalid_category.pk != package_category.pk
+    with pytest.raises(
+        ValidationError, match="Community mismatch between package listing and category"
+    ):
+        active_package_listing.update_categories(
+            agent=team_owner.user,
+            categories=[invalid_category],
+        )

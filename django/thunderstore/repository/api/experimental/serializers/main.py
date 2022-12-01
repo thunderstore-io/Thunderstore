@@ -152,6 +152,10 @@ class JSONSerializerField(serializers.JSONField):
 
 class CommunityFilteredModelChoiceField(ModelChoiceField):
     def get_queryset(self):
+        if "community" in self.context:
+            return self.queryset.exclude(
+                ~Q(community=self.context["community"]),
+            )
         return self.queryset.exclude(
             ~Q(community=self.context["request"].community),
         )
