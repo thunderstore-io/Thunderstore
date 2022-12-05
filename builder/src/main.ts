@@ -6,6 +6,7 @@ import React, { ComponentClass, FunctionComponent } from "react";
 import * as Sentry from "@sentry/react";
 import { MarkdownPreviewPage } from "./markdown";
 import { ManifestValidationPage } from "./manifest";
+import { PackageManagementPanel } from "./components/PackageManagement/Panel";
 
 Sentry.init({
     // TODO: Add as a build variable instead
@@ -16,9 +17,15 @@ Sentry.init({
     allowUrls: [window.location.origin],
 });
 
-const CreateComponent = (component: FunctionComponent | ComponentClass) => {
-    return (element: Element) => {
-        ReactDOM.render(React.createElement(component), element);
+const CreateComponent = (
+    component: FunctionComponent<any> | ComponentClass
+) => {
+    return (element: Element, encodedProps?: string) => {
+        let props: any = undefined;
+        if (encodedProps) {
+            props = JSON.parse(atob(encodedProps));
+        }
+        ReactDOM.render(React.createElement(component, props), element);
     };
 };
 
@@ -26,4 +33,5 @@ const CreateComponent = (component: FunctionComponent | ComponentClass) => {
     UploadPage: CreateComponent(UploadPage),
     MarkdownPreviewPage: CreateComponent(MarkdownPreviewPage),
     ManifestValidationPage: CreateComponent(ManifestValidationPage),
+    PackageManagementPanel: CreateComponent(PackageManagementPanel),
 };

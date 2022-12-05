@@ -1,4 +1,3 @@
-import time
 from typing import List, Optional, Set, Tuple
 
 from django.conf import settings
@@ -6,11 +5,11 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import Http404
+from django.middleware import csrf
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.http import urlencode
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
@@ -460,10 +459,14 @@ class PackageDetailView(CommunityMixin, DetailView):
 
         context["dependants_string"] = dependants_string
 
-        context["can_manage"] = self.can_manage
-        context["can_deprecate"] = self.can_deprecate
-        context["can_undeprecate"] = self.can_undeprecate
-        context["can_unlist"] = self.can_unlist
+        context["show_management_panel"] = self.can_manage
+        context["management_panel_props"] = {
+            "isDeprecated": package_listing.package.is_deprecated,
+            "canDeprecate": self.can_deprecate,
+            "canUndeprecate": self.can_undeprecate,
+            "canUnlist": self.can_unlist,
+            "csrfToken": csrf.get_token(self.request),
+        }
         return context
 
     def post_deprecate(self):

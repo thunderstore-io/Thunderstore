@@ -21,6 +21,7 @@ from ...community.models import (
     PackageListingReviewStatus,
 )
 from ...core.types import UserType
+from ...frontend.extract_props import extract_props_from_html
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team, TeamMember, TeamMemberRole
 from ..package_upload import PackageUploadForm
@@ -460,19 +461,21 @@ def test_view_package_detail_management_option_visibility_without_team(
         TestUserTypes.superuser: True,
     }[user_type]
 
-    expected = b"Manage package deprecation"
+    expected = b'<div id="package-management-panel"></div>'
     if expected_management_visibility is False:
         assert expected not in response.content
     else:
         assert expected in response.content
 
-    expected = (
-        b'<input type="submit" class="btn btn-danger" name="unlist" value="Unlist">'
+    props = extract_props_from_html(
+        html=response.content.decode(),
+        component_name="PackageManagementPanel",
+        component_id="package-management-panel",
     )
-    if expected_unlist_visibility is False:
-        assert expected not in response.content
+    if expected_management_visibility:
+        assert props["canUnlist"] is expected_unlist_visibility
     else:
-        assert expected in response.content
+        assert props is None
 
 
 @pytest.mark.django_db
@@ -517,19 +520,21 @@ def test_view_package_detail_management_option_visibility_with_team(
         TeamMemberRole.member: True,
     }[role] or superuser is True
 
-    expected = b"Manage package deprecation"
+    expected = b'<div id="package-management-panel"></div>'
     if expected_management_visibility is False:
         assert expected not in response.content
     else:
         assert expected in response.content
 
-    expected = (
-        b'<input type="submit" class="btn btn-danger" name="unlist" value="Unlist">'
+    props = extract_props_from_html(
+        html=response.content.decode(),
+        component_name="PackageManagementPanel",
+        component_id="package-management-panel",
     )
-    if superuser is False:
-        assert expected not in response.content
+    if expected_management_visibility:
+        assert props["canUnlist"] is superuser
     else:
-        assert expected in response.content
+        assert props is None
 
 
 @pytest.mark.django_db
