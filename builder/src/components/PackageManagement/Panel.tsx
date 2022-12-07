@@ -1,5 +1,7 @@
 import React from "react";
 import { DeprecationForm } from "./Deprecation";
+import { CategoriesForm } from "./Categories";
+import { PackageCategory } from "../../api";
 
 type PackageManagementPanelProps = {
     isDeprecated: boolean;
@@ -8,6 +10,9 @@ type PackageManagementPanelProps = {
     canUnlist: boolean;
     canUpdateCategories: boolean;
     csrfToken: string;
+    currentCategories: PackageCategory[];
+    availableCategories: PackageCategory[];
+    packageListingId: string;
 };
 export const PackageManagementPanel: React.FC<PackageManagementPanelProps> = (
     props
@@ -48,6 +53,10 @@ export const PackageManagementPanel: React.FC<PackageManagementPanelProps> = (
                         <StatusText />
                     </p>
                     <DeprecationForm {...props} />
+                </div>
+                <div className="mt-3">
+                    <h5>Categories</h5>
+                    <CategoriesForm {...props} />
                 </div>
             </div>
         </div>
