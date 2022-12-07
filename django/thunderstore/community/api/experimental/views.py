@@ -17,6 +17,7 @@ from thunderstore.frontend.api.experimental.serializers.views import (
     PackageCategorySerializer,
 )
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
+from thunderstore.repository.views.repository import get_package_listing_or_404
 
 
 class CustomCursorPagination(CursorPagination):
@@ -109,6 +110,11 @@ class PackageListingUpdateApiView(GenericAPIView):
             listing.update_categories(
                 agent=request.user,
                 categories=request_serializer.validated_data["categories"],
+            )
+            get_package_listing_or_404.clear_cache_with_args(
+                namespace=listing.package.namespace.name,
+                name=listing.package.name,
+                community=listing.community,
             )
             serializer = self.serializer_class(instance=listing)
             return Response(serializer.data, status=status.HTTP_200_OK)

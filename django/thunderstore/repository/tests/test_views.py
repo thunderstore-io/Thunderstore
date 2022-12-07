@@ -17,6 +17,7 @@ from ...cache.tasks import invalidate_cache
 from ...community.factories import CommunitySiteFactory, SiteFactory
 from ...community.models import (
     CommunitySite,
+    PackageCategory,
     PackageListing,
     PackageListingReviewStatus,
 )
@@ -430,8 +431,11 @@ def test_view_package_detail_management_option_visibility_without_team(
     user_type: str,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
+    package_category: PackageCategory,
 ) -> None:
     assert community_site.community == active_package_listing.community
+    assert package_category.community == active_package_listing.community
+    active_package_listing.categories.add(package_category)
 
     user = TestUserTypes.get_user_by_type(user_type)
     if user_type not in TestUserTypes.fake_users():
@@ -492,10 +496,13 @@ def test_view_package_detail_management_option_visibility_with_team(
     client: APIClient,
     community_site: CommunitySite,
     active_package_listing: PackageListing,
+    package_category: PackageCategory,
     role: Optional[str],
     superuser: bool,
 ) -> None:
     assert community_site.community == active_package_listing.community
+    assert package_category.community == active_package_listing.community
+    active_package_listing.categories.add(package_category)
 
     client.force_login(user)
     if role is not None:

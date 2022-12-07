@@ -60,6 +60,15 @@ export class ThunderstoreApiError {
         return new ThunderstoreApiError(message, response, errorObject);
     };
 
+    public toString(): string {
+        if (this.errorObject) {
+            const detail = JSON.stringify(this.errorObject, undefined, 2);
+            return `${this.message} - ${detail}`;
+        } else {
+            return `${this.message}`;
+        }
+    }
+
     get statusCode(): number {
         return this.response.status;
     }
@@ -141,6 +150,8 @@ class ApiUrls {
     static renderMarkdown = () => apiUrl("frontend", "render-markdown");
     static validateManifestV1 = () =>
         apiUrl("submission", "validate", "manifest-v1");
+    static updatePackageListing = (packageListingId: string) =>
+        apiUrl("package-listing", packageListingId, "update");
 }
 
 export interface UserMedia {
@@ -236,6 +247,22 @@ export interface PackageSubmissionResult {
     available_communities: PackageAvailableCommunity[];
 }
 
+export interface PackageListing {
+    categories: PackageCategory[];
+    date_created: string;
+    date_updated: string;
+    full_name: string;
+    has_nsfw_content: boolean;
+    is_deprecated: boolean;
+    is_pinned: boolean;
+    name: string;
+    owner: string;
+    package_url: string;
+    rating_score: number;
+    uuid4: string;
+    versions: PackageVersion[];
+}
+
 class ExperimentalApiImpl extends ThunderstoreApi {
     currentUser = async () => {
         const response = await this.get(ApiUrls.currentUser());
@@ -280,6 +307,19 @@ class ExperimentalApiImpl extends ThunderstoreApi {
     }) => {
         const response = await this.post(ApiUrls.submitPackage(), props.data);
         return (await response.json()) as PackageSubmissionResult;
+    };
+
+    updatePackageListing = async (props: {
+        packageListingId: string;
+        data: {
+            categories: string[];
+        };
+    }) => {
+        const response = await this.post(
+            ApiUrls.updatePackageListing(props.packageListingId),
+            props.data
+        );
+        return (await response.json()) as PackageListing;
     };
 
     listCommunities = async () => {

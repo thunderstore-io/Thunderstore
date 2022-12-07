@@ -458,14 +458,25 @@ class PackageDetailView(CommunityMixin, DetailView):
             dependants_string = f"{dependant_count} other mods depend on this mod"
 
         context["dependants_string"] = dependants_string
-
         context["show_management_panel"] = self.can_manage
+
+        def format_category(cat: PackageCategory):
+            return {"name": cat.name, "slug": cat.slug}
+
         context["management_panel_props"] = {
             "isDeprecated": package_listing.package.is_deprecated,
             "canDeprecate": self.can_deprecate,
             "canUndeprecate": self.can_undeprecate,
             "canUnlist": self.can_unlist,
             "csrfToken": csrf.get_token(self.request),
+            "currentCategories": [
+                format_category(x) for x in package_listing.categories.all()
+            ],
+            "availableCategories": [
+                format_category(x)
+                for x in package_listing.community.package_categories.all()
+            ],
+            "packageListingId": package_listing.pk,
         }
         return context
 
