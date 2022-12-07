@@ -3,15 +3,17 @@ import React, { useMemo } from "react";
 import { Controller } from "react-hook-form";
 import Select from "react-select";
 
-interface FormSelectFieldProps<T> {
-    control: Control;
+interface FormSelectFieldProps<T, F> {
+    control: Control<F>;
     name: string;
     data: T[];
     getOption: (t: T) => { value: string; label: string };
     default?: T | T[];
     isMulti?: boolean;
 }
-export const FormSelectField: React.FC<FormSelectFieldProps<any>> = (props) => {
+export const FormSelectField: React.FC<FormSelectFieldProps<any, any>> = (
+    props
+) => {
     const defaultValue = useMemo(() => {
         if (!props.default) return undefined;
         if (props.isMulti) {

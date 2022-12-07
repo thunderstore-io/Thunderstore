@@ -1,34 +1,32 @@
 import React, { useMemo } from "react";
 import { CsrfInput } from "./CsrfInput";
+import { useManagementContext } from "./Context";
 
 type Button = {
     className: string;
     name: string;
 };
-type DeprecationFormProps = {
-    canDeprecate: boolean;
-    canUndeprecate: boolean;
-    canUnlist: boolean;
-    csrfToken: string;
-};
-export const DeprecationForm: React.FC<DeprecationFormProps> = (props) => {
+
+export const DeprecationForm: React.FC = () => {
+    const context = useManagementContext().props;
+
     const buttons = useMemo(() => {
         const result: Button[] = [];
-        if (props.canDeprecate) {
+        if (context.canDeprecate) {
             result.push({ name: "deprecate", className: "btn-warning" });
         }
-        if (props.canUndeprecate) {
+        if (context.canUndeprecate) {
             result.push({ name: "undeprecate", className: "btn-primary" });
         }
-        if (props.canUnlist) {
+        if (context.canUnlist) {
             result.push({ name: "unlist", className: "btn-danger" });
         }
         return result;
-    }, [props.canDeprecate, props.canUndeprecate, props.canUnlist]);
+    }, [context.canDeprecate, context.canUndeprecate, context.canUnlist]);
 
     return (
         <form method="POST" action="#">
-            <CsrfInput csrfToken={props.csrfToken} />
+            <CsrfInput csrfToken={context.csrfToken} />
             {buttons.map((x) => (
                 <input
                     key={x.name}
