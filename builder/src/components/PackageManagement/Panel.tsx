@@ -1,64 +1,25 @@
-import React from "react";
-import { DeprecationForm } from "./Deprecation";
-import { CategoriesForm } from "./Categories";
-import { PackageCategory } from "../../api";
+import React, { useState } from "react";
+import { ContextProps, ManagementContextProvider } from "./Context";
+import { PackageManagementModal } from "./Modal";
 
-type PackageManagementPanelProps = {
-    isDeprecated: boolean;
-    canDeprecate: boolean;
-    canUndeprecate: boolean;
-    canUnlist: boolean;
-    canUpdateCategories: boolean;
-    csrfToken: string;
-    currentCategories: PackageCategory[];
-    availableCategories: PackageCategory[];
-    packageListingId: string;
-};
-export const PackageManagementPanel: React.FC<PackageManagementPanelProps> = (
-    props
-) => {
-    const StatusText: React.FC = () => {
-        if (props.isDeprecated) {
-            return (
-                <>
-                    Current status:{" "}
-                    <span className="badge badge-pill badge-danger">
-                        deprecated
-                    </span>
-                </>
-            );
-        } else {
-            return (
-                <>
-                    Current status:{" "}
-                    <span className="badge badge-pill badge-primary">
-                        active
-                    </span>
-                </>
-            );
-        }
-    };
+export const PackageManagementPanel: React.FC<ContextProps> = (props) => {
+    const [isVisible, setIsVisible] = useState<boolean>(false);
+    const closeModal = () => setIsVisible(false);
 
     return (
-        <div className="card text-white bg-info mt-2">
-            <div className="card-body">
-                <h4 className="card-title">Manage package</h4>
-                <p className="card-text">
-                    Changes might take several minutes to show publicly! This
-                    card is always up to date.
-                </p>
-                <div className="mt-3">
-                    <h5>Status</h5>
-                    <p className="card-text">
-                        <StatusText />
-                    </p>
-                    <DeprecationForm {...props} />
-                </div>
-                <div className="mt-3">
-                    <h5>Categories</h5>
-                    <CategoriesForm {...props} />
-                </div>
+        <ManagementContextProvider initial={props} closeModal={closeModal}>
+            <div className="d-flex justify-content-end">
+                {isVisible && <PackageManagementModal />}
+                <button
+                    type="button"
+                    className="btn btn-primary"
+                    aria-label="Manage Package"
+                    onClick={() => setIsVisible(true)}
+                >
+                    <span className="fa fa-cog" />
+                    &nbsp;Manage Package
+                </button>
             </div>
-        </div>
+        </ManagementContextProvider>
     );
 };

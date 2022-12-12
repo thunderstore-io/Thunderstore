@@ -468,6 +468,7 @@ class PackageDetailView(CommunityMixin, DetailView):
             "canDeprecate": self.can_deprecate,
             "canUndeprecate": self.can_undeprecate,
             "canUnlist": self.can_unlist,
+            "canUpdateCategories": self.can_manage,
             "csrfToken": csrf.get_token(self.request),
             "currentCategories": [
                 format_category(x) for x in package_listing.categories.all()

@@ -14,3 +14,12 @@ class PackageListingUpdateRequestSerializer(serializers.Serializer):
         ),
         allow_empty=True,
     )
+
+
+class PackageCategorySerializer(serializers.Serializer):
+    name = serializers.CharField()
+    slug = serializers.SlugField()
+
+
+class PackageListingUpdateResponseSerializer(serializers.Serializer):
+    categories = serializers.ListSerializer(child=PackageCategorySerializer())

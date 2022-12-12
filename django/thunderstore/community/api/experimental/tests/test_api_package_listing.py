@@ -39,7 +39,7 @@ def test_api_experimental_package_listing_update_user_types(
     print(response.content)
     if should_succeed:
         assert response.status_code == 200
-        assert response.json()["name"] == active_package_listing.package.name
+        assert response.json()["categories"] == []
     else:
         assert response.status_code == 403
         assert (
@@ -66,6 +66,8 @@ def test_api_experimental_package_listing_update(
     )
 
     assert response.status_code == 200
-    assert response.json()["categories"] == [package_category.name]
+    assert response.json()["categories"] == [
+        {"name": package_category.name, "slug": package_category.slug}
+    ]
     assert active_package_listing.categories.count() == 1
     assert package_category in active_package_listing.categories.all()

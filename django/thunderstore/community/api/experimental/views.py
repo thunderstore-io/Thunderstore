@@ -10,13 +10,13 @@ from rest_framework.views import APIView
 
 from thunderstore.community.api.experimental.serializers import (
     PackageListingUpdateRequestSerializer,
+    PackageListingUpdateResponseSerializer,
 )
 from thunderstore.community.models import Community, PackageListing
 from thunderstore.frontend.api.experimental.serializers.views import (
     CommunitySerializer,
     PackageCategorySerializer,
 )
-from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.views.repository import get_package_listing_or_404
 
 
@@ -93,7 +93,7 @@ class PackageListingUpdateApiView(GenericAPIView):
         "community",
         "package",
     )
-    serializer_class = PackageListingSerializer
+    serializer_class = PackageListingUpdateResponseSerializer
 
     @swagger_auto_schema(
         operation_id="experimental.package_listing.update",

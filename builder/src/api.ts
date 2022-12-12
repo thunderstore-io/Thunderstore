@@ -247,20 +247,8 @@ export interface PackageSubmissionResult {
     available_communities: PackageAvailableCommunity[];
 }
 
-export interface PackageListing {
+export interface UpdatePackageListingResponse {
     categories: PackageCategory[];
-    date_created: string;
-    date_updated: string;
-    full_name: string;
-    has_nsfw_content: boolean;
-    is_deprecated: boolean;
-    is_pinned: boolean;
-    name: string;
-    owner: string;
-    package_url: string;
-    rating_score: number;
-    uuid4: string;
-    versions: PackageVersion[];
 }
 
 class ExperimentalApiImpl extends ThunderstoreApi {
@@ -319,7 +307,7 @@ class ExperimentalApiImpl extends ThunderstoreApi {
             ApiUrls.updatePackageListing(props.packageListingId),
             props.data
         );
-        return (await response.json()) as PackageListing;
+        return (await response.json()) as UpdatePackageListingResponse;
     };
 
     listCommunities = async () => {
