@@ -16,10 +16,12 @@ class PackageListingUpdateRequestSerializer(serializers.Serializer):
     )
 
 
-class PackageCategorySerializer(serializers.Serializer):
+class PackageCategoryExperimentalSerializer(serializers.Serializer):
     name = serializers.CharField()
     slug = serializers.SlugField()
 
 
 class PackageListingUpdateResponseSerializer(serializers.Serializer):
-    categories = serializers.ListSerializer(child=PackageCategorySerializer())
+    categories = serializers.ListSerializer(
+        child=PackageCategoryExperimentalSerializer()
+    )

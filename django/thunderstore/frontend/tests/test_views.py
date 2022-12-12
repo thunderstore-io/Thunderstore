@@ -1,5 +1,17 @@
 import pytest
 from django.urls import reverse
+from rest_framework.test import APIClient
+
+from thunderstore.community.models import CommunitySite
+
+
+@pytest.mark.django_db
+def test_api_docs(client: APIClient, community_site: CommunitySite):
+    response = client.get(
+        "/api/docs/?format=openapi",
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
