@@ -6,19 +6,18 @@
         padding: 1.5rem 1.75rem;
 
         .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 0 1rem;
+            column-count: 3;
 
             @media (max-width: 1160px) {
-                grid-template-columns: 1fr 1fr;
+                column-count: 2;
             }
 
             @media (max-width: 720px) {
-                grid-template-columns: 1fr;
+                column-count: 1;
             }
 
             .grid-item {
+                display: block;
                 padding: 0.25rem 0.25rem;
                 color: white;
                 text-decoration: none;
