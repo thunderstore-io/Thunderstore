@@ -300,6 +300,16 @@ class PackageListSearchView(CommunityMixin, ListView):
         context["active_section"] = self.active_section_slug
         context["active_ordering"] = self.get_active_ordering()
         context["current_search"] = self.get_search_query()
+        context["allowed_params"] = {
+            "q",
+            "ordering",
+            "deprecated",
+            "nsfw",
+            "excluded_categories",
+            "included_categories",
+            "section",
+            "page",
+        }
         breadcrumbs = self.get_breadcrumbs()
         if len(breadcrumbs) > 1:
             context["breadcrumbs"] = breadcrumbs

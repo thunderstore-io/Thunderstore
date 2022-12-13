@@ -31,7 +31,7 @@
 <div class="m-0 mb-2 p-0 w-100">
     <div class="btn-group d-flex" role="group" aria-label="Result ordering">
         {% for entry in sections %}
-            <a href="{% qurl section entry.0 page %}" class="btn btn-primary {% if active_section == entry.0 %}active{% endif %}">
+            <a href="{% qurl allowed_params section entry.0 page %}" class="btn btn-primary {% if active_section == entry.0 %}active{% endif %}">
                 {{ entry.1 }}
             </a>
         {% endfor %}
@@ -42,7 +42,7 @@
 <div class="m-0 mb-2 p-0 w-100">
     <div class="btn-group d-flex" role="group" aria-label="Result ordering">
         {% for entry in ordering_modes %}
-            <a href="{% qurl ordering entry.0 page %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
+            <a href="{% qurl allowed_params ordering entry.0 page %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
                 {{ entry.1 }}
             </a>
         {% endfor %}
@@ -57,6 +57,7 @@
                 <div class="col-7 m-0 p-0 pr-2">
                     <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
                     <input type="hidden" name="ordering" value="{{ active_ordering }}">
+                    <input type="hidden" name="section" value="{{ active_section }}">
                 </div>
                 <div class="col-3 m-0 p-0 pr-1">
                     <button class="btn btn-success w-100" type="submit">Search</button>
