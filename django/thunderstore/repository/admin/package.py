@@ -13,19 +13,17 @@ class PackageVersionInline(admin.StackedInline):
     model = PackageVersion
     readonly_fields = (
         "date_created",
-        "dependencies",
         "description",
         "downloads",
         "file",
         "file_size",
+        "format_spec",
         "icon",
-        "name",
-        "readme",
         "version_number",
         "website_url",
     )
+    exclude = ("readme", "dependencies", "name")
     extra = 0
-    filter_horizontal = ("dependencies",)
 
     def has_add_permission(self, request: HttpRequest, obj) -> bool:
         return False
