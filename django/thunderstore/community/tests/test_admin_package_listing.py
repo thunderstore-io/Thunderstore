@@ -5,11 +5,8 @@ from thunderstore.community.admin.package_listing import (
     approve_listing,
     reject_listing,
 )
-from thunderstore.community.models import (
-    Community,
-    PackageListing,
-    PackageListingReviewStatus,
-)
+from thunderstore.community.consts import PackageListingReviewStatus
+from thunderstore.community.models import Community, PackageListing
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, Team
 

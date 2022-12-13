@@ -2,8 +2,9 @@ from django.contrib import admin
 from django.db import transaction
 from django.db.models import QuerySet
 
+from ..consts import PackageListingReviewStatus
 from ..forms import PackageListingForm
-from ..models.package_listing import PackageListing, PackageListingReviewStatus
+from ..models.package_listing import PackageListing
 
 
 @transaction.atomic

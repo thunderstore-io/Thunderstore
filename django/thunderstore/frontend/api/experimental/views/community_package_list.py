@@ -12,11 +12,8 @@ from rest_framework.views import APIView
 
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
-from thunderstore.community.models import (
-    Community,
-    PackageListingReviewStatus,
-    PackageListingSection,
-)
+from thunderstore.community.consts import PackageListingReviewStatus
+from thunderstore.community.models import Community, PackageListingSection
 from thunderstore.frontend.api.experimental.serializers.views import (
     CommunityPackageListSerializer,
     PackageCategorySerializer,

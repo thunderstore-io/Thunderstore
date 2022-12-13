@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import Manager, QuerySet
 from django.utils.functional import cached_property
 
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models.community_membership import (
     CommunityMemberRole,
     CommunityMembership,
@@ -129,3 +130,12 @@ class Community(TimestampMixin, models.Model):
 
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_packages(user))
+
+    @property
+    def valid_review_statuses(self):
+        if self.require_package_listing_approval:
+            return (PackageListingReviewStatus.approved,)
+        return (
+            PackageListingReviewStatus.approved,
+            PackageListingReviewStatus.unreviewed,
+        )

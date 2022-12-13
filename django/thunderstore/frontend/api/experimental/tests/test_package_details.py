@@ -4,8 +4,9 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import PackageListingFactory
-from thunderstore.community.models import PackageListing, PackageListingReviewStatus
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,

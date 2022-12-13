@@ -19,11 +19,11 @@ from django.views.generic.list import ListView
 from thunderstore.cache.cache import cache_function_result
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
     PackageCategory,
     PackageListing,
-    PackageListingReviewStatus,
     PackageListingSection,
 )
 from thunderstore.repository.mixins import CommunityMixin
