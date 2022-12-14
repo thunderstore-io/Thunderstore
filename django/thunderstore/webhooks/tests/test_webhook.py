@@ -1,5 +1,7 @@
 import pytest
 
+from thunderstore.community.consts import PackageListingReviewStatus
+from thunderstore.community.models import PackageListing
 from thunderstore.webhooks.models import Webhook
 
 
@@ -12,6 +14,34 @@ def test_webhook_get_for_package_release_is_active(
     release_webhook.save(update_fields=("is_active",))
     result = Webhook.get_for_package_release(active_package_listing.package)
     if is_active:
+        assert release_webhook in result
+    else:
+        assert release_webhook not in result
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("review_status", PackageListingReviewStatus.options())
+@pytest.mark.parametrize("require_approval", (True, False))
+def test_webhook_get_for_package_release_review_status(
+    release_webhook: Webhook,
+    active_package_listing: PackageListing,
+    review_status: str,
+    require_approval: bool,
+):
+    active_package_listing.community.require_package_listing_approval = require_approval
+    active_package_listing.community.save()
+    active_package_listing.review_status = review_status
+    active_package_listing.save()
+
+    should_exist = review_status in (
+        PackageListingReviewStatus.approved,
+        PackageListingReviewStatus.unreviewed,
+    )
+    if require_approval:
+        should_exist = review_status == PackageListingReviewStatus.approved
+
+    result = Webhook.get_for_package_release(active_package_listing.package)
+    if should_exist:
         assert release_webhook in result
     else:
         assert release_webhook not in result

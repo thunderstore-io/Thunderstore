@@ -14,13 +14,9 @@ from thunderstore.core.factories import UserFactory
 
 from ...cache.enums import CacheBustCondition
 from ...cache.tasks import invalidate_cache
+from ...community.consts import PackageListingReviewStatus
 from ...community.factories import CommunitySiteFactory, SiteFactory
-from ...community.models import (
-    CommunitySite,
-    PackageCategory,
-    PackageListing,
-    PackageListingReviewStatus,
-)
+from ...community.models import CommunitySite, PackageCategory, PackageListing
 from ...core.types import UserType
 from ...frontend.extract_props import extract_props_from_html
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory

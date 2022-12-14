@@ -60,7 +60,11 @@ class Webhook(models.Model):
     def get_for_package_release(cls, package):
         base_query = Q(Q(webhook_type=WebhookType.mod_release) & Q(is_active=True))
         community_query = Q()
+        community_exclusions = []
         for listing in package.community_listings.all():
+            if listing.review_status not in listing.community.valid_review_statuses:
+                community_exclusions.append(listing.community)
+                continue
             categories = listing.categories.all()
             query = (
                 ~Q(exclude_categories__in=categories)
@@ -72,7 +76,9 @@ class Webhook(models.Model):
             community_query |= Q(query)
 
         full_query = base_query & Q(community_query)
-        return cls.objects.exclude(~Q(full_query))
+        return cls.objects.exclude(~Q(full_query)).exclude(
+            community_site__community__in=community_exclusions
+        )
 
     def get_version_release_json(self, version):
         thumbnail_url = version.icon.url

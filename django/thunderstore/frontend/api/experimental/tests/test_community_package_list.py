@@ -6,12 +6,9 @@ from rest_framework.test import APIClient
 
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunitySiteFactory, PackageListingFactory
-from thunderstore.community.models import (
-    PackageCategory,
-    PackageListingReviewStatus,
-    PackageListingSection,
-)
+from thunderstore.community.models import PackageCategory, PackageListingSection
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.frontend.api.experimental.views import CommunityPackageListApiView
 from thunderstore.repository.factories import (

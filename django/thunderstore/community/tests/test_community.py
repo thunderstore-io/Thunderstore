@@ -2,6 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
 from thunderstore.community.models import (
     Community,
@@ -92,3 +93,19 @@ def test_community_get_community_filepath(community: Community) -> None:
         get_community_filepath(community, "lol.png")
         == f"community/{community.identifier}/lol.png"
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("require_approval", (False, True))
+def test_community_valid_review_statuses(
+    community: Community, require_approval: bool
+) -> None:
+    community.require_package_listing_approval = require_approval
+    community.save()
+    if require_approval:
+        assert community.valid_review_statuses == (PackageListingReviewStatus.approved,)
+    else:
+        assert community.valid_review_statuses == (
+            PackageListingReviewStatus.approved,
+            PackageListingReviewStatus.unreviewed,
+        )

@@ -8,9 +8,10 @@ from django.utils.functional import cached_property
 
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import ChoiceEnum, check_validity
+from thunderstore.core.utils import check_validity
 
 if TYPE_CHECKING:
     from thunderstore.community.models import PackageCategory
@@ -24,12 +25,6 @@ class PackageListingQueryset(models.QuerySet):
 
     def approved(self):
         return self.exclude(~Q(review_status=PackageListingReviewStatus.approved))
-
-
-class PackageListingReviewStatus(ChoiceEnum):
-    unreviewed = "unreviewed"
-    approved = "approved"
-    rejected = "rejected"
 
 
 # TODO: Add a db constraint that ensures a package listing and it's categories

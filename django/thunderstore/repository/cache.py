@@ -1,4 +1,5 @@
-from thunderstore.community.models import PackageListing, PackageListingReviewStatus, Q
+from thunderstore.community.consts import PackageListingReviewStatus
+from thunderstore.community.models import PackageListing, Q
 
 
 def get_package_listing_queryset(community_identifier: str):

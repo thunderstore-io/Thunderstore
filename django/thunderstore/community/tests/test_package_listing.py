@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from conftest import TestUserTypes
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory
 from thunderstore.community.models import (
     Community,
@@ -10,7 +11,6 @@ from thunderstore.community.models import (
     CommunityMembership,
     PackageCategory,
     PackageListing,
-    PackageListingReviewStatus,
 )
 from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
