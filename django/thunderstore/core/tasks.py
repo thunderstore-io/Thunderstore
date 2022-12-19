@@ -3,8 +3,10 @@ from typing import Dict, Optional, Union
 import requests
 from celery import shared_task
 
+from thunderstore.core.settings import CeleryQueues
 
-@shared_task
+
+@shared_task(queue=CeleryQueues.Default)
 def celery_post(
     webhook_url: str,
     data: Optional[str] = None,

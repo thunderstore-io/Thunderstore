@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from thunderstore.cache.enums import CacheBustCondition
+from thunderstore.core.settings import CeleryQueues
 from thunderstore.utils.decorators import run_after_commit
 
 
@@ -13,7 +14,7 @@ def invalidate_cache_on_commit_async(cache_bust_condition: str):
     invalidate_cache.delay(cache_bust_condition)
 
 
-@shared_task
+@shared_task(queue=CeleryQueues.BackgroundCache)
 def invalidate_cache(cache_bust_condition: str):
     if cache_bust_condition == CacheBustCondition.background_update_only:
         raise AttributeError("Invalid cache bust condition")

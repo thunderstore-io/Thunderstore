@@ -87,6 +87,7 @@ CELERY_PIDFILE = register_variable(str, "CELERY_PIDFILE", "/var/run/celery.pid")
 CELERY_LOG_LEVEL = register_variable(str, "CELERY_LOG_LEVEL", "INFO")
 CELERY_CONCURRENCY = register_variable(None, "CELERY_CONCURRENCY", None)
 CELERY_POOL = register_variable(None, "CELERY_POOL", None)
+CELERY_QUEUES = register_variable(str, "CELERY_QUEUES", None)
 
 
 WATCHMEDO_COMMAND = [
@@ -152,6 +153,8 @@ def run_celery_worker() -> None:
         worker_command += ["--pool", CELERY_POOL]
     if CELERY_CONCURRENCY:
         worker_command += ["--concurrency", CELERY_CONCURRENCY]
+    if CELERY_QUEUES:
+        worker_command += ["--queues", CELERY_QUEUES]
     command = []
     if AUTORELOAD:
         command += WATCHMEDO_COMMAND
