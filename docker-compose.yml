@@ -6,6 +6,7 @@ x-django-service: &django-service
     dockerfile: ./Dockerfile
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
+    CELERY_QUEUES: "celery,background.cache"
     DATABASE_URL: "psql://django:django@dbpool/django"
     REDIS_URL: "redis://redis:6379/0"
     PROTOCOL: "http://"
