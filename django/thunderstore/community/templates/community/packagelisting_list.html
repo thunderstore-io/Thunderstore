@@ -57,7 +57,9 @@
                 <div class="col-7 m-0 p-0 pr-2">
                     <input class="form-control w-100" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ current_search }}">
                     <input type="hidden" name="ordering" value="{{ active_ordering }}">
+                    {% if active_section %}
                     <input type="hidden" name="section" value="{{ active_section }}">
+                    {% endif %}
                 </div>
                 <div class="col-3 m-0 p-0 pr-1">
                     <button class="btn btn-success w-100" type="submit">Search</button>
