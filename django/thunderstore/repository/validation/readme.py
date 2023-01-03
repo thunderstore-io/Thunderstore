@@ -2,7 +2,7 @@ import codecs
 
 from django.core.exceptions import ValidationError
 
-MAX_README_SIZE = 32768
+MAX_README_SIZE = 1000 * 100  # 100kb
 
 
 def validate_readme(readme_data: bytes) -> str:

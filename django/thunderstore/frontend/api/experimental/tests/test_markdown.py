@@ -46,5 +46,7 @@ def test_api_experimental_render_markdown_too_long(api_client: APIClient) -> Non
     print(response.content)
     assert response.status_code == 400
     assert response.json() == {
-        "markdown": ["Ensure this field has no more than 32768 characters."],
+        "markdown": [
+            f"Ensure this field has no more than {MAX_README_SIZE} characters."
+        ],
     }
