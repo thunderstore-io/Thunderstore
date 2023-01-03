@@ -4,7 +4,7 @@ from factory.django import DjangoModelFactory
 
 from thunderstore.repository.factories import PackageVersionFactory
 
-from .models import Community, CommunitySite, PackageListing
+from .models import Community, CommunitySite, PackageCategory, PackageListing
 
 
 class SiteFactory(DjangoModelFactory):
@@ -21,6 +21,15 @@ class CommunityFactory(DjangoModelFactory):
 
     name = factory.Sequence(lambda n: f"TestCommunity{n}")
     identifier = factory.Sequence(lambda n: f"test-community-{n}")
+
+
+class PackageCategoryFactory(DjangoModelFactory):
+    class Meta:
+        model = PackageCategory
+
+    community = factory.SubFactory(CommunityFactory)
+    name = factory.Sequence(lambda n: f"TestCategory{n}")
+    slug = factory.Sequence(lambda n: f"test-category-{n}")
 
 
 class CommunitySiteFactory(DjangoModelFactory):

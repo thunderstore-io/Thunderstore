@@ -6,7 +6,8 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.community.models import Community, PackageCategory
+from thunderstore.community.factories import CommunityFactory, PackageCategoryFactory
+from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.frontend.api.experimental.serializers.views import (
@@ -28,6 +29,12 @@ def test_api_experimental_submit_package_success(
     community: Community,
     manifest_v1_package_upload_id: str,
 ):
+    com2 = CommunityFactory()
+    com3 = CommunityFactory()
+    com2_cat1 = PackageCategoryFactory(community=com2)
+    com3_cat1 = PackageCategoryFactory(community=com3)
+    com3_cat2 = PackageCategoryFactory(community=com3)
+
     TeamMember.objects.create(
         user=user,
         team=team,
@@ -42,7 +49,11 @@ def test_api_experimental_submit_package_success(
                 "upload_uuid": manifest_v1_package_upload_id,
                 "author_name": team.name,
                 "categories": [package_category.slug],
-                "communities": [community.identifier],
+                "community_categories": {
+                    com2.identifier: [com2_cat1.slug],
+                    com3.identifier: [com3_cat1.slug, com3_cat2.slug],
+                },
+                "communities": [community.identifier, com2.identifier, com3.identifier],
                 "has_nsfw_content": True,
             }
         ),
@@ -63,6 +74,16 @@ def test_api_experimental_submit_package_success(
     assert listing["community"] == CommunitySerializer(community).data
     assert bool(listing["url"])
     assert listing["categories"] == [PackageCategorySerializer(package_category).data]
+
+    package = PackageReference(team.name, "name", "1.0.0").package
+    listing = PackageListing.objects.get(community=com2, package=package)
+    assert set(listing.categories.values_list("slug", flat=True)) == {com2_cat1.slug}
+
+    listing = PackageListing.objects.get(community=com3, package=package)
+    assert set(listing.categories.values_list("slug", flat=True)) == {
+        com3_cat1.slug,
+        com3_cat2.slug,
+    }
 
 
 @pytest.mark.django_db
