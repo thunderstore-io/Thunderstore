@@ -149,6 +149,7 @@ class PackageVersionPopulator(ContentPopulator):
                     website_url="https://example.org",
                     description=f"Example mod {i}",
                     readme=f"# This is an example mod number {i}",
+                    changelog=f"# Example changelog for mod number {i}",
                 )
 
             # Manually calling would-be signals once per package, as it doesn't
