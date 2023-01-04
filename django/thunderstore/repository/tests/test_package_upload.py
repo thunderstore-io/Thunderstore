@@ -13,20 +13,23 @@ from thunderstore.repository.package_upload import PackageUploadForm
 
 
 @pytest.mark.django_db
-def test_package_upload(user, manifest_v1_data, community):
+@pytest.mark.parametrize("changelog", (None, "# Test changelog"))
+def test_package_upload(user, manifest_v1_data, community, changelog):
 
     icon_raw = io.BytesIO()
     icon = Image.new("RGB", (256, 256), "#FF0000")
     icon.save(icon_raw, format="PNG")
 
-    readme = "# Test readme".encode("utf-8")
+    readme = "# Test readme"
     manifest = json.dumps(manifest_v1_data).encode("utf-8")
 
     files = [
-        ("README.md", readme),
+        ("README.md", readme.encode("utf-8")),
         ("icon.png", icon_raw.getvalue()),
         ("manifest.json", manifest),
     ]
+    if changelog:
+        files.append(("CHANGELOG.md", changelog.encode("utf-8")))
 
     zip_raw = io.BytesIO()
     with ZipFile(zip_raw, "a", ZIP_DEFLATED, False) as zip_file:
@@ -47,27 +50,32 @@ def test_package_upload(user, manifest_v1_data, community):
     assert form.is_valid()
     version = form.save()
     assert version.name == manifest_v1_data["name"]
+    assert version.readme == readme
+    assert version.changelog == changelog
     assert version.package.owner == team
-    assert version.format_spec == PackageFormats.v0_1
+    assert version.format_spec == PackageFormats.get_active_format()
     assert version.package.namespace == team.get_namespace()
     assert version.package.namespace.name == team.name
 
 
 @pytest.mark.django_db
-def test_package_upload_with_extra_data(user, community, manifest_v1_data):
+@pytest.mark.parametrize("changelog", (None, "# Test changelog"))
+def test_package_upload_with_extra_data(user, community, manifest_v1_data, changelog):
 
     icon_raw = io.BytesIO()
     icon = Image.new("RGB", (256, 256), "#FF0000")
     icon.save(icon_raw, format="PNG")
 
-    readme = "# Test readme".encode("utf-8")
+    readme = "# Test readme"
     manifest = json.dumps(manifest_v1_data).encode("utf-8")
 
     files = [
-        ("README.md", readme),
+        ("README.md", readme.encode("utf-8")),
         ("icon.png", icon_raw.getvalue()),
         ("manifest.json", manifest),
     ]
+    if changelog:
+        files.append(("CHANGELOG.md", changelog.encode("utf-8")))
 
     zip_raw = io.BytesIO()
     with ZipFile(zip_raw, "a", ZIP_DEFLATED, False) as zip_file:
@@ -96,8 +104,10 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data):
     assert form.is_valid()
     version = form.save()
     assert version.name == manifest_v1_data["name"]
+    assert version.readme == readme
+    assert version.changelog == changelog
     assert version.package.owner == team
-    assert version.format_spec == PackageFormats.v0_1
+    assert version.format_spec == PackageFormats.get_active_format()
     listing = PackageListing.objects.filter(package=version.package).first()
     assert listing.categories.count() == 1
     assert listing.categories.first() == category

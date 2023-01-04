@@ -71,6 +71,7 @@ class PackageVersion(models.Model):
         blank=True,
     )
     readme = models.TextField()
+    changelog = models.TextField(blank=True, null=True)
 
     # <packagename>.zip
     file = models.FileField(

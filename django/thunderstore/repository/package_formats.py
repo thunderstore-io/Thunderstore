@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from django.db import models
 from django.db.models import Q
 
@@ -11,6 +13,7 @@ class PackageFormats(models.TextChoices):
 
     v0_0 = "thunderstore.io:v0.0"
     v0_1 = "thunderstore.io:v0.1"
+    v0_2 = "thunderstore.io:v0.2"
 
     @classmethod
     def as_query_filter(cls, field_name: str, allow_none: bool) -> Q:
@@ -20,3 +23,11 @@ class PackageFormats(models.TextChoices):
         for entry in cls.values:
             result |= Q(**{field_name: entry})
         return result
+
+    @classmethod
+    def get_supported_formats(cls) -> Tuple["PackageFormats"]:
+        return (cls.v0_1, cls.v0_2)
+
+    @classmethod
+    def get_active_format(cls) -> "PackageFormats":
+        return PackageFormats.v0_2

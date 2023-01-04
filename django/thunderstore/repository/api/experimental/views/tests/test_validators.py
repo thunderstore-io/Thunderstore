@@ -14,12 +14,12 @@ from thunderstore.repository.package_formats import PackageFormats
 
 
 @pytest.mark.django_db
-def test_experimental_api_validate_readme(
+def test_experimental_api_validate_markdown(
     api_client: APIClient, user: UserType, mocker
 ) -> None:
 
     mocked_validator = mocker.patch(
-        "thunderstore.repository.api.experimental.views.validators.validate_readme"
+        "thunderstore.repository.api.experimental.views.validators.validate_markdown"
     )
 
     readme = b"# Hello world"
@@ -62,7 +62,7 @@ def test_experimental_api_validate_manifest(
     assert json.loads(response.content.decode()) == {"success": True}
 
     mocked_validator.assert_called_with(
-        format_spec=PackageFormats.v0_1,
+        format_spec=PackageFormats.get_active_format(),
         user=team_member.user,
         team=team_member.team,
         manifest_data=manifest_data,
