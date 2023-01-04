@@ -164,6 +164,15 @@ window.ts.PackageManagementPanel(
     </div>
 </div>
 
+{% if object.package.changelog %}
+<div class="card bg-light mb-2 mt-2">
+    <div class="card-header"><h4 class="mb-0">CHANGELOG</h4></div>
+    <div class="card-body markdown-body">
+        {{ object.package.changelog|markdownify }}
+    </div>
+</div>
+{% endif %}
+
 <div class="card bg-light mt-2 mb-4">
     <div class="card-header">
         <h2 class="mb-0">Available versions</h2>

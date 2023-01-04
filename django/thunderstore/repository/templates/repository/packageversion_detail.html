@@ -106,12 +106,21 @@
 {% endif %}
 {% endwith %}
 
-<div class="card bg-light mb-4 mt-2">
+<div class="card bg-light mb-2 mt-2">
     <div class="card-header"><h4 class="mb-0">README</h4></div>
     <div class="card-body markdown-body">
         {{ object.readme|markdownify }}
     </div>
 </div>
+
+{% if object.package.changelog %}
+<div class="card bg-light mb-2 mt-2">
+    <div class="card-header"><h4 class="mb-0">CHANGELOG</h4></div>
+    <div class="card-body markdown-body">
+        {{ object.package.changelog|markdownify }}
+    </div>
+</div>
+{% endif %}
 
 {% endcache %}
 {% endblock %}

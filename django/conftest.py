@@ -147,6 +147,7 @@ def package_version(package):
         website_url="https://example.org",
         description="Example mod",
         readme="# This is an example mod",
+        changelog="# This is an example changelog",
     )
 
 

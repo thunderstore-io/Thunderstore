@@ -243,9 +243,11 @@ class Package(models.Model):
             },
         )
 
-    @cached_property
     def readme(self):
         return self.latest.readme
+
+    def changelog(self):
+        return self.latest.changelog
 
     def get_absolute_url(self):
         return reverse(
