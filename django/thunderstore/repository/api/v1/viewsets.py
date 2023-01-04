@@ -1,4 +1,5 @@
 import json
+from io import BytesIO
 from typing import Any, Optional
 
 from django.http import HttpResponse
@@ -12,32 +13,64 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from thunderstore.community.models import Community, CommunitySite
+from thunderstore.community.models import Community, CommunitySite, PackageListing
 from thunderstore.core.types import HttpRequestType
 from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
-from thunderstore.repository.cache import get_package_listing_queryset
+from thunderstore.repository.cache import (
+    get_package_listing_queryset,
+    order_package_listing_queryset,
+)
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package, PackageRating
 from thunderstore.repository.models.cache import APIV1PackageCache
 from thunderstore.repository.permissions import ensure_can_rate_package
+from thunderstore.utils.batch import batch
 
 PACKAGE_SERIALIZER = PackageListingSerializer
+SERIALIZER_BATCH_SIZE = 200
 
 
 def serialize_package_list_for_community(
     community: Community, community_site: Optional[CommunitySite] = None
 ) -> bytes:
-    queryset = get_package_listing_queryset(community_identifier=community.identifier)
-    serializer = PACKAGE_SERIALIZER(
-        queryset,
-        many=True,
-        context={
-            "community_site": community_site,
-            "community": community,
-        },
-    )
-    return JSONRenderer().render(serializer.data)
+    listing_ids = get_package_listing_queryset(
+        community_identifier=community.identifier
+    ).values_list("id", flat=True)
+    batch_size = SERIALIZER_BATCH_SIZE
+    renderer = JSONRenderer()
+    result = BytesIO()
+
+    result.write(b"[")
+    for index, ids in enumerate(batch(batch_size, listing_ids)):
+        queryset = order_package_listing_queryset(
+            PackageListing.objects.filter(id__in=ids)
+        )
+        serializer = PACKAGE_SERIALIZER(
+            queryset,
+            many=True,
+            context={
+                "community_site": community_site,
+                "community": community,
+            },
+        )
+
+        if index != 0:
+            result.write(b",")
+
+        # Skip the first and last byte as those are [ and ]
+        result.write(renderer.render(serializer.data)[1:-1])
+
+    result.write(b"]")
+
+    # Include a sanity check since we're manually piecing together json which
+    # could lead to format bugs. Better to fail entirely than return broken json
+    # as it would be bad to overwrite the cached working version with a broken
+    # one.
+    result.seek(0)
+    json.load(result)
+
+    return result.getvalue()
 
 
 class PackageViewSet(
