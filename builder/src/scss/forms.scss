@@ -28,6 +28,7 @@
 .field-row {
     width: 100%;
     display: flex;
+    gap: 5px;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
@@ -41,4 +42,18 @@
         width: 32px;
         height: 32px;
     }
+}
+
+.select-category {
+    min-width: 250px;
+    flex: 1;
+}
+
+.select-community {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 38px;
 }

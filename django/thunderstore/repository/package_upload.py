@@ -11,6 +11,7 @@ from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_formats import PackageFormats
+from thunderstore.repository.validation.categories import clean_community_categories
 from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.readme import validate_readme
@@ -27,10 +28,13 @@ class PackageUploadForm(forms.ModelForm):
     # TODO: Utilize the format spec in the entirety of the validation pipeline
     #       and make it impossible to avoid doing so (in code).
     format_spec = PackageFormats.v0_1
+
+    # TODO: Remove entirely, community_categories should be used instead
     categories = forms.ModelMultipleChoiceField(
         queryset=PackageCategory.objects.none(),
         required=False,
     )
+    community_categories = forms.JSONField(required=False)
     team = forms.ModelChoiceField(
         queryset=Team.objects.none(),
         to_field_name="name",
@@ -141,6 +145,9 @@ class PackageUploadForm(forms.ModelForm):
         team.ensure_can_upload_package(self.user)
         return team
 
+    def clean_community_categories(self):
+        return clean_community_categories(self.cleaned_data.get("community_categories"))
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         self.instance.name = self.manifest["name"]
@@ -158,9 +165,10 @@ class PackageUploadForm(forms.ModelForm):
             owner=team, name=self.instance.name, namespace=namespace
         )[0]
 
+        community_categories = self.cleaned_data.get("community_categories", {})
         for community in self.cleaned_data.get("communities", []):
-            categories = []
-            if community == self.community:
+            categories = community_categories.get(community.identifier, [])
+            if community == self.community and not categories:
                 categories = self.cleaned_data.get("categories", [])
             self.instance.package.update_listing(
                 has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),

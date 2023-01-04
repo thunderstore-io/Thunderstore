@@ -88,7 +88,8 @@ class SubmitPackageApiView(APIView):
             user=self.request.user,
             community=self.request.community,
             data={
-                "categories": data.get("categories"),
+                "categories": data.get("categories", []),
+                "community_categories": data.get("community_categories", {}),
                 "has_nsfw_content": data.get("has_nsfw_content"),
                 "team": data.get("author_name"),
                 "communities": data.get("communities"),

@@ -171,6 +171,7 @@ class PackageUploadMetadataSerializer(serializers.Serializer):
             to_field="slug",
         ),
         allow_empty=True,
+        required=False,
     )
     communities = serializers.ListField(
         child=ModelChoiceField(
@@ -193,7 +194,7 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
             user=request.user,
             community=request.community,
             data={
-                "categories": metadata.get("categories"),
+                "categories": metadata.get("categories", []),
                 "has_nsfw_content": metadata.get("has_nsfw_content"),
                 "team": metadata.get("author_name"),
                 "communities": metadata.get("communities"),
@@ -215,6 +216,13 @@ class PackageUploadSerializerExperiemental(serializers.Serializer):
 
 class PackageSubmissionMetadataSerializer(PackageUploadMetadataSerializer):
     upload_uuid = serializers.UUIDField()
+    community_categories = serializers.DictField(
+        child=serializers.ListField(
+            child=serializers.CharField(allow_blank=False, required=True),
+            allow_empty=True,
+        ),
+        required=False,
+    )
 
 
 class AvailableCommunitySerializer(serializers.Serializer):

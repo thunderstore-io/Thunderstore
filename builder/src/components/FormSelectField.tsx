@@ -4,6 +4,7 @@ import { Controller } from "react-hook-form";
 import Select from "react-select";
 
 interface FormSelectFieldProps<T, F> {
+    className?: string;
     control: Control<F>;
     name: string;
     data: T[];
@@ -27,7 +28,7 @@ export const FormSelectField: React.FC<FormSelectFieldProps<any, any>> = (
     }, [props.default, props.getOption, props.isMulti]);
 
     return (
-        <div className="w-100">
+        <div className={props.className ?? "w-100"}>
             <div style={{ color: "#666" }}>
                 <Controller
                     name={props.name}
