@@ -4,7 +4,7 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.repository.validation.readme import MAX_README_SIZE
+from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
 
 MARKDOWN_UNRENDERED = """
 # Test markdown
@@ -38,7 +38,7 @@ def test_api_experimental_render_markdown_too_long(api_client: APIClient) -> Non
         reverse("api:experimental:frontend.render-markdown"),
         json.dumps(
             {
-                "markdown": "a" * (MAX_README_SIZE + 1),
+                "markdown": "a" * (MAX_MARKDOWN_SIZE + 1),
             },
         ),
         content_type="application/json",
@@ -47,6 +47,6 @@ def test_api_experimental_render_markdown_too_long(api_client: APIClient) -> Non
     assert response.status_code == 400
     assert response.json() == {
         "markdown": [
-            f"Ensure this field has no more than {MAX_README_SIZE} characters."
+            f"Ensure this field has no more than {MAX_MARKDOWN_SIZE} characters."
         ],
     }

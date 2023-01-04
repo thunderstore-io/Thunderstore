@@ -22,7 +22,7 @@ class PackageVersionInline(admin.StackedInline):
         "version_number",
         "website_url",
     )
-    exclude = ("readme", "dependencies", "name")
+    exclude = ("readme", "changelog", "dependencies", "name")
     extra = 0
 
     def has_add_permission(self, request: HttpRequest, obj) -> bool:

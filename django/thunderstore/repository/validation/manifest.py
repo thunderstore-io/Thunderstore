@@ -12,7 +12,7 @@ from thunderstore.repository.utils import unpack_serializer_errors
 def validate_manifest(
     format_spec: PackageFormats, user: UserType, team: Team, manifest_data: bytes
 ):
-    if format_spec != PackageFormats.v0_1:
+    if format_spec not in PackageFormats.get_supported_formats():
         raise ValidationError(f"Unsupported package format: {format_spec}")
 
     try:

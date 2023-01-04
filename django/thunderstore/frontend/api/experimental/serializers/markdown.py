@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
-from thunderstore.repository.validation.readme import MAX_README_SIZE
+from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
 
 
 class RenderMarkdownParamsSerializer(serializers.Serializer):
-    markdown = serializers.CharField(max_length=MAX_README_SIZE)
+    markdown = serializers.CharField(max_length=MAX_MARKDOWN_SIZE)
 
 
 class RenderMarkdownResponseSerializer(serializers.Serializer):

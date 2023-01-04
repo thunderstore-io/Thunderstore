@@ -14,7 +14,7 @@ from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.repository.validation.categories import clean_community_categories
 from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
-from thunderstore.repository.validation.readme import validate_readme
+from thunderstore.repository.validation.markdown import validate_markdown
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * settings.REPOSITORY_MAX_PACKAGE_SIZE_MB
 MIN_PACKAGE_SIZE = 1  # Honestly impossible, but need to set some value
@@ -27,7 +27,7 @@ class PackageUploadForm(forms.ModelForm):
     #       multiple formats are supported simultaneously.
     # TODO: Utilize the format spec in the entirety of the validation pipeline
     #       and make it impossible to avoid doing so (in code).
-    format_spec = PackageFormats.v0_1
+    format_spec = PackageFormats.get_active_format()
 
     # TODO: Remove entirely, community_categories should be used instead
     categories = forms.ModelMultipleChoiceField(
@@ -76,6 +76,7 @@ class PackageUploadForm(forms.ModelForm):
         self.manifest: Optional[dict] = None
         self.icon: Optional[ContentFile] = None
         self.readme: Optional[str] = None
+        self.changelog: Optional[str] = None
         self.file_size: Optional[int] = None
 
     def validate_manifest(self, manifest: bytes):
@@ -89,9 +90,9 @@ class PackageUploadForm(forms.ModelForm):
     def validate_icon(self, icon: bytes):
         self.icon = validate_icon(icon)
 
-    def validate_readme(self, readme: bytes):
+    def validate_markdown(self, name: str, data: bytes) -> Optional[str]:
         try:
-            self.readme = validate_readme(readme)
+            return validate_markdown(name, data)
         except ValidationError as e:
             self.add_error(None, e)
 
@@ -130,10 +131,16 @@ class PackageUploadForm(forms.ModelForm):
                     raise ValidationError("Package is missing icon.png")
 
                 try:
-                    readme = unzip.read("README.md")
-                    self.validate_readme(readme)
+                    name = "README.md"
+                    self.readme = self.validate_markdown(name, unzip.read(name))
                 except KeyError:
                     raise ValidationError("Package is missing README.md")
+
+                try:
+                    name = "CHANGELOG.md"
+                    self.changelog = self.validate_markdown(name, unzip.read(name))
+                except KeyError:
+                    pass
 
         except (BadZipFile, NotImplementedError):
             raise ValidationError("Invalid zip file format")
@@ -155,6 +162,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.website_url = self.manifest["website_url"]
         self.instance.description = self.manifest["description"]
         self.instance.readme = self.readme
+        self.instance.changelog = self.changelog
         self.instance.file_size = self.file_size
         self.instance.format_spec = self.format_spec
         team = self.cleaned_data["team"]

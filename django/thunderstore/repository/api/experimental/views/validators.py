@@ -12,7 +12,7 @@ from thunderstore.repository.api.experimental.serializers.validators import (
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
-from thunderstore.repository.validation.readme import validate_readme
+from thunderstore.repository.validation.markdown import validate_markdown
 
 
 class ReadmeValidatorApiView(APIView):
@@ -33,7 +33,7 @@ class ReadmeValidatorApiView(APIView):
         serializer = self.params_serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        validate_readme(serializer.validated_data["readme_data"])
+        validate_markdown(serializer.validated_data["readme_data"])
 
         return Response(
             self.response_serializer_class(
@@ -62,7 +62,7 @@ class ManifestV1ValidatorApiView(APIView):
         serializer.is_valid(raise_exception=True)
 
         validate_manifest(
-            format_spec=PackageFormats.v0_1,
+            format_spec=PackageFormats.get_active_format(),
             user=request.user,
             team=serializer.validated_data["namespace"],
             manifest_data=serializer.validated_data["manifest_data"],

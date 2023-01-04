@@ -20,6 +20,7 @@ be impossible to do.
 TRACKED_FORMATS = [
     "thunderstore.io:v0.0",
     "thunderstore.io:v0.1",
+    "thunderstore.io:v0.2",
 ]
 
 
