@@ -226,3 +226,20 @@ submitting a PR.
 
 -   To update coverage file, run `docker-compose exec django coverage run -m pytest`
 -   To see the coverage report, run `docker-compose exec django coverage report -m`
+
+### Test duration estimates
+
+The test run is split across multiple workers on the CI pipeline, and the split
+aims to balance test across all the available workers in equal amounts of time
+consumption.
+
+To be able to do so accurately, the test duration database has to be up to date.
+As such it's a good idea to update the test duration database every now and
+then.
+
+The test duration database can be updated by running the full test suite with
+the `--store-durations` flag. So a full command example would be
+
+```bash
+docker-compose exec django pytest --store-durations
+```
