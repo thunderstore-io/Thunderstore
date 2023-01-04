@@ -1,23 +1,20 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.response import Response
 
 from thunderstore.cache.cache import ManualCacheCommunityMixin
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.repository.api.experimental.serializers import (
+    MarkdownResponseSerializer,
     PackageVersionSerializerExperimental,
 )
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 
 
-class PackageVersionDetailApiView(ManualCacheCommunityMixin, RetrieveAPIView):
-    """
-    Get a single package version
-    """
-
+class PackageVersionDetailMixin(ManualCacheCommunityMixin, RetrieveAPIView):
     cache_until = CacheBustCondition.any_package_updated
-    serializer_class = PackageVersionSerializerExperimental
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
@@ -52,6 +49,31 @@ class PackageVersionDetailApiView(ManualCacheCommunityMixin, RetrieveAPIView):
             )
         )
 
+
+class PackageVersionDetailApiView(PackageVersionDetailMixin):
+    """
+    Get a single package version
+    """
+
+    serializer_class = PackageVersionSerializerExperimental
+
     @swagger_auto_schema(operation_id="experimental_package_version_read")
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
+
+
+class PackageVersionChangelogApiView(PackageVersionDetailMixin):
+    """
+    Get a package verion's changelog
+    """
+
+    serializer_class = MarkdownResponseSerializer
+
+    @swagger_auto_schema(operation_id="experimental_package_version_changelog_read")
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer({"markdown": instance.changelog})
+        return Response(serializer.data)
