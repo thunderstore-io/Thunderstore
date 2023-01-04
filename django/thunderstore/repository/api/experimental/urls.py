@@ -3,6 +3,7 @@ from django.urls import path
 from thunderstore.repository.api.experimental.views import (
     PackageDetailApiView,
     PackageListApiView,
+    PackageVersionChangelogApiView,
     PackageVersionDetailApiView,
     UploadPackageApiView,
 )
@@ -28,6 +29,11 @@ urls = [
         "package/<str:namespace>/<str:name>/<str:version>/",
         PackageVersionDetailApiView.as_view(),
         name="package-version-detail",
+    ),
+    path(
+        "package/<str:namespace>/<str:name>/<str:version>/changelog/",
+        PackageVersionChangelogApiView.as_view(),
+        name="package-version-changelog",
     ),
     path(
         "submission/submit/", SubmitPackageApiView.as_view(), name="submission.submit"
