@@ -3,6 +3,7 @@ from typing import Optional
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Manager, QuerySet
+from django.urls import reverse
 from django.utils.functional import cached_property
 
 from thunderstore.community.consts import PackageListingReviewStatus
@@ -130,6 +131,19 @@ class Community(TimestampMixin, models.Model):
 
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_packages(user))
+
+    @property
+    def full_url(self):
+        return (
+            site.full_url
+            if (site := self.sites.first())
+            else reverse(
+                "communities:community:packages.list",
+                kwargs={
+                    "community_identifier": self.identifier,
+                },
+            )
+        )
 
     @property
     def valid_review_statuses(self):

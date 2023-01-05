@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models import Count
 from django.templatetags.static import static
 
-from thunderstore.community.models import CommunitySite
+from thunderstore.community.models.community import Community
 
 
 def community_site(request):
@@ -48,10 +48,9 @@ def community_site(request):
         }
 
 
-def selectable_sites(request):
+def selectable_communities(request):
     return {
-        "selectable_community_sites": CommunitySite.objects.exclude(is_listed=False)
-        .select_related("community", "site")
-        .annotate(package_count=Count("community__package_listings"))
+        "selectable_communities": Community.objects.listed()
+        .annotate(package_count=Count("package_listings"))
         .order_by("-package_count", "datetime_created")
     }
