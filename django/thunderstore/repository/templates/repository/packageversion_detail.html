@@ -3,6 +3,7 @@
 {% load arrow %}
 {% load markdownify %}
 {% load cache_until %}
+{% load community_url %}
 
 {% block title %}{{ object.display_name }}{% endblock %}
 {% block description %}{{ object.description }}{% endblock %}
@@ -24,8 +25,8 @@
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list" %}">Packages</a></li>
-    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list_by_owner" object.owner.name %}">{{ object.owner.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{% community_url "packages.list" %}">Packages</a></li>
+    <li class="breadcrumb-item"><a href="{% community_url "packages.list_by_owner" owner=object.owner.name %}">{{ object.owner.name }}</a></li>
     {% if object.package.is_effectively_active %}
     <li class="breadcrumb-item"><a href="{{ object.package.get_absolute_url }}">{{ object.package.display_name }}</a></li>
     {% else %}

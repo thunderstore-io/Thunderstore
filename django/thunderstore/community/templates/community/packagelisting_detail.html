@@ -5,6 +5,7 @@
 {% load get_urls %}
 {% load cache_until %}
 {% load encode_props %}
+{% load community_url %}
 
 {% block title %}{{ object.package.display_name }}{% endblock %}
 {% block description %}{{ object.package.description }}{% endblock %}
@@ -35,8 +36,8 @@ window.ts.PackageManagementPanel(
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list" %}">Packages</a></li>
-    <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list_by_owner" object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{% community_url "packages.list" %}">Packages</a></li>
+    <li class="breadcrumb-item"><a href="{% community_url "packages.list_by_owner" owner=object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
     <li class="breadcrumb-item active" aria-current="page">{{ object.package.display_name }}</li>
   </ol>
 </nav>
@@ -115,7 +116,7 @@ window.ts.PackageManagementPanel(
                 <td>Categories</td>
                 <td>
                     {% for category in object.categories.all %}
-                        <a href="{% url "old_urls:packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
+                        <a href="{% community_url "packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
                     {% endfor %}
                 </td>
             </tr>
