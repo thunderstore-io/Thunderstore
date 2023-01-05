@@ -4,11 +4,12 @@ from django.template import Library, TemplateSyntaxError
 from django.template.base import FilterExpression
 from django.template.defaulttags import URLNode, url
 
+from thunderstore.frontend.community_urls import (
+    get_community_url_reverse_args,
+    should_use_old_urls,
+)
+
 register = Library()
-
-
-def should_use_old_urls(context):
-    return "community" not in context or context["community"].main_site
 
 
 class CommunityUrlNameResolver:
@@ -16,10 +17,11 @@ class CommunityUrlNameResolver:
         self.view_name = view_name
 
     def resolve(self, context, ignore_failures=False):
-        prefix = (
-            "old_urls:" if should_use_old_urls(context) else "communities:community:"
+        url_args = get_community_url_reverse_args(
+            context.get("community"),
+            self.view_name.resolve(context, ignore_failures),
         )
-        return f"{prefix}{self.view_name.resolve(context, ignore_failures)}"
+        return url_args["viewname"]
 
 
 class CommunityIdentifierNode:
@@ -29,7 +31,7 @@ class CommunityIdentifierNode:
 
 class CommunityURLNode(URLNode):
     def render(self, context):
-        if not should_use_old_urls(context):
+        if not should_use_old_urls(context.get("community")):
             # Django template caching will result in unintended side effects
             # if we don't copy the instance before modifying it
             kwargs = copy.deepcopy(self.kwargs)
