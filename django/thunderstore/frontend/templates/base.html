@@ -47,22 +47,22 @@
                     <div class="dropdown">
                         <a href="#" role="button" id="communitiesMenu" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false" class="nav-link dropdown-toggle">Communities</a>
-                        {% if selectable_community_sites %}
+                        {% if selectable_communities %}
                         <div class="dropdown-menu communities-dropdown" aria-labelledby="communitiesMenu">
                             <div class="section">
                                 <h6 class="title">Popular communities</h6>
                                 <div class="grid" role="list">
-                                    {% for site in selectable_community_sites|slice:":6"|dictsort:"community.name" %}
-                                        <a class="grid-item" href="{{ site.full_url }}" role="listitem">{{ site.community.name }}</a>
+                                    {% for community in selectable_communities|slice:":6"|dictsort:"name" %}
+                                        <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
                                     {% endfor %}
                                 </div>
                             </div>
-                            {% if selectable_community_sites|length > 6 %}
+                            {% if selectable_communities|length > 6 %}
                                 <div class="section">
                                     <h6 class="title">Other communities</h6>
                                     <div class="grid" role="list">
-                                        {% for site in selectable_community_sites|slice:"6:"|dictsort:"community.name" %}
-                                            <a class="grid-item" href="{{ site.full_url }}" role="listitem">{{ site.community.name }}</a>
+                                        {% for community in selectable_communities|slice:"6:"|dictsort:"name" %}
+                                            <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
                                         {% endfor %}
                                     </div>
                                 </div>

@@ -271,7 +271,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "thunderstore.repository.context_processors.team",
                 "thunderstore.community.context_processors.community_site",
-                "thunderstore.community.context_processors.selectable_sites",
+                "thunderstore.community.context_processors.selectable_communities",
             ],
         },
     },

@@ -109,3 +109,17 @@ def test_community_valid_review_statuses(
             PackageListingReviewStatus.approved,
             PackageListingReviewStatus.unreviewed,
         )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("has_site", (False, True))
+def test_community_full_url(
+    community: Community,
+    has_site: bool,
+) -> None:
+    if has_site:
+        site = CommunitySiteFactory(community=community)
+        expected = site.full_url
+    else:
+        expected = f"/c/{community.identifier}/"
+    assert community.full_url == expected
