@@ -113,7 +113,7 @@ def test_community_valid_review_statuses(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("has_site", (False, True))
-def test_community_full_url(
+def test_community_site_url(
     community: Community,
     has_site: bool,
 ) -> None:
@@ -122,4 +122,4 @@ def test_community_full_url(
         expected = site.full_url
     else:
         expected = f"/c/{community.identifier}/"
-    assert community.full_url == expected
+    assert community.site_url == expected

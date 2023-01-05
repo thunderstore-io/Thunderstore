@@ -9,6 +9,8 @@ from rest_framework import permissions
 
 from thunderstore.community.urls import community_urls
 from thunderstore.frontend.views import (
+    Handler404,
+    Handler500,
     ManifestV1ValidatorView,
     MarkdownPreviewView,
     ads_txt_view,
@@ -22,8 +24,8 @@ from .api_urls import api_urls
 from .healthcheck import healthcheck_view
 from .setting_urls import settings_urls
 
-handler404 = "thunderstore.frontend.views.handle404"
-handler500 = "thunderstore.frontend.views.handle500"
+handler404 = Handler404.as_view()
+handler500 = Handler500.as_view()
 
 AUTH_ROOT = "auth/"
 

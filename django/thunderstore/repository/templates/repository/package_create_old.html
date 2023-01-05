@@ -11,12 +11,20 @@
 <div class="mb-3 mt-3 alert alert-info" role="alert">
     <p class="mb-0">
         Looking for package format documentation?
+        {% if use_old_urls %}
         <a href="{% url 'old_urls:packages.create.docs' %}">You can find it here</a>
+        {% else %}
+        <a href="{% url 'communities:community:packages.create.docs' community_identifier %}">You can find it here</a>
+        {% endif %}
     </p>
 </div>
 <div class="mb-3 mt-3 alert alert-info" role="alert">
     <p class="mb-0">
+        {% if use_old_urls %}
         <a href="{% url 'old_urls:packages.create' %}">Looking for the new upload handler?</a>
+        {% else %}
+        <a href="{% url 'communities:community:packages.create' community_identifier %}">Looking for the new upload handler?</a>
+        {% endif %}
     </p>
 </div>
 <form class="mt-2" method="post" enctype="multipart/form-data" novalidate>

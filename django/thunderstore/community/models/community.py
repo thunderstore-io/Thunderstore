@@ -133,16 +133,16 @@ class Community(TimestampMixin, models.Model):
         return check_validity(lambda: self.ensure_user_can_manage_packages(user))
 
     @property
-    def full_url(self):
-        return (
-            site.full_url
-            if (site := self.sites.first())
-            else reverse(
-                "communities:community:packages.list",
-                kwargs={
-                    "community_identifier": self.identifier,
-                },
-            )
+    def site_url(self):
+        return site.full_url if (site := self.sites.first()) else self.community_url
+
+    @property
+    def community_url(self):
+        return reverse(
+            "communities:community:packages.list",
+            kwargs={
+                "community_identifier": self.identifier,
+            },
         )
 
     @property

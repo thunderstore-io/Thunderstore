@@ -53,7 +53,11 @@
                                 <h6 class="title">Popular communities</h6>
                                 <div class="grid" role="list">
                                     {% for community in selectable_communities|slice:":6"|dictsort:"name" %}
-                                        <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
+                                        {% if use_old_urls %}
+                                        <a class="grid-item" href="{{ community.site_url }}" role="listitem">{{ community.name }}</a>
+                                        {% else %}
+                                        <a class="grid-item" href="{{ community.community_url }}" role="listitem">{{ community.name }}</a>
+                                        {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
@@ -62,7 +66,11 @@
                                     <h6 class="title">Other communities</h6>
                                     <div class="grid" role="list">
                                         {% for community in selectable_communities|slice:"6:"|dictsort:"name" %}
-                                            <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
+                                            {% if use_old_urls %}
+                                            <a class="grid-item" href="{{ community.site_url }}" role="listitem">{{ community.name }}</a>
+                                            {% else %}
+                                            <a class="grid-item" href="{{ community.community_url }}" role="listitem">{{ community.name }}</a>
+                                            {% endif %}
                                         {% endfor %}
                                     </div>
                                 </div>
@@ -71,13 +79,25 @@
                         {% endif %}
                     </div>
                 </li>
+                {% if use_old_urls %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'old_urls:packages.list' %}">Browse</a>
                 </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'communities:community:packages.list' community_identifier %}">Browse</a>
+                </li>
+                {% endif %}
                 {% if request.user.is_authenticated %}
+                    {% if use_old_urls %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'old_urls:packages.create' %}">Upload</a>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'communities:community:packages.create' community_identifier %}">Upload</a>
+                    </li>
+                    {% endif %}
                 {% endif %}
                 <li class="nav-item">
                     <div class="dropdown">
@@ -89,7 +109,11 @@
                             {% endif %}
                             <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
                             <a class="dropdown-item" href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
+                            {% if use_old_urls %}
                             <a class="dropdown-item" href="{% url 'old_urls:packages.create.docs' %}">Package Format Docs</a>
+                            {% else %}
+                            <a class="dropdown-item" href="{% url 'communities:community:packages.create.docs' community_identifier %}">Package Format Docs</a>
+                            {% endif %}
                             <a class="dropdown-item" href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
                             <a class="dropdown-item" href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
                         </div>
@@ -103,9 +127,15 @@
             </ul>
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}
+                    {% if use_old_urls %}
                     <li class="nav-item">
                         <a href="{% url 'old_urls:packages.list_by_owner' team %}" class="nav-link text-dark">{{ request.user.username }}</a>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a href="{% url 'communities:community:packages.list_by_owner' community_identifier team %}" class="nav-link text-dark">{{ request.user.username }}</a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>
                     </li>

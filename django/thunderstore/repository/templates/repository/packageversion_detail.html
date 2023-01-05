@@ -3,6 +3,7 @@
 {% load arrow %}
 {% load markdownify %}
 {% load cache_until %}
+{% load get_urls %}
 
 {% block title %}{{ object.display_name }}{% endblock %}
 {% block description %}{{ object.description }}{% endblock %}
@@ -20,14 +21,19 @@
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-version-detail" 300 object.pk %}
+{% cache_until "any_package_updated" "mod-version-detail" 300 object.pk community_identifier use_old_urls %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
+    {% if use_old_urls %}
     <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list" %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list_by_owner" object.owner.name %}">{{ object.owner.name }}</a></li>
+    {% else %}
+    <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list" community_identifier %}">Packages</a></li>
+    <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list_by_owner" community_identifier object.owner.name %}">{{ object.owner.name }}</a></li>
+    {% endif %}
     {% if object.package.is_effectively_active %}
-    <li class="breadcrumb-item"><a href="{{ object.package.get_absolute_url }}">{{ object.package.display_name }}</a></li>
+    <li class="breadcrumb-item"><a href="{% get_page_url object.package %}">{{ object.package.display_name }}</a></li>
     {% else %}
     <li class="breadcrumb-item text-dark">{{ object.package.display_name }}</li>
     {% endif %}
@@ -55,7 +61,7 @@
     {% endif %}
     <div class="alert alert-warning">
         You are viewing a potentially older version of this package.
-        <a href="{{ object.package.get_absolute_url }}">View all versions.</a>
+        <a href="{% get_page_url object.package %}">View all versions.</a>
     </div>
 {% endif %}
 
@@ -67,7 +73,7 @@
                 <h1 class="mt-0">{{ object.display_name }}</h1>
                 <p>{{ object.description }}</p>
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.owner.name }}</a></h5>
+                    <h5 class="mb-1">By <a href="{% get_owner_url object %}">{{ object.owner.name }}</a></h5>
                     {% if object.website_url %}
                     <a href="{{ object.website_url }}">{{ object.website_url }}</a>
                     {% endif %}
@@ -86,7 +92,7 @@
                 <td>{{ object.version_number }}</td>
             <tr>
                 <td>Download link</td>
-                <td><a href="{{ object.download_url }}">{{ object.full_version_name }}.zip</a></td>
+                <td><a href="{% get_download_url object %}">{{ object.full_version_name }}.zip</a></td>
             </tr>
             <tr>
                 <td>Downloads</td>

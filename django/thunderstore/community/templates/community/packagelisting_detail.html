@@ -22,6 +22,7 @@
 {% endblock %}
 
 {% block content %}
+
 {% if show_management_panel %}
 <div id="package-management-panel"></div>
 <script type="text/javascript">
@@ -31,12 +32,17 @@ window.ts.PackageManagementPanel(
 );
 </script>
 {% endif %}
-{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk community_identifier %}
+{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk community_identifier use_old_urls %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
+    {% if use_old_urls %}
     <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list" %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% url "old_urls:packages.list_by_owner" object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+    {% else %}
+    <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list" community_identifier %}">Packages</a></li>
+    <li class="breadcrumb-item"><a href="{% url "communities:community:packages.list_by_owner" community_identifier object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+    {% endif %}
     <li class="breadcrumb-item active" aria-current="page">{{ object.package.display_name }}</li>
   </ol>
 </nav>
@@ -87,7 +93,7 @@ window.ts.PackageManagementPanel(
                 <h1 class="mt-0">{{ object.package.display_name }}</h1>
                 <p>{{ object.package.description }}</p>
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></h5>
+                    <h5 class="mb-1">By <a href="{% get_owner_url object %}">{{ object.package.owner.name }}</a></h5>
                     {% if object.package.website_url %}
                     <a class="text-nowrap" href="{{ object.package.website_url }}">
                       <span class="fa fa-globe-americas fa-fw"></span>
@@ -114,9 +120,15 @@ window.ts.PackageManagementPanel(
             <tr>
                 <td>Categories</td>
                 <td>
+                    {% if use_old_urls %}
                     {% for category in object.categories.all %}
                         <a href="{% url "old_urls:packages.list" %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
                     {% endfor %}
+                    {% else %}
+                    {% for category in object.categories.all %}
+                        <a href="{% url "communities:community:packages.list" community_identifier %}?included_categories={{ category.pk }}"><span class="badge badge-pill badge-secondary">{{ category.name }}</span></a>
+                    {% endfor %}
+                    {% endif %}
                 </td>
             </tr>
             <tr>
@@ -125,7 +137,11 @@ window.ts.PackageManagementPanel(
             </tr>
             <tr>
                 <td>Dependants</td>
+                {% if use_old_urls %}
                 <td><a href="{{ object.dependants_url }}">{{ dependants_string }}</a>
+                {% else %}
+                <td><a href="{{ object.dependants_url_with_community_identifier }}">{{ dependants_string }}</a>
+                {% endif %}
             </tr>
         </table>
     </div>
@@ -138,7 +154,7 @@ window.ts.PackageManagementPanel(
         </a>
     </div>
     <div class="col-12 col-sm-6 px-3 pr-sm-3 pl-sm-1 mt-1 mt-sm-0">
-        <a href="{{ object.package.latest.download_url }}" type="button" class="btn btn-primary w-100 text-large">
+        <a href="{% get_download_url object.package.latest %}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-download mr-2" aria-hidden="true"></i>Manual Download
         </a>
     </div>
@@ -197,7 +213,7 @@ window.ts.PackageManagementPanel(
                 <td>{{ version.date_created|date:"Y-n-j" }}</td>
                 <td>{{ version.version_number }}</td>
                 <td>{{ version.downloads }}</td>
-                <td><a href="{{ version.download_url }}">Version {{ version.version_number }}</a></td>
+                <td><a href="{% get_download_url version %}">Version {{ version.version_number }}</a></td>
                 <td><a href="{% get_install_url version %}" type="button" class="btn btn-primary">Install</a></td>
             </tr>
             {% endfor %}
