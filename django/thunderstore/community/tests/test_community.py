@@ -123,3 +123,21 @@ def test_community_full_url(
     else:
         expected = f"/c/{community.identifier}/"
     assert community.full_url == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("has_site", (False, True))
+def test_community_should_use_old_urls(
+    community: Community,
+    has_site: bool,
+) -> None:
+    if has_site:
+        CommunitySiteFactory(community=community)
+        expected = True
+    else:
+        expected = False
+    assert Community.should_use_old_urls(community) is expected
+
+
+def test_community_should_use_old_urls_no_community() -> None:
+    assert Community.should_use_old_urls(None) is True

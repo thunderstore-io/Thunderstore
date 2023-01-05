@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -14,6 +14,9 @@ from thunderstore.community.models.community_membership import (
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
+
+if TYPE_CHECKING:
+    from thunderstore.community.models.community_site import CommunitySite
 
 
 class CommunityManager(models.Manager):
@@ -132,11 +135,19 @@ class Community(TimestampMixin, models.Model):
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_packages(user))
 
+    @staticmethod
+    def should_use_old_urls(instance: Optional["Community"]) -> bool:
+        return not instance or bool(instance.main_site)
+
+    @cached_property
+    def main_site(self) -> Optional["CommunitySite"]:
+        return self.sites.first()
+
     @property
     def full_url(self):
         return (
-            site.full_url
-            if (site := self.sites.first())
+            self.main_site.full_url
+            if Community.should_use_old_urls(self)
             else reverse(
                 "communities:community:packages.list",
                 kwargs={
