@@ -2,7 +2,6 @@
 {% load thumbnail %}
 {% load arrow %}
 {% load markdownify %}
-{% load get_urls %}
 {% load cache_until %}
 {% load encode_props %}
 {% load community_url %}
@@ -134,7 +133,7 @@ window.ts.PackageManagementPanel(
 
 <div class="row my-2">
     <div class="col-12 col-sm-6 px-3 pl-sm-3 pr-sm-1">
-        <a href="{% get_install_url object.package.latest %}" type="button" class="btn btn-primary w-100 text-large">
+        <a href="{{ object.package.latest.install_url }}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-rocket mr-2" aria-hidden="true"></i>Install with Mod Manager
         </a>
     </div>
@@ -199,7 +198,7 @@ window.ts.PackageManagementPanel(
                 <td>{{ version.version_number }}</td>
                 <td>{{ version.downloads }}</td>
                 <td><a href="{{ version.download_url }}">Version {{ version.version_number }}</a></td>
-                <td><a href="{% get_install_url version %}" type="button" class="btn btn-primary">Install</a></td>
+                <td><a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a></td>
             </tr>
             {% endfor %}
         </table>

@@ -144,7 +144,7 @@ def test_package_detail_view(
     client, active_package_listing: PackageListing, community_site
 ):
     response = client.get(
-        active_package_listing.package.get_absolute_url(),
+        active_package_listing.get_absolute_url(),
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 200
