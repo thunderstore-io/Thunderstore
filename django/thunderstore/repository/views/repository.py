@@ -26,6 +26,7 @@ from thunderstore.community.models import (
     PackageListing,
     PackageListingSection,
 )
+from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import (
     Package,
@@ -263,7 +264,12 @@ class PackageListSearchView(CommunityMixin, ListView):
     def get_breadcrumbs(self):
         return [
             {
-                "url": reverse_lazy("old_urls:packages.list"),
+                "url": reverse_lazy(
+                    **get_community_url_reverse_args(
+                        community=self.community,
+                        viewname="packages.list",
+                    )
+                ),
                 "name": "Packages",
             },
         ]
@@ -334,7 +340,11 @@ class PackageListByOwnerView(PackageListSearchView):
         return breadcrumbs + [
             {
                 "url": reverse_lazy(
-                    "old_urls:packages.list_by_owner", kwargs=self.kwargs
+                    **get_community_url_reverse_args(
+                        community=self.community,
+                        viewname="packages.list_by_owner",
+                        kwargs=self.kwargs,
+                    )
                 ),
                 "name": self.owner.name,
             },
