@@ -18,11 +18,11 @@ def test_create_test_data_debug_check(debug: bool) -> None:
     def test_debug():
         try:
             call_command("create_test_data")
-            assert Package.objects.filter(name__icontains="Test_Package").count() == 10
+            assert Package.objects.filter(name__icontains="Test_Package").count() == 30
             assert Team.objects.filter(name__icontains="Test_Team").count() == 10
             assert (
                 PackageVersion.objects.filter(name__icontains="Test_Package").count()
-                == 30
+                == 90
             )
             assert settings.DEBUG is True
         except CommandError as e:
@@ -63,8 +63,8 @@ def test_create_test_data_clear() -> None:
     assert not packages.filter(pk=package.pk).exists()
     assert not pvs.filter(pk=pv.pk).exists()
     assert teams.filter(name__icontains="Test_Team").count() == 10
-    assert packages.filter(name__icontains="Test_Package").count() == 10
-    assert pvs.filter(name__icontains="Test_Package").count() == 30
+    assert packages.filter(name__icontains="Test_Package").count() == 30
+    assert pvs.filter(name__icontains="Test_Package").count() == 90
 
 
 @pytest.mark.django_db

@@ -231,7 +231,10 @@ class PackageVersionPopulator(ContentPopulator):
 class DependencyPopulator(ContentPopulator):
     def populate(self, context: ContentPopulatorContext) -> None:
         print("Linking dependencies...")
-        PackageVersion.dependencies.through.objects.all().delete()
+        PackageVersion.dependencies.through.objects.filter(
+            from_packageversion__package__in=context.packages,
+            to_packageversion__package__in=context.packages,
+        ).delete()
         dependencies = [
             x.latest.id for x in context.packages[: context.dependency_count]
         ]
@@ -296,9 +299,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser) -> None:
         parser.add_argument("--community-count", type=int, default=20)
         parser.add_argument("--team-count", type=int, default=10)
-        parser.add_argument("--package-count", type=int, default=1)
+        parser.add_argument("--package-count", type=int, default=3)
         parser.add_argument("--version-count", type=int, default=3)
-        parser.add_argument("--dependency-count", type=int, default=20)
+        parser.add_argument("--dependency-count", type=int, default=5)
         parser.add_argument("--clear", default=False, action="store_true")
         parser.add_argument(
             "--only",
