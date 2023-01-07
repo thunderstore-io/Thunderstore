@@ -159,7 +159,7 @@
                     </div>
                 </div>
                 {% endif %}
-                <a href="{{ object.package.get_absolute_url }}">
+                <a href="{{ object.get_absolute_url }}">
                     <img class="w-100" src="{% thumbnail object.package.icon 256x256 crop %}" alt="{{ object.package }} icon">
                 </a>
             </div>

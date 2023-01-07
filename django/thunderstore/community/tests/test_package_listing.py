@@ -4,7 +4,7 @@ from django.db import IntegrityError
 
 from conftest import TestUserTypes
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.community.factories import CommunityFactory
+from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
 from thunderstore.community.models import (
     Community,
     CommunityMemberRole,
@@ -16,33 +16,93 @@ from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
 
 @pytest.mark.django_db
-def test_package_listing_get_absolute_url_with_community_identifier(
+@pytest.mark.parametrize("with_site", (False, True))
+def test_package_listing_get_absolute_url(
     active_package_listing: PackageListing,
+    with_site: bool,
 ) -> None:
-    assert (
-        active_package_listing.get_absolute_url_with_community_identifier
-        == f"/c/{active_package_listing.community.identifier}/p/{active_package_listing.package.owner.name}/{active_package_listing.package.name}/"
-    )
+    if with_site:
+        CommunitySiteFactory(community=active_package_listing.community)
+        expected = "/".join(
+            [
+                "/package",
+                active_package_listing.package.owner.name,
+                active_package_listing.package.name,
+                "",
+            ]
+        )
+    else:
+        expected = "/".join(
+            [
+                "/c",
+                active_package_listing.community.identifier,
+                "p",
+                active_package_listing.package.owner.name,
+                active_package_listing.package.name,
+                "",
+            ]
+        )
+
+    assert active_package_listing.get_absolute_url() == expected
 
 
 @pytest.mark.django_db
-def test_package_listing_owner_url_with_community_identifier(
+@pytest.mark.parametrize("with_site", (False, True))
+def test_package_listing_owner_url(
     active_package_listing: PackageListing,
+    with_site: bool,
 ) -> None:
-    assert (
-        active_package_listing.owner_url_with_community_identifier
-        == f"/c/{active_package_listing.community.identifier}/p/{active_package_listing.package.owner.name}/"
-    )
+    if with_site:
+        CommunitySiteFactory(community=active_package_listing.community)
+        expected = "/".join(
+            [
+                "/package",
+                active_package_listing.package.owner.name,
+                "",
+            ]
+        )
+    else:
+        expected = "/".join(
+            [
+                "/c",
+                active_package_listing.community.identifier,
+                "p",
+                active_package_listing.package.owner.name,
+                "",
+            ]
+        )
+    assert active_package_listing.owner_url == expected
 
 
 @pytest.mark.django_db
-def test_package_listing_dependants_url_with_community_identifier(
+@pytest.mark.parametrize("with_site", (False, True))
+def test_package_listing_dependants_url(
     active_package_listing: PackageListing,
+    with_site: bool,
 ) -> None:
-    assert (
-        active_package_listing.dependants_url_with_community_identifier
-        == f"/c/{active_package_listing.community.identifier}/p/{active_package_listing.package.owner.name}/{active_package_listing.package.name}/dependants/"
-    )
+    if with_site:
+        CommunitySiteFactory(community=active_package_listing.community)
+        expected = "/".join(
+            [
+                "/package",
+                active_package_listing.package.owner.name,
+                active_package_listing.package.name,
+                "dependants/",
+            ]
+        )
+    else:
+        expected = "/".join(
+            [
+                "/c",
+                active_package_listing.community.identifier,
+                "p",
+                active_package_listing.package.owner.name,
+                active_package_listing.package.name,
+                "dependants/",
+            ]
+        )
+
+    assert active_package_listing.dependants_url == expected
 
 
 @pytest.mark.django_db
