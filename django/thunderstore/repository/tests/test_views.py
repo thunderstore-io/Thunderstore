@@ -16,13 +16,23 @@ from ...cache.enums import CacheBustCondition
 from ...cache.tasks import invalidate_cache
 from ...community.consts import PackageListingReviewStatus
 from ...community.factories import CommunitySiteFactory, SiteFactory
-from ...community.models import CommunitySite, PackageCategory, PackageListing
+from ...community.models import (
+    Community,
+    CommunitySite,
+    PackageCategory,
+    PackageListing,
+)
 from ...core.types import UserType
 from ...frontend.extract_props import extract_props_from_html
+from ...frontend.url_reverse import get_community_url_reverse_args
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Team, TeamMember, TeamMemberRole
 from ..package_upload import PackageUploadForm
-from ..views.repository import PackageVersionDetailView
+from ..views.repository import (
+    PackageListByOwnerView,
+    PackageListSearchView,
+    PackageVersionDetailView,
+)
 
 
 @pytest.mark.django_db
@@ -94,6 +104,39 @@ def test_package_list_view(client, community_site, ordering: str, old_urls: bool
     )
     response = client.get(bad_url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("has_site", (True, False))
+def test_package_list_search_view_get_breadcrumbs(
+    active_package_listing: PackageListing,
+    has_site: bool,
+):
+    community = active_package_listing.community
+    if has_site:
+        CommunitySiteFactory(community=community)
+    owner = active_package_listing.package.owner
+    mock_request = mock.Mock(spec=request.Request)
+    mock_request.community = community
+
+    kwargs = get_community_url_reverse_args(
+        community=community, viewname="packages.list_by_owner", kwargs={"owner": owner}
+    )["kwargs"]
+
+    view = PackageListByOwnerView(kwargs=kwargs, request=mock_request)
+    view.cache_owner()
+    crumbs = view.get_breadcrumbs()
+
+    if has_site:
+        assert crumbs == [
+            {"url": "/package/", "name": "Packages"},
+            {"url": f"/package/{owner.name}/", "name": owner.name},
+        ]
+    else:
+        assert crumbs == [
+            {"url": f"/c/{community.identifier}/", "name": "Packages"},
+            {"url": f"/c/{community.identifier}/p/{owner}/", "name": owner.name},
+        ]
 
 
 @pytest.mark.django_db
