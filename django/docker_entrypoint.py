@@ -139,6 +139,8 @@ def run_gunicorn() -> None:
 
 def run_celery_worker() -> None:
     print("Launching celery workers")
+    if os.path.exists(CELERY_PIDFILE.value):
+        os.remove(CELERY_PIDFILE.value)
     worker_command = [
         "celery",
         "--app",
@@ -155,11 +157,7 @@ def run_celery_worker() -> None:
         worker_command += ["--concurrency", CELERY_CONCURRENCY]
     if CELERY_QUEUES:
         worker_command += ["--queues", CELERY_QUEUES]
-    command = []
-    if AUTORELOAD:
-        command += WATCHMEDO_COMMAND
-    command += worker_command
-    run_command(command)
+    run_command(worker_command)
 
 
 def run_celery_beat() -> None:
