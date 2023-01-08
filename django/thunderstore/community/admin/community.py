@@ -14,12 +14,16 @@ class CommunityMembershipInline(admin.TabularInline):
 @admin.register(Community)
 class CommunityAdmin(admin.ModelAdmin):
     filter_horizontal = ()
-    list_filter = ("is_listed",)
+    list_filter = (
+        "is_listed",
+        "block_auto_updates",
+    )
     list_display = (
         "id",
         "identifier",
         "name",
         "is_listed",
+        "block_auto_updates",
         "datetime_created",
         "datetime_updated",
     )
