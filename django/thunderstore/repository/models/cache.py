@@ -7,8 +7,8 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
-from thunderstore.cache.models import S3FileMixin
 from thunderstore.community.models import Community
+from thunderstore.core.mixins import S3FileMixin
 
 
 class APIV1PackageCache(S3FileMixin):
