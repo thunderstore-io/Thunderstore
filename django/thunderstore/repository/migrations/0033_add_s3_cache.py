@@ -5,6 +5,7 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 import thunderstore.cache.models
+import thunderstore.core.mixins
 import thunderstore.utils.makemigrations
 
 
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         storage=thunderstore.utils.makemigrations.StubStorage(),
-                        upload_to=thunderstore.cache.models.get_package_cache_filepath,
+                        upload_to=thunderstore.core.mixins.get_package_cache_filepath,
                     ),
                 ),
                 ("content_type", models.TextField()),
