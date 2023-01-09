@@ -392,7 +392,7 @@ def test_package_download_view(
     # Should be accessible on the community's own domain
     response = client.get(url, HTTP_HOST=package_site.site.domain)
     assert response.status_code == 302
-    assert response["Location"].startswith("http://localhost:9000/")
+    assert response["Location"].startswith("http://minio:9000/")
 
     # Should not be accessible in another community's domain
     response = client.get(url, HTTP_HOST=random_site.site.domain)
@@ -401,7 +401,7 @@ def test_package_download_view(
     # Should be accessible on the primary domain
     response = client.get(url, HTTP_HOST=primary_site.site.domain)
     assert response.status_code == 302
-    assert response["Location"].startswith("http://localhost:9000/")
+    assert response["Location"].startswith("http://minio:9000/")
 
 
 @pytest.mark.django_db

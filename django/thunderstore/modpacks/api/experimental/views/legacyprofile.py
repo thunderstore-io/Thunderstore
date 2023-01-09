@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.utils import timezone
 from drf_yasg.openapi import TYPE_FILE, Schema
 from drf_yasg.utils import swagger_auto_schema
@@ -61,4 +61,4 @@ class LegacyProfileRetrieveApiView(APIView):
     )
     def get(self, request, key: str, *args, **kwargs):
         profile = get_object_or_404(LegacyProfile, id=key)
-        return HttpResponse(profile.file, content_type="application/octet-stream")
+        return redirect(self.request.build_absolute_uri(profile.file.url))
