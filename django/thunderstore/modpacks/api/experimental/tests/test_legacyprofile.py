@@ -2,6 +2,7 @@ import io
 import json
 
 import pytest
+import requests
 from django.core.files import File
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -75,5 +76,7 @@ def test_experimental_api_legacyprofile_retrieve(api_client: APIClient) -> None:
             },
         ),
     )
+    assert response.status_code == 302
+    response = requests.get(response["Location"])
     assert response.status_code == 200
     assert response.content == test_content
