@@ -10,13 +10,15 @@ class LegacyProfileAdmin(admin.ModelAdmin):
         "datetime_updated",
         "file",
         "file_size",
+        "file_sha256",
     )
     list_display = (
         "id",
         "file_size",
+        "file_sha256",
         "datetime_created",
         "datetime_updated",
     )
     list_display_links = ("id",)
     date_hierarchy = "datetime_created"
-    search_fields = ("id",)
+    search_fields = ("id", "file_sha256")

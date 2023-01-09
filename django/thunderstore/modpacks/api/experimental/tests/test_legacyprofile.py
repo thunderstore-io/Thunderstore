@@ -29,6 +29,33 @@ def test_experimental_api_legacyprofile_create(api_client: APIClient) -> None:
 
 
 @pytest.mark.django_db
+def test_experimental_api_legacyprofile_deduplicate(api_client: APIClient) -> None:
+    assert LegacyProfile.objects.count() == 0
+    test_content = b"hunter2"
+    response = api_client.post(
+        reverse("api:experimental:legacyprofile.create"),
+        data=test_content,
+        content_type="application/octet-stream",
+    )
+    assert LegacyProfile.objects.count() == 1
+    first_key = response.json()["key"]
+    response = api_client.post(
+        reverse("api:experimental:legacyprofile.create"),
+        data=test_content,
+        content_type="application/octet-stream",
+    )
+    assert LegacyProfile.objects.count() == 1
+    assert response.json()["key"] == first_key
+    response = api_client.post(
+        reverse("api:experimental:legacyprofile.create"),
+        data=b"hunter3",
+        content_type="application/octet-stream",
+    )
+    assert LegacyProfile.objects.count() == 2
+    assert response.json()["key"] != first_key
+
+
+@pytest.mark.django_db
 def test_experimental_api_legacyprofile_create_without_body(
     api_client: APIClient,
 ) -> None:
