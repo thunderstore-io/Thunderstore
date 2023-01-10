@@ -1,3 +1,5 @@
+from hashlib import sha256
+
 import ulid2
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -18,15 +20,28 @@ def get_legacy_profile_file_path(instance: "LegacyProfile", filename: str):
 
 
 class LegacyProfileManager(models.Manager):
-    def create_from_upload(self, content: TemporaryUploadedFile) -> "LegacyProfile":
+    def get_or_create_from_upload(
+        self, content: TemporaryUploadedFile
+    ) -> "LegacyProfile":
         if content.size + self.get_total_used_disk_space() > LEGACYPROFILE_STORAGE_CAP:
             raise ValidationError(
                 f"The server has reached maximum total storage used, and can't receive new uploads"
             )
 
+        hash = sha256()
+        content.seek(0)
+        hash.update(content.read())
+        hexdigest = hash.hexdigest()
+
+        if existing := self.filter(
+            file_size=content.size, file_sha256=hexdigest
+        ).first():
+            return existing
+
         return self.create(
             file=content,
             file_size=content.size,
+            file_sha256=hexdigest,
         )
 
     def get_total_used_disk_space(self) -> int:
@@ -44,6 +59,9 @@ class LegacyProfile(TimestampMixin, models.Model):
     file = models.FileField(
         upload_to=get_legacy_profile_file_path,
         storage=get_storage_class(settings.MODPACK_FILE_STORAGE)(),
+    )
+    file_sha256 = models.CharField(
+        max_length=512, editable=False, blank=True, null=True
     )
     file_size = models.PositiveBigIntegerField()
 

@@ -42,7 +42,7 @@ class LegacyProfileCreateApiView(APIView):
     def post(self, request, *args, **kwargs):
         if "file" not in self.request.data or not self.request.data["file"]:
             raise ValidationError(detail="Request body was empty")
-        profile = LegacyProfile.objects.create_from_upload(
+        profile = LegacyProfile.objects.get_or_create_from_upload(
             content=self.request.data["file"]
         )
         serializer = LegacyProfileCreateResponseSerializer({"key": profile.id})
