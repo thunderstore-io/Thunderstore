@@ -61,6 +61,7 @@ class Community(TimestampMixin, models.Model):
     wiki_url = models.CharField(max_length=512, blank=True, null=True)
     is_listed = models.BooleanField(default=True)
     require_package_listing_approval = models.BooleanField(default=False)
+    block_auto_updates = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         if self.pk:

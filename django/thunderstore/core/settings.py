@@ -116,6 +116,10 @@ env = environ.Env(
     SESSION_COOKIE_DOMAIN=(str, ""),
     OAUTH_SHARED_SECRET=(str, ""),
     ALWAYS_RAISE_EXCEPTIONS=(bool, False),
+    ECOSYSTEM_SCHEMA_URL=(
+        str,
+        "https://gcdn.thunderstore.io/static/dev/schema/games.json",
+    ),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -236,6 +240,7 @@ INSTALLED_APPS = [
     "thunderstore.account",
     "thunderstore.markdown",
     "thunderstore.modpacks",
+    "thunderstore.schema_import",
 ]
 
 MIDDLEWARE = [
@@ -358,6 +363,8 @@ LOGOUT_REDIRECT_URL = "index"
 REPOSITORY_MAX_PACKAGE_SIZE_MB = env.int("REPOSITORY_MAX_PACKAGE_SIZE_MB")
 REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB = env.int("REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB")
 LEGACYPROFILE_MAX_TOTAL_SIZE_GB = env.int("LEGACYPROFILE_MAX_TOTAL_SIZE_GB")
+
+ECOSYSTEM_SCHEMA_URL = env.str("ECOSYSTEM_SCHEMA_URL")
 
 # Debug toolbar
 
