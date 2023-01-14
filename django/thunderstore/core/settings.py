@@ -255,6 +255,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.schema_server",
         "thunderstore.legal",
         "thunderstore.wiki",
+        "thunderstore.ipfs",
     ]
 )
 
@@ -579,7 +580,7 @@ DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 THUMBNAIL_DEFAULT_STORAGE = "django.core.files.storage.FileSystemStorage"
 PACKAGE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 MODPACK_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-SCHEMA_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+IPFS_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
 # AWS S3 for everything, can be used with S3 compatible providers
 
@@ -657,7 +658,7 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     MODPACK_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-    SCHEMA_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    IPFS_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # For uploading files to multiple buckets at once.
 S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
@@ -704,14 +705,14 @@ if all(
     THUMBNAIL_DEFAULT_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
-    SCHEMA_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    IPFS_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
 
 # Storage Defaults
 DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
 THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
 PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
 MODPACK_FILE_STORAGE = get_storage_class_or_stub(MODPACK_FILE_STORAGE)
-SCHEMA_FILE_STORAGE = get_storage_class_or_stub(SCHEMA_FILE_STORAGE)
+IPFS_FILE_STORAGE = get_storage_class_or_stub(IPFS_FILE_STORAGE)
 
 # Social auth
 

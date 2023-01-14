@@ -35,38 +35,19 @@ def get_package_cache_filepath(_, filename: str) -> str:
     return f"cache/api/v1/package/{filename}"
 
 
-class S3FileMixinQueryset(models.QuerySet):
-    def active(self) -> models.QuerySet:
-        return self.exclude(Q(is_deleted=True) | Q(data=None))
+class SafeDeleteMixin(models.Model):
+    """
+    Mixin that prevents a scenario where a file is deleted from the storage but
+    the DB state doesn't get updated appropriately e.g. due to a transaction
+    failing.
+    """
 
-    def delete(self):
-        # Disallow bulk-delete to ensure deletion happens properly.
-        raise NotImplementedError(
-            f"Delete is not supported for {self.__class__.__name__}"
-        )
-
-
-class S3FileMixin(models.Model):
-    objects: S3FileMixinQueryset["S3FileMixin"] = S3FileMixinQueryset.as_manager()
-
-    data = models.FileField(
-        upload_to=get_package_cache_filepath,
-        storage=CACHE_STORAGE,
-        blank=True,
-        null=True,
-    )
-    content_type = models.TextField()
-    content_encoding = models.TextField()
-    last_modified = models.DateTimeField()
     is_deleted = models.BooleanField(default=False)
 
-    class Meta:
-        abstract = True
-        indexes = [
-            models.Index(fields=["last_modified"]),
-        ]
+    def safe_delete(self):
+        raise NotImplementedError()
 
-    def delete_file(self, using: str = None):
+    def _safe_delete(self, using: str = None):
         # We need to ensure any potential failure status is recorded to the database
         # appropriately. Easiest way to do this is just to ensure we're not in a
         # transaction, which could end up rolling back our failure status elsewhere
@@ -84,8 +65,45 @@ class S3FileMixin(models.Model):
         # a db write.
         self.is_deleted = True
         self.save(update_fields=("is_deleted",))
-        self.data.delete()
+        self.safe_delete()
 
     def delete(self, using: str = None, **kwargs: Any):
-        self.delete_file(using=using)
+        self._safe_delete(using=using)
         super().delete(using=using, **kwargs)
+
+    class Meta:
+        abstract = True
+
+
+class S3FileMixinQueryset(models.QuerySet):
+    def active(self) -> models.QuerySet:
+        return self.exclude(Q(is_deleted=True) | Q(data=None))
+
+    def delete(self):
+        # Disallow bulk-delete to ensure deletion happens properly.
+        raise NotImplementedError(
+            f"Delete is not supported for {self.__class__.__name__}"
+        )
+
+
+class S3FileMixin(SafeDeleteMixin):
+    objects: S3FileMixinQueryset["S3FileMixin"] = S3FileMixinQueryset.as_manager()
+
+    data = models.FileField(
+        upload_to=get_package_cache_filepath,
+        storage=CACHE_STORAGE,
+        blank=True,
+        null=True,
+    )
+    content_type = models.TextField()
+    content_encoding = models.TextField()
+    last_modified = models.DateTimeField()
+
+    def safe_delete(self):
+        self.data.delete()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["last_modified"]),
+        ]

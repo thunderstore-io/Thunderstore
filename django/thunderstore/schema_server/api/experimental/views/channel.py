@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
-from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.utils.cache import get_conditional_response
 from django.utils.http import http_date
@@ -12,7 +12,8 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.schema_server.models import SchemaChannel, SchemaFile
+from thunderstore.ipfs.models import IPFSObject
+from thunderstore.schema_server.models import SchemaChannel
 
 
 class SchemaChannelUpdateResponseSerializer(serializers.Serializer):
@@ -70,20 +71,15 @@ class SchemaChannelApiView(APIView):
         channel = get_object_or_404(SchemaChannel, identifier=channel)
         if not channel.latest:
             raise NotFound()
-        schema: SchemaFile = channel.latest.file
 
-        last_modified = int(schema.last_modified.timestamp())
+        # TODO: Redirect to the IPFS gateway rather than returning data here
+        ipfs_obj: IPFSObject = channel.latest.ipfs_object
+        last_modified = int(ipfs_obj.datetime_created.timestamp())
 
         # TODO: Add ETag support if useful
         # Check if we can return a 304 response, otherwise return full content
         response = get_conditional_response(request, last_modified=last_modified)
         if response is None:
-            # TODO: Stream directly from the S3 backend instead of buffering
-            # TODO: Should we support decompressing for non-gzip capable clients?
-            response = HttpResponse(
-                content=schema.data,
-                content_type=schema.content_type,
-            )
+            response = HttpResponseRedirect(redirect_to=ipfs_obj.data.url)
             response["Last-Modified"] = http_date(last_modified)
-            response["Content-Encoding"] = schema.content_encoding
         return response

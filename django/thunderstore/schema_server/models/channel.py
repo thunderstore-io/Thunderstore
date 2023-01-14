@@ -2,12 +2,13 @@ from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.files import File
 from django.db import models
 from django.db.models import Manager
 
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
-from thunderstore.schema_server.models.file import SchemaFile
+from thunderstore.ipfs.models import IPFSObject, IPFSObjectRelationMixin
 
 
 class SchemaChannel(TimestampMixin):
@@ -46,7 +47,7 @@ class SchemaChannel(TimestampMixin):
         return channel.add_new_version(content)
 
     def add_new_version(self, content: bytes) -> "SchemaChannelFile":
-        self.latest = SchemaChannelFile.create_version(self, content)
+        self.latest = SchemaChannelVersion.create(self, content)
         self.save()
         return self.latest
 
@@ -54,25 +55,20 @@ class SchemaChannel(TimestampMixin):
         return self.identifier
 
 
-class SchemaChannelFile(TimestampMixin):
+class SchemaChannelVersion(IPFSObjectRelationMixin, TimestampMixin):
     channel = models.ForeignKey(
         "schema_server.SchemaChannel",
         related_name="channel_files",
         on_delete=models.CASCADE,
     )
-    file = models.ForeignKey(
-        "schema_server.SchemaFile",
-        related_name="channel_files",
-        on_delete=models.PROTECT,
-    )
     is_active = models.BooleanField(default=True)
 
     @classmethod
-    def create_version(cls, channel: SchemaChannel, content: bytes):
+    def create(cls, channel: SchemaChannel, content: File):
         return cls.objects.create(
+            ipfs_object=IPFSObject.objects.get_or_create_for_file(content),
             channel=channel,
-            file=SchemaFile.get_or_create(content),
         )
 
     def __str__(self):
-        return f"{self.datetime_created.isoformat()} {self.file.checksum_sha256}"
+        return f"{self.channel} {self.datetime_created.isoformat()}"

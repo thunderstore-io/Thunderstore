@@ -1396,6 +1396,18 @@ files = [
 ]
 
 [[package]]
+name = "ipfs-cid"
+version = "1.0.0"
+description = "A library for building IPFS CID v1 compatible content identifiers using fixed encoding parameters."
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "ipfs_cid-1.0.0-py3-none-any.whl", hash = "sha256:341985f50f893e0e49cf7da0fc0c4ba1afbe57fdea8a215724fd708de4ef96cb"},
+    {file = "ipfs_cid-1.0.0.tar.gz", hash = "sha256:a752c87cde68840e27dcb02f4e7cf940297fae43872bb5e6ef3bf73ad31af73d"},
+]
+
+[[package]]
 name = "isort"
 version = "5.7.0"
 description = "A Python utility / library to sort Python imports."
@@ -3091,4 +3103,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "5c12445dc97ed2f1164ce8657081b52b56cb31031e119c9cfa66acf1a2646b0a"
+content-hash = "68430346be29472fa95c5bc3f8647e3e52a768aa380b1d0042938fd2362ead4d"
