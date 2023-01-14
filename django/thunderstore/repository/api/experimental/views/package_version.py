@@ -77,3 +77,20 @@ class PackageVersionChangelogApiView(PackageVersionDetailMixin):
         instance = self.get_object()
         serializer = self.get_serializer({"markdown": instance.changelog})
         return Response(serializer.data)
+
+
+class PackageVersionReadmeApiView(PackageVersionDetailMixin):
+    """
+    Get a package verion's readme
+    """
+
+    serializer_class = MarkdownResponseSerializer
+
+    @swagger_auto_schema(operation_id="experimental_package_version_readme_read")
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer({"markdown": instance.readme})
+        return Response(serializer.data)

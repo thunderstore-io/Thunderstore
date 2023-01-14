@@ -5,6 +5,7 @@ from thunderstore.repository.api.experimental.views import (
     PackageListApiView,
     PackageVersionChangelogApiView,
     PackageVersionDetailApiView,
+    PackageVersionReadmeApiView,
     UploadPackageApiView,
 )
 from thunderstore.repository.api.experimental.views.submit import SubmitPackageApiView
@@ -34,6 +35,11 @@ urls = [
         "package/<str:namespace>/<str:name>/<str:version>/changelog/",
         PackageVersionChangelogApiView.as_view(),
         name="package-version-changelog",
+    ),
+    path(
+        "package/<str:namespace>/<str:name>/<str:version>/readme/",
+        PackageVersionReadmeApiView.as_view(),
+        name="package-version-readme",
     ),
     path(
         "submission/submit/", SubmitPackageApiView.as_view(), name="submission.submit"
