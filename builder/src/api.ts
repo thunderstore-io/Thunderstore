@@ -9,7 +9,7 @@ type JSONValue =
     | { [key: string]: JSONValue };
 
 export const stringifyError = (
-    val: JSONValue,
+    val: JSONValue | undefined,
     parents?: string[]
 ): string[] => {
     if (val === null) {
@@ -30,7 +30,9 @@ export const stringifyError = (
         return result;
     } else {
         return [
-            `${parents?.join(": ")}${parents ? ": " : ""}${val.toString()}`,
+            `${parents?.join(": ")}${parents ? ": " : ""}${
+                val ? val.toString() : "Unknown error"
+            }`,
         ];
     }
 };
