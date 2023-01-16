@@ -7,17 +7,12 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListingSection,
 )
-from thunderstore.schema_import.schema import Schema, SchemaGame
+from thunderstore.schema_import.schema import Schema, SchemaCommunity
 
 
 # TODO: Add support for deleting or at least disabling unnecessary content
 @transaction.atomic
-def import_game_community(identifier: str, game: SchemaGame):
-    if not game.thunderstore:
-        return
-
-    config = game.thunderstore
-
+def import_community(identifier: str, schema: SchemaCommunity):
     if not (community := Community.objects.filter(identifier=identifier).first()):
         community = Community(
             identifier=identifier,
@@ -28,16 +23,16 @@ def import_game_community(identifier: str, game: SchemaGame):
     if community.block_auto_updates:
         return
 
-    community.slogan = f"The {game.meta.displayName} Mod Database"
+    community.slogan = f"The {schema.display_name} Mod Database"
     community.description = (
         "Thunderstore is a mod database and API for downloading mods"
     )
-    community.name = game.meta.displayName
-    community.discord_url = config.discord_url
-    community.wiki_url = config.wiki_url
+    community.name = schema.display_name
+    community.discord_url = schema.discord_url
+    community.wiki_url = schema.wiki_url
     community.save()
 
-    for k, v in config.categories.items():
+    for k, v in schema.categories.items():
         if not (
             category := PackageCategory.objects.filter(
                 slug=k, community=community
@@ -47,7 +42,7 @@ def import_game_community(identifier: str, game: SchemaGame):
         category.name = v.label
         category.save()
 
-    for index, (k, v) in enumerate(config.sections.items()):
+    for index, (k, v) in enumerate(schema.sections.items()):
         if not (
             section := PackageListingSection.objects.filter(
                 community=community, slug=k
@@ -72,9 +67,9 @@ def import_game_community(identifier: str, game: SchemaGame):
         )
 
 
-def import_schema_games(schema: Schema):
-    for identifier, game in schema.games.items():
-        import_game_community(identifier, game)
+def import_schema_communities(schema: Schema):
+    for identifier, community in schema.communities.items():
+        import_community(identifier, community)
 
 
 def sync_thunderstore_schema():
@@ -82,4 +77,4 @@ def sync_thunderstore_schema():
         settings.ECOSYSTEM_SCHEMA_URL, headers={"accept-encoding": "gzip"}
     )
     schema = Schema.parse_obj(response.json())
-    import_schema_games(schema)
+    import_schema_communities(schema)
