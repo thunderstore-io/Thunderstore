@@ -14,6 +14,7 @@ class SchemaThunderstoreCategory(BaseModel):
 
 
 class SchemaCommunity(BaseModel):
+    display_name: str = Field(alias="displayName")
     categories: Dict[str, SchemaThunderstoreCategory]
     sections: Dict[str, SchemaThunderstoreSection]
     discord_url: Optional[str] = Field(alias="discordUrl")
@@ -30,5 +31,6 @@ class SchemaGame(BaseModel):
 
 
 class Schema(BaseModel):
-    schemaVersion: str
+    schema_version: str = Field(alias="schemaVersion")
     games: Dict[str, SchemaGame]
+    communities: Dict[str, SchemaCommunity]

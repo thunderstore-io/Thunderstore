@@ -118,7 +118,7 @@ env = environ.Env(
     ALWAYS_RAISE_EXCEPTIONS=(bool, False),
     ECOSYSTEM_SCHEMA_URL=(
         str,
-        "https://gcdn.thunderstore.io/static/dev/schema/games.json",
+        "https://gcdn.thunderstore.io/static/dev/schema/ecosystem-schema.0.0.2.json",
     ),
 )
 
