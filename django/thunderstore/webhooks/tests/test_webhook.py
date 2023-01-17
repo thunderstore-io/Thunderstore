@@ -1,8 +1,9 @@
 import pytest
 
 from thunderstore.community.consts import PackageListingReviewStatus
+from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
 from thunderstore.community.models import PackageListing
-from thunderstore.webhooks.models import Webhook
+from thunderstore.webhooks.models import Webhook, WebhookType
 
 
 @pytest.mark.django_db
@@ -101,3 +102,22 @@ def test_webhook_get_for_package_release_require_categories(
         assert release_webhook not in result
     else:
         assert release_webhook in result
+
+
+@pytest.mark.django_db
+def test_webhook_get_for_package_release_rejected_package(
+    release_webhook: Webhook,
+    rejected_package_listing: PackageListing,
+) -> None:
+    # Creating a second webhook just to make sure it doesn't get used,
+    # as was the case with TS-1481 (rejected package posted to wrong community)
+    Webhook.objects.create(
+        name="test",
+        webhook_url="https://example.com/",
+        webhook_type=WebhookType.mod_release,
+        is_active=True,
+        community_site=CommunitySiteFactory(),
+    )
+
+    result = Webhook.get_for_package_release(rejected_package_listing.package)
+    assert result.count() == 0

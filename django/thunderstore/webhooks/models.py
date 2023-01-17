@@ -60,10 +60,9 @@ class Webhook(models.Model):
     def get_for_package_release(cls, package):
         base_query = Q(Q(webhook_type=WebhookType.mod_release) & Q(is_active=True))
         community_query = Q()
-        community_exclusions = []
+        communities = []
         for listing in package.community_listings.all():
             if listing.review_status not in listing.community.valid_review_statuses:
-                community_exclusions.append(listing.community)
                 continue
             categories = listing.categories.all()
             query = (
@@ -74,11 +73,14 @@ class Webhook(models.Model):
             if listing.has_nsfw_content:
                 query &= Q(allow_nsfw=True)
             community_query |= Q(query)
+            communities.append(listing.community)
 
-        full_query = base_query & Q(community_query)
-        return cls.objects.exclude(~Q(full_query)).exclude(
-            community_site__community__in=community_exclusions
+        full_query = (
+            base_query
+            & Q(community_query)
+            & Q(community_site__community__in=communities)
         )
+        return cls.objects.exclude(~Q(full_query))
 
     def get_version_release_json(self, version):
         thumbnail_url = version.icon.url
