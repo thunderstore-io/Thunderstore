@@ -17,6 +17,7 @@ from rest_framework.test import APIClient
 
 from thunderstore.account.forms import CreateServiceAccountForm
 from thunderstore.account.models import ServiceAccount
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
     CommunitySite,
@@ -181,6 +182,15 @@ def active_package_listing(community, active_package):
     return PackageListing.objects.create(
         community=community,
         package=active_package,
+    )
+
+
+@pytest.fixture(scope="function")
+def rejected_package_listing(community, active_package):
+    return PackageListing.objects.create(
+        community=community,
+        package=active_package,
+        review_status=PackageListingReviewStatus.rejected,
     )
 
 
