@@ -55,6 +55,7 @@ export class FileUpload {
 
     @action
     private logErrors(...errors: string[]) {
+        if (!errors || errors.length == 0) return;
         this.uploadErrors.push(...errors);
         console.error(errors);
     }
@@ -65,7 +66,7 @@ export class FileUpload {
             const flattened = stringifyError(error.errorObject);
             this.logErrors(...flattened);
         } else {
-            this.logErrors(error.message);
+            this.logErrors(error.message || "Unknown error");
             console.error(error, error.stack);
         }
     }
