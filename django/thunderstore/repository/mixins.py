@@ -1,6 +1,7 @@
 from django.http import Http404
 from django.utils.functional import cached_property
 
+from thunderstore.community.context_processors import get_community_context
 from thunderstore.community.models.community import Community
 from thunderstore.community.models.community_site import CommunitySite
 
@@ -26,8 +27,7 @@ class CommunityMixin:
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context["community_identifier"] = self.community_identifier
-        context["community"] = self.community
+        context.update(get_community_context(self.community))
         return context
 
     def get_serializer_context(self):
