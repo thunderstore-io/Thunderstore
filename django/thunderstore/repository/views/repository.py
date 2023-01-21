@@ -26,6 +26,7 @@ from thunderstore.community.models import (
     PackageListing,
     PackageListingSection,
 )
+from thunderstore.frontend.api.experimental.serializers.views import CommunitySerializer
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import (
@@ -580,6 +581,14 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageCreateView(CommunityMixin, TemplateView):
     template_name = "repository/package_create.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        serializer = CommunitySerializer(self.community)
+        context["upload_page_props"] = {
+            "currentCommunity": serializer.data,
+        }
+        return context
 
     def dispatch(self, *args, **kwargs):
         if not self.request.user.is_authenticated:

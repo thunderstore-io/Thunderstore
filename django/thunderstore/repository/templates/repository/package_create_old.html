@@ -63,20 +63,6 @@
 
             <div class="field-wrapper">
                 <div class="field-row">
-                    <label for="{{ form.categories.id_for_label }}">Categories</label>
-                    <div class="w-100">
-                        {{ form.categories }}
-                        <p class="mt-1 mb-2">
-                            Note that the selected categories are applied only to the
-                            <kbd class="text-info">{{ community.name }}</kbd> community.
-                        </p>
-                    </div>
-                </div>
-                <div class="text-danger field-errors">{{ form.categories.errors }}</div>
-            </div>
-
-            <div class="field-wrapper">
-                <div class="field-row">
                     <label for="{{ form.has_nsfw_content.id_for_label }}">Contains NSFW content</label>
                     {{ form.has_nsfw_content }}
                 </div>
@@ -89,9 +75,6 @@
 
 <script type="text/javascript">
 
-new SlimSelect({
-    select: "#{{ form.categories.auto_id }}"
-});
 new SlimSelect({
     select: "#{{ form.team.auto_id }}"
 });
