@@ -15,7 +15,6 @@ def update_api_v1_indexes() -> None:
                 community=site.community,
                 content=serialize_package_list_for_community(
                     community=site.community,
-                    community_site=site,
                 ),
             )
         except Exception as e:  # pragma: no cover
@@ -26,7 +25,6 @@ def update_api_v1_indexes() -> None:
                 community=community,
                 content=serialize_package_list_for_community(
                     community=community,
-                    community_site=None,
                 ),
             )
         except Exception as e:  # pragma: no cover

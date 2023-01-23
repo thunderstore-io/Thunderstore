@@ -20,7 +20,6 @@ class CommunityHttpRequest(HttpRequest):
 
 
 def add_community_context_to_request(request: CommunityHttpRequest):
-    request.community_site = None
     request.site = None
     request.community = None
     try:
@@ -29,7 +28,6 @@ def add_community_context_to_request(request: CommunityHttpRequest):
         raise Http404
     if not community_site:
         raise Http404
-    request.community_site = community_site
     request.site = community_site.site
     request.community = community_site.community
 
@@ -49,7 +47,6 @@ class CommunitySiteMiddleware:
         return HttpResponse(content=b"Community not found", status=404)
 
     def __call__(self, request: CommunityHttpRequest) -> HttpResponse:
-        request.community_site = None
         request.site = None
         request.community = None
         request_host = request.META["HTTP_HOST"]

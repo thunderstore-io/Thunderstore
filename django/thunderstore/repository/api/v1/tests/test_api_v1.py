@@ -135,7 +135,7 @@ def test_api_v1_package_detail(
             PACKAGE_SERIALIZER(
                 instance=active_package_listing,
                 context={
-                    "community_site": community_site,
+                    "community": community_site.community,
                 },
             ).data
         )
