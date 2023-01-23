@@ -1,8 +1,11 @@
 import pytest
+from django.conf import settings
+from freezegun.api import FrozenDateTimeFactory
 
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
+from thunderstore.community.factories import CommunityFactory
 from thunderstore.community.models import PackageListing
+from thunderstore.repository.models import Package
 from thunderstore.webhooks.models import Webhook, WebhookType
 
 
@@ -116,8 +119,37 @@ def test_webhook_get_for_package_release_rejected_package(
         webhook_url="https://example.com/",
         webhook_type=WebhookType.mod_release,
         is_active=True,
-        community_site=CommunitySiteFactory(),
+        community=CommunityFactory(),
     )
 
     result = Webhook.get_for_package_release(rejected_package_listing.package)
     assert result.count() == 0
+
+
+@pytest.mark.django_db
+def test_webhook_post_package_version_release(
+    release_webhook: Webhook,
+    active_package_listing: PackageListing,
+    freezer: FrozenDateTimeFactory,
+    mocker,
+) -> None:
+    version = active_package_listing.package.latest
+    data = release_webhook.get_version_release_json(version)
+    assert data["embeds"][0]["url"].startswith(settings.PROTOCOL)
+    mocked_call = mocker.patch.object(release_webhook, "call_with_json")
+    release_webhook.post_package_version_release(version)
+    mocked_call.assert_called_with(data)
+
+
+@pytest.mark.django_db
+def test_webhook_post_package_version_release_no_listing(
+    release_webhook: Webhook,
+    active_package: Package,
+    mocker,
+) -> None:
+    version = active_package.latest
+    result = release_webhook.get_version_release_json(version)
+    assert result is None
+    mocked_call = mocker.patch.object(release_webhook, "call_with_json")
+    release_webhook.post_package_version_release(version)
+    mocked_call.assert_not_called()

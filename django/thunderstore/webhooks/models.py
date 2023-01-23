@@ -23,8 +23,8 @@ class Webhook(models.Model):
         default=WebhookType.mod_release,
         choices=WebhookType.as_choices(),
     )
-    community_site = models.ForeignKey(
-        "community.CommunitySite",
+    community = models.ForeignKey(
+        "community.Community",
         related_name="webhooks",
         on_delete=models.CASCADE,
     )
@@ -68,46 +68,28 @@ class Webhook(models.Model):
             query = (
                 ~Q(exclude_categories__in=categories)
                 & Q(Q(require_categories=None) | Q(require_categories__in=categories))
-                & Q(community_site__community=listing.community)
+                & Q(community=listing.community)
             )
             if listing.has_nsfw_content:
                 query &= Q(allow_nsfw=True)
             community_query |= Q(query)
             communities.append(listing.community)
 
-        full_query = (
-            base_query
-            & Q(community_query)
-            & Q(community_site__community__in=communities)
-        )
+        full_query = base_query & Q(community_query) & Q(community__in=communities)
         return cls.objects.exclude(~Q(full_query))
 
     def get_version_release_json(self, version):
+        listing = version.package.get_package_listing(self.community)
+        if not listing:
+            return None
+
         thumbnail_url = version.icon.url
         if not (
             thumbnail_url.startswith("http://") or thumbnail_url.startswith("https://")
         ):
-            thumbnail_url = (
-                f"{settings.PROTOCOL}{self.community_site.site.domain}{thumbnail_url}"
-            )
+            thumbnail_url = f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{thumbnail_url}"
 
-        fields = [
-            {
-                "name": "Total downloads",
-                "value": f"{version.package.downloads}",
-            },
-        ]
-
-        listing = version.package.get_package_listing(self.community_site.community)
-        if listing:
-            categories = listing.categories.all().values_list("name", flat=True)
-            if categories:
-                fields.append(
-                    {
-                        "name": "Categories",
-                        "value": ", ".join(categories),
-                    }
-                )
+        categories = listing.categories.all().values_list("name", flat=True)
 
         return {
             "embeds": [
@@ -115,7 +97,7 @@ class Webhook(models.Model):
                     "title": f"{version.name} v{version.version_number}",
                     "type": "rich",
                     "description": version.description,
-                    "url": f"{version.package.get_full_url(self.community_site.site)}?utm_source=discord",
+                    "url": f"{listing.get_full_url()}",
                     "timestamp": timezone.now().isoformat(),
                     "color": 4474879,
                     "thumbnail": {
@@ -124,19 +106,30 @@ class Webhook(models.Model):
                         "height": 256,
                     },
                     "provider": {
-                        "name": self.community_site.site.name,
-                        "url": f"{settings.PROTOCOL}{self.community_site.site.domain}/",
+                        "name": settings.SITE_NAME,
+                        "url": f"{settings.PROTOCOL}{settings.PRIMARY_HOST}/",
                     },
                     "author": {
                         "name": version.package.owner.name,
                     },
-                    "fields": fields,
+                    "fields": [
+                        {
+                            "name": "Total downloads",
+                            "value": f"{version.package.downloads}",
+                        },
+                        {
+                            "name": "Categories",
+                            "value": ", ".join(categories),
+                        },
+                    ],
                 }
             ]
         }
 
     def post_package_version_release(self, version):
-        self.call_with_json(self.get_version_release_json(version))
+        data = self.get_version_release_json(version)
+        if data:
+            self.call_with_json(data)
 
     def call_with_json(self, webhook_data):
         if not self.is_active:
