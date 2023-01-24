@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load community_url %}
+{% load encode_props %}
 
 {% block title %}Upload{% endblock %}
 
@@ -34,7 +35,10 @@
 
 <div id="upload-page"></div>
 <script type="text/javascript">
-window.ts.UploadPage(document.getElementById("upload-page"));
+window.ts.UploadPage(
+    document.getElementById("upload-page"),
+    {{ upload_page_props|encode_props }}
+);
 </script>
 
 {% endblock %}

@@ -82,13 +82,12 @@ enum SubmissionStatus {
 
 interface SubmissionFormProps {
     onSubmissionComplete?: (result: PackageSubmissionResult) => void;
+    currentCommunity: Community;
 }
 const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
+    const currentCommunity = props.currentCommunity;
     const [communities, setCommunities] = useState<Community[] | null>(null);
     const [categories, setCategories] = useState<PackageCategory[] | null>(
-        null
-    );
-    const [currentCommunity, setCurrentCommunity] = useState<Community | null>(
         null
     );
     const [teams, setTeams] = useState<string[] | null>(null);
@@ -316,11 +315,8 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
             setCommunities(r.results)
         );
         enumerateCommunities([]);
+        enumerateCategories([], currentCommunity.identifier);
         ExperimentalApi.currentUser().then((r) => setTeams(r.teams));
-        ExperimentalApi.currentCommunity().then((community) => {
-            setCurrentCommunity(community);
-            enumerateCategories([], community.identifier);
-        });
     }, []);
 
     return (
@@ -549,7 +545,10 @@ export const SubmissionResults: React.FC<SubmissionResultsProps> = ({
     );
 };
 
-export const UploadPage: React.FC = () => {
+interface UploadPageProps {
+    currentCommunity: Community;
+}
+export const UploadPage: React.FC<UploadPageProps> = (props) => {
     const [
         submissionResult,
         setSubmissionResult,
@@ -567,6 +566,7 @@ export const UploadPage: React.FC = () => {
                 <div className="card-header">Submit Package</div>
                 <div className="card-body py-2 px-2">
                     <SubmissionForm
+                        currentCommunity={props.currentCommunity}
                         onSubmissionComplete={onSubmissionComplete}
                     />
                 </div>
