@@ -69,7 +69,7 @@ def test_api_experimental_submit_package_success(
     assert PackageReference(team.name, "name", "1.0.0").exists is True
 
     listing_data = response_data["available_communities"]
-    assert len(listing_data) == 1
+    assert len(listing_data) == 3
     listing = listing_data[0]
     assert listing["community"] == CommunitySerializer(community).data
     assert bool(listing["url"])
