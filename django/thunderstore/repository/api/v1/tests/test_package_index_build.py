@@ -16,9 +16,7 @@ from thunderstore.repository.api.v1.viewsets import (
 def test_serialize_package_list_for_community(community_site: CommunitySite):
     for _ in range(int(SERIALIZER_BATCH_SIZE * 2.5)):
         PackageListingFactory(community=community_site.community)
-    result = serialize_package_list_for_community(
-        community_site.community, community_site
-    )
+    result = serialize_package_list_for_community(community_site.community)
     buffer = BytesIO(result)
     buffer.seek(0)
     serializer = PACKAGE_SERIALIZER(data=JSONParser().parse(buffer), many=True)

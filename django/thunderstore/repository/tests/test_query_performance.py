@@ -51,6 +51,6 @@ def test_package_query_count(
     )
     with django_assert_max_num_queries(package_count + creation_queries + 1):
         serializer = PackageListingSerializer(
-            packages, many=True, context={"community_site": community_site}
+            packages, many=True, context={"community": community_site.community}
         )
         _ = serializer.data

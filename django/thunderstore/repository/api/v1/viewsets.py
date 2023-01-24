@@ -13,9 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from thunderstore.community.models import Community, CommunitySite, PackageListing
+from thunderstore.community.models import Community, PackageListing
 from thunderstore.core.types import HttpRequestType
-from thunderstore.core.utils import CommunitySiteSerializerContext
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import (
     get_package_listing_queryset,
@@ -31,9 +30,7 @@ PACKAGE_SERIALIZER = PackageListingSerializer
 SERIALIZER_BATCH_SIZE = 200
 
 
-def serialize_package_list_for_community(
-    community: Community, community_site: Optional[CommunitySite] = None
-) -> bytes:
+def serialize_package_list_for_community(community: Community) -> bytes:
     listing_ids = get_package_listing_queryset(
         community_identifier=community.identifier
     ).values_list("id", flat=True)
@@ -50,7 +47,6 @@ def serialize_package_list_for_community(
             queryset,
             many=True,
             context={
-                "community_site": community_site,
                 "community": community,
             },
         )
@@ -75,7 +71,6 @@ def serialize_package_list_for_community(
 
 class PackageViewSet(
     CommunityMixin,
-    CommunitySiteSerializerContext,
     viewsets.ReadOnlyModelViewSet,
 ):
     cache_database_fallback = False
