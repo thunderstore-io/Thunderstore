@@ -1,8 +1,11 @@
+from typing import Optional
+
 from django.db import models
 from django.db.models import Q, signals
 
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
+from thunderstore.community.models import Community
 from thunderstore.core.utils import ChoiceEnum
 
 
@@ -69,11 +72,14 @@ class DynamicHTML(models.Model):
         invalidate_cache_on_commit_async(CacheBustCondition.dynamic_html_updated)
 
     @classmethod
-    def get_for_community(cls, community, placement):
-        community_filter = Q(
-            ~Q(exclude_communities=community)
-            & Q(Q(require_communities=None) | Q(require_communities=community))
-        )
+    def get_for_community(cls, community: Optional[Community], placement: str):
+        if community:
+            community_filter = Q(
+                ~Q(exclude_communities=community)
+                & Q(Q(require_communities=None) | Q(require_communities=community))
+            )
+        else:
+            community_filter = Q(require_communities=None)
         full_query = Q(Q(is_active=True) & Q(placement=placement) & community_filter)
         return cls.objects.filter(full_query).order_by("-ordering", "-pk")
 
