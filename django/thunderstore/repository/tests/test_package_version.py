@@ -42,14 +42,6 @@ def test_package_version_get_page_url(
 
 
 @pytest.mark.django_db
-def test_package_version_get_owner_url(active_package_listing: PackageListing) -> None:
-    owner_url = active_package_listing.package.latest.get_owner_url(
-        active_package_listing.community.identifier
-    )
-    assert owner_url == "/c/test/p/Test_Team/"
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize("protocol", ("http://", "https://"))
 @pytest.mark.parametrize(
     "primary_host", ("primary.example.org", "secondary.example.org")

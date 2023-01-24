@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
-from django.db.models import Manager, Q, QuerySet, Sum, Value, signals
+from django.db.models import Manager, QuerySet, Sum, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
@@ -136,14 +136,6 @@ class PackageVersion(models.Model):
     def display_name(self):
         return self.name.replace("_", " ")
 
-    # TODO: Remove in the end of TS-272
-    @cached_property
-    def owner_url(self):
-        return self.package.owner_url
-
-    def get_owner_url(self, community_identifier: str) -> str:
-        return self.package.get_owner_url(community_identifier)
-
     @cached_property
     def owner(self):
         return self.package.owner
@@ -167,7 +159,7 @@ class PackageVersion(models.Model):
         )
 
     @cached_property
-    def download_url(self):
+    def _download_url(self):
         return reverse(
             "old_urls:packages.download",
             kwargs={
@@ -182,12 +174,13 @@ class PackageVersion(models.Model):
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
             "hostname": settings.PRIMARY_HOST,
-            "path": self.download_url,
+            "path": self._download_url,
         }
 
-    def get_install_url(self, request):
+    @property
+    def install_url(self):
         return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
-            "hostname": request.site.domain,
+            "hostname": settings.PRIMARY_HOST,
             "owner": self.package.owner.name,
             "name": self.package.name,
             "version": self.version_number,

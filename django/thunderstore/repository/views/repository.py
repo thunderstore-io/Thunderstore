@@ -558,6 +558,24 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             version_number=version,
         )
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["owner_url"] = reverse_lazy(
+            **get_community_url_reverse_args(
+                community=self.community,
+                viewname="packages.list_by_owner",
+                kwargs={"owner": self.kwargs["owner"]},
+            )
+        )
+        context["package_url"] = reverse_lazy(
+            **get_community_url_reverse_args(
+                community=self.community,
+                viewname="packages.detail",
+                kwargs={"owner": self.kwargs["owner"], "name": self.kwargs["name"]},
+            )
+        )
+        return context
+
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageCreateView(CommunityMixin, TemplateView):

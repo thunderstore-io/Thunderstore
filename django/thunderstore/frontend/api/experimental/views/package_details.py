@@ -116,9 +116,9 @@ class PackageDetailApiView(APIView):
                 "dependency_string": latest.full_version_name,
                 "description": latest.description,
                 "download_count": listing.package_total_downloads,
-                "download_url": latest.download_url,
+                "download_url": latest.full_download_url,
                 "image_src": latest.icon.url if bool(latest.icon) else None,
-                "install_url": latest.get_install_url(self.request),
+                "install_url": latest.install_url,
                 "last_updated": listing.package.date_updated,
                 "markdown": latest.readme,
                 "namespace": listing.package.namespace.name,
@@ -130,8 +130,8 @@ class PackageDetailApiView(APIView):
                         {
                             "date_created": v.date_created,
                             "download_count": v.downloads,
-                            "download_url": v.download_url,
-                            "install_url": v.get_install_url(self.request),
+                            "download_url": v.full_download_url,
+                            "install_url": v.install_url,
                             "version_number": v.version_number,
                         }
                     ).data
