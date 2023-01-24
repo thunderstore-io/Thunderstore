@@ -138,7 +138,7 @@ window.ts.PackageManagementPanel(
         </a>
     </div>
     <div class="col-12 col-sm-6 px-3 pr-sm-3 pl-sm-1 mt-1 mt-sm-0">
-        <a href="{{ object.package.latest.download_url }}" type="button" class="btn btn-primary w-100 text-large">
+        <a href="{{ object.package.latest.full_download_url }}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-download mr-2" aria-hidden="true"></i>Manual Download
         </a>
     </div>
@@ -197,7 +197,7 @@ window.ts.PackageManagementPanel(
                 <td>{{ version.date_created|date:"Y-n-j" }}</td>
                 <td>{{ version.version_number }}</td>
                 <td>{{ version.downloads }}</td>
-                <td><a href="{{ version.download_url }}">Version {{ version.version_number }}</a></td>
+                <td><a href="{{ version.full_download_url }}">Version {{ version.version_number }}</a></td>
                 <td><a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a></td>
             </tr>
             {% endfor %}

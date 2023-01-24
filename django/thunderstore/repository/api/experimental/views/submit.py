@@ -42,20 +42,14 @@ class SubmitPackageApiView(APIView):
             raise ValidationError(form.errors)
         package_version = form.save()
 
-        # TODO: Get rid of this logic once multiple subdomains no longer exist
         listings = package_version.package.community_listings.active()
         available_communities = []
         for listing in listings:
-            site = listing.community.sites.first()
-            if not site:
-                continue
-            if not site.site:
-                continue
             available_communities.append(
                 {
                     "community": listing.community,
                     "categories": listing.categories.all(),
-                    "url": package_version.package.get_full_url(site.site),
+                    "url": listing.get_full_url(),
                 }
             )
 
