@@ -205,13 +205,13 @@ def active_version_with_listing(active_package_listing):
 
 
 @pytest.fixture()
-def release_webhook(community_site):
+def release_webhook(community):
     return Webhook.objects.create(
         name="test",
         webhook_url="https://example.com/",
         webhook_type=WebhookType.mod_release,
         is_active=True,
-        community_site=community_site,
+        community=community,
     )
 
 

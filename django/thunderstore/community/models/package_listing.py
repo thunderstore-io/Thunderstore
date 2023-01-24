@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, List, Optional
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q, signals
@@ -95,6 +96,18 @@ class PackageListing(TimestampMixin, models.Model):
                 kwargs={"owner": self.package.owner.name, "name": self.package.name},
             )
         )
+
+    def get_full_url(self):
+        hostname = (
+            settings.PRIMARY_HOST
+            if (site := self.community.main_site) is None
+            else site.site.domain
+        )
+        return "%(protocol)s%(hostname)s%(path)s" % {
+            "protocol": settings.PROTOCOL,
+            "hostname": hostname,
+            "path": self.get_absolute_url(),
+        }
 
     @cached_property
     def owner_url(self):

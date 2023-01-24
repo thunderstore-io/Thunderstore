@@ -13,14 +13,16 @@ class PackageAdmin(admin.ModelAdmin):
         "exclude_categories",
         "require_categories",
     )
+    search_fields = (
+        "name",
+        "community__name",
+    )
     list_display = (
         "name",
         "date_created",
         "webhook_type",
         "is_active",
-        "community_site",
+        "community",
     )
-    list_filter = (
-        "is_active",
-        "community_site",
-    )
+    raw_id_fields = ("community",)
+    list_filter = ("is_active",)
