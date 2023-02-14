@@ -71,11 +71,11 @@
     }
 }
 
-.footer_right_developers {
+.footer_column {
     display: flex;
     flex-direction: column;
 }
 
-.footer_right_developers > h2 {
+.footer_column > h2 {
     font-size: 1rem !important;
 }

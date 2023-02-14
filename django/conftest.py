@@ -15,6 +15,7 @@ from django.core.files.base import File
 from PIL import Image
 from rest_framework.test import APIClient
 
+from django_contracts.models import LegalContract, LegalContractVersion, PublishStatus
 from thunderstore.account.forms import CreateServiceAccountForm
 from thunderstore.account.models import ServiceAccount
 from thunderstore.community.consts import PackageListingReviewStatus
@@ -127,6 +128,29 @@ def team_owner(team):
         user=UserFactory(),
         role=TeamMemberRole.owner,
     )
+
+
+@pytest.fixture()
+def published_legal_contract() -> LegalContract:
+    contract = LegalContract.objects.create(
+        slug="test-contract",
+        title="Test Contract",
+    )
+    contract.publish()
+    return contract
+
+
+@pytest.fixture()
+def published_legal_contract_version(
+    published_legal_contract: LegalContract,
+) -> LegalContractVersion:
+    version = LegalContractVersion.objects.create(
+        contract=published_legal_contract,
+        html_content="<h2>Test contract</h2>",
+        markdown_content="## Test Contract",
+    )
+    version.publish()
+    return version
 
 
 @pytest.fixture()
