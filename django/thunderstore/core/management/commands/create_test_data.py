@@ -1,12 +1,13 @@
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Collection, Dict, List, Optional, OrderedDict, Type
+from typing import Any, Collection, Dict, List, Optional, OrderedDict, Type
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import signals
+from django.db.models import Model, QuerySet, signals
 
+from django_contracts.models import LegalContract, LegalContractVersion, PublishStatus
 from thunderstore.community.models import Community, CommunitySite, PackageListing
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
@@ -18,12 +19,15 @@ class ContentPopulatorContext:
     teams: Collection[Team] = field(default_factory=list)
     packages: Collection[Package] = field(default_factory=list)
     communities: Collection[Community] = field(default_factory=list)
+    contracts: Collection[LegalContract] = field(default_factory=list)
 
     community_count: int = 0
     dependency_count: int = 0
     version_count: int = 0
     team_count: int = 0
     package_count: int = 0
+    contract_count: int = 0
+    contract_version_count: int = 0
 
 
 class ContentPopulator(ABC):
@@ -85,10 +89,10 @@ class CommunitySitePopulator(ContentPopulator):
                 continue
             CommunitySite.objects.create(
                 community=community,
-                site=Site.objects.create(
+                site=Site.objects.get_or_create(
                     name="Thunderstore",
                     domain=f"{community.identifier}.thunderstore.localhost",
-                ),
+                )[0],
             )
 
     def update_context(self, context) -> None:
@@ -270,6 +274,154 @@ class ListingPopulator(ContentPopulator):
         PackageListing.objects.all().delete()
 
 
+class BaseContentPopulator(ContentPopulator):
+    model_cls: Type[Model] = None
+    name: str = None
+
+    def clear(self) -> None:
+        print(f"Deleting {self.name}...")
+        self.model_cls.objects.all().delete()
+
+    def get_last(self) -> int:
+        return last_obj.pk if (last_obj := self.model_cls.objects.last()) else 0
+
+    def update_context(self, context: ContentPopulatorContext) -> None:
+        pass
+
+    def set_context_objs(
+        self, context: ContentPopulatorContext, objs: List[Model]
+    ) -> None:
+        pass
+
+
+class LegalContractPopulator(BaseContentPopulator):
+    model_cls = LegalContract
+    objs: Optional[List[LegalContract]] = None
+    name = "legal contracts"
+    obj_name_prefix = "Test Contract "
+    obj_id_prefix = "test-contract-"
+    obj_id_field = "slug"
+
+    def get_existing(self) -> QuerySet:
+        return self.model_cls.objects.filter(
+            **{
+                f"{self.obj_id_field}__startswith": self.obj_id_prefix,
+            }
+        )
+
+    def create(self, index: int) -> LegalContract:
+        return self.model_cls.objects.create(**self.get_create_kwargs(index))
+
+    def get_create_kwargs(self, index: int) -> Dict[str, Any]:
+        return {
+            f"{self.obj_id_field}": f"{self.obj_id_prefix}{index}",
+            "title": f"{self.obj_name_prefix}{index}",
+        }
+
+    def populate(self, context: ContentPopulatorContext) -> None:
+        print(f"Populating {self.name}...")
+
+        last = self.get_last()
+        existing = list(self.get_existing()[: self.get_context_count(context)])
+        remainder = self.get_context_count(context) - len(existing)
+
+        self.objs = existing + [
+            self.create(last + i) for i in print_progress(range(remainder), remainder)
+        ]
+        for obj in self.objs:
+            if obj.publish_status != PublishStatus.PUBLISHED:
+                obj.publish()
+
+    def update_context(self, context: ContentPopulatorContext) -> None:
+        if self.objs is not None:
+            self.set_context_objs(context, self.objs)
+        else:
+            self.set_context_objs(
+                context, self.get_existing()[: self.get_context_count(context)]
+            )
+
+    def get_context_count(self, context: ContentPopulatorContext):
+        return context.contract_count
+
+    def set_context_objs(
+        self, context: ContentPopulatorContext, objs: List[Any]
+    ) -> None:
+        context.contracts = objs
+
+
+LOREM_IPSUM = """
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna
+aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+"""
+
+
+class LegalContractVersionPopulator(BaseContentPopulator):
+    model_cls = LegalContractVersion
+    name = "legal contract versions"
+    obj_id_field = "markdown_content"
+    obj_id_prefix = "## Test Contract "
+
+    def create(self, contract: LegalContract, index: int) -> LegalContractVersion:
+        return LegalContractVersion(
+            **{
+                "contract": contract,
+                self.obj_id_field: "\n".join(
+                    [
+                        f"{self.obj_id_prefix}{index} - Markdown",
+                        "",
+                        LOREM_IPSUM,
+                        "",
+                        "### Subtitle",
+                        "",
+                        LOREM_IPSUM,
+                    ]
+                ),
+                "html_content": "\n".join(
+                    [
+                        f"<h2>Test Contract {index} - HTML</h2>" "<br>",
+                        f"<p>{LOREM_IPSUM}</p>",
+                        "<br>",
+                        "<h3>Subtitle</h3>" "<br>",
+                        f"<p>{LOREM_IPSUM}</p>",
+                    ]
+                ),
+            }
+        )
+
+    def populate(self, context: ContentPopulatorContext) -> None:
+        print(f"Populating {self.name}...")
+
+        last = self.get_last()
+        objs = []
+        for contract in context.contracts:
+            existing = list(
+                contract.versions.filter(
+                    **{
+                        f"{self.obj_id_field}__startswith": self.obj_id_prefix,
+                        "contract": contract,
+                    }
+                )[: self.get_context_count(context)]
+            )
+            remainder = self.get_context_count(context) - len(existing)
+
+            objs.extend(
+                existing
+                + [
+                    self.create(contract, last + i)
+                    for i in print_progress(range(remainder), remainder)
+                ]
+            )
+
+        for obj in objs:
+            if obj.publish_status != PublishStatus.PUBLISHED:
+                obj.publish()
+
+    def get_context_count(self, context: ContentPopulatorContext):
+        return context.contract_version_count
+
+
 # In generation order; clearing order is inverted
 CONTENT_POPULATORS: Dict[str, Type[ContentPopulator]] = OrderedDict[
     str, ContentPopulator
@@ -282,6 +434,8 @@ CONTENT_POPULATORS: Dict[str, Type[ContentPopulator]] = OrderedDict[
         ("version", PackageVersionPopulator),
         ("dependency", DependencyPopulator),
         ("listing", ListingPopulator),
+        ("contract", LegalContractPopulator),
+        ("contract_version", LegalContractVersionPopulator),
     ]
 )
 
@@ -298,6 +452,8 @@ class Command(BaseCommand):
         parser.add_argument("--team-count", type=int, default=10)
         parser.add_argument("--package-count", type=int, default=1)
         parser.add_argument("--version-count", type=int, default=3)
+        parser.add_argument("--contract-count", type=int, default=3)
+        parser.add_argument("--contract-version-count", type=int, default=8)
         parser.add_argument("--dependency-count", type=int, default=20)
         parser.add_argument("--clear", default=False, action="store_true")
         parser.add_argument(
@@ -355,5 +511,7 @@ class Command(BaseCommand):
             team_count=kwargs.get("team_count", 0),
             dependency_count=kwargs.get("dependency_count", 0),
             community_count=kwargs.get("community_count", 0),
+            contract_count=kwargs.get("contract_count", 0),
+            contract_version_count=kwargs.get("contract_version_count", 0),
         )
         self.populate(context)
