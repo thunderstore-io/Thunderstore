@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load markdownify %}
+{% load cache %}
+
+{% block title %}{{ contract.title }}{% endblock %}
+
+{% block main_content_left %}{% endblock %}
+{% block main_content_right %}{% endblock %}
+{% block content_beginning %}{% endblock %}
+{% block content_end %}{% endblock %}
+
+{% block og_title %}{{ contract.title }} | {{ site_name }}{% endblock %}
+
+
+{% block content %}
+    {% cache 300 templates.contracts.contract version.pk version.datetime_updated contract.datetime_updated %}
+    <div class="card bg-light mt-2">
+        <div class="card-header d-flex justify-content-between gap-2 flex-wrap">
+            <h5 class="mb-0 w-100">{{ contract.title }}</h5>
+            <div class="d-flex justify-content-between gap-2 flex-grow-1 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted">Published {{ version.effective_date|date:"Y-m-d" }}</span>
+                    {% if version.is_latest %}
+                        <span class="badge badge-pill badge-success">Active</span>
+                    {% elif version.publish_status == "DRAFT" %}
+                        <span class="badge badge-pill badge-warning">Draft</span>
+                    {% else %}
+                        <span class="badge badge-pill badge-danger">Deprecated</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ contract.get_absolute_url }}">View active version</a>
+                    <a href="{% url 'contracts:contract.history' contract.slug %}">History</a>
+                    <a href="{{ version.get_absolute_url }}">Permalink to this version</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if version.html_content %}
+            <div>
+                {{ version.html_content|safe }}
+            </div>
+            {% endif %}
+            {% if version.markdown_content %}
+            <div>
+                {{ version.markdown_content|markdownify }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endcache %}
+{% endblock %}

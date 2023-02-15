@@ -230,6 +230,8 @@ INSTALLED_APPS = [
     "django_celery_results",
     "cachalot",
     "corsheaders",
+    # Own Standalone
+    "django_contracts",
     # Own
     "thunderstore.core",
     "thunderstore.cache",
@@ -243,6 +245,7 @@ INSTALLED_APPS = [
     "thunderstore.markdown",
     "thunderstore.modpacks",
     "thunderstore.schema_import",
+    "thunderstore.legal",
 ]
 
 MIDDLEWARE = [
@@ -279,6 +282,7 @@ TEMPLATES = [
                 "thunderstore.repository.context_processors.team",
                 "thunderstore.community.context_processors.community_site",
                 "thunderstore.community.context_processors.selectable_communities",
+                "thunderstore.legal.context_processors.legal_contracts",
             ],
         },
     },

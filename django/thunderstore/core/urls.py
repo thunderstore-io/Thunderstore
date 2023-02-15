@@ -14,6 +14,7 @@ from thunderstore.frontend.views import (
     ads_txt_view,
     robots_txt_view,
 )
+from thunderstore.legal.urls import legal_urls
 from thunderstore.repository.urls import legacy_package_urls
 from thunderstore.repository.views import PackageListView
 
@@ -50,6 +51,7 @@ urlpatterns = [
         ManifestV1ValidatorView.as_view(),
         name="tools.manifest-v1-validator",
     ),
+    path("legal/", include((legal_urls, "contracts"), namespace="contracts")),
 ]
 
 schema_view = get_schema_view(

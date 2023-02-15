@@ -1,4 +1,5 @@
 {% load static %}
+{% load cache %}
 {% load dynamic_html auth_login community_url %}
 
 <!doctype html>
@@ -12,7 +13,7 @@
         <link rel="icon" type="image/png" href="{{ site_icon }}" />
 
         {% block opengraph %}
-        <meta property="og:title" content="{{ site_name }}{% if site_slogan %} | {{ site_slogan }}{% endif %}" />
+        <meta property="og:title" content="{% block og_title %}{{ site_name }}{% if site_slogan %} | {{ site_slogan }}{% endif %}{% endblock %}" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="{{ request.build_absolute_uri }}" />
         <meta property="og:image" content="{{ site_icon }}" />
@@ -129,7 +130,7 @@
         </nav>
         <div class="main">
             <div class="main_content_left">{% block main_content_left %}{% dynamic_html "main_content_left" %}{% endblock %}</div>
-            <div class="container">
+            <div class="container pt-2">
                 {% for message in messages %}
                     <div class="alert mt-3 alert-{{ message.tags }}" role="alert"><p class="mb-0">{{ message }}</p></div>
                 {% endfor %}
@@ -138,8 +139,10 @@
                     {% dynamic_html "content_beginning" %}
                 {% endblock %}
 
+                <div class="mt-4">
                 {% block content %}
                 {% endblock %}
+                </div>
 
                 {% block content_end %}
                     {% dynamic_html "content_end" %}
@@ -160,8 +163,17 @@
                         {% dynamic_html "footer_bottom" %}
                     {% endblock %}
                 </div>
+                {% cache 300 templates.base "footer" "right" %}
                 <div class="footer_content_right">
-                    <div class="footer_right_developers">
+                    {% if legal_contracts %}
+                    <div class="footer_column">
+                        <h2>About</h2>
+                        {% for contract in legal_contracts %}
+                        <a href="{{ contract.get_absolute_url }}">{{ contract.title }}</a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="footer_column">
                         <h2>Developers</h2>
                         <a href="{% url 'swagger' %}">API Docs</a>
                         <a href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
@@ -170,11 +182,12 @@
                         <a href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
                     </div>
                 </div>
+                {% endcache %}
             </div>
             <div class="container footer_links">
                 <p>Thunderstore 2023</p>
                 <div>
-                    <a class="nav-link" href="https://discord.gg/UWpWhjZken"><span class="fab fa-discord"></span></a>
+                    <a class="nav-link" href="https://discord.gg/UWpWhjZken"><span class="fab fa-discord" style="min-height: 24px"></span></a>
                 </div>
             </div>
         </div>

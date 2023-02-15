@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load markdownify %}
+{% load cache %}
+
+{% block title %}{{ contract.title }} - History{% endblock %}
+
+{% block main_content_left %}{% endblock %}
+{% block main_content_right %}{% endblock %}
+{% block content_beginning %}{% endblock %}
+{% block content_end %}{% endblock %}
+
+{% block og_title %}{{ contract.title }} - History | {{ site_name }}{% endblock %}
+
+{% block content %}
+    {% cache 300 templates.contracts.contract_history contract.pk contract.datetime_updated request.user.is_staff %}
+    <div class="card bg-light mt-2">
+        <div class="card-header d-flex justify-content-between gap-2 flex-wrap">
+            <h5 class="mb-0">{{ contract.title }}</h5>
+            <a href="{{ contract.get_absolute_url }}">View active version</a>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Publication Date</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for version in versions %}
+                    <tr>
+                        <td><a href="{{ version.get_absolute_url }}">{{ version.effective_date|date:"Y-m-d" }}</a></td>
+                        <td>
+                            {% if version.is_latest %}
+                                <span class="badge badge-pill badge-success">Active</span>
+                            {% elif version.publish_status == "DRAFT" %}
+                                <span class="badge badge-pill badge-warning">Draft</span>
+                            {% else %}
+                                <span class="badge badge-pill badge-danger">Deprecated</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endcache %}
+{% endblock %}
