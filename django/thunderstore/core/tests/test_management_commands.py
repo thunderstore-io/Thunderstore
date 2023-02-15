@@ -5,6 +5,7 @@ from django.core.management.base import CommandError
 from django.db.models import Count
 from django.test import override_settings
 
+from django_contracts.models import LegalContract, LegalContractVersion
 from thunderstore.community.models import Community, CommunitySite, PackageListing
 from thunderstore.core.management.commands.create_test_data import CONTENT_POPULATORS
 from thunderstore.repository.factories import NamespaceFactory
@@ -74,6 +75,8 @@ def test_create_test_data_clear() -> None:
 @pytest.mark.parametrize("community_count", (2, 4))
 @pytest.mark.parametrize("version_count", (2, 4))
 @pytest.mark.parametrize("dependency_count", (1, 2))
+@pytest.mark.parametrize("legal_contract_count", (2,))
+@pytest.mark.parametrize("legal_contract_version_count", (4,))
 def test_create_test_data_create_data(
     community: Community,
     team_count: int,
@@ -81,6 +84,8 @@ def test_create_test_data_create_data(
     community_count: int,
     version_count: int,
     dependency_count: int,
+    legal_contract_count: int,
+    legal_contract_version_count: int,
 ) -> None:
     assert settings.DEBUG is True
 
@@ -96,10 +101,21 @@ def test_create_test_data_create_data(
         created_community_sites = CommunitySite.objects.filter(
             community__identifier__startswith="test-community-"
         )
+        created_contracts = LegalContract.objects.filter(
+            slug__startswith="test-contract-",
+        )
+        created_contract_versions = LegalContractVersion.objects.filter(
+            markdown_content__startswith="## Test Contract "
+        )
         assert created_teams.count() == team_count
         assert created_packages.count() == team_count * package_count
         assert created_communities.count() == community_count
         assert created_community_sites.count() == community_count
+        assert created_contracts.count() == legal_contract_count
+        assert (
+            created_contract_versions.count()
+            == legal_contract_count * legal_contract_version_count
+        )
         assert (
             created_package_versions.count()
             == team_count * package_count * version_count
@@ -140,6 +156,10 @@ def test_create_test_data_create_data(
         version_count,
         "--dependency-count",
         dependency_count,
+        "--contract-count",
+        legal_contract_count,
+        "--contract-version-count",
+        legal_contract_version_count,
     ]
     call_command(*args)
     assert_counts()
