@@ -23,6 +23,8 @@ from .api_urls import api_urls
 from .healthcheck import healthcheck_view
 from .setting_urls import settings_urls
 
+from django_sub_management.urls import settings_urls as sub_urls
+
 handler404 = "thunderstore.frontend.views.handle404"
 handler500 = "thunderstore.frontend.views.handle500"
 
@@ -37,6 +39,7 @@ urlpatterns = [
     path("package/", include((legacy_package_urls, "old_urls"), namespace="old_urls")),
     path("c/", include((community_urls, "communities"), namespace="communities")),
     path("settings/", include(settings_urls)),
+    path("sub/", include(sub_urls)),
     path("favicon.ico", FaviconView.as_view()),
     path("djangoadmin/", admin.site.urls),
     path("healthcheck/", healthcheck_view, name="healthcheck"),

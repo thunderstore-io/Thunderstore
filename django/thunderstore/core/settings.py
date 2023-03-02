@@ -232,6 +232,9 @@ INSTALLED_APPS = [
     "corsheaders",
     # Own Standalone
     "django_contracts",
+    "django_payment",
+    "django_paypal",
+    "django_sub_management",
     # Own
     "thunderstore.core",
     "thunderstore.cache",

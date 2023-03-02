@@ -4,7 +4,7 @@ RUN mkdir -p /home/node/app/node_modules && mkdir /home/node/app/build && chown 
 VOLUME /home/node/app/build
 WORKDIR /home/node/app
 COPY --chown=node:node ./builder/package.json ./builder/yarn.lock ./
-USER node
+USER root
 RUN yarn install --frozen-lockfile
 COPY --chown=node:node ./builder ./
 

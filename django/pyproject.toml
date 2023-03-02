@@ -3,6 +3,9 @@ name = "Thunderstore"
 version = "0.0.0"
 description = "Thunderstore is a mod database and API for downloading mods"
 authors = ["Mythic <mythicmaniac@gmail.com>"]
+packages = [
+    { include = "python-packages/django-paypal" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
