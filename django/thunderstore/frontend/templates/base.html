@@ -39,7 +39,7 @@
         {% endif %}
 
         {% dynamic_html "html_body_beginning" %}
-        <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
+        <nav class="navbar navbar-expand-sm navbar-dark bg-primary py-2">
             <a class="navbar-brand d-none d-md-block" href="{% url 'index' %}">
                 {{ site_name }}
             </a>
@@ -73,21 +73,10 @@
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% community_url 'packages.list' %}">Browse</a>
-                </li>
-                {% if request.user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% community_url 'packages.create' %}">Upload</a>
-                    </li>
-                {% endif %}
-                <li class="nav-item">
                     <div class="dropdown">
                         <a href="#" role="button" id="developersMenu" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false" class="nav-link dropdown-toggle">Developers</a>
                         <div class="dropdown-menu" aria-labelledby="developersMenu">
-                            {% if site_wiki_url %}
-                            <a class="dropdown-item" href="{{ site_wiki_url }}">Modding Wiki</a>
-                            {% endif %}
                             <a class="dropdown-item" href="{% url 'swagger' %}">API Docs</a>
                             <a class="dropdown-item" href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
                             <a class="dropdown-item" href="{% community_url 'packages.create.docs' %}">Package Format Docs</a>
@@ -96,11 +85,6 @@
                         </div>
                     </div>
                 </li>
-                {% if site_discord_url %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ site_discord_url }}"><span class="fab fa-discord"></span> &nbsp;Join our Discord</a>
-                </li>
-                {% endif %}
             </ul>
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}
@@ -128,6 +112,31 @@
                 {% endif %}
             </ul>
         </nav>
+
+        <nav class="navbar navbar-expand-sm navbar-dark bg-light py-1">
+            <a class="navbar-brand d-none d-md-block" href="{% community_url 'packages.list' %}">{{ community }}</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% community_url 'packages.list' %}">Browse</a>
+                </li>
+                {% if request.user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% community_url 'packages.create' %}">Upload</a>
+                    </li>
+                {% endif %}
+                {% if site_wiki_url %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ site_wiki_url }}">Modding Wiki</a>
+                    </li>
+                {% endif %}
+                {% if site_discord_url %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ site_discord_url }}"><span class="fab fa-discord"></span> &nbsp;Join community Discord</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
         <div class="main">
             <div class="main_content_left">{% block main_content_left %}{% dynamic_html "main_content_left" %}{% endblock %}</div>
             <div class="container pt-2">
