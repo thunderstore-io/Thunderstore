@@ -20,12 +20,23 @@ RUN apt-get update && apt-get install -y \
     curl build-essential git \
  && rm -rf /var/lib/apt/lists/*
 
+
 COPY ./django/pyproject.toml ./django/poetry.lock /app/
 
 RUN pip install -U pip poetry~=1.1.4 --no-cache-dir && \
     poetry config virtualenvs.create false && \
     poetry install && \
     rm -rf ~/.cache
+
+COPY ./django /app
+
+WORKDIR /app/python-packages
+
+RUN pip install -e django-payment/
+RUN pip install -e django-paypal/
+RUN pip install -e django-sub-management/
+
+WORKDIR /app
 
 COPY --from=builder /app/build /app/static_built
 COPY ./django /app
