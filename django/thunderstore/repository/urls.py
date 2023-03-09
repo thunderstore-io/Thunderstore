@@ -23,6 +23,11 @@ from thunderstore.repository.views.team_settings import (
     SettingsTeamListView,
     SettingsTeamServiceAccountView,
 )
+from thunderstore.repository.views.wiki import (
+    PackageWikiHomeView,
+    PackageWikiPageDetailView,
+    PackageWikiPageEditView,
+)
 
 legacy_package_urls = [
     path("", PackageListView.as_view(), name="packages.list"),
@@ -42,6 +47,26 @@ legacy_package_urls = [
         "<str:owner>/<str:name>/",
         PackageDetailView.as_view(),
         name="packages.detail",
+    ),
+    path(
+        "<str:owner>/<str:name>/wiki/",
+        PackageWikiHomeView.as_view(),
+        name="packages.detail.wiki",
+    ),
+    path(
+        "<str:owner>/<str:name>/wiki/new/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.new",
+    ),
+    path(
+        "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/",
+        PackageWikiPageDetailView.as_view(),
+        name="packages.detail.wiki.page.detail",
+    ),
+    path(
+        "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.edit",
     ),
     path(
         "<str:owner>/<str:name>/dependants/",
@@ -70,6 +95,26 @@ package_urls = [
         "p/<str:owner>/<str:name>/",
         PackageDetailView.as_view(),
         name="packages.detail",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/wiki/",
+        PackageWikiHomeView.as_view(),
+        name="packages.detail.wiki",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/wiki/new/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.new",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/",
+        PackageWikiPageDetailView.as_view(),
+        name="packages.detail.wiki.page.detail",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.edit",
     ),
     path(
         "p/<str:owner>/<str:name>/dependants/",

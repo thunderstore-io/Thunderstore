@@ -1,0 +1,15 @@
+<ul class="nav nav-tabs nav-secondary px-2 pt-2" role="tablist">
+    {% for tab in tabs %}
+    <li class="nav-item" role="presentation">
+        <a
+            class="nav-link clickable {% if active_tab == tab.name %}active{% endif %}"
+            style="user-select: none;"
+            {% if active_tab == tab.name %}aria-selected=true{% endif %}
+            role="tab"
+            href="{{ tab.url }}"
+        >
+            {{ tab.title }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>

@@ -80,6 +80,7 @@ window.ts.PackageManagementPanel(
 {% endif %}
 
 <div class="card bg-light mt-2">
+    {% include "community/includes/package_tabs.html" with tabs=tabs active_tab=active_tab %}
     <div class="card-header">
         <div class="media">
             <img class="align-self-center mr-3" src="{% thumbnail object.package.icon 128x128 %}" alt="{{ object.package }} icon">

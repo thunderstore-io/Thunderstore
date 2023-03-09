@@ -110,19 +110,21 @@ const PageActions: React.FC = () => {
     );
 };
 
-export const PageEditPage: React.FC = () => {
+export type PageEditProps = {
+    title: string;
+};
+
+export const PageEditPage: React.FC<PageEditProps> = (props) => {
     return (
         <MarkdownContextProvider initial={"# Test"}>
-            <div className={"d-flex flex-column bg-light card"}>
-                <div className={"modal-header"}>
-                    <h4 className={"mb-0"}>Edit page</h4>
-                </div>
-                <div className={"modal-body"}>
-                    <PageMeta />
-                </div>
-                <EditorTabs />
-                <PageActions />
+            <div className={"card-header"}>
+                <h4 className={"mb-0"}>{props.title}</h4>
             </div>
+            <div className={"modal-body"}>
+                <PageMeta />
+            </div>
+            <EditorTabs />
+            <PageActions />
         </MarkdownContextProvider>
     );
 };

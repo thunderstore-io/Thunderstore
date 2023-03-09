@@ -36,6 +36,7 @@ from thunderstore.repository.models import (
     get_package_dependants,
 )
 from thunderstore.repository.package_upload import PackageUploadForm
+from thunderstore.repository.views.mixins import PackageTabsMixin
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -437,7 +438,7 @@ def get_package_listing_or_404(
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
-class PackageDetailView(CommunityMixin, DetailView):
+class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
     model = PackageListing
     object: Optional[PackageListing]
 
@@ -500,6 +501,7 @@ class PackageDetailView(CommunityMixin, DetailView):
             ],
             "packageListingId": package_listing.pk,
         }
+        context.update(**self.get_tab_context(package_listing, "details"))
         return context
 
     def post_deprecate(self):

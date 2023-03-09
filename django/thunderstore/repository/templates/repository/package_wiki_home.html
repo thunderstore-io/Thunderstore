@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load markdownify %}
+{% load community_url %}
+
+{% block title %}{{ page.title }} | {{ object.package.namespace }}/{{ object.package.display_name }} Wiki{% endblock %}
+
+{% block main_content_left %}{% endblock %}
+{% block content_beginning %}{% endblock %}
+
+{% block content %}
+
+<nav class="mt-3" aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% community_url "packages.list" %}">Packages</a></li>
+        <li class="breadcrumb-item"><a href="{% community_url "packages.list_by_owner" owner=object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.package.display_name }}</a></li>
+        <li class="breadcrumb-item active">Wiki</li>
+    </ol>
+</nav>
+
+<div class="card bg-light">
+    {% include "community/includes/package_tabs.html" with tabs=tabs active_tab=active_tab %}
+    <div class="card-header">
+        <h4 class="mb-0">{{ object.package.display_name }} Wiki</h4>
+    </div>
+    <div class="card-body d-flex flex-column" style="min-height: 400px">
+        {% if pages %}
+        <ul>
+            {% for page in pages %}
+                <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <div class="d-flex justify-content-center align-items-center flex-column" style="flex: 1;">
+                <p>This wiki currently has no pages in it.</p>
+                <a href="new/">Create a page</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer_top %}{% endblock %}
+{% block content_end %}{% endblock %}
+{% block main_content_right %}{% endblock %}
