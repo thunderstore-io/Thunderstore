@@ -1,3 +1,5 @@
+@import "./theme/_variables";
+
 .deleted {
     text-decoration: line-through !important;
 }
@@ -56,6 +58,14 @@
         position: absolute;
         background-color: rgba(0, 0, 0, 0.8);
     }
+}
+
+.nav-light .nav-link.active {
+    background-color: $light;
+}
+
+.nav-secondary .nav-link.active {
+    background-color: $secondary;
 }
 
 .main_content_left,
