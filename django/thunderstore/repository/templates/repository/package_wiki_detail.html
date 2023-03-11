@@ -1,36 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'repository/_wiki_base.html' %}
 {% load markdownify %}
-{% load community_url %}
 
-{% block title %}{{ page.title }} | {{ object.package.namespace }}/{{ object.package.display_name }} Wiki{% endblock %}
-
-{% block main_content_left %}{% endblock %}
-{% block content_beginning %}{% endblock %}
-
-{% block content %}
-
-<nav class="mt-3" aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% community_url "packages.list" %}">Packages</a></li>
-        <li class="breadcrumb-item"><a href="{% community_url "packages.list_by_owner" owner=object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
-        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.package.display_name }}</a></li>
-        <li class="breadcrumb-item"><a href="{{ object.get_wiki_url }}">Wiki</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ page.title }}</li>
-    </ol>
-</nav>
-
-<div class="card bg-light">
-    {% include "community/includes/package_tabs.html" with tabs=tabs active_tab=active_tab %}
+{% block wiki_content %}
     <div class="card-header">
         <h4 class="mb-0">{{ page.title }}</h4>
     </div>
     <div class="card-body">
         <p class="mb-0">{{ page.markdown_content|markdownify }}</p>
     </div>
-</div>
-
 {% endblock %}
-
-{% block footer_top %}{% endblock %}
-{% block content_end %}{% endblock %}
-{% block main_content_right %}{% endblock %}
