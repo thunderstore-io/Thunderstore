@@ -449,6 +449,7 @@ if REDIS_URL:
 CACHALOT_TIMEOUT = 60 * 60  # 1 hour
 CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
     (
+        "account_serviceaccount",
         "auth_group",
         "auth_group_permissions",
         "auth_permission",
@@ -465,6 +466,8 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "community_packagelistingsection",
         "community_packagelistingsection_exclude_categories",
         "community_packagelistingsection_require_categories",
+        "contracts_legalcontract",
+        "contracts_legalcontractversion",
         "core_incomingjwtauthconfiguration",
         "django_admin_log",
         "django_celery_beat_clockedschedule",
@@ -485,11 +488,12 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "frontend_dynamichtml_exclude_communities",
         "frontend_dynamichtml_require_communities",
         "frontend_navlink",
-        "repository_api_v1_package_cache",
+        # Enabling this will break a test, so it's left off for now for safety
+        # "repository_apiv1packagecache",
         "repository_discorduserbotpermission",
         "repository_package",
         "repository_packageversion_dependencies",
-        "repository_package_wiki",
+        "repository_packagewiki",
         "repository_team",
         "repository_teammember",
         "repository_namespace",
@@ -498,6 +502,8 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "social_auth_nonce",
         "social_auth_partial",
         "social_auth_usersocialauth",
+        "thunderstore_wiki_wiki",
+        "thunderstore_wiki_wikipage",
         "usermedia_usermedia",
         "webhooks_webhook",
         "webhooks_webhook_exclude_categories",
