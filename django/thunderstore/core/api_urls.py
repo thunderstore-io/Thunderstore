@@ -17,6 +17,7 @@ from thunderstore.social.api.experimental.urls import urls as social_experimenta
 from thunderstore.usermedia.api.experimental.urls import (
     urls as usermedia_experimental_urls,
 )
+from thunderstore.wiki.api.experimental.urls import urls as wiki_experimental_urls
 
 api_experimental_urls = [
     path(
@@ -42,6 +43,10 @@ api_experimental_urls = [
     path(
         "",
         include(modpacks_experimental_urls),
+    ),
+    path(
+        "wiki/",
+        include(wiki_experimental_urls),
     ),
 ]
 

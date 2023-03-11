@@ -246,6 +246,7 @@ INSTALLED_APPS = [
     "thunderstore.modpacks",
     "thunderstore.schema_import",
     "thunderstore.legal",
+    "thunderstore.wiki",
 ]
 
 MIDDLEWARE = [
@@ -488,6 +489,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "repository_discorduserbotpermission",
         "repository_package",
         "repository_packageversion_dependencies",
+        "repository_package_wiki",
         "repository_team",
         "repository_teammember",
         "repository_namespace",
@@ -503,12 +505,12 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
     ),
 )
 
-# if DEBUG and not DEBUG_SIMULATED_LAG:
-#     CACHES = {
-#         "default": {
-#             "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-#         }
-#     }
+if DEBUG and not DEBUG_SIMULATED_LAG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        }
+    }
 
 LOGGING = {
     "version": 1,
