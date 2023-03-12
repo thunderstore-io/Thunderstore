@@ -1,4 +1,9 @@
-import React, { PropsWithChildren, useContext, useState } from "react";
+import React, {
+    PropsWithChildren,
+    useCallback,
+    useContext,
+    useState,
+} from "react";
 import { ExperimentalApi } from "../../api";
 import * as Sentry from "@sentry/react";
 import { useDebounce } from "../../debounce";
@@ -8,28 +13,23 @@ export type PreviewStatus = {
     isLoading: boolean;
 };
 
-export interface IMarkdownContext {
+export interface MarkdownPreviewProviderProps {
     markdown: string;
-    preview: PreviewStatus;
-    setMarkdown: (markdown: string) => void;
 }
 
-export interface MarkdownContextProviderProps {
-    initial: string;
-}
-
-export const MarkdownContextProvider: React.FC<
-    PropsWithChildren<MarkdownContextProviderProps>
-> = ({ children, initial }) => {
-    const [markdown, setMarkdown] = useState<string>(initial);
+export const MarkdownPreviewProvider: React.FC<
+    PropsWithChildren<MarkdownPreviewProviderProps>
+> = ({ children, markdown }) => {
     const [preview, setPreview] = useState<PreviewStatus>({
         content: "",
         isLoading: false,
     });
 
-    const renderMarkdown = () => {
-        if (markdown.length > 0) {
-            ExperimentalApi.renderMarkdown({ data: { markdown } })
+    const renderMarkdown = useCallback((localMarkdown) => {
+        if (localMarkdown.length > 0) {
+            ExperimentalApi.renderMarkdown({
+                data: { markdown: localMarkdown },
+            })
                 .then((result) => {
                     setPreview({
                         ...preview,
@@ -52,33 +52,25 @@ export const MarkdownContextProvider: React.FC<
                 isLoading: false,
             });
         }
-    };
+    }, []);
 
     useDebounce(
         600,
-        () => {
-            renderMarkdown();
-        },
+        () => renderMarkdown(markdown),
         [markdown],
         () => setPreview({ ...preview, isLoading: true })
     );
 
     return (
-        <MarkdownContext.Provider
-            value={{
-                markdown,
-                preview,
-                setMarkdown,
-            }}
-        >
+        <MarkdownPreviewContext.Provider value={preview}>
             {children}
-        </MarkdownContext.Provider>
+        </MarkdownPreviewContext.Provider>
     );
 };
-export const MarkdownContext = React.createContext<
-    IMarkdownContext | undefined
+export const MarkdownPreviewContext = React.createContext<
+    PreviewStatus | undefined
 >(undefined);
 
-export const useMarkdownContext = (): IMarkdownContext => {
-    return useContext(MarkdownContext)!;
+export const userMarkdownPreview = (): PreviewStatus => {
+    return useContext(MarkdownPreviewContext)!;
 };

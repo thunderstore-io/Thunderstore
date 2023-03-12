@@ -1,8 +1,8 @@
 import React from "react";
-import { useMarkdownContext } from "./MarkdownContext";
+import { useWikiEditContext } from "./WikiEditContext";
 
 export const MarkdownEditorInput: React.FC = () => {
-    const context = useMarkdownContext();
+    const context = useWikiEditContext();
 
     return (
         <div className={"d-flex flex-column h-100"}>
@@ -15,7 +15,7 @@ export const MarkdownEditorInput: React.FC = () => {
             <textarea
                 className={"code-input"}
                 style={{ flex: 1 }}
-                value={context.markdown}
+                value={context.page.markdown}
                 onChange={(evt) => context.setMarkdown(evt.target.value)}
             />
         </div>

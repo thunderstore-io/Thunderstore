@@ -3,7 +3,7 @@ from typing import Optional
 from django.http import Http404, HttpResponse
 from django.middleware import csrf
 from django.shortcuts import redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import DetailView
@@ -40,6 +40,18 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
             return listing
         return self.object
 
+    def get_create_url(self) -> str:
+        return reverse_lazy(
+            **get_community_url_reverse_args(
+                community=self.community,
+                viewname="packages.detail.wiki.page.new",
+                kwargs={
+                    "owner": self.object.package.namespace.name,
+                    "name": self.object.package.name,
+                },
+            ),
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         package_listing = context["object"]
@@ -48,31 +60,7 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
         return context
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
-class PackageWikiPageEditView(PackageWikiBaseView):
-    template_name = "repository/package_wiki_edit.html"
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        is_new = "page" not in self.kwargs
-        context["is_new"] = is_new
-        context["title"] = "New Page" if is_new else "Edit Page"
-        context["editor_props"] = {
-            "title": context["title"],
-            "csrfToken": csrf.get_token(self.request),
-        }
-        return context
-
-
-class PackageWikiHomeView(PackageWikiBaseView):
-    template_name = "repository/package_wiki_home.html"
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        return context
-
-
-class PackageWikiPageDetailView(PackageWikiBaseView):
+class PackageWikiPageBaseView(PackageWikiBaseView):
     template_name = "repository/package_wiki_detail.html"
     page: Optional[WikiPage] = None
 
@@ -86,7 +74,7 @@ class PackageWikiPageDetailView(PackageWikiBaseView):
 
     def get(self, *args, **kwargs) -> HttpResponse:
         page = self.get_page(self.get_wiki(self.get_object(*args, **kwargs).package))
-        if self.kwargs.get("pslug", "") != page.slug:
+        if page and self.kwargs.get("pslug", "") != page.slug:
             self.kwargs["pslug"] = page.slug
             return redirect(
                 reverse(
@@ -102,4 +90,52 @@ class PackageWikiPageDetailView(PackageWikiBaseView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["page"] = self.get_page(context["wiki"])
+        context["create_url"] = self.get_create_url()
+        return context
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class PackageWikiPageEditView(PackageWikiPageBaseView):
+    template_name = "repository/package_wiki_edit.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        page = context["page"]
+        context["is_new"] = page is None
+        context["title"] = "New page" if page is None else "Editing page"
+        context["editor_props"] = {
+            "editorTitle": context["title"],
+            "csrfToken": csrf.get_token(self.request),
+            "page": {
+                "id": page.pk,
+                "title": page.title,
+                "markdown": page.markdown_content,
+            }
+            if page
+            else None,
+        }
+        return context
+
+
+class PackageWikiHomeView(PackageWikiBaseView):
+    template_name = "repository/package_wiki_home.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        return context
+
+
+class PackageWikiPageDetailView(PackageWikiPageBaseView):
+    def get_edit_url(self) -> str:
+        return reverse_lazy(
+            **get_community_url_reverse_args(
+                community=self.community,
+                viewname="packages.detail.wiki.page.edit",
+                kwargs=self.kwargs,
+            ),
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context["edit_url"] = self.get_edit_url()
         return context

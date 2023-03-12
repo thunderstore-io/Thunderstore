@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { MarkdownContextProvider } from "./MarkdownContext";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MarkdownEditorInput } from "./EditorInput";
+import { useWikiEditContext, WikiEditContextProvider } from "./WikiEditContext";
+import { PageEditMeta } from "./Models";
 
 interface TabProps {
     isActive?: boolean;
@@ -86,11 +87,15 @@ const EditorTabs: React.FC = () => {
 };
 
 const PageMeta: React.FC = () => {
+    const context = useWikiEditContext();
+
     return (
         <input
             className={"w-100 h5 py-1 px-2"}
             name={"title"}
             placeholder={"Title"}
+            value={context.page.title}
+            onChange={(evt) => context.setTitle(evt.target.value)}
         />
     );
 };
@@ -111,20 +116,23 @@ const PageActions: React.FC = () => {
 };
 
 export type PageEditProps = {
-    title: string;
+    editorTitle: string;
+    csrfToken: string;
+    page: PageEditMeta | null;
 };
 
 export const PageEditPage: React.FC<PageEditProps> = (props) => {
+    // TODO: Add csrfTokenProvider
     return (
-        <MarkdownContextProvider initial={"# Test"}>
+        <WikiEditContextProvider page={props.page}>
             <div className={"card-header"}>
-                <h4 className={"mb-0"}>{props.title}</h4>
+                <h4 className={"mb-0"}>{props.editorTitle}</h4>
             </div>
             <div className={"modal-body"}>
                 <PageMeta />
             </div>
             <EditorTabs />
             <PageActions />
-        </MarkdownContextProvider>
+        </WikiEditContextProvider>
     );
 };

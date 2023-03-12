@@ -1,5 +1,5 @@
 import React from "react";
-import { useMarkdownContext } from "./MarkdownContext";
+import { userMarkdownPreview } from "./MarkdownPreviewContext";
 
 const LoadingSpinner = () => {
     return (
@@ -26,14 +26,14 @@ const LoadingSpinner = () => {
 };
 
 export const MarkdownPreview: React.FC = () => {
-    const context = useMarkdownContext();
+    const context = userMarkdownPreview();
 
     return (
         <div style={{ height: "100%" }}>
-            {context.preview.isLoading && <LoadingSpinner />}
+            {context.isLoading && <LoadingSpinner />}
             <div
                 className={"markdown-body"}
-                dangerouslySetInnerHTML={{ __html: context.preview.content }}
+                dangerouslySetInnerHTML={{ __html: context.content }}
             />
         </div>
     );
