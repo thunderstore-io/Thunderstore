@@ -15,7 +15,7 @@ export const MarkdownEditorInput: React.FC = () => {
             <textarea
                 className={"code-input"}
                 style={{ flex: 1 }}
-                value={context.page.markdown}
+                value={context.page.markdown_content}
                 onChange={(evt) => context.setMarkdown(evt.target.value)}
             />
         </div>

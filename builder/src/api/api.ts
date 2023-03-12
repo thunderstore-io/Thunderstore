@@ -10,6 +10,8 @@ import {
     UpdatePackageListingResponse,
     UserMedia,
     UserMediaInitiateUploadResponse,
+    WikiPage,
+    WikiPageUpsertRequest,
 } from "./models";
 import { ApiUrls } from "./urls";
 import { ThunderstoreApi } from "./client";
@@ -103,6 +105,18 @@ class ExperimentalApiImpl extends ThunderstoreApi {
             props.data
         );
         return (await response.json()) as { success: boolean };
+    };
+
+    upsertPackageWikiPage = async (props: {
+        namespace: string;
+        name: string;
+        data: WikiPageUpsertRequest;
+    }) => {
+        const response = await this.post(
+            ApiUrls.upsertPackageWikiPage(props.namespace, props.name),
+            props.data
+        );
+        return (await response.json()) as WikiPage;
     };
 }
 

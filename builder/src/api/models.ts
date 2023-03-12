@@ -102,3 +102,18 @@ export interface PackageSubmissionResult {
 export interface UpdatePackageListingResponse {
     categories: PackageCategory[];
 }
+
+export interface WikiPageUpsertRequest {
+    id?: string;
+    title: string;
+    markdown_content: string;
+}
+
+export interface WikiPage {
+    id: string;
+    title: string;
+    slug: string;
+    datetime_created: string;
+    datetime_updated: string;
+    markdown_content: string;
+}

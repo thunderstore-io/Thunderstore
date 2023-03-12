@@ -20,4 +20,6 @@ export class ApiUrls {
         apiUrl("submission", "validate", "manifest-v1");
     static updatePackageListing = (packageListingId: string) =>
         apiUrl("package-listing", packageListingId, "update");
+    static upsertPackageWikiPage = (namespace: string, name: string) =>
+        apiUrl("package", namespace, name, "wiki");
 }

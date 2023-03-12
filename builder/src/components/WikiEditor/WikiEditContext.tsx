@@ -1,33 +1,42 @@
 import React, { PropsWithChildren, useContext, useState } from "react";
-import { PageEditMeta } from "./Models";
 import { MarkdownPreviewProvider } from "./MarkdownPreviewContext";
+import { WikiPageUpsertRequest } from "../../api";
 
 export interface IWikiEditContext {
     page: {
         id?: string;
         title: string;
-        markdown: string;
+        markdown_content: string;
+    };
+    package: {
+        namespace: string;
+        name: string;
     };
     setMarkdown: (markdown: string) => void;
     setTitle: (title: string) => void;
 }
 
-export interface WikiEditContextProvider {
-    page: PageEditMeta | null;
+export interface WikiEditContextProviderProps {
+    pkg: {
+        namespace: string;
+        name: string;
+    };
+    page: WikiPageUpsertRequest | null;
 }
 
 export const WikiEditContextProvider: React.FC<
-    PropsWithChildren<WikiEditContextProvider>
-> = ({ children, page }) => {
+    PropsWithChildren<WikiEditContextProviderProps>
+> = ({ children, page, pkg }) => {
     const [title, setTitle] = useState<string>(page?.title ?? "");
     const [markdown, setMarkdown] = useState<string>(
-        page?.markdown ?? "# New page"
+        page?.markdown_content ?? "# New page"
     );
 
     return (
         <WikiEditContext.Provider
             value={{
-                page: { title, markdown },
+                page: { id: page?.id, title, markdown_content: markdown },
+                package: pkg,
                 setMarkdown,
                 setTitle,
             }}

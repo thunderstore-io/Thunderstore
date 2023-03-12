@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MarkdownEditorInput } from "./EditorInput";
 import { useWikiEditContext, WikiEditContextProvider } from "./WikiEditContext";
-import { PageEditMeta } from "./Models";
 import { CsrfTokenProvider } from "../CsrfTokenContext";
+import { ExperimentalApi, WikiPageUpsertRequest } from "../../api";
 
 interface TabProps {
     isActive?: boolean;
@@ -101,14 +101,40 @@ const PageMeta: React.FC = () => {
     );
 };
 
-const PageActions: React.FC = () => {
+interface PageActionsProps {
+    wikiUrl: string;
+}
+const PageActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
+    const context = useWikiEditContext();
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+    const submit = useCallback(
+        (
+            data: WikiPageUpsertRequest,
+            pkg: { namespace: string; name: string }
+        ) => {
+            if (isSubmitting) return;
+            setIsSubmitting(true);
+            ExperimentalApi.upsertPackageWikiPage({
+                namespace: pkg.namespace,
+                name: pkg.name,
+                data,
+            })
+                .then((resp) => {
+                    window.location.replace(`${wikiUrl}${resp.slug}/`);
+                })
+                .finally(() => setIsSubmitting(false));
+        },
+        [isSubmitting, setIsSubmitting]
+    );
+
     return (
         <div className="modal-footer d-flex justify-content-end">
             <button
                 type="button"
                 className="btn btn-success"
-                // disabled={props.form.status === "SUBMITTING"}
-                // onClick={props.form.onSubmit}
+                disabled={isSubmitting}
+                onClick={() => submit(context.page, context.package)}
             >
                 Save
             </button>
@@ -119,13 +145,18 @@ const PageActions: React.FC = () => {
 export type PageEditProps = {
     editorTitle: string;
     csrfToken: string;
-    page: PageEditMeta | null;
+    package: {
+        namespace: string;
+        name: string;
+    };
+    page: WikiPageUpsertRequest | null;
+    wikiUrl: string;
 };
 
 export const PageEditPage: React.FC<PageEditProps> = (props) => {
     return (
         <CsrfTokenProvider token={props.csrfToken}>
-            <WikiEditContextProvider page={props.page}>
+            <WikiEditContextProvider page={props.page} pkg={props.package}>
                 <div className={"card-header"}>
                     <h4 className={"mb-0"}>{props.editorTitle}</h4>
                 </div>
@@ -133,7 +164,7 @@ export const PageEditPage: React.FC<PageEditProps> = (props) => {
                     <PageMeta />
                 </div>
                 <EditorTabs />
-                <PageActions />
+                <PageActions wikiUrl={props.wikiUrl} />
             </WikiEditContextProvider>
         </CsrfTokenProvider>
     );

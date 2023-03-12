@@ -98,6 +98,18 @@ class PackageWikiPageBaseView(PackageWikiBaseView):
 class PackageWikiPageEditView(PackageWikiPageBaseView):
     template_name = "repository/package_wiki_edit.html"
 
+    def get_wiki_url(self):
+        return reverse(
+            **get_community_url_reverse_args(
+                community=self.community,
+                viewname="packages.detail.wiki",
+                kwargs={
+                    "owner": self.object.package.namespace.name,
+                    "name": self.object.package.name,
+                },
+            ),
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         page = context["page"]
@@ -106,10 +118,15 @@ class PackageWikiPageEditView(PackageWikiPageBaseView):
         context["editor_props"] = {
             "editorTitle": context["title"],
             "csrfToken": csrf.get_token(self.request),
+            "wikiUrl": self.get_wiki_url(),
+            "package": {
+                "namespace": self.object.package.namespace.name,
+                "name": self.object.package.name,
+            },
             "page": {
                 "id": page.pk,
                 "title": page.title,
-                "markdown": page.markdown_content,
+                "markdown_content": page.markdown_content,
             }
             if page
             else None,
