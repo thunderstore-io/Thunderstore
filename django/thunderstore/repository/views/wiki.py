@@ -56,6 +56,7 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
         context = super().get_context_data(*args, **kwargs)
         package_listing = context["object"]
         context["wiki"] = self.get_wiki(package_listing.package)
+        context["create_url"] = self.get_create_url()
         context.update(**self.get_tab_context(package_listing, "wiki"))
         return context
 
@@ -90,7 +91,6 @@ class PackageWikiPageBaseView(PackageWikiBaseView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context["page"] = self.get_page(context["wiki"])
-        context["create_url"] = self.get_create_url()
         return context
 
 
@@ -113,7 +113,6 @@ class PackageWikiPageEditView(PackageWikiPageBaseView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         page = context["page"]
-        context["is_new"] = page is None
         context["title"] = "New page" if page is None else "Editing page"
         context["editor_props"] = {
             "editorTitle": context["title"],
@@ -138,8 +137,7 @@ class PackageWikiHomeView(PackageWikiBaseView):
     template_name = "repository/package_wiki_home.html"
 
     def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        return context
+        return super().get_context_data(*args, **kwargs)
 
 
 class PackageWikiPageDetailView(PackageWikiPageBaseView):

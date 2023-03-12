@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MarkdownEditorInput } from "./EditorInput";
 import { useWikiEditContext, WikiEditContextProvider } from "./WikiEditContext";
@@ -104,7 +104,7 @@ const PageMeta: React.FC = () => {
 interface PageActionsProps {
     wikiUrl: string;
 }
-const PageActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
+const FooterActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
     const context = useWikiEditContext();
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -128,10 +128,20 @@ const PageActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
         [isSubmitting, setIsSubmitting]
     );
 
+    const cancelUrl = useMemo(() => {
+        if (context.page.id) {
+            return `${wikiUrl}${context.page.id}/`;
+        } else {
+            return wikiUrl;
+        }
+    }, [wikiUrl]);
+
     return (
         <div className="modal-footer d-flex justify-content-end">
+            <a type="button" className="btn btn-outline-dark" href={cancelUrl}>
+                Cancel
+            </a>
             <button
-                type="button"
                 className="btn btn-success"
                 disabled={isSubmitting}
                 onClick={() => submit(context.page, context.package)}
@@ -139,6 +149,41 @@ const PageActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
                 Save
             </button>
         </div>
+    );
+};
+
+const HeaderActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
+    const context = useWikiEditContext();
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+    const deletePage = () => {
+        setIsSubmitting(true);
+        // TODO: Implement API call
+        setIsSubmitting(false);
+    };
+    const newPage = () => {
+        window.location.replace(`${wikiUrl}new/`);
+    };
+
+    return (
+        <>
+            {context.page.id && (
+                <button
+                    className="btn btn-danger"
+                    disabled={isSubmitting}
+                    onClick={deletePage}
+                >
+                    Delete page
+                </button>
+            )}
+            <button
+                className="btn btn-success"
+                disabled={isSubmitting}
+                onClick={newPage}
+            >
+                New page
+            </button>
+        </>
     );
 };
 
@@ -157,14 +202,19 @@ export const PageEditPage: React.FC<PageEditProps> = (props) => {
     return (
         <CsrfTokenProvider token={props.csrfToken}>
             <WikiEditContextProvider page={props.page} pkg={props.package}>
-                <div className={"card-header"}>
-                    <h4 className={"mb-0"}>{props.editorTitle}</h4>
+                <div className="card-header d-flex justify-content-between gap-1 flex-wrap">
+                    <div className="mb-0 d-flex flex-column flex-grow-1 justify-content-center">
+                        <h4 className={"mb-0"}>{props.editorTitle}</h4>
+                    </div>
+                    <div className="d-flex gap-2 justify-content-end align-items-center">
+                        <HeaderActions wikiUrl={props.wikiUrl} />
+                    </div>
                 </div>
                 <div className={"modal-body"}>
                     <PageMeta />
                 </div>
                 <EditorTabs />
-                <PageActions wikiUrl={props.wikiUrl} />
+                <FooterActions wikiUrl={props.wikiUrl} />
             </WikiEditContextProvider>
         </CsrfTokenProvider>
     );
