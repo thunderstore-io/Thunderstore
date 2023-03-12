@@ -12,10 +12,10 @@
         <h4 class="mb-0">{{ wiki.wiki.title }}</h4>
     </div>
     <div class="card-body d-flex flex-column" style="min-height: 400px">
-        {% if wiki and wiki.pages %}
+        {% if wiki and wiki.wiki.pages.all %}
         <ul>
-            {% for page in wiki.pages %}
-                <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+            {% for page in wiki.wiki.pages.all %}
+                <li><a href="{% community_url "packages.detail.wiki.page.detail" owner=object.package.owner.name name=object.package.name page=page.pk pslug=page.slug%}">{{ page.title }}</a></li>
             {% endfor %}
         </ul>
         {% else %}

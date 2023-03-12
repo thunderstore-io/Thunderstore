@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from thunderstore.repository.api.v1.urls import urls as v1_urls
 from thunderstore.repository.views import (
@@ -58,6 +58,13 @@ legacy_package_urls = [
         PackageWikiPageEditView.as_view(),
         name="packages.detail.wiki.page.new",
     ),
+    re_path(
+        # Regex pattern is used to resolve any variation of slug usage after
+        # page ID, even if the slug is completely incorrect.
+        r"(?P<owner>[\w_-]+)/(?P<name>[\w_]+)/wiki/(?P<page>[0-9]+)(?:-(?P<pslug>[\w-]+)|-)?/$",
+        PackageWikiPageDetailView.as_view(),
+        name="packages.detail.wiki.page.detail",
+    ),
     path(
         "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/",
         PackageWikiPageDetailView.as_view(),
@@ -106,10 +113,12 @@ package_urls = [
         PackageWikiPageEditView.as_view(),
         name="packages.detail.wiki.page.new",
     ),
-    path(
-        "p/<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/",
+    re_path(
+        # Regex pattern is used to resolve any variation of slug usage after
+        # page ID, even if the slug is completely incorrect.
+        r"p/(?P<owner>[\w_-]+)/(?P<name>[\w_]+)/wiki/(?P<page>[0-9]+)(?:-(?P<pslug>[\w-]+)|-)?/$",
         PackageWikiPageDetailView.as_view(),
-        name="packages.detail.wiki.page.detail",
+        name="packages.detail.wiki.page.detail-without-slug",
     ),
     path(
         "p/<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
