@@ -26,7 +26,7 @@ export const DeprecationForm: React.FC = () => {
 
     return (
         <form method="POST" action="#">
-            <CsrfInput csrfToken={context.csrfToken} />
+            <CsrfInput />
             {buttons.map((x) => (
                 <input
                     key={x.name}

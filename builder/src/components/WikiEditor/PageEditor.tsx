@@ -3,6 +3,7 @@ import { MarkdownPreview } from "./MarkdownPreview";
 import { MarkdownEditorInput } from "./EditorInput";
 import { useWikiEditContext, WikiEditContextProvider } from "./WikiEditContext";
 import { PageEditMeta } from "./Models";
+import { CsrfTokenProvider } from "../CsrfTokenContext";
 
 interface TabProps {
     isActive?: boolean;
@@ -122,17 +123,18 @@ export type PageEditProps = {
 };
 
 export const PageEditPage: React.FC<PageEditProps> = (props) => {
-    // TODO: Add csrfTokenProvider
     return (
-        <WikiEditContextProvider page={props.page}>
-            <div className={"card-header"}>
-                <h4 className={"mb-0"}>{props.editorTitle}</h4>
-            </div>
-            <div className={"modal-body"}>
-                <PageMeta />
-            </div>
-            <EditorTabs />
-            <PageActions />
-        </WikiEditContextProvider>
+        <CsrfTokenProvider token={props.csrfToken}>
+            <WikiEditContextProvider page={props.page}>
+                <div className={"card-header"}>
+                    <h4 className={"mb-0"}>{props.editorTitle}</h4>
+                </div>
+                <div className={"modal-body"}>
+                    <PageMeta />
+                </div>
+                <EditorTabs />
+                <PageActions />
+            </WikiEditContextProvider>
+        </CsrfTokenProvider>
     );
 };
