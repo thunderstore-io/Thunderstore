@@ -13,6 +13,7 @@ from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package
 from thunderstore.repository.models.wiki import PackageWiki
+from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
 from thunderstore.repository.views.mixins import PackageTabsMixin
 from thunderstore.repository.views.repository import get_package_listing_or_404
 from thunderstore.wiki.models import WikiPage
@@ -121,6 +122,10 @@ class PackageWikiPageEditView(PackageWikiPageBaseView):
             "editorTitle": context["title"],
             "csrfToken": csrf.get_token(self.request),
             "wikiUrl": self.get_wiki_url(),
+            "options": {
+                "titleMaxLength": WikiPage._meta.get_field("title").max_length,
+                "markdownMaxLength": MAX_MARKDOWN_SIZE,
+            },
             "package": {
                 "namespace": self.object.package.namespace.name,
                 "name": self.object.package.name,

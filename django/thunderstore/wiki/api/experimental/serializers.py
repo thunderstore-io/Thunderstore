@@ -1,9 +1,14 @@
 from rest_framework import serializers
 
+from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
+from thunderstore.wiki.models import WikiPage
+
 
 class WikiPageBaseSerializer(serializers.Serializer):
     id = serializers.CharField(source="pk")
-    title = serializers.CharField()
+    title = serializers.CharField(
+        max_length=WikiPage._meta.get_field("title").max_length,
+    )
     slug = serializers.SerializerMethodField()
     datetime_created = serializers.DateTimeField()
     datetime_updated = serializers.DateTimeField()
@@ -18,8 +23,14 @@ class WikiPageSerializer(WikiPageBaseSerializer):
 
 class WikiPageUpsertSerializer(serializers.Serializer):
     id = serializers.CharField(required=False)
-    title = serializers.CharField(required=True)
-    markdown_content = serializers.CharField(required=True)
+    title = serializers.CharField(
+        required=True,
+        max_length=WikiPage._meta.get_field("title").max_length,
+    )
+    markdown_content = serializers.CharField(
+        required=True,
+        max_length=MAX_MARKDOWN_SIZE,
+    )
 
 
 class WikiPageDeleteSerializer(serializers.Serializer):

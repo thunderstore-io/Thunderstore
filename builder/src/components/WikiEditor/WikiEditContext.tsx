@@ -3,6 +3,11 @@ import { MarkdownPreviewProvider } from "./MarkdownPreviewContext";
 import { WikiPageUpsertRequest } from "../../api";
 import { useOnBeforeUnload } from "../../state/OnBeforeUnload";
 
+type EditorOptions = {
+    titleMaxLength: number;
+    markdownMaxLength: number;
+};
+
 export interface IWikiEditContext {
     page: {
         id?: string;
@@ -13,6 +18,7 @@ export interface IWikiEditContext {
         namespace: string;
         name: string;
     };
+    options: EditorOptions;
     setMarkdown: (markdown: string) => void;
     setTitle: (title: string) => void;
     clearCache: () => void;
@@ -24,6 +30,7 @@ export interface WikiEditContextProviderProps {
         name: string;
     };
     page: WikiPageUpsertRequest | null;
+    options: EditorOptions;
 }
 
 const useStoredState = (
@@ -49,7 +56,7 @@ const useStoredState = (
 
 export const WikiEditContextProvider: React.FC<
     PropsWithChildren<WikiEditContextProviderProps>
-> = ({ children, page, pkg }) => {
+> = ({ children, page, pkg, options }) => {
     const [title, setTitle] = useState<string>(page?.title ?? "");
     const [
         getStoredMarkdown,
@@ -70,6 +77,7 @@ export const WikiEditContextProvider: React.FC<
             value={{
                 page: { id: page?.id, title, markdown_content: markdown },
                 package: pkg,
+                options: options,
                 setMarkdown: _setMarkdown,
                 clearCache: clearStoredMarkdown,
                 setTitle,

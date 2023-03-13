@@ -90,13 +90,15 @@ const PageMeta: React.FC = () => {
     const context = useWikiEditContext();
 
     return (
-        <input
-            className={"w-100 h5 py-1 px-2"}
-            name={"title"}
-            placeholder={"Title"}
-            value={context.page.title}
-            onChange={(evt) => context.setTitle(evt.target.value)}
-        />
+        <>
+            <input
+                className={"w-100 h5 py-1 px-2"}
+                name={"title"}
+                placeholder={"Title"}
+                value={context.page.title}
+                onChange={(evt) => context.setTitle(evt.target.value)}
+            />
+        </>
     );
 };
 
@@ -214,13 +216,21 @@ export type PageEditProps = {
         namespace: string;
         name: string;
     };
+    options: {
+        titleMaxLength: number;
+        markdownMaxLength: number;
+    };
     page: WikiPageUpsertRequest | null;
     wikiUrl: string;
 };
 
 export const PageEditPage: React.FC<PageEditProps> = (props) => {
     return (
-        <WikiEditContextProvider page={props.page} pkg={props.package}>
+        <WikiEditContextProvider
+            page={props.page}
+            pkg={props.package}
+            options={props.options}
+        >
             <div className="card-header d-flex justify-content-between gap-1 flex-wrap">
                 <div className="mb-0 d-flex flex-column flex-grow-1 justify-content-center">
                     <h4 className={"mb-0"}>{props.editorTitle}</h4>
