@@ -31,7 +31,7 @@ export const MarkdownEditorInput: React.FC = () => {
                 onChange={(evt) => context.setMarkdown(evt.target.value)}
             />
             <MarkdownLengthIndicator />
-            <ErrorList errors={context.errors.markdown} />
+            <ErrorList errors={context.errors?.fields.markdown} />
         </div>
     );
 };

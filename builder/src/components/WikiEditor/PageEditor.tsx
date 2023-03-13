@@ -1,19 +1,8 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MarkdownEditorInput } from "./EditorInput";
-import {
-    useWikiEditContext,
-    WikiEditContextProvider,
-    WikiEditErrors,
-} from "./WikiEditContext";
-import {
-    ExperimentalApi,
-    ThunderstoreApiError,
-    WikiDeleteError,
-    WikiPageUpsertError,
-    WikiPageUpsertRequest,
-} from "../../api";
-import * as Sentry from "@sentry/browser";
+import { useWikiEditContext, WikiEditContextProvider } from "./WikiEditContext";
+import { WikiPageUpsertRequest } from "../../api";
 import { ErrorList } from "./ErrorList";
 
 interface TabProps {
@@ -110,96 +99,32 @@ const PageMeta: React.FC = () => {
                 value={context.page.title}
                 onChange={(evt) => context.setTitle(evt.target.value)}
             />
-            <ErrorList errors={context.errors.title} />
+            <ErrorList errors={context.errors?.fields.title} />
         </>
     );
 };
 
-interface PageActionsProps {
-    wikiUrl: string;
-}
-const FooterActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
+const FooterActions: React.FC = () => {
     const context = useWikiEditContext();
-    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-    const submit = useCallback(
-        (
-            data: WikiPageUpsertRequest,
-            pkg: { namespace: string; name: string },
-            setErrors: (errors: WikiEditErrors) => void
-        ) => {
-            if (isSubmitting) return;
-            setIsSubmitting(true);
-            setErrors({ title: [], markdown: [], other: [] });
-            ExperimentalApi.upsertPackageWikiPage({
-                namespace: pkg.namespace,
-                name: pkg.name,
-                data,
-            })
-                .then((resp) => {
-                    context.clearCache();
-                    window.location.replace(`${wikiUrl}${resp.slug}/`);
-                })
-                .catch((e) => {
-                    const errors: WikiEditErrors = {
-                        title: [],
-                        markdown: [],
-                        other: [],
-                    };
-                    if (e instanceof ThunderstoreApiError) {
-                        const error = e.errorObject as WikiPageUpsertError | null;
-                        if (error) {
-                            if (error.title) {
-                                errors.title.push(...error.title);
-                            }
-                            if (error.markdown_content) {
-                                errors.markdown.push(...error.markdown_content);
-                            }
-                            if (error.non_field_errors) {
-                                errors.other.push(...error.non_field_errors);
-                            }
-                            if (error.__all__) {
-                                errors.other.push(...error.__all__);
-                            }
-                        } else {
-                            Sentry.captureException(e);
-                            errors.other.push(
-                                "Unknown error occurred when saving"
-                            );
-                            console.error(e);
-                        }
-                    } else {
-                        Sentry.captureException(e);
-                        errors.other.push("Unknown error occurred when saving");
-                        console.error(e);
-                    }
-                    setErrors(errors);
-                })
-                .finally(() => setIsSubmitting(false));
-        },
-        [isSubmitting, setIsSubmitting]
-    );
 
     const cancelUrl = useMemo(() => {
         if (context.page.id) {
-            return `${wikiUrl}${context.page.id}/`;
+            return `${context.wikiUrl}${context.page.id}/`;
         } else {
-            return wikiUrl;
+            return context.wikiUrl;
         }
-    }, [wikiUrl]);
+    }, [context.wikiUrl]);
 
     return (
         <div className="modal-footer d-flex justify-content-end">
-            <ErrorList errors={context.errors.other} />
+            <ErrorList errors={context.errors?.general} />
             <a type="button" className="btn btn-outline-dark" href={cancelUrl}>
                 Cancel
             </a>
             <button
                 className="btn btn-success"
-                disabled={isSubmitting}
-                onClick={() =>
-                    submit(context.page, context.package, context.setErrors)
-                }
+                disabled={context.isSubmitting}
+                onClick={context.upsertPage}
             >
                 Save
             </button>
@@ -207,92 +132,27 @@ const FooterActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
     );
 };
 
-const HeaderActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
+const HeaderActions: React.FC = () => {
     const context = useWikiEditContext();
-    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-    const deletePage = useCallback(
-        (
-            pageId: string,
-            pkg: { namespace: string; name: string },
-            setErrors: (errors: WikiEditErrors) => void
-        ) => {
-            if (
-                !confirm(
-                    "You're about to delete a page, this action can't be undone. Are you sure?"
-                )
-            )
-                return;
-            if (isSubmitting) return;
-            setIsSubmitting(true);
-            setErrors({ title: [], markdown: [], other: [] });
-            ExperimentalApi.deletePackageWikiPage({
-                namespace: pkg.namespace,
-                name: pkg.name,
-                pageId,
-            })
-                .then(() => {
-                    window.location.replace(`${wikiUrl}`);
-                })
-                .catch((e) => {
-                    const errors: WikiEditErrors = {
-                        title: [],
-                        markdown: [],
-                        other: [],
-                    };
-                    if (e instanceof ThunderstoreApiError) {
-                        const error = e.errorObject as WikiDeleteError | null;
-                        if (error) {
-                            if (error.pageId) {
-                                errors.other.push(...error.pageId);
-                            }
-                            if (error.non_field_errors) {
-                                errors.other.push(...error.non_field_errors);
-                            }
-                            if (error.__all__) {
-                                errors.other.push(...error.__all__);
-                            }
-                        } else {
-                            Sentry.captureException(e);
-                            errors.other.push("Unknown error occurred");
-                            console.error(e);
-                        }
-                    } else {
-                        Sentry.captureException(e);
-                        errors.other.push("Unknown error occurred");
-                        console.error(e);
-                    }
-                    setErrors(errors);
-                })
-                .finally(() => setIsSubmitting(false));
-        },
-        [isSubmitting, setIsSubmitting]
-    );
 
     const newPage = () => {
-        window.location.replace(`${wikiUrl}new/`);
+        window.location.replace(`${context.wikiUrl}new/`);
     };
 
     return (
         <>
-            {context.page.id && (
+            {context.deletePage && (
                 <button
                     className="btn btn-danger"
-                    disabled={isSubmitting}
-                    onClick={() =>
-                        deletePage(
-                            context.page.id!,
-                            context.package,
-                            context.setErrors
-                        )
-                    }
+                    disabled={context.isSubmitting}
+                    onClick={context.deletePage}
                 >
                     Delete page
                 </button>
             )}
             <button
                 className="btn btn-success"
-                disabled={isSubmitting}
+                disabled={context.isSubmitting}
                 onClick={newPage}
             >
                 New page
@@ -322,20 +182,21 @@ export const PageEditPage: React.FC<PageEditProps> = (props) => {
             page={props.page}
             pkg={props.package}
             options={props.options}
+            wikiUrl={props.wikiUrl}
         >
             <div className="card-header d-flex justify-content-between gap-1 flex-wrap">
                 <div className="mb-0 d-flex flex-column flex-grow-1 justify-content-center">
                     <h4 className={"mb-0"}>{props.editorTitle}</h4>
                 </div>
                 <div className="d-flex gap-2 justify-content-end align-items-center">
-                    <HeaderActions wikiUrl={props.wikiUrl} />
+                    <HeaderActions />
                 </div>
             </div>
             <div className={"modal-body"}>
                 <PageMeta />
             </div>
             <EditorTabs />
-            <FooterActions wikiUrl={props.wikiUrl} />
+            <FooterActions />
         </WikiEditContextProvider>
     );
 };

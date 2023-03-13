@@ -104,7 +104,7 @@ export interface UpdatePackageListingResponse {
 }
 
 export interface WikiPageUpsertRequest {
-    id?: string;
+    id?: string | number;
     title: string;
     markdown_content: string;
 }
