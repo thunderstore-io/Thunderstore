@@ -109,6 +109,20 @@ export interface WikiPageUpsertRequest {
     markdown_content: string;
 }
 
+export interface BaseApiError {
+    non_field_errors?: string[];
+    __all__?: string[];
+}
+
+export interface WikiDeleteError extends BaseApiError {
+    pageId?: string[];
+}
+
+export interface WikiPageUpsertError extends BaseApiError {
+    title?: string[];
+    markdown_content?: string[];
+}
+
 export interface WikiPage {
     id: string;
     title: string;

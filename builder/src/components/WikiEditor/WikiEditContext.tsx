@@ -8,6 +8,12 @@ type EditorOptions = {
     markdownMaxLength: number;
 };
 
+export type WikiEditErrors = {
+    title: string[];
+    markdown: string[];
+    other: string[];
+};
+
 export interface IWikiEditContext {
     page: {
         id?: string;
@@ -18,6 +24,8 @@ export interface IWikiEditContext {
         namespace: string;
         name: string;
     };
+    errors: WikiEditErrors;
+    setErrors: (errors: WikiEditErrors) => void;
     options: EditorOptions;
     setMarkdown: (markdown: string) => void;
     setTitle: (title: string) => void;
@@ -58,6 +66,11 @@ export const WikiEditContextProvider: React.FC<
     PropsWithChildren<WikiEditContextProviderProps>
 > = ({ children, page, pkg, options }) => {
     const [title, setTitle] = useState<string>(page?.title ?? "");
+    const [errors, setErrors] = useState<WikiEditErrors>({
+        title: [],
+        markdown: [],
+        other: [],
+    });
     const [
         getStoredMarkdown,
         setStoredMarkdown,
@@ -78,6 +91,8 @@ export const WikiEditContextProvider: React.FC<
                 page: { id: page?.id, title, markdown_content: markdown },
                 package: pkg,
                 options: options,
+                errors,
+                setErrors,
                 setMarkdown: _setMarkdown,
                 clearCache: clearStoredMarkdown,
                 setTitle,

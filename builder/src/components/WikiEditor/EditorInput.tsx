@@ -1,6 +1,7 @@
 import React from "react";
 import { useWikiEditContext } from "./WikiEditContext";
 import { SizeIndicator } from "./SizeIndicator";
+import { ErrorList } from "./ErrorList";
 
 const MarkdownLengthIndicator = () => {
     const context = useWikiEditContext();
@@ -30,6 +31,7 @@ export const MarkdownEditorInput: React.FC = () => {
                 onChange={(evt) => context.setMarkdown(evt.target.value)}
             />
             <MarkdownLengthIndicator />
+            <ErrorList errors={context.errors.markdown} />
         </div>
     );
 };
