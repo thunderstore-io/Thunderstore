@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useContext, useState } from "react";
 import { MarkdownPreviewProvider } from "./MarkdownPreviewContext";
 import { WikiPageUpsertRequest } from "../../api";
+import { useOnBeforeUnload } from "../../state/OnBeforeUnload";
 
 export interface IWikiEditContext {
     page: {
@@ -31,6 +32,7 @@ export const WikiEditContextProvider: React.FC<
     const [markdown, setMarkdown] = useState<string>(
         page?.markdown_content ?? "# New page"
     );
+    useOnBeforeUnload(page ? page.markdown_content != markdown : false);
 
     return (
         <WikiEditContext.Provider
