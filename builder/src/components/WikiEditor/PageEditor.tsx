@@ -120,6 +120,7 @@ const FooterActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
                 data,
             })
                 .then((resp) => {
+                    context.clearCache();
                     window.location.replace(`${wikiUrl}${resp.slug}/`);
                 })
                 .finally(() => setIsSubmitting(false));

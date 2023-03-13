@@ -15,6 +15,7 @@ export interface IWikiEditContext {
     };
     setMarkdown: (markdown: string) => void;
     setTitle: (title: string) => void;
+    clearCache: () => void;
 }
 
 export interface WikiEditContextProviderProps {
@@ -25,21 +26,52 @@ export interface WikiEditContextProviderProps {
     page: WikiPageUpsertRequest | null;
 }
 
+const useStoredState = (
+    enabled: boolean,
+    storageKey: string,
+    defaultVal: string
+): [() => string, (val: string) => string, () => void] => {
+    if (enabled) {
+        return [
+            () => {
+                return localStorage.getItem(storageKey) ?? defaultVal;
+            },
+            (val: string) => {
+                localStorage.setItem(storageKey, val);
+                return val;
+            },
+            () => localStorage.removeItem(storageKey),
+        ];
+    } else {
+        return [() => defaultVal, (val: string) => val, () => undefined];
+    }
+};
+
 export const WikiEditContextProvider: React.FC<
     PropsWithChildren<WikiEditContextProviderProps>
 > = ({ children, page, pkg }) => {
     const [title, setTitle] = useState<string>(page?.title ?? "");
-    const [markdown, setMarkdown] = useState<string>(
+    const [
+        getStoredMarkdown,
+        setStoredMarkdown,
+        clearStoredMarkdown,
+    ] = useStoredState(
+        !page,
+        "legacy.wikiEditor.newPageMarkdown",
         page?.markdown_content ?? "# New page"
     );
-    useOnBeforeUnload(page ? page.markdown_content != markdown : false);
+    const [markdown, setMarkdown] = useState<string>(getStoredMarkdown);
+    const _setMarkdown = (val: string) => setMarkdown(setStoredMarkdown(val));
+
+    useOnBeforeUnload(!!page && page.markdown_content != markdown);
 
     return (
         <WikiEditContext.Provider
             value={{
                 page: { id: page?.id, title, markdown_content: markdown },
                 package: pkg,
-                setMarkdown,
+                setMarkdown: _setMarkdown,
+                clearCache: clearStoredMarkdown,
                 setTitle,
             }}
         >
