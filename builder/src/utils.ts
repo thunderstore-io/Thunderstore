@@ -51,12 +51,16 @@ function parseXhrResponseHeaders(allHeaders: string): Headers {
     return result;
 }
 
+type Opts = Omit<FetchOptions, "body"> & {
+    body: XMLHttpRequestBodyInit | null;
+};
+
 interface FetchOptions extends RequestInit {
     headers?: Headers;
 }
 export function fetchWithProgress(
     url: string,
-    opts: FetchOptions = {},
+    opts: Opts,
     onProgress?: (this: XMLHttpRequest, ev: ProgressEvent) => any
 ): { request: XMLHttpRequest; response: Promise<Response> } {
     const xhr = new XMLHttpRequest();

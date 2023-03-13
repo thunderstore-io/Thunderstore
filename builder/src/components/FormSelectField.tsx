@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import { Controller } from "react-hook-form";
 import Select from "react-select";
 
-interface FormSelectFieldProps<T, F> {
+interface FormSelectFieldProps<T, F extends Record<string, any>> {
     className?: string;
     control: Control<F>;
     name: string;
