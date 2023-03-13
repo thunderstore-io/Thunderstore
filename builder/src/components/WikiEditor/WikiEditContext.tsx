@@ -201,7 +201,9 @@ export const WikiEditContextProvider: React.FC<
     const [markdown, setMarkdown] = useState<string>(getStoredMarkdown);
     const _setMarkdown = (val: string) => setMarkdown(setStoredMarkdown(val));
 
-    useOnBeforeUnload(!isNew && page?.markdown_content != markdown);
+    useOnBeforeUnload(
+        !isNew && page?.markdown_content != markdown && !isSubmitting
+    );
 
     const partialContext: PartialContext = {
         page: {

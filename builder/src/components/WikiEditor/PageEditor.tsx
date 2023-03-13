@@ -4,6 +4,7 @@ import { MarkdownEditorInput } from "./EditorInput";
 import { useWikiEditContext, WikiEditContextProvider } from "./WikiEditContext";
 import { WikiPageUpsertRequest } from "../../api";
 import { ErrorList } from "./ErrorList";
+import { LoadingIndicator } from "./LoadingIndicator";
 
 interface TabProps {
     isActive?: boolean;
@@ -161,6 +162,29 @@ const HeaderActions: React.FC = () => {
     );
 };
 
+export const PageEditForm: React.FC<{ title: string }> = ({ title }) => {
+    const context = useWikiEditContext();
+
+    return (
+        <>
+            {context.isSubmitting && <LoadingIndicator />}
+            <div className="card-header d-flex justify-content-between gap-1 flex-wrap">
+                <div className="mb-0 d-flex flex-column flex-grow-1 justify-content-center">
+                    <h4 className={"mb-0"}>{title}</h4>
+                </div>
+                <div className="d-flex gap-2 justify-content-end align-items-center">
+                    <HeaderActions />
+                </div>
+            </div>
+            <div className={"modal-body"}>
+                <PageMeta />
+            </div>
+            <EditorTabs />
+            <FooterActions />
+        </>
+    );
+};
+
 export type PageEditProps = {
     editorTitle: string;
     csrfToken: string;
@@ -184,19 +208,7 @@ export const PageEditPage: React.FC<PageEditProps> = (props) => {
             options={props.options}
             wikiUrl={props.wikiUrl}
         >
-            <div className="card-header d-flex justify-content-between gap-1 flex-wrap">
-                <div className="mb-0 d-flex flex-column flex-grow-1 justify-content-center">
-                    <h4 className={"mb-0"}>{props.editorTitle}</h4>
-                </div>
-                <div className="d-flex gap-2 justify-content-end align-items-center">
-                    <HeaderActions />
-                </div>
-            </div>
-            <div className={"modal-body"}>
-                <PageMeta />
-            </div>
-            <EditorTabs />
-            <FooterActions />
+            <PageEditForm title={props.editorTitle} />
         </WikiEditContextProvider>
     );
 };
