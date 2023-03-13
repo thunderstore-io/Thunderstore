@@ -279,6 +279,12 @@ class Package(models.Model):
     def can_user_manage_deprecation(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_deprecation(user))
 
+    def ensure_user_can_manage_wiki(self, user: Optional[UserType]) -> None:
+        return self.owner.ensure_user_can_manage_packages(user)
+
+    def can_user_manage_wiki(self, user: Optional[UserType]) -> bool:
+        return self.owner.can_user_manage_packages(user)
+
     def __str__(self):
         return self.full_package_name
 

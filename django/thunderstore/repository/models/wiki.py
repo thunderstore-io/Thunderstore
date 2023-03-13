@@ -34,10 +34,10 @@ class PackageWiki(TimestampMixin):
     @classmethod
     @transaction.atomic
     def get_for_package(
-        cls, package: Package, create: bool = False
+        cls, package: Package, create: bool = False, dummy: bool = True
     ) -> Optional["PackageWiki"]:
         result = cls.objects.filter(package=package).first()
-        if not result:
+        if not result and (create or dummy):
             result = cls(
                 package=package,
                 wiki=create_wiki_for_package(package, save=create),

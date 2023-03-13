@@ -2,11 +2,11 @@
     {% for tab in tabs %}
     <li class="nav-item" role="presentation">
         <a
-            class="nav-link clickable {% if active_tab == tab.name %}active{% endif %}"
+            class="nav-link {% if tab.is_disabled %}disabled text-muted{% else %}clickable{% endif %} {% if tab.is_active %}active{% endif %}"
             style="user-select: none;"
-            {% if active_tab == tab.name %}aria-selected=true{% endif %}
+            {% if tab.is_active %}aria-selected=true{% endif %}
             role="tab"
-            href="{{ tab.url }}"
+            {% if not tab.is_disabled %}href="{{ tab.url }}"{% endif %}
         >
             {{ tab.title }}
         </a>

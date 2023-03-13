@@ -56,8 +56,11 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
         context = super().get_context_data(*args, **kwargs)
         package_listing = context["object"]
         context["wiki"] = self.get_wiki(package_listing.package)
+        context["can_manage_wiki"] = self.object.package.can_user_manage_wiki(
+            self.request.user
+        )
         context["create_url"] = self.get_create_url()
-        context.update(**self.get_tab_context(package_listing, "wiki"))
+        context.update(**self.get_tab_context(package_listing, "wiki", set()))
         return context
 
 

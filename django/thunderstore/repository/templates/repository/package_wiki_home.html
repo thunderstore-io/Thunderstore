@@ -13,7 +13,9 @@
             <h4 class="mb-0">{{ wiki.wiki.title }}</h4>
         </div>
         <div class="d-flex gap-2 justify-content-end align-items-center">
+            {% if can_manage_wiki %}
             <a type="button" class="btn btn-success" href="{{ create_url }}">New page</a>
+            {% endif %}
         </div>
     </div>
     <div class="card-body d-flex flex-column" style="min-height: 400px">
@@ -26,7 +28,9 @@
         {% else %}
             <div class="d-flex justify-content-center align-items-center flex-column" style="flex: 1;">
                 <p>This wiki currently has no pages in it.</p>
-                <a href="new/">Create a page</a>
+                {% if can_manage_wiki %}
+                <a href="{{ create_url }}">Create a page</a>
+                {% endif %}
             </div>
         {% endif %}
     </div>

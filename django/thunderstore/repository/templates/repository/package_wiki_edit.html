@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block wiki_content %}
+{% if can_manage_wiki %}
     <div id="edit-page"></div>
     <script type="text/javascript">
     window.ts.PageEditPage(
@@ -15,4 +16,28 @@
         {{ editor_props|encode_props }}
     );
     </script>
+    <noscript>
+        <div class="card-header d-flex justify-content-between gap-1 flex-wrap">
+            <div class="mb-0 d-flex flex-column flex-grow-1">
+                <h4 class="mb-0">{{ title }}</h4>
+            </div>
+        </div>
+        <div class="card-body d-flex flex-column" style="min-height: 400px">
+            <div class="d-flex justify-content-center align-items-center flex-column" style="flex: 1;">
+                <p>Javascript is necessary to use the wiki editor, and it has been blocked by your browser</p>
+            </div>
+        </div>
+    </noscript>
+{% else %}
+    <div class="card-header d-flex justify-content-between gap-1 flex-wrap">
+        <div class="mb-0 d-flex flex-column flex-grow-1">
+            <h4 class="mb-0">{{ title }}</h4>
+        </div>
+    </div>
+    <div class="card-body d-flex flex-column" style="min-height: 400px">
+        <div class="d-flex justify-content-center align-items-center flex-column" style="flex: 1;">
+            <p>You don't have sufficient permissions to edit this wiki.</p>
+        </div>
+    </div>
+{% endif %}
 {% endblock %}

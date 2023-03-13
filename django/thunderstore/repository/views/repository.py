@@ -32,6 +32,7 @@ from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import (
     Package,
     PackageVersion,
+    PackageWiki,
     Team,
     get_package_dependants,
 )
@@ -501,7 +502,21 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
             ],
             "packageListingId": package_listing.pk,
         }
-        context.update(**self.get_tab_context(package_listing, "details"))
+        wiki_disabled = (
+            PackageWiki.get_for_package(
+                package_listing.package, create=False, dummy=False
+            )
+            is None
+        )
+        disabled_tabs = (
+            {"wiki"}
+            if wiki_disabled
+            and not package_listing.package.can_user_manage_wiki(self.request.user)
+            else set()
+        )
+        context.update(
+            **self.get_tab_context(package_listing, "details", disabled_tabs)
+        )
         return context
 
     def post_deprecate(self):

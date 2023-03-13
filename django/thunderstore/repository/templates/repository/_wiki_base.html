@@ -21,7 +21,7 @@
 </nav>
 
 <div class="card bg-light">
-    {% include "community/includes/package_tabs.html" with tabs=tabs active_tab=active_tab %}
+    {% include "community/includes/package_tabs.html" with tabs=tabs%}
     {% block wiki_content %}{% endblock %}
 </div>
 

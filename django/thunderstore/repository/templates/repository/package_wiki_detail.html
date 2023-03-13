@@ -9,8 +9,10 @@
             <span class="text-muted">Updated {% humanize_timestamp page.datetime_updated %}</span>
         </div>
         <div class="d-flex gap-2 justify-content-end align-items-center">
+            {% if can_manage_wiki %}
             <a type="button" class="btn btn-light" href="{{ edit_url }}">Edit</a>
             <a type="button" class="btn btn-success" href="{{ create_url }}">New page</a>
+            {% endif %}
         </div>
     </div>
     <div class="card-body markdown-body" style="min-height: 400px">

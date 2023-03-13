@@ -71,7 +71,7 @@ class PackageWikiApiView(RetrieveAPIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         package = self.get_package()
-        package.owner.ensure_user_can_manage_packages(request.user)
+        package.ensure_user_can_manage_wiki(request.user)
         request_serializer = WikiPageUpsertSerializer(data=request.data)
         request_serializer.is_valid(raise_exception=True)
         wiki = PackageWiki.get_for_package(package, create=True).wiki
