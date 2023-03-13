@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MarkdownEditorInput } from "./EditorInput";
 import { useWikiEditContext, WikiEditContextProvider } from "./WikiEditContext";
-import { CsrfTokenProvider } from "../CsrfTokenContext";
 import { ExperimentalApi, WikiPageUpsertRequest } from "../../api";
 
 interface TabProps {
@@ -156,11 +155,29 @@ const HeaderActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
     const context = useWikiEditContext();
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    const deletePage = () => {
-        setIsSubmitting(true);
-        // TODO: Implement API call
-        setIsSubmitting(false);
-    };
+    const deletePage = useCallback(
+        (pageId: string, pkg: { namespace: string; name: string }) => {
+            if (
+                !confirm(
+                    "You're about to delete a page, this action can't be undone. Are you sure?"
+                )
+            )
+                return;
+            if (isSubmitting) return;
+            setIsSubmitting(true);
+            ExperimentalApi.deletePackageWikiPage({
+                namespace: pkg.namespace,
+                name: pkg.name,
+                pageId,
+            })
+                .then(() => {
+                    window.location.replace(`${wikiUrl}`);
+                })
+                .finally(() => setIsSubmitting(false));
+        },
+        [isSubmitting, setIsSubmitting]
+    );
+
     const newPage = () => {
         window.location.replace(`${wikiUrl}new/`);
     };
@@ -171,7 +188,9 @@ const HeaderActions: React.FC<PageActionsProps> = ({ wikiUrl }) => {
                 <button
                     className="btn btn-danger"
                     disabled={isSubmitting}
-                    onClick={deletePage}
+                    onClick={() =>
+                        deletePage(context.page.id!, context.package)
+                    }
                 >
                     Delete page
                 </button>
@@ -200,22 +219,20 @@ export type PageEditProps = {
 
 export const PageEditPage: React.FC<PageEditProps> = (props) => {
     return (
-        <CsrfTokenProvider token={props.csrfToken}>
-            <WikiEditContextProvider page={props.page} pkg={props.package}>
-                <div className="card-header d-flex justify-content-between gap-1 flex-wrap">
-                    <div className="mb-0 d-flex flex-column flex-grow-1 justify-content-center">
-                        <h4 className={"mb-0"}>{props.editorTitle}</h4>
-                    </div>
-                    <div className="d-flex gap-2 justify-content-end align-items-center">
-                        <HeaderActions wikiUrl={props.wikiUrl} />
-                    </div>
+        <WikiEditContextProvider page={props.page} pkg={props.package}>
+            <div className="card-header d-flex justify-content-between gap-1 flex-wrap">
+                <div className="mb-0 d-flex flex-column flex-grow-1 justify-content-center">
+                    <h4 className={"mb-0"}>{props.editorTitle}</h4>
                 </div>
-                <div className={"modal-body"}>
-                    <PageMeta />
+                <div className="d-flex gap-2 justify-content-end align-items-center">
+                    <HeaderActions wikiUrl={props.wikiUrl} />
                 </div>
-                <EditorTabs />
-                <FooterActions wikiUrl={props.wikiUrl} />
-            </WikiEditContextProvider>
-        </CsrfTokenProvider>
+            </div>
+            <div className={"modal-body"}>
+                <PageMeta />
+            </div>
+            <EditorTabs />
+            <FooterActions wikiUrl={props.wikiUrl} />
+        </WikiEditContextProvider>
     );
 };

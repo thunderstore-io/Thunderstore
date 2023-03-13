@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from thunderstore.repository.models import Package, PackageWiki
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.wiki.api.experimental.serializers import (
+    WikiPageDeleteSerializer,
     WikiPageSerializer,
     WikiPageUpsertSerializer,
     WikiSerializer,
@@ -88,3 +89,21 @@ class PackageWikiApiView(RetrieveAPIView):
             instance=page,
         )
         return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=WikiPageDeleteSerializer,
+        operation_id="experimental_package_wiki_delete",
+        operation_summary="Delete a wiki page",
+        operation_description="Deletes a wiki page by page ID",
+        tags=["wiki"],
+    )
+    def delete(self, request, *args, **kwargs):
+        package = self.get_package()
+        package.ensure_user_can_manage_wiki(request.user)
+        request_serializer = WikiPageDeleteSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        wiki = PackageWiki.get_for_package(package, create=True).wiki
+        page_data = request_serializer.validated_data
+        page = get_object_or_404(wiki.pages.all(), pk=page_data["id"])
+        page.delete()
+        return Response({"success": True})

@@ -22,6 +22,10 @@ class WikiPageUpsertSerializer(serializers.Serializer):
     markdown_content = serializers.CharField(required=True)
 
 
+class WikiPageDeleteSerializer(serializers.Serializer):
+    id = serializers.CharField(required=True)
+
+
 class WikiPageIndexSerializer(WikiPageBaseSerializer):
     pass
 

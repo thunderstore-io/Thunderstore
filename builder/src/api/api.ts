@@ -113,10 +113,22 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         data: WikiPageUpsertRequest;
     }) => {
         const response = await this.post(
-            ApiUrls.upsertPackageWikiPage(props.namespace, props.name),
+            ApiUrls.packageWiki(props.namespace, props.name),
             props.data
         );
         return (await response.json()) as WikiPage;
+    };
+
+    deletePackageWikiPage = async (props: {
+        namespace: string;
+        name: string;
+        pageId: string;
+    }) => {
+        const response = await this.delete(
+            ApiUrls.packageWiki(props.namespace, props.name),
+            { id: props.pageId }
+        );
+        return (await response.json()) as { success: boolean };
     };
 }
 

@@ -1,5 +1,7 @@
 import { ThunderstoreApiError } from "./error";
 
+type RequestMethod = "GET" | "POST" | "DELETE";
+
 export class ThunderstoreApi {
     apiKey: string | null;
 
@@ -9,7 +11,7 @@ export class ThunderstoreApi {
 
     protected apiFetch = async (
         url: string,
-        method: "GET" | "POST",
+        method: RequestMethod,
         body?: string
     ) => {
         const headers = new Headers({
@@ -43,11 +45,23 @@ export class ThunderstoreApi {
         return this.apiFetch(queryUrl.toString(), "GET");
     };
 
-    protected post = async (url: string, data?: object) => {
+    protected _apiSubmit = async (
+        url: string,
+        method: RequestMethod,
+        data?: object
+    ) => {
         return this.apiFetch(
             url,
-            "POST",
+            method,
             data ? JSON.stringify(data) : undefined
         );
+    };
+
+    protected post = async (url: string, data?: object) => {
+        return this._apiSubmit(url, "POST", data);
+    };
+
+    protected delete = async (url: string, data?: object) => {
+        return this._apiSubmit(url, "DELETE", data);
     };
 }
