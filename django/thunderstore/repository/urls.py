@@ -66,11 +66,6 @@ legacy_package_urls = [
         name="packages.detail.wiki.page.detail",
     ),
     path(
-        "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/",
-        PackageWikiPageDetailView.as_view(),
-        name="packages.detail.wiki.page.detail",
-    ),
-    path(
         "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
         PackageWikiPageEditView.as_view(),
         name="packages.detail.wiki.page.edit",

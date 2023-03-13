@@ -1,8 +1,8 @@
 from typing import Optional
 
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.middleware import csrf
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -28,7 +28,7 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
             self.wiki = PackageWiki.get_for_package(package, False)
         return self.wiki
 
-    def get_object(self, *args, **kwargs) -> PackageListing:
+    def get_object(self, queryset=None) -> PackageListing:
         if not self.object:
             listing = get_package_listing_or_404(
                 namespace=self.kwargs["owner"],
@@ -77,7 +77,7 @@ class PackageWikiPageBaseView(PackageWikiBaseView):
         return self.page
 
     def get(self, *args, **kwargs) -> HttpResponse:
-        page = self.get_page(self.get_wiki(self.get_object(*args, **kwargs).package))
+        page = self.get_page(self.get_wiki(self.get_object().package))
         if page and self.kwargs.get("pslug", "") != page.slug:
             self.kwargs["pslug"] = page.slug
             return redirect(
@@ -144,6 +144,8 @@ class PackageWikiHomeView(PackageWikiBaseView):
 
 
 class PackageWikiPageDetailView(PackageWikiPageBaseView):
+    not_found_template_name = "repository/package_wiki_404.html"
+
     def get_edit_url(self) -> str:
         return reverse_lazy(
             **get_community_url_reverse_args(
@@ -157,3 +159,15 @@ class PackageWikiPageDetailView(PackageWikiPageBaseView):
         context = super().get_context_data(*args, **kwargs)
         context["edit_url"] = self.get_edit_url()
         return context
+
+    def get(self, request, *args, **kwargs):
+        page = self.get_page(self.get_wiki(self.get_object().package))
+        if not page:
+            return HttpResponseNotFound(
+                render(
+                    request,
+                    self.not_found_template_name,
+                    self.get_context_data(self.get_object()),
+                )
+            )
+        return super().get(request, *args, **kwargs)
