@@ -70,6 +70,7 @@ class PackageUploadForm(forms.ModelForm):
         # TODO: Query only teams where the user has upload permission
         self.fields["team"].queryset = Team.objects.filter(
             members__user=self.user,
+            is_active=True,
         )
         # TODO: Move this to the frontent code somehow
         self.fields["team"].widget.attrs["class"] = "slimselect-lg"

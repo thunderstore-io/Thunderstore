@@ -13,7 +13,7 @@ class CreateServiceAccountForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields["team"] = forms.ModelChoiceField(
-            queryset=Team.objects.filter(members__user=user),
+            queryset=Team.objects.filter(members__user=user, is_active=True),
         )
 
     def clean_team(self) -> Team:

@@ -37,13 +37,15 @@ class SettingsTeamListView(RequireAuthenticationMixin, TemplateView):
         context = super().get_context_data(*args, **kwargs)
         context["page_title"] = "Teams"
         context["team_memberships"] = TeamMember.objects.filter(
-            user=self.request.user
+            user=self.request.user,
+            team__is_active=True,
         ).select_related("team")
         return context
 
 
 class TeamDetailView(DetailView):
     model = Team
+    queryset = Team.objects.filter(is_active=True)
     slug_field = "name"
     slug_url_kwarg = "name"
     context_object_name = "team"
@@ -89,7 +91,8 @@ class SettingsTeamDetailView(TeamDetailView, UserFormKwargs, FormView):
         kwargs = super().get_form_kwargs()
         if "demote" in self.request.POST or "promote" in self.request.POST:
             instance = TeamMember.objects.filter(
-                pk=self.request.POST.get("membership")
+                pk=self.request.POST.get("membership"),
+                team__is_active=True,
             ).first()
             if "membership" not in self.request.POST:
                 raise SuspiciousOperation("Invalid action; membership not found")

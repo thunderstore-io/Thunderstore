@@ -131,7 +131,7 @@ class PackageUploadAuthorNameField(serializers.SlugRelatedField):
 
     def get_queryset(self):
         return Team.objects.exclude(
-            ~Q(members__user=self.context["request"].user),
+            ~Q(members__user=self.context["request"].user) | Q(is_active=False)
         )
 
 
