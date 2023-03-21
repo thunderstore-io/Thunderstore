@@ -1,11 +1,12 @@
 from typing import Optional
 
 from django.db import models
-from django.db.models import Q, signals
+from django.db.models import Manager, Q, TextChoices, signals
 
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.community.models import Community
+from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.utils import ChoiceEnum
 
 
@@ -82,6 +83,53 @@ class DynamicHTML(models.Model):
             community_filter = Q(require_communities=None)
         full_query = Q(Q(is_active=True) & Q(placement=placement) & community_filter)
         return cls.objects.filter(full_query).order_by("-ordering", "-pk")
+
+
+class LinkTargetChoices(TextChoices):
+    Blank = "_blank"
+    Parent = "_parent"
+    Self = "_self"
+    Top = "_top"
+
+
+class NavLinkMixin(TimestampMixin):
+    title = models.TextField()
+    href = models.TextField()
+    css_class = models.TextField(blank=True, null=True)
+    target = models.TextField(
+        choices=LinkTargetChoices.choices,
+        default=LinkTargetChoices.Self,
+    )
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        abstract = True
+
+
+class NavLink(NavLinkMixin):
+    objects: Manager["NavLink"]
+
+    class Meta:
+        ordering = ("order", "title")
+        indexes = [models.Index(fields=["is_active", "order", "title"])]
+
+
+class CommunityNavLink(NavLinkMixin):
+    objects: Manager["CommunityNavLink"]
+
+    community = models.ForeignKey(
+        "community.Community",
+        related_name="nav_links",
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        ordering = ("order", "title")
+        indexes = [models.Index(fields=["community", "is_active", "order", "title"])]
 
 
 signals.post_save.connect(DynamicHTML.post_save, sender=DynamicHTML)
