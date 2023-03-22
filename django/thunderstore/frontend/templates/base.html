@@ -85,6 +85,11 @@
                         </div>
                     </div>
                 </li>
+                {% for link in global_nav_links %}
+                <li class="nav-item">
+                    <a href="{{ link.href }}" class="nav-link {{ link.css_class }}" target="{{ link.target }}" rel="noopener">{{ link.title }}</a>
+                </li>
+                {% endfor %}
             </ul>
             <ul class="navbar-nav ml-auto">
                 {% if request.user.is_authenticated %}
@@ -134,6 +139,11 @@
                         <a class="nav-link" href="{{ site_discord_url }}"><span class="fab fa-discord"></span> &nbsp;Join community Discord</a>
                     </li>
                 {% endif %}
+                {% for link in community_nav_links %}
+                    <li class="nav-item">
+                        <a href="{{ link.href }}" class="nav-link {{ link.css_class }}" target="{{ link.target }}" rel="noopener">{{ link.title }}</a>
+                    </li>
+                {% endfor %}
             </ul>
         </nav>
 

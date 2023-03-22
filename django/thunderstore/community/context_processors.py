@@ -12,6 +12,7 @@ def get_community_context(community: Optional[Community]):
         result = {
             "community": community,
             "community_identifier": community.identifier,
+            "community_nav_links": community.nav_links.filter(is_active=True),
             "site_name": settings.SITE_NAME,
             "site_slogan": community.slogan or "",
             "site_description": community.description or "",
@@ -42,6 +43,7 @@ def get_community_context(community: Optional[Community]):
         return {
             "community": None,
             "community_identifier": None,
+            "community_nav_links": [],
             "site_name": settings.SITE_NAME,
             "site_slogan": settings.SITE_SLOGAN,
             "site_description": settings.SITE_DESCRIPTION,
