@@ -10,8 +10,7 @@ from jwt import (
 )
 from jwt import decode as jwt_decode
 
-from thunderstore.cache.cache import cache_function_result
-from thunderstore.cache.enums import CacheBustCondition
+from overwolf_auth.compat import CacheBustCondition, cache_function_result
 
 CACHE_KEY = "overwolf-oauth-jwks"
 JWKS_URL = "https://accounts.overwolf.com/oauth2/jwks.json"
