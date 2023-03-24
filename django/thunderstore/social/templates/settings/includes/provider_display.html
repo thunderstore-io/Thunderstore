@@ -1,0 +1,11 @@
+{% load static %}
+
+{% spaceless %}
+    {% if provider == "overwolf" %}
+        <img src="{% static 'overwolf-logo.svg' %}" alt="" class="mr-3"
+             width="21" height="21" style="vertical-align: -1px;" />
+    {% else %}
+        <span class="fab fa-{{ provider }} mr-3"></span>
+    {% endif %}
+    <span class="text-capitalize">{{ provider }}</span>
+{% endspaceless %}
