@@ -48,6 +48,8 @@ env = environ.Env(
     SOCIAL_AUTH_DISCORD_SECRET=(str, ""),
     SOCIAL_AUTH_GITHUB_KEY=(str, ""),
     SOCIAL_AUTH_GITHUB_SECRET=(str, ""),
+    SOCIAL_AUTH_OVERWOLF_KEY=(str, ""),
+    SOCIAL_AUTH_OVERWOLF_SECRET=(str, ""),
     AWS_ACCESS_KEY_ID=(str, ""),
     AWS_SECRET_ACCESS_KEY=(str, ""),
     AWS_S3_REGION_NAME=(str, ""),
@@ -705,6 +707,7 @@ SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ["username", "first_name", "email"]
 AUTHENTICATION_BACKENDS = (
     "social_core.backends.github.GithubOAuth2",
     "social_core.backends.discord.DiscordOAuth2",
+    "overwolf_auth.backends.OverwolfOAuth2",
     "django.contrib.auth.backends.ModelBackend",
 )
 
@@ -721,6 +724,12 @@ SOCIAL_AUTH_DISCORD_SECRET = env.str("SOCIAL_AUTH_DISCORD_SECRET")
 SOCIAL_AUTH_DISCORD_SCOPE = ["email"]
 SOCIAL_AUTH_DISCORD_PROFILE_EXTRA_PARAMS = {"fields": "email"}
 SOCIAL_AUTH_DISCORD_GET_ALL_EXTRA_DATA = True
+
+# Social auth - Overwolf
+SOCIAL_AUTH_OVERWOLF_KEY = env.str("SOCIAL_AUTH_OVERWOLF_KEY")
+SOCIAL_AUTH_OVERWOLF_SECRET = env.str("SOCIAL_AUTH_OVERWOLF_SECRET")
+SOCIAL_AUTH_OVERWOLF_SCOPE = ["openid", "profile", "email"]  # "openid" is required
+SOCIAL_AUTH_OVERWOLF_GET_ALL_EXTRA_DATA = True
 
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",
