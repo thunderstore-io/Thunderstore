@@ -10,9 +10,11 @@ from thunderstore.repository.factories import PackageFactory
 from thunderstore.repository.models import (
     Namespace,
     Package,
+    PackageWiki,
     TeamMember,
     TeamMemberRole,
 )
+from thunderstore.wiki.factories import WikiPageFactory
 
 
 @pytest.mark.django_db
@@ -140,3 +142,29 @@ def test_package_ensure_user_can_manage_wiki(
     else:
         assert package.can_user_manage_wiki(user) is True
         assert package.ensure_user_can_manage_wiki(user) is None
+
+
+@pytest.mark.django_db
+def test_package_has_wiki_no_wiki(package: Package) -> None:
+    assert package.has_wiki is False
+
+
+@pytest.mark.django_db
+def test_package_has_wiki_no_pages(
+    package: Package,
+    package_wiki: PackageWiki,
+) -> None:
+    assert package_wiki.package == package
+    assert package_wiki.wiki.pages.exists() is False
+    assert package.has_wiki is False
+
+
+@pytest.mark.django_db
+def test_package_has_wiki_yes(
+    package: Package,
+    package_wiki: PackageWiki,
+) -> None:
+    assert package_wiki.package == package
+    WikiPageFactory(wiki=package_wiki.wiki)
+    assert package_wiki.wiki.pages.exists() is True
+    assert package.has_wiki is True

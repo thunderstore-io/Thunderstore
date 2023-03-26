@@ -502,15 +502,9 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
             ],
             "packageListingId": package_listing.pk,
         }
-        wiki_disabled = (
-            PackageWiki.get_for_package(
-                package_listing.package, create=False, dummy=False
-            )
-            is None
-        )
         disabled_tabs = (
             {"wiki"}
-            if wiki_disabled
+            if not package_listing.package.has_wiki
             and not package_listing.package.can_user_manage_wiki(self.request.user)
             else set()
         )
