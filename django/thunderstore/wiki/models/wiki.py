@@ -19,6 +19,10 @@ class TitleMixin(models.Model):
         self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
+    @property
+    def full_slug(self) -> str:
+        return f"{self.pk}-{self.slug}"
+
 
 class Wiki(TimestampMixin, TitleMixin):
     objects: Manager["Wiki"]

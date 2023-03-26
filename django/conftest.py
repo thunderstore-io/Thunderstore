@@ -340,6 +340,21 @@ def package_wiki(wiki: Wiki, package: Package) -> PackageWiki:
 
 
 @pytest.fixture()
+def active_package_wiki(wiki: Wiki, active_package: Package) -> PackageWiki:
+    return PackageWikiFactory(wiki=wiki, package=active_package)
+
+
+@pytest.fixture()
+def package_wiki_page(package_wiki: PackageWiki) -> WikiPage:
+    return WikiPageFactory(wiki=package_wiki.wiki)
+
+
+@pytest.fixture()
+def active_package_wiki_page(active_package_wiki: PackageWiki) -> WikiPage:
+    return WikiPageFactory(wiki=active_package_wiki.wiki)
+
+
+@pytest.fixture()
 def celery_app():
     from celery import Celery, _state
 

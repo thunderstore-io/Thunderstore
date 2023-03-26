@@ -17,4 +17,4 @@ def test_api_experimental_wiki_page(
     result = response.json()
     assert result["markdown_content"] == wiki_page.markdown_content
     assert result["title"] == wiki_page.title
-    assert result["slug"] == f"{wiki_page.pk}-{wiki_page.slug}"
+    assert result["slug"] == f"{wiki_page.full_slug}"

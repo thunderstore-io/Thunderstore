@@ -9,12 +9,9 @@ class WikiPageBaseSerializer(serializers.Serializer):
     title = serializers.CharField(
         max_length=WikiPage._meta.get_field("title").max_length,
     )
-    slug = serializers.SerializerMethodField()
+    slug = serializers.CharField(source="full_slug")
     datetime_created = serializers.DateTimeField()
     datetime_updated = serializers.DateTimeField()
-
-    def get_slug(self, instance) -> str:
-        return f"{instance.pk}-{instance.slug}"
 
 
 class WikiPageSerializer(WikiPageBaseSerializer):
@@ -44,8 +41,5 @@ class WikiPageIndexSerializer(WikiPageBaseSerializer):
 class WikiSerializer(serializers.Serializer):
     id = serializers.CharField(source="pk")
     title = serializers.CharField()
-    slug = serializers.SerializerMethodField()
+    slug = serializers.CharField(source="full_slug")
     pages = WikiPageIndexSerializer(many=True)
-
-    def get_slug(self, instance) -> str:
-        return f"{instance.pk}-{instance.slug}"

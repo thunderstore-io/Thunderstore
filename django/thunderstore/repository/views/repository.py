@@ -502,14 +502,8 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
             ],
             "packageListingId": package_listing.pk,
         }
-        disabled_tabs = (
-            {"wiki"}
-            if not package_listing.package.has_wiki
-            and not package_listing.package.can_user_manage_wiki(self.request.user)
-            else set()
-        )
         context.update(
-            **self.get_tab_context(package_listing, "details", disabled_tabs)
+            **self.get_tab_context(self.request.user, package_listing, "details")
         )
         return context
 

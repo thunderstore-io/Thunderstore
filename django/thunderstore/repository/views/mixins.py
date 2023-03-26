@@ -1,7 +1,8 @@
 import dataclasses
-from typing import Dict, List, Literal, Set, TypedDict, Union
+from typing import Dict, List, Literal, TypedDict, Union
 
 from thunderstore.community.models import PackageListing
+from thunderstore.core.types import UserType
 
 TabName = Union[Literal["details"], Literal["wiki"]]
 
@@ -10,6 +11,7 @@ TabName = Union[Literal["details"], Literal["wiki"]]
 class PartialTab:
     url: str
     title: str
+    is_disabled: bool = False
 
 
 @dataclasses.dataclass
@@ -28,13 +30,20 @@ class TabContext(TypedDict):
 class PackageTabsMixin:
     def get_tab_context(
         self,
+        user: UserType,
         listing: PackageListing,
         active_tab: TabName,
-        disabled_tabs: Set[TabName],
     ) -> TabContext:
         tabs: Dict[TabName, PartialTab] = {
             "details": PartialTab(url=listing.get_absolute_url(), title="Details"),
-            "wiki": PartialTab(url=listing.get_wiki_url(), title="Wiki"),
+            "wiki": PartialTab(
+                url=listing.get_wiki_url(),
+                title="Wiki",
+                is_disabled=(
+                    not listing.package.has_wiki
+                    and not listing.package.can_user_manage_wiki(user)
+                ),
+            ),
         }
         return {
             "tabs": [
@@ -42,7 +51,7 @@ class PackageTabsMixin:
                     title=v.title,
                     name=k,
                     url=v.url,
-                    is_disabled=k in disabled_tabs,
+                    is_disabled=v.is_disabled and k != active_tab,
                     is_active=k == active_tab,
                 )
                 for k, v in tabs.items()

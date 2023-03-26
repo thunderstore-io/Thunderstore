@@ -38,7 +38,7 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
             )
             if not listing.can_be_viewed_by_user(self.request.user):
                 raise Http404("Package is waiting for approval or has been rejected")
-            return listing
+            self.object = listing
         return self.object
 
     def get_create_url(self) -> str:
@@ -61,7 +61,9 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
             self.request.user
         )
         context["create_url"] = self.get_create_url()
-        context.update(**self.get_tab_context(package_listing, "wiki", set()))
+        context.update(
+            **self.get_tab_context(self.request.user, package_listing, "wiki")
+        )
         return context
 
 
@@ -172,7 +174,7 @@ class PackageWikiPageDetailView(PackageWikiPageBaseView):
                 render(
                     request,
                     self.not_found_template_name,
-                    self.get_context_data(self.get_object()),
+                    self.get_context_data(object=self.get_object()),
                 )
             )
         return super().get(request, *args, **kwargs)

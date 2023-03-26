@@ -43,12 +43,12 @@ def test_api_experimental_package_wiki_get_success(
     expected = {
         "id": str(package_wiki.wiki.pk),
         "title": package_wiki.wiki.title,
-        "slug": f"{package_wiki.wiki.pk}-{package_wiki.wiki.slug}",
+        "slug": package_wiki.wiki.full_slug,
         "pages": [
             {
                 "id": str(p.pk),
                 "title": p.title,
-                "slug": f"{p.pk}-{p.slug}",
+                "slug": p.full_slug,
                 "datetime_created": p.datetime_created.isoformat().replace(
                     "+00:00", "Z"
                 ),
