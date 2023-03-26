@@ -3,12 +3,14 @@ from factory.django import DjangoModelFactory
 
 from thunderstore.core.factories import UserFactory
 
+from ..wiki.factories import WikiFactory
 from .models import (
     Namespace,
     Package,
     PackageRating,
     PackageVersion,
     PackageVersionDownloadEvent,
+    PackageWiki,
     Team,
     TeamMember,
 )
@@ -72,3 +74,11 @@ class PackageVersionDownloadEventFactory(DjangoModelFactory):
         model = PackageVersionDownloadEvent
 
     version = factory.SubFactory(PackageVersionFactory)
+
+
+class PackageWikiFactory(DjangoModelFactory):
+    class Meta:
+        model = PackageWiki
+
+    package = factory.SubFactory(PackageFactory)
+    wiki = factory.SubFactory(WikiFactory)

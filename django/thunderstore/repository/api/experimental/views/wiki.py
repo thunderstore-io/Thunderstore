@@ -1,7 +1,8 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 from rest_framework.response import Response
 
@@ -32,7 +33,7 @@ class PackageWikiApiView(RetrieveAPIView):
                 namespace=self.kwargs["namespace"],
                 name=self.kwargs["name"],
             )
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             raise ValidationError(str(e))
         obj = get_object_or_404(
             Package.objects.active(), **reference.get_filter_kwargs()
@@ -43,7 +44,7 @@ class PackageWikiApiView(RetrieveAPIView):
     def filter_queryset(self, queryset: QuerySet[Wiki]) -> QuerySet[Wiki]:
         return queryset.filter(
             package_wiki__package__name=self.kwargs["name"],
-            package_wiki__package__namespace=self.kwargs["namespace"],
+            package_wiki__package__owner__name=self.kwargs["namespace"],
         )
 
     @swagger_auto_schema(
@@ -56,6 +57,14 @@ class PackageWikiApiView(RetrieveAPIView):
     )
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
+
+    def get_wiki_for_write(self, request) -> Wiki:
+        package = self.get_package()
+        try:
+            package.ensure_user_can_manage_wiki(request.user)
+        except ValidationError:
+            raise PermissionDenied()
+        return PackageWiki.get_for_package(package, create=True).wiki
 
     @swagger_auto_schema(
         request_body=WikiPageUpsertSerializer,
@@ -71,11 +80,9 @@ class PackageWikiApiView(RetrieveAPIView):
     )
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        package = self.get_package()
-        package.ensure_user_can_manage_wiki(request.user)
         request_serializer = WikiPageUpsertSerializer(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        wiki = PackageWiki.get_for_package(package, create=True).wiki
+        wiki = self.get_wiki_for_write(request)
         page_data = request_serializer.validated_data
         if "id" in page_data:
             page = get_object_or_404(wiki.pages.all(), pk=page_data["id"])
@@ -98,11 +105,9 @@ class PackageWikiApiView(RetrieveAPIView):
         tags=["wiki"],
     )
     def delete(self, request, *args, **kwargs):
-        package = self.get_package()
-        package.ensure_user_can_manage_wiki(request.user)
         request_serializer = WikiPageDeleteSerializer(data=request.data)
         request_serializer.is_valid(raise_exception=True)
-        wiki = PackageWiki.get_for_package(package, create=True).wiki
+        wiki = self.get_wiki_for_write(request)
         page_data = request_serializer.validated_data
         page = get_object_or_404(wiki.pages.all(), pk=page_data["id"])
         page.delete()

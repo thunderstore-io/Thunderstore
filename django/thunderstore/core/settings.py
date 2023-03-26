@@ -511,12 +511,12 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
     ),
 )
 
-if DEBUG and not DEBUG_SIMULATED_LAG:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-        }
-    }
+# if DEBUG and not DEBUG_SIMULATED_LAG:
+#     CACHES = {
+#         "default": {
+#             "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+#         }
+#     }
 
 LOGGING = {
     "version": 1,

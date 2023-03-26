@@ -8,7 +8,7 @@ from thunderstore.repository.models import Package
 from thunderstore.wiki.models import Wiki
 
 
-def create_wiki_for_package(package: Package, save: bool = False):
+def create_wiki_for_package(package: Package, save: bool = False) -> Wiki:
     result = Wiki(
         title=f"{package.namespace.name}/{package.name} Wiki",
     )
