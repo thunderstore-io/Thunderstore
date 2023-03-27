@@ -1,11 +1,11 @@
 import re
 import uuid
 from distutils.version import StrictVersion
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Case, Q, Sum, When, signals
 from django.urls import reverse
@@ -18,6 +18,9 @@ from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
+
+if TYPE_CHECKING:
+    from thunderstore.repository.models import PackageWiki
 
 
 class PackageQueryset(models.QuerySet):
@@ -40,6 +43,8 @@ def get_package_dependants_list(package_pk: int):
 
 class Package(models.Model):
     objects = PackageQueryset.as_manager()
+    wiki: Optional["PackageWiki"]
+
     owner = models.ForeignKey(
         "repository.Team",
         on_delete=models.PROTECT,
@@ -120,6 +125,13 @@ class Package(models.Model):
         if categories:
             listing.categories.set(categories)
         listing.save(update_fields=("has_nsfw_content",))
+
+    @cached_property
+    def has_wiki(self) -> bool:
+        try:
+            return self.wiki.wiki.pages.exists()
+        except ObjectDoesNotExist:
+            return False
 
     @cached_property
     def full_package_name(self):
@@ -278,6 +290,12 @@ class Package(models.Model):
 
     def can_user_manage_deprecation(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_deprecation(user))
+
+    def ensure_user_can_manage_wiki(self, user: Optional[UserType]) -> None:
+        return self.owner.ensure_user_can_manage_packages(user)
+
+    def can_user_manage_wiki(self, user: Optional[UserType]) -> bool:
+        return self.owner.can_user_manage_packages(user)
 
     def __str__(self):
         return self.full_package_name

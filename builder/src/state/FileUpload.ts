@@ -61,13 +61,16 @@ export class FileUpload {
     }
 
     @action
-    private logApiError(error: Error | ThunderstoreApiError) {
+    private logApiError(error: unknown | Error | ThunderstoreApiError) {
         if (error instanceof ThunderstoreApiError) {
             const flattened = stringifyError(error.errorObject);
             this.logErrors(...flattened);
-        } else {
+        } else if (error instanceof Error) {
             this.logErrors(error.message || "Unknown error");
             console.error(error, error.stack);
+        } else {
+            this.logErrors(`${error}` || "Unknown error");
+            console.error(error);
         }
     }
 
@@ -202,7 +205,7 @@ export class FileUpload {
                     request.abort();
                 } catch (e) {
                     Sentry.captureException(e);
-                    console.error(e, e.stack);
+                    console.error(e);
                 }
             }
             this._ongoingRequests = null;
@@ -214,7 +217,7 @@ export class FileUpload {
                 });
             } catch (e) {
                 Sentry.captureException(e);
-                console.error(e, e.stack);
+                console.error(e);
             }
         }
     }

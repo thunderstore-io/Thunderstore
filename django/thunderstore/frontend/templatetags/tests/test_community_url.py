@@ -4,6 +4,7 @@ from django.urls import URLPattern, reverse
 
 from thunderstore.community.factories import CommunitySiteFactory
 from thunderstore.community.models import Community
+from thunderstore.frontend.tests.utils import get_url_kwarg
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.urls import package_urls
 
@@ -19,7 +20,7 @@ def test_tag_community_url_valid(
     if with_site:
         CommunitySiteFactory(community=community)
 
-    kwargs = {k: "test" for k in url_pattern.pattern.regex.groupindex.keys()}
+    kwargs = {k: get_url_kwarg(k) for k in url_pattern.pattern.regex.groupindex.keys()}
     args = " ".join([f"{k}='{v}'" for k, v in kwargs.items()])
     template = (
         f"{{% load community_url %}}{{% community_url '{url_pattern.name}' {args} %}}"

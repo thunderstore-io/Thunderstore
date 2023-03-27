@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from thunderstore.repository.api.v1.urls import urls as v1_urls
 from thunderstore.repository.views import (
@@ -23,6 +23,11 @@ from thunderstore.repository.views.team_settings import (
     SettingsTeamListView,
     SettingsTeamServiceAccountView,
 )
+from thunderstore.repository.views.wiki import (
+    PackageWikiHomeView,
+    PackageWikiPageDetailView,
+    PackageWikiPageEditView,
+)
 
 legacy_package_urls = [
     path("", PackageListView.as_view(), name="packages.list"),
@@ -42,6 +47,28 @@ legacy_package_urls = [
         "<str:owner>/<str:name>/",
         PackageDetailView.as_view(),
         name="packages.detail",
+    ),
+    path(
+        "<str:owner>/<str:name>/wiki/",
+        PackageWikiHomeView.as_view(),
+        name="packages.detail.wiki",
+    ),
+    path(
+        "<str:owner>/<str:name>/wiki/new/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.new",
+    ),
+    re_path(
+        # Regex pattern is used to resolve any variation of slug usage after
+        # page ID, even if the slug is completely incorrect.
+        r"(?P<owner>[\w_-]+)/(?P<name>[\w_]+)/wiki/(?P<page>[0-9]+)(?:-(?P<pslug>[\w-]*))?/$",
+        PackageWikiPageDetailView.as_view(),
+        name="packages.detail.wiki.page.detail",
+    ),
+    path(
+        "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.edit",
     ),
     path(
         "<str:owner>/<str:name>/dependants/",
@@ -70,6 +97,28 @@ package_urls = [
         "p/<str:owner>/<str:name>/",
         PackageDetailView.as_view(),
         name="packages.detail",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/wiki/",
+        PackageWikiHomeView.as_view(),
+        name="packages.detail.wiki",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/wiki/new/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.new",
+    ),
+    re_path(
+        # Regex pattern is used to resolve any variation of slug usage after
+        # page ID, even if the slug is completely incorrect.
+        r"p/(?P<owner>[\w_-]+)/(?P<name>[\w_]+)/wiki/(?P<page>[0-9]+)(?:-(?P<pslug>[\w-]*))?/$",
+        PackageWikiPageDetailView.as_view(),
+        name="packages.detail.wiki.page.detail",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
+        PackageWikiPageEditView.as_view(),
+        name="packages.detail.wiki.page.edit",
     ),
     path(
         "p/<str:owner>/<str:name>/dependants/",

@@ -31,7 +31,7 @@ window.ts.PackageManagementPanel(
 );
 </script>
 {% endif %}
-{% cache_until "any_package_updated" "mod-detail" 300 object.package.pk community_identifier %}
+{% cache_until "any_package_updated" "mod-detail-header" 300 object.package.pk community_identifier %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -80,6 +80,9 @@ window.ts.PackageManagementPanel(
 {% endif %}
 
 <div class="card bg-light mt-2">
+    {% endcache %}
+    {% include "community/includes/package_tabs.html" with tabs=tabs %}
+    {% cache_until "any_package_updated" "mod-detail-content" 300 object.package.pk community_identifier %}
     <div class="card-header">
         <div class="media">
             <img class="align-self-center mr-3" src="{% thumbnail object.package.icon 128x128 %}" alt="{{ object.package }} icon">

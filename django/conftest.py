@@ -33,12 +33,14 @@ from thunderstore.repository.factories import (
     NamespaceFactory,
     PackageFactory,
     PackageVersionFactory,
+    PackageWikiFactory,
     TeamFactory,
     TeamMemberFactory,
 )
 from thunderstore.repository.models import (
     Package,
     PackageVersion,
+    PackageWiki,
     Team,
     TeamMember,
     TeamMemberRole,
@@ -47,6 +49,8 @@ from thunderstore.repository.models import (
 from thunderstore.repository.models.namespace import Namespace
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
+from thunderstore.wiki.factories import WikiFactory, WikiPageFactory
+from thunderstore.wiki.models import Wiki, WikiPage
 
 
 class HTTPServer(SuperHTTPServer):
@@ -318,6 +322,36 @@ def autoclear_cache(settings, worker_id) -> None:
 @pytest.fixture()
 def community_site(community, site):
     return CommunitySite.objects.create(site=site, community=community)
+
+
+@pytest.fixture()
+def wiki() -> Wiki:
+    return WikiFactory()
+
+
+@pytest.fixture()
+def wiki_page(wiki: Wiki) -> WikiPage:
+    return WikiPageFactory(wiki=wiki)
+
+
+@pytest.fixture()
+def package_wiki(wiki: Wiki, package: Package) -> PackageWiki:
+    return PackageWikiFactory(wiki=wiki, package=package)
+
+
+@pytest.fixture()
+def active_package_wiki(wiki: Wiki, active_package: Package) -> PackageWiki:
+    return PackageWikiFactory(wiki=wiki, package=active_package)
+
+
+@pytest.fixture()
+def package_wiki_page(package_wiki: PackageWiki) -> WikiPage:
+    return WikiPageFactory(wiki=package_wiki.wiki)
+
+
+@pytest.fixture()
+def active_package_wiki_page(active_package_wiki: PackageWiki) -> WikiPage:
+    return WikiPageFactory(wiki=active_package_wiki.wiki)
 
 
 @pytest.fixture()

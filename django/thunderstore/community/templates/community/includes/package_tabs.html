@@ -1,0 +1,15 @@
+<ul class="nav nav-tabs nav-secondary px-2 pt-2" role="tablist">
+    {% for tab in tabs %}
+    <li class="nav-item" role="presentation">
+        <a
+            class="nav-link {% if tab.is_disabled %}disabled text-muted{% else %}clickable{% endif %} {% if tab.is_active %}active{% endif %}"
+            style="user-select: none;"
+            {% if tab.is_active %}aria-selected=true{% endif %}
+            role="tab"
+            {% if not tab.is_disabled %}href="{{ tab.url }}"{% endif %}
+        >
+            {{ tab.title }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
