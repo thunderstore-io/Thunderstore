@@ -2,6 +2,27 @@
 {% load markdownify %}
 {% load community_url %}
 
+{% block opengraph %}
+    <meta property="og:title" content="{% if page.title %}{{ page.title }}{% else %}{{ wiki.wiki.title }}{% endif %}" />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:image" content="{{ site_icon }}" />
+    <meta property="og:image:width" content="{{ site_icon_width }}" />
+    <meta property="og:image:height" content="{{ site_icon_height }}" />
+
+    <meta property="og:description" content="{{ wiki.wiki.title }}" />
+    <meta property="og:site_name" content="{{ site_name }}" />
+
+    {% if page %}
+    <meta property="og:type" content="article" />
+    <meta property="article:modified_time" content="{{ page.datetime_updated|date:"c" }}" />
+    <meta property="article:published_time" content="{{ page.datetime_created|date:"c" }}" />
+    <meta property="article:author" content="{{ object.package.owner.name }}" />
+    <meta property="article:section" content="{{ wiki.wiki.title }}" />
+    {% else %}
+    <meta property="og:type" content="website" />
+    {% endif %}
+{% endblock %}
+
 {% block title %}{% if page.title %}{{ page.title }} | {% endif %}{{ wiki.wiki.title }}{% endblock %}
 
 {% block main_content_left %}{% endblock %}
