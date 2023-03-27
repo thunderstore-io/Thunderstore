@@ -42,4 +42,6 @@ class WikiSerializer(serializers.Serializer):
     id = serializers.CharField(source="pk")
     title = serializers.CharField()
     slug = serializers.CharField(source="full_slug")
+    datetime_created = serializers.DateTimeField()
+    datetime_updated = serializers.DateTimeField()
     pages = WikiPageIndexSerializer(many=True)

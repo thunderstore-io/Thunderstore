@@ -1,10 +1,13 @@
 import json
+from typing import Optional
+from unittest.mock import patch
 
 import pytest
 from rest_framework.test import APIClient
 
 from thunderstore.core.factories import UserFactory
-from thunderstore.repository.factories import TeamMemberFactory
+from thunderstore.repository.api.experimental.views.wiki import PackageWikiListAPIView
+from thunderstore.repository.factories import PackageWikiFactory, TeamMemberFactory
 from thunderstore.repository.models import (
     Package,
     PackageVersion,
@@ -44,6 +47,12 @@ def test_api_experimental_package_wiki_get_success(
         "id": str(package_wiki.wiki.pk),
         "title": package_wiki.wiki.title,
         "slug": package_wiki.wiki.full_slug,
+        "datetime_created": package_wiki.wiki.datetime_created.isoformat().replace(
+            "+00:00", "Z"
+        ),
+        "datetime_updated": package_wiki.wiki.datetime_updated.isoformat().replace(
+            "+00:00", "Z"
+        ),
         "pages": [
             {
                 "id": str(p.pk),
@@ -209,3 +218,63 @@ def test_api_experimental_package_wiki_page_delete(
     result = response.json()
     assert result == {"success": True}
     assert WikiPage.objects.filter(pk=page.pk).first() is None
+
+
+@pytest.mark.django_db
+def test_api_experimental_package_wiki_list(api_client: APIClient):
+    def get_response():
+        resp = api_client.get(
+            f"/api/experimental/package/wikis/",
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        return resp.json()
+
+    data = get_response()
+    assert data["has_more"] is False
+    assert data["results"] == []
+
+    wikis = [PackageWikiFactory() for _ in range(5)]
+
+    data = get_response()
+    assert data["has_more"] is False
+    assert len(data["results"]) == 5
+    assert data["results"][0]["wiki"]["id"] == str(wikis[0].wiki.pk)
+    assert data["results"][4]["wiki"]["id"] == str(wikis[4].wiki.pk)
+
+    # Test that the ordering updates when we add a page
+    WikiPageFactory(wiki=wikis[3].wiki)
+
+    data = get_response()
+    assert data["has_more"] is False
+    assert len(data["results"]) == 5
+    assert data["results"][0]["wiki"]["id"] == str(wikis[0].wiki.pk)
+    assert data["results"][4]["wiki"]["id"] == str(wikis[3].wiki.pk)
+    assert data["results"][3]["wiki"]["id"] == str(wikis[4].wiki.pk)
+
+
+@pytest.mark.django_db
+@patch.object(PackageWikiListAPIView, "page_size", 1)
+def test_api_experimental_package_wiki_list_pagination(api_client: APIClient):
+    wikis = [PackageWikiFactory() for _ in range(5)]
+
+    def get_response(cursor: Optional[str] = None):
+        resp = api_client.get(
+            f"/api/experimental/package/wikis/{f'?after={cursor}' if cursor else ''}",
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        return resp.json()
+
+    data = get_response()
+    assert data["has_more"] is True
+    assert len(data["results"]) == 1
+    assert data["results"][0]["wiki"]["id"] == str(wikis[0].wiki.pk)
+    assert data["cursor"] == data["results"][0]["wiki"]["datetime_updated"]
+
+    for i in range(4):
+        data = get_response(data["cursor"])
+        assert data["has_more"] is (i < 3)
+        assert len(data["results"]) == 1
+        assert data["results"][0]["wiki"]["id"] == str(wikis[i + 1].wiki.pk)
+        assert data["cursor"] == data["results"][0]["wiki"]["datetime_updated"]

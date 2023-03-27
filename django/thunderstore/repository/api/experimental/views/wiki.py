@@ -1,9 +1,14 @@
+from datetime import datetime
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import F, QuerySet
+from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.generics import GenericAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.response import Response
 
 from thunderstore.repository.models import Package, PackageWiki
@@ -112,3 +117,62 @@ class PackageWikiApiView(RetrieveAPIView):
         page = get_object_or_404(wiki.pages.all(), pk=page_data["id"])
         page.delete()
         return Response({"success": True})
+
+
+class PackageWikiSerializer(serializers.Serializer):
+    namespace = serializers.CharField()
+    name = serializers.CharField()
+    wiki = WikiSerializer()
+
+
+class PackageWikiListQueryParams(serializers.Serializer):
+    after = serializers.DateTimeField(required=False)
+
+
+class PackageWikiListResponse(serializers.Serializer):
+    results = PackageWikiSerializer(many=True)
+    cursor = serializers.DateTimeField()
+    has_more = serializers.BooleanField()
+
+
+class PackageWikiListAPIView(GenericAPIView):
+    queryset = (
+        PackageWiki.objects.all()
+        .annotate(namespace=F("package__owner__name"), name=F("package__name"))
+        .select_related("wiki")
+        .prefetch_related("wiki__pages")
+        .order_by("wiki__datetime_updated")
+    )
+    serializer_class = WikiSerializer
+    page_size = 100
+
+    @swagger_auto_schema(
+        query_serializer=PackageWikiListQueryParams(),
+        responses={200: PackageWikiListResponse()},
+        operation_id="experimental_package_wiki_list",
+        operation_summary="List package wikis",
+        operation_description=(
+            "Fetch a bulk of package wikis at once. Supports querying by "
+            "update time to accommodate local caching."
+        ),
+        tags=["wiki"],
+    )
+    def get(self, request, **kwargs):
+        params_serializer = PackageWikiListQueryParams(data=self.request.query_params)
+        params_serializer.is_valid(raise_exception=True)
+        after: Optional[datetime] = params_serializer.validated_data.get("after", None)
+        qs = self.get_queryset()
+        if after is not None:
+            qs = qs.exclude(wiki__datetime_updated__lte=after)
+        wikis = list(qs[: self.page_size + 1])
+        results = wikis[: self.page_size]
+        serializer = PackageWikiListResponse(
+            instance={
+                "results": results,
+                "cursor": results[-1].wiki.datetime_updated
+                if results
+                else timezone.now(),
+                "has_more": len(wikis) == self.page_size + 1,
+            }
+        )
+        return Response(serializer.data)

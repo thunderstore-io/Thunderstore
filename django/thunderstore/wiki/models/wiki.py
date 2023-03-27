@@ -33,6 +33,10 @@ class Wiki(TimestampMixin, TitleMixin):
         self.datetime_updated = timezone.now()
         self.save()
 
+    class Meta:
+        ordering = ("datetime_updated",)
+        indexes = [models.Index(fields=["datetime_updated"])]
+
 
 class WikiPage(TimestampMixin, TitleMixin):
     objects: Manager["WikiPage"]
