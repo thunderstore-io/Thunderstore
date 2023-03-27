@@ -24,12 +24,14 @@
             {% endcache %}
         </div>
         <div class="col-lg-3 col-sm-12 pt-4 mt-4 mt-lg-0 pt-lg-0 border-lg-left border-lg-top-0 border-top">
+            {% cache_until "manual_update_only" "wiki-page-index" 300 wiki.wiki.pk wiki.wiki.datetime_updated %}
             <h5>Pages</h5>
             <ul class="pl-4">
                 {% for page in wiki.wiki.pages.all %}
                     <li><a href="{% community_url "packages.detail.wiki.page.detail" owner=object.package.owner.name name=object.package.name page=page.pk pslug=page.slug%}">{{ page.title }}</a></li>
                 {% endfor %}
             </ul>
+            {% endcache %}
         </div>
     </div>
 {% endblock %}

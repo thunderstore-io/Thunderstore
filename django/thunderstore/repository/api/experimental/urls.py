@@ -14,7 +14,10 @@ from thunderstore.repository.api.experimental.views.validators import (
     ManifestV1ValidatorApiView,
     ReadmeValidatorApiView,
 )
-from thunderstore.repository.api.experimental.views.wiki import PackageWikiApiView
+from thunderstore.repository.api.experimental.views.wiki import (
+    PackageWikiApiView,
+    PackageWikiListAPIView,
+)
 from thunderstore.social.api.experimental.views import CurrentUserExperimentalApiView
 
 urls = [
@@ -22,6 +25,7 @@ urls = [
         "current-user/", CurrentUserExperimentalApiView.as_view(), name="current-user"
     ),
     path("package/", PackageListApiView.as_view(), name="package-list"),
+    path("package/wikis/", PackageWikiListAPIView.as_view(), name="package-wiki-list"),
     path(
         "package/<str:namespace>/<str:name>/",
         PackageDetailApiView.as_view(),
