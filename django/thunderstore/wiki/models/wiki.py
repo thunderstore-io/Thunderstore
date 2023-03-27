@@ -1,5 +1,6 @@
 from django.db import models, transaction
 from django.db.models import Manager
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -53,3 +54,7 @@ class WikiPage(TimestampMixin, TitleMixin):
         res = super().delete(*args, **kwargs)
         self.wiki.on_page_updated()
         return res
+
+    class Meta:
+        ordering = ("wiki", "slug")
+        indexes = [models.Index(fields=["wiki", "slug"])]
