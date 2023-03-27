@@ -20,7 +20,8 @@
     </div>
     <div class="card-body d-flex flex-column" style="min-height: 400px">
         {% if wiki and wiki.wiki.pages.all %}
-        <ul>
+        <h5>Pages</h5>
+        <ul class="pl-4">
             {% for page in wiki.wiki.pages.all %}
                 <li><a href="{% community_url "packages.detail.wiki.page.detail" owner=object.package.owner.name name=object.package.name page=page.pk pslug=page.slug%}">{{ page.title }}</a></li>
             {% endfor %}
