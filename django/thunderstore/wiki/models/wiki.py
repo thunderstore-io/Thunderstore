@@ -1,5 +1,6 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Manager
+from django.utils import timezone
 from django.utils.text import slugify
 
 from django_contracts.compat import TimestampMixin
@@ -27,6 +28,10 @@ class TitleMixin(models.Model):
 class Wiki(TimestampMixin, TitleMixin):
     objects: Manager["Wiki"]
 
+    def on_page_updated(self):
+        self.datetime_updated = timezone.now()
+        self.save()
+
 
 class WikiPage(TimestampMixin, TitleMixin):
     objects: Manager["WikiPage"]
@@ -37,3 +42,14 @@ class WikiPage(TimestampMixin, TitleMixin):
         on_delete=models.CASCADE,
     )
     markdown_content = models.TextField(blank=True, null=True)
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.wiki.on_page_updated()
+
+    @transaction.atomic
+    def delete(self, *args, **kwargs):
+        res = super().delete(*args, **kwargs)
+        self.wiki.on_page_updated()
+        return res
