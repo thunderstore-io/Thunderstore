@@ -1,6 +1,7 @@
 {% extends 'repository/_wiki_base.html' %}
 {% load arrow %}
 {% load markdownify %}
+{% load cache_until %}
 
 {% block wiki_content %}
     <div class="card-header d-flex justify-content-between gap-1 flex-wrap">
@@ -15,7 +16,9 @@
             {% endif %}
         </div>
     </div>
+    {% cache_until "manual_update_only" "wiki-page-markdown" 300 page.pk page.datetime_updated %}
     <div class="card-body markdown-body" style="min-height: 400px">
         {{ page.markdown_content|markdownify }}
     </div>
+    {% endcache %}
 {% endblock %}
