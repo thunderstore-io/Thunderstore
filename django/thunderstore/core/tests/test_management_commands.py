@@ -10,6 +10,7 @@ from thunderstore.community.models import Community, CommunitySite, PackageListi
 from thunderstore.core.management.commands.create_test_data import CONTENT_POPULATORS
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, PackageVersion, Team
+from thunderstore.wiki.models import WikiPage
 
 
 @pytest.mark.django_db
@@ -77,6 +78,7 @@ def test_create_test_data_clear() -> None:
 @pytest.mark.parametrize("dependency_count", (1, 2))
 @pytest.mark.parametrize("legal_contract_count", (2,))
 @pytest.mark.parametrize("legal_contract_version_count", (4,))
+@pytest.mark.parametrize("wiki_page_count", (4,))
 def test_create_test_data_create_data(
     community: Community,
     team_count: int,
@@ -86,6 +88,7 @@ def test_create_test_data_create_data(
     dependency_count: int,
     legal_contract_count: int,
     legal_contract_version_count: int,
+    wiki_page_count: int,
 ) -> None:
     assert settings.DEBUG is True
 
@@ -107,8 +110,12 @@ def test_create_test_data_create_data(
         created_contract_versions = LegalContractVersion.objects.filter(
             markdown_content__startswith="## Test Contract "
         )
+        created_wiki_pages = WikiPage.objects.filter(title__startswith="Test Page ")
         assert created_teams.count() == team_count
         assert created_packages.count() == team_count * package_count
+        assert (
+            created_wiki_pages.count() == package_count * team_count * wiki_page_count
+        )
         assert created_communities.count() == community_count
         assert created_community_sites.count() == community_count
         assert created_contracts.count() == legal_contract_count
@@ -150,6 +157,8 @@ def test_create_test_data_create_data(
         team_count,
         "--package-count",
         package_count,
+        "--wiki-page-count",
+        wiki_page_count,
         "--community-count",
         community_count,
         "--version-count",
