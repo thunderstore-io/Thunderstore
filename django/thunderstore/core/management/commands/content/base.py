@@ -1,3 +1,5 @@
+import functools
+import os
 from abc import ABC
 from dataclasses import dataclass, field
 from typing import Collection, List, Type
@@ -6,7 +8,7 @@ from django.db.models import Model
 
 from django_contracts.models import LegalContract
 from thunderstore.community.models import Community
-from thunderstore.repository.models import Package, Team
+from thunderstore.repository.models import Package, PackageWiki, Team
 
 
 @dataclass
@@ -15,6 +17,7 @@ class ContentPopulatorContext:
     packages: Collection[Package] = field(default_factory=list)
     communities: Collection[Community] = field(default_factory=list)
     contracts: Collection[LegalContract] = field(default_factory=list)
+    package_wikis: Collection[PackageWiki] = field(default_factory=list)
 
     community_count: int = 0
     dependency_count: int = 0
@@ -23,6 +26,7 @@ class ContentPopulatorContext:
     package_count: int = 0
     contract_count: int = 0
     contract_version_count: int = 0
+    wiki_page_count: int = 0
 
 
 class ContentPopulator(ABC):
@@ -54,6 +58,15 @@ class BaseContentPopulator(ContentPopulator):
         self, context: ContentPopulatorContext, objs: List[Model]
     ) -> None:
         pass
+
+
+@functools.lru_cache(maxsize=None)
+def dummy_markdown() -> str:
+    markdown_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "markdown.md"
+    )
+    with open(markdown_path, "r") as f:
+        return f.read()
 
 
 LOREM_IPSUM = """

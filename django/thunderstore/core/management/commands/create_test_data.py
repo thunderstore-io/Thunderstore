@@ -27,6 +27,12 @@ from thunderstore.core.management.commands.content.package_listing import (
 from thunderstore.core.management.commands.content.package_version import (
     PackageVersionPopulator,
 )
+from thunderstore.core.management.commands.content.package_wiki import (
+    PackageWikiPopulator,
+)
+from thunderstore.core.management.commands.content.package_wiki_pages import (
+    PackageWikiPagePopulator,
+)
 from thunderstore.core.management.commands.content.team import TeamPopulator
 
 # In generation order; clearing order is inverted
@@ -43,6 +49,8 @@ CONTENT_POPULATORS: Dict[str, Type[ContentPopulator]] = OrderedDict[
         ("listing", ListingPopulator),
         ("contract", LegalContractPopulator),
         ("contract_version", LegalContractVersionPopulator),
+        ("package_wiki", PackageWikiPopulator),
+        ("package_wiki_pages", PackageWikiPagePopulator),
     ]
 )
 
@@ -58,6 +66,7 @@ class Command(BaseCommand):
         parser.add_argument("--community-count", type=int, default=20)
         parser.add_argument("--team-count", type=int, default=10)
         parser.add_argument("--package-count", type=int, default=1)
+        parser.add_argument("--wiki-page-count", type=int, default=7)
         parser.add_argument("--version-count", type=int, default=3)
         parser.add_argument("--contract-count", type=int, default=3)
         parser.add_argument("--contract-version-count", type=int, default=8)
@@ -120,5 +129,6 @@ class Command(BaseCommand):
             community_count=kwargs.get("community_count", 0),
             contract_count=kwargs.get("contract_count", 0),
             contract_version_count=kwargs.get("contract_version_count", 0),
+            wiki_page_count=kwargs.get("wiki_page_count", 0),
         )
         self.populate(context)
