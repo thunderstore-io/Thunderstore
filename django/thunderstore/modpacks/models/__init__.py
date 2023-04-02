@@ -1,1 +1,1 @@
-from .legacyprofile import LegacyProfile
+from .legacyprofile import LegacyProfile, LegacyProfileMetaData
