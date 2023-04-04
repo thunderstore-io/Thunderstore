@@ -118,7 +118,7 @@ class PackageNameField(StrictCharField):
         super().__init__(**kwargs)
         validator = RegexValidator(
             PACKAGE_NAME_REGEX,
-            message=f"Package names can only contain a-Z A-Z 0-9 _ characers",
+            message=f"Package names can only contain a-z A-Z 0-9 _ characters",
         )
         self.validators.append(validator)
 

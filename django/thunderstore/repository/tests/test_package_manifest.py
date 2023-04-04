@@ -172,7 +172,7 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
     "name, error",
     [
         ["some_name", ""],
-        ["some-name", "Package names can only contain a-Z A-Z 0-9 _ characers"],
+        ["some-name", "Package names can only contain a-z A-Z 0-9 _ characters"],
         ["", "This field may not be blank."],
         ["a", ""],
         ["some_very_long_name", ""],
