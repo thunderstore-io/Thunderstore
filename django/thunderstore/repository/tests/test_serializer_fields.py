@@ -84,7 +84,7 @@ def test_fields_list_dependency_field():
     "value, exception_message",
     [
         ["some_name", ""],
-        ["some-name", "Package names can only contain a-Z A-Z 0-9 _ characers"],
+        ["some-name", "Package names can only contain a-z A-Z 0-9 _ characters"],
         ["", "This field may not be blank."],
         ["a", ""],
         ["some_very_long_name", ""],
