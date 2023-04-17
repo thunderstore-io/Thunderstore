@@ -9,12 +9,8 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from thunderstore.social.api.experimental.views import overwolf
-from thunderstore.social.permissions import (
-    ImproperlyConfigured,
-    OauthSharedSecretPermission,
-)
+from thunderstore.social.permissions import ImproperlyConfigured
 
-SECRET = "no_more_secrets"
 LOGIN_URL = reverse("api:experimental:auth.overwolf.login")
 
 
@@ -25,7 +21,6 @@ def do_login_request(client: APIClient, jwt: Optional[str]) -> Response:
         LOGIN_URL,
         payload,
         content_type="application/json",
-        HTTP_AUTHORIZATION=f"TS-Secret {SECRET}",
     )
 
 
@@ -36,22 +31,6 @@ def test_querying_ow_api__with_undefined_ow_id__raises_exception() -> None:
 
 
 @pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
-def test_login_request__without_authorization_header__is_rejected(
-    api_client: APIClient,
-) -> None:
-    """
-    Test that the endpoint requires the header - further testing auth
-    header would just duplicate the tests in test_complete_login.py.
-    """
-    response = api_client.post(LOGIN_URL, {}, content_type="application/json")
-
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect authentication credentials."
-
-
-@pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
 def test_login_request__without_jwt__is_rejected(api_client: APIClient) -> None:
     response = do_login_request(api_client, jwt="")
     errors = response.json()
@@ -71,7 +50,6 @@ def test_login_request__without_jwt__is_rejected(api_client: APIClient) -> None:
 
 
 @pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
 @patch.object(overwolf, "query_overwolf_jwt_api", return_value=Mock(status_code=401))
 def test_login_request__with_invalid_jwt__is_verified_and_rejected(
     mocked_query_api_func, api_client: APIClient
@@ -83,7 +61,6 @@ def test_login_request__with_invalid_jwt__is_verified_and_rejected(
 
 
 @pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
 @patch.object(overwolf, "verify_overwolf_jwt")
 @patch.object(
     overwolf,

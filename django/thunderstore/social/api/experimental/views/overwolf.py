@@ -17,10 +17,7 @@ from rest_framework.views import APIView
 from thunderstore.social.api.experimental.views.complete_login import (
     get_or_create_auth_user,
 )
-from thunderstore.social.permissions import (
-    ImproperlyConfigured,
-    OauthSharedSecretPermission,
-)
+from thunderstore.social.permissions import ImproperlyConfigured
 from thunderstore.social.providers import UserInfoSchema
 
 User = get_user_model()
@@ -53,7 +50,7 @@ class OverwolfLoginApiView(APIView):
     login process triggered from a browser.
     """
 
-    permission_classes: Sequence[Type[BasePermission]] = [OauthSharedSecretPermission]
+    permission_classes: Sequence[Type[BasePermission]] = []
 
     @swagger_auto_schema(
         operation_id="experimental.auth.overwolf.login",
