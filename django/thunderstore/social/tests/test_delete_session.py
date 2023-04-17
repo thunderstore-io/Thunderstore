@@ -1,94 +1,68 @@
-import json
-from typing import Optional
-from unittest.mock import patch
-
 import pytest
-from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.sessions.models import Session
 from django.urls import reverse
-from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from thunderstore.social.permissions import OauthSharedSecretPermission
+from thunderstore.core.types import UserType
 
-SECRET = "no_more_secrets"
-LOGOUT_URL = reverse("api:experimental:auth.delete")
-
-
-def do_logout_request(client: APIClient, sessionid: Optional[str]) -> Response:
-    payload = json.dumps({"sessionid": sessionid})
-
-    return client.post(
-        LOGOUT_URL,
-        payload,
-        content_type="application/json",
-        HTTP_AUTHORIZATION=f"TS-Secret {SECRET}",
-    )
+URL = reverse("api:experimental:auth.delete")
 
 
 @pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
-def test_logout_request__without_authorization_header__is_rejected(
+def test_delete_request__without_auth_header__is_rejected(
     api_client: APIClient,
+    user: UserType,
 ) -> None:
-    """
-    Test that the endpoint requires the header - further testing auth
-    header would just duplicate the tests in test_complete_login.py.
-    """
-    response = api_client.post(LOGOUT_URL, {}, content_type="application/json")
+    assert Session.objects.count() == 0
 
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect authentication credentials."
-
-
-@pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
-def test_logout_request__without_sessionid__is_rejected(api_client: APIClient) -> None:
-    response = do_logout_request(api_client, sessionid="")
-    errors = response.json()
-
-    assert response.status_code == 400
-    assert len(errors) == 1
-    assert len(errors["sessionid"]) == 1
-    assert errors["sessionid"][0] == "This field may not be blank."
-
-    response = do_logout_request(api_client, sessionid=None)
-    errors = response.json()
-
-    assert response.status_code == 400
-    assert len(errors) == 1
-    assert len(errors["sessionid"]) == 1
-    assert errors["sessionid"][0] == "This field may not be null."
-
-
-@pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
-def test_logout_request__with_nonexisting_sessionid__succeeds(
-    api_client: APIClient,
-) -> None:
-    response = do_logout_request(api_client, sessionid="no_such_session")
-
-    assert response.status_code == 204
-    assert response.content == b""
-
-
-@pytest.mark.django_db
-@patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
-def test_logout_request__with_existing_sessionid__succeeds(
-    api_client: APIClient,
-) -> None:
-    # Start with no sessions.
-    assert not Session.objects.exists()
-
-    # Create session.
-    session = SessionStore(None)
-    session.create()
+    api_client.force_login(user)
 
     assert Session.objects.count() == 1
 
-    # Logout the session.
-    response = do_logout_request(api_client, sessionid=session.session_key)
+    response = api_client.post(URL, content_type="application/json")
+
+    assert response.status_code == 401
+    assert Session.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_delete_request__with_nonexisting_sessionid__is_rejected(
+    api_client: APIClient,
+    user: UserType,
+) -> None:
+    assert Session.objects.count() == 0
+
+    api_client.force_login(user)
+
+    assert Session.objects.count() == 1
+
+    response = api_client.post(
+        URL,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Session let-me-in",
+    )
+
+    assert response.status_code == 401
+    assert Session.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_logout_request__with_existing_sessionid__succeeds(
+    api_client: APIClient,
+    user: UserType,
+) -> None:
+    assert Session.objects.count() == 0
+
+    api_client.force_login(user)
+
+    assert Session.objects.count() == 1
+
+    session_key = api_client.cookies["sessionid"].value
+    response = api_client.post(
+        URL,
+        content_type="application/json",
+        HTTP_AUTHORIZATION=f"Session {session_key}",
+    )
 
     assert response.status_code == 204
-    assert response.content == b""
-    assert not Session.objects.exists()
+    assert Session.objects.count() == 0
