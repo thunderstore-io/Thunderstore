@@ -4,7 +4,6 @@ import requests
 import ulid2  # type: ignore
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
-from django.contrib.sessions.models import Session
 from django.http import HttpResponse
 from drf_yasg.utils import swagger_auto_schema  # type: ignore
 from pydantic import BaseModel
@@ -81,31 +80,6 @@ class OverwolfLoginApiView(APIView):
                 "username": user.username,
             }
         )
-
-
-class OwLogoutRequestBody(serializers.Serializer):
-    sessionid = serializers.CharField(label="Thunderstore session key")
-
-
-class OverwolfLogoutApiView(APIView):
-    """
-    Drop provided session from database.
-    """
-
-    permission_classes: Sequence[Type[BasePermission]] = [OauthSharedSecretPermission]
-
-    @swagger_auto_schema(
-        operation_id="experimental.auth.overwolf.logout",
-        request_body=OwLogoutRequestBody,
-        responses={204: ""},
-    )
-    def post(self, request: Request) -> HttpResponse:
-        request_data = OwLogoutRequestBody(data=request.data)
-        request_data.is_valid(raise_exception=True)
-        sessionid: str = request_data.validated_data["sessionid"]
-
-        Session.objects.filter(session_key=sessionid).delete()
-        return Response(status=204)
 
 
 def query_overwolf_jwt_api(path: str, jwt: str) -> requests.Response:
