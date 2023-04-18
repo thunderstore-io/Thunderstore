@@ -2,6 +2,7 @@ from django.urls import path
 
 from thunderstore.social.api.experimental.views import (
     CompleteLoginApiView,
+    DeleteSessionApiView,
     OverwolfLoginApiView,
     ValidateSessionApiView,
 )
@@ -13,9 +14,14 @@ urls = [
         name="auth.complete",
     ),
     path(
-        "auth/overwolf/",
+        "auth/delete/",
+        DeleteSessionApiView.as_view(),
+        name="auth.delete",
+    ),
+    path(
+        "auth/overwolf/login/",
         OverwolfLoginApiView.as_view(),
-        name="auth.overwolf",
+        name="auth.overwolf.login",
     ),
     path(
         "auth/validate/",

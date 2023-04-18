@@ -62,4 +62,4 @@ class UserSessionTokenAuthentication(DRFTokenAuthentication):
         if not user.is_active:
             raise exceptions.AuthenticationFailed("User inactive or deleted.")
 
-        return (user, None)
+        return (user, key)
