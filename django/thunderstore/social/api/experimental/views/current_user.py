@@ -1,5 +1,9 @@
+from typing import List, Optional, Set, TypedDict
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from thunderstore.core.types import UserType
 
 
 class CurrentUserExperimentalApiView(APIView):
@@ -8,25 +12,51 @@ class CurrentUserExperimentalApiView(APIView):
     """
 
     def get(self, request, format=None):
-        username = None
-        capabilities = set()
-        rated_packages = []
-        teams = []
         if request.user.is_authenticated:
-            username = request.user.username
-            capabilities.add("package.rate")
-            rated_packages = request.user.package_ratings.select_related(
-                "package"
-            ).values_list("package__uuid4", flat=True)
-            teams = request.user.teams.filter(team__is_active=True).values_list(
-                "team__name"
-            )
-            teams = [team[0] for team in teams]
-        return Response(
-            {
-                "username": username,
-                "capabilities": capabilities,
-                "ratedPackages": rated_packages,
-                "teams": teams,
-            },
-        )
+            profile = get_user_profile(request.user)
+        else:
+            profile = get_empty_profile()
+
+        return Response(profile)
+
+
+class UserProfile(TypedDict):
+    username: Optional[str]
+    capabilities: Set[str]
+    rated_packages: List[str]
+    teams: List[str]
+
+
+def get_empty_profile() -> UserProfile:
+    return {
+        "username": None,
+        "capabilities": set(),
+        "rated_packages": [],
+        "teams": [],
+    }
+
+
+def get_user_profile(user: UserType) -> UserProfile:
+    username = user.username
+    capabilities = {"package.rate"}
+
+    rated_packages = list(
+        user.package_ratings.select_related("package").values_list(
+            "package__uuid4",
+            flat=True,
+        ),
+    )
+
+    teams = list(
+        user.teams.filter(team__is_active=True).values_list(
+            "team__name",
+            flat=True,
+        ),
+    )
+
+    return {
+        "username": username,
+        "capabilities": capabilities,
+        "rated_packages": rated_packages,
+        "teams": teams,
+    }
