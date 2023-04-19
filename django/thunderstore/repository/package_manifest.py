@@ -1,3 +1,4 @@
+from django.core.validators import URLValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -27,6 +28,7 @@ class ManifestV1Serializer(serializers.Serializer):
     website_url = StrictCharField(
         max_length=PackageVersion._meta.get_field("website_url").max_length,
         allow_blank=True,
+        validators=[URLValidator(schemes=["http", "https", "mailto", "ipfs"])],
     )
     description = StrictCharField(
         max_length=PackageVersion._meta.get_field("description").max_length,

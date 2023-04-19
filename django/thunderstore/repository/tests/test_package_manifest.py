@@ -242,15 +242,32 @@ def test_manifest_v1_serializer_version_number_validation(
 @pytest.mark.parametrize(
     "url, error",
     [
-        ["asdiasdhuasd", ""],
+        ["asdiasdhuasd", "Enter a valid URL."],
         ["https://google.com/", ""],
         ["", ""],
-        ["a", ""],
-        ["some not valid website URL", ""],
+        ["a", "Enter a valid URL."],
+        ["some not valid website URL", "Enter a valid URL."],
+        ["http://google.com/", ""],
+        ["https://google.com/", ""],
+        ["mailto://google.com/", ""],
+        ["ipfs://google.com/", ""],
         [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("website_url").max_length, ""],
+        [
+            "a" * PackageVersion._meta.get_field("website_url").max_length,
+            "Enter a valid URL.",
+        ],
         [
             "a" * PackageVersion._meta.get_field("website_url").max_length + "b",
+            "Enter a valid URL.",
+        ],
+        [
+            "https://example.org/"
+            + ("a" * (PackageVersion._meta.get_field("website_url").max_length - 20)),
+            "",
+        ],
+        [
+            "https://example.org/"
+            + ("a" * (PackageVersion._meta.get_field("website_url").max_length - 19)),
             "Ensure this field has no more than 1024 characters.",
         ],
     ],
