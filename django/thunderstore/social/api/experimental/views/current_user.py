@@ -1,5 +1,6 @@
 from typing import List, Optional, Set, TypedDict
 
+from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -23,14 +24,24 @@ class CurrentUserExperimentalApiView(APIView):
 class UserProfile(TypedDict):
     username: Optional[str]
     capabilities: Set[str]
+    has_subscription: bool
     rated_packages: List[str]
     teams: List[str]
+
+
+class UserProfileSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    capabilities = serializers.ListField()
+    has_subscription = serializers.BooleanField()
+    rated_packages = serializers.ListField()
+    teams = serializers.ListField()
 
 
 def get_empty_profile() -> UserProfile:
     return {
         "username": None,
         "capabilities": set(),
+        "has_subscription": False,
         "rated_packages": [],
         "teams": [],
     }
@@ -39,6 +50,9 @@ def get_empty_profile() -> UserProfile:
 def get_user_profile(user: UserType) -> UserProfile:
     username = user.username
     capabilities = {"package.rate"}
+
+    # TODO: Read actual sub status once related feature is implemented.
+    has_subscription = False
 
     rated_packages = list(
         user.package_ratings.select_related("package").values_list(
@@ -57,6 +71,7 @@ def get_user_profile(user: UserType) -> UserProfile:
     return {
         "username": username,
         "capabilities": capabilities,
+        "has_subscription": has_subscription,
         "rated_packages": rated_packages,
         "teams": teams,
     }
