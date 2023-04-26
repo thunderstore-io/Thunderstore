@@ -17,6 +17,10 @@ from rest_framework.views import APIView
 from thunderstore.social.api.experimental.views.complete_login import (
     get_or_create_auth_user,
 )
+from thunderstore.social.api.experimental.views.current_user import (
+    UserProfileSerializer,
+    get_user_profile,
+)
 from thunderstore.social.permissions import ImproperlyConfigured
 from thunderstore.social.providers import UserInfoSchema
 
@@ -29,7 +33,7 @@ class OwLoginRequestBody(serializers.Serializer):
 
 class OwLoginResponseBody(serializers.Serializer):
     session_id = serializers.CharField()
-    username = serializers.CharField()
+    profile = UserProfileSerializer()
 
 
 class OverwolfProfileSchema(BaseModel):
@@ -74,7 +78,7 @@ class OverwolfLoginApiView(APIView):
         return Response(
             {
                 "session_id": request.session.session_key,
-                "username": user.username,
+                "profile": get_user_profile(user),
             }
         )
 

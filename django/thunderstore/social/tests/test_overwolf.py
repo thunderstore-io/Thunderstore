@@ -76,7 +76,7 @@ def test_login_request__with_valid_information__succeeds(
     data = response.json()
 
     assert response.status_code == 200
-    assert data["username"] == "kingsley"
+    assert data["profile"]["username"] == "kingsley"
     assert type(data["session_id"]) == str
     assert data["session_id"] != ""
     mocked_verify.assert_called_once_with("mock_jwt")
