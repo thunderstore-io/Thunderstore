@@ -1,0 +1,61 @@
+version: "3.8"
+
+x-django-service: &django-service
+  image: thunderstore/thunderstore:${COMMIT_SHA}
+  environment:
+    DATABASE_URL: "psql://django:django@db/django"
+    CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
+    REDIS_URL: "redis://redis:6379/0"
+  depends_on:
+    - db
+    - redis
+    - rabbitmq
+
+x-celery-volumes: &celery-volumes
+  volumes:
+    - django-data:/app/var:ro
+
+services:
+  db:
+    image: postgres:10.4-alpine
+    environment:
+      POSTGRES_USER: django
+      POSTGRES_PASSWORD: django
+      POSTGRES_DB: django
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:5.0.4-alpine
+    command: --maxmemory 200mb --maxmemory-policy allkeys-lru
+
+  rabbitmq:
+    image: rabbitmq:3.8.9
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: django
+      RABBITMQ_DEFAULT_PASS: django
+      RABBITMQ_DEFAULT_VHOST: django
+
+  django:
+    <<: *django-service
+    command: gunicorn
+    volumes:
+      - django-data:/app/var
+    ports:
+      - 80:8000
+    depends_on:
+      - django-worker
+      - django-beat
+
+  django-worker:
+    <<: [*django-service, *celery-volumes]
+    command: celeryworker
+
+  django-beat:
+    <<: [*django-service, *celery-volumes]
+    command: celerybeat
+
+volumes:
+  db-data:
+  django-data:
