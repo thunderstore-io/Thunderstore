@@ -23,7 +23,7 @@ django-ipware = "^3.0"
 sentry_sdk = "^1.5"
 django-redis = "^4.11"
 pyjwt = { version = "^2.0", extras = ["crypto"] }
-celery = "^5.0.5"
+celery = "^5.2.7"
 django-celery-results = "^2.0.0"
 django-celery-beat = "^2.1.0"
 ulid2 = "^0.2.0"
