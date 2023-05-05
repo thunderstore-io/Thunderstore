@@ -11,6 +11,7 @@ omit =
     */manage.py
     */admin.py
     thunderstore/debug/*
+    */python-packages/*
 
 [report]
 exclude_lines =

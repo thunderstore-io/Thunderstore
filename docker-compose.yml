@@ -4,6 +4,8 @@ x-django-service: &django-service
   build:
     context: .
     dockerfile: ./Dockerfile
+    args:
+      BUILD_INSTALL_EXTRAS: ${BUILD_INSTALL_EXTRAS}
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
     CELERY_QUEUES: "celery,background.cache"
@@ -49,6 +51,7 @@ x-django-volumes: &django-volumes
   volumes:
     - django-data:/app/var:ro
     - ./django:/app:ro
+    - ./python-packages:/python-packages:ro
     - built-static:/app/static_built:ro
 
 services:
@@ -78,7 +81,7 @@ services:
   adminer:
     image: adminer:4.7.5
     ports:
-      - 127.0.0.1:8080:8080
+      - "127.0.0.1:8080:8080"
 
   rabbitmq:
     image: rabbitmq:3.8.14-alpine@sha256:11d8cd02ac340e99de628053f76bb1182ce3df3b41d3e8f399377276ba489409
@@ -95,7 +98,7 @@ services:
       context: .
       dockerfile: minio/Dockerfile
     ports:
-      - 127.0.0.1:9000:9000
+      - "127.0.0.1:9000:9000"
     volumes:
       - minio-data:/data
     environment:
@@ -111,7 +114,7 @@ services:
       - ./django:/app
       - built-static:/app/static_built:ro
     ports:
-      - 127.0.0.1:80:8000
+      - "127.0.0.1:80:8000"
     depends_on:
       - builder
 

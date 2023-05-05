@@ -6,7 +6,9 @@ Thunderstore is a mod database and API for downloading mods.
 
 ## Setup guide for development
 
--   Copy `.env.template` to `.env` and modify as you see fit
+-   Copy `.env.template` to `.env` and modify as you see fit - If you have access to the `python-packages` submodule & it's cloned, make
+    sure to set `BUILD_INSTALL_EXTRAS` to `true`. Any other value will not work. Changing this setting will require
+    rebuilding the environment (e.g. with `docker-compose build`) for it to take effect.
 -   Run `docker-compose up`
 -   Run `docker-compose exec django python manage.py migrate` in another terminal
 -   Run `docker-compose exec django python manage.py shell` and enter the

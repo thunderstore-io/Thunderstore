@@ -35,6 +35,12 @@ markdown-it-py = {version = "2.1.0", extras = ["linkify"]}
 abyss = {git = "https://github.com/akx/abyss.git", rev = "4352e557f25a303f718ec1bf82ea0ca545ebc077"}
 lxml = "^4.9.1"
 
+[tool.poetry.group.plugins]
+optional = true
+
+[tool.poetry.group.plugins.dependencies]
+django-paypal = { path = "../python-packages/django-paypal", develop = true }
+
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 pytest-cov = "^2.8"
@@ -50,7 +56,6 @@ pre-commit = "^2.9.3"
 mypy = ">=0.790"
 django-stubs = "^1.7.0"
 djangorestframework-stubs = "^1.3.0"
-
 flake8 = "^3.8.2"
 flake8-2020 = "^1.6.0"
 flake8-broken-line = "^0.3.0"
@@ -88,5 +93,5 @@ profile = "black"
 known_third_party = ["django"]
 
 [build-system]
-requires = ["poetry>=1.0"]
+requires = ["poetry>=1.4"]
 build-backend = "poetry.masonry.api"

@@ -10,6 +10,8 @@ FROM python:3.8-slim-buster@sha256:2516c4bc037b8144b6104e73e6bdd0c861725d9ed7bd0
 
 LABEL org.opencontainers.image.source="https://github.com/thunderstore-io/Thunderstore"
 
+ARG BUILD_INSTALL_EXTRAS
+
 ENV PYTHONUNBUFFERED 1
 
 ENV DB_CERT_DIR /etc/ssl/private/db-certs/
@@ -20,11 +22,17 @@ RUN apt-get update && apt-get install -y \
     curl build-essential git \
  && rm -rf /var/lib/apt/lists/*
 
+COPY ./python-packages/ /python-packages
 COPY ./django/pyproject.toml ./django/poetry.lock /app/
 
-RUN pip install -U pip poetry~=1.1.4 --no-cache-dir && \
+RUN pip install -U pip setuptools wheel virtualenv==20.7.2 poetry~=1.4.2 --no-cache-dir && \
     poetry config virtualenvs.create false && \
-    poetry install && \
+    poetry config installer.max-workers 1 && \
+    if [ $BUILD_INSTALL_EXTRAS = true ] ; then \
+      poetry install --with plugins ; \
+    else \
+      poetry install ; \
+    fi && \
     rm -rf ~/.cache
 
 COPY --from=builder /app/build /app/static_built
