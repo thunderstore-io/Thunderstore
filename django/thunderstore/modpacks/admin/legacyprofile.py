@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from thunderstore.modpacks.models import LegacyProfile
+from thunderstore.modpacks.models import LegacyProfile, LegacyProfileMetaData
 
 
 @admin.register(LegacyProfile)
@@ -22,3 +22,10 @@ class LegacyProfileAdmin(admin.ModelAdmin):
     list_display_links = ("id",)
     date_hierarchy = "datetime_created"
     search_fields = ("id", "file_sha256")
+
+@admin.register(LegacyProfileMetaData)
+class LegacyProfileMetaDataAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "profile",
+    )

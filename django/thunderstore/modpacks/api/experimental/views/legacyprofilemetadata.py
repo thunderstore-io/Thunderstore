@@ -20,5 +20,5 @@ class LegacyProfileMetaDataRetrieveApiView(APIView):
     )
     def get(self, request, key: str, *args, **kwargs) -> HttpResponse:
         obj = LegacyProfileMetaData.objects.filter(profile__id=key).last()
-        serializer = LegacyProfileMetaDataSerializer({"code": obj.profile_meta_data["code"], "name": obj.profile_meta_data["name"], "mods": obj.profile_meta_data["mods"]})
+        serializer = LegacyProfileMetaDataSerializer({"code": obj.profile_meta_data["code"], "name": obj.profile_meta_data["name"], "mods": obj.profile_meta_data["mods"], "game": obj.profile_meta_data["game"], "game_display_name": obj.profile_meta_data["game_display_name"]})
         return Response(serializer.data, status=status.HTTP_200_OK)
