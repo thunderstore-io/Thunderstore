@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional, Set, TypedDict
 
 from rest_framework import serializers
@@ -21,10 +22,18 @@ class CurrentUserExperimentalApiView(APIView):
         return Response(profile)
 
 
+class SubscriptionStatus(TypedDict):
+    expires: Optional[date]
+
+
+class SubscriptionStatusSerializer(serializers.Serializer):
+    expires = serializers.DateField()
+
+
 class UserProfile(TypedDict):
     username: Optional[str]
     capabilities: Set[str]
-    has_subscription: bool
+    subscription: SubscriptionStatus
     rated_packages: List[str]
     teams: List[str]
 
@@ -32,7 +41,7 @@ class UserProfile(TypedDict):
 class UserProfileSerializer(serializers.Serializer):
     username = serializers.CharField()
     capabilities = serializers.ListField()
-    has_subscription = serializers.BooleanField()
+    subscription = SubscriptionStatusSerializer()
     rated_packages = serializers.ListField()
     teams = serializers.ListField()
 
@@ -41,7 +50,7 @@ def get_empty_profile() -> UserProfile:
     return {
         "username": None,
         "capabilities": set(),
-        "has_subscription": False,
+        "subscription": get_subscription_status(user=None),
         "rated_packages": [],
         "teams": [],
     }
@@ -50,9 +59,6 @@ def get_empty_profile() -> UserProfile:
 def get_user_profile(user: UserType) -> UserProfile:
     username = user.username
     capabilities = {"package.rate"}
-
-    # TODO: Read actual sub status once related feature is implemented.
-    has_subscription = False
 
     rated_packages = list(
         user.package_ratings.select_related("package").values_list(
@@ -71,7 +77,22 @@ def get_user_profile(user: UserType) -> UserProfile:
     return {
         "username": username,
         "capabilities": capabilities,
-        "has_subscription": has_subscription,
+        "subscription": get_subscription_status(user),
         "rated_packages": rated_packages,
         "teams": teams,
     }
+
+
+def get_subscription_status(user: Optional[UserType]) -> SubscriptionStatus:
+    """
+    Return information regarding user's paid subscription plan.
+
+    TODO: This is just a stub. The real thing (as well as the definition
+    for SubscriptionStatus) should be implemented in our proprietary
+    django_paypal package or some other more suitable location.
+    """
+    if not user:
+        return {"expires": None}
+
+    # TODO: return expiration date if user has active subscription.
+    return {"expires": None}

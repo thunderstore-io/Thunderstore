@@ -23,7 +23,7 @@ def test_current_user_info__for_unauthenticated_user__is_empty_structure(
     user_info = response.json()
 
     assert user_info["username"] is None
-    assert user_info["has_subscription"] is False
+    assert user_info["subscription"]["expires"] is None
     assert len(user_info["capabilities"]) == 0
     assert len(user_info["rated_packages"]) == 0
     assert len(user_info["teams"]) == 0
@@ -42,3 +42,5 @@ def test_current_user_info__for_authenticated_user__has_proper_values(
     user_info = response.json()
 
     assert user_info["username"] == "Test"
+    assert type(user_info["subscription"]) == dict
+    assert "expires" in user_info["subscription"]
