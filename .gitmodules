@@ -1,0 +1,3 @@
+[submodule "python-packages"]
+	path = python-packages
+	url = git@github.com:thunderstore-io/python-packages.git
