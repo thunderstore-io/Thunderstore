@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from django.db import models
 from django.db.models import Manager, Q, TextChoices, signals
@@ -61,6 +61,19 @@ class DynamicHTML(models.Model):
         blank=True,
     )
 
+    exclude_user_flags = models.ManyToManyField(
+        "account.UserFlag",
+        related_name="dynamic_html_exclusions",
+        help_text="Hidden from user with at least one of these flags",
+        blank=True,
+    )
+    require_user_flags = models.ManyToManyField(
+        "account.UserFlag",
+        help_text="Shown to users with at least one of these flags",
+        related_name="dynamic_html_inclusions",
+        blank=True,
+    )
+
     def __str__(self):
         return self.name
 
@@ -73,7 +86,12 @@ class DynamicHTML(models.Model):
         invalidate_cache_on_commit_async(CacheBustCondition.dynamic_html_updated)
 
     @classmethod
-    def get_for_community(cls, community: Optional[Community], placement: str):
+    def get_for_community(
+        cls,
+        community: Optional[Community],
+        placement: str,
+        user_flags: List[str],
+    ):
         if community:
             community_filter = Q(
                 ~Q(exclude_communities=community)
@@ -81,7 +99,17 @@ class DynamicHTML(models.Model):
             )
         else:
             community_filter = Q(require_communities=None)
-        full_query = Q(Q(is_active=True) & Q(placement=placement) & community_filter)
+
+        user_filter = Q(
+            ~Q(exclude_user_flags__identifier__in=user_flags)
+            & Q(
+                Q(require_user_flags__identifier__in=user_flags)
+                | Q(require_user_flags=None)
+            )
+        )
+        full_query = Q(
+            Q(is_active=True) & Q(placement=placement) & community_filter & user_filter
+        )
         return cls.objects.filter(full_query).order_by("-ordering", "-pk")
 
 
