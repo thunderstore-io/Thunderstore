@@ -2,11 +2,12 @@ import importlib
 import importlib.util
 import inspect
 import pkgutil
+from typing import Set, Type
 
 from .base import BasePlugin
 
 
-def load_ts_plugins():
+def load_ts_plugins() -> Set[Type[BasePlugin]]:
     plugin_modules = {
         name: importlib.import_module(f"{name}.ts_plugins")
         for finder, name, ispkg in pkgutil.iter_modules()

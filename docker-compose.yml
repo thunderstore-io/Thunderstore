@@ -112,6 +112,7 @@ services:
     volumes:
       - django-data:/app/var
       - ./django:/app
+      - ./python-packages:/python-packages
       - built-static:/app/static_built:ro
     ports:
       - "127.0.0.1:80:8000"
