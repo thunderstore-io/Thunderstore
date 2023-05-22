@@ -5,6 +5,7 @@ from django.urls import URLPattern
 
 from .base import BasePlugin
 from .loading import load_ts_plugins
+from .types import SettingsLink
 
 
 class PluginRegistry:
@@ -29,6 +30,9 @@ class PluginRegistry:
 
     def get_settings_urls(self) -> List[URLPattern]:
         return list(itertools.chain(*(x.get_settings_urls() for x in self.plugins)))
+
+    def get_settings_links(self) -> List[SettingsLink]:
+        return list(itertools.chain(*(x.get_settings_links() for x in self.plugins)))
 
 
 plugin_registry = PluginRegistry.autodiscover()
