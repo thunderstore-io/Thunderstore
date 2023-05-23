@@ -1,7 +1,8 @@
 import datetime
-from typing import List
+from typing import List, Optional, Union
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -30,7 +31,9 @@ class UserFlag(TimestampMixin):
 
     @classmethod
     def get_active_flags_on_user(
-        cls, user: UserType, timestamp: datetime.datetime
+        cls,
+        user: Optional[Union[UserType, AnonymousUser]],
+        timestamp: datetime.datetime,
     ) -> List[str]:
         if not user or not user.pk:
             return []
@@ -39,7 +42,7 @@ class UserFlag(TimestampMixin):
             Q(datetime_valid_until__gt=timestamp) | Q(datetime_valid_until=None)
         )
 
-        return (
+        return list(
             UserFlagMembership.objects.filter(query)
             .order_by("flag__identifier")
             .distinct("flag__identifier")
