@@ -15,9 +15,10 @@ from django.core.files.base import File
 from PIL import Image
 from rest_framework.test import APIClient
 
-from django_contracts.models import LegalContract, LegalContractVersion, PublishStatus
+from django_contracts.models import LegalContract, LegalContractVersion
+from thunderstore.account.factories import UserFlagFactory
 from thunderstore.account.forms import CreateServiceAccountForm
-from thunderstore.account.models import ServiceAccount
+from thunderstore.account.models import ServiceAccount, UserFlag
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
@@ -390,6 +391,11 @@ def service_account(user, team) -> ServiceAccount:
     )
     assert form.is_valid()
     return form.save()
+
+
+@pytest.fixture()
+def user_flag() -> UserFlag:
+    return UserFlagFactory()
 
 
 @pytest.fixture()

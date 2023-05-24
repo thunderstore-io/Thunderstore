@@ -263,6 +263,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "thunderstore.community.middleware.CommunitySiteMiddleware",
+    "thunderstore.account.middleware.UserFlagsMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "thunderstore.abyss.middleware.TracingMiddleware",
@@ -453,6 +454,8 @@ CACHALOT_TIMEOUT = 60 * 60  # 1 hour
 CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
     (
         "account_serviceaccount",
+        "account_userflag",
+        "account_userflagmembership",
         "auth_group",
         "auth_group_permissions",
         "auth_permission",
