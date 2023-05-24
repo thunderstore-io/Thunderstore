@@ -1,6 +1,7 @@
 import datetime
 from typing import List, Optional, Union
 
+from cachalot.api import cachalot_disabled
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -42,12 +43,15 @@ class UserFlag(TimestampMixin):
             Q(datetime_valid_until__gt=timestamp) | Q(datetime_valid_until=None)
         )
 
-        return list(
-            UserFlagMembership.objects.filter(query)
-            .order_by("flag__identifier")
-            .distinct("flag__identifier")
-            .values_list("flag__identifier", flat=True)
-        )
+        # The query parameters are almost always unique due to the timestamp, so
+        # it makes no sense to cache the query.
+        with cachalot_disabled():
+            return list(
+                UserFlagMembership.objects.filter(query)
+                .order_by("flag__identifier")
+                .distinct("flag__identifier")
+                .values_list("flag__identifier", flat=True)
+            )
 
 
 class UserFlagMembership(TimestampMixin):

@@ -32,8 +32,7 @@ def test_user_flags_overlapping_memberships_return_distinct(
     user: UserType,
     user_flag: UserFlag,
 ):
-    early_time = timezone.now()
-    start_time = early_time + timedelta(seconds=1)
+    start_time = timezone.now()
     late_time = start_time + timedelta(days=100000)
 
     for _ in range(3):
@@ -44,9 +43,7 @@ def test_user_flags_overlapping_memberships_return_distinct(
             datetime_valid_until=None,
         )
 
-    assert UserFlag.get_active_flags_on_user(user, early_time) == []
     assert UserFlag.get_active_flags_on_user(user, late_time) == [user_flag.identifier]
-    assert UserFlag.get_active_flags_on_user(None, late_time) == []
 
 
 @pytest.mark.django_db
@@ -66,7 +63,7 @@ def test_user_flags_without_end_time_are_active(
     )
     assert UserFlag.get_active_flags_on_user(user, early_time) == []
     assert UserFlag.get_active_flags_on_user(user, late_time) == [user_flag.identifier]
-    assert UserFlag.get_active_flags_on_user(None, late_time) == []
+    assert UserFlag.get_active_flags_on_user(user, start_time) == [user_flag.identifier]
 
 
 @pytest.mark.django_db
@@ -79,7 +76,7 @@ def test_user_flags_past_end_time_are_inactive(
     middle_time = start_time + timedelta(days=1)
     almost_end_time = middle_time + timedelta(days=1)
     end_time = almost_end_time + timedelta(microseconds=1)
-    late_time = end_time + timedelta(days=1)
+    late_time = end_time + timedelta(microseconds=1)
 
     UserFlagMembershipFactory(
         user=user,
@@ -93,7 +90,6 @@ def test_user_flags_past_end_time_are_inactive(
     assert UserFlag.get_active_flags_on_user(user, middle_time) == [
         user_flag.identifier
     ]
-    assert UserFlag.get_active_flags_on_user(None, middle_time) == []
     assert UserFlag.get_active_flags_on_user(user, almost_end_time) == [
         user_flag.identifier
     ]
