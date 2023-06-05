@@ -1,5 +1,6 @@
 from django.urls import include, path
 
+from thunderstore.api.urls import urls as cyberstorm_urls
 from thunderstore.community.api.experimental.urls import (
     urls as community_experimental_urls,
 )
@@ -55,5 +56,9 @@ api_urls = [
     path(
         "experimental/",
         include((api_experimental_urls, "experimental"), namespace="experimental"),
+    ),
+    path(
+        "cyberstorm/",
+        include((cyberstorm_urls, "cyberstorm"), namespace="cyberstorm"),
     ),
 ]

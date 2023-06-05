@@ -238,6 +238,7 @@ INSTALLED_APPS = [
     # Own
     "thunderstore.core",
     "thunderstore.cache",
+    "thunderstore.api",
     "thunderstore.frontend",
     "thunderstore.repository",
     "thunderstore.webhooks",
