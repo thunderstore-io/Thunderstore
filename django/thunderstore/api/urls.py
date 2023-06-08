@@ -1,6 +1,6 @@
 from django.urls import path
 
-from thunderstore.api.views import CommunitiesAPIView, CommunityAPIView, PackageAPIView, PackagePreviewAPIView
+from thunderstore.api.views import CommunitiesAPIView, CommunityAPIView, PackageAPIView, PackagePreviewAPIView, TeamAPIView, UserAPIView
 
 urls = [
     path(
@@ -22,5 +22,15 @@ urls = [
         "p/",
         PackagePreviewAPIView.as_view(),  # type: ignore
         name="api.packages",
+    ),
+    path(
+        "t/<slug:team_identifier>/",
+        TeamAPIView.as_view(),  # type: ignore
+        name="api.team",
+    ),
+    path(
+        "u/<slug:user_identifier>/",
+        UserAPIView.as_view(),  # type: ignore
+        name="api.user",
     ),
 ]
