@@ -15,6 +15,9 @@
                 </div>
                 <div class="card-body">
                     <ul class="pl-3 mb-0">
+                        {% for link in setting_links %}
+                        <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+                        {% endfor %}
                         <li><a href="{% url "settings.teams" %}">Teams</a></li>
                         <li><a href="{% url "settings.linked-accounts" %}">Linked Accounts</a></li>
                         <li><a href="{% url "settings.delete-account" %}" class="text-danger">Delete Account</a></li>

@@ -9,6 +9,7 @@ from django.http import HttpRequest
 
 from thunderstore.core.storage import S3MirrorConfig, get_storage_class_or_stub
 from thunderstore.core.utils import validate_filepath_prefix
+from thunderstore.plugins.registry import plugin_registry
 
 try:
     import debug_toolbar
@@ -213,44 +214,46 @@ load_db_certs()
 
 # Application definition
 
-INSTALLED_APPS = [
-    # Django
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.postgres",
-    "django.contrib.sites",
-    # 3rd Party
-    "easy_thumbnails",
-    "social_django",
-    "rest_framework",
-    "rest_framework.authtoken",
-    "drf_yasg",
-    "django_celery_beat",
-    "django_celery_results",
-    "cachalot",
-    "corsheaders",
-    # Own Standalone
-    "django_contracts",
-    # Own
-    "thunderstore.core",
-    "thunderstore.cache",
-    "thunderstore.frontend",
-    "thunderstore.repository",
-    "thunderstore.webhooks",
-    "thunderstore.social",
-    "thunderstore.community",
-    "thunderstore.usermedia",
-    "thunderstore.account",
-    "thunderstore.markdown",
-    "thunderstore.modpacks",
-    "thunderstore.schema_import",
-    "thunderstore.legal",
-    "thunderstore.wiki",
-]
+INSTALLED_APPS = plugin_registry.get_installed_apps(
+    [
+        # Django
+        "django.contrib.admin",
+        "django.contrib.auth",
+        "django.contrib.contenttypes",
+        "django.contrib.sessions",
+        "django.contrib.messages",
+        "django.contrib.staticfiles",
+        "django.contrib.postgres",
+        "django.contrib.sites",
+        # 3rd Party
+        "easy_thumbnails",
+        "social_django",
+        "rest_framework",
+        "rest_framework.authtoken",
+        "drf_yasg",
+        "django_celery_beat",
+        "django_celery_results",
+        "cachalot",
+        "corsheaders",
+        # Own Standalone
+        "django_contracts",
+        # Own
+        "thunderstore.core",
+        "thunderstore.cache",
+        "thunderstore.frontend",
+        "thunderstore.repository",
+        "thunderstore.webhooks",
+        "thunderstore.social",
+        "thunderstore.community",
+        "thunderstore.usermedia",
+        "thunderstore.account",
+        "thunderstore.markdown",
+        "thunderstore.modpacks",
+        "thunderstore.schema_import",
+        "thunderstore.legal",
+        "thunderstore.wiki",
+    ]
+)
 
 MIDDLEWARE = [
     "thunderstore.core.middleware.QueryCountHeaderMiddleware",
@@ -762,3 +765,5 @@ OAUTH_SHARED_SECRET = env.str("OAUTH_SHARED_SECRET")
 
 # Mod manager client id
 OVERWOLF_CLIENT_ID = env.str("OVERWOLF_CLIENT_ID")
+
+globals().update(plugin_registry.get_django_settings(globals()))

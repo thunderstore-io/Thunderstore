@@ -18,6 +18,7 @@ from thunderstore.account.forms import (
 )
 from thunderstore.core.mixins import RequireAuthenticationMixin
 from thunderstore.core.utils import capture_exception
+from thunderstore.frontend.views import SettingsViewMixin
 from thunderstore.repository.forms import (
     AddTeamMemberForm,
     CreateTeamForm,
@@ -30,11 +31,11 @@ from thunderstore.repository.forms import (
 from thunderstore.repository.models import Team, TeamMember, reverse
 
 
-class SettingsTeamListView(RequireAuthenticationMixin, TemplateView):
+class SettingsTeamListView(SettingsViewMixin, RequireAuthenticationMixin, TemplateView):
     template_name = "settings/team_list.html"
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context["page_title"] = "Teams"
         context["team_memberships"] = TeamMember.objects.filter(
             user=self.request.user,
@@ -43,7 +44,7 @@ class SettingsTeamListView(RequireAuthenticationMixin, TemplateView):
         return context
 
 
-class TeamDetailView(DetailView):
+class TeamDetailView(SettingsViewMixin, DetailView):
     model = Team
     queryset = Team.objects.filter(is_active=True)
     slug_field = "name"
@@ -137,7 +138,9 @@ class SettingsTeamAddMemberView(TeamDetailView, UserFormKwargs, FormView):
         return redirect(self.object.settings_url)
 
 
-class SettingsTeamCreateView(RequireAuthenticationMixin, UserFormKwargs, CreateView):
+class SettingsTeamCreateView(
+    SettingsViewMixin, RequireAuthenticationMixin, UserFormKwargs, CreateView
+):
     model = Team
     form_class = CreateTeamForm
     template_name = "settings/team_create.html"
