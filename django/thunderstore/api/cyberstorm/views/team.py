@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from thunderstore.repository.models.team import Team
 
-from thunderstore.api.serializers import CyberstormTeamSerializer, CyberstormTeamMemberSerializer
+from thunderstore.api.cyberstorm.serializers import CyberstormTeamSerializer, CyberstormTeamMemberSerializer
 
 
 class TeamAPIView(APIView):

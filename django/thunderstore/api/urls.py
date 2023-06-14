@@ -1,6 +1,6 @@
 from django.urls import path
 
-from thunderstore.api.views import CommunitiesAPIView, CommunityAPIView, PackageAPIView, PackagePreviewAPIView, TeamAPIView, UserAPIView
+from thunderstore.api.cyberstorm.views import CommunitiesAPIView, CommunityAPIView, PackageAPIView, PackagePreviewAPIView, TeamAPIView, UserAPIView
 
 urls = [
     path(

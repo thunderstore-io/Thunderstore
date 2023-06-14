@@ -20,7 +20,7 @@ from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.models import PackageListingSection
-from thunderstore.api.serializers.package import (
+from thunderstore.api.cyberstorm.serializers.package import (
     CommunityPackageListCyberstormSerializer,
     PackageCategoryCyberstormSerializer,
     PackageSearchQueryParameterCyberstormSerializer,
@@ -42,7 +42,7 @@ class PackagePreviewAPIView(APIView):
 
     @swagger_auto_schema(
         responses={200: CommunityPackageListCyberstormSerializer()},
-        operation_id="experimental.frontend.community.packages",
+        operation_id="api.packages",
     )
     def get(
         self,

@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.api.serializers import CyberstormCommunitySerializer
+from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
 from thunderstore.community.models import Community
 
 

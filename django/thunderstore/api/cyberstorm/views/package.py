@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from thunderstore.community.models import PackageListing
 from thunderstore.community.utils import get_preferred_community
-from thunderstore.api.serializers import (
+from thunderstore.api.cyberstorm.serializers import (
     PackageCategoryCyberstormSerializer,
     PackageDependencyCyberstormSerializer,
     PackageDetailViewContentCyberstormSerializer,
