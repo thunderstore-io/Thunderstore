@@ -21,9 +21,9 @@ jobs:
       - name: Get node version
         id: node-version
         run: echo "::set-output name=node-version::$(node --version)"
-      - uses: Gr1N/setup-poetry@v7
-      - name: Configure poetry
-        run: poetry config virtualenvs.in-project true
+      - uses: snok/install-poetry@v1
+        with:
+          virtualenvs-in-project: true
       - name: Cache poetry venv
         id: cache-poetry
         uses: actions/cache@v2
