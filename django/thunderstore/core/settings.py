@@ -240,6 +240,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         # Own
         "thunderstore.core",
         "thunderstore.cache",
+        "thunderstore.api",
         "thunderstore.frontend",
         "thunderstore.repository",
         "thunderstore.webhooks",
