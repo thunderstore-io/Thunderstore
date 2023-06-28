@@ -1,3 +1,11 @@
 from django.urls import path
 
-cyberstorm_urls = []
+from thunderstore.api.cyberstorm.views import PackageListAPIView
+
+cyberstorm_urls = [
+    path(
+        "package/",
+        PackageListAPIView.as_view(),
+        name="cyberstorm.packages",
+    ),
+]
