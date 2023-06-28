@@ -3,6 +3,7 @@ from django.urls import path
 from thunderstore.api.cyberstorm.views import (
     CommunityDetailAPIView,
     CommunityListAPIView,
+    TeamDetailAPIView,
 )
 
 cyberstorm_urls = [
@@ -15,5 +16,10 @@ cyberstorm_urls = [
         "community/<str:community_id>/",
         CommunityDetailAPIView.as_view(),
         name="cyberstorm.community",
+    ),
+    path(
+        "team/<str:name>/",
+        TeamDetailAPIView.as_view(),
+        name="cyberstorm.team",
     ),
 ]
