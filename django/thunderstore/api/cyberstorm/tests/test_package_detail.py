@@ -142,24 +142,7 @@ def test_api_cyberstorm_package_detail_success(
             assert pl.package.owner.members.filter(
                 user__username=tm["user"], role=tm["role"]
             ).exists()
-        for dep in data["dependencies"]:
-            preferred = get_preferred_community(
-                Package.objects.get(
-                    name=dep["name"],
-                    namespace__name=dep["namespace"],
-                ),
-                pl.community,
-            )
-            if not dep["community"] == None:
-                assert preferred.identifier == dep["community"]
-            else:
-                assert preferred == None
-            assert pl.package.latest.dependencies.filter(
-                name=dep["name"],
-                package__namespace__name=dep["namespace"],
-                description=dep["short_description"],
-                version_number=dep["version"],
-            ).exists()
+        # Dependencies are tested in test_api_cyberstorm_package_detail_dependencies
         assert data["short_description"] == pl.package.latest.description
         assert data["size"] == pl.package.latest.file_size
         assert data["description"] == pl.package.latest.readme
@@ -270,6 +253,87 @@ def test_api_cyberstorm_package_detail_package_rating_and_download_counts(
     )
     assert data["likes"] == 9
     assert data["download_count"] == 394
+
+
+@pytest.mark.django_db
+def test_api_cyberstorm_package_detail_dependencies(
+    api_client: APIClient,
+) -> None:
+
+    site1 = CommunitySiteFactory()
+    site2 = CommunitySiteFactory()
+    site3 = CommunitySiteFactory()
+    # Fetched listing
+    listing1 = PackageListingFactory(
+        community_=site1.community, package_version_kwargs={"name": "Fetched_Pack"}
+    )
+    # Same community, listing
+    listing2 = PackageListingFactory(
+        community_=site1.community, package_version_kwargs={"name": "Pack_2"}
+    )
+    # Different community listing, with same community listing existing
+    listing3 = PackageListingFactory(
+        community_=site2.community, package_version_kwargs={"name": "Pack_3"}
+    )
+    listing4 = PackageListingFactory(
+        package_=listing3.package, community_=site1.community
+    )  # This one should be selected
+    # Dependency without listing
+    listingless_version = PackageVersionFactory(name="Listingless_Pack")
+    # Different community listing, without same community listing existing
+    listing5 = PackageListingFactory(
+        community_=site3.community, package_version_kwargs={"name": "Pack_5"}
+    )
+
+    listing2.package.handle_updated_version(None)
+    listing3.package.handle_updated_version(None)
+    listing4.package.handle_updated_version(None)
+    # We should have 5 dependecies set, but because
+    deps = [
+        listingless_version,
+        listing2.package.latest,
+        listing3.package.latest,
+        listing4.package.latest,
+        listing5.package.latest,
+    ]
+    listing1.package.versions.first().dependencies.set(deps)
+
+    data = __query_api(
+        api_client,
+        site1.community.identifier,
+        listing1.package.namespace.name,
+        listing1.package.name,
+    )
+    site1.community
+    assert (
+        next((item for item in data["dependencies"] if item["name"] == "Pack_2"))[
+            "community"
+        ]
+        == site1.community.identifier
+    )
+    assert (
+        next((item for item in data["dependencies"] if item["name"] == "Pack_3"))[
+            "community"
+        ]
+        == site1.community.identifier
+    )
+    assert (
+        next((item for item in data["dependencies"] if item["name"] == "Pack_5"))[
+            "community"
+        ]
+        == site3.community.identifier
+    )
+    assert (
+        next(
+            (
+                item
+                for item in data["dependencies"]
+                if item["name"] == "Listingless_Pack"
+            )
+        )["community"]
+        == None
+    )
+    assert len(data["dependencies"]) == 4
 
 
 def __query_api(
