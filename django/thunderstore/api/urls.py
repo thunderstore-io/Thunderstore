@@ -1,3 +1,11 @@
 from django.urls import path
 
-cyberstorm_urls = []
+from thunderstore.api.cyberstorm.views import LikePackageAPIView
+
+cyberstorm_urls = [
+    path(
+        "package/like/<str:uuid4>",
+        LikePackageAPIView.as_view(),
+        name="cyberstorm.like_package",
+    ),
+]
