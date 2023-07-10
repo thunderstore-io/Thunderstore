@@ -9,11 +9,11 @@ cyberstorm_urls = [
     path(
         "community/",
         CommunityListAPIView.as_view(),
-        name="cyberstorm.communities",
+        name="cyberstorm.community.list",
     ),
     path(
         "community/<str:community_id>/",
         CommunityDetailAPIView.as_view(),
-        name="cyberstorm.community",
+        name="cyberstorm.community.detail",
     ),
 ]

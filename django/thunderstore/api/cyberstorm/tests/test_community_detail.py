@@ -1,10 +1,8 @@
 import pytest
-from django.db.models import Count, Sum
 from rest_framework.test import APIClient
 
 from thunderstore.community.factories import PackageListingFactory
 from thunderstore.community.models import CommunitySite
-from thunderstore.community.models.community import Community
 
 
 @pytest.mark.django_db
@@ -25,23 +23,18 @@ def test_api_cyberstorm_community_detail_success(
         f"/api/cyberstorm/community/{community_site.community.identifier}/",
         HTTP_HOST=community_site.site.domain,
     )
-    c = Community.objects.annotate(
-        pkgs=Count("package_listings", distinct=True),
-        downloads=Sum("package_listings__package__versions__downloads", distinct=True),
-    ).get(
-        identifier=community_site.community.identifier,
-    )
-    resp_com = response.json()
     assert response.status_code == 200
-    assert c.name == resp_com["name"]
-    assert c.identifier == resp_com["identifier"]
-    assert c.downloads == resp_com["download_count"]
-    assert c.pkgs == resp_com["package_count"]
-    assert (
-        c.background_image_url.url if bool(c.background_image_url) else None
-    ) == resp_com["background_image_url"]
-    assert c.description == resp_com["description"]
-    assert c.discord_url == resp_com["discord_link"]
+    response_data = response.json()
+
+    c = community_site.community
+
+    assert c.name == response_data["name"]
+    assert c.identifier == response_data["identifier"]
+    assert c.total_download_count == response_data["total_download_count"]
+    assert c.total_package_count == response_data["total_package_count"]
+    assert c.background_image_url == response_data["background_image_url"]
+    assert c.description == response_data["description"]
+    assert c.discord_url == response_data["discord_url"]
 
 
 @pytest.mark.django_db

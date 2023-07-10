@@ -63,6 +63,16 @@ class Community(TimestampMixin, models.Model):
     require_package_listing_approval = models.BooleanField(default=False)
     block_auto_updates = models.BooleanField(default=True)
 
+    @property
+    def total_package_count(self) -> int:
+        # TODO: Implement as a cached value with background updates
+        return -1
+
+    @property
+    def total_download_count(self) -> int:
+        # TODO: Implement as a cached value with background updates
+        return -1
+
     def save(self, *args, **kwargs):
         if self.pk:
             in_db = type(self).objects.get(pk=self.pk)

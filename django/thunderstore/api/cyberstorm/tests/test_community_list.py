@@ -1,10 +1,11 @@
 from typing import Dict, List, Union
+from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.api.cyberstorm.views import CommunityListAPIView
+from thunderstore.api.cyberstorm.views.community_list import CommunityPaginator
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models.community import Community
@@ -44,37 +45,16 @@ def test_api_cyberstorm_community_list_get_success(
     )
 
     assert response.status_code == 200
-    resp_com_list = response.json()["results"]
+    results = response.json()["results"]
 
-    assert resp_com_list[0]["name"] == community_site.community.name
-    assert resp_com_list[0]["identifier"] == community_site.community.identifier
-    assert resp_com_list[0]["download_count"] == 0
-    assert resp_com_list[0]["package_count"] == 0
-    assert resp_com_list[0]["background_image_url"] == None
-    assert (
-        resp_com_list[0]["background_image_url"]
-        == community_site.community.background_image_url
-    )
-    assert resp_com_list[0]["description"] == community_site.community.description
-    assert resp_com_list[0]["discord_link"] == community_site.community.discord_url
-
-    assert resp_com_list[1]["name"] == community1.name
-    assert resp_com_list[1]["identifier"] == community1.identifier
-    assert resp_com_list[1]["download_count"] == 100
-    assert resp_com_list[1]["package_count"] == 10
-    assert resp_com_list[1]["background_image_url"] == None
-    assert resp_com_list[1]["background_image_url"] == community1.background_image_url
-    assert resp_com_list[1]["description"] == community1.description
-    assert resp_com_list[1]["discord_link"] == community1.discord_url
-
-    assert resp_com_list[2]["name"] == community2.name
-    assert resp_com_list[2]["identifier"] == community2.identifier
-    assert resp_com_list[2]["download_count"] == 50
-    assert resp_com_list[2]["package_count"] == 10
-    assert isinstance(resp_com_list[2]["background_image_url"], str)
-    assert resp_com_list[2]["background_image_url"] == community2.background_image_url
-    assert resp_com_list[2]["description"] == community2.description
-    assert resp_com_list[2]["discord_link"] == community2.discord_url
+    for index, c in enumerate((community_site.community, community1, community2)):
+        assert results[index]["name"] == c.name
+        assert results[index]["identifier"] == c.identifier
+        assert results[index]["total_download_count"] == c.total_download_count
+        assert results[index]["total_package_count"] == c.total_package_count
+        assert results[index]["background_image_url"] == c.background_image_url
+        assert results[index]["description"] == c.description
+        assert results[index]["discord_url"] == c.discord_url
 
 
 @pytest.mark.django_db
@@ -98,12 +78,12 @@ def test_api_cyberstorm_community_list_only_listed_communities_are_returned(
 
 
 @pytest.mark.django_db
-def test_api_cyberstorm_community_list_are_ordered_by_name_by_default(
+def test_api_cyberstorm_community_list_are_ordered_by_identifier_by_default(
     api_client: APIClient, community
 ) -> None:
-    a = CommunityFactory(name="a")
-    b = CommunityFactory(name="b")
-    c = CommunityFactory(name="c")
+    a = CommunityFactory(identifier="a")
+    b = CommunityFactory(identifier="b")
+    c = CommunityFactory(identifier="c")
 
     data = __query_api(api_client)
 
@@ -111,131 +91,54 @@ def test_api_cyberstorm_community_list_are_ordered_by_name_by_default(
 
 
 @pytest.mark.django_db
-def test_api_cyberstorm_community_list_download_counts() -> None:
-    view = CommunityListAPIView()
+@patch.object(CommunityPaginator, "page_size", 10)
+def test_api_cyberstorm_community_list_pagination(
+    api_client: APIClient,
+) -> None:
 
-    community1 = CommunityFactory()
-    community2 = CommunityFactory()
-    for x in range(10):
-        PackageListingFactory(
-            community_=community1, package_version_kwargs={"downloads": 10}
-        )
-        PackageListingFactory(
-            community_=community2, package_version_kwargs={"downloads": 5}
-        )
-
-    communities = view.get_queryset()
-
-    assert communities.get(name=community1.name).downloads == 100
-    assert communities.get(name=community2.name).downloads == 50
-
-    for x in range(10):
-        PackageListingFactory(
-            community_=community1,
-            package_version_kwargs={"downloads": 3},
-            package_kwargs={"is_deprecated": True},
-        )
-        PackageListingFactory(
-            community_=community2,
-            review_status=PackageListingReviewStatus.rejected,
-            package_version_kwargs={"downloads": 5},
-        )
-
-    communities = view.get_queryset()
-
-    assert communities.get(name=community1.name).downloads == 100
-    assert communities.get(name=community2.name).downloads == 50
-
-
-@pytest.mark.django_db
-def test_api_cyberstorm_community_list_package_counts() -> None:
-    view = CommunityListAPIView()
-
-    community1 = CommunityFactory()
-    community2 = CommunityFactory()
-    for x in range(10):
-        PackageListingFactory(community_=community1)
-        PackageListingFactory(community_=community2)
-
-    communities = view.get_queryset()
-
-    assert communities.get(name=community1.name).pkgs == 10
-    assert communities.get(name=community2.name).pkgs == 10
-
-    for x in range(7):
-        PackageListingFactory(
-            community_=community1, package_kwargs={"is_deprecated": True}
-        )
-        PackageListingFactory(
-            community_=community2, review_status=PackageListingReviewStatus.rejected
-        )
-
-    for x in range(3):
-        PackageListingFactory(
-            community_=community1, package_kwargs={"is_deprecated": False}
-        )
-        PackageListingFactory(
-            community_=community2, review_status=PackageListingReviewStatus.approved
-        )
-
-    communities = view.get_queryset()
-
-    assert communities.get(name=community1.name).pkgs == 13
-    assert communities.get(name=community2.name).pkgs == 13
-
-
-@pytest.mark.django_db
-def test_api_cyberstorm_community_list_pagination(api_client: APIClient) -> None:
-
-    for i in range(55):
+    for i in range(25):
         CommunityFactory()
+
+    total_count = Community.objects.count()
+    assert 30 >= total_count > 20
 
     data = __query_api(api_client)
 
-    assert data["current"] == 1
-    assert data["final"] == 3
-    assert data["total"] == 56
-    assert data["count"] == 20
-    assert len(data["results"]) == 20
+    assert data["previous"] is None
+    assert data["next"].endswith("page=2")
+    assert data["count"] == total_count
+    assert len(data["results"]) == 10
 
     data = __query_api(api_client, "page=2")
-    assert data["current"] == 2
-    assert data["final"] == 3
-    assert data["total"] == 56
-    assert data["count"] == 20
-    assert (
-        len(data["results"]) == 20
-    )  # There is the test community, that is created in api_client
+    assert data["next"].endswith("page=3")
+    assert data["previous"] == data["next"].replace("?page=3", "")
+    assert data["count"] == total_count
+    assert len(data["results"]) == 10
 
     data = __query_api(api_client, "page=3")
-    assert data["current"] == 3
-    assert data["final"] == 3
-    assert data["total"] == 56
-    assert data["count"] == 16
-    assert (
-        len(data["results"]) == 16
-    )  # There is the test community, that is created in api_client
+    assert data["previous"].endswith("page=2")
+    assert data["next"] is None
+    assert data["count"] == total_count
+    assert len(data["results"]) == total_count - 20
 
 
 def __assert_communities(
     data: Dict, communities: Union[Community, List[Community]]
 ) -> None:
     """
-    Check that expected communities, identified by name, are found in results
-
-    Note that by default the communities in the results are ordered by "name".
+    Check that expected communities are found in results
     """
     expected = communities if isinstance(communities, List) else [communities]
 
     assert len(data["results"]) == len(expected)
 
     for i, actual in enumerate(data["results"]):
-        assert actual["name"] == expected[i].name
+        assert actual["identifier"] == expected[i].identifier
 
 
 def __query_api(client: APIClient, query: str = "", response_status_code=200) -> Dict:
     url = reverse(
-        "api:cyberstorm:cyberstorm.communities",
+        "api:cyberstorm:cyberstorm.community.list",
     )
     response = client.get(f"{url}?{query}")
     assert response.status_code == response_status_code
