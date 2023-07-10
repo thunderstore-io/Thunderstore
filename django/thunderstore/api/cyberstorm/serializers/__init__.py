@@ -1,1 +1,1 @@
-__all__ = []
+from .community import CyberstormCommunitySerializer
