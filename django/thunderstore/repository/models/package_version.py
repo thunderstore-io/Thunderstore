@@ -132,6 +132,10 @@ class PackageVersion(models.Model):
             },
         )
 
+    @property
+    def icon_url(self) -> str:
+        return self.icon.url
+
     @cached_property
     def display_name(self):
         return self.name.replace("_", " ")
@@ -141,8 +145,20 @@ class PackageVersion(models.Model):
         return self.package.owner
 
     @cached_property
+    def namespace(self):
+        return self.package.namespace.name
+
+    @cached_property
     def is_deprecated(self):
         return self.package.is_deprecated
+
+    @cached_property
+    def dependencies_count(self):
+        return self.dependencies.count()
+
+    @cached_property
+    def dependencies_preview(self):
+        return self.dependencies[:20]
 
     @cached_property
     def full_version_name(self):

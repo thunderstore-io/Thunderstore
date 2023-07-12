@@ -187,6 +187,14 @@ class Package(models.Model):
         return self.latest.icon
 
     @cached_property
+    def icon_url(self):
+        return self.latest.icon_url
+
+    @cached_property
+    def file_size(self):
+        return self.latest.file_size
+
+    @cached_property
     def website_url(self):
         return self.latest.website_url
 
@@ -201,6 +209,22 @@ class Package(models.Model):
     @cached_property
     def dependencies(self):
         return self.latest.dependencies.all()
+
+    @cached_property
+    def dependencies_count(self):
+        return self.latest.dependencies_count
+
+    @cached_property
+    def dependencies_preview(self):
+        return self.latest.dependencies[:20]
+
+    @cached_property
+    def versions_count(self):
+        return self.available_versions.count()
+
+    @cached_property
+    def versions_preview(self):
+        return self.available_versions[:20]
 
     @cached_property
     def sorted_dependencies(self):
