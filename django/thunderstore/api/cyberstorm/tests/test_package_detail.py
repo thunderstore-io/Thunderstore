@@ -8,7 +8,7 @@ from django.http import Http404, HttpRequest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.api.cyberstorm.views import PackageDetailAPIView
+from thunderstore.api.cyberstorm.views import PackageListingDetailAPIView
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunitySiteFactory, PackageListingFactory
 from thunderstore.community.models import CommunitySite
@@ -167,7 +167,7 @@ def test_api_cyberstorm_package_detail_success(
 @pytest.mark.django_db
 def test_api_cyberstorm_package_detail_can_be_viewed_by_user_failure() -> None:
     pl = PackageListingFactory(review_status=PackageListingReviewStatus.rejected)
-    view = PackageDetailAPIView()
+    view = PackageListingDetailAPIView()
     user = UserFactory()
     request = HttpRequest()
     setattr(request, "user", user)

@@ -8,22 +8,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers import (
-    PackageCategorySerializerCyberstorm,
-    PackageDependencySerializerCyberstorm,
-    PackageDetailSerializerCyberstorm,
-    PackageTeamSerializerCyberstorm,
-    PackageVersionSerializerCyberstorm,
+    CyberstormPackageSerializer,
+    CyberstormTeamSerializer,
 )
 from thunderstore.community.models import PackageListing
 from thunderstore.community.utils import get_preferred_community
 from thunderstore.repository.models.package import Package
 
 
-class PackageDetailAPIView(APIView):
+class PackageListingDetailAPIView(APIView):
     permission_classes = []
 
     @swagger_auto_schema(
-        responses={200: PackageDetailSerializerCyberstorm()},
+        responses={200: CyberstormPackageSerializer()},
         operation_id="cyberstorm.package",
     )
     def get(
@@ -85,9 +82,7 @@ class PackageDetailAPIView(APIView):
             )
         )
 
-    def serialize_results(
-        self, listing: PackageListing
-    ) -> PackageDetailSerializerCyberstorm:
+    def serialize_results(self, listing: PackageListing) -> CyberstormPackageSerializer:
         """
         Format results to transportation.
         """
@@ -111,56 +106,11 @@ class PackageDetailAPIView(APIView):
                 ).data
             )
 
-        return PackageDetailSerializerCyberstorm(
+        return CyberstormPackageSerializer(
             {
-                "name": listing.package.name,
-                "namespace": listing.package.namespace.name,
-                "community": listing.community.identifier,
-                "short_description": latest.description,
-                "image_source": latest.icon.url if bool(latest.icon) else None,
-                "download_count": listing.package_total_downloads,
-                "likes": listing.package_total_rating,
-                "size": latest.file_size,
-                "author": listing.package.owner.name,
-                "last_updated": listing.package.date_updated,
-                "is_pinned": listing.package.is_pinned,
-                "is_nsfw": listing.has_nsfw_content,
-                "is_deprecated": listing.package.is_deprecated,
-                "categories": [
-                    PackageCategorySerializerCyberstorm(c).data
-                    for c in listing.categories.all()
-                ],
-                "description": latest.readme,
-                "github_link": latest.website_url,
-                "donation_link": listing.package.owner.donation_link,
-                "first_uploaded": listing.package.date_created,
                 "dependency_string": latest.full_version_name,
                 "dependencies": dependencies,
                 "dependant_count": listing.package_dependant_count,
-                "team": PackageTeamSerializerCyberstorm(
-                    {
-                        "name": listing.package.owner.name,
-                        "members": [
-                            {
-                                "user": member.username,
-                                # TODO: We don't have user profile pics yet
-                                "image_source": None,
-                                "role": member.role,
-                            }
-                            for member in listing.package.owner.members.all()
-                        ],
-                    }
-                ).data,
-                "versions": [
-                    PackageVersionSerializerCyberstorm(
-                        {
-                            "upload_date": v.date_created,
-                            "download_count": v.downloads,
-                            "version": v.version_number,
-                            "changelog": v.changelog,
-                        }
-                    ).data
-                    for v in listing.package.available_versions
-                ],
+                "team": CyberstormTeamSerializer(listing.package.owner).data,
             }
         )

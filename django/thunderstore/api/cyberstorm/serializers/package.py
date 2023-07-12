@@ -1,89 +1,60 @@
 from rest_framework import serializers
 
-from thunderstore.community.models import Community, PackageCategory
-from thunderstore.repository.models import Namespace, Package, PackageVersion, Team
+from . import CyberstormCommunitySerializer
+from .team import CyberstormTeamSerializer
 
 
-class PackageTeamMemberSerializerCyberstorm(serializers.Serializer):
-    user = serializers.CharField()
-    image_source = serializers.CharField(allow_null=True)
-    role = serializers.CharField()
-
-
-class PackageTeamSerializerCyberstorm(serializers.Serializer):
+class CyberstormPackageCategorySerializer(serializers.Serializer):
     name = serializers.CharField()
-    members = PackageTeamMemberSerializerCyberstorm(many=True)
+    slug = serializers.CharField()
 
 
-class PackageCategorySerializerCyberstorm(serializers.ModelSerializer):
-    class Meta:
-        model = PackageCategory
-        fields = ["name", "slug"]
-
-
-class PackageVersionSerializerCyberstorm(serializers.Serializer):
-    upload_date = serializers.DateTimeField()
-    download_count = serializers.IntegerField(min_value=0)
-    version = serializers.CharField(
-        max_length=PackageVersion._meta.get_field("version_number").max_length
-    )
-    changelog = serializers.CharField(
-        max_length=PackageVersion._meta.get_field("changelog").max_length,
-        allow_null=True,
-        allow_blank=True,
-    )
-
-
-class PackageSerializerCyberstorm(serializers.Serializer):
-    name = serializers.CharField(max_length=Package._meta.get_field("name").max_length)
-    namespace = serializers.CharField(
-        max_length=Namespace._meta.get_field("name").max_length
-    )
-    community = serializers.CharField(
-        max_length=Community._meta.get_field("identifier").max_length
-    )
-    short_description = serializers.CharField(
-        max_length=PackageVersion._meta.get_field("description").max_length
-    )
-    image_source = serializers.CharField(allow_null=True)
-    download_count = serializers.IntegerField(min_value=0)
-    likes = serializers.IntegerField(min_value=0)
-    size = serializers.IntegerField()
-    author = serializers.CharField(max_length=Team._meta.get_field("name").max_length)
-    last_updated = serializers.DateTimeField()
-    is_pinned = serializers.BooleanField()
-    is_nsfw = serializers.BooleanField()
-    is_deprecated = serializers.BooleanField()
-    categories = PackageCategorySerializerCyberstorm(many=True)
-
-
-class PackageDependencySerializerCyberstorm(serializers.Serializer):
-    name = serializers.CharField(max_length=Package._meta.get_field("name").max_length)
-    namespace = serializers.CharField(
-        max_length=Namespace._meta.get_field("name").max_length
-    )
-    community = serializers.CharField(
-        allow_null=True,
-        max_length=Community._meta.get_field("identifier").max_length,
-    )
-    short_description = serializers.CharField(
-        max_length=PackageVersion._meta.get_field("description").max_length
-    )
-    image_source = serializers.CharField(allow_null=True)
-    version = serializers.CharField(
-        max_length=PackageVersion._meta.get_field("version_number").max_length
-    )
-
-
-class PackageDetailSerializerCyberstorm(PackageSerializerCyberstorm):
+class CyberstormPackageVersionMinimalSerializer(serializers.Serializer):
+    identifier = serializers.CharField(source="full_version_name")
+    namespace = serializers.CharField()
+    name = serializers.CharField()
+    version_number = serializers.CharField()
     description = serializers.CharField()
-    github_link = serializers.CharField(
-        max_length=PackageVersion._meta.get_field("website_url").max_length
-    )
-    donation_link = serializers.CharField()
-    first_uploaded = serializers.DateTimeField()
-    dependency_string = serializers.CharField(max_length=210)
-    dependencies = PackageDependencySerializerCyberstorm(many=True)
+
+    datetime_created = serializers.DateTimeField(source="date_created")
+    file_size = serializers.IntegerField()
+    icon_url = serializers.CharField()
+
+    download_count = serializers.IntegerField(source="downloads")
+
+
+class CyberstormPackageSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    namespace = serializers.CharField()
+
+    display_name = serializers.CharField()
+    description = serializers.CharField()
+
+    icon_url = serializers.CharField()
+
+    download_count = serializers.IntegerField(source="downloads")
+    rating_score = serializers.IntegerField()
+    file_size = serializers.IntegerField()
+
+    datetime_created = serializers.DateTimeField(source="date_created")
+    datetime_updated = serializers.DateTimeField(source="date_updated")
+    is_pinned = serializers.BooleanField()
+    is_deprecated = serializers.BooleanField()
+
+    website_url = serializers.CharField()
     dependant_count = serializers.IntegerField(min_value=0)
-    team = PackageTeamSerializerCyberstorm()
-    versions = PackageVersionSerializerCyberstorm(many=True)
+    owner = CyberstormTeamSerializer()
+
+    dependencies_count = serializers.IntegerField()
+    dependencies_preview = CyberstormPackageVersionMinimalSerializer(many=True)
+    versions_count = serializers.IntegerField()
+    versions_preview = CyberstormPackageVersionMinimalSerializer(many=True)
+
+
+class CyberstormPackageListingMetaSerializer(serializers.Serializer):
+    community = CyberstormCommunitySerializer()
+    package = CyberstormPackageSerializer()
+    categories = CyberstormPackageCategorySerializer(many=True)
+    review_status = serializers.CharField()
+
+    has_nsfw_content = serializers.BooleanField()
