@@ -460,6 +460,7 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "account_serviceaccount",
         "account_userflag",
         "account_userflagmembership",
+        "account_usersettings",
         "auth_group",
         "auth_group_permissions",
         "auth_permission",

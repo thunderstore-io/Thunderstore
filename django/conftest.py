@@ -18,7 +18,7 @@ from rest_framework.test import APIClient
 from django_contracts.models import LegalContract, LegalContractVersion
 from thunderstore.account.factories import UserFlagFactory
 from thunderstore.account.forms import CreateServiceAccountForm
-from thunderstore.account.models import ServiceAccount, UserFlag
+from thunderstore.account.models import ServiceAccount, UserFlag, UserSettings
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
@@ -110,6 +110,17 @@ def user(django_user_model):
         email="test@example.org",
         password="hunter2",
     )
+
+
+@pytest.fixture()
+def user_with_settings(django_user_model):
+    user = django_user_model.objects.create_user(
+        username="SettingsTest",
+        email="test@example.org",
+        password="hunter2",
+    )
+    UserSettings.get_for_user(user)
+    return user
 
 
 @pytest.fixture()
