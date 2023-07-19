@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import include, path
 
 from thunderstore.api.urls import cyberstorm_urls
@@ -57,8 +58,12 @@ api_urls = [
         "experimental/",
         include((api_experimental_urls, "experimental"), namespace="experimental"),
     ),
-    path(
-        "cyberstorm/",
-        include((cyberstorm_urls, "cyberstorm"), namespace="cyberstorm"),
-    ),
 ]
+
+if settings.IS_CYBERSTORM_ENABLED:
+    api_urls.append(
+        path(
+            "cyberstorm/",
+            include((cyberstorm_urls, "cyberstorm"), namespace="cyberstorm"),
+        )
+    )
