@@ -437,6 +437,25 @@ def test_service_account_creation(client, community_site, team, team_owner):
 
 
 @pytest.mark.django_db
+def test_team_creation_view(client, community_site, team_owner):
+    client.force_login(team_owner.user)
+
+    response = client.get(
+        reverse("settings.teams.create"),
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 200
+    assert b"Enter the name of the team you wish to create." in response.content
+
+    response = client.post(
+        reverse("settings.teams.create"),
+        {"name": "TeamName"},
+        HTTP_HOST=community_site.site.domain,
+    )
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
 def test_team_settings_donation_link_view(
     client: APIClient,
     community_site: CommunitySite,
