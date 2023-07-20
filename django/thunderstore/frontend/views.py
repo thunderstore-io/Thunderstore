@@ -44,7 +44,7 @@ class ManifestV1ValidatorView(TemplateView):
     template_name = "frontend/manifest_v1_validator.html"
 
 
-class SettingsViewMixin(TemplateView):
+class SettingsViewMixin:
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["setting_links"] = plugin_registry.get_settings_links()
