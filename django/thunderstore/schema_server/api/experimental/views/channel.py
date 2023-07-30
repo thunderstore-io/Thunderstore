@@ -36,6 +36,7 @@ class SchemaChannelApiView(APIView):
         request_body=Schema(title="content", type=TYPE_FILE),
         responses={200: SchemaChannelUpdateResponseSerializer()},
         operation_id="experimental.schema.channel.update",
+        tags=["schema"],
     )
     def post(self, request, channel: str, *args, **kwargs):
         if "file" not in self.request.data or not self.request.data["file"]:
@@ -69,6 +70,7 @@ class SchemaChannelLatestApiView(APIView):
     @swagger_auto_schema(
         responses={200: Schema(title="content", type=TYPE_FILE)},
         operation_id="experimental.schema.channel.retrieve",
+        tags=["schema"],
     )
     def get(self, request, channel: str, *args, **kwargs):
         channel = get_object_or_404(SchemaChannel, identifier=channel)
