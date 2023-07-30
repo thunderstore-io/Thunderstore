@@ -28,6 +28,7 @@ class ReadmeValidatorApiView(APIView):
         request_body=params_serializer_class(),
         responses={200: response_serializer_class()},
         operation_id="experimental.submission.validate.readme",
+        tags=["experimental"],
     )
     def post(self, request):
         serializer = self.params_serializer_class(data=request.data)
@@ -56,6 +57,7 @@ class ManifestV1ValidatorApiView(APIView):
         request_body=params_serializer_class(),
         responses={200: response_serializer_class()},
         operation_id="experimental.submission.validate.manifest-v1",
+        tags=["experimental"],
     )
     def post(self, request):
         serializer = self.params_serializer_class(data=request.data)
@@ -89,6 +91,7 @@ class IconValidatorApiView(APIView):
         request_body=params_serializer_class(),
         responses={200: response_serializer_class()},
         operation_id="experimental.submission.validate.icon",
+        tags=["experimental"],
     )
     def post(self, request):
         serializer = self.params_serializer_class(data=request.data)

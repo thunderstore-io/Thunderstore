@@ -18,6 +18,7 @@ class RenderMarkdownApiView(APIView):
         request_body=RenderMarkdownParamsSerializer,
         responses={200: RenderMarkdownResponseSerializer()},
         operation_id="experimental.frontend.render-markdown",
+        tags=["experimental"],
     )
     def post(self, request, *args, **kwargs):
         validator = RenderMarkdownParamsSerializer(data=request.data)

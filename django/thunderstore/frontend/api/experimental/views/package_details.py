@@ -26,6 +26,8 @@ class PackageDetailApiView(APIView):
     @swagger_auto_schema(
         responses={200: PackageDetailViewContentSerializer()},
         operation_id="experimental.frontend.community.package",
+        deprecated=True,
+        tags=["experimental"],
     )
     def get(
         self,

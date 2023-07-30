@@ -10,6 +10,14 @@ from thunderstore.community.models import (
 from thunderstore.schema_import.schema import Schema, SchemaCommunity
 
 
+def get_slogan_from_display_name(name: str) -> str:
+    if name.lower().startswith("the "):
+        slogan_name = name[4:]
+    else:
+        slogan_name = name
+    return f"The {slogan_name} Mod Database"
+
+
 # TODO: Add support for deleting or at least disabling unnecessary content
 @transaction.atomic
 def import_community(identifier: str, schema: SchemaCommunity):
@@ -23,7 +31,7 @@ def import_community(identifier: str, schema: SchemaCommunity):
     if community.block_auto_updates:
         return
 
-    community.slogan = f"The {schema.display_name} Mod Database"
+    community.slogan = get_slogan_from_display_name(schema.display_name)
     community.description = (
         "Thunderstore is a mod database and API for downloading mods"
     )

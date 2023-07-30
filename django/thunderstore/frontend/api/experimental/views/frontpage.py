@@ -20,6 +20,8 @@ class FrontPageApiView(APIView):
     @swagger_auto_schema(
         responses={200: FrontPageContentSerializer()},
         operation_id="experimental.frontend.frontpage",
+        deprecated=True,
+        tags=["experimental"],
     )
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         queryset = self.get_queryset()

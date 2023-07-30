@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -18,9 +19,17 @@ class UploadPackageApiView(APIView):
     parser_classes = [MultiPartParser]
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        deprecated=True,
+        tags=["experimental"],
+    )
     def get(self, request):
         return Response({"max_package_size_bytes": MAX_PACKAGE_SIZE})
 
+    @swagger_auto_schema(
+        deprecated=True,
+        tags=["experimental"],
+    )
     def post(self, request):
         serializer = PackageUploadSerializerExperiemental(
             data=request.data,

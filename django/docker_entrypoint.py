@@ -162,6 +162,8 @@ def run_celery_worker() -> None:
 
 def run_celery_beat() -> None:
     print("Launching celery beat")
+    if os.path.exists(CELERY_PIDFILE.value):
+        os.remove(CELERY_PIDFILE.value)
     worker_command = [
         "celery",
         "--app",

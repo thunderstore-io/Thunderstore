@@ -60,6 +60,7 @@ class OverwolfLoginApiView(APIView):
         operation_id="experimental.auth.overwolf.login",
         request_body=OwLoginRequestBody,
         responses={200: OwLoginResponseBody()},
+        tags=["experimental"],
     )
     def post(self, request: Request) -> HttpResponse:
         request_data = OwLoginRequestBody(data=request.data)

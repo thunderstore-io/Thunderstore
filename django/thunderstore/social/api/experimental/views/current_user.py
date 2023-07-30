@@ -1,6 +1,7 @@
 from datetime import date
 from typing import List, Optional, Set, TypedDict
 
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +14,7 @@ class CurrentUserExperimentalApiView(APIView):
     Gets information about the current user, such as rated packages and permissions
     """
 
+    @swagger_auto_schema(tags=["experimental"])
     def get(self, request, format=None):
         if request.user.is_authenticated:
             profile = get_user_profile(request.user)

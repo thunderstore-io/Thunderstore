@@ -5,7 +5,19 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListingSection,
 )
+from thunderstore.schema_import.sync import get_slogan_from_display_name
 from thunderstore.schema_import.tasks import sync_ecosystem_schema
+
+
+@pytest.mark.parametrize(
+    "name, expected",
+    (
+        ("Risk of Rain 2", "The Risk of Rain 2 Mod Database"),
+        ("The Ouroboros King", "The Ouroboros King Mod Database"),
+    ),
+)
+def test_schema_sync_slogan_name(name: str, expected: str):
+    assert get_slogan_from_display_name(name) == expected
 
 
 @pytest.mark.django_db

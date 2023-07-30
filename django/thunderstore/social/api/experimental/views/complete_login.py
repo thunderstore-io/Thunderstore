@@ -47,6 +47,7 @@ class CompleteLoginApiView(APIView):
         operation_id="experimental.auth.complete",
         request_body=RequestBody,
         responses={200: ResponseBody()},
+        tags=["experimental"],
     )
     def post(self, request: Request, provider: str) -> HttpResponse:
         request_data = RequestBody(data=request.data)

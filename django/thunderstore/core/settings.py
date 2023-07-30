@@ -252,6 +252,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.markdown",
         "thunderstore.modpacks",
         "thunderstore.schema_import",
+        "thunderstore.schema_server",
         "thunderstore.legal",
         "thunderstore.wiki",
     ]
@@ -509,6 +510,10 @@ CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
         "repository_team",
         "repository_teammember",
         "repository_namespace",
+        "schema_server_schemachannel",
+        "schema_server_schemachannel_authorized_users",
+        "schema_server_schemachannelfile",
+        "schema_server_schemafile",
         "social_auth_association",
         "social_auth_code",
         "social_auth_nonce",
@@ -578,6 +583,7 @@ DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 THUMBNAIL_DEFAULT_STORAGE = "django.core.files.storage.FileSystemStorage"
 PACKAGE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 MODPACK_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+SCHEMA_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
 # AWS S3 for everything, can be used with S3 compatible providers
 
@@ -655,6 +661,7 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     THUMBNAIL_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     MODPACK_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    SCHEMA_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # For uploading files to multiple buckets at once.
 S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
@@ -701,12 +708,14 @@ if all(
     THUMBNAIL_DEFAULT_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    SCHEMA_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
 
 # Storage Defaults
 DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
 THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
 PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
 MODPACK_FILE_STORAGE = get_storage_class_or_stub(MODPACK_FILE_STORAGE)
+SCHEMA_FILE_STORAGE = get_storage_class_or_stub(SCHEMA_FILE_STORAGE)
 
 # Social auth
 

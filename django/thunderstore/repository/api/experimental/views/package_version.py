@@ -16,6 +16,10 @@ from thunderstore.repository.package_reference import PackageReference
 class PackageVersionDetailMixin(ManualCacheCommunityMixin, RetrieveAPIView):
     cache_until = CacheBustCondition.any_package_updated
 
+    @swagger_auto_schema(tags=["experimental"])
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
         try:
@@ -57,7 +61,10 @@ class PackageVersionDetailApiView(PackageVersionDetailMixin):
 
     serializer_class = PackageVersionSerializerExperimental
 
-    @swagger_auto_schema(operation_id="experimental_package_version_read")
+    @swagger_auto_schema(
+        operation_id="experimental_package_version_read",
+        tags=["experimental"],
+    )
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
 
@@ -69,7 +76,10 @@ class PackageVersionChangelogApiView(PackageVersionDetailMixin):
 
     serializer_class = MarkdownResponseSerializer
 
-    @swagger_auto_schema(operation_id="experimental_package_version_changelog_read")
+    @swagger_auto_schema(
+        operation_id="experimental_package_version_changelog_read",
+        tags=["experimental"],
+    )
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
 
@@ -86,7 +96,10 @@ class PackageVersionReadmeApiView(PackageVersionDetailMixin):
 
     serializer_class = MarkdownResponseSerializer
 
-    @swagger_auto_schema(operation_id="experimental_package_version_readme_read")
+    @swagger_auto_schema(
+        operation_id="experimental_package_version_readme_read",
+        tags=["experimental"],
+    )
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
 

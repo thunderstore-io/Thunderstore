@@ -23,6 +23,7 @@ class DeleteSessionApiView(APIView):
     @swagger_auto_schema(
         operation_id="experimental.auth.delete",
         responses={204: ""},
+        tags=["experimental"],
     )
     def post(self, request: Request) -> HttpResponse:
         Session.objects.filter(session_key=request.auth).delete()

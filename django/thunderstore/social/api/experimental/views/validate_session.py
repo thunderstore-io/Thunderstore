@@ -17,6 +17,8 @@ class ValidateSessionApiView(APIView):
             200: "Session is valid",
             401: "Session key is missing, invalid, or expired",
         },
+        deprecated=True,
+        tags=["experimental"],
     )
     def get(self, request: Request) -> HttpResponse:
         # UserSessionTokenAuthentication will automatically return 401

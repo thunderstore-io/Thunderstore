@@ -48,6 +48,7 @@ from thunderstore.repository.models import (
     Webhook,
 )
 from thunderstore.repository.models.namespace import Namespace
+from thunderstore.schema_server.factories import SchemaChannelFactory
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models import WebhookType
 from thunderstore.wiki.factories import WikiFactory, WikiPageFactory
@@ -277,6 +278,11 @@ def package_listing_section(community):
         slug="test-section",
         is_listed=True,
     )
+
+
+@pytest.fixture()
+def schema_channel():
+    return SchemaChannelFactory()
 
 
 @pytest.fixture()
