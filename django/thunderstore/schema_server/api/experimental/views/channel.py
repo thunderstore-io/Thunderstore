@@ -62,6 +62,10 @@ class SchemaChannelApiView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+class SchemaChannelLatestApiView(APIView):
+    permission_classes = []
+
     @swagger_auto_schema(
         responses={200: Schema(title="content", type=TYPE_FILE)},
         operation_id="experimental.schema.channel.retrieve",

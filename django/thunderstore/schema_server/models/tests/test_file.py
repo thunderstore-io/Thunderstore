@@ -1,5 +1,3 @@
-import gzip
-import io
 import time
 from datetime import timedelta
 from hashlib import sha256
@@ -8,19 +6,7 @@ import pytest
 from django.utils import timezone
 
 from thunderstore.schema_server.models import SchemaFile
-
-
-def _gzip_compress(data: bytes) -> bytes:
-    with io.BytesIO() as buffer:
-        with gzip.GzipFile(fileobj=buffer, mode="wb") as gz:
-            gz.write(data)
-        return buffer.getvalue()
-
-
-def _gzip_decompress(data: bytes) -> bytes:
-    with io.BytesIO(data) as buffer:
-        with gzip.GzipFile(fileobj=buffer, mode="rb") as gz:
-            return gz.read()
+from thunderstore.utils.gzip import gzip_compress, gzip_decompress
 
 
 def _sha256_hash(data: bytes) -> str:
@@ -32,7 +18,7 @@ def _sha256_hash(data: bytes) -> str:
 @pytest.mark.django_db
 def test_schema_server_file_compression():
     test_data = b"Hello world, Hello world, Hello world"
-    compressed_data = _gzip_compress(test_data)
+    compressed_data = gzip_compress(test_data)
     file = SchemaFile.get_or_create(test_data)
     assert file.file_size == len(test_data)
     assert file.content_encoding == "gzip"
@@ -40,7 +26,7 @@ def test_schema_server_file_compression():
 
     file_data = file.data.read()
     assert file_data == compressed_data
-    assert _gzip_decompress(file_data) == test_data
+    assert gzip_decompress(file_data) == test_data
 
 
 @pytest.mark.django_db
