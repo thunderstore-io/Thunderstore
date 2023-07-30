@@ -33,6 +33,7 @@ class UserMediaInitiateUploadApiView(GenericAPIView):
         request_body=UserMediaInitiateUploadParams,
         responses={201: UserMediaInitiateUploadResponseSerializer()},
         operation_id="experimental.usermedia.initiate-upload",
+        tags=["usermedia"],
     )
     def post(self, request, *args, **kwargs):
         validator = UserMediaInitiateUploadParams(data=request.data)
@@ -77,6 +78,7 @@ class UserMediaFinishUploadApiView(GenericAPIView):
         request_body=UserMediaFinishUploadParamsSerializer(),
         responses={200: UserMediaSerializer()},
         operation_id="experimental.usermedia.finish-upload",
+        tags=["usermedia"],
     )
     def post(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -107,6 +109,7 @@ class UserMediaAbortUploadApiView(GenericAPIView):
     @swagger_auto_schema(
         responses={200: UserMediaSerializer()},
         operation_id="experimental.usermedia.abort-upload",
+        tags=["usermedia"],
     )
     def post(self, request, *args, **kwargs):
         instance = self.get_object()

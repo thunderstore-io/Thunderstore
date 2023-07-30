@@ -64,6 +64,10 @@ class CommunitiesExperimentalApiView(CustomListAPIView):
     queryset = Community.objects.listed()
     serializer_class = CommunitySerializer
 
+    @swagger_auto_schema(tags=["experimental"])
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
 
 class PackageCategoriesExperimentalApiView(CustomListAPIView):
     pagination_class = CustomCursorPagination
@@ -74,6 +78,10 @@ class PackageCategoriesExperimentalApiView(CustomListAPIView):
         community = get_object_or_404(Community, identifier=community_identifier)
         return community.package_categories
 
+    @swagger_auto_schema(tags=["experimental"])
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
 
 class CurrentCommunityExperimentalApiView(APIView):
     serializer_class = CommunitySerializer
@@ -82,6 +90,7 @@ class CurrentCommunityExperimentalApiView(APIView):
         responses={200: serializer_class()},
         operation_id="experimental.community.current",
         operation_description="Fetch the Community of the queried domain",
+        tags=["experimental"],
     )
     def get(self, request, *args, **kwargs):
         serializer = CommunitySerializer(request.community)
@@ -99,6 +108,7 @@ class PackageListingUpdateApiView(GenericAPIView):
         operation_id="experimental.package_listing.update",
         request_body=PackageListingUpdateRequestSerializer,
         responses={200: serializer_class()},
+        tags=["experimental"],
     )
     def post(self, request, *args, **kwargs):
         listing: PackageListing = self.get_object()

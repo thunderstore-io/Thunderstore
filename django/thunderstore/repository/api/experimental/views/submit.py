@@ -29,6 +29,7 @@ class SubmitPackageApiView(APIView):
         request_body=PackageSubmissionMetadataSerializer(),
         responses={200: PackageSubmissionResult()},
         operation_id="experimental.package.submit",
+        tags=["experimental"],
     )
     def post(self, request):
         serializer = PackageSubmissionMetadataSerializer(

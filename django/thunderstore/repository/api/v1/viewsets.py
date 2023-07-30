@@ -5,6 +5,7 @@ from typing import Any, Optional
 from django.http import HttpResponse
 from django.utils.cache import get_conditional_response
 from django.utils.http import http_date
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import action
@@ -91,6 +92,7 @@ class PackageViewSet(
             community_identifier=self.community_identifier
         )
 
+    @swagger_auto_schema(tags=["v1"])
     def list(self, request: HttpRequestType, *args: Any, **kwargs: Any) -> HttpResponse:
         cache = APIV1PackageCache.get_latest_for_community(
             community_identifier=self.community_identifier
@@ -114,6 +116,11 @@ class PackageViewSet(
 
         return response
 
+    @swagger_auto_schema(deprecated=True, tags=["v1"])
+    def retrieve(self, *args: Any, **kwargs: Any) -> Response:
+        return super().retrieve(*args, **kwargs)
+
+    @swagger_auto_schema(tags=["v1"])
     @action(
         detail=True,
         methods=["post"],

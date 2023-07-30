@@ -1,5 +1,6 @@
 from typing import Optional
 
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 
@@ -11,7 +12,7 @@ from thunderstore.repository.package_reference import PackageReference
 
 class DeprecateModApiView(JWTApiView):
     """
-    Deprecates a mod by it's package name
+    Deprecates a mod by its package name
 
     * Requires JWT authentication.
     * Only users with special permissions may use this action
@@ -42,6 +43,7 @@ class DeprecateModApiView(JWTApiView):
         if not permissions.can_deprecate:
             raise PermissionDenied("Insufficient Discord user permissions")
 
+    @swagger_auto_schema(tags=["v1"])
     def post(
         self,
         request: HttpRequestType,

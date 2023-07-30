@@ -32,6 +32,8 @@ class CommunityPackageListApiView(APIView):
     @swagger_auto_schema(
         responses={200: CommunityPackageListSerializer()},
         operation_id="experimental.frontend.community.packages",
+        deprecated=True,
+        tags=["experimental"],
     )
     def get(self, request: HttpRequest, community_identifier: str) -> HttpResponse:
         communities = Community.objects.prefetch_related("package_categories")

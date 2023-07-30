@@ -38,6 +38,7 @@ class LegacyProfileCreateApiView(APIView):
         request_body=Schema(title="content", type=TYPE_FILE),
         responses={200: LegacyProfileCreateResponseSerializer()},
         operation_id="experimental.modpacks.legacyprofile.create",
+        tags=["experimental"],
     )
     def post(self, request, *args, **kwargs):
         if "file" not in self.request.data or not self.request.data["file"]:
@@ -58,6 +59,7 @@ class LegacyProfileRetrieveApiView(APIView):
     @swagger_auto_schema(
         responses={200: Schema(title="content", type=TYPE_FILE)},
         operation_id="experimental.modpacks.legacyprofile.retrieve",
+        tags=["experimental"],
     )
     def get(self, request, key: str, *args, **kwargs):
         profile = get_object_or_404(LegacyProfile, id=key)

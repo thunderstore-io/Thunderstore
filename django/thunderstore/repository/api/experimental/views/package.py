@@ -53,6 +53,13 @@ class PackageListApiView(ManualCacheCommunityMixin, ListAPIView):
     serializer_class = PackageSerializerExperimental
     pagination_class = CustomCursorPagination
 
+    @swagger_auto_schema(
+        deprecated=True,
+        tags=["experimental"],
+    )
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
+
     def get_queryset(self):
         return get_package_queryset()
 
@@ -81,6 +88,9 @@ class PackageDetailApiView(ManualCacheCommunityMixin, RetrieveAPIView):
     def get_queryset(self):
         return get_package_queryset()
 
-    @swagger_auto_schema(operation_id="experimental_package_read")
+    @swagger_auto_schema(
+        operation_id="experimental_package_read",
+        tags=["experimental"],
+    )
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
