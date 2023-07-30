@@ -36,17 +36,17 @@ class SchemaChannel(TimestampMixin):
     def update_channel(
         cls, user: Optional[UserType], identifier: str, content: bytes
     ) -> "SchemaChannelFile":
-        channel = SchemaChannel.objects.get(identifier=identifier)
+        channel: SchemaChannel = SchemaChannel.objects.get(identifier=identifier)
         if (
             user is None
             or not user.is_active
             or user not in channel.authorized_users.all()
         ):
             raise PermissionDenied()
-        return channel.add_new_version(content)
+        return channel._add_new_version(content)
 
-    def add_new_version(self, content: bytes) -> "SchemaChannelFile":
-        self.latest = SchemaChannelFile.create_version(self, content)
+    def _add_new_version(self, content: bytes) -> "SchemaChannelFile":
+        self.latest = SchemaChannelFile._create_version(self, content)
         self.save()
         return self.latest
 
@@ -68,7 +68,11 @@ class SchemaChannelFile(TimestampMixin):
     is_active = models.BooleanField(default=True)
 
     @classmethod
-    def create_version(cls, channel: SchemaChannel, content: bytes):
+    def _create_version(cls, channel: SchemaChannel, content: bytes):
+        """
+        This method should only be called internally by SchemaChannel
+        """
+
         return cls.objects.create(
             channel=channel,
             file=SchemaFile.get_or_create(content),
