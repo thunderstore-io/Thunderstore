@@ -34,6 +34,13 @@ def test_schema_server_schemachannel_update_channel_unauthorized(
     with pytest.raises(PermissionDenied):
         SchemaChannel.update_channel(admin_user, channel.identifier, b"Test")
 
+    channel.authorized_users.add(user)
+    assert SchemaChannel.update_channel(user, channel.identifier, b"Test") is not None
+    user.is_active = False
+    user.save()
+    with pytest.raises(PermissionDenied):
+        SchemaChannel.update_channel(user, channel.identifier, b"Test")
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("identifier", ("test", "set"))
