@@ -37,7 +37,6 @@ class SchemaFile(S3FileMixin):
     def get_or_create(cls, content: bytes) -> "SchemaFile":
         hash = sha256()
         hash.update(content)
-        hash.hexdigest()
         checksum = hash.hexdigest()
 
         if existing := cls.objects.filter(checksum_sha256=checksum).first():
