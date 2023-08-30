@@ -183,6 +183,7 @@ class PackageListSearchView(CommunityMixin, ListView):
                 "-package__is_pinned",
                 "package__is_deprecated",
                 "-total_downloads",
+                "-package__date_updated",
             )
         if active_ordering == "top-rated":
             return queryset.annotate(
@@ -191,6 +192,7 @@ class PackageListSearchView(CommunityMixin, ListView):
                 "-package__is_pinned",
                 "package__is_deprecated",
                 "-total_rating",
+                "-package__date_updated",
             )
         return queryset.order_by(
             "-package__is_pinned",
