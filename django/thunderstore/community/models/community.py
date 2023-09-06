@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Manager, QuerySet
@@ -66,12 +67,29 @@ class Community(TimestampMixin, models.Model):
     @property
     def total_package_count(self) -> int:
         # TODO: Implement as a cached value with background updates
-        return -1
+        if not settings.DEBUG:
+            return -1
+
+        listings = self.package_listings.active()
+
+        if self.require_package_listing_approval:
+            listings = listings.approved()
+
+        return listings.count()
 
     @property
     def total_download_count(self) -> int:
         # TODO: Implement as a cached value with background updates
-        return -1
+        # TODO: also figure out more efficient way to handle this
+        if not settings.DEBUG:
+            return -1
+
+        listings = self.package_listings.active()
+
+        if self.require_package_listing_approval:
+            listings = listings.approved()
+
+        return sum([l.total_downloads for l in listings])
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -122,6 +140,13 @@ class Community(TimestampMixin, models.Model):
         Return URL to the community's background image if one exists.
         """
         return None if not bool(self.background_image) else self.background_image.url
+
+    @cached_property
+    def icon_url(self) -> Optional[str]:
+        """
+        Return URL to the community's icon image if one exists.
+        """
+        return None if not bool(self.icon) else self.icon.url
 
     def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
         if not user or not user.is_authenticated:

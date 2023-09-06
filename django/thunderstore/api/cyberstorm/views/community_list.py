@@ -1,3 +1,4 @@
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 
@@ -7,7 +8,7 @@ from thunderstore.community.models import Community
 
 
 class CommunityPaginator(PageNumberPagination):
-    page_size = 100
+    page_size = 150
 
 
 class CommunityListAPIView(ListAPIView):
@@ -15,6 +16,7 @@ class CommunityListAPIView(ListAPIView):
     serializer_class = CyberstormCommunitySerializer
     pagination_class = CommunityPaginator
     queryset = Community.objects.listed()
-    filter_backends = [StrictOrderingFilter]
-    ordering_fields = ["identifier"]
+    filter_backends = [SearchFilter, StrictOrderingFilter]
+    search_fields = ["description", "name"]
+    ordering_fields = ["datetime_created", "identifier", "name"]
     ordering = ["identifier"]
