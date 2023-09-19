@@ -1,9 +1,14 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.test import override_settings
 
 from conftest import TestUserTypes
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
+from thunderstore.community.factories import (
+    CommunityFactory,
+    CommunitySiteFactory,
+    PackageListingFactory,
+)
 from thunderstore.community.models import (
     Community,
     CommunityMemberRole,
@@ -83,6 +88,21 @@ def test_background_image_url_when_community_has_image(dummy_image):
 
 
 @pytest.mark.django_db
+def test_icon_url_when_community_has_no_image():
+    community = CommunityFactory()
+    url = community.icon_url
+    assert url is None
+
+
+@pytest.mark.django_db
+def test_icon_url_when_community_has_image(dummy_image):
+    community = CommunityFactory(icon=dummy_image)
+    url = community.icon_url
+    assert isinstance(url, str)
+    assert len(url) > 0
+
+
+@pytest.mark.django_db
 def test_community_site_get_absolute_url(community_site: CommunitySite) -> None:
     assert community_site.get_absolute_url == "/c/test/"
 
@@ -141,3 +161,87 @@ def test_community_should_use_old_urls(
 
 def test_community_should_use_old_urls_no_community() -> None:
     assert Community.should_use_old_urls(None) is True
+
+
+@pytest.mark.django_db
+def test_total_package_count():
+    # Method is not implemented yet and always returns -1.
+    community = CommunityFactory()
+    assert community.total_package_count == -1
+
+    PackageListingFactory(community_=community)
+    PackageListingFactory(
+        community_=community, review_status=PackageListingReviewStatus.approved
+    )
+    PackageListingFactory()
+    assert community.total_package_count == -1
+
+    community.require_package_listing_approval = True
+    community.save()
+    assert community.total_package_count == -1
+
+
+@override_settings(DEBUG=True)
+@pytest.mark.django_db
+def test_experimental_total_package_count():
+    community = CommunityFactory()
+    assert community.total_package_count == 0
+
+    PackageListingFactory(community_=community)
+    PackageListingFactory(
+        community_=community, review_status=PackageListingReviewStatus.approved
+    )
+    PackageListingFactory()
+    assert community.total_package_count == 2
+
+    community.require_package_listing_approval = True
+    community.save()
+    assert community.total_package_count == 1
+
+
+@pytest.mark.django_db
+def test_total_download_count():
+    # Method is not implemented yet and always returns -1.
+    community = CommunityFactory()
+    assert community.total_download_count == -1
+
+    PackageListingFactory(community_=community, package_version_kwargs={"downloads": 0})
+    assert community.total_download_count == -1
+
+    PackageListingFactory(
+        community_=community, package_version_kwargs={"downloads": 23}
+    )
+    PackageListingFactory(
+        community_=community,
+        package_version_kwargs={"downloads": 11},
+        review_status=PackageListingReviewStatus.approved,
+    )
+    assert community.total_download_count == -1
+
+    community.require_package_listing_approval = True
+    community.save()
+    assert community.total_download_count == -1
+
+
+@override_settings(DEBUG=True)
+@pytest.mark.django_db
+def test_experimental_total_download_count():
+    community = CommunityFactory()
+    assert community.total_download_count == 0
+
+    PackageListingFactory(community_=community, package_version_kwargs={"downloads": 0})
+    assert community.total_download_count == 0
+
+    PackageListingFactory(
+        community_=community, package_version_kwargs={"downloads": 23}
+    )
+    PackageListingFactory(
+        community_=community,
+        package_version_kwargs={"downloads": 11},
+        review_status=PackageListingReviewStatus.approved,
+    )
+    assert community.total_download_count == 23 + 11
+
+    community.require_package_listing_approval = True
+    community.save()
+    assert community.total_download_count == 11
