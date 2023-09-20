@@ -1,11 +1,13 @@
-from datetime import date
+import datetime
 from typing import List, Optional, Set, TypedDict
 
+from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.account.models.user_flag import UserFlag
 from thunderstore.core.types import UserType
 
 
@@ -25,7 +27,7 @@ class CurrentUserExperimentalApiView(APIView):
 
 
 class SubscriptionStatus(TypedDict):
-    expires: Optional[date]
+    expires: Optional[datetime.datetime]
 
 
 class SubscriptionStatusSerializer(serializers.Serializer):
@@ -96,5 +98,8 @@ def get_subscription_status(user: Optional[UserType]) -> SubscriptionStatus:
     if not user:
         return {"expires": None}
 
-    # TODO: return expiration date if user has active subscription.
+    now = timezone.now()
+    if "cyberstorm_beta_access" in UserFlag.get_active_flags_on_user(user, now):
+        return {"expires": (now + datetime.timedelta(weeks=4))}
+
     return {"expires": None}
