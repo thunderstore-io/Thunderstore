@@ -127,6 +127,7 @@ env = environ.Env(
         "https://gcdn.thunderstore.io/static/dev/schema/ecosystem-schema.0.0.2.json",
     ),
     IS_CYBERSTORM_ENABLED=(bool, False),
+    SHOW_CYBERSTORM_API_DOCS=(bool, False),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -781,5 +782,7 @@ OVERWOLF_CLIENT_ID = env.str("OVERWOLF_CLIENT_ID")
 # Cyberstorm APIs enabled?
 IS_CYBERSTORM_ENABLED = env.bool("IS_CYBERSTORM_ENABLED")
 
+# Enable QA API endpoint docs
+SHOW_CYBERSTORM_API_DOCS = env.bool("SHOW_CYBERSTORM_API_DOCS")
 
 globals().update(plugin_registry.get_django_settings(globals()))
