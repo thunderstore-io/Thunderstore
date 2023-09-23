@@ -360,6 +360,7 @@ SESSION_COOKIE_DOMAIN = env.str("SESSION_COOKIE_DOMAIN") or None
 class CeleryQueues:
     Default = "celery"
     BackgroundCache = "background.cache"
+    BackgroundTask = "background.task"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
