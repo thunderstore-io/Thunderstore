@@ -29,3 +29,16 @@ class PackageListingForm(forms.ModelForm):
             raise ValidationError(
                 "All PackageListing categories must match the community of the PackageListing"
             )
+
+
+class PackageListingAdminForm(PackageListingForm):
+    """
+    Same as PackageListingForm but without allowing any category selection
+    before first save, as the admin view will populate the category selection
+    with all categories in the DB otherwise.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields["categories"].queryset = PackageCategory.objects.none()

@@ -1,7 +1,7 @@
 import pytest
 from django.forms import model_to_dict
 
-from thunderstore.community.forms import PackageListingForm
+from thunderstore.community.forms import PackageListingAdminForm, PackageListingForm
 from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.repository.models import Package
 
@@ -105,3 +105,11 @@ def test_package_listing_form_create_categories_different_community(
     )
     assert form.is_valid() is False
     assert form.errors == {"__all__": [expected_error]}
+
+
+@pytest.mark.django_db
+def test_package_listing_form_admin_variant(active_package_listing: PackageListing):
+    form1 = PackageListingAdminForm(instance=active_package_listing)
+    assert form1.fields["categories"].queryset.query.is_empty() is False
+    form2 = PackageListingAdminForm()
+    assert form2.fields["categories"].queryset.query.is_empty() is True
