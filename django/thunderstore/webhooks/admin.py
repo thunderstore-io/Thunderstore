@@ -1,10 +1,13 @@
 from django.contrib import admin
 
+from thunderstore.webhooks.forms.webhook import WebhookForm
 from thunderstore.webhooks.models import Webhook
 
 
 @admin.register(Webhook)
 class PackageAdmin(admin.ModelAdmin):
+    form = WebhookForm
+
     readonly_fields = (
         "date_created",
         "uuid4",
