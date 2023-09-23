@@ -34,7 +34,7 @@ class PackageListingAdmin(admin.ModelAdmin):
         reject_listing,
     )
     filter_horizontal = ("categories",)
-    raw_id_fields = ("package",)
+    raw_id_fields = ("package", "community")
     list_filter = (
         "has_nsfw_content",
         "community",
