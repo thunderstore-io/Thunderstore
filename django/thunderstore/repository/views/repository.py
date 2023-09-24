@@ -26,6 +26,7 @@ from thunderstore.community.models import (
     PackageListing,
     PackageListingSection,
 )
+from thunderstore.core.types import UserType
 from thunderstore.frontend.api.experimental.serializers.views import CommunitySerializer
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
@@ -440,6 +441,16 @@ def get_package_listing_or_404(
     return package_listing
 
 
+def can_view_listing_admin(user: UserType, obj: PackageListing):
+    # TODO: Object level permissions once implemented
+    return user.is_staff and user.has_perm("community.view_packagelisting")
+
+
+def can_view_package_admin(user: UserType, obj: Package):
+    # TODO: Object level permissions once implemented
+    return user.is_staff and user.has_perm("repository.view_package")
+
+
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
     model = PackageListing
@@ -484,6 +495,12 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
 
         context["dependants_string"] = dependants_string
         context["show_management_panel"] = self.can_manage
+        context["show_listing_admin_link"] = can_view_listing_admin(
+            self.request.user, package_listing
+        )
+        context["show_package_admin_link"] = can_view_package_admin(
+            self.request.user, package_listing.package
+        )
 
         def format_category(cat: PackageCategory):
             return {"name": cat.name, "slug": cat.slug}

@@ -23,7 +23,15 @@
 
 {% block content %}
 {% if show_management_panel %}
-<div id="package-management-panel"></div>
+<div class="d-flex justify-content-end gap-1">
+    <div id="package-management-panel"></div>
+    {% if show_listing_admin_link %}
+    <a href="{% url "admin:community_packagelisting_change" object.pk %}" type="button" class="btn btn-primary"><span class="fas fa-external-link-alt"></span>&nbsp;&nbsp;Listing admin</a>
+    {% endif %}
+    {% if show_package_admin_link %}
+    <a href="{% url "admin:repository_package_change" object.package.pk %}" type="button" class="btn btn-primary"><span class="fas fa-external-link-alt"></span>&nbsp;&nbsp;Package admin</a>
+    {% endif %}
+</div>
 <script type="text/javascript">
 window.ts.PackageManagementPanel(
     document.getElementById("package-management-panel"),

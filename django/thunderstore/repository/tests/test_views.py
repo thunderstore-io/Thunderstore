@@ -3,6 +3,9 @@ from unittest import mock
 from urllib import request
 
 import pytest
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404
 from django.test import Client
@@ -16,22 +19,18 @@ from ...cache.enums import CacheBustCondition
 from ...cache.tasks import invalidate_cache
 from ...community.consts import PackageListingReviewStatus
 from ...community.factories import CommunitySiteFactory, SiteFactory
-from ...community.models import (
-    Community,
-    CommunitySite,
-    PackageCategory,
-    PackageListing,
-)
+from ...community.models import CommunitySite, PackageCategory, PackageListing
 from ...core.types import UserType
 from ...frontend.extract_props import extract_props_from_html
 from ...frontend.url_reverse import get_community_url_reverse_args
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
-from ..models import Team, TeamMember, TeamMemberRole
+from ..models import Package, Team, TeamMember, TeamMemberRole
 from ..package_upload import PackageUploadForm
 from ..views.repository import (
     PackageListByOwnerView,
-    PackageListSearchView,
     PackageVersionDetailView,
+    can_view_listing_admin,
+    can_view_package_admin,
 )
 
 
@@ -774,3 +773,48 @@ def test_view_package_detail_management_unlist_permissions(
         assert response.status_code == 302
         package.refresh_from_db()
         assert package.is_active is False
+
+
+User = get_user_model()
+
+
+@pytest.mark.django_db
+def test_view_package_detail_can_view_listing_admin(
+    user: UserType,
+    active_package_listing: PackageListing,
+) -> None:
+    assert can_view_listing_admin(user, active_package_listing) is False
+    user.is_staff = True
+    user.save()
+    assert can_view_listing_admin(user, active_package_listing) is False
+    content_type = ContentType.objects.get_for_model(PackageListing)
+    permission = Permission.objects.get(
+        codename="view_packagelisting",
+        content_type=content_type,
+    )
+    user.user_permissions.add(permission)
+    user = User.objects.get(pk=user.pk)  # Refresh permission cache
+    assert can_view_listing_admin(user, active_package_listing) is True
+    user.is_staff = False
+    assert can_view_listing_admin(user, active_package_listing) is False
+
+
+@pytest.mark.django_db
+def test_view_package_detail_can_view_package_admin(
+    user: UserType,
+    active_package: Package,
+) -> None:
+    assert can_view_package_admin(user, active_package) is False
+    user.is_staff = True
+    user.save()
+    assert can_view_package_admin(user, active_package) is False
+    content_type = ContentType.objects.get_for_model(Package)
+    permission = Permission.objects.get(
+        codename="view_package",
+        content_type=content_type,
+    )
+    user.user_permissions.add(permission)
+    user = User.objects.get(pk=user.pk)  # Refresh permission cache
+    assert can_view_package_admin(user, active_package) is True
+    user.is_staff = False
+    assert can_view_package_admin(user, active_package) is False
