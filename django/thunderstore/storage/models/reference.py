@@ -1,9 +1,12 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from django.db import models
 
 from thunderstore.core.mixins import TimestampMixin
-from thunderstore.storage.models import DataBlob
+from thunderstore.storage.models.blob import DataBlob
+
+if TYPE_CHECKING:
+    from thunderstore.storage.models.group import DataBlobGroup
 
 
 class DataBlobReferenceManager(models.Manager):
@@ -29,6 +32,13 @@ class DataBlobReference(TimestampMixin):
         "storage.DataBlob",
         related_name="references",
         on_delete=models.PROTECT,
+    )
+    group: Optional["DataBlobGroup"] = models.ForeignKey(
+        "storage.DataBlobGroup",
+        related_name="entries",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
     objects: "models.Manager[DataBlobReference]" = DataBlobReferenceManager()
 
@@ -64,6 +74,7 @@ class DataBlobReference(TimestampMixin):
         cls,
         data: bytes,
         *,
+        group: Optional["DataBlobGroup"] = None,
         name: Optional[str] = None,
         content_type: Optional[str] = None,
         content_encoding: Optional[str] = None,
@@ -72,6 +83,7 @@ class DataBlobReference(TimestampMixin):
         blob = DataBlob.get_or_create(data)
         return cls.objects.create(
             blob=blob,
+            group=group,
             name=name,
             content_type=content_type,
             content_encoding=content_encoding,
