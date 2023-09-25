@@ -79,6 +79,13 @@ class PackageVersion(models.Model):
         storage=get_storage_class(settings.PACKAGE_FILE_STORAGE)(),
     )
     file_size = models.PositiveIntegerField()
+    file_tree = models.ForeignKey(
+        "storage.DataBlobGroup",
+        related_name="package_versions",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+    )
 
     # <packagename>.png
     icon = models.ImageField(

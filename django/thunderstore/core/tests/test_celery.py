@@ -33,6 +33,7 @@ KNOWN_CELERY_IDS = (
     "thunderstore.repository.tasks.update_api_caches",
     "thunderstore.usermedia.tasks.celery_cleanup_expired_uploads",
     "thunderstore.schema_import.tasks.sync_ecosystem_schema",
+    "thunderstore.repository.tasks.files.extract_package_version_file_tree",
 )
 
 
