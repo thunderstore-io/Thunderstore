@@ -22,3 +22,7 @@ class UserSettings(models.Model):
     def get_for_user(cls, user: User) -> Optional["UserSettings"]:
         settings = cls.objects.filter(user=user).first()
         return settings if settings else cls.objects.create(user=user)
+
+    class Meta:
+        verbose_name = "user settings"
+        verbose_name_plural = "user settings"

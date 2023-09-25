@@ -36,5 +36,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+            options={
+                "verbose_name": "user settings",
+                "verbose_name_plural": "user settings",
+            },
         ),
     ]
