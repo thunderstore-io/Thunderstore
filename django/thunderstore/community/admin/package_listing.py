@@ -3,7 +3,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from ..consts import PackageListingReviewStatus
-from ..forms import PackageListingForm
+from ..forms import PackageListingAdminForm
 from ..models.package_listing import PackageListing
 
 
@@ -29,6 +29,7 @@ approve_listing.short_description = "Approve"
 
 @admin.register(PackageListing)
 class PackageListingAdmin(admin.ModelAdmin):
+    form = PackageListingAdminForm
     actions = (
         approve_listing,
         reject_listing,
@@ -70,7 +71,6 @@ class PackageListingAdmin(admin.ModelAdmin):
         "datetime_created",
         "datetime_updated",
     )
-    form = PackageListingForm
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
