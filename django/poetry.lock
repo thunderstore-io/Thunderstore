@@ -2768,6 +2768,23 @@ files = [
 ]
 
 [[package]]
+name = "ts-scanners"
+version = "0.1.0"
+description = ""
+category = "dev"
+optional = false
+python-versions = "^3.8"
+files = []
+develop = true
+
+[package.dependencies]
+Django = "*"
+
+[package.source]
+type = "directory"
+url = "../python-packages/ts-scanners"
+
+[[package]]
 name = "ts-subsys"
 version = "0.1.0"
 description = ""
@@ -3091,4 +3108,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "5c12445dc97ed2f1164ce8657081b52b56cb31031e119c9cfa66acf1a2646b0a"
+content-hash = "3ac73d001849c7d3cb78ed21abc79e787bfd96e16ad4936f01e7bc6ae2126c4b"

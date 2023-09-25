@@ -42,6 +42,7 @@ optional = true
 django-paypal = { path = "../python-packages/django-paypal", develop = true }
 paypal-api = { path = "../python-packages/paypal-api", develop = true }
 ts-subsys = { path = "../python-packages/ts-subsys", develop = true }
+ts-scanners = { path = "../python-packages/ts-scanners", develop = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
