@@ -16,6 +16,9 @@ class DataBlobGroup(TimestampMixin):
     name = models.TextField()
     is_complete = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.name
+
     def set_complete(self):
         self.is_complete = True
         self.save()

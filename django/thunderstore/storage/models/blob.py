@@ -37,6 +37,9 @@ class DataBlob(SafeDeleteMixin):
         db_index=True,
     )
 
+    def __str__(self):
+        return self.checksum_sha256
+
     @property
     def data_url(self) -> str:
         return self.data.url
