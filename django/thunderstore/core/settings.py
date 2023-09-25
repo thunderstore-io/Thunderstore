@@ -256,6 +256,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.schema_server",
         "thunderstore.legal",
         "thunderstore.wiki",
+        "thunderstore.storage",
     ]
 )
 
@@ -586,6 +587,7 @@ THUMBNAIL_DEFAULT_STORAGE = "django.core.files.storage.FileSystemStorage"
 PACKAGE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 MODPACK_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 SCHEMA_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+BLOB_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
 # AWS S3 for everything, can be used with S3 compatible providers
 
@@ -664,6 +666,7 @@ if all((AWS_S3_ENDPOINT_URL, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID)):
     PACKAGE_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     MODPACK_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     SCHEMA_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    BLOB_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # For uploading files to multiple buckets at once.
 S3_MIRRORS: Tuple[S3MirrorConfig, ...] = (
@@ -711,6 +714,7 @@ if all(
     PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     SCHEMA_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    BLOB_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # Storage Defaults
 DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
@@ -718,6 +722,7 @@ THUMBNAIL_DEFAULT_STORAGE = get_storage_class_or_stub(THUMBNAIL_DEFAULT_STORAGE)
 PACKAGE_FILE_STORAGE = get_storage_class_or_stub(PACKAGE_FILE_STORAGE)
 MODPACK_FILE_STORAGE = get_storage_class_or_stub(MODPACK_FILE_STORAGE)
 SCHEMA_FILE_STORAGE = get_storage_class_or_stub(SCHEMA_FILE_STORAGE)
+BLOB_FILE_STORAGE = get_storage_class_or_stub(BLOB_FILE_STORAGE)
 
 # Social auth
 

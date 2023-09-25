@@ -46,27 +46,10 @@ class S3FileMixinQueryset(models.QuerySet):
         )
 
 
-class S3FileMixin(models.Model):
-    objects: S3FileMixinQueryset["S3FileMixin"] = S3FileMixinQueryset.as_manager()
-
-    data = models.FileField(
-        upload_to=get_package_cache_filepath,
-        storage=CACHE_STORAGE,
-        blank=True,
-        null=True,
-    )
-    content_type = models.TextField()
-    content_encoding = models.TextField()
-    last_modified = models.DateTimeField()
+class SafeDeleteMixin(models.Model):
     is_deleted = models.BooleanField(default=False)
 
-    class Meta:
-        abstract = True
-        indexes = [
-            models.Index(fields=["last_modified"]),
-        ]
-
-    def delete_file(self, using: str = None):
+    def _delete_file(self, using: str = None):
         # We need to ensure any potential failure status is recorded to the database
         # appropriately. Easiest way to do this is just to ensure we're not in a
         # transaction, which could end up rolling back our failure status elsewhere
@@ -84,8 +67,42 @@ class S3FileMixin(models.Model):
         # a db write.
         self.is_deleted = True
         self.save(update_fields=("is_deleted",))
-        self.data.delete()
+        self.on_safe_delete()
+
+    def on_safe_delete(self):
+        """
+        Actual data deletion should be handled in this wrapper, which ensures
+        the is_deleted flag has been set to True and committed to the databse
+        before this is ever called.
+        """
+        pass
 
     def delete(self, using: str = None, **kwargs: Any):
-        self.delete_file(using=using)
+        self._delete_file(using=using)
         super().delete(using=using, **kwargs)
+
+    class Meta:
+        abstract = True
+
+
+class S3FileMixin(SafeDeleteMixin):
+    objects: S3FileMixinQueryset["S3FileMixin"] = S3FileMixinQueryset.as_manager()
+
+    data = models.FileField(
+        upload_to=get_package_cache_filepath,
+        storage=CACHE_STORAGE,
+        blank=True,
+        null=True,
+    )
+    content_type = models.TextField()
+    content_encoding = models.TextField()
+    last_modified = models.DateTimeField()
+
+    def on_safe_delete(self):
+        self.data.delete()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["last_modified"]),
+        ]

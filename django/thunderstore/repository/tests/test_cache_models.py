@@ -140,13 +140,13 @@ def test_api_v1_package_cache_drop_stale_cache_none(settings: Any) -> None:
 def test_api_v1_package_cache_delete_file_transactions_disabled(community: Community):
     cache = APIV1PackageCache.update_for_community(community, b"")
     with pytest.raises(RuntimeError, match="Must not be called during a transaction"):
-        cache.delete_file()
+        cache._delete_file()
 
 
 @pytest.mark.django_db(transaction=True)
 def test_api_v1_package_cache_delete_file_transactionless_allowed(community: Community):
     cache = APIV1PackageCache.update_for_community(community, b"")
-    cache.delete_file()
+    cache._delete_file()
 
 
 @pytest.mark.django_db
@@ -157,7 +157,7 @@ def test_api_v1_package_cache_delete_file(community: Community, settings: Any):
     assert isinstance(storage, S3Boto3Storage)
     name = cache.data.name
     assert storage.exists(name)
-    cache.delete_file()
+    cache._delete_file()
     assert not storage.exists(name)
     cache.refresh_from_db()
     assert cache.is_deleted is True
