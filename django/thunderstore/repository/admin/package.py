@@ -103,6 +103,11 @@ class PackageAdmin(admin.ModelAdmin):
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
+    def get_view_on_site_url(self, obj: Optional[Package] = None) -> Optional[str]:
+        if obj:
+            return obj.get_view_on_site_url()
+        return super().get_view_on_site_url(obj)
+
     def has_delete_permission(
         self, request: HttpRequest, obj: Optional[Package] = None
     ) -> bool:

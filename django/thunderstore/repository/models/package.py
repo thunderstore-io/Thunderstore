@@ -224,11 +224,21 @@ class Package(models.Model):
     def changelog(self):
         return self.latest.changelog
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse(
             "old_urls:packages.detail",
             kwargs={"owner": self.owner.name, "name": self.name},
         )
+
+    def get_view_on_site_url(self) -> Optional[str]:
+        # This function is currently only used in Django admin, so it doens't
+        # matter too much which community it links to. That said, this should
+        # be updated once the concept of a "main page" for a mod exists.
+        # TODO: Point this to the main page of a package once that exists as a concept
+        from thunderstore.community.models import PackageListing
+
+        listing = PackageListing.objects.active().first()
+        return listing.get_full_url() if listing else None
 
     def get_page_url(self, community_identifier: str) -> str:
         return reverse(

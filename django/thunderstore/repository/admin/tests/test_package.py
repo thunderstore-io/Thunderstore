@@ -2,6 +2,7 @@ import pytest
 from django.conf import settings
 from django.test import Client
 
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.admin.package import (
     PackageAdmin,
     deprecate_package,
@@ -39,6 +40,18 @@ def test_admin_package_detail(
         HTTP_HOST=settings.PRIMARY_HOST,
     )
     assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_admin_package_view_on_site_url(
+    active_package_listing: PackageListing,
+):
+    modeladmin = PackageAdmin(Package, None)
+    assert modeladmin.get_view_on_site_url(None) is None
+    assert (
+        modeladmin.get_view_on_site_url(active_package_listing.package)
+        == active_package_listing.get_full_url()
+    )
 
 
 @pytest.mark.django_db
