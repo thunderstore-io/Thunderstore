@@ -1,6 +1,7 @@
 import pytest
 
-from thunderstore.storage.models.blob import DataBlob, DataBlobReference
+from thunderstore.storage.models.blob import DataBlob
+from thunderstore.storage.models.reference import DataBlobReference
 
 
 @pytest.mark.django_db
