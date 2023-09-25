@@ -729,6 +729,7 @@ BLOB_FILE_STORAGE = get_storage_class_or_stub(BLOB_FILE_STORAGE)
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
 SOCIAL_AUTH_URL_NAMESPACE = "social"
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ["username", "first_name", "email"]
+SOCIAL_AUTH_ADMIN_SEARCH_FIELDS = ["uid"]
 AUTHENTICATION_BACKENDS = (
     "social_core.backends.github.GithubOAuth2",
     "social_core.backends.discord.DiscordOAuth2",
