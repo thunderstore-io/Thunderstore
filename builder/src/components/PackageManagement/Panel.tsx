@@ -10,18 +10,16 @@ export const PackageManagementPanel: React.FC<ContextProps> = (props) => {
     return (
         <CsrfTokenProvider token={props.csrfToken}>
             <ManagementContextProvider initial={props} closeModal={closeModal}>
-                <div className="d-flex justify-content-end">
-                    {isVisible && <PackageManagementModal />}
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        aria-label="Manage Package"
-                        onClick={() => setIsVisible(true)}
-                    >
-                        <span className="fa fa-cog" />
-                        &nbsp;Manage Package
-                    </button>
-                </div>
+                {isVisible && <PackageManagementModal />}
+                <button
+                    type="button"
+                    className="btn btn-primary"
+                    aria-label="Manage Package"
+                    onClick={() => setIsVisible(true)}
+                >
+                    <span className="fa fa-cog" />
+                    &nbsp;&nbsp;Manage Package
+                </button>
             </ManagementContextProvider>
         </CsrfTokenProvider>
     );
