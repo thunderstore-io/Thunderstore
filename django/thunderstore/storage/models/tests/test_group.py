@@ -9,6 +9,7 @@ def test_storage_models_blobgroup():
     group: DataBlobGroup = DataBlobGroup.objects.create(name="Test group")
 
     assert group.name == "Test group"
+    assert str(group) == "Test group"
     assert DataBlobReference.objects.count() == 0
     entry = group.add_entry(
         content, "test", content_type="application/json", content_encoding="gzip"

@@ -11,6 +11,7 @@ def test_storage_models_blob_create():
     assert blob.data.read() == b"123"
     assert blob.checksum_sha256 == checksum
     assert blob.data_size == len(content)
+    assert str(blob) == checksum
 
 
 @pytest.mark.django_db

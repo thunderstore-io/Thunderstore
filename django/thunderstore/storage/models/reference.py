@@ -42,6 +42,9 @@ class DataBlobReference(TimestampMixin):
     )
     objects: "models.Manager[DataBlobReference]" = DataBlobReferenceManager()
 
+    def __str__(self):
+        return self.name
+
     @property
     def data_size(self) -> int:
         return self.blob.data_size

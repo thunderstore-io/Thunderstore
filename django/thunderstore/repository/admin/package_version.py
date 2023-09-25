@@ -1,12 +1,27 @@
 from django.contrib import admin
+from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.tasks.files import extract_package_version_file_tree
+
+
+def extract_file_list(modeladmin, request, queryset: QuerySet):
+    for entry in queryset:
+        extract_package_version_file_tree.delay(entry.pk)
+
+
+extract_file_list.short_description = "Queue file list extraction"
 
 
 @admin.register(PackageVersion)
 class PackageVersionAdmin(admin.ModelAdmin):
     model = PackageVersion
+    actions = [
+        extract_file_list,
+    ]
     list_select_related = (
         "package",
         "package__owner",
@@ -20,6 +35,7 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "file_size",
         "downloads",
         "date_created",
+        "has_file_tree",
     )
     search_fields = (
         "package__owner__name",
@@ -27,7 +43,35 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "version_number",
     )
     date_hierarchy = "date_created"
-    readonly_fields = [x.name for x in PackageVersion._meta.fields]
+    readonly_fields = [x.name for x in PackageVersion._meta.fields] + [
+        "file_tree_link",
+    ]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                has_file_tree=ExpressionWrapper(
+                    ~Q(file_tree=None), output_field=BooleanField()
+                )
+            )
+        )
+
+    def has_file_tree(self, obj):
+        return obj.has_file_tree
+
+    has_file_tree.boolean = True
+    has_file_tree.admin_order_field = "has_file_tree"
+
+    def file_tree_link(self, obj):
+        if not obj.file_tree:
+            return None
+        url = reverse(
+            f"admin:{obj.file_tree._meta.app_label}_{obj.file_tree._meta.model_name}_change",
+            kwargs={"object_id": obj.file_tree.pk},
+        )
+        return mark_safe(f'<a href="{url}">{obj.file_tree}</a>')
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

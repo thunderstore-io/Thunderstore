@@ -14,6 +14,7 @@ def test_storage_models_blobreference_create():
         content_type="application/json",
         content_encoding="gzip",
     )
+    assert str(reference) == "Test"
     assert reference.data == content
     assert reference.data_checksum_sha256 == checksum
     assert reference.name == "Test"
