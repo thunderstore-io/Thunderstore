@@ -9,6 +9,7 @@ from django.db import transaction
 
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
+from thunderstore.repository.filetree import create_file_tree_from_zip_data
 from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.repository.validation.categories import clean_community_categories
@@ -166,6 +167,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.changelog = self.changelog
         self.instance.file_size = self.file_size
         self.instance.format_spec = self.format_spec
+
         team = self.cleaned_data["team"]
         team.ensure_can_upload_package(self.user)
         # We just take the namespace with team name for now
@@ -173,6 +175,11 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.package = Package.objects.get_or_create(
             owner=team, name=self.instance.name, namespace=namespace
         )[0]
+
+        self.instance.file_tree = create_file_tree_from_zip_data(
+            name=f"File tree of package: {self.instance.full_version_name}",
+            zip_data=self.cleaned_data["file"],
+        )
 
         community_categories = self.cleaned_data.get("community_categories", {})
         for community in self.cleaned_data.get("communities", []):

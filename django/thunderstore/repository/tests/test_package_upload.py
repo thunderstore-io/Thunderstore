@@ -56,6 +56,8 @@ def test_package_upload(user, manifest_v1_data, community, changelog):
     assert version.format_spec == PackageFormats.get_active_format()
     assert version.package.namespace == team.get_namespace()
     assert version.package.namespace.name == team.name
+    assert version.file_tree is not None
+    assert version.file_tree.entries.count() == 3 if changelog is None else 4
 
 
 @pytest.mark.django_db
@@ -112,3 +114,5 @@ def test_package_upload_with_extra_data(user, community, manifest_v1_data, chang
     assert listing.categories.count() == 1
     assert listing.categories.first() == category
     assert listing.has_nsfw_content is True
+    assert version.file_tree is not None
+    assert version.file_tree.entries.count() == 3 if changelog is None else 4
