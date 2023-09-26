@@ -40,6 +40,8 @@ x-django-service: &django-service
     CACHE_S3_CUSTOM_DOMAIN: "localhost:9000/thunderstore"
     CACHE_S3_SECURE_URLS: "False"
     CACHE_S3_DEFAULT_ACL: "private"
+
+    SOURCE_VIEW_ENABLE_HIGHLIGHTING: "True"
   env_file:
     - .env
   depends_on:
