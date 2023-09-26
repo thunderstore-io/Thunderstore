@@ -3,8 +3,9 @@ from typing import Dict, List, Literal, TypedDict, Union
 
 from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
+from thunderstore.plugins.registry import plugin_registry
 
-TabName = Union[Literal["details"], Literal["wiki"]]
+TabName = Union[Literal["details"], Literal["wiki"], str]
 
 
 @dataclasses.dataclass
@@ -35,15 +36,18 @@ class PackageTabsMixin:
         active_tab: TabName,
     ) -> TabContext:
         tabs: Dict[TabName, PartialTab] = {
-            "details": PartialTab(url=listing.get_absolute_url(), title="Details"),
-            "wiki": PartialTab(
-                url=listing.get_wiki_url(),
-                title="Wiki",
-                is_disabled=(
-                    not listing.package.has_wiki
-                    and not listing.package.can_user_manage_wiki(user)
+            **{
+                "details": PartialTab(url=listing.get_absolute_url(), title="Details"),
+                "wiki": PartialTab(
+                    url=listing.get_wiki_url(),
+                    title="Wiki",
+                    is_disabled=(
+                        not listing.package.has_wiki
+                        and not listing.package.can_user_manage_wiki(user)
+                    ),
                 ),
-            ),
+            },
+            **plugin_registry.get_package_tabs(user, listing),
         }
         return {
             "tabs": [

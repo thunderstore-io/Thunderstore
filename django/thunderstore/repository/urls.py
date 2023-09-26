@@ -1,5 +1,6 @@
 from django.urls import include, path, re_path
 
+from thunderstore.plugins.registry import plugin_registry
 from thunderstore.repository.api.v1.urls import urls as v1_urls
 from thunderstore.repository.views import (
     PackageCreateOldView,
@@ -29,63 +30,68 @@ from thunderstore.repository.views.wiki import (
     PackageWikiPageEditView,
 )
 
-legacy_package_urls = [
-    path("", PackageListView.as_view(), name="packages.list"),
-    path("create/", PackageCreateView.as_view(), name="packages.create"),
-    path(
-        "create/old/",
-        PackageCreateOldView.as_view(),
-        name="packages.create.old",
-    ),
-    path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
-    path(
-        "download/<str:owner>/<str:name>/<str:version>/",
-        PackageDownloadView.as_view(),
-        name="packages.download",
-    ),
-    path(
-        "<str:owner>/<str:name>/",
-        PackageDetailView.as_view(),
-        name="packages.detail",
-    ),
-    path(
-        "<str:owner>/<str:name>/wiki/",
-        PackageWikiHomeView.as_view(),
-        name="packages.detail.wiki",
-    ),
-    path(
-        "<str:owner>/<str:name>/wiki/new/",
-        PackageWikiPageEditView.as_view(),
-        name="packages.detail.wiki.page.new",
-    ),
-    re_path(
-        # Regex pattern is used to resolve any variation of slug usage after
-        # page ID, even if the slug is completely incorrect.
-        r"(?P<owner>[\w_-]+)/(?P<name>[\w_]+)/wiki/(?P<page>[0-9]+)(?:-(?P<pslug>[\w-]*))?/$",
-        PackageWikiPageDetailView.as_view(),
-        name="packages.detail.wiki.page.detail",
-    ),
-    path(
-        "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
-        PackageWikiPageEditView.as_view(),
-        name="packages.detail.wiki.page.edit",
-    ),
-    path(
-        "<str:owner>/<str:name>/dependants/",
-        PackageListByDependencyView.as_view(),
-        name="packages.list_by_dependency",
-    ),
-    path(
-        "<str:owner>/<str:name>/<str:version>/",
-        PackageVersionDetailView.as_view(),
-        name="packages.version.detail",
-    ),
-    path(
-        "<str:owner>/",
-        PackageListByOwnerView.as_view(),
-        name="packages.list_by_owner",
-    ),
-]
+legacy_package_urls = (
+    [
+        path("", PackageListView.as_view(), name="packages.list"),
+        path("create/", PackageCreateView.as_view(), name="packages.create"),
+        path(
+            "create/old/",
+            PackageCreateOldView.as_view(),
+            name="packages.create.old",
+        ),
+        path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
+        path(
+            "download/<str:owner>/<str:name>/<str:version>/",
+            PackageDownloadView.as_view(),
+            name="packages.download",
+        ),
+        path(
+            "<str:owner>/<str:name>/",
+            PackageDetailView.as_view(),
+            name="packages.detail",
+        ),
+        path(
+            "<str:owner>/<str:name>/wiki/",
+            PackageWikiHomeView.as_view(),
+            name="packages.detail.wiki",
+        ),
+        path(
+            "<str:owner>/<str:name>/wiki/new/",
+            PackageWikiPageEditView.as_view(),
+            name="packages.detail.wiki.page.new",
+        ),
+        re_path(
+            # Regex pattern is used to resolve any variation of slug usage after
+            # page ID, even if the slug is completely incorrect.
+            r"(?P<owner>[\w_-]+)/(?P<name>[\w_]+)/wiki/(?P<page>[0-9]+)(?:-(?P<pslug>[\w-]*))?/$",
+            PackageWikiPageDetailView.as_view(),
+            name="packages.detail.wiki.page.detail",
+        ),
+        path(
+            "<str:owner>/<str:name>/wiki/<int:page>-<slug:pslug>/edit/",
+            PackageWikiPageEditView.as_view(),
+            name="packages.detail.wiki.page.edit",
+        ),
+        path(
+            "<str:owner>/<str:name>/dependants/",
+            PackageListByDependencyView.as_view(),
+            name="packages.list_by_dependency",
+        ),
+        path(
+            "<str:owner>/",
+            PackageListByOwnerView.as_view(),
+            name="packages.list_by_owner",
+        ),
+    ]
+    + plugin_registry.get_legacy_package_urls()
+    + [
+        path(
+            "<str:owner>/<str:name>/<str:version>/",
+            PackageVersionDetailView.as_view(),
+            name="packages.version.detail",
+        ),
+    ]
+)
 
 package_urls = [
     path("", PackageListView.as_view(), name="packages.list"),
@@ -135,7 +141,7 @@ package_urls = [
         PackageListByOwnerView.as_view(),
         name="packages.list_by_owner",
     ),
-]
+] + plugin_registry.get_new_package_urls()
 
 settings_urls = [
     path(
