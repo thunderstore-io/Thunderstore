@@ -1,11 +1,16 @@
 import itertools
-from typing import Any, Dict, List, Set, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Set, Type
 
 from django.urls import URLPattern
 
 from .base import BasePlugin
 from .loading import load_ts_plugins
 from .types import SettingsLink
+
+if TYPE_CHECKING:
+    from ..community.models import PackageListing
+    from ..core.types import UserType
+    from ..repository.views.mixins import PartialTab
 
 
 class PluginRegistry:
@@ -30,6 +35,15 @@ class PluginRegistry:
 
     def get_settings_urls(self) -> List[URLPattern]:
         return list(itertools.chain(*(x.get_settings_urls() for x in self.plugins)))
+
+    def get_package_tabs(
+        self, user: "UserType", listing: "PackageListing"
+    ) -> Dict[str, "PartialTab"]:
+        result = {}
+        for entry in (x.get_package_tabs() for x in self.plugins):
+            for key, getter in entry.items():
+                result[key] = getter(user, listing)
+        return result
 
     def get_settings_links(self) -> List[SettingsLink]:
         return list(itertools.chain(*(x.get_settings_links() for x in self.plugins)))
