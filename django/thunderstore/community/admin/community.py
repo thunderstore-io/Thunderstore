@@ -17,6 +17,7 @@ class CommunityAdmin(admin.ModelAdmin):
     list_filter = (
         "is_listed",
         "block_auto_updates",
+        "show_decompilation_results",
     )
     list_display = (
         "id",
@@ -26,6 +27,7 @@ class CommunityAdmin(admin.ModelAdmin):
         "block_auto_updates",
         "datetime_created",
         "datetime_updated",
+        "show_decompilation_results",
     )
     list_display_links = (
         "id",

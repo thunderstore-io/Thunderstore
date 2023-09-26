@@ -7,6 +7,7 @@ from django.db import models, transaction
 from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
 
+from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
 from thunderstore.repository.models import Namespace, Package
@@ -104,6 +105,11 @@ class Team(models.Model):
         validators=[URLValidator(["https"])],
     )
     is_active = models.BooleanField(default=True)
+
+    show_decompilation_results = models.TextField(
+        choices=OptionalBoolChoice.choices,
+        default=OptionalBoolChoice.NONE,
+    )
 
     class Meta:
         verbose_name = "Team"
