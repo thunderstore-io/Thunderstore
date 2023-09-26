@@ -36,6 +36,14 @@ class PluginRegistry:
     def get_settings_urls(self) -> List[URLPattern]:
         return list(itertools.chain(*(x.get_settings_urls() for x in self.plugins)))
 
+    def get_legacy_package_urls(self) -> List[URLPattern]:
+        return list(
+            itertools.chain(*(x.get_legacy_package_urls() for x in self.plugins))
+        )
+
+    def get_new_package_urls(self) -> List[URLPattern]:
+        return list(itertools.chain(*(x.get_new_package_urls() for x in self.plugins)))
+
     def get_package_tabs(
         self, user: "UserType", listing: "PackageListing"
     ) -> Dict[str, "PartialTab"]:

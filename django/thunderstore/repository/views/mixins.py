@@ -5,7 +5,7 @@ from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
 from thunderstore.plugins.registry import plugin_registry
 
-TabName = Union[Literal["details"], Literal["wiki"]]
+TabName = Union[Literal["details"], Literal["wiki"], str]
 
 
 @dataclasses.dataclass

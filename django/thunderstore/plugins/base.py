@@ -23,6 +23,14 @@ class BasePlugin(ABC):
         return []
 
     @classmethod
+    def get_legacy_package_urls(cls) -> List[URLPattern]:
+        return []
+
+    @classmethod
+    def get_new_package_urls(cls) -> List[URLPattern]:
+        return []
+
+    @classmethod
     def get_package_tabs(
         cls,
     ) -> Dict[str, Callable[["UserType", "PackageListing"], "PartialTab"]]:
