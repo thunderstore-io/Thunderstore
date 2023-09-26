@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.contrib import admin
 from django.db import transaction
 from django.db.models import QuerySet
@@ -77,3 +79,10 @@ class PackageListingAdmin(admin.ModelAdmin):
             return self.readonly_fields
         else:
             return []
+
+    def get_view_on_site_url(
+        self, obj: Optional[PackageListing] = None
+    ) -> Optional[str]:
+        if obj:
+            return obj.get_full_url()
+        return super().get_view_on_site_url(obj)

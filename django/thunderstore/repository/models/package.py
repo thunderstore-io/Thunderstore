@@ -237,7 +237,7 @@ class Package(models.Model):
         # TODO: Point this to the main page of a package once that exists as a concept
         from thunderstore.community.models import PackageListing
 
-        listing = PackageListing.objects.active().first()
+        listing = PackageListing.objects.active().filter(package=self).first()
         return listing.get_full_url() if listing else None
 
     def get_page_url(self, community_identifier: str) -> str:
