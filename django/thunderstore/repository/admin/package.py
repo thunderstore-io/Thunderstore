@@ -76,16 +76,17 @@ class PackageAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "namespace",
-        "owner",
         "is_active",
         "is_deprecated",
         "is_pinned",
         "file_size",
+        "show_decompilation_results",
     )
     list_filter = (
         "is_active",
         "is_pinned",
         "is_deprecated",
+        "show_decompilation_results",
     )
     search_fields = (
         "name",

@@ -32,6 +32,13 @@ class TeamAdmin(admin.ModelAdmin):
         deactivate,
     )
     readonly_fields = ("name",)
-    list_display = ("name", "is_active")
-    list_filter = ("is_active",)
+    list_display = (
+        "name",
+        "is_active",
+        "show_decompilation_results",
+    )
+    list_filter = (
+        "is_active",
+        "show_decompilation_results",
+    )
     search_fields = ("name",)

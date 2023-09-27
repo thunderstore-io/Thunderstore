@@ -15,6 +15,7 @@ from django.utils.functional import cached_property
 from thunderstore.cache.cache import cache_function_result
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
+from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
@@ -83,6 +84,11 @@ class Package(models.Model):
         on_delete=models.SET_NULL,
         related_name="+",
         null=True,
+    )
+
+    show_decompilation_results = models.TextField(
+        choices=OptionalBoolChoice.choices,
+        default=OptionalBoolChoice.NONE,
     )
 
     class Meta:

@@ -12,6 +12,7 @@ from thunderstore.community.models.community_membership import (
     CommunityMemberRole,
     CommunityMembership,
 )
+from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
@@ -63,6 +64,11 @@ class Community(TimestampMixin, models.Model):
     is_listed = models.BooleanField(default=True)
     require_package_listing_approval = models.BooleanField(default=False)
     block_auto_updates = models.BooleanField(default=True)
+
+    show_decompilation_results = models.TextField(
+        choices=OptionalBoolChoice.choices,
+        default=OptionalBoolChoice.NONE,
+    )
 
     @property
     def total_package_count(self) -> int:
