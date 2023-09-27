@@ -20,7 +20,7 @@ django-storages = { version = "^1.11", extras = ["boto3"] }
 djangorestframework = "^3.11"
 drf-yasg = "^1.17"
 django-ipware = "^3.0"
-sentry_sdk = "^1.5"
+sentry_sdk = {extras = ["celery"], version = "^1.31.0"}
 django-redis = "^4.11"
 pyjwt = { version = "^2.0", extras = ["crypto"] }
 celery = "^5.0.5"
