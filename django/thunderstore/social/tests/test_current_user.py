@@ -4,6 +4,7 @@ import pytest
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.test import APIClient
+from social_django.models import UserSocialAuth  # type: ignore
 
 from thunderstore.account.models.user_flag import UserFlag, UserFlagMembership
 from thunderstore.core.types import UserType
@@ -29,12 +30,13 @@ def test_current_user_info__for_unauthenticated_user__is_empty_structure(
     assert user_info["username"] is None
     assert user_info["subscription"]["expires"] is None
     assert len(user_info["capabilities"]) == 0
+    assert len(user_info["connections"]) == 0
     assert len(user_info["rated_packages"]) == 0
     assert len(user_info["teams"]) == 0
 
 
 @pytest.mark.django_db
-def test_current_user_info__for_authenticated_user__has_proper_values(
+def test_current_user_info__for_authenticated_user__has_basic_values(
     api_client: APIClient,
     user: UserType,
 ) -> None:
@@ -46,6 +48,23 @@ def test_current_user_info__for_authenticated_user__has_proper_values(
     user_info = response.json()
 
     assert user_info["username"] == "Test"
+    assert type(user_info["capabilities"]) == list
+    assert type(user_info["rated_packages"]) == list
+    assert type(user_info["teams"]) == list
+
+
+@pytest.mark.django_db
+def test_current_user_info__for_subscriber__has_subscription_expiration(
+    api_client: APIClient,
+    user: UserType,
+) -> None:
+    api_client.force_authenticate(user=user)
+    response = request_user_info(api_client)
+
+    assert response.status_code == 200
+
+    user_info = response.json()
+
     assert type(user_info["subscription"]) == dict
     assert "expires" in user_info["subscription"]
     assert user_info["subscription"]["expires"] is None
@@ -69,7 +88,6 @@ def test_current_user_info__for_authenticated_user__has_proper_values(
 
     user_info = response.json()
 
-    assert user_info["username"] == "Test"
     assert type(user_info["subscription"]) == dict
     assert "expires" in user_info["subscription"]
     expiry_datetime = datetime.datetime.fromisoformat(
@@ -78,3 +96,63 @@ def test_current_user_info__for_authenticated_user__has_proper_values(
     assert expiry_datetime > now + datetime.timedelta(
         days=27
     ) and expiry_datetime < now + datetime.timedelta(days=29)
+
+
+@pytest.mark.django_db
+def test_current_user_info__for_oauth_user__has_connections(
+    api_client: APIClient,
+    user: UserType,
+) -> None:
+    api_client.force_authenticate(user=user)
+    response = request_user_info(api_client)
+
+    assert response.status_code == 200
+
+    user_info = response.json()
+
+    assert type(user_info["connections"]) == list
+    assert len(user_info["connections"]) == 0
+
+    UserSocialAuth.objects.bulk_create(
+        [
+            UserSocialAuth(
+                user=user,
+                provider="discord",
+                uid="d123",
+                extra_data={"username": "discord_user"},
+            ),
+            UserSocialAuth(
+                user=user,
+                provider="github",
+                uid="gh123",
+                extra_data={"login": "gh_user", "avatar_url": "gh_url"},
+            ),
+            UserSocialAuth(
+                user=user,
+                provider="overwolf",
+                uid="ow123",
+                extra_data={"username": "ow_user", "avatar": "ow_url"},
+            ),
+        ]
+    )
+
+    response = request_user_info(api_client)
+
+    assert response.status_code == 200
+
+    user_info = response.json()
+
+    assert type(user_info["connections"]) == list
+    assert len(user_info["connections"]) == 3
+
+    discord = next(c for c in user_info["connections"] if c["provider"] == "discord")
+    assert discord["username"] == "discord_user"
+    assert discord["avatar"] is None
+
+    github = next(c for c in user_info["connections"] if c["provider"] == "github")
+    assert github["username"] == "gh_user"
+    assert github["avatar"] == "gh_url"
+
+    overwolf = next(c for c in user_info["connections"] if c["provider"] == "overwolf")
+    assert overwolf["username"] == "ow_user"
+    assert overwolf["avatar"] == "ow_url"
