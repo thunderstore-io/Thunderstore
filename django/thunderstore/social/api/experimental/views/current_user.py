@@ -1,6 +1,7 @@
 import datetime
 from typing import List, Optional, Set, TypedDict
 
+from django.db.models import Q
 from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 
 from thunderstore.account.models.user_flag import UserFlag
 from thunderstore.core.types import UserType
+from thunderstore.repository.models import TeamMember
 
 
 class CurrentUserExperimentalApiView(APIView):
@@ -46,6 +48,18 @@ class SubscriptionStatusSerializer(serializers.Serializer):
     expires = serializers.DateField()
 
 
+class UserTeam(TypedDict):
+    name: str
+    role: str
+    member_count: int
+
+
+class UserTeamSerializer(serializers.Serializer):
+    name: serializers.CharField()
+    role: serializers.CharField()
+    member_count: serializers.IntegerField(min_value=0)
+
+
 class UserProfile(TypedDict):
     username: Optional[str]
     capabilities: Set[str]
@@ -61,7 +75,7 @@ class UserProfileSerializer(serializers.Serializer):
     connections = serializers.ListSerializer(child=SocialAuthConnectionSerializer())
     subscription = SubscriptionStatusSerializer()
     rated_packages = serializers.ListField()
-    teams = serializers.ListField()
+    teams = serializers.ListSerializer(child=UserTeamSerializer())
 
 
 def get_empty_profile() -> UserProfile:
@@ -86,20 +100,13 @@ def get_user_profile(user: UserType) -> UserProfile:
         ),
     )
 
-    teams = list(
-        user.teams.filter(team__is_active=True).values_list(
-            "team__name",
-            flat=True,
-        ),
-    )
-
     return {
         "username": username,
         "capabilities": capabilities,
         "connections": get_social_auth_connections(user),
         "subscription": get_subscription_status(user),
         "rated_packages": rated_packages,
-        "teams": teams,
+        "teams": get_teams(user),
     }
 
 
@@ -147,4 +154,32 @@ def get_social_auth_connections(user: UserType) -> List[SocialAuthConnection]:
             "avatar": sa.extra_data.get(OAUTH_AVATAR_FIELDS[sa.provider]),
         }
         for sa in user.social_auth.all()
+    ]
+
+
+def get_teams(user: UserType) -> List[UserTeam]:
+    """
+    Return information regarding the teams the user belongs to.
+    """
+    memberships = (
+        TeamMember.objects.prefetch_related(
+            "team__members__user__service_account",
+        )
+        .exclude(team__is_active=False)
+        .exclude(~Q(user=user))
+    )
+
+    return [
+        {
+            "name": membership.team.name,
+            "role": membership.role,
+            "member_count": len(
+                [
+                    m
+                    for m in membership.team.members.all()
+                    if not hasattr(m.user, "service_account")
+                ],
+            ),
+        }
+        for membership in memberships.all()
     ]
