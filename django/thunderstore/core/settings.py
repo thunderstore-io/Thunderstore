@@ -128,6 +128,7 @@ env = environ.Env(
     ),
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
+    CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -459,76 +460,25 @@ if REDIS_URL:
         },
     }
 
-CACHALOT_TIMEOUT = 60 * 60  # 1 hour
-CACHALOT_ONLY_CACHABLE_TABLES = frozenset(
+CACHALOT_TIMEOUT = env.int("CACHALOT_TIMEOUT_SECONDS")
+CACHALOT_UNCACHABLE_TABLES = frozenset(
     (
-        "account_serviceaccount",
-        "account_userflag",
-        "account_userflagmembership",
-        "account_usersettings",
-        "auth_group",
-        "auth_group_permissions",
-        "auth_permission",
-        "auth_user",
-        "auth_user_groups",
-        "auth_user_user_permissions",
-        "authtoken_token",
-        "community_community",
-        "community_communitymembership",
-        "community_communitysite",
-        "community_packagecategory",
-        "community_packagelisting",
-        "community_packagelisting_categories",
-        "community_packagelistingsection",
-        "community_packagelistingsection_exclude_categories",
-        "community_packagelistingsection_require_categories",
-        "contracts_legalcontract",
-        "contracts_legalcontractversion",
-        "core_incomingjwtauthconfiguration",
-        "django_admin_log",
-        "django_celery_beat_clockedschedule",
-        "django_celery_beat_crontabschedule",
-        "django_celery_beat_intervalschedule",
-        "django_celery_beat_periodictask",
-        "django_celery_beat_periodictasks",
-        "django_celery_beat_solarschedule",
+        # Should never return stale data
+        "django_migrations",
+        # Handles its own TTL
+        "cache_databasecache",
+        # Enabling this will break a test, so it's left off for now for safety
+        "repository_apiv1packagecache",
+        # Should never return stale data
+        # Frequent writes & invalidations, not many reads -> not worth caching
         "django_celery_results_chordcounter",
         "django_celery_results_taskresult",
-        "django_content_type",
-        "django_site",
-        "easy_thumbnails_source",
-        "easy_thumbnails_thumbnail",
-        "easy_thumbnails_thumbnaildimensions",
-        "frontend_communitynavlink",
-        "frontend_dynamichtml",
-        "frontend_dynamichtml_exclude_communities",
-        "frontend_dynamichtml_require_communities",
-        "frontend_navlink",
-        # Enabling this will break a test, so it's left off for now for safety
-        # "repository_apiv1packagecache",
-        "repository_discorduserbotpermission",
-        "repository_package",
-        "repository_packageversion_dependencies",
-        "repository_packagewiki",
-        "repository_team",
-        "repository_teammember",
-        "repository_namespace",
-        "schema_server_schemachannel",
-        "schema_server_schemachannel_authorized_users",
-        "schema_server_schemachannelfile",
-        "schema_server_schemafile",
-        "social_auth_association",
-        "social_auth_code",
-        "social_auth_nonce",
-        "social_auth_partial",
-        "social_auth_usersocialauth",
-        "thunderstore_wiki_wiki",
-        "thunderstore_wiki_wikipage",
-        "usermedia_usermedia",
-        "webhooks_webhook",
-        "webhooks_webhook_exclude_categories",
-        "webhooks_webhook_require_categories",
-    ),
+        # Too frequent writes for cachalot to work efficiently
+        "django_session",
+        "repository_packageversion",
+        "repository_packageversiondownloadevent",
+        "repository_packagerating",
+    )
 )
 
 # if DEBUG and not DEBUG_SIMULATED_LAG:
