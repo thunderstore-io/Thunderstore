@@ -37,7 +37,8 @@ class FrontPageApiView(APIView):
         )
 
     def serialize_results(
-        self, queryset: QuerySet[Community]
+        self,
+        queryset: QuerySet[Community],
     ) -> FrontPageContentSerializer:
         communities = [
             {

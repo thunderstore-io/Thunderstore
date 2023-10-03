@@ -103,7 +103,7 @@ class Community(TimestampMixin, models.Model):
                     + (
                         "icon_width",
                         "icon_height",
-                    )
+                    ),
                 )
         if not self.background_image:
             self.background_image_width = 0
@@ -114,7 +114,7 @@ class Community(TimestampMixin, models.Model):
                     + (
                         "background_image_width",
                         "background_image_height",
-                    )
+                    ),
                 )
         return super().save(*args, **kwargs)
 

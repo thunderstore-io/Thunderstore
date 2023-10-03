@@ -102,7 +102,8 @@ def test_celery_task_removal_handled_correctly(celery_app):
 @pytest.mark.django_db
 @override_settings(CELERY_ALWAYS_EAGER=True)
 def test_celery_post(
-    celery_app: celery.Celery, http_server: Generator[str, None, None]
+    celery_app: celery.Celery,
+    http_server: Generator[str, None, None],
 ):
     celery_response = celery_post.delay("http://localhost:8888")
     assert celery_response.state == "SUCCESS"

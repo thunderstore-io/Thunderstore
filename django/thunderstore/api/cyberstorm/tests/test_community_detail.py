@@ -7,16 +7,20 @@ from thunderstore.community.models import CommunityAggregatedFields, CommunitySi
 
 @pytest.mark.django_db
 def test_api_cyberstorm_community_detail_success(
-    client: APIClient, community_site: CommunitySite
+    client: APIClient,
+    community_site: CommunitySite,
 ):
     PackageListingFactory(
-        community_=community_site.community, package_version_kwargs={"downloads": 0}
+        community_=community_site.community,
+        package_version_kwargs={"downloads": 0},
     )
     PackageListingFactory(
-        community_=community_site.community, package_version_kwargs={"downloads": 23}
+        community_=community_site.community,
+        package_version_kwargs={"downloads": 23},
     )
     PackageListingFactory(
-        community_=community_site.community, package_version_kwargs={"downloads": 42}
+        community_=community_site.community,
+        package_version_kwargs={"downloads": 42},
     )
     CommunityAggregatedFields.create_missing()
     community_site.community.refresh_from_db()
@@ -42,10 +46,11 @@ def test_api_cyberstorm_community_detail_success(
 
 @pytest.mark.django_db
 def test_api_cyberstorm_community_detail_failure(
-    client: APIClient, community_site: CommunitySite
+    client: APIClient,
+    community_site: CommunitySite,
 ):
     response = client.get(
-        f"/api/cyberstorm/community/bad/",
+        "/api/cyberstorm/community/bad/",
         HTTP_HOST=community_site.site.domain,
     )
     assert response.status_code == 404
