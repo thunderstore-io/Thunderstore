@@ -93,11 +93,10 @@ def test_current_user_info__for_subscriber__has_subscription_expiration(
     assert type(user_info["subscription"]) == dict
     assert "expires" in user_info["subscription"]
     expiry_datetime = datetime.datetime.fromisoformat(
-        user_info["subscription"]["expires"].replace("Z", "+00:00")
+        user_info["subscription"]["expires"].replace("Z", "+00:00"),
     )
-    assert expiry_datetime > now + datetime.timedelta(
-        days=27
-    ) and expiry_datetime < now + datetime.timedelta(days=29)
+    assert now + datetime.timedelta(days=27) < expiry_datetime
+    assert expiry_datetime < now + datetime.timedelta(days=29)
 
 
 @pytest.mark.django_db
@@ -135,7 +134,7 @@ def test_current_user_info__for_oauth_user__has_connections(
                 uid="ow123",
                 extra_data={"username": "ow_user", "avatar": "ow_url"},
             ),
-        ]
+        ],
     )
 
     response = request_user_info(api_client)
