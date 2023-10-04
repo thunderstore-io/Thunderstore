@@ -1,12 +1,13 @@
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Manager, QuerySet
 from django.urls import reverse
 from django.utils.functional import cached_property
 
+from django_extrafields.models import SafeOneToOneOrField
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models.community_membership import (
     CommunityMemberRole,
@@ -22,6 +23,10 @@ if TYPE_CHECKING:
 
 
 class CommunityManager(models.Manager):
+    def get_queryset(self):
+        # Always join aggregated fields when creating a QuerySet.
+        return super().get_queryset().select_related("aggregated_fields")
+
     def listed(self) -> "QuerySet[Community]":  # TODO: Generic type
         return self.exclude(is_listed=False)
 
@@ -34,6 +39,12 @@ class Community(TimestampMixin, models.Model):
     objects: "CommunityManager[Community]" = CommunityManager()
     members: "Manager[CommunityMembership]"
 
+    aggregated_fields = SafeOneToOneOrField(
+        "CommunityAggregatedFields",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     slogan = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)
 
@@ -71,31 +82,12 @@ class Community(TimestampMixin, models.Model):
     )
 
     @property
-    def total_package_count(self) -> int:
-        # TODO: Implement as a cached value with background updates
-        if not settings.DEBUG:
-            return -1
-
-        listings = self.package_listings.active()
-
-        if self.require_package_listing_approval:
-            listings = listings.approved()
-
-        return listings.count()
-
-    @property
-    def total_download_count(self) -> int:
-        # TODO: Implement as a cached value with background updates
-        # TODO: also figure out more efficient way to handle this
-        if not settings.DEBUG:
-            return -1
-
-        listings = self.package_listings.active()
-
-        if self.require_package_listing_approval:
-            listings = listings.approved()
-
-        return sum([l.total_downloads for l in listings])
+    def aggregated(self) -> "AggregatedFields":
+        return (
+            self.aggregated_fields.as_class()
+            if self.aggregated_fields
+            else CommunityAggregatedFields.get_empty()
+        )
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -206,3 +198,68 @@ class Community(TimestampMixin, models.Model):
             PackageListingReviewStatus.approved,
             PackageListingReviewStatus.unreviewed,
         )
+
+
+@dataclass
+class AggregatedFields:
+    download_count: int = 0
+    package_count: int = 0
+
+
+class CommunityAggregatedFields(TimestampMixin, models.Model):
+    """
+    Computationally heavy fields updated by a periodic background task.
+    """
+
+    download_count = models.PositiveIntegerField(default=0)
+    package_count = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return str(self.as_class())
+
+    @classmethod
+    def get_empty(cls) -> AggregatedFields:
+        return AggregatedFields()
+
+    def as_class(self) -> AggregatedFields:
+        """
+        Return fields in a format supporting attribute access.
+        """
+        return AggregatedFields(self.download_count, self.package_count)
+
+    @classmethod
+    @transaction.atomic
+    def create_missing(cls) -> None:
+        """
+        Create CommunityAggregatedFields objects for Communities that
+        don't have none.
+        """
+        communities = Community.objects.filter(aggregated_fields=None).order_by("pk")
+
+        created_afs = cls.objects.bulk_create(
+            [cls() for _ in range(communities.count())],
+        )
+
+        for community, aggregated_fields in zip(communities, created_afs):
+            community.aggregated_fields = aggregated_fields
+
+        Community.objects.bulk_update(communities, ["aggregated_fields"])
+
+    @classmethod
+    def update_for_community(cls, community: Community) -> None:
+        """
+        Updates field values for given Community.
+
+        Assumes the CommunityAggregatedFields objects has been created
+        previously, e.g. by calling .create_missing()
+        """
+        listings = community.package_listings.active()
+
+        if community.require_package_listing_approval:
+            listings = listings.approved()
+
+        community.aggregated_fields.package_count = listings.count()
+        community.aggregated_fields.download_count = sum(
+            listing.total_downloads for listing in listings
+        )
+        community.aggregated_fields.save()

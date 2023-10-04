@@ -1,14 +1,9 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.test import override_settings
 
 from conftest import TestUserTypes
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.community.factories import (
-    CommunityFactory,
-    CommunitySiteFactory,
-    PackageListingFactory,
-)
+from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
 from thunderstore.community.models import (
     Community,
     CommunityMemberRole,
@@ -161,87 +156,3 @@ def test_community_should_use_old_urls(
 
 def test_community_should_use_old_urls_no_community() -> None:
     assert Community.should_use_old_urls(None) is True
-
-
-@pytest.mark.django_db
-def test_total_package_count():
-    # Method is not implemented yet and always returns -1.
-    community = CommunityFactory()
-    assert community.total_package_count == -1
-
-    PackageListingFactory(community_=community)
-    PackageListingFactory(
-        community_=community, review_status=PackageListingReviewStatus.approved
-    )
-    PackageListingFactory()
-    assert community.total_package_count == -1
-
-    community.require_package_listing_approval = True
-    community.save()
-    assert community.total_package_count == -1
-
-
-@override_settings(DEBUG=True)
-@pytest.mark.django_db
-def test_experimental_total_package_count():
-    community = CommunityFactory()
-    assert community.total_package_count == 0
-
-    PackageListingFactory(community_=community)
-    PackageListingFactory(
-        community_=community, review_status=PackageListingReviewStatus.approved
-    )
-    PackageListingFactory()
-    assert community.total_package_count == 2
-
-    community.require_package_listing_approval = True
-    community.save()
-    assert community.total_package_count == 1
-
-
-@pytest.mark.django_db
-def test_total_download_count():
-    # Method is not implemented yet and always returns -1.
-    community = CommunityFactory()
-    assert community.total_download_count == -1
-
-    PackageListingFactory(community_=community, package_version_kwargs={"downloads": 0})
-    assert community.total_download_count == -1
-
-    PackageListingFactory(
-        community_=community, package_version_kwargs={"downloads": 23}
-    )
-    PackageListingFactory(
-        community_=community,
-        package_version_kwargs={"downloads": 11},
-        review_status=PackageListingReviewStatus.approved,
-    )
-    assert community.total_download_count == -1
-
-    community.require_package_listing_approval = True
-    community.save()
-    assert community.total_download_count == -1
-
-
-@override_settings(DEBUG=True)
-@pytest.mark.django_db
-def test_experimental_total_download_count():
-    community = CommunityFactory()
-    assert community.total_download_count == 0
-
-    PackageListingFactory(community_=community, package_version_kwargs={"downloads": 0})
-    assert community.total_download_count == 0
-
-    PackageListingFactory(
-        community_=community, package_version_kwargs={"downloads": 23}
-    )
-    PackageListingFactory(
-        community_=community,
-        package_version_kwargs={"downloads": 11},
-        review_status=PackageListingReviewStatus.approved,
-    )
-    assert community.total_download_count == 23 + 11
-
-    community.require_package_listing_approval = True
-    community.save()
-    assert community.total_download_count == 11

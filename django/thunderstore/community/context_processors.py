@@ -61,7 +61,7 @@ def community_site(request):
 
 def selectable_communities(request):
     return {
-        "selectable_communities": Community.objects.listed()
-        .annotate(package_count=Count("package_listings"))
-        .order_by("-package_count", "datetime_created")
+        "selectable_communities": Community.objects.listed().order_by(
+            "-aggregated_fields__package_count", "datetime_created"
+        )
     }

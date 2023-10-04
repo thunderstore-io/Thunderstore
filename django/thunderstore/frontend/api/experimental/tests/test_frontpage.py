@@ -4,7 +4,12 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from thunderstore.community.models import Community, CommunitySite, PackageListing
+from thunderstore.community.models import (
+    Community,
+    CommunityAggregatedFields,
+    CommunitySite,
+    PackageListing,
+)
 from thunderstore.repository.factories import PackageVersionFactory
 
 
@@ -12,6 +17,10 @@ from thunderstore.repository.factories import PackageVersionFactory
 def test_counts_when_no_communities_exists(api_client: APIClient) -> None:
     # Disable the default Community created by test config.
     Community.objects.update(is_listed=False)
+    CommunityAggregatedFields.create_missing()
+
+    for community in Community.objects.all():
+        CommunityAggregatedFields.update_for_community(community)
 
     data = __query_api(api_client)
 
@@ -22,6 +31,11 @@ def test_counts_when_no_communities_exists(api_client: APIClient) -> None:
 
 @pytest.mark.django_db
 def test_counts_when_no_packages_exists(api_client: APIClient) -> None:
+    CommunityAggregatedFields.create_missing()
+
+    for community in Community.objects.all():
+        CommunityAggregatedFields.update_for_community(community)
+
     data = __query_api(api_client)
 
     assert len(data["communities"]) == 1
@@ -41,6 +55,9 @@ def test_counts_when_packages_have_been_downloaded(api_client: APIClient) -> Non
     PackageListing.objects.create(community=site.community, package=ver1.package)
     PackageListing.objects.create(community=site.community, package=ver2.package)
     PackageListing.objects.create(community=site.community, package=ver3.package)
+    CommunityAggregatedFields.create_missing()
+    site.community.refresh_from_db()
+    CommunityAggregatedFields.update_for_community(site.community)
 
     data = __query_api(api_client)
 
