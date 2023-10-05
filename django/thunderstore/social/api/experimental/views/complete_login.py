@@ -66,11 +66,13 @@ class CompleteLoginApiView(APIView):
         login(request, user, "django.contrib.auth.backends.ModelBackend")
 
         return Response(
-            {
-                "email": user.email,
-                "session_id": request.session.session_key,
-                "username": user.username,
-            }
+            ResponseBody(
+                {
+                    "email": user.email,
+                    "session_id": request.session.session_key,
+                    "username": user.username,
+                }
+            ).data
         )
 
 
