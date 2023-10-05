@@ -4,6 +4,7 @@ from typing import List, Optional, Set, TypedDict
 from django.db.models import Q
 from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
+from pydantic import BaseModel
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -35,9 +36,9 @@ class SocialAuthConnection(TypedDict):
 
 
 class SocialAuthConnectionSerializer(serializers.Serializer):
-    provider: serializers.CharField()
-    username: serializers.CharField()
-    avatar: serializers.CharField()
+    provider = serializers.CharField()
+    username = serializers.CharField()
+    avatar = serializers.CharField()
 
 
 class SubscriptionStatus(TypedDict):
@@ -45,19 +46,19 @@ class SubscriptionStatus(TypedDict):
 
 
 class SubscriptionStatusSerializer(serializers.Serializer):
-    expires = serializers.DateField()
+    expires = serializers.DateTimeField()
 
 
-class UserTeam(TypedDict):
+class UserTeam(BaseModel):
     name: str
     role: str
     member_count: int
 
 
 class UserTeamSerializer(serializers.Serializer):
-    name: serializers.CharField()
-    role: serializers.CharField()
-    member_count: serializers.IntegerField(min_value=0)
+    name = serializers.CharField()
+    role = serializers.CharField()
+    member_count = serializers.IntegerField(min_value=0)
 
 
 class UserProfile(TypedDict):
@@ -67,15 +68,19 @@ class UserProfile(TypedDict):
     subscription: SubscriptionStatus
     rated_packages: List[str]
     teams: List[str]
+    teams_full: List[UserTeam]
 
 
 class UserProfileSerializer(serializers.Serializer):
     username = serializers.CharField()
     capabilities = serializers.ListField()
-    connections = serializers.ListSerializer(child=SocialAuthConnectionSerializer())
+    connections = SocialAuthConnectionSerializer(many=True)
     subscription = SubscriptionStatusSerializer()
     rated_packages = serializers.ListField()
-    teams = serializers.ListSerializer(child=UserTeamSerializer())
+    teams = (
+        serializers.ListField()
+    )  # This is in active use by the Django frontend react components at least
+    teams_full = UserTeamSerializer(many=True)
 
 
 def get_empty_profile() -> UserProfile:
@@ -86,6 +91,7 @@ def get_empty_profile() -> UserProfile:
         "subscription": get_subscription_status(user=None),
         "rated_packages": [],
         "teams": [],
+        "teams_full": [],
     }
 
 
@@ -100,14 +106,19 @@ def get_user_profile(user: UserType) -> UserProfile:
         ),
     )
 
-    return {
-        "username": username,
-        "capabilities": capabilities,
-        "connections": get_social_auth_connections(user),
-        "subscription": get_subscription_status(user),
-        "rated_packages": rated_packages,
-        "teams": get_teams(user),
-    }
+    teams = get_teams(user)
+
+    return UserProfileSerializer(
+        {
+            "username": username,
+            "capabilities": capabilities,
+            "connections": get_social_auth_connections(user),
+            "subscription": get_subscription_status(user),
+            "rated_packages": rated_packages,
+            "teams": [x.name for x in teams],
+            "teams_full": teams,
+        }
+    ).data
 
 
 def get_subscription_status(user: Optional[UserType]) -> SubscriptionStatus:
@@ -131,12 +142,11 @@ def get_subscription_status(user: Optional[UserType]) -> SubscriptionStatus:
 OAUTH_USERNAME_FIELDS = {
     "discord": "username",
     "github": "login",
-    "overwolf": "username",
+    "overwolf": "nickname",
 }
 
 
 OAUTH_AVATAR_FIELDS = {
-    "discord": "!NOT_SUPPORTED!",
     "github": "avatar_url",
     "overwolf": "avatar",
 }
@@ -150,8 +160,10 @@ def get_social_auth_connections(user: UserType) -> List[SocialAuthConnection]:
     return [
         {
             "provider": sa.provider,
-            "username": sa.extra_data[OAUTH_USERNAME_FIELDS[sa.provider]],
-            "avatar": sa.extra_data.get(OAUTH_AVATAR_FIELDS[sa.provider]),
+            "username": sa.extra_data.get(OAUTH_USERNAME_FIELDS.get(sa.provider)),
+            "avatar": sa.extra_data.get(OAUTH_AVATAR_FIELDS[sa.provider])
+            if sa.provider in OAUTH_AVATAR_FIELDS
+            else None,
         }
         for sa in user.social_auth.all()
     ]
@@ -170,16 +182,16 @@ def get_teams(user: UserType) -> List[UserTeam]:
     )
 
     return [
-        {
-            "name": membership.team.name,
-            "role": membership.role,
-            "member_count": len(
+        UserTeam(
+            name=membership.team.name,
+            role=membership.role,
+            member_count=len(
                 [
                     m
                     for m in membership.team.members.all()
                     if not hasattr(m.user, "service_account")
                 ],
             ),
-        }
+        )
         for membership in memberships.all()
     ]
