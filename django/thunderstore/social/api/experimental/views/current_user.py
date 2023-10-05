@@ -26,6 +26,18 @@ class CurrentUserExperimentalApiView(APIView):
         return Response(profile)
 
 
+class SocialAuthConnection(TypedDict):
+    provider: str
+    username: str
+    avatar: Optional[str]
+
+
+class SocialAuthConnectionSerializer(serializers.Serializer):
+    provider: serializers.CharField()
+    username: serializers.CharField()
+    avatar: serializers.CharField()
+
+
 class SubscriptionStatus(TypedDict):
     expires: Optional[datetime.datetime]
 
@@ -37,6 +49,7 @@ class SubscriptionStatusSerializer(serializers.Serializer):
 class UserProfile(TypedDict):
     username: Optional[str]
     capabilities: Set[str]
+    connections: List[SocialAuthConnection]
     subscription: SubscriptionStatus
     rated_packages: List[str]
     teams: List[str]
@@ -45,6 +58,7 @@ class UserProfile(TypedDict):
 class UserProfileSerializer(serializers.Serializer):
     username = serializers.CharField()
     capabilities = serializers.ListField()
+    connections = serializers.ListSerializer(child=SocialAuthConnectionSerializer())
     subscription = SubscriptionStatusSerializer()
     rated_packages = serializers.ListField()
     teams = serializers.ListField()
@@ -54,6 +68,7 @@ def get_empty_profile() -> UserProfile:
     return {
         "username": None,
         "capabilities": set(),
+        "connections": [],
         "subscription": get_subscription_status(user=None),
         "rated_packages": [],
         "teams": [],
@@ -81,6 +96,7 @@ def get_user_profile(user: UserType) -> UserProfile:
     return {
         "username": username,
         "capabilities": capabilities,
+        "connections": get_social_auth_connections(user),
         "subscription": get_subscription_status(user),
         "rated_packages": rated_packages,
         "teams": teams,
@@ -103,3 +119,32 @@ def get_subscription_status(user: Optional[UserType]) -> SubscriptionStatus:
         return {"expires": (now + datetime.timedelta(weeks=4))}
 
     return {"expires": None}
+
+
+OAUTH_USERNAME_FIELDS = {
+    "discord": "username",
+    "github": "login",
+    "overwolf": "username",
+}
+
+
+OAUTH_AVATAR_FIELDS = {
+    "discord": "!NOT_SUPPORTED!",
+    "github": "avatar_url",
+    "overwolf": "avatar",
+}
+
+
+def get_social_auth_connections(user: UserType) -> List[SocialAuthConnection]:
+    """
+    Return information regarding user's registered OAuth logins.
+    """
+
+    return [
+        {
+            "provider": sa.provider,
+            "username": sa.extra_data[OAUTH_USERNAME_FIELDS[sa.provider]],
+            "avatar": sa.extra_data.get(OAUTH_AVATAR_FIELDS[sa.provider]),
+        }
+        for sa in user.social_auth.all()
+    ]
