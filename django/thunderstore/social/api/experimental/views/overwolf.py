@@ -77,10 +77,12 @@ class OverwolfLoginApiView(APIView):
             request.session.create()
 
         return Response(
-            {
-                "session_id": request.session.session_key,
-                "profile": get_user_profile(user),
-            }
+            OwLoginResponseBody(
+                {
+                    "session_id": request.session.session_key,
+                    "profile": get_user_profile(user),
+                }
+            ).data
         )
 
 
