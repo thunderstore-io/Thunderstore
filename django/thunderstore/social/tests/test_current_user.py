@@ -6,8 +6,11 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 from social_django.models import UserSocialAuth  # type: ignore
 
+from thunderstore.account.factories import ServiceAccountFactory
 from thunderstore.account.models.user_flag import UserFlag, UserFlagMembership
 from thunderstore.core.types import UserType
+from thunderstore.repository.factories import TeamMemberFactory
+from thunderstore.repository.models.team import TeamMemberRole
 
 
 def request_user_info(api_client: APIClient) -> Response:
@@ -50,7 +53,6 @@ def test_current_user_info__for_authenticated_user__has_basic_values(
     assert user_info["username"] == "Test"
     assert type(user_info["capabilities"]) == list
     assert type(user_info["rated_packages"]) == list
-    assert type(user_info["teams"]) == list
 
 
 @pytest.mark.django_db
@@ -91,11 +93,10 @@ def test_current_user_info__for_subscriber__has_subscription_expiration(
     assert type(user_info["subscription"]) == dict
     assert "expires" in user_info["subscription"]
     expiry_datetime = datetime.datetime.fromisoformat(
-        user_info["subscription"]["expires"].replace("Z", "+00:00")
+        user_info["subscription"]["expires"].replace("Z", "+00:00"),
     )
-    assert expiry_datetime > now + datetime.timedelta(
-        days=27
-    ) and expiry_datetime < now + datetime.timedelta(days=29)
+    assert now + datetime.timedelta(days=27) < expiry_datetime
+    assert expiry_datetime < now + datetime.timedelta(days=29)
 
 
 @pytest.mark.django_db
@@ -133,7 +134,7 @@ def test_current_user_info__for_oauth_user__has_connections(
                 uid="ow123",
                 extra_data={"username": "ow_user", "avatar": "ow_url"},
             ),
-        ]
+        ],
     )
 
     response = request_user_info(api_client)
@@ -156,3 +157,44 @@ def test_current_user_info__for_oauth_user__has_connections(
     overwolf = next(c for c in user_info["connections"] if c["provider"] == "overwolf")
     assert overwolf["username"] == "ow_user"
     assert overwolf["avatar"] == "ow_url"
+
+
+@pytest.mark.django_db
+def test_current_user_info__for_team_member__has_teams(
+    api_client: APIClient,
+    user: UserType,
+) -> None:
+    api_client.force_authenticate(user=user)
+    response = request_user_info(api_client)
+
+    assert response.status_code == 200
+
+    user_info = response.json()
+
+    assert type(user_info["teams"]) == list
+    assert len(user_info["teams"]) == 0
+
+    # First team contains only the user, second team has another member
+    # and a service account.
+    member1 = TeamMemberFactory.create(user=user, role=TeamMemberRole.owner)
+    member2 = TeamMemberFactory.create(user=user, role=TeamMemberRole.member)
+    TeamMemberFactory.create(team=member2.team)
+    sa = ServiceAccountFactory(owner=member2.team)
+    TeamMemberFactory(user=sa.user, team=member2.team)
+
+    response = request_user_info(api_client)
+
+    assert response.status_code == 200
+
+    user_info = response.json()
+
+    assert type(user_info["teams"]) == list
+    assert len(user_info["teams"]) == 2
+
+    team1 = next(t for t in user_info["teams"] if t["name"] == member1.team.name)
+    assert team1["role"] == TeamMemberRole.owner
+    assert team1["member_count"] == 1
+
+    team2 = next(t for t in user_info["teams"] if t["name"] == member2.team.name)
+    assert team2["role"] == TeamMemberRole.member
+    assert team2["member_count"] == 2  # ServiceAccounts do not count.
