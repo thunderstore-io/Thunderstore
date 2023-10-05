@@ -132,7 +132,13 @@ def test_current_user_info__for_oauth_user__has_connections(
                 user=user,
                 provider="overwolf",
                 uid="ow123",
-                extra_data={"username": "ow_user", "avatar": "ow_url"},
+                extra_data={"nickname": "ow_user", "avatar": "ow_url"},
+            ),
+            UserSocialAuth(
+                user=user,
+                provider="unknown",
+                uid="unk123",
+                extra_data={},
             ),
         ],
     )
@@ -144,7 +150,7 @@ def test_current_user_info__for_oauth_user__has_connections(
     user_info = response.json()
 
     assert type(user_info["connections"]) == list
-    assert len(user_info["connections"]) == 3
+    assert len(user_info["connections"]) == 4
 
     discord = next(c for c in user_info["connections"] if c["provider"] == "discord")
     assert discord["username"] == "discord_user"
@@ -157,6 +163,10 @@ def test_current_user_info__for_oauth_user__has_connections(
     overwolf = next(c for c in user_info["connections"] if c["provider"] == "overwolf")
     assert overwolf["username"] == "ow_user"
     assert overwolf["avatar"] == "ow_url"
+
+    unknown = next(c for c in user_info["connections"] if c["provider"] == "unknown")
+    assert unknown["username"] is None
+    assert unknown["avatar"] is None
 
 
 @pytest.mark.django_db
@@ -190,11 +200,15 @@ def test_current_user_info__for_team_member__has_teams(
 
     assert type(user_info["teams"]) == list
     assert len(user_info["teams"]) == 2
+    assert type(user_info["teams_full"]) == list
+    assert len(user_info["teams_full"]) == 2
 
-    team1 = next(t for t in user_info["teams"] if t["name"] == member1.team.name)
+    assert user_info["teams"] == [t["name"] for t in user_info["teams_full"]]
+
+    team1 = next(t for t in user_info["teams_full"] if t["name"] == member1.team.name)
     assert team1["role"] == TeamMemberRole.owner
     assert team1["member_count"] == 1
 
-    team2 = next(t for t in user_info["teams"] if t["name"] == member2.team.name)
+    team2 = next(t for t in user_info["teams_full"] if t["name"] == member2.team.name)
     assert team2["role"] == TeamMemberRole.member
     assert team2["member_count"] == 2  # ServiceAccounts do not count.
