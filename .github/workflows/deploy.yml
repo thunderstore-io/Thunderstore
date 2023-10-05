@@ -9,7 +9,6 @@ jobs:
   deploy:
     name: Trigger deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     steps:
       - name: Call deployment workflow
         run: |
