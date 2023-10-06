@@ -96,13 +96,14 @@ class PackageDetailView(PackageListingDetailView):
         def format_category(cat: PackageCategory):
             return {"name": cat.name, "slug": cat.slug}
 
+        csrf_token = csrf.get_token(self.request)
         context["management_panel_props"] = {
             "isDeprecated": package_listing.package.is_deprecated,
             "canDeprecate": self.can_deprecate,
             "canUndeprecate": self.can_undeprecate,
             "canUnlist": self.can_unlist,
             "canUpdateCategories": self.can_manage_categories,
-            "csrfToken": csrf.get_token(self.request),
+            "csrfToken": csrf_token,
             "currentCategories": [
                 format_category(x) for x in package_listing.categories.all()
             ],
@@ -111,6 +112,25 @@ class PackageDetailView(PackageListingDetailView):
                 for x in package_listing.community.package_categories.all()
             ],
             "packageListingId": package_listing.pk,
+        }
+        context["report_button_props"] = {
+            "packageListingId": package_listing.pk,
+            "packageVersionId": package_listing.package.latest.pk,
+            "csrfToken": csrf_token,
+            "reasonChoices": [
+                {"value": "suspected-malware", "label": "Suspected malware"},
+                {
+                    "value": "upload-without-permission",
+                    "label": "Uploaded without permission",
+                },
+                {"value": "reupload", "label": "Reupload"},
+                {"value": "harassment", "label": "Harassment"},
+                {"value": "wrong-community", "label": "Wrong community"},
+                {"value": "invalid-categorization", "label": "Invalid categorization"},
+                {"value": "spam", "label": "Spam"},
+                {"value": "other", "label": "Other"},
+            ],
+            "descriptionMaxLength": 2048,
         }
         context["review_panel_props"] = self.get_review_panel()
         return context
