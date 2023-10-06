@@ -28,6 +28,7 @@ KNOWN_CELERY_IDS = (
     "celery.chain",
     "celery.starmap",
     "celery.backend_cleanup",
+    "thunderstore.community.tasks.update_community_aggregated_fields",
     "thunderstore.core.tasks.celery_post",
     "thunderstore.cache.tasks.invalidate_cache",
     "thunderstore.repository.tasks.update_api_caches",

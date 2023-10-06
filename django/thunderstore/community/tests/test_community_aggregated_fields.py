@@ -2,7 +2,9 @@ import pytest
 
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
-from thunderstore.community.models import CommunityAggregatedFields
+from thunderstore.community.models import Community, CommunityAggregatedFields
+from thunderstore.community.tasks import update_community_aggregated_fields
+from thunderstore.repository.factories import PackageVersionFactory
 
 
 @pytest.mark.django_db
@@ -171,3 +173,55 @@ def test_community_aggregated_fields__update_for_community__skips_unapproved_pac
     CommunityAggregatedFields.update_for_community(community)
 
     assert community.aggregated.package_count == 2
+
+
+@pytest.mark.django_db
+def test_community_aggregated_fields__celery_tasks__handles_mixed_situations():
+    # Community 1 has existing packages and downloads.
+    caf1 = CommunityAggregatedFields.objects.create(package_count=2, download_count=5)
+    c1 = CommunityFactory(aggregated_fields=caf1)
+    PackageListingFactory(
+        community_=c1,
+        package_version_kwargs={"downloads": 1},
+    )
+    c1_l2 = PackageListingFactory(
+        community_=c1,
+        package_version_kwargs={"downloads": 2, "version_number": "1.0.1"},
+    )
+    PackageVersionFactory(package=c1_l2.package, downloads=2)
+
+    # Community 1 has changes not reflected in the initial aggregated values.
+    PackageListingFactory(
+        community_=c1,
+        package_version_kwargs={"downloads": 2},
+    )
+
+    # Community 2 has existing CommunityAggregatedFields but no packages.
+    caf2 = CommunityAggregatedFields.objects.create()
+    CommunityFactory(aggregated_fields=caf2)
+
+    # Community 3 has no pre-existing CommunityAggregatedFields.
+    c3_l1 = PackageListingFactory(
+        package_version_kwargs={"downloads": 3},
+    )
+
+    assert Community.objects.count() == 3
+    assert CommunityAggregatedFields.objects.count() == 2
+    assert caf1.package_count == 2
+    assert caf1.download_count == 5
+    assert caf2.package_count == 0
+    assert caf2.download_count == 0
+
+    update_community_aggregated_fields()
+    caf1.refresh_from_db()
+    caf2.refresh_from_db()
+    caf3 = Community.objects.get(pk=c3_l1.community.pk).aggregated_fields
+
+    assert Community.objects.count() == 3
+    assert CommunityAggregatedFields.objects.count() == 3
+    assert caf1.package_count == 3
+    assert caf1.download_count == 7
+    assert caf2.package_count == 0
+    assert caf2.download_count == 0
+    assert caf3.package_count == 1
+    assert caf3.download_count == 3
