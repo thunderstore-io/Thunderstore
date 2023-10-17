@@ -1,4 +1,4 @@
-import { JSONValue } from "./models";
+import { GenericApiError, JSONValue } from "./models";
 
 export const stringifyError = (
     val: JSONValue | undefined,
@@ -33,25 +33,40 @@ export class ThunderstoreApiError {
     message: string;
     response: Response | null;
     errorObject: JSONValue | null;
+    extractedMessage: string | null;
 
     constructor(
         message: string,
         response: Response | null,
-        errorObject: JSONValue | null
+        errorObject: JSONValue | null,
+        extractedMessage: string | null
     ) {
         this.message = message;
         this.response = response;
         this.errorObject = errorObject;
+        this.extractedMessage = extractedMessage;
     }
 
     static createFromResponse = async (message: string, response: Response) => {
         let errorObject: JSONValue | null = null;
+        let extractedMessage: string | null = null;
         try {
             errorObject = await response.json();
+            if (typeof errorObject === "string") {
+                extractedMessage = errorObject;
+            } else if (typeof errorObject === "object") {
+                const genericError = errorObject as GenericApiError;
+                extractedMessage = genericError.detail || null;
+            }
         } catch (e) {
             console.error(e);
         }
-        return new ThunderstoreApiError(message, response, errorObject);
+        return new ThunderstoreApiError(
+            message,
+            response,
+            errorObject,
+            extractedMessage
+        );
     };
 
     public toString(): string {
