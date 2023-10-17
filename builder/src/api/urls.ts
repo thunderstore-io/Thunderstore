@@ -27,6 +27,8 @@ export class ApiUrls {
         apiUrl("package-listing", packageListingId, "approve");
     static rejectPackageListing = (packageListingId: string) =>
         apiUrl("package-listing", packageListingId, "reject");
+    static reportPackageListing = (packageListingId: string) =>
+        apiUrl("package-listing", packageListingId, "report");
     static packageWiki = (namespace: string, name: string) =>
         apiUrl("package", namespace, name, "wiki");
 }

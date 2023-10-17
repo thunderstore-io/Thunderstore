@@ -84,6 +84,20 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         return (await response.json()) as UpdatePackageListingResponse;
     };
 
+    reportPackageListing = async (props: {
+        packageListingId: string;
+        data: {
+            reason: string;
+            description?: string;
+        };
+    }) => {
+        const response = await this.post(
+            ApiUrls.reportPackageListing(props.packageListingId),
+            props.data
+        );
+        return await response.json();
+    };
+
     approvePackageListing = async (props: {
         packageListingId: string;
         data: {
