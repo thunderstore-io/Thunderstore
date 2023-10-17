@@ -2,7 +2,11 @@ import pytest
 from rest_framework.test import APIClient
 
 from thunderstore.community.factories import PackageListingFactory
-from thunderstore.community.models import CommunityAggregatedFields, CommunitySite
+from thunderstore.community.models import (
+    CommunityAggregatedFields,
+    CommunitySite,
+    PackageCategory,
+)
 
 
 @pytest.mark.django_db
@@ -10,12 +14,23 @@ def test_api_cyberstorm_community_detail_success(
     client: APIClient,
     community_site: CommunitySite,
 ):
+    categories = [
+        PackageCategory.objects.create(
+            name=i,
+            slug=i,
+            community=community_site.community,
+        )
+        for i in range(3)
+    ]
+
     PackageListingFactory(
         community_=community_site.community,
+        categories=[categories[0]],
         package_version_kwargs={"downloads": 0},
     )
     PackageListingFactory(
         community_=community_site.community,
+        categories=[categories[0], categories[1]],
         package_version_kwargs={"downloads": 23},
     )
     PackageListingFactory(
@@ -42,6 +57,15 @@ def test_api_cyberstorm_community_detail_success(
     assert c.background_image_url == response_data["background_image_url"]
     assert c.description == response_data["description"]
     assert c.discord_url == response_data["discord_url"]
+
+    # Include all community's categories even if they're currently not
+    # in use, so people see they exists.
+    assert type(response_data["package_categories"]) == list
+    assert len(response_data["package_categories"]) == 3
+    slugs = [c["slug"] for c in response_data["package_categories"]]
+    assert "0" in slugs
+    assert "1" in slugs
+    assert "2" in slugs
 
 
 @pytest.mark.django_db
