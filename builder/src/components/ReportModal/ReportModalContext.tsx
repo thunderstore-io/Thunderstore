@@ -3,6 +3,7 @@ import React, { PropsWithChildren, useContext } from "react";
 export type ReportModalContextProps = {
     csrfToken: string;
     packageListingId: string;
+    packageVersionId: string;
     reasonChoices: { value: string; label: string }[];
     descriptionMaxLength: number;
 };

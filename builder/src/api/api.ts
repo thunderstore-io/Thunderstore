@@ -87,6 +87,7 @@ class ExperimentalApiImpl extends ThunderstoreApi {
     reportPackageListing = async (props: {
         packageListingId: string;
         data: {
+            package_version_id: string;
             reason: string;
             description?: string;
         };

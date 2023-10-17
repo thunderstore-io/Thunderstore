@@ -1,9 +1,5 @@
 import { useForm } from "react-hook-form";
-import {
-    ExperimentalApi,
-    ThunderstoreApiError,
-    UpdatePackageListingResponse,
-} from "../../api";
+import { ExperimentalApi, ThunderstoreApiError } from "../../api";
 import * as Sentry from "@sentry/react";
 import { useState } from "react";
 import { Control, FieldError } from "react-hook-form/dist/types";
@@ -22,10 +18,10 @@ export type ReportForm = {
     status: Status;
 };
 
-export const useReportForm = (
-    packageListingId: string,
-    onSuccess?: (result: UpdatePackageListingResponse) => void
-): ReportForm => {
+export const useReportForm = (props: {
+    packageListingId: string;
+    packageVersionId: string;
+}): ReportForm => {
     const { handleSubmit, control, formState } = useForm<ReportFormValues>();
     const [status, setStatus] = useState<Status>(undefined);
     const [error, setError] = useState<string | undefined>(undefined);
@@ -40,14 +36,14 @@ export const useReportForm = (
         }
         setStatus("SUBMITTING");
         try {
-            const result = await ExperimentalApi.reportPackageListing({
-                packageListingId: packageListingId,
+            await ExperimentalApi.reportPackageListing({
+                packageListingId: props.packageListingId,
                 data: {
+                    package_version_id: props.packageVersionId,
                     reason: data.reason.value,
                     description: data.description,
                 },
             });
-            if (onSuccess) onSuccess(result);
             setStatus("SUCCESS");
         } catch (e) {
             Sentry.captureException(e);

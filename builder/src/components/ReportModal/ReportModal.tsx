@@ -117,10 +117,10 @@ export const ReportModal: React.FC = () => {
     const context = useReportModalContext();
     useOnEscape(context.closeModal);
 
-    const form = useReportForm(
-        context.props.packageListingId,
-        () => {} // TODO: Indicate success, prevent double-submission
-    );
+    const form = useReportForm({
+        packageListingId: context.props.packageListingId,
+        packageVersionId: context.props.packageVersionId,
+    });
 
     const style = {
         backgroundColor: "rgba(0, 0, 0, 0.4)",
