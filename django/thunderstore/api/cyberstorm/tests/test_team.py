@@ -2,6 +2,8 @@ import pytest
 from rest_framework.test import APIClient
 
 from thunderstore.account.factories import ServiceAccountFactory
+from thunderstore.community.factories import PackageCategoryFactory
+from thunderstore.community.models import Community, PackageListingSection
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import TeamFactory, TeamMemberFactory
 from thunderstore.repository.models.team import Team
@@ -18,6 +20,52 @@ def test_team_detail_api_view__for_active_team__returns_data(
     assert response.status_code == 200
     assert team.name == result["name"]
     assert team.donation_link == result["donation_link"]
+
+
+@pytest.mark.django_db
+def test_team_detail_api_view__when_queried_with_community__returns_categories_and_sections(
+    api_client: APIClient,
+    community: Community,
+    team: Team,
+):
+    category = PackageCategoryFactory(community=community, slug="only-category")
+    modpacks = PackageListingSection.objects.create(
+        community=community,
+        name="Modpacks",
+        slug="modpacks",
+        priority=9001,
+    )
+    mods = PackageListingSection.objects.create(
+        community=community,
+        name="Mods",
+        slug="mods",
+        priority=1,
+    )
+
+    # Return empty lists if community is not specified.
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/")
+    result = response.json()
+
+    assert response.status_code == 200
+    assert type(result["package_categories"]) == list
+    assert len(result["package_categories"]) == 0
+    assert type(result["sections"]) == list
+    assert len(result["sections"]) == 0
+
+    # Return community's categories/sections if community is specified.
+    response = api_client.get(
+        f"/api/cyberstorm/team/{team.name}/?community={community.identifier}",
+    )
+    result = response.json()
+
+    assert response.status_code == 200
+    assert type(result["package_categories"]) == list
+    assert len(result["package_categories"]) == 1
+    assert result["package_categories"][0]["slug"] == category.slug
+    assert type(result["sections"]) == list
+    assert len(result["sections"]) == 2
+    assert result["sections"][0]["slug"] == mods.slug
+    assert result["sections"][1]["slug"] == modpacks.slug
 
 
 @pytest.mark.django_db

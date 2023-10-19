@@ -8,3 +8,9 @@ from rest_framework import serializers
 class CyberstormPackageCategorySerializer(serializers.Serializer):
     name = serializers.CharField()
     slug = serializers.SlugField()
+
+
+class CyberstormPackageListingSectionSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    slug = serializers.SlugField()
+    priority = serializers.IntegerField()
