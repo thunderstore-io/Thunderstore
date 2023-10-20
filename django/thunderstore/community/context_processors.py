@@ -1,7 +1,6 @@
 from typing import Optional
 
 from django.conf import settings
-from django.db.models import Count
 from django.templatetags.static import static
 
 from thunderstore.community.models.community import Community
@@ -28,7 +27,7 @@ def get_community_context(community: Optional[Community]):
                     "site_icon": url,
                     "site_icon_width": community.icon_width,
                     "site_icon_height": community.icon_height,
-                }
+                },
             )
         else:
             result.update(
@@ -36,7 +35,7 @@ def get_community_context(community: Optional[Community]):
                     "site_icon": f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{static('icon.png')}",
                     "site_icon_width": "1000",
                     "site_icon_height": "1000",
-                }
+                },
             )
         return result
     else:
@@ -61,7 +60,8 @@ def community_site(request):
 
 def selectable_communities(request):
     return {
-        "selectable_communities": Community.objects.listed()
-        .annotate(package_count=Count("package_listings"))
-        .order_by("-package_count", "datetime_created")
+        "selectable_communities": Community.objects.listed().order_by(
+            "-aggregated_fields__package_count",
+            "datetime_created",
+        ),
     }

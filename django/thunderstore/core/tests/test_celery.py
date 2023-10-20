@@ -28,6 +28,7 @@ KNOWN_CELERY_IDS = (
     "celery.chain",
     "celery.starmap",
     "celery.backend_cleanup",
+    "thunderstore.community.tasks.update_community_aggregated_fields",
     "thunderstore.core.tasks.celery_post",
     "thunderstore.cache.tasks.invalidate_cache",
     "thunderstore.repository.tasks.update_api_caches",
@@ -101,7 +102,8 @@ def test_celery_task_removal_handled_correctly(celery_app):
 @pytest.mark.django_db
 @override_settings(CELERY_ALWAYS_EAGER=True)
 def test_celery_post(
-    celery_app: celery.Celery, http_server: Generator[str, None, None]
+    celery_app: celery.Celery,
+    http_server: Generator[str, None, None],
 ):
     celery_response = celery_post.delay("http://localhost:8888")
     assert celery_response.state == "SUCCESS"

@@ -22,6 +22,7 @@ from thunderstore.account.models import ServiceAccount, UserFlag, UserSettings
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
+    CommunityAggregatedFields,
     CommunitySite,
     PackageCategory,
     PackageListing,
@@ -101,6 +102,7 @@ def prime_testing_database(django_db_setup, django_db_blocker):
         [x.delete() for x in Webhook.objects.all()]
         [x.delete() for x in CommunitySite.objects.all()]
         [x.delete() for x in Community.objects.all()]
+        [x.delete() for x in CommunityAggregatedFields.objects.all()]
         [x.delete() for x in Site.objects.all()]
 
 

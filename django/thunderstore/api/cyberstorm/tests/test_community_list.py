@@ -8,26 +8,35 @@ from rest_framework.test import APIClient
 from thunderstore.api.cyberstorm.views.community_list import CommunityPaginator
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
-from thunderstore.community.models.community import Community
+from thunderstore.community.models.community import Community, CommunityAggregatedFields
 from thunderstore.community.models.community_site import CommunitySite
 
 
 @pytest.mark.django_db
 def test_api_cyberstorm_community_list_get_success(
-    client: APIClient, community_site: CommunitySite, dummy_image
+    client: APIClient,
+    community_site: CommunitySite,
+    dummy_image,
 ):
+    community1 = CommunityFactory(
+        aggregated_fields=CommunityAggregatedFields.objects.create(),
+    )
+    community2 = CommunityFactory(
+        aggregated_fields=CommunityAggregatedFields.objects.create(),
+        background_image=dummy_image,
+    )
 
-    community1 = CommunityFactory()
-    community2 = CommunityFactory(background_image=dummy_image)
-    for x in range(10):
+    for _ in range(10):
         PackageListingFactory(
-            community_=community1, package_version_kwargs={"downloads": 10}
+            community_=community1,
+            package_version_kwargs={"downloads": 10},
         )
         PackageListingFactory(
-            community_=community2, package_version_kwargs={"downloads": 5}
+            community_=community2,
+            package_version_kwargs={"downloads": 5},
         )
 
-    for x in range(10):
+    for _ in range(10):
         PackageListingFactory(
             community_=community1,
             package_version_kwargs={"downloads": 3},
@@ -38,6 +47,9 @@ def test_api_cyberstorm_community_list_get_success(
             review_status=PackageListingReviewStatus.rejected,
             package_version_kwargs={"downloads": 5},
         )
+
+    CommunityAggregatedFields.update_for_community(community1)
+    CommunityAggregatedFields.update_for_community(community2)
 
     response = client.get(
         "/api/cyberstorm/community/",
@@ -50,8 +62,8 @@ def test_api_cyberstorm_community_list_get_success(
     for index, c in enumerate((community_site.community, community1, community2)):
         assert results[index]["name"] == c.name
         assert results[index]["identifier"] == c.identifier
-        assert results[index]["total_download_count"] == c.total_download_count
-        assert results[index]["total_package_count"] == c.total_package_count
+        assert results[index]["total_download_count"] == c.aggregated.download_count
+        assert results[index]["total_package_count"] == c.aggregated.package_count
         assert results[index]["background_image_url"] == c.background_image_url
         assert results[index]["description"] == c.description
         assert results[index]["discord_url"] == c.discord_url
@@ -74,12 +86,13 @@ def test_api_cyberstorm_community_list_only_listed_communities_are_returned(
     assert (
         len(data["results"]) == 2
     )  # There is the test community, that is created in api_client
-    assert not (non_listed.identifier in [c["identifier"] for c in data["results"]])
+    assert not (non_listed.identifier in (c["identifier"] for c in data["results"]))
 
 
 @pytest.mark.django_db
 def test_api_cyberstorm_community_list_are_ordered_by_identifier_by_default(
-    api_client: APIClient, community
+    api_client: APIClient,
+    community,
 ) -> None:
     a = CommunityFactory(identifier="a")
     b = CommunityFactory(identifier="b")
@@ -96,7 +109,7 @@ def test_api_cyberstorm_community_list_pagination(
     api_client: APIClient,
 ) -> None:
 
-    for i in range(25):
+    for _ in range(25):
         CommunityFactory()
 
     total_count = Community.objects.count()
@@ -123,7 +136,8 @@ def test_api_cyberstorm_community_list_pagination(
 
 
 def __assert_communities(
-    data: Dict, communities: Union[Community, List[Community]]
+    data: Dict,
+    communities: Union[Community, List[Community]],
 ) -> None:
     """
     Check that expected communities are found in results

@@ -1,4 +1,4 @@
-from django.db.models import BigIntegerField, Count, QuerySet, Sum
+from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
@@ -32,29 +32,21 @@ class FrontPageApiView(APIView):
     def get_queryset(self) -> QuerySet[Community]:
         return (
             Community.objects.listed()
-            .prefetch_related(
-                "sites",
-            )
-            .annotate(
-                package_downloads_total=Sum(
-                    "package_listings__package__versions__downloads",
-                    output_field=BigIntegerField(),
-                ),
-                package_count=Count("package_listings"),
-            )
-            .order_by("-package_count")
+            .prefetch_related("sites")
+            .order_by("-aggregated_fields__package_count")
         )
 
     def serialize_results(
-        self, queryset: QuerySet[Community]
+        self,
+        queryset: QuerySet[Community],
     ) -> FrontPageContentSerializer:
         communities = [
             {
                 "bg_image_src": c.background_image_url,
-                "download_count": c.package_downloads_total or 0,
+                "download_count": c.aggregated.download_count,
                 "identifier": c.identifier,
                 "name": c.name,
-                "package_count": c.package_count,
+                "package_count": c.aggregated.package_count,
             }
             for c in queryset
         ]

@@ -9,5 +9,11 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     datetime_created = serializers.DateTimeField()
     background_image_url = serializers.CharField(required=False)
     icon_url = serializers.CharField(required=False)
-    total_download_count = serializers.IntegerField()
-    total_package_count = serializers.IntegerField()
+    total_download_count = serializers.SerializerMethodField()
+    total_package_count = serializers.SerializerMethodField()
+
+    def get_total_download_count(self, obj) -> int:
+        return obj.aggregated.download_count
+
+    def get_total_package_count(self, obj) -> int:
+        return obj.aggregated.package_count
