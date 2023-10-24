@@ -15,18 +15,23 @@ def test_get_avatar_url__for_user_without_connetions__returns_none(
 
 
 @pytest.mark.django_db
-def test_get_avatar_url__for_discord_user__returns_none(user: UserType) -> None:
-    UserSocialAuth.objects.create(
+def test_get_avatar_url__for_discord_user__returns_avatar(user: UserType) -> None:
+    connection = UserSocialAuth.objects.create(
         user=user,
         provider="discord",
         uid="user",
-        extra_data={"avatar": "url", "avatar_url": "url"},
     )
 
     avatar = get_avatar_url(user)
 
-    # Discord doesn't return avatar URLs.
     assert avatar is None
+
+    connection.extra_data = {"id": "user_id", "avatar": "avatar_id"}
+    connection.save()
+
+    avatar = get_avatar_url(user)
+
+    assert avatar.endswith("avatars/user_id/avatar_id.png")
 
 
 @pytest.mark.django_db
