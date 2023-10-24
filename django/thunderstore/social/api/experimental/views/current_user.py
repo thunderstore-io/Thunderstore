@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from thunderstore.account.models.user_flag import UserFlag
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import TeamMember
+from thunderstore.social.utils import get_connection_avatar_url
 
 
 class CurrentUserExperimentalApiView(APIView):
@@ -146,12 +147,6 @@ OAUTH_USERNAME_FIELDS = {
 }
 
 
-OAUTH_AVATAR_FIELDS = {
-    "github": "avatar_url",
-    "overwolf": "avatar",
-}
-
-
 def get_social_auth_connections(user: UserType) -> List[SocialAuthConnection]:
     """
     Return information regarding user's registered OAuth logins.
@@ -161,9 +156,7 @@ def get_social_auth_connections(user: UserType) -> List[SocialAuthConnection]:
         {
             "provider": sa.provider,
             "username": sa.extra_data.get(OAUTH_USERNAME_FIELDS.get(sa.provider)),
-            "avatar": sa.extra_data.get(OAUTH_AVATAR_FIELDS[sa.provider])
-            if sa.provider in OAUTH_AVATAR_FIELDS
-            else None,
+            "avatar": get_connection_avatar_url(sa),
         }
         for sa in user.social_auth.all()
     ]

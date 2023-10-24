@@ -2,7 +2,7 @@ from typing import Optional
 
 from rest_framework import serializers
 
-from thunderstore.social.utils import get_avatar_url
+from thunderstore.social.utils import get_user_avatar_url
 
 
 class CyberstormTeamSerializer(serializers.Serializer):
@@ -23,7 +23,7 @@ class CyberstormTeamMemberSerializer(serializers.Serializer):
     role = serializers.CharField()
 
     def get_avatar(self, obj) -> Optional[str]:
-        return get_avatar_url(obj.user)
+        return get_user_avatar_url(obj.user)
 
 
 class CyberstormServiceAccountSerializer(serializers.Serializer):
