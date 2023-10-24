@@ -17,3 +17,14 @@ class CyberstormCommunitySerializer(serializers.Serializer):
 
     def get_total_package_count(self, obj) -> int:
         return obj.aggregated.package_count
+
+
+class CyberstormPackageCategorySerializer(serializers.Serializer):
+    name = serializers.CharField()
+    slug = serializers.SlugField()
+
+
+class CyberstormPackageListingSectionSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    slug = serializers.SlugField()
+    priority = serializers.IntegerField()
