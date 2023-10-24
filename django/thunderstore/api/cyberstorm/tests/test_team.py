@@ -1,10 +1,13 @@
 import pytest
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from thunderstore.account.factories import ServiceAccountFactory
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import TeamFactory, TeamMemberFactory
 from thunderstore.repository.models.team import Team
+
+User = get_user_model()
 
 
 @pytest.mark.django_db
@@ -151,6 +154,35 @@ def test_team_members_api_view__for_member__returns_only_real_users(
 
 
 @pytest.mark.django_db
+def test_team_members_api_view__for_member__sorts_results(
+    api_client: APIClient,
+    team: Team,
+):
+    alice = User.objects.create(username="Alice")
+    bob = User.objects.create(username="Bob")
+    erin = User.objects.create(username="Erin")
+    dan = User.objects.create(username="Dan")
+    charlie = User.objects.create(username="Charlie")
+    TeamMemberFactory(team=team, user=alice, role="member")
+    TeamMemberFactory(team=team, user=bob, role="owner")
+    TeamMemberFactory(team=team, user=erin, role="member")
+    TeamMemberFactory(team=team, user=dan, role="owner")
+    TeamMemberFactory(team=team, user=charlie, role="member")
+    api_client.force_authenticate(alice)
+
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/members/")
+    result = response.json()
+
+    # Owners alphabetically, then members alphabetically.
+    assert len(result) == 5
+    assert result[0]["username"] == bob.username
+    assert result[1]["username"] == dan.username
+    assert result[2]["username"] == alice.username
+    assert result[3]["username"] == charlie.username
+    assert result[4]["username"] == erin.username
+
+
+@pytest.mark.django_db
 def test_team_service_accounts_api_view__for_member__returns_only_service_accounts(
     api_client: APIClient,
     team: Team,
@@ -167,3 +199,27 @@ def test_team_service_accounts_api_view__for_member__returns_only_service_accoun
     assert result[0]["identifier"] == str(sa.uuid)
     assert result[0]["name"] == sa.user.first_name
     assert result[0]["last_used"] is None
+
+
+@pytest.mark.django_db
+def test_team_service_accounts_api_view__for_member__sorts_results(
+    api_client: APIClient,
+    team: Team,
+    user: UserType,
+):
+    bob = User.objects.create(username="Bob", first_name="Bob")
+    charlie = User.objects.create(username="Charlie", first_name="Charlie")
+    alice = User.objects.create(username="Alice", first_name="Alice")
+    ServiceAccountFactory(owner=team, user=bob)
+    ServiceAccountFactory(owner=team, user=charlie)
+    ServiceAccountFactory(owner=team, user=alice)
+    TeamMemberFactory(team=team, user=user, role="member")
+    api_client.force_authenticate(user)
+
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/service-accounts/")
+    result = response.json()
+
+    assert len(result) == 3
+    assert result[0]["name"] == alice.first_name
+    assert result[1]["name"] == bob.first_name
+    assert result[2]["name"] == charlie.first_name
