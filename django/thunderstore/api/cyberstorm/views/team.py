@@ -1,6 +1,5 @@
 from django.db.models import Q, QuerySet
 from rest_framework.exceptions import NotFound, PermissionDenied
-from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -11,6 +10,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
 )
+from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
 from thunderstore.repository.models.team import Team, TeamMember
 
@@ -45,7 +45,7 @@ class TeamRestrictedAPIView(ListAPIView):
 
 class TeamMembersAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
     serializer_class = CyberstormTeamMemberSerializer
-    filter_backends = [OrderingFilter]
+    filter_backends = [StrictOrderingFilter]
     ordering = ["-role", "user__username"]
 
     def get_queryset(self) -> QuerySet[TeamMember]:
@@ -58,7 +58,7 @@ class TeamMembersAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
 
 class TeamServiceAccountsAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
     serializer_class = CyberstormServiceAccountSerializer
-    filter_backends = [OrderingFilter]
+    filter_backends = [StrictOrderingFilter]
     ordering = ["user__first_name"]
 
     def get_queryset(self) -> QuerySet[ServiceAccount]:
