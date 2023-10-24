@@ -1,6 +1,6 @@
 from django.db.models import Q, QuerySet
-from rest_framework.exceptions import NotFound, PermissionDenied
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 
@@ -32,12 +32,8 @@ class TeamRestrictedAPIView(ListAPIView):
     def check_permissions(self, request: Request) -> None:
         super().check_permissions(request)
 
-        try:
-            team = Team.objects.exclude(is_active=False).get(
-                name__iexact=self.kwargs["team_id"],
-            )
-        except Team.DoesNotExist:
-            raise NotFound()
+        teams = Team.objects.exclude(is_active=False)
+        team = get_object_or_404(teams, name__iexact=self.kwargs["team_id"])
 
         if not team.can_user_access(request.user):
             raise PermissionDenied()
