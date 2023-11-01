@@ -1,7 +1,7 @@
 from .community_detail import CommunityDetailAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
-from .packages import CommunityPackageListApiView
+from .packages import CommunityPackageListApiView, NamespacePackageListApiView
 from .team import TeamDetailAPIView, TeamMembersAPIView, TeamServiceAccountsAPIView
 
 __all__ = [
@@ -9,6 +9,7 @@ __all__ = [
     "CommunityFiltersAPIView",
     "CommunityListAPIView",
     "CommunityPackageListApiView",
+    "NamespacePackageListApiView",
     "TeamDetailAPIView",
     "TeamMembersAPIView",
     "TeamServiceAccountsAPIView",

@@ -5,6 +5,7 @@ from thunderstore.api.cyberstorm.views import (
     CommunityFiltersAPIView,
     CommunityListAPIView,
     CommunityPackageListApiView,
+    NamespacePackageListApiView,
     TeamDetailAPIView,
     TeamMembersAPIView,
     TeamServiceAccountsAPIView,
@@ -30,6 +31,11 @@ cyberstorm_urls = [
         "package/<str:community_id>/",
         CommunityPackageListApiView.as_view(),
         name="cyberstorm.package.community",
+    ),
+    path(
+        "package/<str:community_id>/<str:namespace_id>/",
+        NamespacePackageListApiView.as_view(),
+        name="cyberstorm.package.community.namespace",
     ),
     path(
         "team/<str:team_id>/",

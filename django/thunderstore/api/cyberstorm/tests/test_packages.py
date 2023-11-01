@@ -17,7 +17,7 @@ from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,
 )
-from thunderstore.repository.models import Package
+from thunderstore.repository.models import Package, Team
 
 ########################
 # BasePackageListApiView
@@ -581,3 +581,31 @@ def test_community_view__when_community_requires_review__returns_only_approved_p
 
     assert result["count"] == 1
     assert result["results"][0]["name"] == approved.package.name
+
+
+#############################
+# NamespacePackageListApiView
+#############################
+
+
+@pytest.mark.django_db
+def test_namespace_view__returns_only_packages_listed_in_community_belonging_to_namespace(
+    api_client: APIClient,
+    community: Community,
+    team: Team,
+) -> None:
+    namespace = team.namespaces.get()
+    expected = PackageListingFactory(
+        community_=community,
+        package_kwargs={"namespace": namespace},
+    )
+    PackageListingFactory(community_=community)
+    PackageListingFactory(package_kwargs={"namespace": namespace})
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{community.identifier}/{namespace.name}/",
+    )
+    result = response.json()
+
+    assert result["count"] == 1
+    assert result["results"][0]["name"] == expected.package.name

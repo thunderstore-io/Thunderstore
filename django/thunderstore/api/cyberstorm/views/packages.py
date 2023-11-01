@@ -18,7 +18,7 @@ from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import Community, PackageListingSection
-from thunderstore.repository.models import Package
+from thunderstore.repository.models import Namespace, Package
 
 # Keys are values expected in requests, values are args for .order_by().
 ORDER_ARGS = {
@@ -449,4 +449,48 @@ class CommunityPackageListApiView(BasePackageListApiView):
         return reverse(
             "api:cyberstorm:cyberstorm.package.community",
             kwargs={"community_id": self.kwargs["community_id"]},
+        )
+
+
+class NamespacePackageListApiView(BasePackageListApiView):
+    """
+    Community & Namespace-scoped package list.
+    """
+
+    @conditional_swagger_auto_schema(
+        query_serializer=PackageListRequestSerializer,
+        responses={200: PackageListResponseSerializer()},
+        operation_id="api_cyberstorm_package_community_namespace",
+        tags=["cyberstorm"],
+    )
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        return super().get(request, *args, **kwargs)
+
+    def _get_base_queryset(self) -> QuerySet[Package]:
+        """
+        Return QuerySet filtered with endpoint specific operations.
+        """
+        community_id = self.kwargs["community_id"]
+        community = get_object_or_404(Community, identifier=community_id)
+
+        namespace_id = self.kwargs["namespace_id"]
+        namespace = get_object_or_404(Namespace, name__iexact=namespace_id)
+
+        return get_community_package_queryset(community).exclude(
+            ~Q(namespace=namespace),
+        )
+
+    def _get_paginator_cache_key(self):
+        return "api.cyberstorm.package.community.namespace"
+
+    def _get_paginator_cache_vary_prefix(self):
+        return f"{self.kwargs['community_id']}/{self.kwargs['namespace_id']}"
+
+    def _get_request_path(self) -> str:
+        return reverse(
+            "api:cyberstorm:cyberstorm.package.community.namespace",
+            kwargs={
+                "community_id": self.kwargs["community_id"],
+                "namespace_id": self.kwargs["namespace_id"],
+            },
         )
