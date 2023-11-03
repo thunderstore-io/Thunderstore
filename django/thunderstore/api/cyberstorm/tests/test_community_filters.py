@@ -56,5 +56,7 @@ def test_community_filters_api_view__returns_package_listing_sections(
 
     # Filter out unlisted, order by priority.
     assert len(result["sections"]) == 2
+    assert result["sections"][0]["uuid"] == str(section3.uuid)
     assert result["sections"][0]["slug"] == section3.slug
+    assert result["sections"][1]["uuid"] == str(section1.uuid)
     assert result["sections"][1]["slug"] == section1.slug
