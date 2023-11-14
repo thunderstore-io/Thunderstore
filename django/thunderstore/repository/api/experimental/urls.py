@@ -8,6 +8,9 @@ from thunderstore.repository.api.experimental.views import (
     PackageVersionReadmeApiView,
     UploadPackageApiView,
 )
+from thunderstore.repository.api.experimental.views.package_index import (
+    PackageIndexApiView,
+)
 from thunderstore.repository.api.experimental.views.submit import SubmitPackageApiView
 from thunderstore.repository.api.experimental.views.validators import (
     IconValidatorApiView,
@@ -24,6 +27,7 @@ urls = [
     path(
         "current-user/", CurrentUserExperimentalApiView.as_view(), name="current-user"
     ),
+    path("package-index/", PackageIndexApiView.as_view(), name="package-index"),
     path("package/", PackageListApiView.as_view(), name="package-list"),
     path("package/wikis/", PackageWikiListAPIView.as_view(), name="package-wiki-list"),
     path(
