@@ -17,20 +17,15 @@ from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,
 )
-from thunderstore.repository.models import Package, Team
+from thunderstore.repository.models import Team
 
 ########################
 # BasePackageListApiView
 ########################
 
 
-def get_mock_qs(self):
-    return Package.objects.all()
-
-
 mock_base_package_list_api_view = patch.multiple(
     BasePackageListApiView,
-    _get_base_queryset=get_mock_qs,
     _get_paginator_cache_key=Mock(return_value="cache"),
     _get_paginator_cache_vary_prefix=Mock(return_value="cache"),
     _get_request_path=Mock(return_value="packages"),
@@ -40,10 +35,13 @@ mock_base_package_list_api_view = patch.multiple(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__by_default__filters_out_inactive_packages() -> None:
-    PackageListingFactory(package_kwargs={"is_active": False})
+    pl = PackageListingFactory(package_kwargs={"is_active": False})
 
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=pl.community.identifier,
+    )
 
     assert response.data["count"] == 0
 
@@ -51,10 +49,13 @@ def test_base_view__by_default__filters_out_inactive_packages() -> None:
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__by_default__filters_out_deprecated_packages() -> None:
-    PackageListingFactory(package_kwargs={"is_deprecated": True})
+    pl = PackageListingFactory(package_kwargs={"is_deprecated": True})
 
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=pl.community.identifier,
+    )
 
     assert response.data["count"] == 0
 
@@ -62,10 +63,13 @@ def test_base_view__by_default__filters_out_deprecated_packages() -> None:
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_requested__include_deprecated_packages() -> None:
-    PackageListingFactory(package_kwargs={"is_deprecated": True})
+    pl = PackageListingFactory(package_kwargs={"is_deprecated": True})
 
     request = APIRequestFactory().get("/", {"deprecated": True})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=pl.community.identifier,
+    )
 
     assert response.data["count"] == 1
 
@@ -73,10 +77,13 @@ def test_base_view__when_requested__include_deprecated_packages() -> None:
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__by_default__filters_out_nsfw() -> None:
-    PackageListingFactory(has_nsfw_content=True)
+    pl = PackageListingFactory(has_nsfw_content=True)
 
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=pl.community.identifier,
+    )
 
     assert response.data["count"] == 0
 
@@ -84,10 +91,13 @@ def test_base_view__by_default__filters_out_nsfw() -> None:
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_requested__include_nsfw_packages() -> None:
-    PackageListingFactory(has_nsfw_content=True)
+    pl = PackageListingFactory(has_nsfw_content=True)
 
     request = APIRequestFactory().get("/", {"nsfw": True})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=pl.community.identifier,
+    )
 
     assert response.data["count"] == 1
 
@@ -102,7 +112,10 @@ def test_base_view__by_default__does_not_filter_by_categories(
     PackageListingFactory(community_=community, categories=[cat])
 
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 2
 
@@ -117,7 +130,10 @@ def test_base_view__when_including_category__filters_out_not_matched(
     included = PackageListingFactory(community_=community, categories=[cat])
 
     request = APIRequestFactory().get("/", {"included_categories": [cat.id]})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == included.package.name
@@ -133,7 +149,10 @@ def test_base_view__when_excluding_category__filters_out_matched(
     PackageListingFactory(community_=community, categories=[cat])
 
     request = APIRequestFactory().get("/", {"excluded_categories": [cat.id]})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == included.package.name
@@ -160,7 +179,10 @@ def test_base_view__when_requesting_section__filters_based_on_categories(
     PackageListingFactory(community_=community, categories=[irrelevant])
 
     request = APIRequestFactory().get("/", {"section": section.uuid})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == expected.package.name
@@ -175,7 +197,10 @@ def test_base_view__when_requesting_nonexisting_section__does_nothing() -> None:
         "/",
         {"section": "decade00-0000-4000-a000-000000000000"},
     )
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=expected.community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == expected.package.name
@@ -191,19 +216,28 @@ def test_base_view__when_search_is_used__filters_based_on_names_and_description(
     pl3 = PackageListingFactory(community_=community)
 
     request = APIRequestFactory().get("/", {"q": pl1.package.name})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == pl1.package.name
 
     request = APIRequestFactory().get("/", {"q": pl2.package.owner.name})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == pl2.package.name
 
     request = APIRequestFactory().get("/", {"q": pl3.package.latest.description})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == pl3.package.name
@@ -228,7 +262,10 @@ def test_base_view__by_default__orders_packages_by_update_date(
     )
 
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl2.package.name
@@ -255,7 +292,10 @@ def test_base_view__when_requested__orders_packages_by_creation_date(
     )
 
     request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl2.package.name
@@ -282,7 +322,10 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
     )
 
     request = APIRequestFactory().get("/", {"ordering": "most-downloaded"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl3.package.name
@@ -294,7 +337,10 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
 
     invalidate_cache(CacheBustCondition.any_package_updated)
     request = APIRequestFactory().get("/", {"ordering": "most-downloaded"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl1.package.name
@@ -315,7 +361,10 @@ def test_base_view__when_requested__orders_packages_by_rating_counts(
     PackageRatingFactory(package=top.package)
 
     request = APIRequestFactory().get("/", {"ordering": "top-rated"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == top.package.name
@@ -329,7 +378,10 @@ def test_base_view__unknown_ordering_parameter__returns_error(
     community: Community,
 ) -> None:
     request = APIRequestFactory().get("/", {"ordering": "color"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert "ordering" in response.data
     assert "is not a valid choice" in str(response.data["ordering"])
@@ -348,7 +400,10 @@ def test_base_view__always__returns_pinned_packages_first(
     pl3 = PackageListingFactory(community_=community)
 
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl2.package.name
@@ -369,7 +424,10 @@ def test_base_view__always__returns_deprecated_packages_last(
     pl3 = PackageListingFactory(community_=community)
 
     request = APIRequestFactory().get("/", {"deprecated": True})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl3.package.name
@@ -386,7 +444,10 @@ def test_base_view__when_request_matches_lots_of_packages__paginates_results(
         PackageListingFactory(community_=community)
 
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 21
     assert response.data["previous"] is None
@@ -394,7 +455,10 @@ def test_base_view__when_request_matches_lots_of_packages__paginates_results(
     assert len(response.data["results"]) == 20
 
     request = APIRequestFactory().get("/", {"page": 2})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 21
     assert response.data["previous"] is not None
@@ -404,16 +468,24 @@ def test_base_view__when_request_matches_lots_of_packages__paginates_results(
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__when_requested_page_is_out_of_bounds__returns_error() -> None:
+def test_base_view__when_requested_page_is_out_of_bounds__returns_error(
+    community: Community,
+) -> None:
     request = APIRequestFactory().get("/")
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     # Requesting empty first page shouldn't cause error.
     assert response.data["count"] == 0
     assert len(response.data["results"]) == 0
 
     request = APIRequestFactory().get("/", {"page": 2})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     # Error not serialized by dispatch so cast to str manually.
     assert "detail" in response.data
@@ -440,7 +512,10 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
             "q": "test",
         },
     )
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["previous"].endswith(
         f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=1&q=test",
@@ -459,7 +534,10 @@ def test_base_view__caches_results(community: Community) -> None:
     )
 
     request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == "foo"
@@ -469,7 +547,10 @@ def test_base_view__caches_results(community: Community) -> None:
     PackageListingFactory(community_=community)
 
     request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     # Cached result, no changes.
     assert response.data["count"] == 1
@@ -477,7 +558,10 @@ def test_base_view__caches_results(community: Community) -> None:
 
     invalidate_cache(CacheBustCondition.any_package_updated)
     request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListApiView().dispatch(request)
+    response = BasePackageListApiView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
 
     assert response.data["count"] == 2
     assert response.data["results"][1]["name"] == "bar"
@@ -526,6 +610,47 @@ def test_community_view__when_package_listed_in_multiple_communities__returns_on
 
     assert result["count"] == 1
     assert result["results"][0]["community_identifier"] == pl2.community.identifier
+
+
+@pytest.mark.django_db
+def test_community_view__when_package_listed_in_multiple_communities__returns_correct_community_info(
+    api_client: APIClient,
+) -> None:
+    com1pack1 = PackageListingFactory()
+    com2pack1 = PackageListingFactory(package_=com1pack1.package)
+    com1pack2 = PackageListingFactory(community_=com1pack1.community)
+    com2pack2 = PackageListingFactory(
+        community_=com2pack1.community,
+        package_=com1pack2.package,
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{com1pack2.community.identifier}/",
+    )
+    result = response.json()
+
+    assert result["count"] == 2
+    assert len(result["results"]) == 2
+    assert (
+        result["results"][0]["community_identifier"] == com1pack2.community.identifier
+    )
+    assert (
+        result["results"][1]["community_identifier"] == com1pack2.community.identifier
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{com2pack2.community.identifier}/",
+    )
+    result = response.json()
+
+    assert result["count"] == 2
+    assert len(result["results"]) == 2
+    assert (
+        result["results"][0]["community_identifier"] == com2pack2.community.identifier
+    )
+    assert (
+        result["results"][1]["community_identifier"] == com2pack2.community.identifier
+    )
 
 
 @pytest.mark.django_db
