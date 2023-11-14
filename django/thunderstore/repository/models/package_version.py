@@ -1,11 +1,12 @@
 import re
 import uuid
+from typing import Iterator
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
-from django.db.models import Manager, QuerySet, Sum, signals
+from django.db.models import Manager, Q, QuerySet, Sum, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
 from ipware import get_client_ip
@@ -25,13 +26,36 @@ def get_version_png_filepath(instance, filename):
     return f"repository/icons/{instance}.png"
 
 
-class PackageVersionManager(models.Manager):
+class PackageVersionQuerySet(models.QuerySet):
     def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
         return self.exclude(is_active=False)
 
+    def chunked_enumerate(self, chunk_size=1000) -> Iterator["PackageVersion"]:
+        """
+        Enumerate over all the results without fetching everything at once.
+        Instead, cursor based pagination with deterministic ordering is used
+        to fetch each chunk separately, thus saving on memory.
+
+        Server-side cursors would be a better option if the environment allows
+        for it, but connection poolers generally make that impossible.
+
+        :param chunk_size: The amount of items fetched at once in each chunk
+        :return: Iterator of all the results
+        """
+        qs = self.order_by("date_created", "id")
+        cursor = Q()
+        while page := list(qs.filter(cursor)[:chunk_size]):
+            cursor = Q(
+                date_created__gte=page[-1].date_created,
+                id__gt=page[-1].id,
+            )
+            for entry in page:
+                yield entry
+
 
 class PackageVersion(models.Model):
-    objects: "Manager[PackageVersion]" = PackageVersionManager()
+    objects: "Manager[PackageVersion]" = PackageVersionQuerySet.as_manager()
+    id: int
 
     package = models.ForeignKey(
         "repository.Package",
@@ -40,6 +64,7 @@ class PackageVersion(models.Model):
     )
     is_active = models.BooleanField(
         default=True,
+        db_index=True,
     )
     date_created = models.DateTimeField(
         auto_now_add=True,
@@ -104,6 +129,9 @@ class PackageVersion(models.Model):
         return super().save(*args, **kwargs)
 
     class Meta:
+        indexes = [
+            models.Index(fields=["date_created", "id"]),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("package", "version_number"), name="unique_version_per_package"
