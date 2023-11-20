@@ -3,6 +3,7 @@ from .community import (
     CyberstormPackageCategorySerializer,
     CyberstormPackageListingSectionSerializer,
 )
+from .package import CyberstormPackagePreviewSerializer
 from .team import (
     CyberstormServiceAccountSerializer,
     CyberstormTeamMemberSerializer,
@@ -13,6 +14,7 @@ __all__ = [
     "CyberstormCommunitySerializer",
     "CyberstormPackageCategorySerializer",
     "CyberstormPackageListingSectionSerializer",
+    "CyberstormPackagePreviewSerializer",
     "CyberstormServiceAccountSerializer",
     "CyberstormTeamMemberSerializer",
     "CyberstormTeamSerializer",
