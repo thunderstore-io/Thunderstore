@@ -1,21 +1,17 @@
-from abc import abstractmethod
-from typing import Any, List, Optional, OrderedDict, Tuple
+from copy import deepcopy
+from typing import List, Optional, OrderedDict, Tuple
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.core.paginator import EmptyPage, Page
+from django.core.paginator import Page
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
 from django.urls import reverse
-from rest_framework import serializers, status
-from rest_framework.exceptions import ParseError
+from rest_framework import serializers
 from rest_framework.generics import ListAPIView, get_object_or_404
-from rest_framework.request import Request
-from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
 from thunderstore.api.utils import conditional_swagger_auto_schema
-from thunderstore.cache.enums import CacheBustCondition
-from thunderstore.cache.pagination import CachedPaginator
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import Community, PackageListingSection
 from thunderstore.repository.models import Namespace, Package
@@ -64,91 +60,97 @@ class PackageListResponseSerializer(serializers.Serializer):
     results = CyberstormPackagePreviewSerializer(many=True)
 
 
+class PackageListPaginator(PageNumberPagination):
+    page_size = 20
+
+
 class BasePackageListApiView(ListAPIView):
     """
     Base class for community-scoped, paginated, filterable package listings.
 
     Classes implementing this base class should receive `community_id`
-    url parameter and implement the abstract methods listed below.
+    url parameter.
+
+    Methods with names starting prefixed with underscore are you custom
+    methods, whereas the rest are overwritten methods from ListAPIView.
     """
 
-    page_size = 20
-
-    @abstractmethod
-    def _get_paginator_cache_key(self) -> str:
-        """
-        Return cache_key argument for CachedPaginator initialization.
-        """
-        raise NotImplementedError(
-            "PackageListApiView must implement _get_paginator_cache_key",
-        )
-
-    @abstractmethod
-    def _get_paginator_cache_vary_prefix(self) -> str:
-        """
-        Return endpoint and URL parameter specific string.
-
-        This is used as a part to create the cache_vary argument for
-        CachedPaginator initialization. Do not include query parameter
-        related information in this part.
-        """
-        raise NotImplementedError(
-            "PackageListApiView must implement _get_paginator_cache_vary_prefix",
-        )
-
-    @abstractmethod
-    def _get_request_path(self) -> str:
-        """
-        Return path part of URL to access the endpoint
-        """
-        raise NotImplementedError(
-            "PackageListApiView must implement _get_request_path",
-        )
+    pagination_class = PackageListPaginator
+    serializer_class = CyberstormPackagePreviewSerializer
+    viewname: str = ""  # Define in subclass
 
     def get(self, request, *args, **kwargs):
-        qp = PackageListRequestSerializer(data=request.query_params)
-        qp.is_valid(raise_exception=True)
-        params = qp.validated_data
+        return super().get(request, *args, **kwargs)
 
-        # To improve cacheability.
-        for value in params.values():
-            if isinstance(value, list):
-                value.sort()
+    def list(self, request, *args, **kwargs):  # noqa: A003
+        assert self.paginator is not None
 
-        package_qs = self._get_package_queryset()
-        package_qs = filter_deprecated(params["deprecated"], package_qs)
-        package_qs = filter_nsfw(params["nsfw"], package_qs)
-        package_qs = filter_in_categories(params["included_categories"], package_qs)
-        package_qs = filter_not_in_categories(params["excluded_categories"], package_qs)
-        package_qs = filter_by_section(params.get("section"), package_qs)
-        package_qs = filter_by_query(params.get("q"), package_qs)
-        package_qs = self._annotate_queryset(package_qs)
-        package_qs = self._order_queryset(params["ordering"], package_qs)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        response = self.paginator.get_paginated_response(serializer.data)
 
-        package_page = self._paginate(params, package_qs)
-        (prev_url, next_url) = self._get_sibling_pages(params, package_page)
-        packages = self._get_packages_dicts(package_page)
+        # Paginator's default implementation uses the Request object to
+        # construct previous/next links, which can open attack vectors
+        # via cache. Ideally this would have been overridden in the
+        # paginator itself, but that would require passing extra args,
+        # which would change the methods signatures, which is icky and
+        # not liked by MyPy either.
+        (previous_url, next_url) = self._get_sibling_pages()
+        response.data["previous"] = previous_url
+        response.data["next"] = next_url
 
-        serializer = PackageListResponseSerializer(
-            {
-                "count": package_page.paginator.count,
-                "previous": prev_url,
-                "next": next_url,
-                "results": packages,
-            },
+        return response
+
+    def get_serializer(self, package_page: Page, **kwargs):
+        """
+        Augment the objects with information required by serializer.
+
+        This is needed since the serializer returns community-related
+        information that is not directly available on a Package object.
+
+        This is an awkward place to do this but ListApiView didn't seem
+        to contain more suitable way to adjust the items.
+
+        Using Page as type overrides the default implementation, but is
+        accurate as long as serializer_class is defined. If not, it may
+        be any iterable, e.g. QuerySet.
+        """
+        package_list = self._get_packages_dicts(package_page)
+        return super().get_serializer(package_list, **kwargs)
+
+    def get_queryset(self) -> QuerySet[Package]:
+        queryset = get_community_package_queryset(self._get_community())
+        return self._annotate_queryset(queryset)
+
+    def filter_queryset(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
+        community = self._get_community()
+        require_approval = community.require_package_listing_approval
+        queryset = self.get_queryset()
+        params = self._get_validated_query_params()
+
+        queryset = filter_by_review_status(require_approval, queryset)
+        queryset = filter_deprecated(params["deprecated"], queryset)
+        queryset = filter_nsfw(params["nsfw"], queryset)
+        queryset = filter_in_categories(params["included_categories"], queryset)
+        queryset = filter_not_in_categories(params["excluded_categories"], queryset)
+        queryset = filter_by_section(params.get("section"), queryset)
+        queryset = filter_by_query(params.get("q"), queryset)
+
+        return queryset.order_by(
+            "-is_pinned",
+            "is_deprecated",
+            ORDER_ARGS[params["ordering"]],
+            "-date_updated",
+            "-pk",
         )
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def _get_package_queryset(self) -> QuerySet[Package]:
+    def _get_community(self) -> Community:
+        """
+        Read Community identifier from URL parameter and return object.
+        """
         community_id = self.kwargs["community_id"]
-        community = get_object_or_404(Community, identifier=community_id)
-        queryset = get_community_package_queryset(community)
-
-        return filter_by_review_status(
-            community.require_package_listing_approval,
-            queryset,
-        )
+        return get_object_or_404(Community, identifier=community_id)
 
     def _annotate_queryset(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
         """
@@ -171,46 +173,29 @@ class BasePackageListApiView(ListAPIView):
             ),
         )
 
-    def _order_queryset(
-        self,
-        ordering: str,
-        queryset: QuerySet[Package],
-    ) -> QuerySet[Package]:
+    def _get_validated_query_params(self) -> OrderedDict:
         """
-        Order results in requested order, defaulting to latest update.
+        Validate request query parameters with a request serializer.
         """
-        return queryset.order_by(
-            "-is_pinned",
-            "is_deprecated",
-            ORDER_ARGS[ordering],
-            "-date_updated",
-            "-pk",
-        )
+        qp = PackageListRequestSerializer(data=self.request.query_params)
+        qp.is_valid(raise_exception=True)
+        params = qp.validated_data
 
-    def _paginate(self, params: OrderedDict, queryset: QuerySet[Package]) -> Page:
-        """
-        Slice queryset based on the requested page.
-        """
-        paginator = CachedPaginator(
-            queryset,
-            self.page_size,
-            cache_key=self._get_paginator_cache_key(),
-            cache_vary=self._get_full_cache_vary(params),
-            cache_bust_condition=CacheBustCondition.any_package_updated,
-        )
+        # To improve cacheability.
+        for value in params.values():
+            if isinstance(value, list):
+                value.sort()
 
-        try:
-            page = paginator.page(params["page"])
-        except EmptyPage:
-            raise ParseError("Page index error: no results on requested page")
-
-        return page
+        return params
 
     def _get_packages_dicts(self, package_page: Page):
+        """
+        Return objects that can be serialized by the response serializer.
+        """
         community_id = self.kwargs["community_id"]
         packages = []
 
-        for p in package_page.object_list:
+        for p in package_page:
             listing = p.community_listings.get(community__identifier=community_id)
 
             packages.append(
@@ -233,45 +218,29 @@ class BasePackageListApiView(ListAPIView):
 
         return packages
 
-    def _get_full_cache_vary(self, params: OrderedDict) -> str:
-        """
-        Return cache key for CachedPaginator.
-        """
-        cache_vary = self._get_paginator_cache_vary_prefix()
-        cache_vary += f".{params['deprecated']}"
-        cache_vary += f".{params['nsfw']}"
-        cache_vary += f".{params['included_categories']}"
-        cache_vary += f".{params['excluded_categories']}"
-        cache_vary += f".{params.get('section', '-')}"
-        cache_vary += f".{params.get('q', '-')}"
-        cache_vary += f".{params['ordering']}"
-        cache_vary += f".{params['page']}"
-        cache_vary += f".{self.page_size}"
-        return cache_vary
-
-    def _get_sibling_pages(
-        self,
-        params: OrderedDict,
-        package_page: Page,
-    ) -> Tuple[Optional[str], Optional[str]]:
+    def _get_sibling_pages(self) -> Tuple[Optional[str], Optional[str]]:
         """
         Return the URLs to previous and next pages of this result set.
         """
-        base_url = (
-            f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{self._get_request_path()}"
-        )
+        assert self.paginator is not None
+        assert hasattr(self.paginator, "page")
+        page: Page = self.paginator.page
+
+        assert self.viewname
+        path = reverse(self.viewname, kwargs=self.kwargs)
+
+        base_url = f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{path}"
         previous_url = None
         next_url = None
+        params = deepcopy(self._get_validated_query_params())
 
-        if package_page.has_previous():
-            params["page"] -= 1
+        if page.has_previous():
+            params["page"] = page.previous_page_number()
             previous_url = f"{base_url}?{urlencode(params, doseq=True)}"
-            params["page"] += 1
 
-        if package_page.has_next():
-            params["page"] += 1
+        if page.has_next():
+            params["page"] = page.next_page_number()
             next_url = f"{base_url}?{urlencode(params, doseq=True)}"
-            params["page"] -= 1
 
         return (previous_url, next_url)
 
@@ -280,6 +249,8 @@ class CommunityPackageListApiView(BasePackageListApiView):
     """
     Community-scoped package list.
     """
+
+    viewname = "api:cyberstorm:cyberstorm.package.community"
 
     @conditional_swagger_auto_schema(
         query_serializer=PackageListRequestSerializer,
@@ -290,23 +261,13 @@ class CommunityPackageListApiView(BasePackageListApiView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    def _get_paginator_cache_key(self):
-        return "api.cyberstorm.package.community"
-
-    def _get_paginator_cache_vary_prefix(self):
-        return self.kwargs["community_id"]
-
-    def _get_request_path(self) -> str:
-        return reverse(
-            "api:cyberstorm:cyberstorm.package.community",
-            kwargs={"community_id": self.kwargs["community_id"]},
-        )
-
 
 class NamespacePackageListApiView(BasePackageListApiView):
     """
     Community & Namespace-scoped package list.
     """
+
+    viewname = "api:cyberstorm:cyberstorm.package.community.namespace"
 
     @conditional_swagger_auto_schema(
         query_serializer=PackageListRequestSerializer,
@@ -314,30 +275,15 @@ class NamespacePackageListApiView(BasePackageListApiView):
         operation_id="api_cyberstorm_package_community_namespace",
         tags=["cyberstorm"],
     )
-    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    def _get_package_queryset(self) -> QuerySet[Package]:
+    def get_queryset(self) -> QuerySet[Package]:
         namespace_id = self.kwargs["namespace_id"]
         namespace = get_object_or_404(Namespace, name__iexact=namespace_id)
 
-        community_scoped_qs = super()._get_package_queryset()
+        community_scoped_qs = super().get_queryset()
         return community_scoped_qs.exclude(~Q(namespace=namespace))
-
-    def _get_paginator_cache_key(self):
-        return "api.cyberstorm.package.community.namespace"
-
-    def _get_paginator_cache_vary_prefix(self):
-        return f"{self.kwargs['community_id']}/{self.kwargs['namespace_id']}"
-
-    def _get_request_path(self) -> str:
-        return reverse(
-            "api:cyberstorm:cyberstorm.package.community.namespace",
-            kwargs={
-                "community_id": self.kwargs["community_id"],
-                "namespace_id": self.kwargs["namespace_id"],
-            },
-        )
 
 
 def get_community_package_queryset(community: Community) -> QuerySet[Package]:

@@ -1,11 +1,9 @@
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from rest_framework.test import APIClient, APIRequestFactory
 
 from thunderstore.api.cyberstorm.views.packages import BasePackageListApiView
-from thunderstore.cache.enums import CacheBustCondition
-from thunderstore.cache.tasks import invalidate_cache
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models import (
@@ -26,9 +24,7 @@ from thunderstore.repository.models import Team
 
 mock_base_package_list_api_view = patch.multiple(
     BasePackageListApiView,
-    _get_paginator_cache_key=Mock(return_value="cache"),
-    _get_paginator_cache_vary_prefix=Mock(return_value="cache"),
-    _get_request_path=Mock(return_value="packages"),
+    viewname="api:cyberstorm:cyberstorm.package.community",
 )
 
 
@@ -335,7 +331,6 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
     # Downloads of all versions are counted towards package's downloads.
     PackageVersionFactory(package=pl1.package, downloads=9001, version_number="1.0.1")
 
-    invalidate_cache(CacheBustCondition.any_package_updated)
     request = APIRequestFactory().get("/", {"ordering": "most-downloaded"})
     response = BasePackageListApiView().dispatch(
         request,
@@ -489,7 +484,7 @@ def test_base_view__when_requested_page_is_out_of_bounds__returns_error(
 
     # Error not serialized by dispatch so cast to str manually.
     assert "detail" in response.data
-    assert "Page index error" in str(response.data["detail"])
+    assert "Invalid page" in str(response.data["detail"])
 
 
 @mock_base_package_list_api_view
@@ -523,48 +518,6 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
     assert response.data["next"].endswith(
         f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=3&q=test",
     )
-
-
-@mock_base_package_list_api_view
-@pytest.mark.django_db
-def test_base_view__caches_results(community: Community) -> None:
-    pl1 = PackageListingFactory(
-        community_=community,
-        package_kwargs={"name": "foo"},
-    )
-
-    request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListApiView().dispatch(
-        request,
-        community_id=community.identifier,
-    )
-
-    assert response.data["count"] == 1
-    assert response.data["results"][0]["name"] == "foo"
-
-    pl1.package.name = "bar"
-    pl1.package.save()
-    PackageListingFactory(community_=community)
-
-    request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListApiView().dispatch(
-        request,
-        community_id=community.identifier,
-    )
-
-    # Cached result, no changes.
-    assert response.data["count"] == 1
-    assert response.data["results"][0]["name"] == "foo"
-
-    invalidate_cache(CacheBustCondition.any_package_updated)
-    request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListApiView().dispatch(
-        request,
-        community_id=community.identifier,
-    )
-
-    assert response.data["count"] == 2
-    assert response.data["results"][1]["name"] == "bar"
 
 
 #############################
