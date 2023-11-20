@@ -64,7 +64,7 @@ class PackageListPaginator(PageNumberPagination):
     page_size = 20
 
 
-class BasePackageListApiView(ListAPIView):
+class BasePackageListAPIView(ListAPIView):
     """
     Base class for community-scoped, paginated, filterable package listings.
 
@@ -245,7 +245,7 @@ class BasePackageListApiView(ListAPIView):
         return (previous_url, next_url)
 
 
-class CommunityPackageListApiView(BasePackageListApiView):
+class CommunityPackageListAPIView(BasePackageListAPIView):
     """
     Community-scoped package list.
     """
@@ -262,7 +262,7 @@ class CommunityPackageListApiView(BasePackageListApiView):
         return super().get(request, *args, **kwargs)
 
 
-class NamespacePackageListApiView(BasePackageListApiView):
+class NamespacePackageListAPIView(BasePackageListAPIView):
     """
     Community & Namespace-scoped package list.
     """
