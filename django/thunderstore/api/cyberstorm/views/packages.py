@@ -14,8 +14,12 @@ from rest_framework.pagination import PageNumberPagination
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
 from thunderstore.api.utils import conditional_swagger_auto_schema
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.community.models import Community, PackageListingSection
-from thunderstore.repository.models import Namespace, Package
+from thunderstore.community.models import (
+    Community,
+    PackageListing,
+    PackageListingSection,
+)
+from thunderstore.repository.models import Namespace, Package, get_package_dependants
 
 # Keys are values expected in requests, values are args for .order_by().
 ORDER_ARGS = {
@@ -130,8 +134,9 @@ class BasePackageListAPIView(ListAPIView):
         return super().get_serializer(package_list, **kwargs)
 
     def get_queryset(self) -> QuerySet[Package]:
-        queryset = get_community_package_queryset(self._get_community())
-        return self._annotate_queryset(queryset)
+        queryset = Package.objects.active()  # type: ignore
+        queryset = self._annotate_queryset(queryset)
+        return self._select_and_prefetch(queryset)
 
     def filter_queryset(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
         community = self._get_community()
@@ -139,6 +144,7 @@ class BasePackageListAPIView(ListAPIView):
         params = self._get_validated_query_params()
 
         qs = filter_by_review_status(require_approval, queryset)
+        qs = filter_by_listed_in_community(community.identifier, qs)
         qs = filter_deprecated(params["deprecated"], qs)
         qs = filter_nsfw(params["nsfw"], qs)
         qs = filter_in_categories(params["included_categories"], qs)
@@ -180,6 +186,16 @@ class BasePackageListAPIView(ListAPIView):
                     ratings=Count("package_ratings"),
                 ).values("ratings"),
             ),
+        )
+
+    def _select_and_prefetch(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
+        """
+        Add query optimizations.
+        """
+
+        return queryset.select_related("latest", "namespace").prefetch_related(
+            "community_listings__categories",
+            "community_listings__community",
         )
 
     def _get_validated_query_params(self) -> OrderedDict:
@@ -296,19 +312,52 @@ class NamespacePackageListAPIView(BasePackageListAPIView):
         return community_scoped_qs.exclude(~Q(namespace=namespace))
 
 
-def get_community_package_queryset(community: Community) -> QuerySet[Package]:
+@method_decorator(
+    name="get",
+    decorator=conditional_swagger_auto_schema(
+        query_serializer=PackageListRequestSerializer,
+        manual_fields=[],
+        responses={200: PackageListResponseSerializer()},
+        operation_id="api_cyberstorm_package_community_namespace_package_dependants",
+        tags=["cyberstorm"],
+    ),
+)
+class PackageDependantsListAPIView(BasePackageListAPIView):
     """
-    Create base QuerySet for community scoped PackageListAPIViews.
+    Package list for packages that depend on a given package and are
+    listed in a given community.
     """
 
-    return (
-        Package.objects.active()  # type: ignore
-        .select_related("latest", "namespace")
-        .prefetch_related(
-            "community_listings__categories",
-            "community_listings__community",
+    viewname = (
+        "api:cyberstorm:cyberstorm.package.community.namespace.package-dependants"
+    )
+
+    def get_queryset(self) -> QuerySet[Package]:
+        community_id = self.kwargs["community_id"]
+        namespace_id = self.kwargs["namespace_id"]
+        package_name = self.kwargs["package_name"]
+        listings = PackageListing.objects.active()  # type: ignore
+        listing = get_object_or_404(
+            listings,
+            community__identifier=community_id,
+            package__namespace__name=namespace_id,
+            package__name__iexact=package_name,
         )
-        .exclude(~Q(community_listings__community__pk=community.pk))
+
+        queryset = get_package_dependants(listing.package.pk)
+        queryset = self._annotate_queryset(queryset)
+        return self._select_and_prefetch(queryset)
+
+
+def filter_by_listed_in_community(
+    community_identifier: str,
+    queryset: QuerySet[Package],
+) -> QuerySet[Package]:
+    """
+    Exclude packages not listed in given community.
+    """
+    return queryset.exclude(
+        ~Q(community_listings__community__identifier=community_identifier),
     )
 
 
