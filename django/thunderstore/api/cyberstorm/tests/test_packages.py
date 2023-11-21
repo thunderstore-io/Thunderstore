@@ -125,7 +125,7 @@ def test_base_view__when_including_category__filters_out_not_matched(
     PackageListingFactory(community_=community, categories=[])
     included = PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"included_categories": [cat.id]})
+    request = APIRequestFactory().get("/", {"included_categories": [str(cat.id)]})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
@@ -144,7 +144,7 @@ def test_base_view__when_excluding_category__filters_out_matched(
     included = PackageListingFactory(community_=community, categories=[])
     PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"excluded_categories": [cat.id]})
+    request = APIRequestFactory().get("/", {"excluded_categories": [str(cat.id)]})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
@@ -501,7 +501,7 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
         "/",
         data={
             "deprecated": True,
-            "included_categories": [cat.id],
+            "included_categories": [str(cat.id)],
             "ordering": "most-downloaded",
             "page": 2,
             "q": "test",

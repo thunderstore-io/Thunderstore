@@ -20,7 +20,7 @@ class CyberstormCommunitySerializer(serializers.Serializer):
 
 
 class CyberstormPackageCategorySerializer(serializers.Serializer):
-    id = serializers.IntegerField()  # noqa: A003
+    id = serializers.CharField()  # noqa: A003
     name = serializers.CharField()
     slug = serializers.SlugField()
 
