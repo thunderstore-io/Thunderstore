@@ -12,6 +12,7 @@ from thunderstore.community.models import (
     PackageListingSection,
 )
 from thunderstore.repository.factories import (
+    NamespaceFactory,
     PackageRatingFactory,
     PackageVersionFactory,
 )
@@ -686,4 +687,71 @@ def test_namespace_view__returns_only_packages_listed_in_community_belonging_to_
     result = response.json()
 
     assert result["count"] == 1
+    assert result["results"][0]["name"] == expected.package.name
+
+
+##############################
+# PackageDependantsListAPIView
+##############################
+
+
+@pytest.mark.django_db
+def test_dependants_view__returns_only_dependants_of_requested_package(
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    # Target dependency,
+    package = "Mod"
+    target_ns = NamespaceFactory()
+    target_dependency = PackageListingFactory(
+        community_=community,
+        package_kwargs={"name": package, "namespace": target_ns},
+    )
+
+    # Target package depends on target dependency.
+    target_package = PackageListingFactory(community_=community)
+    target_package.package.latest.dependencies.set(
+        [target_dependency.package.latest.id],
+    )
+
+    # Other dependency is listed in the same community and has the same
+    # name as the target dependency, but belongs to a different
+    # namespace.
+    other_ns = NamespaceFactory()
+    other_dependency = PackageListingFactory(
+        community_=community,
+        package_kwargs={"name": package, "namespace": other_ns},
+    )
+    other_package = PackageListingFactory(community_=community)
+    other_package.package.latest.dependencies.set([other_dependency.package.latest.id])
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{community.identifier}/{target_ns.name}/{package}/dependants/",
+    )
+    result = response.json()
+
+    assert result["count"] == 1
+    assert result["results"][0]["namespace"] == target_package.package.namespace.name
+    assert result["results"][0]["name"] == target_package.package.name
+
+
+@pytest.mark.django_db
+def test_dependants_view__returns_only_packages_listed_in_community(
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    dependency_listing = PackageListingFactory(community_=community)
+    dependency_id = dependency_listing.package.latest.id
+    expected = PackageListingFactory(community_=community)
+    expected.package.latest.dependencies.set([dependency_id])
+    other_community_listing = PackageListingFactory()
+    other_community_listing.package.latest.dependencies.set([dependency_id])
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{community.identifier}/{dependency_listing.package.namespace.name}/{dependency_listing.package.name}/dependants/",
+    )
+    result = response.json()
+
+    assert result["count"] == 1
+    assert result["results"][0]["namespace"] == expected.package.namespace.name
     assert result["results"][0]["name"] == expected.package.name
