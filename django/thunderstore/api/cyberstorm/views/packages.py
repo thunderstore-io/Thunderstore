@@ -92,9 +92,6 @@ class BasePackageListAPIView(ListAPIView):
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
 
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
     def list(self, request, *args, **kwargs):  # noqa: A003
         assert self.paginator is not None
 
@@ -139,18 +136,17 @@ class BasePackageListAPIView(ListAPIView):
     def filter_queryset(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
         community = self._get_community()
         require_approval = community.require_package_listing_approval
-        queryset = self.get_queryset()
         params = self._get_validated_query_params()
 
-        queryset = filter_by_review_status(require_approval, queryset)
-        queryset = filter_deprecated(params["deprecated"], queryset)
-        queryset = filter_nsfw(params["nsfw"], queryset)
-        queryset = filter_in_categories(params["included_categories"], queryset)
-        queryset = filter_not_in_categories(params["excluded_categories"], queryset)
-        queryset = filter_by_section(params.get("section"), queryset)
-        queryset = filter_by_query(params.get("q"), queryset)
+        qs = filter_by_review_status(require_approval, queryset)
+        qs = filter_deprecated(params["deprecated"], qs)
+        qs = filter_nsfw(params["nsfw"], qs)
+        qs = filter_in_categories(params["included_categories"], qs)
+        qs = filter_not_in_categories(params["excluded_categories"], qs)
+        qs = filter_by_section(params.get("section"), qs)
+        qs = filter_by_query(params.get("q"), qs)
 
-        return queryset.order_by(
+        return qs.order_by(
             "-is_pinned",
             "is_deprecated",
             ORDER_ARGS[params["ordering"]],
