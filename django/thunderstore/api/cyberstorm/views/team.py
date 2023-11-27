@@ -1,8 +1,13 @@
+import json
+
 from django.db.models import Q, QuerySet
+from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
@@ -12,6 +17,7 @@ from thunderstore.api.cyberstorm.serializers import (
 )
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.repository.forms import CreateTeamForm
 from thunderstore.repository.models.team import Team, TeamMember
 
 
@@ -20,6 +26,27 @@ class TeamDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     queryset = Team.objects.exclude(is_active=False)
     lookup_field = "name__iexact"
     lookup_url_kwarg = "team_id"
+
+
+class TeamCreateAPIView(APIView):
+    def post(self, request, format=None):
+        form = CreateTeamForm(
+            user=request.user,
+            data=request.data,
+        )
+
+        if form.is_valid():
+            team = form.save()
+            return Response(
+                json.dumps(
+                    {
+                        "teamName": team.name,
+                    }
+                ),
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TeamRestrictedAPIView(ListAPIView):

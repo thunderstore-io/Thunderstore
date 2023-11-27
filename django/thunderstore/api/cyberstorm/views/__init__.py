@@ -7,6 +7,12 @@ from .packages import (
     PackageDependantsListAPIView,
 )
 from .team import TeamDetailAPIView, TeamMembersAPIView, TeamServiceAccountsAPIView
+from .team import (
+    TeamCreateAPIView,
+    TeamDetailAPIView,
+    TeamMembersAPIView,
+    TeamServiceAccountsAPIView,
+)
 
 __all__ = [
     "CommunityDetailAPIView",
@@ -18,4 +24,5 @@ __all__ = [
     "TeamDetailAPIView",
     "TeamMembersAPIView",
     "TeamServiceAccountsAPIView",
+    "TeamCreateAPIView",
 ]
