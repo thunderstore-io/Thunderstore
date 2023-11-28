@@ -52,6 +52,11 @@ class PackageVersionQuerySet(models.QuerySet):
             for entry in page:
                 yield entry
 
+    def listed_in(self, community_identifier: str):
+        return self.exclude(
+            ~Q(package__community_listings__community__identifier=community_identifier),
+        )
+
 
 class PackageVersion(models.Model):
     objects: "Manager[PackageVersion]" = PackageVersionQuerySet.as_manager()
