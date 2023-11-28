@@ -142,7 +142,7 @@ def test_package_listing_is_waiting_for_approval(
     community.save()
     if require_approval:
         assert active_package_listing.is_waiting_for_approval == (
-            review_status != PackageListingReviewStatus.approved
+            review_status == PackageListingReviewStatus.unreviewed
         )
     else:
         assert active_package_listing.is_waiting_for_approval is False
@@ -150,7 +150,7 @@ def test_package_listing_is_waiting_for_approval(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("review_status", PackageListingReviewStatus.options())
-def test_package_listing_is_waiting_for_approval(
+def test_package_listing_is_rejected(
     active_package_listing: PackageListing,
     review_status: str,
 ) -> None:
