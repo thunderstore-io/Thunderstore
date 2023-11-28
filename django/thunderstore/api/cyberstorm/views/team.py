@@ -17,15 +17,15 @@ from thunderstore.api.cyberstorm.serializers import (
 )
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
-from thunderstore.repository.forms import CreateTeamForm
+from thunderstore.repository.forms import (
+    AddTeamMemberForm,
+    CreateTeamForm,
+    DisbandTeamForm,
+    DonationLinkTeamForm,
+    EditTeamMemberForm,
+    RemoveTeamMemberForm,
+)
 from thunderstore.repository.models.team import Team, TeamMember
-
-
-class TeamDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
-    serializer_class = CyberstormTeamSerializer
-    queryset = Team.objects.exclude(is_active=False)
-    lookup_field = "name__iexact"
-    lookup_url_kwarg = "team_id"
 
 
 class TeamCreateAPIView(APIView):
@@ -47,6 +47,107 @@ class TeamCreateAPIView(APIView):
             )
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AddTeamMemberAPIView(APIView):
+    def post(self, request, format=None):
+        form = AddTeamMemberForm(
+            user=request.user,
+            data=request.data,
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RemoveTeamMemberAPIView(APIView):
+    def post(self, request, format=None):
+        form = RemoveTeamMemberForm(
+            user=request.user,
+            data=request.data,
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditTeamMemberAPIView(APIView):
+    def post(self, request, format=None):
+        form = EditTeamMemberForm(
+            user=request.user,
+            data=request.data,
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DisbandTeamAPIView(APIView):
+    def post(self, request, format=None):
+        form = DisbandTeamForm(
+            user=request.user,
+            data=request.data,
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DonationLinkTeamAPIView(APIView):
+    def post(self, request, team_id, format=None):
+        try:
+            print(team_id)
+            print(request.data)
+            team = Team.objects.get(name=team_id)
+        except Team.DoesNotExist:
+            return Response(
+                json.dumps(
+                    {
+                        "error": "Team",
+                    }
+                ),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        form = DonationLinkTeamForm(
+            user=request.user,
+            instance=team,
+            data=request.data,
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeamDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+    serializer_class = CyberstormTeamSerializer
+    queryset = Team.objects.exclude(is_active=False)
+    lookup_field = "name__iexact"
+    lookup_url_kwarg = "team_id"
 
 
 class TeamRestrictedAPIView(ListAPIView):

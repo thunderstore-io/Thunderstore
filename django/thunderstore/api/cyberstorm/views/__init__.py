@@ -8,6 +8,7 @@ from .packages import (
 )
 from .team import TeamDetailAPIView, TeamMembersAPIView, TeamServiceAccountsAPIView
 from .team import (
+    DonationLinkTeamAPIView,
     TeamCreateAPIView,
     TeamDetailAPIView,
     TeamMembersAPIView,
@@ -25,4 +26,5 @@ __all__ = [
     "TeamMembersAPIView",
     "TeamServiceAccountsAPIView",
     "TeamCreateAPIView",
+    "DonationLinkTeamAPIView",
 ]
