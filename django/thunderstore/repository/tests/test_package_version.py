@@ -51,7 +51,7 @@ def test_package_version_get_page_url(
     active_package_listing: PackageListing,
 ) -> None:
     owner_url = active_package_listing.package.latest.get_page_url(
-        active_package_listing.community.identifier
+        active_package_listing.community.identifier,
     )
     assert (
         owner_url
@@ -62,7 +62,8 @@ def test_package_version_get_page_url(
 @pytest.mark.django_db
 @pytest.mark.parametrize("protocol", ("http://", "https://"))
 @pytest.mark.parametrize(
-    "primary_host", ("primary.example.org", "secondary.example.org")
+    "primary_host",
+    ("primary.example.org", "secondary.example.org"),
 )
 def test_package_version_full_download_url(
     active_package_listing: PackageListing,
@@ -91,7 +92,8 @@ def test_package_version_format_spec_constraint(
         package_version.save()
     else:
         with pytest.raises(
-            IntegrityError, match='violates check constraint "valid_package_format"'
+            IntegrityError,
+            match='violates check constraint "valid_package_format"',
         ):
             package_version.save()
 

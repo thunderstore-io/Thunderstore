@@ -126,7 +126,7 @@ class PackageVersion(models.Model):
     def validate(self):
         if not re.match(PACKAGE_NAME_REGEX, self.name):
             raise ValidationError(
-                "Package names can only contain a-z A-Z 0-9 _ characters"
+                "Package names can only contain a-z A-Z 0-9 _ characters",
             )
 
     def save(self, *args, **kwargs):
@@ -139,7 +139,8 @@ class PackageVersion(models.Model):
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=("package", "version_number"), name="unique_version_per_package"
+                fields=("package", "version_number"),
+                name="unique_version_per_package",
             ),
             models.CheckConstraint(
                 check=PackageFormats.as_query_filter(
@@ -211,20 +212,12 @@ class PackageVersion(models.Model):
 
     @cached_property
     def full_download_url(self) -> str:
-        return "%(protocol)s%(hostname)s%(path)s" % {
-            "protocol": settings.PROTOCOL,
-            "hostname": settings.PRIMARY_HOST,
-            "path": self._download_url,
-        }
+        return f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{self._download_url}"
 
     @property
     def install_url(self):
-        return "ror2mm://v1/install/%(hostname)s/%(owner)s/%(name)s/%(version)s/" % {
-            "hostname": settings.PRIMARY_HOST,
-            "owner": self.package.owner.name,
-            "name": self.package.name,
-            "version": self.version_number,
-        }
+        path = f"{self.package.owner.name}/{self.package.name}/{self.version_number}"
+        return f"ror2mm://v1/install/{settings.PRIMARY_HOST}/{path}/"
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
