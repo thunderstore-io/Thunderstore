@@ -363,6 +363,7 @@ class CeleryQueues:
     Default = "celery"
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
+    BackgroundLongRunning = "background.long_running"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
