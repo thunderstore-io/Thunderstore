@@ -30,3 +30,16 @@ class CyberstormServiceAccountSerializer(serializers.Serializer):
     identifier = serializers.CharField(source="uuid")
     name = serializers.CharField(source="user.first_name")
     last_used = serializers.DateTimeField()
+
+
+class CyberstormTeamCreateSerialiazer(serializers.Serializer):
+    team_name = serializers.CharField()
+
+
+class CyberstormTeamAddMemberSerialiazer(serializers.Serializer):
+    user = serializers.CharField()
+    role = serializers.CharField()
+
+
+class CyberstormEditServiceAccountSerialiazer(serializers.Serializer):
+    nickname = serializers.CharField()

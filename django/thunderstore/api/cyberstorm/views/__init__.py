@@ -8,7 +8,14 @@ from .packages import (
 )
 from .team import TeamDetailAPIView, TeamMembersAPIView, TeamServiceAccountsAPIView
 from .team import (
-    DonationLinkTeamAPIView,
+    AddTeamMemberAPIView,
+    CreateServiceAccountAPIView,
+    DeleteServiceAccountAPIView,
+    DisbandTeamAPIView,
+    EditServiceAccountAPIView,
+    EditTeamAPIView,
+    EditTeamMemberAPIView,
+    RemoveTeamMemberAPIView,
     TeamCreateAPIView,
     TeamDetailAPIView,
     TeamMembersAPIView,
@@ -23,8 +30,15 @@ __all__ = [
     "NamespacePackageListAPIView",
     "PackageDependantsListAPIView",
     "TeamDetailAPIView",
+    "TeamCreateAPIView",
+    "AddTeamMemberAPIView",
+    "RemoveTeamMemberAPIView",
+    "EditTeamMemberAPIView",
+    "DisbandTeamAPIView",
+    "EditTeamAPIView",
     "TeamMembersAPIView",
     "TeamServiceAccountsAPIView",
-    "TeamCreateAPIView",
-    "DonationLinkTeamAPIView",
+    "CreateServiceAccountAPIView",
+    "DeleteServiceAccountAPIView",
+    "EditServiceAccountAPIView",
 ]
