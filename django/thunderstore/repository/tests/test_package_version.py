@@ -76,3 +76,16 @@ def test_package_version_format_spec_constraint(
             IntegrityError, match='violates check constraint "valid_package_format"'
         ):
             package_version.save()
+
+
+@pytest.mark.django_db
+def test_package_version_chunked_enumerate() -> None:
+    package_ids = {PackageVersionFactory().pk for _ in range(10)}
+
+    assert len(package_ids) == 10
+    assert PackageVersion.objects.count() == 10
+
+    for entry in PackageVersion.objects.chunked_enumerate(3):
+        package_ids.remove(entry.pk)
+
+    assert len(package_ids) == 0
