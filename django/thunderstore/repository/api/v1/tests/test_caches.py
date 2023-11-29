@@ -47,7 +47,13 @@ def test_api_v1_cache_building_package_url(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "protocol, primary_domain, site_domain, community_identifier, expected_prefix",
+    (
+        "protocol",
+        "primary_domain",
+        "site_domain",
+        "community_identifier",
+        "expected_prefix",
+    ),
     (
         (
             "http://",

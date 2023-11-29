@@ -169,20 +169,20 @@ def test_manifest_v1_serializer_too_many_dependencies(user, manifest_v1_data):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "name, error",
-    [
-        ["some_name", ""],
-        ["some-name", "Package names can only contain a-z A-Z 0-9 _ characters"],
-        ["", "This field may not be blank."],
-        ["a", ""],
-        ["some_very_long_name", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("name").max_length, ""],
-        [
+    ("name", "error"),
+    (
+        ("some_name", ""),
+        ("some-name", "Package names can only contain a-z A-Z 0-9 _ characters"),
+        ("", "This field may not be blank."),
+        ("a", ""),
+        ("some_very_long_name", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("name").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("name").max_length + "b",
             "Ensure this field has no more than 128 characters.",
-        ],
-    ],
+        ),
+    ),
 )
 def test_manifest_v1_serializer_name_validation(
     user, manifest_v1_data, name: str, error: str
@@ -203,23 +203,23 @@ def test_manifest_v1_serializer_name_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "version, error",
-    [
-        ["1.0.0", ""],
-        [
+    ("version", "error"),
+    (
+        ("1.0.0", ""),
+        (
             "asdasdasd",
             "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
-        ],
-        ["", "This field may not be blank."],
-        ["1.5.2", ""],
-        [
+        ),
+        ("", "This field may not be blank."),
+        ("1.5.2", ""),
+        (
             "1.6.2+post.dev1",
             "Version numbers must follow the Major.Minor.Patch format (e.g. 1.45.320)",
-        ],
-        ["11111.111111.111", ""],
-        [None, "This field may not be null."],
-        ["111111.111111.111", "Ensure this field has no more than 16 characters."],
-    ],
+        ),
+        ("11111.111111.111", ""),
+        (None, "This field may not be null."),
+        ("111111.111111.111", "Ensure this field has no more than 16 characters."),
+    ),
 )
 def test_manifest_v1_serializer_version_number_validation(
     user, manifest_v1_data, version: str, error: str
@@ -240,37 +240,37 @@ def test_manifest_v1_serializer_version_number_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "url, error",
-    [
-        ["asdiasdhuasd", "Enter a valid URL."],
-        ["https://google.com/", ""],
-        ["", ""],
-        ["a", "Enter a valid URL."],
-        ["some not valid website URL", "Enter a valid URL."],
-        ["http://google.com/", ""],
-        ["https://google.com/", ""],
-        ["mailto://google.com/", ""],
-        ["ipfs://google.com/", ""],
-        [None, "This field may not be null."],
-        [
+    ("url", "error"),
+    (
+        ("asdiasdhuasd", "Enter a valid URL."),
+        ("https://google.com/", ""),
+        ("", ""),
+        ("a", "Enter a valid URL."),
+        ("some not valid website URL", "Enter a valid URL."),
+        ("http://google.com/", ""),
+        ("https://google.com/", ""),
+        ("mailto://google.com/", ""),
+        ("ipfs://google.com/", ""),
+        (None, "This field may not be null."),
+        (
             "a" * PackageVersion._meta.get_field("website_url").max_length,
             "Enter a valid URL.",
-        ],
-        [
+        ),
+        (
             "a" * PackageVersion._meta.get_field("website_url").max_length + "b",
             "Enter a valid URL.",
-        ],
-        [
+        ),
+        (
             "https://example.org/"
             + ("a" * (PackageVersion._meta.get_field("website_url").max_length - 20)),
             "",
-        ],
-        [
+        ),
+        (
             "https://example.org/"
             + ("a" * (PackageVersion._meta.get_field("website_url").max_length - 19)),
             "Ensure this field has no more than 1024 characters.",
-        ],
-    ],
+        ),
+    ),
 )
 def test_manifest_v1_serializer_website_url_validation(
     user, manifest_v1_data, url: str, error: str
@@ -291,20 +291,20 @@ def test_manifest_v1_serializer_website_url_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "description, error",
-    [
-        ["asdiasdhuasd", ""],
-        ["https://google.com/", ""],
-        ["", ""],
-        ["a", ""],
-        ["some not valid website URL", ""],
-        [None, "This field may not be null."],
-        ["a" * PackageVersion._meta.get_field("description").max_length, ""],
-        [
+    ("description", "error"),
+    (
+        ("asdiasdhuasd", ""),
+        ("https://google.com/", ""),
+        ("", ""),
+        ("a", ""),
+        ("some not valid website URL", ""),
+        (None, "This field may not be null."),
+        ("a" * PackageVersion._meta.get_field("description").max_length, ""),
+        (
             "a" * PackageVersion._meta.get_field("description").max_length + "b",
             "Ensure this field has no more than 256 characters.",
-        ],
-    ],
+        ),
+    ),
 )
 def test_manifest_v1_serializer_description_validation(
     user, manifest_v1_data, description: str, error: str
@@ -325,17 +325,17 @@ def test_manifest_v1_serializer_description_validation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "dependencies, error",
-    [
-        [["asdiasdhuasd"], "Invalid package reference string"],
-        [["https://google.com/"], "Invalid package reference string"],
-        [[""], "Invalid package reference string"],
-        [["a"], "Invalid package reference string"],
-        [["some not valid website URL"], "Invalid package reference string"],
-        [[None], "This field may not be null."],
-        [None, "This field may not be null."],
-        ["", 'Expected a list of items but got type "str".'],
-    ],
+    ("dependencies", "error"),
+    (
+        (["asdiasdhuasd"], "Invalid package reference string"),
+        (["https://google.com/"], "Invalid package reference string"),
+        ([""], "Invalid package reference string"),
+        (["a"], "Invalid package reference string"),
+        (["some not valid website URL"], "Invalid package reference string"),
+        ([None], "This field may not be null."),
+        (None, "This field may not be null."),
+        ("", 'Expected a list of items but got type "str".'),
+    ),
 )
 def test_manifest_v1_serializer_dependencies_invalid(
     user, manifest_v1_data, dependencies, error: str
@@ -380,13 +380,13 @@ def test_manifest_v1_serializer_dependencies_valid(user, manifest_v1_data):
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "field",
-    [
+    (
         "name",
         "version_number",
         "website_url",
         "description",
         "dependencies",
-    ],
+    ),
 )
 def test_manifest_v1_missing_fields(user, manifest_v1_data, field):
     team = Team.get_or_create_for_user(user)
@@ -403,13 +403,13 @@ def test_manifest_v1_missing_fields(user, manifest_v1_data, field):
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "field",
-    [
+    (
         "name",
         "version_number",
         "website_url",
         "description",
         "dependencies",
-    ],
+    ),
 )
 def test_manifest_v1_null_fields(user, manifest_v1_data, field):
     team = Team.get_or_create_for_user(user)
@@ -440,14 +440,14 @@ def test_manifest_v1_strict_char_fields(user, manifest_v1_data, fieldname, testd
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "field, empty_val, should_fail",
-    [
-        ["name", "", True],
-        ["version_number", "", True],
-        ["website_url", "", False],
-        ["description", "", False],
-        ["dependencies", [], False],
-    ],
+    ("field", "empty_val", "should_fail"),
+    (
+        ("name", "", True),
+        ("version_number", "", True),
+        ("website_url", "", False),
+        ("description", "", False),
+        ("dependencies", [], False),
+    ),
 )
 def test_manifest_v1_blank_fields(
     user, manifest_v1_data, field, empty_val, should_fail

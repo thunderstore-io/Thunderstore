@@ -15,14 +15,14 @@ from thunderstore.repository.factories import (
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "package_count, version_count",
-    [
+    ("package_count", "version_count"),
+    (
         (1, 1),
         (1, 5),
         (5, 1),
         (2, 4),
         (5, 5),
-    ],
+    ),
 )
 def test_package_query_count(
     django_assert_max_num_queries, package_count, version_count, community_site

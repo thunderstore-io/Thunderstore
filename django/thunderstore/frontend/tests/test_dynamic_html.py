@@ -9,7 +9,7 @@ from thunderstore.frontend.models import DynamicHTML, DynamicPlacement
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     ("required_flags", "excluded_flags", "user_flags", "should_match"),
-    [
+    (
         ([], [], [], True),
         ([], [], ["flag-1"], True),
         (["flag-1"], [], [], False),
@@ -21,7 +21,7 @@ from thunderstore.frontend.models import DynamicHTML, DynamicPlacement
         (["flag-1"], ["flag-2"], ["flag-1"], True),
         (["flag-1"], ["flag-1", "flag-2"], ["flag-1"], False),
         (["flag-1", "flag-2"], [], ["flag-2"], True),
-    ],
+    ),
 )
 def test_dynamic_html_user_flag_filtering(
     required_flags: List[str],

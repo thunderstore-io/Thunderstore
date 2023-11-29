@@ -33,7 +33,7 @@ def test_complete_login_sets_access_token(mocked_request_post) -> None:
 
 
 @pytest.mark.parametrize(
-    "helper_class, method_name",
+    ("helper_class", "method_name"),
     (
         (DiscordOauthHelper, "get_user_info"),
         (GitHubOauthHelper, "get_user_info"),
@@ -181,7 +181,7 @@ def test_github_get_user_email_without_valid_email(mock_response: List) -> None:
 
 
 @pytest.mark.parametrize(
-    "provider, expected",
+    ("provider", "expected"),
     (
         ("discord", DiscordOauthHelper),
         ("GiThUb", GitHubOauthHelper),

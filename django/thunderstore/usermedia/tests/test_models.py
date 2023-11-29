@@ -63,8 +63,8 @@ def test_usermedia_create_upload(populate_user: bool, populate_expiry: bool):
 
 
 @pytest.mark.parametrize(
-    ["prefix", "uuid", "filename", "expected"],
-    [
+    ("prefix", "uuid", "filename", "expected"),
+    (
         (None, uuid.uuid4(), "testfile", "usermedia/{uuid}-testfile"),
         ("", uuid.uuid4(), "testfile", "usermedia/{uuid}-testfile"),
         ("testdir", uuid.uuid4(), "testfile", "testdir/usermedia/{uuid}-testfile"),
@@ -118,7 +118,7 @@ def test_usermedia_create_upload(populate_user: bool, populate_expiry: bool):
             'testfile!"¤)=(',
             "test.../dir/usermedia/{uuid}-testfile",
         ),
-    ],
+    ),
 )
 def test_usermedia_compute_key(
     prefix: Optional[str], uuid: UUID, filename: str, expected: str

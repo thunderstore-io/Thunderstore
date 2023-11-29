@@ -53,7 +53,7 @@ def test_form_create_team_valid_data(user_type: str) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "name1, name2, should_fail",
+    ("name1", "name2", "should_fail"),
     (
         ("Team", "team", True),
         ("Team", "t_eam", False),
@@ -80,7 +80,7 @@ def test_form_create_team_team_name_conflict(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "name, should_fail",
+    ("name", "should_fail"),
     (
         ("Team", False),
         ("Team_Name", False),

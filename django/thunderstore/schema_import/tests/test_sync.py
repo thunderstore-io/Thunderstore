@@ -10,7 +10,7 @@ from thunderstore.schema_import.tasks import sync_ecosystem_schema
 
 
 @pytest.mark.parametrize(
-    "name, expected",
+    ("name", "expected"),
     (
         ("Risk of Rain 2", "The Risk of Rain 2 Mod Database"),
         ("The Ouroboros King", "The Ouroboros King Mod Database"),

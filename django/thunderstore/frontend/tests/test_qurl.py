@@ -10,7 +10,7 @@ from thunderstore.community.factories import PackageListingFactory
 from thunderstore.community.models import CommunitySite, PackageListingSection
 from thunderstore.frontend.templatetags.qurl import QurlNode
 
-TEST_PARAMS = [
+TEST_PARAMS = (
     ("page", True),
     ("q", True),
     ("included_categories", True),
@@ -21,11 +21,11 @@ TEST_PARAMS = [
     ("section", True),
     ("foo", False),
     ("jwoejfiwejof", False),
-]
+)
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("param, should_exist", TEST_PARAMS)
+@pytest.mark.parametrize(("param", "should_exist"), TEST_PARAMS)
 def test_qurl_parameter_filtering_package_listing_view(
     client: APIClient,
     community_site: CommunitySite,
@@ -77,7 +77,7 @@ def test_qurl_parameter_filtering_package_listing_view(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("param, should_exist", TEST_PARAMS)
+@pytest.mark.parametrize(("param", "should_exist"), TEST_PARAMS)
 def test_qurl_parameter_filtering_static(
     rf: RequestFactory,
     community_site: CommunitySite,
