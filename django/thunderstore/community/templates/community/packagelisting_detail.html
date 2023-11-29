@@ -4,7 +4,7 @@
 {% load markdownify %}
 {% load cache_until %}
 {% load encode_props %}
-{% load community_url %}
+{% load dynamic_html community_url %}
 
 {% block title %}{{ object.package.display_name }}{% endblock %}
 {% block description %}{{ object.package.description }}{% endblock %}
@@ -161,6 +161,8 @@ window.ts.PackageManagementPanel(
     </div>
     {% endif %}
 </div>
+
+{% dynamic_html "package_page_actions" %}
 
 {% with object.package.dependencies as dependencies %}
 {% if dependencies %}

@@ -19,6 +19,7 @@ class DynamicPlacement(ChoiceEnum):
     footer_top = "footer_top"
     footer_bottom = "footer_bottom"
     content_end = "content_end"
+    package_page_actions = "package_page_actions"
     main_content_left = "main_content_left"
     main_content_right = "main_content_right"
 
