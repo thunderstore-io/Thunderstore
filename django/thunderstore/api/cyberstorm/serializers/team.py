@@ -41,5 +41,25 @@ class CyberstormTeamAddMemberSerialiazer(serializers.Serializer):
     role = serializers.CharField()
 
 
+class CyberstormRemoveTeamMemberRequestSerialiazer(serializers.Serializer):
+    user = serializers.CharField()
+
+
+class CyberstormRemoveTeamMemberResponseSerialiazer(serializers.Serializer):
+    team = serializers.CharField()
+    user = serializers.CharField()
+
+
+class CyberstormEditTeamMemberRequestSerialiazer(serializers.Serializer):
+    user = serializers.CharField()
+    role = serializers.CharField()
+
+
+class CyberstormEditTeamMemberResponseSerialiazer(serializers.Serializer):
+    team = serializers.CharField()
+    user = serializers.CharField()
+    role = serializers.CharField()
+
+
 class CyberstormEditServiceAccountSerialiazer(serializers.Serializer):
     nickname = serializers.CharField()

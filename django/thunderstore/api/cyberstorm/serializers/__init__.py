@@ -6,6 +6,10 @@ from .community import (
 from .package import CyberstormPackagePreviewSerializer
 from .team import (
     CyberstormEditServiceAccountSerialiazer,
+    CyberstormEditTeamMemberRequestSerialiazer,
+    CyberstormEditTeamMemberResponseSerialiazer,
+    CyberstormRemoveTeamMemberRequestSerialiazer,
+    CyberstormRemoveTeamMemberResponseSerialiazer,
     CyberstormServiceAccountSerializer,
     CyberstormTeamAddMemberSerialiazer,
     CyberstormTeamCreateSerialiazer,
@@ -23,5 +27,9 @@ __all__ = [
     "CyberstormTeamSerializer",
     "CyberstormTeamCreateSerialiazer",
     "CyberstormTeamAddMemberSerialiazer",
+    "CyberstormRemoveTeamMemberRequestSerialiazer",
+    "CyberstormRemoveTeamMemberResponseSerialiazer",
+    "CyberstormEditTeamMemberRequestSerialiazer",
+    "CyberstormEditTeamMemberResponseSerialiazer",
     "CyberstormEditServiceAccountSerialiazer",
 ]

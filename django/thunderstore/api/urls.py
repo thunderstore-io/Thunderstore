@@ -69,19 +69,9 @@ cyberstorm_urls = [
         name="cyberstorm.teams.create",
     ),
     path(
-        "team/<str:team_id>/members/add/",
-        AddTeamMemberAPIView.as_view(),
-        name="cyberstorm.team.members.add",
-    ),
-    path(
-        "team/<str:team_id>/members/remove/",
-        RemoveTeamMemberAPIView.as_view(),
-        name="cyberstorm.team.members.remove",
-    ),
-    path(
-        "team/<str:team_id>/members/edit/",
-        EditTeamMemberAPIView.as_view(),
-        name="cyberstorm.team.members.edit",
+        "team/<str:team_id>/",
+        TeamDetailAPIView.as_view(),
+        name="cyberstorm.team.detail",
     ),
     path(
         "team/<str:team_id>/disband/",
@@ -97,6 +87,21 @@ cyberstorm_urls = [
         "team/<str:team_id>/members/",
         TeamMembersAPIView.as_view(),
         name="cyberstorm.team.members",
+    ),
+    path(
+        "team/<str:team_id>/members/add/",
+        AddTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.add",
+    ),
+    path(
+        "team/<str:team_id>/members/remove/",
+        RemoveTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.remove",
+    ),
+    path(
+        "team/<str:team_id>/members/edit/",
+        EditTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.edit",
     ),
     path(
         "team/<str:team_id>/service-accounts/",

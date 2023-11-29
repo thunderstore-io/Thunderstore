@@ -18,6 +18,10 @@ from thunderstore.account.forms import (
 from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormEditServiceAccountSerialiazer,
+    CyberstormEditTeamMemberRequestSerialiazer,
+    CyberstormEditTeamMemberResponseSerialiazer,
+    CyberstormRemoveTeamMemberRequestSerialiazer,
+    CyberstormRemoveTeamMemberResponseSerialiazer,
     CyberstormServiceAccountSerializer,
     CyberstormTeamAddMemberSerialiazer,
     CyberstormTeamCreateSerialiazer,
@@ -114,12 +118,10 @@ class AddTeamMemberAPIView(APIView):
 
 
 class RemoveTeamMemberAPIView(APIView):
-
-    # TODO: What? It wants a membership object?
     @swagger_auto_schema(
-        request_body=CyberstormEditServiceAccountSerialiazer,
-        responses={200: ""},
-        operation_id="cyberstorm.team.service-account.edit",
+        request_body=CyberstormRemoveTeamMemberRequestSerialiazer,
+        responses={200: CyberstormRemoveTeamMemberResponseSerialiazer},
+        operation_id="cyberstorm.team.members.remove",
         tags=["cyberstorm"],
     )
     def post(self, request, team_id, format=None):
@@ -156,6 +158,7 @@ class RemoveTeamMemberAPIView(APIView):
         if form.is_valid():
             form.save()
             return Response(
+                {"team": team_member.team.name, "user": team_member.user.username},
                 status=status.HTTP_200_OK,
             )
         else:
@@ -164,14 +167,22 @@ class RemoveTeamMemberAPIView(APIView):
 
 class EditTeamMemberAPIView(APIView):
     @swagger_auto_schema(
-        request_body=CyberstormEditServiceAccountSerialiazer,
-        responses={200: ""},
-        operation_id="cyberstorm.team.service-account.edit",
+        request_body=CyberstormEditTeamMemberRequestSerialiazer,
+        responses={200: CyberstormEditTeamMemberResponseSerialiazer},
+        operation_id="cyberstorm.team.members.edit",
         tags=["cyberstorm"],
     )
     def post(self, request, team_id, format=None):
         try:
-            team_member = TeamMember.objects.get(user=request.user, team__id=team_id)
+            if "user" in request.data:
+                team_member = TeamMember.objects.get(
+                    user__username=request.data["user"], team__name=team_id
+                )
+            else:
+                return Response(
+                    {"error": "Missing user in request"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         except TeamMember.DoesNotExist:
             return Response(
                 json.dumps(
@@ -190,6 +201,11 @@ class EditTeamMemberAPIView(APIView):
         if form.is_valid():
             form.save()
             return Response(
+                {
+                    "team": team_member.team.name,
+                    "user": team_member.user.username,
+                    "role": team_member.role,
+                },
                 status=status.HTTP_200_OK,
             )
         else:
