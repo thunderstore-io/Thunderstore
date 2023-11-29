@@ -17,7 +17,9 @@ def update_api_caches():
 
 @shared_task(
     name="thunderstore.repository.tasks.update_experimental_package_index",
-    queue=CeleryQueues.BackgroundTask,
+    queue=CeleryQueues.BackgroundLongRunning,
+    soft_time_limit=60 * 60 * 23,
+    time_limit=60 * 60 * 24,
 )
 def update_experimental_package_index():
     update_api_experimental_package_index()
