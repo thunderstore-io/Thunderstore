@@ -29,7 +29,7 @@ def test_package_listing_get_absolute_url(
                 active_package_listing.package.owner.name,
                 active_package_listing.package.name,
                 "",
-            ]
+            ],
         )
     else:
         expected = "/".join(
@@ -40,7 +40,7 @@ def test_package_listing_get_absolute_url(
                 active_package_listing.package.owner.name,
                 active_package_listing.package.name,
                 "",
-            ]
+            ],
         )
 
     assert active_package_listing.get_absolute_url() == expected
@@ -59,7 +59,7 @@ def test_package_listing_owner_url(
                 "/package",
                 active_package_listing.package.owner.name,
                 "",
-            ]
+            ],
         )
     else:
         expected = "/".join(
@@ -69,7 +69,7 @@ def test_package_listing_owner_url(
                 "p",
                 active_package_listing.package.owner.name,
                 "",
-            ]
+            ],
         )
     assert active_package_listing.owner_url == expected
 
@@ -88,7 +88,7 @@ def test_package_listing_dependants_url(
                 active_package_listing.package.owner.name,
                 active_package_listing.package.name,
                 "dependants/",
-            ]
+            ],
         )
     else:
         expected = "/".join(
@@ -99,7 +99,7 @@ def test_package_listing_dependants_url(
                 active_package_listing.package.owner.name,
                 active_package_listing.package.name,
                 "dependants/",
-            ]
+            ],
         )
 
     assert active_package_listing.dependants_url == expected
@@ -107,7 +107,8 @@ def test_package_listing_dependants_url(
 
 @pytest.mark.django_db
 def test_package_listing_only_one_per_community(
-    active_package: Package, community: Community
+    active_package: Package,
+    community: Community,
 ) -> None:
     l1 = PackageListing.objects.create(package=active_package, community=community)
     assert l1.pk
@@ -121,8 +122,8 @@ def test_package_listing_community_read_only(
     active_package_listing: PackageListing,
 ) -> None:
     c = Community.objects.create(name="Test Community")
+    active_package_listing.community = c
     with pytest.raises(ValidationError) as exc:
-        active_package_listing.community = c
         active_package_listing.save()
     assert "PackageListing.community is read only" in str(exc.value)
 
@@ -142,7 +143,7 @@ def test_package_listing_is_waiting_for_approval(
     community.save()
     if require_approval:
         assert active_package_listing.is_waiting_for_approval == (
-            review_status != PackageListingReviewStatus.approved
+            review_status == PackageListingReviewStatus.unreviewed
         )
     else:
         assert active_package_listing.is_waiting_for_approval is False
@@ -150,7 +151,7 @@ def test_package_listing_is_waiting_for_approval(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("review_status", PackageListingReviewStatus.options())
-def test_package_listing_is_waiting_for_approval(
+def test_package_listing_is_rejected(
     active_package_listing: PackageListing,
     review_status: str,
 ) -> None:
@@ -197,45 +198,45 @@ def test_package_listing_ensure_can_be_viewed_by_user(
         )
 
     result = listing.can_be_viewed_by_user(user)
-    error = None
+    errors = []
     expected_error = "Insufficient permissions to view"
     try:
         listing.ensure_can_be_viewed_by_user(user)
     except ValidationError as e:
-        error = str(e)
+        errors = e.messages
 
     if require_approval:
         if review_status == PackageListingReviewStatus.approved:
             assert result is True
-            assert error is None
+            assert not errors
         elif user is None:
             assert result is False
-            assert expected_error in error
+            assert expected_error in errors
         elif not user.is_authenticated:
             assert result is False
-            assert expected_error in error
+            assert expected_error in errors
         elif community.can_user_manage_packages(user):
             assert result is True
-            assert error is None
+            assert not errors
         elif listing.package.owner.can_user_access(user):
             assert result is True
-            assert error is None
+            assert not errors
     else:
         if review_status != PackageListingReviewStatus.rejected:
             assert result is True
-            assert error is None
+            assert not errors
         elif user is None:
             assert result is False
-            assert expected_error in error
+            assert expected_error in errors
         elif not user.is_authenticated:
             assert result is False
-            assert expected_error in error
+            assert expected_error in errors
         elif community.can_user_manage_packages(user):
             assert result is True
-            assert error is None
+            assert not errors
         elif listing.package.owner.can_user_access(user):
             assert result is True
-            assert error is None
+            assert not errors
 
 
 @pytest.mark.django_db
@@ -266,11 +267,11 @@ def test_package_listing_ensure_update_categories_permission(
         )
 
     result = listing.check_update_categories_permission(user)
-    error = None
+    errors = []
     try:
         listing.ensure_update_categories_permission(user)
     except ValidationError as e:
-        error = e.message
+        errors = e.messages
 
     has_perms = any(
         (
@@ -278,7 +279,7 @@ def test_package_listing_ensure_update_categories_permission(
             team_role == TeamMemberRole.member,
             community_role == CommunityMemberRole.owner,
             community_role == CommunityMemberRole.moderator,
-        )
+        ),
     )
 
     error_map = {
@@ -296,10 +297,11 @@ def test_package_listing_ensure_update_categories_permission(
 
     if expected_error:
         assert result is False
-        assert error == expected_error
+        assert len(errors) == 1
+        assert errors[0] == expected_error
     else:
         assert result is True
-        assert error is None
+        assert not errors
 
 
 @pytest.mark.django_db
@@ -313,7 +315,8 @@ def test_package_listing_update_categories(
     assert active_package_listing.package.owner == team_owner.team
     assert active_package_listing.categories.count() == 0
     mocked_permission_check = mocker.patch.object(
-        active_package_listing, "ensure_update_categories_permission"
+        active_package_listing,
+        "ensure_update_categories_permission",
     )
     active_package_listing.update_categories(
         agent=team_owner.user,
@@ -329,7 +332,8 @@ def test_package_listing_update_categories(
     )
     assert invalid_category.pk != package_category.pk
     with pytest.raises(
-        ValidationError, match="Community mismatch between package listing and category"
+        ValidationError,
+        match="Community mismatch between package listing and category",
     ):
         active_package_listing.update_categories(
             agent=team_owner.user,
