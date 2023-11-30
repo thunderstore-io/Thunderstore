@@ -13,7 +13,6 @@ from rest_framework.views import APIView
 from thunderstore.account.forms import (
     CreateServiceAccountForm,
     DeleteServiceAccountForm,
-    EditServiceAccountForm,
 )
 from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
@@ -69,9 +68,6 @@ class TeamCreateAPIView(APIView):
 
 
 class AddTeamMemberAPIView(APIView):
-    # TODO: Needs to the team as an field
-    # And a membership as an instance, somehow?
-
     @swagger_auto_schema(
         request_body=CyberstormTeamAddMemberSerialiazer,
         responses={200: ""},
@@ -240,6 +236,9 @@ class DisbandTeamAPIView(APIView):
         if form.is_valid():
             form.save()
             return Response(
+                {
+                    "team": team.name,
+                },
                 status=status.HTTP_200_OK,
             )
         else:
@@ -289,7 +288,7 @@ class CreateServiceAccountAPIView(APIView):
     )
     def post(self, request, team_id, format=None):
         try:
-            team = Team.objects.get(id=team_id)
+            team = Team.objects.get(name=team_id)
         except Team.DoesNotExist:
             return Response(
                 json.dumps(
@@ -299,32 +298,50 @@ class CreateServiceAccountAPIView(APIView):
                 ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        form = CreateServiceAccountForm(
-            user=request.user,
-            data={"team": team, "nickname": request.data["nickname"]},
-        )
-
-        if form.is_valid():
-            form.save()
-            return Response(
-                status=status.HTTP_200_OK,
+        if "nickname" in request.data:
+            form = CreateServiceAccountForm(
+                user=request.user,
+                data={"team": team, "nickname": request.data["nickname"]},
             )
+
+            if form.is_valid():
+                service_account = form.save()
+                return Response(
+                    json.dumps(
+                        {
+                            "service_account_token": form.api_token,
+                            "service_account_nickname": service_account.nickname,
+                        }
+                    ),
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Missing nickname in request"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class DeleteServiceAccountAPIView(APIView):
     @swagger_auto_schema(
         request_body=CyberstormEditServiceAccountSerialiazer,
         responses={200: ""},
-        operation_id="cyberstorm.team.service-account.edit",
+        operation_id="cyberstorm.team.service-account.delete",
         tags=["cyberstorm"],
     )
-    def post(self, request, team_id, service_account_uuid, format=None):
+    def post(self, request, team_id, format=None):
         try:
-            service_account = ServiceAccount.objects.get(
-                team__id=team_id, uuid=service_account_uuid
-            )
+            if "service_account_uuid" in request.data:
+                service_account = ServiceAccount.objects.get(
+                    owner__name=team_id, uuid=request.data["service_account_uuid"]
+                )
+            else:
+                return Response(
+                    {"error": "Missing service_account_nickname in request"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         except ServiceAccount.DoesNotExist:
             return Response(
                 json.dumps(
@@ -342,44 +359,11 @@ class DeleteServiceAccountAPIView(APIView):
         if form.is_valid():
             form.save()
             return Response(
-                status=status.HTTP_200_OK,
-            )
-        else:
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class EditServiceAccountAPIView(APIView):
-    @swagger_auto_schema(
-        request_body=CyberstormEditServiceAccountSerialiazer,
-        responses={200: ""},
-        operation_id="cyberstorm.team.service-account.edit",
-        tags=["cyberstorm"],
-    )
-    def post(self, request, team_id, service_account_uuid, format=None):
-        try:
-            service_account = ServiceAccount.objects.get(
-                team__id=team_id, uuid=service_account_uuid
-            )
-        except ServiceAccount.DoesNotExist:
-            return Response(
                 json.dumps(
                     {
-                        "error": "Service account not found",
+                        "message": "Service account deleted",
                     }
                 ),
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        form = EditServiceAccountForm(
-            user=request.user,
-            data={
-                "service_account": service_account,
-                "nickname": request.data["nickname"],
-            },
-        )
-
-        if form.is_valid():
-            form.save()
-            return Response(
                 status=status.HTTP_200_OK,
             )
         else:

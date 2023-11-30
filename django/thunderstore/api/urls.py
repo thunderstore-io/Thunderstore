@@ -12,7 +12,6 @@ from thunderstore.api.cyberstorm.views import (
     CreateServiceAccountAPIView,
     DeleteServiceAccountAPIView,
     DisbandTeamAPIView,
-    EditServiceAccountAPIView,
     EditTeamAPIView,
     EditTeamMemberAPIView,
     RemoveTeamMemberAPIView,
@@ -21,6 +20,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamMembersAPIView,
     TeamServiceAccountsAPIView,
 )
+from thunderstore.api.cyberstorm.views.user import UserDeleteAPIView
 
 cyberstorm_urls = [
     path(
@@ -114,13 +114,13 @@ cyberstorm_urls = [
         name="cyberstorm.team.service-accounts.create",
     ),
     path(
-        "team/<str:team_id>/service-account/<str:service_account_uuid>/delete/",
+        "team/<str:team_id>/service-accounts/delete/",
         DeleteServiceAccountAPIView.as_view(),
-        name="cyberstorm.team.service-account.delete",
+        name="cyberstorm.team.service-accounts.delete",
     ),
     path(
-        "team/<str:team_id>/service-account/<str:service_account_uuid>/edit/",
-        EditServiceAccountAPIView.as_view(),
-        name="cyberstorm.team.service-account.edit",
+        "user/<str:username>/delete/",
+        UserDeleteAPIView.as_view(),
+        name="cyberstorm.user.delete",
     ),
 ]
