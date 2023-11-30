@@ -4,7 +4,11 @@ from django.db import IntegrityError
 
 from conftest import TestUserTypes
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
+from thunderstore.community.factories import (
+    CommunityFactory,
+    CommunitySiteFactory,
+    PackageListingFactory,
+)
 from thunderstore.community.models import (
     Community,
     CommunityMemberRole,
@@ -339,3 +343,29 @@ def test_package_listing_update_categories(
             agent=team_owner.user,
             categories=[invalid_category],
         )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("require_approval", (False, True))
+@pytest.mark.parametrize("review_status", PackageListingReviewStatus.options())
+def test_package_listing_queryset_filter_by_community_approval_rule(
+    require_approval: bool,
+    review_status: str,
+) -> None:
+    PackageListingFactory(
+        community_kwargs={"require_package_listing_approval": require_approval},
+        review_status=review_status,
+    )
+
+    count = PackageListing.objects.filter_by_community_approval_rule().count()  # type: ignore
+
+    if require_approval:
+        if review_status == PackageListingReviewStatus.approved:
+            assert count == 1
+        else:
+            assert count == 0
+    else:
+        if review_status == PackageListingReviewStatus.rejected:
+            assert count == 0
+        else:
+            assert count == 1

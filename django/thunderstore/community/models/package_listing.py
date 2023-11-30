@@ -28,6 +28,12 @@ class PackageListingQueryset(models.QuerySet):
     def approved(self):
         return self.exclude(~Q(review_status=PackageListingReviewStatus.approved))
 
+    def filter_by_community_approval_rule(self):
+        return self.exclude(review_status=PackageListingReviewStatus.rejected).exclude(
+            Q(community__require_package_listing_approval=True)
+            & ~Q(review_status=PackageListingReviewStatus.approved),
+        )
+
 
 # TODO: Add a db constraint that ensures a package listing and it's categories
 #       belong to the same community. This might require actually specifying
