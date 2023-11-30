@@ -80,7 +80,7 @@ def test_missing_authorization_header_is_caught(api_client: APIClient) -> None:
 @patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "header, expected_response_code",
+    ("header", "expected_response_code"),
     (
         ("", 401),
         ("TS-Secret", 401),
@@ -109,7 +109,7 @@ def test_invalid_authorization_header_is_caught(
 @patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "code, redirect_uri",
+    ("code", "redirect_uri"),
     (
         (False, False),
         (True, False),
@@ -149,7 +149,7 @@ def test_parameters_are_provided(
 @patch.object(OauthSharedSecretPermission, "SHARED_SECRET", SECRET)
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "code, redirect_uri",
+    ("code", "redirect_uri"),
     (
         ("", ""),
         (None, None),

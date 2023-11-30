@@ -19,12 +19,12 @@ from thunderstore.repository.models import (
 
 
 @pytest.mark.parametrize(
-    "role, expected",
-    [
-        ["owner", True],
-        ["member", True],
-        [None, False],
-    ],
+    ("role", "expected"),
+    (
+        ("owner", True),
+        ("member", True),
+        (None, False),
+    ),
 )
 @pytest.mark.django_db
 def test_team_can_user_upload(user, role, expected) -> None:
@@ -39,7 +39,7 @@ def test_team_can_user_upload(user, role, expected) -> None:
 
 
 @pytest.mark.parametrize(
-    "name, should_fail",
+    ("name", "should_fail"),
     (
         ("SomeAuthor", False),
         ("Some-Author", True),
@@ -76,7 +76,7 @@ def test_team_create_namespace_creation() -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "username, expected_name",
+    ("username", "expected_name"),
     (
         ("SomeAuthor", "SomeAuthor"),
         ("Some-Author", "SomeAuthor"),
@@ -586,7 +586,7 @@ def test_team_ensure_user_can_disband_has_packages(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "val_in, val_out",
+    ("val_in", "val_out"),
     (
         ("as'\"df", "asdf"),
         ("_asdf", "asdf"),
@@ -678,7 +678,7 @@ def test_team_get_namespace(team):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "value, should_fail",
+    ("value", "should_fail"),
     (
         (None, False),
         ("", True),

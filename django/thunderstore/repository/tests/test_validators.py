@@ -67,16 +67,16 @@ def test_reference_validator_eq():
 
 
 @pytest.mark.parametrize(
-    "version_str, should_fail",
-    [
-        ["1.0.0", False],
-        ["1.0.0.0", True],
-        ["1.a", True],
-        ["asd.dsa.asd", True],
-        ["0.0.0", False],
-        ["1", True],
-        ["20.08.210338", True],
-    ],
+    ("version_str", "should_fail"),
+    (
+        ("1.0.0", False),
+        ("1.0.0.0", True),
+        ("1.a", True),
+        ("asd.dsa.asd", True),
+        ("0.0.0", False),
+        ("1", True),
+        ("20.08.210338", True),
+    ),
 )
 def test_version_number_validator(version_str, should_fail):
     validator = VersionNumberValidator()
@@ -94,7 +94,7 @@ def test_version_number_validator_eq():
 
 
 @pytest.mark.parametrize(
-    "component, should_fail",
+    ("component", "should_fail"),
     (
         ("SomeAuthor", False),
         ("Some-Author", True),

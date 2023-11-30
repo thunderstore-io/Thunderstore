@@ -209,7 +209,7 @@ def test_api_v1_rate_package_permission_denied(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "donation_link, should_exist",
+    ("donation_link", "should_exist"),
     (
         (None, False),
         ("https://example.org/", True),

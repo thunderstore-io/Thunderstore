@@ -42,7 +42,7 @@ def test_unlisted_community_returns_404(api_client: APIClient) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "status, require_approval, http_code",
+    ("status", "require_approval", "http_code"),
     (
         (PackageListingReviewStatus.approved, False, 200),
         (PackageListingReviewStatus.approved, True, 200),

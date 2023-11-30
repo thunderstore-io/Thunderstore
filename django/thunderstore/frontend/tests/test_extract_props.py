@@ -17,8 +17,8 @@ def _load_test_data(path: str) -> str:
 
 
 @pytest.mark.parametrize(
-    "encoded, expected",
-    [
+    ("encoded", "expected"),
+    (
         (
             "eyJpc0RlcHJlY2F0ZWQiOiB0cnVlLCAiY2FuRGVwcmVjYXRlIjogZmFsc2UsICJjYW5VbmRlcHJlY2F0ZSI6IHRydWV9",
             {"isDeprecated": True, "canDeprecate": False, "canUndeprecate": True},
@@ -27,7 +27,7 @@ def _load_test_data(path: str) -> str:
             "ImhlbGxvIg==",
             "hello",
         ),
-    ],
+    ),
 )
 def test_decode_props(encoded: str, expected: Any) -> None:
     assert decode_props(encoded) == expected

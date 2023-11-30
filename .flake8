@@ -5,3 +5,5 @@ exclude =
   __pycache__,
   migrations
 ignore = E203,W503,PT003,PIE783,E501
+pytest-parametrize-values-type = tuple
+pytest-parametrize-values-row-type = tuple

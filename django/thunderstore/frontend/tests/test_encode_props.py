@@ -11,10 +11,10 @@ from thunderstore.frontend.templatetags.encode_props import encode_props
 
 @pytest.mark.parametrize(
     "data",
-    [
+    (
         {"isDeprecated": True, "canDeprecate": False, "canUndeprecate": True},
         "This is a string, not JSON",
-    ],
+    ),
 )
 def test_encode_props(data: Any):
     encoded = encode_props(data)

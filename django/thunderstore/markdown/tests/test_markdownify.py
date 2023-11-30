@@ -20,7 +20,7 @@ EDGE_CASE_MARKUP = (
 
 
 @pytest.mark.parametrize(
-    "markdown, expected",
+    ("markdown", "expected"),
     (
         ("", ""),
         ("\ufeff", ""),

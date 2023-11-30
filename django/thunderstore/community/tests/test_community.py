@@ -111,7 +111,7 @@ def test_community_get_community_filepath(community: Community) -> None:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("require_approval", [False, True])
+@pytest.mark.parametrize("require_approval", (False, True))
 def test_community_valid_review_statuses(
     community: Community,
     require_approval: bool,
@@ -128,7 +128,7 @@ def test_community_valid_review_statuses(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("has_site", [False, True])
+@pytest.mark.parametrize("has_site", (False, True))
 def test_community_full_url(
     community: Community,
     has_site: bool,
@@ -142,7 +142,7 @@ def test_community_full_url(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("has_site", [False, True])
+@pytest.mark.parametrize("has_site", (False, True))
 def test_community_should_use_old_urls(
     community: Community,
     has_site: bool,

@@ -38,8 +38,8 @@ def test_make_full_url(scheme: str, rf: RequestFactory, settings: Any) -> None:
 
 
 @pytest.mark.parametrize(
-    ["filename", "expected"],
-    [
+    ("filename", "expected"),
+    (
         (None, None),
         ("", ""),
         ("/", ""),
@@ -49,15 +49,15 @@ def test_make_full_url(scheme: str, rf: RequestFactory, settings: Any) -> None:
             "abcdefghijklmnopqrstuvxyzABCDEFGHIJKLMNOPQRSTUVXYZ1234567890._-",
             "abcdefghijklmnopqrstuvxyzABCDEFGHIJKLMNOPQRSTUVXYZ1234567890._-",
         ),
-    ],
+    ),
 )
 def test_sanitize_filename(filename: Optional[str], expected: Optional[str]) -> None:
     assert sanitize_filename(filename) == expected
 
 
 @pytest.mark.parametrize(
-    ["filepath", "expected"],
-    [
+    ("filepath", "expected"),
+    (
         (None, None),
         ("", ""),
         ("test/dir/testfile", "test/dir/testfile"),
@@ -70,15 +70,15 @@ def test_sanitize_filename(filename: Optional[str], expected: Optional[str]) -> 
         ('test.../.././/dir////testfile!"¤)=(', "test.../dir/testfile"),
         ("test/dir/testfile/", "test/dir/testfile"),
         ("test/dir/testfile///", "test/dir/testfile"),
-    ],
+    ),
 )
 def test_sanitize_filepath(filepath: Optional[str], expected: Optional[str]) -> None:
     assert sanitize_filepath(filepath) == expected
 
 
 @pytest.mark.parametrize(
-    ["filepath", "should_fail"],
-    [
+    ("filepath", "should_fail"),
+    (
         (None, False),
         ("", False),
         ("test", False),
@@ -94,7 +94,7 @@ def test_sanitize_filepath(filepath: Optional[str], expected: Optional[str]) -> 
         ('test.../.././/dir////testfile!"¤)=(', True),
         ("test/dir/testfile/", True),
         ("test/dir/testfile///", True),
-    ],
+    ),
 )
 def test_validate_filepath_prefix(filepath: Optional[str], should_fail: bool) -> None:
     if should_fail:

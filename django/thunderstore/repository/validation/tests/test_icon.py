@@ -11,10 +11,10 @@ from thunderstore.repository.validation.icon import MAX_ICON_SIZE, validate_icon
 
 @pytest.mark.parametrize(
     ("width", "height"),
-    [
+    (
         (257, 256),
         (256, 257),
-    ],
+    ),
 )
 def test_validate_invalid_icon_dimensions(width: int, height: int) -> None:
     img = Image.new("RGB", (width, height), color="red")
@@ -43,13 +43,13 @@ def test_validate_icon_too_large_file() -> None:
 
 @pytest.mark.parametrize(
     "save_format",
-    [
+    (
         "JPEG",
         "BMP",
         "WEBP",
         "GIF",
         "ICO",
-    ],
+    ),
 )
 def test_validate_icon_not_png_format(save_format: str) -> None:
     img = Image.new("RGB", (256, 256), color="red")
