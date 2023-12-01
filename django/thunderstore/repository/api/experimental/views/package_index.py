@@ -42,8 +42,10 @@ class PackageIndexEntry(serializers.Serializer):
 
 
 def serialize_package_index() -> bytes:
-    versions: PackageVersionQuerySet = PackageVersion.objects.active().annotate(
-        namespace=F("package__namespace")
+    versions: PackageVersionQuerySet = (
+        PackageVersion.objects.active()
+        .annotate(namespace=F("package__namespace"))
+        .prefetch_related("dependencies", "dependencies__package")
     )
     renderer = JSONRenderer()
     result = BytesIO()

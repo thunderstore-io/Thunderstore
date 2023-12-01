@@ -2,7 +2,9 @@ import json
 
 import pytest
 import requests
+from django.db import connection
 from django.db.models import F
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from thunderstore.repository.api.experimental.views.package_index import (
@@ -35,3 +37,12 @@ def test_api_experimental_package_index(api_client: APIClient):
     assert len(results) == len(expected)
     for entry in expected:
         assert entry in results
+
+
+@pytest.mark.django_db
+def test_update_api_experimental_package_index_query_count():
+    [PackageVersionFactory() for _ in range(10)]
+    assert PackageVersion.objects.count() == 10
+    with CaptureQueriesContext(connection) as context:
+        update_api_experimental_package_index()
+    assert len(context) < 8
