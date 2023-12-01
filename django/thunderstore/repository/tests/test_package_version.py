@@ -3,6 +3,7 @@ from typing import Any, Literal, Union
 import pytest
 from django.db import IntegrityError
 
+from thunderstore.community.factories import PackageListingFactory
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import PackageVersion
@@ -19,7 +20,7 @@ def test_get_total_used_disk_space():
 
 
 @pytest.mark.django_db
-def test_package_version_manager_active():
+def test_package_version_queryset_active():
     p1 = PackageVersionFactory(is_active=True)
     p2 = PackageVersionFactory(is_active=False)
 
@@ -29,11 +30,28 @@ def test_package_version_manager_active():
 
 
 @pytest.mark.django_db
+def test_package_version_queryset_listed_in():
+    l1 = PackageListingFactory()
+    l2 = PackageListingFactory()
+    l3 = PackageListingFactory()
+
+    versions1 = PackageVersion.objects.listed_in(l1.community.identifier)
+    versions2 = PackageVersion.objects.listed_in(l2.community.identifier)
+
+    assert l1.package.latest in versions1
+    assert l1.package.latest not in versions2
+    assert l2.package.latest not in versions1
+    assert l2.package.latest in versions2
+    assert l3.package.latest not in versions1
+    assert l3.package.latest not in versions2
+
+
+@pytest.mark.django_db
 def test_package_version_get_page_url(
     active_package_listing: PackageListing,
 ) -> None:
     owner_url = active_package_listing.package.latest.get_page_url(
-        active_package_listing.community.identifier
+        active_package_listing.community.identifier,
     )
     assert (
         owner_url
@@ -44,7 +62,8 @@ def test_package_version_get_page_url(
 @pytest.mark.django_db
 @pytest.mark.parametrize("protocol", ("http://", "https://"))
 @pytest.mark.parametrize(
-    "primary_host", ("primary.example.org", "secondary.example.org")
+    "primary_host",
+    ("primary.example.org", "secondary.example.org"),
 )
 def test_package_version_full_download_url(
     active_package_listing: PackageListing,
@@ -73,7 +92,8 @@ def test_package_version_format_spec_constraint(
         package_version.save()
     else:
         with pytest.raises(
-            IntegrityError, match='violates check constraint "valid_package_format"'
+            IntegrityError,
+            match='violates check constraint "valid_package_format"',
         ):
             package_version.save()
 
