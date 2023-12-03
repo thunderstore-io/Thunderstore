@@ -1,11 +1,15 @@
 from typing import Any
 
 import pytest
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
 from thunderstore.community.factories import SiteFactory
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.core.types import UserType
 from thunderstore.repository.factories import PackageFactory
 from thunderstore.repository.models import (
     Namespace,
@@ -15,6 +19,8 @@ from thunderstore.repository.models import (
     TeamMemberRole,
 )
 from thunderstore.wiki.factories import WikiPageFactory
+
+User = get_user_model()
 
 
 @pytest.mark.django_db
@@ -110,6 +116,25 @@ def test_package_ensure_user_can_manage_deprecation(
     else:
         assert package.can_user_manage_deprecation(user) is True
         assert package.ensure_user_can_manage_deprecation(user) is None
+
+
+@pytest.mark.django_db
+def test_package_ensure_user_can_manage_deprecation_deprecate_package_perm(
+    namespace: Namespace,
+    user: UserType,
+):
+    team = namespace.team
+    package = PackageFactory(owner=team, namespace=namespace)
+    user.is_staff = True
+    user.save()
+    assert package.can_user_manage_deprecation(user) is False
+    content_type = ContentType.objects.get_for_model(Package)
+    perm = Permission.objects.get(
+        content_type=content_type, codename="deprecate_package"
+    )
+    user.user_permissions.add(perm)
+    user = User.objects.get(pk=user.pk)
+    assert package.can_user_manage_deprecation(user) is True
 
 
 @pytest.mark.django_db
