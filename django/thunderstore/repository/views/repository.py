@@ -27,6 +27,7 @@ from thunderstore.community.models import (
     PackageListingSection,
 )
 from thunderstore.core.types import UserType
+from thunderstore.core.utils import check_validity
 from thunderstore.frontend.api.experimental.serializers.views import CommunitySerializer
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
@@ -471,6 +472,12 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
         return self.object.package.can_user_manage_deprecation(self.request.user)
 
     @property
+    def can_manage_categories(self) -> bool:
+        return self.can_manage and check_validity(
+            lambda: self.object.ensure_update_categories_permission(self.request.user)
+        )
+
+    @property
     def can_deprecate(self):
         return self.can_manage and self.object.package.is_deprecated is False
 
@@ -510,7 +517,7 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
             "canDeprecate": self.can_deprecate,
             "canUndeprecate": self.can_undeprecate,
             "canUnlist": self.can_unlist,
-            "canUpdateCategories": self.can_manage,
+            "canUpdateCategories": self.can_manage_categories,
             "csrfToken": csrf.get_token(self.request),
             "currentCategories": [
                 format_category(x) for x in package_listing.categories.all()

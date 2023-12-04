@@ -92,6 +92,7 @@ class Package(models.Model):
     )
 
     class Meta:
+        permissions = (("deprecate_package", "Can manage package deprecation status"),)
         constraints = [
             models.UniqueConstraint(
                 fields=("owner", "name"), name="unique_name_per_namespace"
@@ -300,7 +301,10 @@ class Package(models.Model):
             raise ValidationError("Must be authenticated")
         if not user.is_active:
             raise ValidationError("User has been deactivated")
-        if user.is_staff and user.has_perm("repository.change_package"):
+        if user.is_staff and (
+            user.has_perm("repository.change_package")
+            or user.has_perm("repository.deprecate_package")
+        ):
             return
         self.owner.ensure_user_can_manage_packages(user)
 
