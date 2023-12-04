@@ -54,7 +54,7 @@
                         {# Manual rendering due to different set being displayed than validated #}
                         <select class="slimselect-lg" name="communities" id="{{ form.communities.auto_id }}" multiple>
                             {% for opt in selectable_communities %}
-                            <option value="{{ opt.identifier }}" {% if opt == community %}selected{% endif %}>{{ opt.name }}</option>
+                            <option value="{{ opt.identifier }}">{{ opt.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
