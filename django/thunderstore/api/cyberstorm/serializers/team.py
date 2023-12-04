@@ -2,7 +2,14 @@ from typing import Optional
 
 from rest_framework import serializers
 
+from thunderstore.repository.models.team import Team
 from thunderstore.social.utils import get_user_avatar_url
+
+
+class CyberstormTeamNameSerialiazer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = ["name"]
 
 
 class CyberstormTeamSerializer(serializers.Serializer):

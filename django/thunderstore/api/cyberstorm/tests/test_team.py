@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
@@ -223,3 +225,70 @@ def test_team_service_accounts_api_view__for_member__sorts_results(
     assert result[0]["name"] == alice.first_name
     assert result[1]["name"] == bob.first_name
     assert result[2]["name"] == charlie.first_name
+
+
+@pytest.mark.django_db
+def test_team_add_member__success(
+    api_client: APIClient,
+    team: Team,
+    user: UserType,
+):
+    teamMember = TeamMemberFactory(team=team, role="owner")
+    api_client.force_authenticate(teamMember.user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/members/add/",
+        json.dumps({"user": user.username, "role": "owner"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_team_add_member__team_doesnt_exist(
+    api_client: APIClient,
+    team: Team,
+    user: UserType,
+):
+    teamMember = TeamMemberFactory(team=team, role="owner")
+    api_client.force_authenticate(teamMember.user)
+
+    response = api_client.post(
+        "/api/cyberstorm/team/FakeTeam/members/add/",
+        json.dumps({"user": user.username, "role": "owner"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert json.loads(response.json())["error"] == "Team not found"
+
+
+@pytest.mark.django_db
+def test_team_add_member__user_already_in_team(
+    api_client: APIClient,
+    team: Team,
+    user: UserType,
+):
+    teamMember = TeamMemberFactory(team=team, role="owner")
+    api_client.force_authenticate(teamMember.user)
+
+    response1 = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/members/add/",
+        json.dumps({"user": user.username, "role": "owner"}),
+        content_type="application/json",
+    )
+
+    assert response1.status_code == 200
+
+    response2 = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/members/add/",
+        json.dumps({"user": user.username, "role": "owner"}),
+        content_type="application/json",
+    )
+
+    assert response2.status_code == 400
+    assert (
+        "Team Member with this User and Team already exists."
+        in response2.json()["__all__"]
+    )
