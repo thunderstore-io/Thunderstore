@@ -665,7 +665,7 @@ if all(
     PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     SCHEMA_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
-    BLOB_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    BLOB_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
 
 # Storage Defaults
 DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)
