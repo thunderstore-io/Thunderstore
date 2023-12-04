@@ -349,7 +349,8 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                                 }}
                             >
                                 <p className="mt-1 mb-2">
-                                    No teams available?{" "}
+                                    The team name will become the prefix of the
+                                    package ID. No teams available?{" "}
                                     <a href="/settings/teams/" className="ml-1">
                                         Create one here!
                                     </a>
