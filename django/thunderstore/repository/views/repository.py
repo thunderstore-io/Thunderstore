@@ -2,8 +2,8 @@ from typing import List, Optional, Set, Tuple
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db import models, transaction
+from django.db.models import Count, ExpressionWrapper, Q, Sum
 from django.http import Http404
 from django.middleware import csrf
 from django.shortcuts import get_object_or_404, redirect
@@ -645,8 +645,16 @@ class PackageCreateOldView(CommunityMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["selectable_communities"] = Community.objects.filter(
-            Q(is_listed=True) | Q(pk=self.community.pk),
+        context["selectable_communities"] = (
+            Community.objects.filter(
+                Q(is_listed=True) | Q(pk=self.community.pk),
+            )
+            .annotate(
+                is_current_community=ExpressionWrapper(
+                    Q(pk=self.community.pk), output_field=models.BooleanField()
+                )
+            )
+            .order_by("-is_current_community", "name")
         )
         context["current_community"] = self.community
         return context
@@ -657,7 +665,7 @@ class PackageCreateOldView(CommunityMixin, CreateView):
         kwargs["community"] = self.community
         kwargs["initial"] = {
             "team": Team.get_default_for_user(self.request.user),
-            "communities": [self.community],
+            "communities": [],
         }
         return kwargs
 

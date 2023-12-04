@@ -4,7 +4,6 @@ import {
     Community,
     ExperimentalApi,
     PackageAvailableCommunity,
-    PackageCategory,
     PackageSubmissionResult,
     ThunderstoreApiError,
 } from "./api";
@@ -87,9 +86,6 @@ interface SubmissionFormProps {
 const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     const currentCommunity = props.currentCommunity;
     const [communities, setCommunities] = useState<Community[] | null>(null);
-    const [categories, setCategories] = useState<PackageCategory[] | null>(
-        null
-    );
     const [teams, setTeams] = useState<string[] | null>(null);
     const [formErrors, setFormErrors] = useState<FormErrors>(new FormErrors());
     const [file, setFile] = useState<File | null>(null);
@@ -281,31 +277,14 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
 
         promise.then((result) => {
             const next = current.concat(result.results);
+            next.sort((a, b) =>
+                a.identifier == props.currentCommunity.identifier
+                    ? -1
+                    : a.name.localeCompare(b.name)
+            );
             setCommunities(next);
             if (result.pagination.next_link) {
                 enumerateCommunities(next, result.pagination.next_link);
-            }
-        });
-    };
-
-    const enumerateCategories = (
-        current: PackageCategory[],
-        communityIdentifier: string,
-        cursor?: string
-    ) => {
-        const promise = cursor
-            ? ExperimentalApi.getNextPage<PackageCategory>(cursor)
-            : ExperimentalApi.listCategories({ communityIdentifier });
-
-        promise.then((result) => {
-            const next = current.concat(result.results);
-            setCategories(next);
-            if (result.pagination.next_link) {
-                enumerateCategories(
-                    next,
-                    communityIdentifier,
-                    result.pagination.next_link
-                );
             }
         });
     };
@@ -315,7 +294,6 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
             setCommunities(r.results)
         );
         enumerateCommunities([]);
-        enumerateCategories([], currentCommunity.identifier);
         ExperimentalApi.currentUser().then((r) => setTeams(r.teams));
     }, []);
 
@@ -331,8 +309,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
 
             {currentCommunity != null &&
             teams != null &&
-            communities != null &&
-            categories != null ? (
+            communities != null ? (
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div className={"px-3 py-3"}>
                         <FormRow
@@ -373,7 +350,6 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                                         label: x.name,
                                     };
                                 }}
-                                default={currentCommunity}
                                 isMulti={true}
                             />
                         </FormRow>
@@ -384,14 +360,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                             error={formErrors.categoriesError}
                         >
                             <CommunityCategorySelector
-                                selectedCommunities={
-                                    selectedCommunities ?? [
-                                        {
-                                            value: currentCommunity.identifier,
-                                            label: currentCommunity.name,
-                                        },
-                                    ]
-                                }
+                                selectedCommunities={selectedCommunities ?? []}
                                 control={categoriesControl}
                             />
                         </FormRow>
@@ -491,7 +460,10 @@ export const SubmissionResultRow: React.FC<PackageAvailableCommunityProps> = ({
                 <div className="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
                     {info.categories.map((category) => {
                         return (
-                            <span className="badge badge-pill badge-secondary category-badge">
+                            <span
+                                key={category.slug}
+                                className="badge badge-pill badge-secondary category-badge"
+                            >
                                 {category.name}
                             </span>
                         );
