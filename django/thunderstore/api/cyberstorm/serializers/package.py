@@ -20,7 +20,7 @@ class CyberstormPackagePreviewSerializer(serializers.Serializer):
         max_length=PackageVersion._meta.get_field("description").max_length,
     )
     download_count = serializers.IntegerField(min_value=0)
-    icon_url = serializers.CharField(allow_null=True)
+    icon_url = serializers.CharField()
     is_deprecated = serializers.BooleanField()
     is_nsfw = serializers.BooleanField()
     is_pinned = serializers.BooleanField()
