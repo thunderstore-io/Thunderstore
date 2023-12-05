@@ -6,7 +6,12 @@ from .packages import (
     NamespacePackageListAPIView,
     PackageDependantsListAPIView,
 )
-from .team import TeamDetailAPIView, TeamMembersAPIView, TeamServiceAccountsAPIView
+from .team import (
+    AddTeamMemberAPIView,
+    TeamDetailAPIView,
+    TeamMembersAPIView,
+    TeamServiceAccountsAPIView,
+)
 
 __all__ = [
     "CommunityDetailAPIView",
@@ -16,6 +21,7 @@ __all__ = [
     "NamespacePackageListAPIView",
     "PackageDependantsListAPIView",
     "TeamDetailAPIView",
+    "AddTeamMemberAPIView",
     "TeamMembersAPIView",
     "TeamServiceAccountsAPIView",
 ]
