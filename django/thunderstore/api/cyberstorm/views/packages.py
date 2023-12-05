@@ -229,7 +229,7 @@ class BasePackageListAPIView(ListAPIView):
                     "community_identifier": community_id,
                     "description": p.latest.description,
                     "download_count": p.download_count,
-                    "icon_url": p.latest.icon.url if bool(p.latest.icon) else None,
+                    "icon_url": p.latest.icon.url,
                     "is_deprecated": p.is_deprecated,
                     "is_nsfw": listing.has_nsfw_content,
                     "is_pinned": p.is_pinned,
