@@ -1,6 +1,7 @@
 from .community_detail import CommunityDetailAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
+from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
 from .package_detail import PackageDetailAPIView
 from .packages import (
     CommunityPackageListAPIView,
@@ -17,6 +18,8 @@ __all__ = [
     "NamespacePackageListAPIView",
     "PackageDependantsListAPIView",
     "PackageDetailAPIView",
+    "PackageVersionChangelogAPIView",
+    "PackageVersionReadmeAPIView",
     "TeamDetailAPIView",
     "TeamMembersAPIView",
     "TeamServiceAccountsAPIView",
