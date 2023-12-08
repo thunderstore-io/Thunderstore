@@ -10,6 +10,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageDetailAPIView,
     PackageVersionChangelogAPIView,
     PackageVersionReadmeAPIView,
+    PackageVersionsAPIView,
     TeamDetailAPIView,
     TeamMembersAPIView,
     TeamServiceAccountsAPIView,
@@ -88,5 +89,10 @@ cyberstorm_urls = [
         "readme/<str:namespace_id>/<str:package_name>/<str:version_number>/",
         PackageVersionReadmeAPIView.as_view(),
         name="cyberstorm.package-version.readme",
+    ),
+    path(
+        "versions/<str:namespace_id>/<str:package_name>/",
+        PackageVersionsAPIView.as_view(),
+        name="cyberstorm.package.versions",
     ),
 ]
