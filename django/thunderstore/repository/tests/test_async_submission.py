@@ -14,7 +14,7 @@ from thunderstore.repository.models import (
 )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_async_package_submission_flow(
     user: UserType,
     manifest_v1_data: Dict[str, Any],

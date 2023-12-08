@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Manager, TextChoices
 from django.utils import timezone
 
@@ -61,6 +61,7 @@ class AsyncPackageSubmission(TimestampMixin):
         null=True,
     )
 
+    @transaction.atomic
     def schedule_if_appropriate(self):
         """
         Schedules processing of this submission if it's in a valid state for
@@ -74,6 +75,8 @@ class AsyncPackageSubmission(TimestampMixin):
         if self.status == PackageSubmissionStatus.PENDING and has_expired(
             self.datetime_scheduled, timezone.now(), self.TASK_TTL
         ):
-            process_submission_task.delay(submission_id=self.pk)
+            transaction.on_commit(
+                lambda: process_submission_task.delay(submission_id=self.pk)
+            )
             self.datetime_scheduled = timezone.now()
         self.save(update_fields=("datetime_scheduled", "datetime_polled"))
