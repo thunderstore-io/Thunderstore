@@ -1,10 +1,13 @@
 import factory
+from django.utils import timezone
 from factory.django import DjangoModelFactory
 
 from thunderstore.core.factories import UserFactory
 
+from ..usermedia.factories import UserMediaFactory
 from ..wiki.factories import WikiFactory
 from .models import (
+    AsyncPackageSubmission,
     Namespace,
     Package,
     PackageRating,
@@ -82,3 +85,12 @@ class PackageWikiFactory(DjangoModelFactory):
 
     package = factory.SubFactory(PackageFactory)
     wiki = factory.SubFactory(WikiFactory)
+
+
+class AsyncPackageSubmissionFactory(DjangoModelFactory):
+    class Meta:
+        model = AsyncPackageSubmission
+
+    owner = factory.SubFactory(UserFactory)
+    file = factory.SubFactory(UserMediaFactory, owner=factory.SelfAttribute("..owner"))
+    form_data = dict()
