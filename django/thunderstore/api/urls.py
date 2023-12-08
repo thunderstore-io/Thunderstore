@@ -1,16 +1,25 @@
 from django.urls import path
 
 from thunderstore.api.cyberstorm.views import (
+    AddTeamMemberAPIView,
     CommunityDetailAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
     CommunityPackageListAPIView,
+    CreateServiceAccountAPIView,
+    DeleteServiceAccountAPIView,
+    DisbandTeamAPIView,
+    EditTeamAPIView,
+    EditTeamMemberAPIView,
     NamespacePackageListAPIView,
     PackageDependantsListAPIView,
+    RemoveTeamMemberAPIView,
+    TeamCreateAPIView,
     TeamDetailAPIView,
     TeamMembersAPIView,
     TeamServiceAccountsAPIView,
 )
+from thunderstore.api.cyberstorm.views.user import UserDeleteAPIView
 
 cyberstorm_urls = [
     path(
@@ -44,9 +53,24 @@ cyberstorm_urls = [
         name="cyberstorm.package.community.namespace.package-dependants",
     ),
     path(
+        "teams/create/",
+        TeamCreateAPIView.as_view(),
+        name="cyberstorm.teams.create",
+    ),
+    path(
         "team/<str:team_id>/",
         TeamDetailAPIView.as_view(),
         name="cyberstorm.team.detail",
+    ),
+    path(
+        "team/<str:team_id>/edit/",
+        EditTeamAPIView.as_view(),
+        name="cyberstorm.team.edit",
+    ),
+    path(
+        "team/<str:team_id>/disband/",
+        DisbandTeamAPIView.as_view(),
+        name="cyberstorm.team.disband",
     ),
     path(
         "team/<str:team_id>/members/",
@@ -54,8 +78,38 @@ cyberstorm_urls = [
         name="cyberstorm.team.members",
     ),
     path(
+        "team/<str:team_id>/members/add/",
+        AddTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.add",
+    ),
+    path(
+        "team/<str:team_id>/members/remove/",
+        RemoveTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.remove",
+    ),
+    path(
+        "team/<str:team_id>/members/edit/",
+        EditTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.edit",
+    ),
+    path(
         "team/<str:team_id>/service-accounts/",
         TeamServiceAccountsAPIView.as_view(),
         name="cyberstorm.team.service-accounts",
+    ),
+    path(
+        "team/<str:team_id>/service-accounts/create/",
+        CreateServiceAccountAPIView.as_view(),
+        name="cyberstorm.team.service-accounts.create",
+    ),
+    path(
+        "team/<str:team_id>/service-accounts/delete/",
+        DeleteServiceAccountAPIView.as_view(),
+        name="cyberstorm.team.service-accounts.delete",
+    ),
+    path(
+        "user/<str:username>/delete/",
+        UserDeleteAPIView.as_view(),
+        name="cyberstorm.user.delete",
     ),
 ]
