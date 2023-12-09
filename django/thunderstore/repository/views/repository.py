@@ -618,6 +618,7 @@ class PackageCreateView(CommunityMixin, TemplateView):
         serializer = CommunitySerializer(self.community)
         context["upload_page_props"] = {
             "currentCommunity": serializer.data,
+            "useAsyncFlow": settings.USE_ASYNC_PACKAGE_SUBMISSION_FLOW,
         }
         return context
 

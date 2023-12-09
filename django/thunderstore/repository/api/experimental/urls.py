@@ -12,6 +12,10 @@ from thunderstore.repository.api.experimental.views.package_index import (
     PackageIndexApiView,
 )
 from thunderstore.repository.api.experimental.views.submit import SubmitPackageApiView
+from thunderstore.repository.api.experimental.views.submit_async import (
+    CreateAsyncPackageSubmissionApiView,
+    PollSubmissionStatusApiView,
+)
 from thunderstore.repository.api.experimental.views.validators import (
     IconValidatorApiView,
     ManifestV1ValidatorApiView,
@@ -57,6 +61,16 @@ urls = [
     ),
     path(
         "submission/submit/", SubmitPackageApiView.as_view(), name="submission.submit"
+    ),
+    path(
+        "submission/submit-async/",
+        CreateAsyncPackageSubmissionApiView.as_view(),
+        name="submission.submit-async",
+    ),
+    path(
+        "submission/poll-async/<str:submission_id>/",
+        PollSubmissionStatusApiView.as_view(),
+        name="submission.poll-async",
     ),
     path(
         "submission/upload/", UploadPackageApiView.as_view(), name="submission.upload"
