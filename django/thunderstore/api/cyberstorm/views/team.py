@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
+from django.http import HttpRequest
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
@@ -19,7 +20,7 @@ from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
     conditional_swagger_auto_schema,
 )
-from thunderstore.repository.forms import AddTeamMemberForm
+from thunderstore.repository.forms import AddTeamMemberForm, RemoveTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
 
 User = get_user_model()
@@ -102,6 +103,57 @@ class TeamMemberAddAPIView(APIView):
             team_member = form.save()
             return Response(
                 CyberstormTeamAddMemberResponseSerialiazer(team_member).data
+            )
+        else:
+            raise ValidationError(form.errors)
+
+
+class CyberstormRemoveTeamMemberRequestSerialiazer(serializers.Serializer):
+    username = serializers.CharField()
+
+
+class CyberstormRemoveTeamMemberResponseSerialiazer(serializers.Serializer):
+    username = serializers.CharField()
+    team_name = serializers.CharField()
+
+
+class RemoveTeamMemberAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormRemoveTeamMemberRequestSerialiazer,
+        responses={200: CyberstormRemoveTeamMemberResponseSerialiazer},
+        operation_id="cyberstorm.team.members.remove",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest, team_name: str):
+        team = get_object_or_404(Team, name__iexact=team_name)
+
+        serializer = CyberstormRemoveTeamMemberRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team_member = get_object_or_404(
+            TeamMember,
+            user__username__iexact=serializer.validated_data["username"],
+            team=team,
+        )
+
+        membership = team.get_membership_for_user(team_member.user)
+
+        form = RemoveTeamMemberForm(
+            user=request.user,
+            data={"membership": membership},
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                CyberstormRemoveTeamMemberResponseSerialiazer(
+                    {
+                        "username": serializer.validated_data["username"],
+                        "team_name": team_name,
+                    }
+                ).data
             )
         else:
             raise ValidationError(form.errors)
