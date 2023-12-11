@@ -57,6 +57,79 @@ def test_team_detail_api_view__for_inactive_team__returns_404(
 
 
 @pytest.mark.django_db
+def test_team_disband__when_disbanding_team__succeeds(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    api_client.force_authenticate(user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/disband/",
+        json.dumps({"verification": team.name}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["name"] == team.name
+
+
+@pytest.mark.django_db
+def test_team_disband__when_disbanding_team__fails_because_verification_is_invalid(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    api_client.force_authenticate(user)
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/disband/",
+        json.dumps({"verification": "Bad Verification"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert "Invalid verification" in response_json["verification"]
+
+
+@pytest.mark.django_db
+def test_team_disband__when_disbanding_team__fails_because_team_doesnt_exist(
+    api_client: APIClient,
+    user: UserType,
+):
+    api_client.force_authenticate(user)
+    response = api_client.post(
+        f"/api/cyberstorm/team/GhostTeam/disband/",
+        json.dumps({"verification": "GhostTeam"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 404
+    response_json = response.json()
+    assert response_json["detail"] == "Not found."
+
+
+@pytest.mark.django_db
+def test_team_disband__when_disbanding_team__fails_because_user_is_not_authenticated(
+    api_client: APIClient,
+    team: Team,
+):
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/disband/",
+        json.dumps({"verification": "Bad Verification"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    response_json = response.json()
+    assert response_json["detail"] == "Authentication credentials were not provided."
+    assert Team.objects.filter(name=team.name).count() == 1
+
+
+@pytest.mark.django_db
 def test_team_membership_permission__for_unauthenticated_user__returns_401(
     api_client: APIClient,
     team: Team,
