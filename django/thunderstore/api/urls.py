@@ -15,6 +15,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
     TeamServiceAccountListAPIView,
+    TeamCreateAPIView,
 )
 
 cyberstorm_urls = [
@@ -77,6 +78,11 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/versions/",
         PackageVersionListAPIView.as_view(),
         name="cyberstorm.package.versions",
+    ),
+    path(
+        "teams/create/",
+        TeamCreateAPIView.as_view(),
+        name="cyberstorm.teams.create",
     ),
     path(
         "team/<str:team_id>/",

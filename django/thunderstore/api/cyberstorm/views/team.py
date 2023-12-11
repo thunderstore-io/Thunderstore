@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
+from django.http import HttpRequest
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
@@ -19,7 +20,7 @@ from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
     conditional_swagger_auto_schema,
 )
-from thunderstore.repository.forms import AddTeamMemberForm
+from thunderstore.repository.forms import AddTeamMemberForm, CreateTeamForm
 from thunderstore.repository.models.team import Team, TeamMember
 
 User = get_user_model()
@@ -47,6 +48,42 @@ class TeamRestrictedAPIView(ListAPIView):
 
         if not team.can_user_access(request.user):
             raise PermissionDenied()
+
+
+class CyberstormTeamCreateRequestSerialiazer(serializers.Serializer):
+    name = serializers.CharField(
+        max_length=Team._meta.get_field("name").max_length,
+        validators=Team._meta.get_field("name").validators,
+    )
+
+
+class CyberstormTeamCreateResponseSerialiazer(serializers.Serializer):
+    name = serializers.CharField()
+
+
+class TeamCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormTeamCreateRequestSerialiazer,
+        responses={200: CyberstormTeamCreateResponseSerialiazer},
+        operation_id="cyberstorm.teams.create",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest):
+        serializer = CyberstormTeamCreateRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        form = CreateTeamForm(
+            user=request.user,
+            data=serializer.validated_data,
+        )
+
+        if form.is_valid():
+            team = form.save()
+            return Response(CyberstormTeamCreateResponseSerialiazer(team).data)
+        else:
+            raise ValidationError(form.errors)
 
 
 class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
