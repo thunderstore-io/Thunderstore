@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
+from django.http import HttpRequest
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
@@ -19,7 +20,7 @@ from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
     conditional_swagger_auto_schema,
 )
-from thunderstore.repository.forms import AddTeamMemberForm
+from thunderstore.repository.forms import AddTeamMemberForm, EditTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
 
 User = get_user_model()
@@ -102,6 +103,53 @@ class TeamMemberAddAPIView(APIView):
             team_member = form.save()
             return Response(
                 CyberstormTeamAddMemberResponseSerialiazer(team_member).data
+            )
+        else:
+            raise ValidationError(form.errors)
+
+
+class CyberstormEditTeamMemberRequestSerialiazer(serializers.Serializer):
+    username = serializers.CharField()
+    role = serializers.ChoiceField(
+        choices=EditTeamMemberForm.base_fields["role"].choices
+    )
+
+
+class CyberstormEditTeamMemberResponseSerialiazer(serializers.Serializer):
+    username = serializers.CharField(source="user")
+    role = serializers.ChoiceField(
+        choices=EditTeamMemberForm.base_fields["role"].choices
+    )
+    team_name = serializers.CharField(source="team")
+
+
+class EditTeamMemberAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormEditTeamMemberRequestSerialiazer,
+        responses={200: CyberstormEditTeamMemberResponseSerialiazer},
+        operation_id="cyberstorm.team.members.edit",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest, team_name: str):
+        serializer = CyberstormEditTeamMemberRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        team_member = get_object_or_404(
+            TeamMember,
+            user__username__iexact=request.data["username"],
+            team__name__iexact=team_name,
+        )
+        form = EditTeamMemberForm(
+            user=request.user,
+            instance=team_member,
+            data=serializer.validated_data,
+        )
+
+        if form.is_valid():
+            team_member = form.save()
+            return Response(
+                CyberstormEditTeamMemberResponseSerialiazer(team_member).data
             )
         else:
             raise ValidationError(form.errors)
