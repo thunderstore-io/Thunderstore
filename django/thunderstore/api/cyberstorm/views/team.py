@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
+from django.http import HttpRequest
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
@@ -19,7 +20,7 @@ from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
     conditional_swagger_auto_schema,
 )
-from thunderstore.repository.forms import AddTeamMemberForm
+from thunderstore.repository.forms import AddTeamMemberForm, DisbandTeamForm
 from thunderstore.repository.models.team import Team, TeamMember
 
 User = get_user_model()
@@ -47,6 +48,44 @@ class TeamRestrictedAPIView(ListAPIView):
 
         if not team.can_user_access(request.user):
             raise PermissionDenied()
+
+
+class CyberstormDisbandTeamRequestSerialiazer(serializers.Serializer):
+    verification = serializers.CharField()
+
+
+class CyberstormDisbandTeamResponseSerialiazer(serializers.Serializer):
+    name = serializers.CharField()
+
+
+class DisbandTeamAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormDisbandTeamRequestSerialiazer,
+        responses={200: CyberstormDisbandTeamResponseSerialiazer},
+        operation_id="cyberstorm.team.disband",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest, team_name: str):
+        serializer = CyberstormDisbandTeamRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team = get_object_or_404(Team, name__iexact=team_name)
+
+        form = DisbandTeamForm(
+            user=request.user,
+            instance=team,
+            data=serializer.validated_data,
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                CyberstormDisbandTeamResponseSerialiazer({"name": team_name}).data
+            )
+        else:
+            raise ValidationError(form.errors)
 
 
 class TeamMembersAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
