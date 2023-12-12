@@ -38,7 +38,7 @@ def test_api_v1_package_version_metrics(
     active_package.latest.downloads = 200
     active_package.latest.save()
 
-    assert active_package.latest.downloads == 200
+    assert active_package.downloads == 200
 
     namespace = active_package.namespace.name
     name = active_package.name
