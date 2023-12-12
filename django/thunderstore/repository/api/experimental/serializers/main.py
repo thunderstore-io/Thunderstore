@@ -96,10 +96,10 @@ class PackageSerializerExperimental(serializers.ModelSerializer):
         return make_full_url(self.context["request"], instance.get_absolute_url())
 
     def get_total_downloads(self, instance):
-        return instance._total_downloads
+        return -1
 
     def get_rating_score(self, instance):
-        return instance._rating_score
+        return -1
 
     class Meta:
         model = Package
