@@ -12,7 +12,11 @@ from thunderstore.social.api.v1.views.current_user import CurrentUserInfoView
 v1_router = routers.DefaultRouter()
 v1_router.register(r"package", PackageViewSet, basename="package")
 
-urls = [
+
+community_urls = [
+    path("", include(v1_router.urls)),
+]
+communityless_urls = [
     path("current-user/info/", CurrentUserInfoView.as_view(), name="current-user.info"),
     path("bot/deprecate-mod/", DeprecateModApiView.as_view(), name="bot.deprecate-mod"),
     path(
@@ -25,5 +29,10 @@ urls = [
         PackageVersionMetricsApiView.as_view(),
         name="package-metrics.package-version",
     ),
-    path("", include(v1_router.urls)),
+]
+
+
+urls = [
+    *communityless_urls,
+    *community_urls,
 ]
