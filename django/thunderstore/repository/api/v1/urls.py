@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from thunderstore.repository.api.v1.views import DeprecateModApiView
+from thunderstore.repository.api.v1.views.deprecate import DeprecateModApiView
 from thunderstore.repository.api.v1.viewsets import PackageViewSet
 from thunderstore.social.api.v1.views.current_user import CurrentUserInfoView
 
