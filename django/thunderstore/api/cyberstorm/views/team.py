@@ -1,9 +1,6 @@
-import json
-
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import serializers, status
+from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -18,7 +15,10 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamSerializer,
 )
 from thunderstore.api.ordering import StrictOrderingFilter
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import (
+    CyberstormAutoSchemaMixin,
+    conditional_swagger_auto_schema,
+)
 from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
 
@@ -63,9 +63,7 @@ class TeamMembersAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
 
 
 class CyberstormTeamAddMemberRequestSerialiazer(serializers.Serializer):
-    username = serializers.CharField(
-        max_length=User._meta.get_field("username").max_length
-    )
+    username = serializers.CharField()
     role = serializers.ChoiceField(
         choices=AddTeamMemberForm.base_fields["role"].choices
     )
@@ -73,14 +71,12 @@ class CyberstormTeamAddMemberRequestSerialiazer(serializers.Serializer):
 
 class CyberstormTeamAddMemberResponseSerialiazer(serializers.Serializer):
     username = serializers.CharField(source="user")
-    role = serializers.ChoiceField(
-        choices=AddTeamMemberForm.base_fields["role"].choices
-    )
+    role = serializers.CharField()
     team = serializers.CharField()
 
 
 class AddTeamMemberAPIView(APIView):
-    @swagger_auto_schema(
+    @conditional_swagger_auto_schema(
         request_body=CyberstormTeamAddMemberRequestSerialiazer,
         responses={200: CyberstormTeamAddMemberResponseSerialiazer},
         operation_id="cyberstorm.team.members.add",
