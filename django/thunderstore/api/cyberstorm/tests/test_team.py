@@ -296,3 +296,26 @@ def test_team_add_member__when_adding_a_member__fails_because_user_is_already_in
         "Team Member with this User and Team already exists."
         in response2.json()["__all__"]
     )
+
+
+@pytest.mark.django_db
+def test_team_add_member__when_adding_a_member__fails_because_user_is_not_authenticated(
+    api_client: APIClient,
+    team: Team,
+    user: UserType,
+):
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/members/add/",
+        json.dumps({"username": user.username, "role": "owner"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    response_json = response.json()
+    assert response_json["detail"] == "Authentication credentials were not provided."
+    assert (
+        Team.objects.get(pk=team.pk)
+        .members.filter(user__username=user.username)
+        .count()
+        == 0
+    )

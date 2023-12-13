@@ -76,6 +76,8 @@ class CyberstormTeamAddMemberResponseSerialiazer(serializers.Serializer):
 
 
 class AddTeamMemberAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     @conditional_swagger_auto_schema(
         request_body=CyberstormTeamAddMemberRequestSerialiazer,
         responses={200: CyberstormTeamAddMemberResponseSerialiazer},
