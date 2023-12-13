@@ -72,9 +72,9 @@ jobs:
     needs: build
     strategy:
       matrix:
-        group: [1, 2, 3]
+        group: [1, 2, 3, 4, 5, 6]
     env:
-      PYTEST_SPLITS: 3
+      PYTEST_SPLITS: 6
       PYTEST_GROUP: ${{ matrix.group }}
       PYTEST_NUM_WORKERS: auto
     steps:
