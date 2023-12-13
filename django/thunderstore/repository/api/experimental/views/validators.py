@@ -1,5 +1,4 @@
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -20,7 +19,6 @@ class ReadmeValidatorApiView(APIView):
     Validates a package readme.
     """
 
-    permission_classes = [permissions.IsAuthenticated]
     params_serializer_class = ReadmeValidatorParamsSerializer
     response_serializer_class = ValidatorResponseSerializer
 
@@ -49,7 +47,6 @@ class ManifestV1ValidatorApiView(APIView):
     Validates a package manifest.
     """
 
-    permission_classes = [permissions.IsAuthenticated]
     params_serializer_class = ManifestV1ValidatorParamsSerializer
     response_serializer_class = ValidatorResponseSerializer
 
@@ -83,7 +80,6 @@ class IconValidatorApiView(APIView):
     Validates a package icon.
     """
 
-    permission_classes = [permissions.IsAuthenticated]
     params_serializer_class = IconValidatorParamsSerializer
     response_serializer_class = ValidatorResponseSerializer
 
