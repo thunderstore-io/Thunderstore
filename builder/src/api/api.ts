@@ -3,7 +3,9 @@ import {
     Community,
     CurrentUserInfo,
     FinishUploadProps,
+    PackageAsyncSubmissionStatus,
     PackageCategory,
+    PackageSubmissionData,
     PackageSubmissionResult,
     PaginatedResult,
     RenderMarkdownResult,
@@ -49,17 +51,24 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         return (await response.json()) as UserMedia;
     };
 
-    submitPackage = async (props: {
-        data: {
-            author_name: string;
-            community_categories: { [key: string]: string[] };
-            communities: string[];
-            has_nsfw_content: boolean;
-            upload_uuid: string;
-        };
-    }) => {
+    submitPackage = async (props: { data: PackageSubmissionData }) => {
         const response = await this.post(ApiUrls.submitPackage(), props.data);
         return (await response.json()) as PackageSubmissionResult;
+    };
+
+    submitPackageAsync = async (props: { data: PackageSubmissionData }) => {
+        const response = await this.post(
+            ApiUrls.submitPackageAsync(),
+            props.data
+        );
+        return (await response.json()) as PackageAsyncSubmissionStatus;
+    };
+
+    pollAsyncSubmission = async (props: { submissionId: string }) => {
+        const response = await this.get(
+            ApiUrls.pollAsyncSubmission(props.submissionId)
+        );
+        return (await response.json()) as PackageAsyncSubmissionStatus;
     };
 
     updatePackageListing = async (props: {

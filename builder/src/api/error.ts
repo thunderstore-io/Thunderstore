@@ -31,12 +31,12 @@ export const stringifyError = (
 
 export class ThunderstoreApiError {
     message: string;
-    response: Response;
+    response: Response | null;
     errorObject: JSONValue | null;
 
     constructor(
         message: string,
-        response: Response,
+        response: Response | null,
         errorObject: JSONValue | null
     ) {
         this.message = message;
@@ -63,11 +63,11 @@ export class ThunderstoreApiError {
         }
     }
 
-    get statusCode(): number {
-        return this.response.status;
+    get statusCode(): number | undefined {
+        return this.response?.status;
     }
 
-    get statusText(): string {
-        return this.response.statusText;
+    get statusText(): string | undefined {
+        return this.response?.statusText;
     }
 }
