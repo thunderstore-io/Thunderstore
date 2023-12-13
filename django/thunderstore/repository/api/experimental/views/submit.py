@@ -3,7 +3,6 @@ from typing import Any
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import permissions
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,8 +21,6 @@ class SubmitPackageApiView(APIView):
     """
     Submits a pre-uploaded package by upload uuid.
     """
-
-    permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
         request_body=PackageSubmissionMetadataSerializer(),

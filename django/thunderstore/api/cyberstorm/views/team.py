@@ -3,7 +3,7 @@ from django.db.models import Q, QuerySet
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -37,8 +37,6 @@ class TeamRestrictedAPIView(ListAPIView):
     """
     Ensure the user is a member of the Team.
     """
-
-    permission_classes = [IsAuthenticated]
 
     def check_permissions(self, request: Request) -> None:
         super().check_permissions(request)
