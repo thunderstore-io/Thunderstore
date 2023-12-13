@@ -18,6 +18,19 @@ from thunderstore.usermedia.s3_client import get_s3_client
 from thunderstore.usermedia.s3_upload import download_file
 
 
+def get_usermedia_or_404(user, usermedia_uuid: str) -> UserMedia:
+    notfound = NotFound("Upload not found or user has insufficient access permissions")
+    try:
+        user_media = UserMedia.objects.get(uuid=usermedia_uuid)
+    except ObjectDoesNotExist:
+        raise notfound
+
+    if not user_media.can_user_write(user):
+        raise notfound
+
+    return user_media
+
+
 class SubmitPackageApiView(APIView):
     """
     Submits a pre-uploaded package by upload uuid.
@@ -64,17 +77,7 @@ class SubmitPackageApiView(APIView):
         return Response(serializer.data)
 
     def _download_file(self, upload_uuid: str) -> TemporaryUploadedFile:
-        notfound = NotFound(
-            "Upload not found or user has insufficient access permissions"
-        )
-        try:
-            user_media = UserMedia.objects.get(uuid=upload_uuid)
-        except ObjectDoesNotExist:
-            raise notfound
-
-        if not user_media.can_user_write(self.request.user):
-            raise notfound
-
+        user_media = get_usermedia_or_404(self.request.user, upload_uuid)
         client = get_s3_client()
         return download_file(self.request.user, client, user_media)
 

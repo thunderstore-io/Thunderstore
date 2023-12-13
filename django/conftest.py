@@ -32,6 +32,7 @@ from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum
 from thunderstore.repository.factories import (
+    AsyncPackageSubmissionFactory,
     NamespaceFactory,
     PackageFactory,
     PackageVersionFactory,
@@ -40,6 +41,7 @@ from thunderstore.repository.factories import (
     TeamMemberFactory,
 )
 from thunderstore.repository.models import (
+    AsyncPackageSubmission,
     Package,
     PackageVersion,
     PackageWiki,
@@ -479,6 +481,23 @@ def manifest_v1_package_upload_id(
     )
     settings.DISABLE_TRANSACTION_CHECKS = checks_disabled
     return upload_id
+
+
+@pytest.fixture(scope="function")
+def async_package_submission(
+    user: UserType,
+    team: Team,
+    community: Community,
+    manifest_v1_package_upload_id: str,
+) -> AsyncPackageSubmission:
+    return AsyncPackageSubmissionFactory(
+        owner=user,
+        file_id=manifest_v1_package_upload_id,
+        form_data={
+            "team": team.name,
+            "communities": [community.identifier],
+        },
+    )
 
 
 def create_test_service_account_user():

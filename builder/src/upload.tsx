@@ -5,6 +5,7 @@ import {
     ExperimentalApi,
     PackageAvailableCommunity,
     PackageSubmissionResult,
+    SubmissionError,
     ThunderstoreApiError,
 } from "./api";
 import { useForm } from "react-hook-form";
@@ -17,6 +18,7 @@ import { ProgressBar } from "./components/ProgressBar";
 import { FormSelectField } from "./components/FormSelectField";
 import { CommunityCategorySelector } from "./components/CommunitySelector";
 import { FormRow } from "./components/FormRow";
+import { SubmitPackage } from "./api/packageSubmit";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus == FileUploadStatus.CANCELED) {
@@ -60,18 +62,6 @@ class FormErrors {
     }
 }
 
-interface SubmissionError {
-    upload_uuid?: string[];
-    author_name?: string[];
-    categories?: string[];
-    communities?: string[];
-    has_nsfw_content?: string[];
-    detail?: string;
-    file?: string[];
-    team?: string[];
-    __all__?: string[];
-}
-
 enum SubmissionStatus {
     UPLOADING = "UPLOADING",
     PROCESSING = "PROCESSING",
@@ -82,6 +72,7 @@ enum SubmissionStatus {
 interface SubmissionFormProps {
     onSubmissionComplete?: (result: PackageSubmissionResult) => void;
     currentCommunity: Community;
+    useAsyncFlow: boolean;
 }
 const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     const currentCommunity = props.currentCommunity;
@@ -173,7 +164,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
             if (!uploadId) return;
             try {
                 setSubmissionStatus(SubmissionStatus.PROCESSING);
-                const result = await ExperimentalApi.submitPackage({
+                const result = await SubmitPackage({
                     data: {
                         upload_uuid: uploadId,
                         author_name: uploadTeam,
@@ -181,6 +172,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                         communities: uploadCommunities,
                         has_nsfw_content: uploadNsfw,
                     },
+                    useAsyncFlow: props.useAsyncFlow,
                 });
                 setSubmissionStatus(SubmissionStatus.COMPLETE);
                 if (props.onSubmissionComplete) {
@@ -520,6 +512,7 @@ export const SubmissionResults: React.FC<SubmissionResultsProps> = ({
 
 interface UploadPageProps {
     currentCommunity: Community;
+    useAsyncFlow?: boolean;
 }
 export const UploadPage: React.FC<UploadPageProps> = (props) => {
     const [
@@ -540,6 +533,7 @@ export const UploadPage: React.FC<UploadPageProps> = (props) => {
                 <div className="card-body py-2 px-2">
                     <SubmissionForm
                         currentCommunity={props.currentCommunity}
+                        useAsyncFlow={!!props.useAsyncFlow}
                         onSubmissionComplete={onSubmissionComplete}
                     />
                 </div>

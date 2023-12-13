@@ -42,6 +42,7 @@ x-django-service: &django-service
     CACHE_S3_DEFAULT_ACL: "private"
 
     SOURCE_VIEW_ENABLE_HIGHLIGHTING: "True"
+    USE_ASYNC_PACKAGE_SUBMISSION_FLOW: "True"
   env_file:
     - .env
   depends_on:

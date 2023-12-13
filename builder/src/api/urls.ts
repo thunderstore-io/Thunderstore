@@ -12,6 +12,9 @@ export class ApiUrls {
     static abortUpload = (usermediaId: string) =>
         apiUrl("usermedia", usermediaId, "abort-upload");
     static submitPackage = () => apiUrl("submission", "submit");
+    static submitPackageAsync = () => apiUrl("submission", "submit-async");
+    static pollAsyncSubmission = (submissionId: string) =>
+        apiUrl("submission", "poll-async", submissionId);
     static listCommunities = () => apiUrl("community");
     static listCategories = (communityIdentifier: string) =>
         apiUrl("community", communityIdentifier, "category");

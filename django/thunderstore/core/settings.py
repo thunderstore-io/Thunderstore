@@ -126,9 +126,11 @@ env = environ.Env(
         str,
         "https://gcdn.thunderstore.io/static/dev/schema/ecosystem-schema.0.0.2.json",
     ),
+    CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
+    # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
-    CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
+    USE_ASYNC_PACKAGE_SUBMISSION_FLOW=(bool, False),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -742,5 +744,8 @@ IS_CYBERSTORM_ENABLED = env.bool("IS_CYBERSTORM_ENABLED")
 
 # Enable QA API endpoint docs
 SHOW_CYBERSTORM_API_DOCS = env.bool("SHOW_CYBERSTORM_API_DOCS")
+
+# Enable the async package submission frontend flow
+USE_ASYNC_PACKAGE_SUBMISSION_FLOW = env.bool("USE_ASYNC_PACKAGE_SUBMISSION_FLOW")
 
 globals().update(plugin_registry.get_django_settings(globals()))

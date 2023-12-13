@@ -1,7 +1,13 @@
+from datetime import datetime
+
 import pytest
 
 from thunderstore.repository.package_reference import PackageReference
-from thunderstore.repository.utils import does_contain_package, has_duplicate_packages
+from thunderstore.repository.utils import (
+    does_contain_package,
+    has_duplicate_packages,
+    has_expired,
+)
 
 
 @pytest.mark.parametrize(
@@ -91,3 +97,41 @@ def test_utils_does_contain_package(collection, reference, expected):
 def test_utils_has_duplicate_packages(collection, expected):
     collection = [PackageReference.parse(x) for x in collection]
     assert has_duplicate_packages(collection) == expected
+
+
+@pytest.mark.parametrize(
+    ("timestamp", "now", "ttl_seconds", "expected"),
+    (
+        (
+            datetime(2023, 1, 1, 12, 10, 39),
+            datetime(2023, 1, 1, 12, 10, 59),
+            60,
+            False,
+        ),
+        (
+            datetime(2023, 1, 1, 12, 10, 39),
+            datetime(2023, 1, 1, 12, 11, 39),
+            60,
+            False,
+        ),
+        (
+            datetime(2023, 1, 1, 12, 10, 39),
+            datetime(2023, 1, 1, 12, 11, 40),
+            60,
+            True,
+        ),
+        (
+            datetime(2023, 1, 1, 12, 10, 39),
+            datetime(2023, 1, 1, 12, 3, 40),
+            60,
+            False,
+        ),
+    ),
+)
+def test_utils_has_expired(
+    timestamp: datetime,
+    now: datetime,
+    ttl_seconds: float,
+    expected: bool,
+) -> None:
+    assert has_expired(timestamp, now, ttl_seconds) is expected

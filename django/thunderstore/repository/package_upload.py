@@ -56,18 +56,21 @@ class PackageUploadForm(forms.ModelForm):
     def __init__(
         self,
         user: UserType,
-        community: Community,
+        community: Optional[Community],
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.user = user
         self.community = community
-        # TODO: How to handle with multi-community? Let's just default to the
-        #       currently active community for the sake of simplicity
-        self.fields["categories"].queryset = PackageCategory.objects.filter(
-            community=community
-        )
+
+        if self.community:
+            self.fields["categories"].queryset = PackageCategory.objects.filter(
+                community=community
+            )
+        else:
+            self.fields["categories"].queryset = PackageCategory.objects.none()
+
         # TODO: Query only teams where the user has upload permission
         self.fields["team"].queryset = Team.objects.filter(
             members__user=self.user,
@@ -184,7 +187,11 @@ class PackageUploadForm(forms.ModelForm):
         community_categories = self.cleaned_data.get("community_categories", {})
         for community in self.cleaned_data.get("communities", []):
             categories = community_categories.get(community.identifier, [])
-            if community == self.community and not categories:
+            if (
+                self.community is not None
+                and community == self.community
+                and not categories
+            ):
                 categories = self.cleaned_data.get("categories", [])
             self.instance.package.update_listing(
                 has_nsfw_content=self.cleaned_data.get("has_nsfw_content", False),

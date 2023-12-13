@@ -36,6 +36,8 @@ KNOWN_CELERY_IDS = (
     "thunderstore.schema_import.tasks.sync_ecosystem_schema",
     "thunderstore.repository.tasks.files.extract_package_version_file_tree",
     "thunderstore.repository.tasks.update_experimental_package_index",
+    "thunderstore.repository.tasks.process_package_submission",
+    "thunderstore.repository.tasks.cleanup_package_submissions",
 )
 
 
