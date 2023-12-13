@@ -1,6 +1,7 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -15,7 +16,7 @@ class FrontPageApiView(APIView):
     Return information required to render the site's front page.
     """
 
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         responses={200: FrontPageContentSerializer()},

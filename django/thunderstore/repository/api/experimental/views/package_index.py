@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
+from rest_framework.permissions import AllowAny
 from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
 from sentry_sdk import capture_exception
@@ -80,6 +81,8 @@ class PackageIndexApiView(APIView):
     Lists all known package versions across all communities in a stream of
     newline delimited JSON.
     """
+
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         tags=["experimental"],

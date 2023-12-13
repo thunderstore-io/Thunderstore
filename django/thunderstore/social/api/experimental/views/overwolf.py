@@ -9,7 +9,7 @@ from drf_yasg.utils import swagger_auto_schema  # type: ignore
 from pydantic import BaseModel
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import AllowAny, BasePermission
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -54,7 +54,7 @@ class OverwolfLoginApiView(APIView):
     login process triggered from a browser.
     """
 
-    permission_classes: Sequence[Type[BasePermission]] = []
+    permission_classes: Sequence[Type[BasePermission]] = [AllowAny]
 
     @swagger_auto_schema(
         operation_id="experimental.auth.overwolf.login",

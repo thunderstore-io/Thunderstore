@@ -1,11 +1,13 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import RetrieveAPIView
+from rest_framework.permissions import AllowAny
 
 from thunderstore.wiki.api.experimental.serializers import WikiPageSerializer
 from thunderstore.wiki.models import WikiPage
 
 
 class WikiPageApiView(RetrieveAPIView):
+    permission_classes = [AllowAny]
     queryset = WikiPage.objects.all()
     serializer_class = WikiPageSerializer
 

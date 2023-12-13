@@ -1,5 +1,6 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,6 +11,7 @@ class CurrentUserInfoView(APIView):
     """
 
     authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(tags=["v1"])
     def get(self, request, format=None, community_identifier=None):

@@ -1,5 +1,6 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import AllowAny
 
 from thunderstore.community.api.experimental.views._utils import (
     CustomCursorPagination,
@@ -12,6 +13,7 @@ from thunderstore.frontend.api.experimental.serializers.views import (
 
 
 class PackageCategoriesExperimentalApiView(CustomListAPIView):
+    permission_classes = [AllowAny]
     pagination_class = CustomCursorPagination
     serializer_class = PackageCategorySerializer
 

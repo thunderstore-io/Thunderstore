@@ -40,6 +40,11 @@ def test_api_experimental_package_listing_update_user_types(
     if should_succeed:
         assert response.status_code == 200
         assert response.json()["categories"] == []
+    elif user_type == TestUserTypes.no_user:
+        assert response.status_code == 401
+        assert (
+            response.json()["detail"] == "Authentication credentials were not provided."
+        )
     else:
         assert response.status_code == 403
         assert (
