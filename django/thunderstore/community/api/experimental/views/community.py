@@ -1,5 +1,6 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +13,7 @@ from thunderstore.frontend.api.experimental.serializers.views import CommunitySe
 
 
 class CommunitiesExperimentalApiView(CustomListAPIView):
+    permission_classes = [AllowAny]
     pagination_class = CustomCursorPagination
     queryset = Community.objects.listed()
     serializer_class = CommunitySerializer
@@ -22,6 +24,7 @@ class CommunitiesExperimentalApiView(CustomListAPIView):
 
 
 class CurrentCommunityExperimentalApiView(APIView):
+    permission_classes = [AllowAny]
     serializer_class = CommunitySerializer
 
     @swagger_auto_schema(

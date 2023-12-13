@@ -58,7 +58,7 @@ def test_api_experimental_package_listing_approve_fail(
         f"/api/experimental/package-listing/{active_package_listing.pk}/approve/",
         content_type="application/json",
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
 
     api_client.force_authenticate(user=team_owner.user)
     response = api_client.post(
@@ -113,7 +113,7 @@ def test_api_experimental_package_listing_reject_fail(
         data=json.dumps({"rejection_reason": reason}),
         content_type="application/json",
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
 
     api_client.force_authenticate(user=team_owner.user)
     response = api_client.post(

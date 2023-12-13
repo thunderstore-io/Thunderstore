@@ -3,6 +3,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.pagination import CursorPagination
+from rest_framework.permissions import AllowAny
 
 from thunderstore.cache.cache import ManualCacheCommunityMixin
 from thunderstore.cache.enums import CacheBustCondition
@@ -49,6 +50,7 @@ class PackageListApiView(ManualCacheCommunityMixin, ListAPIView):
     Lists all available packages
     """
 
+    permission_classes = [AllowAny]
     cache_until = CacheBustCondition.any_package_updated
     serializer_class = PackageSerializerExperimental
     pagination_class = CustomCursorPagination
@@ -69,6 +71,7 @@ class PackageDetailApiView(ManualCacheCommunityMixin, RetrieveAPIView):
     Get a single package
     """
 
+    permission_classes = [AllowAny]
     cache_until = CacheBustCondition.any_package_updated
     serializer_class = PackageSerializerExperimental
 
