@@ -496,9 +496,13 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
         dependant_count = len(package_listing.package.dependants_list)
 
         if dependant_count == 1:
-            dependants_string = f"{dependant_count} other mod depends on this mod"
+            dependants_string = (
+                f"{dependant_count} other package depends on this package"
+            )
         else:
-            dependants_string = f"{dependant_count} other mods depend on this mod"
+            dependants_string = (
+                f"{dependant_count} other packages depend on this package"
+            )
 
         context["dependants_string"] = dependants_string
         context["show_management_panel"] = self.can_manage
