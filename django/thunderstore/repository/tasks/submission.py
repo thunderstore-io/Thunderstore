@@ -46,14 +46,20 @@ def cleanup_submissions():
 
 
 @transaction.atomic
-def process_submission_idempotent(submission_id: str):
+def process_submission_idempotent(submission_id: str) -> bool:
+    """
+    Process a submission by ID with idempotency guarantees.
+
+    :param submission_id: The submission to process
+    :return: 'True' if processing was needed, 'False' if it could be skipped.
+    """
     submission = (
         AsyncPackageSubmission.objects.select_for_update(skip_locked=True)
         .filter(pk=submission_id, status=PackageSubmissionStatus.PENDING)
         .first()
     )
     if not submission:
-        return
+        return False
 
     try:
         _process_submission(submission)
@@ -64,6 +70,8 @@ def process_submission_idempotent(submission_id: str):
         submission.status = PackageSubmissionStatus.FINISHED
         submission.datetime_finished = timezone.now()
         submission.save()
+
+    return True
 
 
 def _process_submission(submission: AsyncPackageSubmission):

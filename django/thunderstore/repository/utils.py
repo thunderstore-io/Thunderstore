@@ -1,10 +1,12 @@
-from typing import List
+from datetime import datetime
+from typing import TYPE_CHECKING, List, Optional
 
-from thunderstore.repository.package_reference import PackageReference
+if TYPE_CHECKING:
+    from thunderstore.repository.package_reference import PackageReference
 
 
 def does_contain_package(
-    packages: List[PackageReference], package: PackageReference
+    packages: List["PackageReference"], package: "PackageReference"
 ) -> bool:
     """
     Checks whether or not a list of package references contains a specific
@@ -21,7 +23,7 @@ def does_contain_package(
     return False
 
 
-def has_duplicate_packages(packages: List[PackageReference]) -> bool:
+def has_duplicate_packages(packages: List["PackageReference"]) -> bool:
     """
     Checks whether or not a list  of package references has duplicates of the
     same package, as opposed to only having unique packages references. Version
@@ -56,3 +58,13 @@ def unpack_serializer_errors(field, errors, error_dict=None):
     else:
         error_dict[field] = str(errors)
     return error_dict
+
+
+def has_expired(
+    timestamp: Optional[datetime],
+    now: datetime,
+    ttl_seconds: float,
+) -> bool:
+    if timestamp is None:
+        return True
+    return (now - timestamp).total_seconds() > ttl_seconds

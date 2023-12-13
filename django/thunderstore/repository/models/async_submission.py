@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from django.conf import settings
 from django.db import models, transaction
@@ -7,22 +6,13 @@ from django.db.models import Manager, TextChoices
 from django.utils import timezone
 
 from thunderstore.core.mixins import TimestampMixin
+from thunderstore.repository.utils import has_expired
 from thunderstore.usermedia.models import UserMedia
 
 
 class PackageSubmissionStatus(TextChoices):
     PENDING = "PENDING"
     FINISHED = "FINISHED"
-
-
-def has_expired(
-    timestamp: Optional[datetime],
-    now: datetime,
-    ttl_seconds: float,
-) -> bool:
-    if timestamp is None:
-        return True
-    return (now - timestamp).total_seconds() > ttl_seconds
 
 
 class AsyncPackageSubmission(TimestampMixin):
