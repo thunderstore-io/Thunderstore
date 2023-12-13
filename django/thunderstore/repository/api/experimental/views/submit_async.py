@@ -8,6 +8,7 @@ from thunderstore.repository.api.experimental.serializers import (
     PackageSubmissionMetadataSerializer,
     PackageSubmissionResult,
 )
+from thunderstore.repository.api.experimental.views.submit import get_usermedia_or_404
 from thunderstore.repository.models.async_submission import AsyncPackageSubmission
 
 
@@ -60,6 +61,12 @@ class CreateAsyncPackageSubmissionApiView(APIView):
             context={"request": request},
         )
         serializer.is_valid(raise_exception=True)
+
+        # This will raise an API error if the upload doesn't exist, which is
+        # nicer than a DB integrity error.
+        get_usermedia_or_404(
+            self.request.user, serializer.validated_data["upload_uuid"]
+        )
 
         submission: AsyncPackageSubmission = AsyncPackageSubmission.objects.create(
             owner=request.user,
