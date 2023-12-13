@@ -6,6 +6,7 @@ from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from pydantic import BaseModel
 from rest_framework import serializers
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,6 +20,8 @@ class CurrentUserExperimentalApiView(APIView):
     """
     Gets information about the current user, such as rated packages and permissions
     """
+
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(tags=["experimental"])
     def get(self, request, format=None):

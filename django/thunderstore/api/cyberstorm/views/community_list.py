@@ -1,6 +1,7 @@
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
 from thunderstore.api.ordering import StrictOrderingFilter
@@ -13,7 +14,7 @@ class CommunityPaginator(PageNumberPagination):
 
 
 class CommunityListAPIView(ListAPIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
     serializer_class = CyberstormCommunitySerializer
     pagination_class = CommunityPaginator
     queryset = Community.objects.listed()

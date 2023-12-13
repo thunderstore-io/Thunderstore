@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from drf_yasg.utils import swagger_auto_schema  # type: ignore
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import HTTP_401_UNAUTHORIZED
@@ -10,6 +11,8 @@ class ValidateSessionApiView(APIView):
     """
     Check that valid session key is provided in Authorization header.
     """
+
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         operation_id="experimental.auth.validate",

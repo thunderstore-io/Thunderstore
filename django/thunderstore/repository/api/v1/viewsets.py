@@ -10,7 +10,7 @@ from rest_framework import viewsets
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
@@ -74,6 +74,7 @@ class PackageViewSet(
     CommunityMixin,
     viewsets.ReadOnlyModelViewSet,
 ):
+    permission_classes = [AllowAny]
     cache_database_fallback = False
     serializer_class = PACKAGE_SERIALIZER
     lookup_field = "package__uuid4"

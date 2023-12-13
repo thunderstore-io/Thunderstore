@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView, ListAPIView, get_object_or_404
 from rest_framework.pagination import CursorPagination
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -60,6 +61,7 @@ class CustomListAPIView(ListAPIView):
 
 
 class CommunitiesExperimentalApiView(CustomListAPIView):
+    permission_classes = [AllowAny]
     pagination_class = CustomCursorPagination
     queryset = Community.objects.listed()
     serializer_class = CommunitySerializer
@@ -70,6 +72,7 @@ class CommunitiesExperimentalApiView(CustomListAPIView):
 
 
 class PackageCategoriesExperimentalApiView(CustomListAPIView):
+    permission_classes = [AllowAny]
     pagination_class = CustomCursorPagination
     serializer_class = PackageCategorySerializer
 
@@ -84,6 +87,7 @@ class PackageCategoriesExperimentalApiView(CustomListAPIView):
 
 
 class CurrentCommunityExperimentalApiView(APIView):
+    permission_classes = [AllowAny]
     serializer_class = CommunitySerializer
 
     @swagger_auto_schema(
@@ -98,6 +102,7 @@ class CurrentCommunityExperimentalApiView(APIView):
 
 
 class PackageListingUpdateApiView(GenericAPIView):
+    permission_classes = [AllowAny]
     queryset = PackageListing.objects.active().select_related(
         "community",
         "package",

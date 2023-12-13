@@ -2,6 +2,7 @@ from typing import Optional
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from thunderstore.core.jwt_helpers import JWTApiView
@@ -17,6 +18,8 @@ class DeprecateModApiView(JWTApiView):
     * Requires JWT authentication.
     * Only users with special permissions may use this action
     """
+
+    permission_classes = [AllowAny]
 
     def get_package(self, package_name):
         if package_name is None:
