@@ -3,7 +3,7 @@ from django.db.models import Q, QuerySet
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -26,6 +26,7 @@ User = get_user_model()
 
 
 class TeamDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
     lookup_field = "name__iexact"
@@ -76,6 +77,8 @@ class CyberstormTeamAddMemberResponseSerialiazer(serializers.Serializer):
 
 
 class AddTeamMemberAPIView(APIView):
+    permission_classes = [AllowAny]
+
     @conditional_swagger_auto_schema(
         request_body=CyberstormTeamAddMemberRequestSerialiazer,
         responses={200: CyberstormTeamAddMemberResponseSerialiazer},

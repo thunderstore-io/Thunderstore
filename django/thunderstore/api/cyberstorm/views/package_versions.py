@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.permissions import AllowAny
 
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
 from thunderstore.repository.models import Package
@@ -18,6 +19,7 @@ class PackageVersionsAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     Return a list of available versions of the package.
     """
 
+    permission_classes = [AllowAny]
     serializer_class = CyberstormPackageVersionSerializer
 
     def get_queryset(self):

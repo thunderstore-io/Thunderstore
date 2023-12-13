@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -22,6 +23,7 @@ class CommunityFiltersAPIView(APIView):
     they can be used as filters.
     """
 
+    permission_classes = [AllowAny]
     queryset = Community.objects.prefetch_related("package_categories")
     serializer_class = CommunityFiltersAPIViewSerializer
 
