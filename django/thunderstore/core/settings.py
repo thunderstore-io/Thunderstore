@@ -127,6 +127,7 @@ env = environ.Env(
         "https://gcdn.thunderstore.io/static/dev/schema/ecosystem-schema.0.0.2.json",
     ),
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
+    DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -747,5 +748,8 @@ SHOW_CYBERSTORM_API_DOCS = env.bool("SHOW_CYBERSTORM_API_DOCS")
 
 # Enable the async package submission frontend flow
 USE_ASYNC_PACKAGE_SUBMISSION_FLOW = env.bool("USE_ASYNC_PACKAGE_SUBMISSION_FLOW")
+
+# Seconds to wait between logging download events
+DOWNLOAD_METRICS_TTL_SECONDS = env.int("DOWNLOAD_METRICS_TTL_SECONDS")
 
 globals().update(plugin_registry.get_django_settings(globals()))

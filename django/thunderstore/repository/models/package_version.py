@@ -3,6 +3,7 @@ import uuid
 from typing import Iterator, Optional
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
@@ -250,6 +251,14 @@ class PackageVersion(models.Model):
     @staticmethod
     def log_download_event(version: "PackageVersion", client_ip: Optional[str]):
         if not client_ip:
+            return
+
+        if not cache.set(
+            key=f"metrics.{client_ip}.download.{version.pk}",
+            value=0,
+            timeout=settings.DOWNLOAD_METRICS_TTL_SECONDS,
+            nx=True,
+        ):
             return
 
         download_event, created = PackageVersionDownloadEvent.objects.get_or_create(
