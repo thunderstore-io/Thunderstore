@@ -37,7 +37,7 @@ def test_get_storage_class_or_stub(mocker) -> None:
 )
 @pytest.mark.django_db
 def test_mirrored_storage(dummy_image: Image) -> None:
-    pv = PackageVersionFactory(icon=None)
+    pv = PackageVersionFactory(icon=None, name="MirrorStorageTest")
     icon_path = get_version_png_filepath(pv, "")
 
     assert hasattr(default_storage, "mirrors")
