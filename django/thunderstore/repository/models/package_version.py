@@ -9,10 +9,17 @@ from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models import Manager, Q, QuerySet, Sum, signals
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 
+from thunderstore.metrics.models import (
+    PackageVersionDownloadEvent as TimeseriesDownloadEvent,
+)
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
-from thunderstore.repository.models import Package, PackageVersionDownloadEvent
+from thunderstore.repository.models import Package
+from thunderstore.repository.models import (
+    PackageVersionDownloadEvent as LegacyDownloadEvent,
+)
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
 from thunderstore.webhooks.models import Webhook
@@ -255,6 +262,14 @@ class PackageVersion(models.Model):
         if not client_ip:
             return False
 
+        if not any(
+            (
+                settings.USE_LEGACY_PACKAGE_DOWNLOAD_METRICS,
+                settings.USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS,
+            )
+        ):
+            return False
+
         return cache.set(
             key=f"metrics.{client_ip}.download.{version.pk}",
             value=0,
@@ -266,22 +281,31 @@ class PackageVersion(models.Model):
     def log_download_event(version: "PackageVersion", client_ip: Optional[str]):
         if not PackageVersion._can_log_download_event(version, client_ip):
             return
-        PackageVersion._log_download_event_legacy(version, client_ip)
+
+        if settings.USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS:
+            PackageVersion._log_download_event_timeseries(version)
+
+        if settings.USE_LEGACY_PACKAGE_DOWNLOAD_METRICS:
+            PackageVersion._log_download_event_legacy(version, client_ip)
+
+        version._increase_download_counter()
+
+    @staticmethod
+    def _log_download_event_timeseries(version: "PackageVersion"):
+        TimeseriesDownloadEvent.objects.create(
+            version_id=version.id,
+            timestamp=timezone.now(),
+        )
 
     @staticmethod
     def _log_download_event_legacy(version: "PackageVersion", client_ip: Optional[str]):
-        download_event, created = PackageVersionDownloadEvent.objects.get_or_create(
+        download_event, created = LegacyDownloadEvent.objects.get_or_create(
             version=version,
             source_ip=client_ip,
         )
 
-        if created:
-            valid = True
-        else:
-            valid = download_event.count_downloads_and_return_validity()
-
-        if valid:
-            version._increase_download_counter()
+        if not created:
+            download_event.count_downloads_and_return_validity()
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)

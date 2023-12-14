@@ -132,6 +132,8 @@ env = environ.Env(
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW=(bool, False),
+    USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS=(bool, False),
+    USE_LEGACY_PACKAGE_DOWNLOAD_METRICS=(bool, True),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -749,6 +751,14 @@ SHOW_CYBERSTORM_API_DOCS = env.bool("SHOW_CYBERSTORM_API_DOCS")
 
 # Enable the async package submission frontend flow
 USE_ASYNC_PACKAGE_SUBMISSION_FLOW = env.bool("USE_ASYNC_PACKAGE_SUBMISSION_FLOW")
+
+# Enable the new package download metrics implementation
+USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS = env.bool(
+    "USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS"
+)
+
+# Enable the legacy package download metrics implementation
+USE_LEGACY_PACKAGE_DOWNLOAD_METRICS = env.bool("USE_LEGACY_PACKAGE_DOWNLOAD_METRICS")
 
 # Seconds to wait between logging download events
 DOWNLOAD_METRICS_TTL_SECONDS = env.int("DOWNLOAD_METRICS_TTL_SECONDS")
