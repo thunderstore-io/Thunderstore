@@ -261,6 +261,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.legal",
         "thunderstore.wiki",
         "thunderstore.storage",
+        "thunderstore.metrics",
     ]
 )
 
