@@ -249,18 +249,27 @@ class PackageVersion(models.Model):
         return self.full_version_name
 
     @staticmethod
-    def log_download_event(version: "PackageVersion", client_ip: Optional[str]):
+    def _can_log_download_event(
+        version: "PackageVersion", client_ip: Optional[str]
+    ) -> bool:
         if not client_ip:
-            return
+            return False
 
-        if not cache.set(
+        return cache.set(
             key=f"metrics.{client_ip}.download.{version.pk}",
             value=0,
             timeout=settings.DOWNLOAD_METRICS_TTL_SECONDS,
             nx=True,
-        ):
-            return
+        )
 
+    @staticmethod
+    def log_download_event(version: "PackageVersion", client_ip: Optional[str]):
+        if not PackageVersion._can_log_download_event(version, client_ip):
+            return
+        PackageVersion._log_download_event_legacy(version, client_ip)
+
+    @staticmethod
+    def _log_download_event_legacy(version: "PackageVersion", client_ip: Optional[str]):
         download_event, created = PackageVersionDownloadEvent.objects.get_or_create(
             version=version,
             source_ip=client_ip,
