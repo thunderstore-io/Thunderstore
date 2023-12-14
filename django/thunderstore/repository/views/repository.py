@@ -15,6 +15,7 @@ from django.views.generic import TemplateView, View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
+from ipware import get_client_ip
 
 from thunderstore.cache.cache import cache_function_result
 from thunderstore.cache.enums import CacheBustCondition
@@ -34,7 +35,6 @@ from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import (
     Package,
     PackageVersion,
-    PackageWiki,
     Team,
     get_package_dependants,
 )
@@ -696,5 +696,6 @@ class PackageDownloadView(CommunityMixin, View):
             package__name=kwargs["name"],
             version_number=kwargs["version"],
         )
-        obj.maybe_increase_download_counter(self.request)
+        client_ip, _ = get_client_ip(self.request)
+        PackageVersion.log_download_event(obj, client_ip)
         return redirect(self.request.build_absolute_uri(obj.file.url))

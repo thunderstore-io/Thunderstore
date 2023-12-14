@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import Iterator
+from typing import Iterator, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -9,7 +9,6 @@ from django.db import models
 from django.db.models import Manager, Q, QuerySet, Sum, signals
 from django.urls import reverse
 from django.utils.functional import cached_property
-from ipware import get_client_ip
 
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package, PackageVersionDownloadEvent
@@ -241,13 +240,20 @@ class PackageVersion(models.Model):
         for webhook in webhooks:
             webhook.post_package_version_release(self)
 
-    def maybe_increase_download_counter(self, request):
-        client_ip, is_routable = get_client_ip(request)
-        if client_ip is None:
+    def _increase_download_counter(self):
+        self.downloads += 1
+        self.save(update_fields=("downloads",))
+
+    def __str__(self):
+        return self.full_version_name
+
+    @staticmethod
+    def log_download_event(version: "PackageVersion", client_ip: Optional[str]):
+        if not client_ip:
             return
 
         download_event, created = PackageVersionDownloadEvent.objects.get_or_create(
-            version=self,
+            version=version,
             source_ip=client_ip,
         )
 
@@ -257,14 +263,7 @@ class PackageVersion(models.Model):
             valid = download_event.count_downloads_and_return_validity()
 
         if valid:
-            self._increase_download_counter()
-
-    def _increase_download_counter(self):
-        self.downloads += 1
-        self.save(update_fields=("downloads",))
-
-    def __str__(self):
-        return self.full_version_name
+            version._increase_download_counter()
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
