@@ -482,6 +482,7 @@ CACHALOT_UNCACHABLE_TABLES = frozenset(
         "django_celery_results_taskresult",
         # Too frequent writes for cachalot to work efficiently
         "django_session",
+        "metrics_packageversiondownloadevent",
         "repository_packageversion",
         "repository_packageversiondownloadevent",
         "repository_packagerating",
