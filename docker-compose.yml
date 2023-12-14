@@ -43,6 +43,7 @@ x-django-service: &django-service
 
     SOURCE_VIEW_ENABLE_HIGHLIGHTING: "True"
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW: "True"
+    USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS: "True"
   env_file:
     - .env
   depends_on:

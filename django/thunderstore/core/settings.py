@@ -127,10 +127,13 @@ env = environ.Env(
         "https://gcdn.thunderstore.io/static/dev/schema/ecosystem-schema.0.0.2.json",
     ),
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
+    DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW=(bool, False),
+    USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS=(bool, False),
+    USE_LEGACY_PACKAGE_DOWNLOAD_METRICS=(bool, True),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -260,6 +263,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.legal",
         "thunderstore.wiki",
         "thunderstore.storage",
+        "thunderstore.metrics",
     ]
 )
 
@@ -478,6 +482,7 @@ CACHALOT_UNCACHABLE_TABLES = frozenset(
         "django_celery_results_taskresult",
         # Too frequent writes for cachalot to work efficiently
         "django_session",
+        "metrics_packageversiondownloadevent",
         "repository_packageversion",
         "repository_packageversiondownloadevent",
         "repository_packagerating",
@@ -747,5 +752,16 @@ SHOW_CYBERSTORM_API_DOCS = env.bool("SHOW_CYBERSTORM_API_DOCS")
 
 # Enable the async package submission frontend flow
 USE_ASYNC_PACKAGE_SUBMISSION_FLOW = env.bool("USE_ASYNC_PACKAGE_SUBMISSION_FLOW")
+
+# Enable the new package download metrics implementation
+USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS = env.bool(
+    "USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS"
+)
+
+# Enable the legacy package download metrics implementation
+USE_LEGACY_PACKAGE_DOWNLOAD_METRICS = env.bool("USE_LEGACY_PACKAGE_DOWNLOAD_METRICS")
+
+# Seconds to wait between logging download events
+DOWNLOAD_METRICS_TTL_SECONDS = env.int("DOWNLOAD_METRICS_TTL_SECONDS")
 
 globals().update(plugin_registry.get_django_settings(globals()))

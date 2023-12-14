@@ -393,9 +393,10 @@ def test_package_download_view(
     assert response.status_code == 302
     assert response["Location"].startswith("http://minio:9000/")
 
-    # Should not be accessible in another community's domain
+    # Should be accessible in another community's domain
     response = client.get(url, HTTP_HOST=random_site.site.domain)
-    assert response.status_code == 404
+    assert response.status_code == 302
+    assert response["Location"].startswith("http://minio:9000/")
 
     # Should be accessible on the primary domain
     response = client.get(url, HTTP_HOST=primary_site.site.domain)

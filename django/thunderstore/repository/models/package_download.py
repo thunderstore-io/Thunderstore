@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -19,7 +20,11 @@ class PackageVersionDownloadEvent(models.Model):
         self.total_downloads += 1
         is_valid = False
 
-        if self.last_download + timedelta(minutes=10) < timezone.now():
+        if (
+            self.last_download
+            + timedelta(seconds=settings.DOWNLOAD_METRICS_TTL_SECONDS)
+            < timezone.now()
+        ):
             self.counted_downloads += 1
             self.last_download = timezone.now()
             is_valid = True

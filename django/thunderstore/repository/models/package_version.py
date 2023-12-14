@@ -1,18 +1,25 @@
 import re
 import uuid
-from typing import Iterator
+from typing import Iterator, Optional
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models import Manager, Q, QuerySet, Sum, signals
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
-from ipware import get_client_ip
 
+from thunderstore.metrics.models import (
+    PackageVersionDownloadEvent as TimeseriesDownloadEvent,
+)
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
-from thunderstore.repository.models import Package, PackageVersionDownloadEvent
+from thunderstore.repository.models import Package
+from thunderstore.repository.models import (
+    PackageVersionDownloadEvent as LegacyDownloadEvent,
+)
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
 from thunderstore.webhooks.models import Webhook
@@ -241,30 +248,68 @@ class PackageVersion(models.Model):
         for webhook in webhooks:
             webhook.post_package_version_release(self)
 
-    def maybe_increase_download_counter(self, request):
-        client_ip, is_routable = get_client_ip(request)
-        if client_ip is None:
-            return
-
-        download_event, created = PackageVersionDownloadEvent.objects.get_or_create(
-            version=self,
-            source_ip=client_ip,
-        )
-
-        if created:
-            valid = True
-        else:
-            valid = download_event.count_downloads_and_return_validity()
-
-        if valid:
-            self._increase_download_counter()
-
     def _increase_download_counter(self):
         self.downloads += 1
         self.save(update_fields=("downloads",))
 
     def __str__(self):
         return self.full_version_name
+
+    @staticmethod
+    def _get_log_key(version: "PackageVersion", client_ip: str) -> str:
+        return f"metrics.{client_ip}.download.{version.pk}"
+
+    @staticmethod
+    def _can_log_download_event(
+        version: "PackageVersion", client_ip: Optional[str]
+    ) -> bool:
+        if not client_ip:
+            return False
+
+        if not any(
+            (
+                settings.USE_LEGACY_PACKAGE_DOWNLOAD_METRICS,
+                settings.USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS,
+            )
+        ):
+            return False
+
+        return cache.set(
+            key=PackageVersion._get_log_key(version, client_ip),
+            value=0,
+            timeout=settings.DOWNLOAD_METRICS_TTL_SECONDS,
+            nx=True,
+        )
+
+    @staticmethod
+    def log_download_event(version: "PackageVersion", client_ip: Optional[str]):
+        if not PackageVersion._can_log_download_event(version, client_ip):
+            return
+
+        if settings.USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS:
+            PackageVersion._log_download_event_timeseries(version)
+
+        if settings.USE_LEGACY_PACKAGE_DOWNLOAD_METRICS:
+            PackageVersion._log_download_event_legacy(version, client_ip)
+
+        version._increase_download_counter()
+
+    @staticmethod
+    def _log_download_event_timeseries(version: "PackageVersion"):
+        TimeseriesDownloadEvent.objects.create(
+            version_id=version.id,
+            timestamp=timezone.now(),
+        )
+
+    @staticmethod
+    def _log_download_event_legacy(version: "PackageVersion", client_ip: str):
+        download_event, created = LegacyDownloadEvent.objects.get_or_create(
+            version=version,
+            source_ip=client_ip,
+        )
+
+        if not created:
+            download_event.count_downloads_and_return_validity()
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)

@@ -1,5 +1,4 @@
 import factory
-from django.utils import timezone
 from factory.django import DjangoModelFactory
 
 from thunderstore.core.factories import UserFactory
@@ -12,7 +11,6 @@ from .models import (
     Package,
     PackageRating,
     PackageVersion,
-    PackageVersionDownloadEvent,
     PackageWiki,
     Team,
     TeamMember,
@@ -70,13 +68,6 @@ class PackageVersionFactory(DjangoModelFactory):
     description = factory.Sequence(lambda n: f"Desc_{n:04d}")
     version_number = "1.0.0"
     file_size = 5242880
-
-
-class PackageVersionDownloadEventFactory(DjangoModelFactory):
-    class Meta:
-        model = PackageVersionDownloadEvent
-
-    version = factory.SubFactory(PackageVersionFactory)
 
 
 class PackageWikiFactory(DjangoModelFactory):
