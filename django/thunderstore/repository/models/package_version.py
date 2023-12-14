@@ -256,6 +256,10 @@ class PackageVersion(models.Model):
         return self.full_version_name
 
     @staticmethod
+    def _get_log_key(version: "PackageVersion", client_ip: str) -> str:
+        return f"metrics.{client_ip}.download.{version.pk}"
+
+    @staticmethod
     def _can_log_download_event(
         version: "PackageVersion", client_ip: Optional[str]
     ) -> bool:
@@ -271,7 +275,7 @@ class PackageVersion(models.Model):
             return False
 
         return cache.set(
-            key=f"metrics.{client_ip}.download.{version.pk}",
+            key=PackageVersion._get_log_key(version, client_ip),
             value=0,
             timeout=settings.DOWNLOAD_METRICS_TTL_SECONDS,
             nx=True,
@@ -298,7 +302,7 @@ class PackageVersion(models.Model):
         )
 
     @staticmethod
-    def _log_download_event_legacy(version: "PackageVersion", client_ip: Optional[str]):
+    def _log_download_event_legacy(version: "PackageVersion", client_ip: str):
         download_event, created = LegacyDownloadEvent.objects.get_or_create(
             version=version,
             source_ip=client_ip,
