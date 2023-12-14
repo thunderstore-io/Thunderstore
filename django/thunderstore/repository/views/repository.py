@@ -690,27 +690,11 @@ class PackageCreateOldView(CommunityMixin, CreateView):
 
 class PackageDownloadView(CommunityMixin, View):
     def get(self, *args, **kwargs):
-        owner = kwargs["owner"]
-        name = kwargs["name"]
-        version = kwargs["version"]
-
-        if self.request.get_host() == settings.PRIMARY_HOST:
-            package = get_object_or_404(
-                Package,
-                owner__name=owner,
-                name=name,
-            )
-        else:
-            package = get_object_or_404(
-                PackageListing,
-                package__owner__name=owner,
-                package__name=name,
-                community=self.community,
-            ).package
-        version = get_object_or_404(
+        obj = get_object_or_404(
             PackageVersion,
-            package=package,
-            version_number=version,
+            package__owner__name=kwargs["owner"],
+            package__name=kwargs["name"],
+            version_number=kwargs["version"],
         )
-        version.maybe_increase_download_counter(self.request)
-        return redirect(self.request.build_absolute_uri(version.file.url))
+        obj.maybe_increase_download_counter(self.request)
+        return redirect(self.request.build_absolute_uri(obj.file.url))
