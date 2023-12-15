@@ -175,7 +175,10 @@ class Community(TimestampMixin, models.Model):
 
     @cached_property
     def main_site(self) -> Optional["CommunitySite"]:
-        return self.sites.first()
+        try:
+            return self.sites.all()[0]
+        except IndexError:
+            return None
 
     @property
     def full_url(self):

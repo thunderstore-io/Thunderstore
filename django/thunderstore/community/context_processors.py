@@ -1,8 +1,10 @@
 from typing import Optional
 
 from django.conf import settings
+from django.db.models import Prefetch
 from django.templatetags.static import static
 
+from thunderstore.community.models import CommunitySite
 from thunderstore.community.models.community import Community
 
 
@@ -59,8 +61,13 @@ def community_site(request):
 
 
 def selectable_communities(request):
+    sites_prefetch = Prefetch(
+        "sites", queryset=CommunitySite.objects.select_related("site")
+    )
     return {
-        "selectable_communities": Community.objects.listed().order_by(
+        "selectable_communities": Community.objects.listed()
+        .prefetch_related(sites_prefetch)
+        .order_by(
             "-aggregated_fields__package_count",
             "datetime_created",
         ),
