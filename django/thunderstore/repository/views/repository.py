@@ -3,7 +3,7 @@ from typing import List, Optional, Set, Tuple
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
-from django.db.models import Count, ExpressionWrapper, Q, Sum
+from django.db.models import Count, ExpressionWrapper, OuterRef, Q, Subquery, Sum
 from django.http import Http404
 from django.middleware import csrf
 from django.shortcuts import get_object_or_404, redirect
@@ -218,20 +218,33 @@ class PackageListSearchView(CommunityMixin, ListView):
         return queryset.exclude(icontains_query).distinct()
 
     def get_queryset(self):
+        listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
+
         queryset = (
             self.get_base_queryset()
-            .prefetch_related("package__versions", "categories")
+            .prefetch_related(
+                "package__versions",
+                "community__sites",
+                "categories",
+            )
             .select_related(
                 "package",
                 "package__latest",
                 "package__owner",
+                "community",
             )
-            # .annotate(
-            #     _total_downloads=Sum("package__versions__downloads"),
-            # )
-            # .annotate(
-            #     _rating_score=Count("package__package_ratings"),
-            # )
+            .annotate(
+                _total_downloads=Subquery(
+                    listing_ref.annotate(
+                        downloads=Sum("package__versions__downloads"),
+                    ).values("downloads"),
+                ),
+                _rating_score=Subquery(
+                    listing_ref.annotate(
+                        ratings=Count("package__package_ratings"),
+                    ).values("ratings"),
+                ),
+            )
         )
 
         included_categories = self.filter_require_categories
