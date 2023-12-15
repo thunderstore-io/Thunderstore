@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.db.models import Prefetch
 from django.http import Http404
 from django.utils.functional import cached_property
@@ -26,7 +28,7 @@ class CommunityMixin:
             raise Http404()
 
     @cached_property
-    def community_site(self) -> CommunitySite:
+    def community_site(self) -> Optional["CommunitySite"]:
         return self.community.main_site
 
     def get_context_data(self, *args, **kwargs):
