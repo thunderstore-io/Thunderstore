@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+from thunderstore.core.utils import replace_cdn
 from thunderstore.modpacks.models import LegacyProfile
 
 
@@ -63,4 +64,6 @@ class LegacyProfileRetrieveApiView(APIView):
     )
     def get(self, request, key: str, *args, **kwargs):
         profile = get_object_or_404(LegacyProfile, id=key)
-        return redirect(self.request.build_absolute_uri(profile.file.url))
+        url = self.request.build_absolute_uri(profile.file.url)
+        url = replace_cdn(url, request.query_params.get("cdn"))
+        return redirect(url)

@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.db.models import Count, ExpressionWrapper, OuterRef, Q, Subquery, Sum
-from django.http import Http404
+from django.http import Http404, HttpRequest
 from django.middleware import csrf
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -28,7 +28,7 @@ from thunderstore.community.models import (
     PackageListingSection,
 )
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import check_validity
+from thunderstore.core.utils import check_validity, replace_cdn
 from thunderstore.frontend.api.experimental.serializers.views import CommunitySerializer
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
@@ -702,7 +702,7 @@ class PackageCreateOldView(CommunityMixin, CreateView):
 
 
 class PackageDownloadView(CommunityMixin, View):
-    def get(self, *args, **kwargs):
+    def get(self, request: HttpRequest, *args, **kwargs):
         obj = get_object_or_404(
             PackageVersion,
             package__owner__name=kwargs["owner"],
@@ -711,4 +711,7 @@ class PackageDownloadView(CommunityMixin, View):
         )
         client_ip, _ = get_client_ip(self.request)
         PackageVersion.log_download_event(obj, client_ip)
-        return redirect(self.request.build_absolute_uri(obj.file.url))
+
+        url = self.request.build_absolute_uri(obj.file.url)
+        url = replace_cdn(url, request.GET.get("cdn"))
+        return redirect(url)

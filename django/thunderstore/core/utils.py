@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 from typing import Callable, Optional
 
 from django.conf import settings
@@ -103,3 +104,18 @@ def validate_filepath_prefix(filepath: Optional[str]) -> Optional[str]:
             f"Invalid filepath prefix: {filepath}, should be: {stripped}"
         )
     return stripped
+
+
+def replace_cdn(absolute_url: str, domain: Optional[str]):
+    # The implementation would change any relative URL to a
+    # "protocol-relative URL", which may or may not be what some future
+    # users would expect. Better ~safe~ raise than sorry.
+    if not absolute_url.lower().startswith("http"):
+        raise ValueError("Absolute URL including protocol required")
+
+    if domain and domain in settings.ALLOWED_CDNS:
+        parsed = urllib.parse.urlparse(absolute_url)
+        parsed = parsed._replace(netloc=domain)
+        return parsed.geturl()
+
+    return absolute_url
