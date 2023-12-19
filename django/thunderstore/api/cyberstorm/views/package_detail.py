@@ -65,7 +65,7 @@ class ResponseSerializer(serializers.Serializer):
     description = serializers.CharField(source="package.latest.description")
     download_count = serializers.IntegerField(min_value=0)
     download_url = serializers.CharField(source="package.latest.full_download_url")
-    full_version_name = serializers.CharField(source="package.latest")
+    full_version_name = serializers.CharField(source="package.latest.full_version_name")
     has_changelog = serializers.SerializerMethodField()
     icon_url = serializers.CharField(source="package.latest.icon.url")
     install_url = serializers.CharField(source="package.latest.install_url")
