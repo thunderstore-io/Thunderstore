@@ -194,5 +194,28 @@ def test_package_detail_view__returns_info(api_client: APIClient) -> None:
     assert actual["website_url"] == latest.website_url
 
 
+@pytest.mark.django_db
+def test_package_detail_view__serializes_url_correctly(api_client: APIClient) -> None:
+    l = PackageListingFactory(
+        package_version_kwargs={
+            "website_url": "https://thunderstore.io/",
+        },
+    )
+
+    url = f"/api/cyberstorm/package/{l.community.identifier}/{l.package.namespace}/{l.package.name}/"
+    response = api_client.get(url)
+    actual = response.json()
+
+    assert actual["website_url"] == "https://thunderstore.io/"
+
+    l.package.latest.website_url = ""
+    l.package.latest.save(update_fields=("website_url",))
+
+    response = api_client.get(url)
+    actual = response.json()
+
+    assert actual["website_url"] == None
+
+
 def _date_to_z(value: datetime) -> str:
     return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")

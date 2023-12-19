@@ -37,6 +37,18 @@ class TeamSerializer(serializers.Serializer):
     members = CyberstormTeamMemberSerializer(many=True)
 
 
+class EmptyStringAsNoneField(serializers.Field):
+    """
+    Serialize empty string to None and deserialize vice versa.
+    """
+
+    def to_representation(self, value):
+        return None if value == "" else value
+
+    def to_internal_value(self, data):
+        return "" if data is None else data
+
+
 class ResponseSerializer(serializers.Serializer):
     """
     Data shown on package detail view.
@@ -69,7 +81,7 @@ class ResponseSerializer(serializers.Serializer):
     rating_count = serializers.IntegerField(min_value=0)
     size = serializers.IntegerField(min_value=0, source="package.latest.file_size")
     team = TeamSerializer(source="package.owner")
-    website_url = serializers.CharField(source="package.latest.website_url")
+    website_url = EmptyStringAsNoneField(source="package.latest.website_url")
 
     def get_has_changelog(self, listing: PackageListing) -> bool:
         changelog = listing.package.latest.changelog
