@@ -81,9 +81,9 @@ class PackageDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
 
     def get_object(self):
         return get_custom_package_detail_listing(
-            self.kwargs["community_id"],
-            self.kwargs["namespace_id"],
-            self.kwargs["package_name"],
+            community_id=self.kwargs["community_id"],
+            namespace_id=self.kwargs["namespace_id"],
+            package_name=self.kwargs["package_name"],
         )
 
 

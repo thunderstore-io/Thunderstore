@@ -24,9 +24,9 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
 
     def get_object(self):
         package_version = get_package_version(
-            self.kwargs["namespace_id"],
-            self.kwargs["package_name"],
-            self.kwargs.get("version_number"),
+            namespace_id=self.kwargs["namespace_id"],
+            package_name=self.kwargs["package_name"],
+            version_number=self.kwargs.get("version_number"),
         )
 
         return {"html": render_markdown(package_version.readme)}
@@ -43,9 +43,9 @@ class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView)
 
     def get_object(self):
         package_version = get_package_version(
-            self.kwargs["namespace_id"],
-            self.kwargs["package_name"],
-            self.kwargs.get("version_number"),
+            namespace_id=self.kwargs["namespace_id"],
+            package_name=self.kwargs["package_name"],
+            version_number=self.kwargs.get("version_number"),
         )
 
         if package_version.changelog:
