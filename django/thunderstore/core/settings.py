@@ -102,6 +102,7 @@ env = environ.Env(
     MIRROR_S3_CUSTOM_DOMAIN=(str, ""),
     MIRROR_S3_SECURE_URLS=(bool, True),
     MIRROR_S3_DEFAULT_ACL=(str, "private"),
+    ALLOWED_CDNS=(list, []),
     REDIS_URL=(str, ""),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
@@ -673,6 +674,8 @@ if all(
     MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     SCHEMA_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
     BLOB_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+
+ALLOWED_CDNS = env.list("ALLOWED_CDNS")
 
 # Storage Defaults
 DEFAULT_FILE_STORAGE = get_storage_class_or_stub(DEFAULT_FILE_STORAGE)

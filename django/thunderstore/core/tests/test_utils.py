@@ -2,12 +2,13 @@ from typing import Any, Optional
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 
 from thunderstore.core.utils import (
     capture_exception,
     check_validity,
     make_full_url,
+    replace_cdn,
     sanitize_filename,
     sanitize_filepath,
     validate_filepath_prefix,
@@ -110,3 +111,79 @@ def test_capture_exception_always_raise(settings: Any):
     settings.ALWAYS_RAISE_EXCEPTIONS = True
     with pytest.raises(Exception, match="test"):
         capture_exception(Exception("test"))
+
+
+@pytest.mark.parametrize(
+    ("url", "preferred", "expected"),
+    (
+        (
+            "https://gcdn.thunderstore.io/healthz",
+            None,
+            "https://gcdn.thunderstore.io/healthz",
+        ),
+        (
+            "https://gcdn.thunderstore.io/healthz",
+            "",
+            "https://gcdn.thunderstore.io/healthz",
+        ),
+        (
+            "https://gcdn.thunderstore.io/healthz",
+            "disallowed.thunderstore.io",
+            "https://gcdn.thunderstore.io/healthz",
+        ),
+        (
+            "https://gcdn.thunderstore.io/healthz",
+            "gcdn.thunderstore.io",
+            "https://gcdn.thunderstore.io/healthz",
+        ),
+        (
+            "https://gcdn.thunderstore.io/healthz",
+            "hcdn-1.hcdn.thunderstore.io",
+            "https://hcdn-1.hcdn.thunderstore.io/healthz",
+        ),
+        (
+            "https://gcdn.thunderstore.io",
+            "hcdn-1.hcdn.thunderstore.io",
+            "https://hcdn-1.hcdn.thunderstore.io",
+        ),
+        (
+            "https://hcdn-1.hcdn.thunderstore.io/healthz",
+            "gcdn.thunderstore.io",
+            "https://gcdn.thunderstore.io/healthz",
+        ),
+        (
+            "http://localhost.thunderstore/healthz",
+            "hcdn-1.hcdn.thunderstore.io",
+            "http://hcdn-1.hcdn.thunderstore.io/healthz",
+        ),
+        (
+            "http://localhost:9000/healthz",
+            "hcdn-1.hcdn.thunderstore.io",
+            "http://hcdn-1.hcdn.thunderstore.io/healthz",
+        ),
+    ),
+)
+@override_settings(ALLOWED_CDNS=["gcdn.thunderstore.io", "hcdn-1.hcdn.thunderstore.io"])
+def test_replace_cdn(
+    url: str,
+    preferred: Optional[str],
+    expected: str,
+) -> None:
+    assert replace_cdn(url, preferred) == expected
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "",
+        "/",
+        "/relative/path",
+        "//thunderstore.io/protocol/relative/path",
+    ),
+)
+def test_replace_cdn__raises_for_relative_urls(url: str) -> None:
+    with pytest.raises(
+        ValueError,
+        match="Absolute URL including protocol required",
+    ):
+        replace_cdn(url, "irrelevant")
