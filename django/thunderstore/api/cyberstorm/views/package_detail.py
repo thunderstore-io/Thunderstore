@@ -1,4 +1,15 @@
-from django.db.models import CharField, Count, OuterRef, QuerySet, Subquery, Sum, Value
+from django.db.models import (
+    BooleanField,
+    CharField,
+    Count,
+    ExpressionWrapper,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
+    Value,
+)
 from rest_framework import serializers
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 
@@ -66,7 +77,7 @@ class ResponseSerializer(serializers.Serializer):
     download_count = serializers.IntegerField(min_value=0)
     download_url = serializers.CharField(source="package.latest.full_download_url")
     full_version_name = serializers.CharField(source="package.latest.full_version_name")
-    has_changelog = serializers.SerializerMethodField()
+    has_changelog = serializers.BooleanField()
     icon_url = serializers.CharField(source="package.latest.icon.url")
     install_url = serializers.CharField(source="package.latest.install_url")
     is_deprecated = serializers.BooleanField(source="package.is_deprecated")
@@ -82,10 +93,6 @@ class ResponseSerializer(serializers.Serializer):
     size = serializers.IntegerField(min_value=0, source="package.latest.file_size")
     team = TeamSerializer(source="package.owner")
     website_url = EmptyStringAsNoneField(source="package.latest.website_url")
-
-    def get_has_changelog(self, listing: PackageListing) -> bool:
-        changelog = listing.package.latest.changelog
-        return False if changelog is None else bool(changelog.strip())
 
 
 class PackageDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
@@ -106,6 +113,7 @@ class CustomListing(PackageListing):
     dependant_count: int
     dependencies: QuerySet[PackageVersion]
     download_count: int
+    has_changelog: bool
     rating_count: int
 
 
@@ -139,6 +147,10 @@ def get_custom_package_detail_listing(
                 listing_ref.annotate(
                     ratings=Count("package__package_ratings"),
                 ).values("ratings"),
+            ),
+            has_changelog=ExpressionWrapper(
+                Q(package__latest__changelog__isnull=False),
+                output_field=BooleanField(),
             ),
         )
     )
