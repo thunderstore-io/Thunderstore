@@ -75,7 +75,7 @@ def test_readme_api_view__prerenders_markup(api_client: APIClient) -> None:
 @pytest.mark.parametrize(
     ("markdown", "markup"),
     (
-        (None, ""),
+        ("", ""),
         ("Oh hai!", "<p>Oh hai!</p>\n"),
     ),
 )
@@ -92,3 +92,18 @@ def test_changelog_api_view__prerenders_markup(
     actual = response.json()
 
     assert actual["html"] == markup
+
+
+@pytest.mark.django_db
+def test_changelog_api_view__when_package_has_no_changelog__returns_404(
+    api_client: APIClient,
+) -> None:
+    v = PackageVersionFactory(changelog=None)
+
+    response = api_client.get(
+        f"/api/cyberstorm/changelog/{v.package.namespace}/{v.package.name}/",
+    )
+    actual = response.json()
+
+    assert response.status_code == 404
+    assert actual["detail"] == "Not found."

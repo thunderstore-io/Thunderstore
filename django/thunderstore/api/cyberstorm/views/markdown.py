@@ -48,10 +48,10 @@ class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView)
             version_number=self.kwargs.get("version_number"),
         )
 
-        if package_version.changelog:
-            return {"html": render_markdown(package_version.changelog)}
+        if package_version.changelog is None:
+            raise Http404
 
-        return {"html": ""}
+        return {"html": render_markdown(package_version.changelog)}
 
 
 def get_package_version(

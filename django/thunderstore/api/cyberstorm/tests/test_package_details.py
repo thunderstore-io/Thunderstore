@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 import pytest
 from rest_framework.test import APIClient
@@ -88,6 +89,32 @@ def test_get_custom_package_detail_listing__annotates_downloads_and_ratings() ->
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("changelog", "expected"),
+    (
+        (None, False),
+        ("", True),
+        (" ", True),  # Space
+        ("  ", True),  # Tab
+        ("# Oh hai", True),
+    ),
+)
+def test_get_custom_package_detail_listing__annotates_has_changelog(
+    changelog: Optional[str],
+    expected: bool,
+) -> None:
+    listing = PackageListingFactory(package_version_kwargs={"changelog": changelog})
+
+    actual = get_custom_package_detail_listing(
+        listing.community.identifier,
+        listing.package.namespace.name,
+        listing.package.name.upper(),
+    )
+
+    assert actual.has_changelog == expected
+
+
+@pytest.mark.django_db
 def test_get_custom_package_detail_listing__augments_listing_with_dependant_count() -> None:
     listing = PackageListingFactory()
     dependant_count = 5
@@ -173,7 +200,7 @@ def test_package_detail_view__returns_info(api_client: APIClient) -> None:
     assert actual["download_count"] == 99
     assert actual["download_url"] == latest.full_download_url
     assert actual["full_version_name"] == latest.full_version_name
-    assert actual["has_changelog"] == bool(latest.changelog.strip())
+    assert actual["has_changelog"] == (latest.changelog is not None)
     assert actual["icon_url"] == latest.icon.url
     assert actual["install_url"] == latest.install_url
     assert actual["is_deprecated"] == listing.package.is_deprecated
@@ -214,7 +241,7 @@ def test_package_detail_view__serializes_url_correctly(api_client: APIClient) ->
     response = api_client.get(url)
     actual = response.json()
 
-    assert actual["website_url"] == None
+    assert actual["website_url"] is None
 
 
 def _date_to_z(value: datetime) -> str:
