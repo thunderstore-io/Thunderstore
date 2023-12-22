@@ -22,7 +22,7 @@ from thunderstore.repository.models import (
 )
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
-from thunderstore.webhooks.models import Webhook
+from thunderstore.webhooks.models.release import Webhook
 
 
 def get_version_zip_filepath(instance, filename):

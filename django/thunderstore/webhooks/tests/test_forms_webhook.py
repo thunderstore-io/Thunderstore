@@ -1,12 +1,11 @@
 from typing import Dict
 
 import pytest
-from django.db.models.sql.where import NothingNode
 from django.forms import model_to_dict
 
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.webhooks.forms import WebhookAdminForm, WebhookForm
-from thunderstore.webhooks.models import Webhook, WebhookType
+from thunderstore.webhooks.models.release import Webhook, WebhookType
 
 
 def _create_category(community: Community) -> PackageCategory:

@@ -2,9 +2,10 @@ from typing import TYPE_CHECKING, List, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q, signals
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 
 from thunderstore.cache.enums import CacheBustCondition
@@ -15,6 +16,12 @@ from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.permissions.utils import validate_user
+from thunderstore.webhooks.audit import (
+    AuditAction,
+    AuditEvent,
+    AuditEventField,
+    fire_audit_event,
+)
 
 if TYPE_CHECKING:
     from thunderstore.community.models import PackageCategory
@@ -125,18 +132,59 @@ class PackageListing(TimestampMixin, models.Model):
             "path": self.get_absolute_url(),
         }
 
+    def build_audit_event(
+        self,
+        *,
+        action: AuditAction,
+        user_id: int,
+        message: Optional[str] = None,
+    ) -> AuditEvent:
+        return AuditEvent(
+            timestamp=timezone.now(),
+            user_id=user_id,
+            community_id=self.community.pk,
+            action=action,
+            message=message,
+            related_url=self.get_full_url(),
+            fields=[
+                AuditEventField(
+                    name="Community",
+                    value=self.community.name,
+                ),
+                AuditEventField(
+                    name="Package",
+                    value=self.package.full_package_name,
+                ),
+            ],
+        )
+
+    @transaction.atomic
     def reject(self, agent: Optional[UserType], rejection_reason: str):
         if self.can_user_manage_approval_status(agent):
             self.rejection_reason = rejection_reason
             self.review_status = PackageListingReviewStatus.rejected
             self.save()
+            fire_audit_event(
+                self.build_audit_event(
+                    action=AuditAction.PACKAGE_REJECTED,
+                    user_id=agent.pk,
+                    message=rejection_reason,
+                )
+            )
         else:
             raise PermissionError()
 
+    @transaction.atomic
     def approve(self, agent: Optional[UserType]):
         if self.can_user_manage_approval_status(agent):
             self.review_status = PackageListingReviewStatus.approved
             self.save()
+            fire_audit_event(
+                self.build_audit_event(
+                    action=AuditAction.PACKAGE_APPROVED,
+                    user_id=agent.pk,
+                )
+            )
         else:
             raise PermissionError()
 

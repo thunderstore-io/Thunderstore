@@ -53,7 +53,7 @@ from thunderstore.repository.models import (
 from thunderstore.repository.models.namespace import Namespace
 from thunderstore.schema_server.factories import SchemaChannelFactory
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
-from thunderstore.webhooks.models import WebhookType
+from thunderstore.webhooks.models.release import WebhookType
 from thunderstore.wiki.factories import WikiFactory, WikiPageFactory
 from thunderstore.wiki.models import Wiki, WikiPage
 
