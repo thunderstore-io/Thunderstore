@@ -1,9 +1,13 @@
 from django.urls import path
 
-from thunderstore.community.api.experimental.views import (
+from thunderstore.community.api.experimental.views.category import (
+    PackageCategoriesExperimentalApiView,
+)
+from thunderstore.community.api.experimental.views.community import (
     CommunitiesExperimentalApiView,
     CurrentCommunityExperimentalApiView,
-    PackageCategoriesExperimentalApiView,
+)
+from thunderstore.community.api.experimental.views.listing import (
     PackageListingUpdateApiView,
 )
 
