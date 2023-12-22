@@ -148,7 +148,10 @@ if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
-        integrations=[DjangoIntegration(), CeleryIntegration()],
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(monitor_beat_tasks=True),
+        ],
     )
 
 checkout_dir = environ.Path(__file__) - 3
