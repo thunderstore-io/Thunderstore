@@ -4,9 +4,7 @@ from typing import Optional
 import pytest
 from rest_framework.test import APIClient
 
-from thunderstore.api.cyberstorm.views.package_detail import (
-    get_custom_package_detail_listing,
-)
+from thunderstore.api.cyberstorm.views.package_listing import get_custom_package_listing
 from thunderstore.community.factories import (
     CommunityFactory,
     PackageCategoryFactory,
@@ -20,7 +18,7 @@ from thunderstore.repository.factories import (
 
 
 @pytest.mark.django_db
-def test_get_custom_package_detail_listing__returns_objects_matching_args() -> None:
+def test_get_custom_package_listing__returns_objects_matching_args() -> None:
     expected = PackageListingFactory()
     PackageListingFactory(package_=expected.package)  # Different Community
     PackageListingFactory(
@@ -32,7 +30,7 @@ def test_get_custom_package_detail_listing__returns_objects_matching_args() -> N
         package_kwargs={"namespace": expected.package.namespace},
     )  # Different Package name
 
-    actual = get_custom_package_detail_listing(
+    actual = get_custom_package_listing(
         expected.community.identifier,
         expected.package.namespace.name,
         expected.package.name,
@@ -44,15 +42,15 @@ def test_get_custom_package_detail_listing__returns_objects_matching_args() -> N
 
 
 @pytest.mark.django_db
-def test_get_custom_package_detail_listing__treats_package_name_as_case_insensitive() -> None:
+def test_get_custom_package_listing__treats_package_name_as_case_insensitive() -> None:
     expected = PackageListingFactory()
 
-    requested_as_uppercase = get_custom_package_detail_listing(
+    requested_as_uppercase = get_custom_package_listing(
         expected.community.identifier,
         expected.package.namespace.name,
         expected.package.name.upper(),
     )
-    requested_as_lowercase = get_custom_package_detail_listing(
+    requested_as_lowercase = get_custom_package_listing(
         expected.community.identifier,
         expected.package.namespace.name,
         expected.package.name.lower(),
@@ -63,7 +61,7 @@ def test_get_custom_package_detail_listing__treats_package_name_as_case_insensit
 
 
 @pytest.mark.django_db
-def test_get_custom_package_detail_listing__annotates_downloads_and_ratings() -> None:
+def test_get_custom_package_listing__annotates_downloads_and_ratings() -> None:
     listing = PackageListingFactory(package_version_kwargs={"downloads": 100})
     PackageVersionFactory(
         package=listing.package,
@@ -78,7 +76,7 @@ def test_get_custom_package_detail_listing__annotates_downloads_and_ratings() ->
 
     [PackageRatingFactory(package=listing.package) for _ in range(3)]
 
-    actual = get_custom_package_detail_listing(
+    actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
         listing.package.name.upper(),
@@ -99,13 +97,13 @@ def test_get_custom_package_detail_listing__annotates_downloads_and_ratings() ->
         ("# Oh hai", True),
     ),
 )
-def test_get_custom_package_detail_listing__annotates_has_changelog(
+def test_get_custom_package_listing__annotates_has_changelog(
     changelog: Optional[str],
     expected: bool,
 ) -> None:
     listing = PackageListingFactory(package_version_kwargs={"changelog": changelog})
 
-    actual = get_custom_package_detail_listing(
+    actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
         listing.package.name.upper(),
@@ -115,7 +113,7 @@ def test_get_custom_package_detail_listing__annotates_has_changelog(
 
 
 @pytest.mark.django_db
-def test_get_custom_package_detail_listing__augments_listing_with_dependant_count() -> None:
+def test_get_custom_package_listing__augments_listing_with_dependant_count() -> None:
     listing = PackageListingFactory()
     dependant_count = 5
 
@@ -123,7 +121,7 @@ def test_get_custom_package_detail_listing__augments_listing_with_dependant_coun
         dependant = PackageVersionFactory()
         dependant.dependencies.add(listing.package.latest)
 
-    actual = get_custom_package_detail_listing(
+    actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
         listing.package.name.upper(),
@@ -133,7 +131,7 @@ def test_get_custom_package_detail_listing__augments_listing_with_dependant_coun
 
 
 @pytest.mark.django_db
-def test_get_custom_package_detail_listing__augments_listing_with_dependencies_from_same_community() -> None:
+def test_get_custom_package_listing__augments_listing_with_dependencies_from_same_community() -> None:
     dependant = PackageListingFactory()
     dependency1 = PackageListingFactory(community=dependant.community)
     dependency2 = PackageListingFactory()
@@ -146,7 +144,7 @@ def test_get_custom_package_detail_listing__augments_listing_with_dependencies_f
         ],
     )
 
-    actual = get_custom_package_detail_listing(
+    actual = get_custom_package_listing(
         dependant.community.identifier,
         dependant.package.namespace.name,
         dependant.package.name.upper(),
@@ -159,7 +157,7 @@ def test_get_custom_package_detail_listing__augments_listing_with_dependencies_f
 
 
 @pytest.mark.django_db
-def test_package_detail_view__returns_info(api_client: APIClient) -> None:
+def test_package_listing_view__returns_info(api_client: APIClient) -> None:
     community = CommunityFactory()
     category = PackageCategoryFactory(community=community)
     listing = PackageListingFactory(
@@ -182,7 +180,7 @@ def test_package_detail_view__returns_info(api_client: APIClient) -> None:
     member = TeamMemberFactory(team=listing.package.owner, role="member")
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{community.identifier}/{listing.package.namespace}/{listing.package.name}/",
+        f"/api/cyberstorm/listing/{community.identifier}/{listing.package.namespace}/{listing.package.name}/",
     )
     actual = response.json()
 
@@ -222,14 +220,14 @@ def test_package_detail_view__returns_info(api_client: APIClient) -> None:
 
 
 @pytest.mark.django_db
-def test_package_detail_view__serializes_url_correctly(api_client: APIClient) -> None:
+def test_package_listing_view__serializes_url_correctly(api_client: APIClient) -> None:
     l = PackageListingFactory(
         package_version_kwargs={
             "website_url": "https://thunderstore.io/",
         },
     )
 
-    url = f"/api/cyberstorm/package/{l.community.identifier}/{l.package.namespace}/{l.package.name}/"
+    url = f"/api/cyberstorm/listing/{l.community.identifier}/{l.package.namespace}/{l.package.name}/"
     response = api_client.get(url)
     actual = response.json()
 

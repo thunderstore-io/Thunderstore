@@ -95,11 +95,11 @@ class ResponseSerializer(serializers.Serializer):
     website_url = EmptyStringAsNoneField(source="package.latest.website_url")
 
 
-class PackageDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = ResponseSerializer
 
     def get_object(self):
-        return get_custom_package_detail_listing(
+        return get_custom_package_listing(
             community_id=self.kwargs["community_id"],
             namespace_id=self.kwargs["namespace_id"],
             package_name=self.kwargs["package_name"],
@@ -117,7 +117,7 @@ class CustomListing(PackageListing):
     rating_count: int
 
 
-def get_custom_package_detail_listing(
+def get_custom_package_listing(
     community_id: str,
     namespace_id: str,
     package_name: str,

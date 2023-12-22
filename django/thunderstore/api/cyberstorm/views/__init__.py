@@ -2,13 +2,13 @@ from .community import CommunityAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
 from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
-from .package_detail import PackageDetailAPIView
-from .package_versions import PackageVersionsAPIView
-from .packages import (
-    CommunityPackageListAPIView,
-    NamespacePackageListAPIView,
-    PackageDependantsListAPIView,
+from .package_listing import PackageListingAPIView
+from .package_listing_list import (
+    PackageListingByCommunityListAPIView,
+    PackageListingByDependencyListAPIView,
+    PackageListingByNamespaceListAPIView,
 )
+from .package_versions import PackageVersionsAPIView
 from .team import (
     AddTeamMemberAPIView,
     TeamDetailAPIView,
@@ -20,10 +20,10 @@ __all__ = [
     "CommunityAPIView",
     "CommunityFiltersAPIView",
     "CommunityListAPIView",
-    "CommunityPackageListAPIView",
-    "NamespacePackageListAPIView",
-    "PackageDependantsListAPIView",
-    "PackageDetailAPIView",
+    "PackageListingAPIView",
+    "PackageListingByCommunityListAPIView",
+    "PackageListingByDependencyListAPIView",
+    "PackageListingByNamespaceListAPIView",
     "PackageVersionChangelogAPIView",
     "PackageVersionReadmeAPIView",
     "PackageVersionsAPIView",

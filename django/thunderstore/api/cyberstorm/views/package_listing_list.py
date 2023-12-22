@@ -275,16 +275,16 @@ class BasePackageListAPIView(ListAPIView):
     decorator=conditional_swagger_auto_schema(
         query_serializer=PackageListRequestSerializer,
         responses={200: PackageListResponseSerializer()},
-        operation_id="api_cyberstorm_package_community",
+        operation_id="api_cyberstorm_package_listing_by_community_list",
         tags=["cyberstorm"],
     ),
 )
-class CommunityPackageListAPIView(BasePackageListAPIView):
+class PackageListingByCommunityListAPIView(BasePackageListAPIView):
     """
     Community-scoped package list.
     """
 
-    viewname = "api:cyberstorm:cyberstorm.package.community"
+    viewname = "api:cyberstorm:cyberstorm.listing.by-community-list"
 
 
 @method_decorator(
@@ -293,16 +293,16 @@ class CommunityPackageListAPIView(BasePackageListAPIView):
         query_serializer=PackageListRequestSerializer,
         manual_fields=[],
         responses={200: PackageListResponseSerializer()},
-        operation_id="api_cyberstorm_package_community_namespace",
+        operation_id="api_cyberstorm_package_listing_by_namespace_list",
         tags=["cyberstorm"],
     ),
 )
-class NamespacePackageListAPIView(BasePackageListAPIView):
+class PackageListingByNamespaceListAPIView(BasePackageListAPIView):
     """
     Community & Namespace-scoped package list.
     """
 
-    viewname = "api:cyberstorm:cyberstorm.package.community.namespace"
+    viewname = "api:cyberstorm:cyberstorm.listing.by-namespace-list"
 
     def get_queryset(self) -> QuerySet[Package]:
         namespace_id = self.kwargs["namespace_id"]
@@ -318,19 +318,17 @@ class NamespacePackageListAPIView(BasePackageListAPIView):
         query_serializer=PackageListRequestSerializer,
         manual_fields=[],
         responses={200: PackageListResponseSerializer()},
-        operation_id="api_cyberstorm_package_community_namespace_package_dependants",
+        operation_id="api_cyberstorm_package_listing_by_dependency_list",
         tags=["cyberstorm"],
     ),
 )
-class PackageDependantsListAPIView(BasePackageListAPIView):
+class PackageListingByDependencyListAPIView(BasePackageListAPIView):
     """
     Package list for packages that depend on a given package and are
     listed in a given community.
     """
 
-    viewname = (
-        "api:cyberstorm:cyberstorm.package.community.namespace.package-dependants"
-    )
+    viewname = "api:cyberstorm:cyberstorm.listing.by-dependency-list"
 
     def get_queryset(self) -> QuerySet[Package]:
         community_id = self.kwargs["community_id"]
