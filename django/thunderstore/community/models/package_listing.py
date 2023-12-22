@@ -125,6 +125,21 @@ class PackageListing(TimestampMixin, models.Model):
             "path": self.get_absolute_url(),
         }
 
+    def reject(self, agent: Optional[UserType], rejection_reason: str):
+        if self.can_user_manage_approval_status(agent):
+            self.rejection_reason = rejection_reason
+            self.review_status = PackageListingReviewStatus.rejected
+            self.save()
+        else:
+            raise PermissionError()
+
+    def approve(self, agent: Optional[UserType]):
+        if self.can_user_manage_approval_status(agent):
+            self.review_status = PackageListingReviewStatus.approved
+            self.save()
+        else:
+            raise PermissionError()
+
     @cached_property
     def owner_url(self):
         return reverse(
@@ -190,16 +205,25 @@ class PackageListing(TimestampMixin, models.Model):
                 )
         self.categories.set(categories)
 
-    def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
+    def can_be_moderated_by_user(self, user: Optional[UserType]) -> bool:
+        return self.community.can_user_manage_packages(user)
+
+    def ensure_user_can_manage_listing(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
-        is_allowed = self.community.can_user_manage_packages(
+        is_allowed = self.can_be_moderated_by_user(
             user
         ) or self.package.owner.can_user_manage_packages(user)
         if not is_allowed:
-            raise ValidationError("Must have package management permission")
+            raise ValidationError("Must have listing management permission")
+
+    def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
+        self.ensure_user_can_manage_listing(user)
 
     def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_update_categories_permission(user))
+
+    def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
+        return self.can_be_moderated_by_user(user)
 
     def ensure_can_be_viewed_by_user(self, user: Optional[UserType]) -> None:
         def get_has_perms() -> bool:

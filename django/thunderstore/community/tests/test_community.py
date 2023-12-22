@@ -42,7 +42,7 @@ def test_community_ensure_user_can_manage_packages(
     result = community.can_user_manage_packages(user)
     error = None
     try:
-        community.ensure_user_can_manage_packages(user)
+        community.ensure_user_can_moderate_packages(user)
     except ValidationError as e:
         error = str(e)
 
