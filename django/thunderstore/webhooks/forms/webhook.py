@@ -4,8 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from thunderstore.community.models import PackageCategory
-
-from ..models import Webhook
+from thunderstore.webhooks.models.release import Webhook
 
 
 class WebhookForm(forms.ModelForm):

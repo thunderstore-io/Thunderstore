@@ -6,7 +6,7 @@ from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory
 from thunderstore.community.models import PackageListing
 from thunderstore.repository.models import Package
-from thunderstore.webhooks.models import Webhook, WebhookType
+from thunderstore.webhooks.models.release import Webhook, WebhookType
 
 
 @pytest.mark.django_db

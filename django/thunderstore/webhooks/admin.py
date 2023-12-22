@@ -1,11 +1,11 @@
 from django.contrib import admin
 
 from thunderstore.webhooks.forms.webhook import WebhookForm
-from thunderstore.webhooks.models import Webhook
+from thunderstore.webhooks.models.release import Webhook
 
 
 @admin.register(Webhook)
-class PackageAdmin(admin.ModelAdmin):
+class ReleaseWebhookAdmin(admin.ModelAdmin):
     form = WebhookForm
 
     readonly_fields = (
