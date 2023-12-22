@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
-from thunderstore.community.factories import SiteFactory
+from thunderstore.community.factories import PackageCategoryFactory, SiteFactory
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import PackageFactory
@@ -193,3 +193,34 @@ def test_package_has_wiki_yes(
     WikiPageFactory(wiki=package_wiki.wiki)
     assert package_wiki.wiki.pages.exists() is True
     assert package.has_wiki is True
+
+
+@pytest.mark.django_db
+def test_package_update_listing(
+    active_package_listing: PackageListing,
+):
+    package = active_package_listing.package
+    com = active_package_listing.community
+    cats = [PackageCategoryFactory(community=com) for _ in range(3)]
+
+    active_package_listing.categories.set([cats[0]])
+
+    package.update_listing(
+        has_nsfw_content=True,
+        categories=[cats[1]],
+        community=com,
+    )
+    listing = package.get_or_create_package_listing(com)
+    assert listing.categories.count() == 2
+    for entry in (cats[0], cats[1]):
+        assert entry in listing.categories.all()
+
+    package.update_listing(
+        has_nsfw_content=True,
+        categories=[cats[2]],
+        community=com,
+    )
+
+    assert listing.categories.count() == 3
+    for entry in cats:
+        assert entry in listing.categories.all()
