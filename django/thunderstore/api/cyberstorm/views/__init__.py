@@ -8,7 +8,7 @@ from .package_listing_list import (
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
 )
-from .package_versions import PackageVersionsAPIView
+from .package_version_list import PackageVersionListAPIView
 from .team import (
     AddTeamMemberAPIView,
     TeamDetailAPIView,
@@ -25,8 +25,8 @@ __all__ = [
     "PackageListingByDependencyListAPIView",
     "PackageListingByNamespaceListAPIView",
     "PackageVersionChangelogAPIView",
+    "PackageVersionListAPIView",
     "PackageVersionReadmeAPIView",
-    "PackageVersionsAPIView",
     "TeamDetailAPIView",
     "AddTeamMemberAPIView",
     "TeamMembersAPIView",

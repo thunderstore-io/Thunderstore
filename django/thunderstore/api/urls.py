@@ -10,8 +10,8 @@ from thunderstore.api.cyberstorm.views import (
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
     PackageVersionChangelogAPIView,
+    PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
-    PackageVersionsAPIView,
     TeamDetailAPIView,
     TeamMembersAPIView,
     TeamServiceAccountsAPIView,
@@ -54,6 +54,31 @@ cyberstorm_urls = [
         name="cyberstorm.listing.by-dependency-list",
     ),
     path(
+        "package/<str:namespace_id>/<str:package_name>/latest/changelog/",
+        PackageVersionChangelogAPIView.as_view(),
+        name="cyberstorm.package.latest.changelog",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/latest/readme/",
+        PackageVersionReadmeAPIView.as_view(),
+        name="cyberstorm.package.latest.readme",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/changelog/",
+        PackageVersionChangelogAPIView.as_view(),
+        name="cyberstorm.package.version.changelog",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/readme/",
+        PackageVersionReadmeAPIView.as_view(),
+        name="cyberstorm.package.version.readme",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/versions/",
+        PackageVersionListAPIView.as_view(),
+        name="cyberstorm.package.versions",
+    ),
+    path(
         "team/<str:team_id>/",
         TeamDetailAPIView.as_view(),
         name="cyberstorm.team.detail",
@@ -72,33 +97,5 @@ cyberstorm_urls = [
         "team/<str:team_id>/service-accounts/",
         TeamServiceAccountsAPIView.as_view(),
         name="cyberstorm.team.service-accounts",
-    ),
-    # TODO: rethink URL prefixes. Now "package" is in use for community
-    # scoped things, so have to use something else for actually package
-    # (version) scoped things.
-    path(
-        "changelog/<str:namespace_id>/<str:package_name>/",
-        PackageVersionChangelogAPIView.as_view(),
-        name="cyberstorm.package-version.changelog-latest",
-    ),
-    path(
-        "changelog/<str:namespace_id>/<str:package_name>/<str:version_number>/",
-        PackageVersionChangelogAPIView.as_view(),
-        name="cyberstorm.package-version.changelog",
-    ),
-    path(
-        "readme/<str:namespace_id>/<str:package_name>/",
-        PackageVersionReadmeAPIView.as_view(),
-        name="cyberstorm.package-version.readme-latest",
-    ),
-    path(
-        "readme/<str:namespace_id>/<str:package_name>/<str:version_number>/",
-        PackageVersionReadmeAPIView.as_view(),
-        name="cyberstorm.package-version.readme",
-    ),
-    path(
-        "versions/<str:namespace_id>/<str:package_name>/",
-        PackageVersionsAPIView.as_view(),
-        name="cyberstorm.package.versions",
     ),
 ]

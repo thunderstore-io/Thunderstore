@@ -6,7 +6,7 @@ from thunderstore.repository.models import Package
 
 
 @pytest.mark.django_db
-def test_package_versions_api_view__returns_error_for_inactive_package(
+def test_package_version_list_api_view__returns_error_for_inactive_package(
     api_client: APIClient,
     package: Package,
 ) -> None:
@@ -14,7 +14,7 @@ def test_package_versions_api_view__returns_error_for_inactive_package(
     package.save()
 
     response = api_client.get(
-        f"/api/cyberstorm/versions/{package.namespace}/{package.name}/",
+        f"/api/cyberstorm/package/{package.namespace}/{package.name}/versions/",
     )
     actual = response.json()
 
@@ -22,13 +22,13 @@ def test_package_versions_api_view__returns_error_for_inactive_package(
 
 
 @pytest.mark.django_db
-def test_package_versions_api_view__does_not_return_inactive_versions(
+def test_package_version_list_api_view__does_not_return_inactive_versions(
     api_client: APIClient,
 ) -> None:
     inactive = PackageVersionFactory(is_active=False)
 
     response = api_client.get(
-        f"/api/cyberstorm/versions/{inactive.package.namespace}/{inactive.package.name}/",
+        f"/api/cyberstorm/package/{inactive.package.namespace}/{inactive.package.name}/versions/",
     )
     actual = response.json()
 
@@ -36,13 +36,13 @@ def test_package_versions_api_view__does_not_return_inactive_versions(
 
 
 @pytest.mark.django_db
-def test_package_versions_api_view__returns_versions(
+def test_package_version_list_api_view__returns_versions(
     api_client: APIClient,
 ) -> None:
     expected = PackageVersionFactory()
 
     response = api_client.get(
-        f"/api/cyberstorm/versions/{expected.package.namespace}/{expected.package.name}/",
+        f"/api/cyberstorm/package/{expected.package.namespace}/{expected.package.name}/versions/",
     )
     actual = response.json()
 
