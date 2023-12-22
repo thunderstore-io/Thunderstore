@@ -323,7 +323,7 @@ def test_team_ensure_user_can_manage_members(
             assert team.can_user_manage_members(user) is False
             with pytest.raises(ValidationError) as e:
                 team.ensure_user_can_manage_members(user)
-            assert "Service accounts are unable to manage members" in str(e.value)
+            assert "Service accounts are unable to perform this action" in str(e.value)
         else:
             if role == TeamMemberRole.owner:
                 assert team.can_user_manage_members(user) is True
@@ -555,7 +555,7 @@ def test_team_ensure_user_can_disband(team: Team, user_type: str, role: str) -> 
         assert team.can_user_disband(user) is False
         with pytest.raises(ValidationError) as e:
             team.ensure_user_can_disband(user)
-        assert "Service accounts are unable to disband teams" in str(e.value)
+        assert "Service accounts are unable to perform this action" in str(e.value)
     else:
         if role is not None:
             TeamMember.objects.create(
@@ -638,6 +638,11 @@ def test_team_ensure_can_create_service_account(
         with pytest.raises(ValidationError) as e:
             team.ensure_can_create_service_account(user)
         assert "User has been deactivated" in str(e.value)
+    elif user_type == TestUserTypes.service_account:
+        with pytest.raises(
+            ValidationError, match="Service accounts are unable to perform this action"
+        ):
+            team.ensure_can_create_service_account(user)
     elif role is None:
         with pytest.raises(ValidationError) as e:
             team.ensure_can_create_service_account(user)
@@ -710,7 +715,7 @@ def test_team_ensure_user_can_edit_info(team: Team, user_type: str, role: str) -
     elif user_type == TestUserTypes.deactivated_user:
         expected_error = "User has been deactivated"
     elif user_type == TestUserTypes.service_account:
-        expected_error = "Service accounts are unable to edit team info"
+        expected_error = "Service accounts are unable to perform this action"
     elif role == TeamMemberRole.owner:
         expected_error = None
     else:
@@ -740,7 +745,7 @@ def test_team_ensure_user_can_manage_packages(
     elif user_type == TestUserTypes.deactivated_user:
         expected_error = "User has been deactivated"
     elif user_type == TestUserTypes.service_account:
-        expected_error = "Service accounts are unable to manage packages"
+        expected_error = "Service accounts are unable to perform this action"
     elif role in (TeamMemberRole.owner, TeamMemberRole.member):
         expected_error = None
     else:
