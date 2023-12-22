@@ -13,7 +13,7 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-def test_team_detail_api_view__for_active_team__returns_data(
+def test_team_api_view__for_active_team__returns_data(
     api_client: APIClient,
     team: Team,
 ):
@@ -26,14 +26,14 @@ def test_team_detail_api_view__for_active_team__returns_data(
 
 
 @pytest.mark.django_db
-def test_team_detail_api_view__for_nonexisting_team__returns_404(api_client: APIClient):
+def test_team_api_view__for_nonexisting_team__returns_404(api_client: APIClient):
     response = api_client.get("/api/cyberstorm/team/bad/")
 
     assert response.status_code == 404
 
 
 @pytest.mark.django_db
-def test_team_detail_api_view__when_fetching_team__is_case_insensitive(
+def test_team_api_view__when_fetching_team__is_case_insensitive(
     api_client: APIClient,
 ):
     TeamFactory(name="RaDTeAm")
@@ -44,7 +44,7 @@ def test_team_detail_api_view__when_fetching_team__is_case_insensitive(
 
 
 @pytest.mark.django_db
-def test_team_detail_api_view__for_inactive_team__returns_404(
+def test_team_api_view__for_inactive_team__returns_404(
     api_client: APIClient,
     team: Team,
 ):
@@ -61,7 +61,7 @@ def test_team_membership_permission__for_unauthenticated_user__returns_401(
     api_client: APIClient,
     team: Team,
 ):
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/members/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/member/")
 
     assert response.status_code == 401
 
@@ -73,7 +73,7 @@ def test_team_membership_permission__for_nonexisting_team__returns_404(
 ):
     api_client.force_authenticate(user)
 
-    response = api_client.get("/api/cyberstorm/team/bad/members/")
+    response = api_client.get("/api/cyberstorm/team/bad/member/")
 
     assert response.status_code == 404
 
@@ -88,7 +88,7 @@ def test_team_membership_permission__for_inactive_team__returns_404(
     team.save()
     api_client.force_authenticate(user)
 
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/members/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/member/")
 
     assert response.status_code == 404
 
@@ -101,7 +101,7 @@ def test_team_membership_permission__for_nonmember__returns_403(
 ):
     api_client.force_authenticate(user)
 
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/members/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/member/")
 
     assert response.status_code == 403
 
@@ -115,7 +115,7 @@ def test_team_membership_permission__for_member__returns_200(
     TeamMemberFactory(team=team, user=user)
     api_client.force_authenticate(user)
 
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/members/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/member/")
 
     assert response.status_code == 200
 
@@ -123,20 +123,19 @@ def test_team_membership_permission__for_member__returns_200(
 @pytest.mark.django_db
 def test_team_membership_permission__when_fetching_team__is_case_insensitive(
     api_client: APIClient,
-    team: Team,
     user: UserType,
 ):
     team = TeamFactory(name="ThunderGods")
     TeamMemberFactory(team=team, user=user)
     api_client.force_authenticate(user)
 
-    response = api_client.get("/api/cyberstorm/team/thundergods/members/")
+    response = api_client.get("/api/cyberstorm/team/thundergods/member/")
 
     assert response.status_code == 200
 
 
 @pytest.mark.django_db
-def test_team_members_api_view__for_member__returns_only_real_users(
+def test_team_member_list_api_view__for_member__returns_only_real_users(
     api_client: APIClient,
     team: Team,
     user: UserType,
@@ -145,7 +144,7 @@ def test_team_members_api_view__for_member__returns_only_real_users(
     ServiceAccountFactory(owner=team)
     api_client.force_authenticate(user)
 
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/members/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/member/")
     result = response.json()
 
     assert len(result) == 1
@@ -156,7 +155,7 @@ def test_team_members_api_view__for_member__returns_only_real_users(
 
 
 @pytest.mark.django_db
-def test_team_members_api_view__for_member__sorts_results(
+def test_team_member_list_api_view__for_member__sorts_results(
     api_client: APIClient,
     team: Team,
 ):
@@ -172,7 +171,7 @@ def test_team_members_api_view__for_member__sorts_results(
     TeamMemberFactory(team=team, user=charlie, role="member")
     api_client.force_authenticate(alice)
 
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/members/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/member/")
     result = response.json()
 
     # Owners alphabetically, then members alphabetically.
@@ -185,7 +184,7 @@ def test_team_members_api_view__for_member__sorts_results(
 
 
 @pytest.mark.django_db
-def test_team_service_accounts_api_view__for_member__returns_only_service_accounts(
+def test_team_service_account_list_api_view__for_member__returns_only_service_accounts(
     api_client: APIClient,
     team: Team,
     user: UserType,
@@ -194,7 +193,7 @@ def test_team_service_accounts_api_view__for_member__returns_only_service_accoun
     sa = ServiceAccountFactory(owner=team)
     api_client.force_authenticate(user)
 
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/service-accounts/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/service-account/")
     result = response.json()
 
     assert len(result) == 1
@@ -204,7 +203,7 @@ def test_team_service_accounts_api_view__for_member__returns_only_service_accoun
 
 
 @pytest.mark.django_db
-def test_team_service_accounts_api_view__for_member__sorts_results(
+def test_team_service_account_list_api_view__for_member__sorts_results(
     api_client: APIClient,
     team: Team,
     user: UserType,
@@ -218,7 +217,7 @@ def test_team_service_accounts_api_view__for_member__sorts_results(
     TeamMemberFactory(team=team, user=user, role="member")
     api_client.force_authenticate(user)
 
-    response = api_client.get(f"/api/cyberstorm/team/{team.name}/service-accounts/")
+    response = api_client.get(f"/api/cyberstorm/team/{team.name}/service-account/")
     result = response.json()
 
     assert len(result) == 3
@@ -228,7 +227,7 @@ def test_team_service_accounts_api_view__for_member__sorts_results(
 
 
 @pytest.mark.django_db
-def test_team_add_member__when_adding_a_member__succeeds(
+def test_team_member_add_api_view__when_adding_a_member__succeeds(
     api_client: APIClient,
     team: Team,
     user: UserType,
@@ -237,7 +236,7 @@ def test_team_add_member__when_adding_a_member__succeeds(
     api_client.force_authenticate(teamMember.user)
 
     response = api_client.post(
-        f"/api/cyberstorm/team/{team.name}/members/add/",
+        f"/api/cyberstorm/team/{team.name}/member/add/",
         json.dumps({"username": user.username, "role": "owner"}),
         content_type="application/json",
     )
@@ -250,7 +249,7 @@ def test_team_add_member__when_adding_a_member__succeeds(
 
 
 @pytest.mark.django_db
-def test_team_add_member__when_adding_a_member__fails_because_team_doesnt_exist(
+def test_team_member_add_api_view__when_adding_a_member__fails_because_team_doesnt_exist(
     api_client: APIClient,
     team: Team,
     user: UserType,
@@ -259,7 +258,7 @@ def test_team_add_member__when_adding_a_member__fails_because_team_doesnt_exist(
     api_client.force_authenticate(teamMember.user)
 
     response = api_client.post(
-        "/api/cyberstorm/team/FakeTeam/members/add/",
+        "/api/cyberstorm/team/FakeTeam/member/add/",
         json.dumps({"username": user.username, "role": "owner"}),
         content_type="application/json",
     )
@@ -269,7 +268,7 @@ def test_team_add_member__when_adding_a_member__fails_because_team_doesnt_exist(
 
 
 @pytest.mark.django_db
-def test_team_add_member__when_adding_a_member__fails_because_user_is_already_in_team(
+def test_team_member_add_api_view__when_adding_a_member__fails_because_user_is_already_in_team(
     api_client: APIClient,
     team: Team,
     user: UserType,
@@ -278,7 +277,7 @@ def test_team_add_member__when_adding_a_member__fails_because_user_is_already_in
     api_client.force_authenticate(teamMember.user)
 
     response1 = api_client.post(
-        f"/api/cyberstorm/team/{team.name}/members/add/",
+        f"/api/cyberstorm/team/{team.name}/member/add/",
         json.dumps({"username": user.username, "role": "owner"}),
         content_type="application/json",
     )
@@ -286,7 +285,7 @@ def test_team_add_member__when_adding_a_member__fails_because_user_is_already_in
     assert response1.status_code == 200
 
     response2 = api_client.post(
-        f"/api/cyberstorm/team/{team.name}/members/add/",
+        f"/api/cyberstorm/team/{team.name}/member/add/",
         json.dumps({"username": user.username, "role": "owner"}),
         content_type="application/json",
     )
@@ -299,13 +298,13 @@ def test_team_add_member__when_adding_a_member__fails_because_user_is_already_in
 
 
 @pytest.mark.django_db
-def test_team_add_member__when_adding_a_member__fails_because_user_is_not_authenticated(
+def test_team_member_add_api_view__when_adding_a_member__fails_because_user_is_not_authenticated(
     api_client: APIClient,
     team: Team,
     user: UserType,
 ):
     response = api_client.post(
-        f"/api/cyberstorm/team/{team.name}/members/add/",
+        f"/api/cyberstorm/team/{team.name}/member/add/",
         json.dumps({"username": user.username, "role": "owner"}),
         content_type="application/json",
     )

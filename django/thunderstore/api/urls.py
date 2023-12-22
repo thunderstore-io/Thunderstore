@@ -1,7 +1,6 @@
 from django.urls import path
 
 from thunderstore.api.cyberstorm.views import (
-    AddTeamMemberAPIView,
     CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
@@ -12,9 +11,10 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionChangelogAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
-    TeamDetailAPIView,
-    TeamMembersAPIView,
-    TeamServiceAccountsAPIView,
+    TeamAPIView,
+    TeamMemberAddAPIView,
+    TeamMemberListAPIView,
+    TeamServiceAccountListAPIView,
 )
 
 cyberstorm_urls = [
@@ -80,22 +80,22 @@ cyberstorm_urls = [
     ),
     path(
         "team/<str:team_id>/",
-        TeamDetailAPIView.as_view(),
-        name="cyberstorm.team.detail",
+        TeamAPIView.as_view(),
+        name="cyberstorm.team",
     ),
     path(
-        "team/<str:team_id>/members/",
-        TeamMembersAPIView.as_view(),
-        name="cyberstorm.team.members",
+        "team/<str:team_id>/member/",
+        TeamMemberListAPIView.as_view(),
+        name="cyberstorm.team.member.list",
     ),
     path(
-        "team/<str:team_name>/members/add/",
-        AddTeamMemberAPIView.as_view(),
-        name="cyberstorm.team.members.add",
+        "team/<str:team_name>/member/add/",
+        TeamMemberAddAPIView.as_view(),
+        name="cyberstorm.team.member.add",
     ),
     path(
-        "team/<str:team_id>/service-accounts/",
-        TeamServiceAccountsAPIView.as_view(),
-        name="cyberstorm.team.service-accounts",
+        "team/<str:team_id>/service-account/",
+        TeamServiceAccountListAPIView.as_view(),
+        name="cyberstorm.team.service-account",
     ),
 ]

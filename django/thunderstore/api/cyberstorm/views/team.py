@@ -25,7 +25,7 @@ from thunderstore.repository.models.team import Team, TeamMember
 User = get_user_model()
 
 
-class TeamDetailAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
     lookup_field = "name__iexact"
@@ -49,7 +49,7 @@ class TeamRestrictedAPIView(ListAPIView):
             raise PermissionDenied()
 
 
-class TeamMembersAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
+class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
     serializer_class = CyberstormTeamMemberSerializer
     filter_backends = [StrictOrderingFilter]
     ordering = ["-role", "user__username"]
@@ -75,13 +75,13 @@ class CyberstormTeamAddMemberResponseSerialiazer(serializers.Serializer):
     team = serializers.CharField()
 
 
-class AddTeamMemberAPIView(APIView):
+class TeamMemberAddAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @conditional_swagger_auto_schema(
         request_body=CyberstormTeamAddMemberRequestSerialiazer,
         responses={200: CyberstormTeamAddMemberResponseSerialiazer},
-        operation_id="cyberstorm.team.members.add",
+        operation_id="cyberstorm.team.member.add",
         tags=["cyberstorm"],
     )
     def post(self, request, team_name, format=None):
@@ -107,7 +107,7 @@ class AddTeamMemberAPIView(APIView):
             raise ValidationError(form.errors)
 
 
-class TeamServiceAccountsAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
+class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
     serializer_class = CyberstormServiceAccountSerializer
     filter_backends = [StrictOrderingFilter]
     ordering = ["user__first_name"]
