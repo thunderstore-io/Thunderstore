@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from thunderstore.webhooks.forms.webhook import WebhookForm
+from thunderstore.webhooks.models.audit import AuditWebhook
 from thunderstore.webhooks.models.release import Webhook
 
 
@@ -28,4 +29,20 @@ class ReleaseWebhookAdmin(admin.ModelAdmin):
         "community",
     )
     raw_id_fields = ("community",)
+    list_filter = ("is_active",)
+
+
+@admin.register(AuditWebhook)
+class AuditWebhookAdmin(admin.ModelAdmin):
+    search_fields = ("name",)
+    filter_horizontal = ("match_communities",)
+    readonly_fields = (
+        "datetime_created",
+        "datetime_updated",
+    )
+    list_display = (
+        "name",
+        "datetime_created",
+        "is_active",
+    )
     list_filter = ("is_active",)
