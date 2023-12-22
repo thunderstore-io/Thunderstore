@@ -131,7 +131,7 @@ class Package(models.Model):
         listing = self.get_or_create_package_listing(community)
         listing.has_nsfw_content = has_nsfw_content
         if categories:
-            listing.categories.set(categories)
+            listing.categories.add(*categories)
         listing.save(update_fields=("has_nsfw_content",))
 
     @cached_property
