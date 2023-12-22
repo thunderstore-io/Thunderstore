@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -29,7 +30,7 @@ class CommunityFiltersAPIView(APIView):
         tags=["cyberstorm"],
         responses={200: serializer_class()},
     )
-    def get(self, request, community_id: str, format=None):
+    def get(self, request: Request, community_id: str):
         community = get_object_or_404(self.queryset, identifier=community_id)
         filters = {
             "package_categories": community.package_categories.all(),
