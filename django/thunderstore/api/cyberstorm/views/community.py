@@ -1,11 +1,11 @@
 from rest_framework.generics import RetrieveAPIView
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
-from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.api.utils import CyberstormAutoSchemaMixin
 from thunderstore.community.models import Community
 
 
-class CommunityAPIView(RetrieveAPIView):
+class CommunityAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     lookup_url_kwarg = "community_id"
     lookup_field = "identifier"
     permission_classes = []
@@ -13,7 +13,3 @@ class CommunityAPIView(RetrieveAPIView):
     # Unlisted communities are included, as direct links to them should work.
     queryset = Community.objects.all()
     serializer_class = CyberstormCommunitySerializer
-
-    @conditional_swagger_auto_schema(tags=["cyberstorm"])
-    def get(self, *args, **kwargs):
-        return super().get(*args, **kwargs)

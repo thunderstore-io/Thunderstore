@@ -4,7 +4,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
 from thunderstore.api.ordering import StrictOrderingFilter
-from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.api.utils import CyberstormAutoSchemaMixin
 from thunderstore.community.models import Community
 
 
@@ -12,7 +12,7 @@ class CommunityPaginator(PageNumberPagination):
     page_size = 150
 
 
-class CommunityListAPIView(ListAPIView):
+class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     permission_classes = []
     serializer_class = CyberstormCommunitySerializer
     pagination_class = CommunityPaginator
@@ -21,7 +21,3 @@ class CommunityListAPIView(ListAPIView):
     search_fields = ["description", "name"]
     ordering_fields = ["datetime_created", "identifier", "name"]
     ordering = ["identifier"]
-
-    @conditional_swagger_auto_schema(tags=["cyberstorm"])
-    def get(self, *args, **kwargs):
-        return super().get(*args, **kwargs)
