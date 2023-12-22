@@ -11,9 +11,15 @@ def celery_post(
     webhook_url: str,
     data: Optional[str] = None,
     headers: Union[Dict, None] = None,
-) -> None:
-    requests.post(
+):
+    response = requests.post(
         webhook_url,
         data=data,
         headers=headers,
     )
+    return {
+        "url": response.url,
+        "status": response.status_code,
+        "reason": response.reason,
+        "content": response.text,
+    }
