@@ -1,17 +1,15 @@
 import React, { CSSProperties } from "react";
-import { useManagementContext } from "./Context";
-import { PackageListingUpdateForm, usePackageListingUpdateForm } from "./hooks";
-import { PackageStatus } from "./PackageStatus";
-import { CategoriesSelect } from "./CategoriesSelect";
-import { DeprecationForm } from "./Deprecation";
+import { useReviewContext } from "./Context";
+import { PackageListingReviewForm, usePackageReviewForm } from "./useForm";
+import { ReviewStatusDisplay } from "./ReviewStatus";
 import { useOnEscape } from "../common/useOnEscape";
 
 const Header: React.FC = () => {
-    const context = useManagementContext();
+    const context = useReviewContext();
 
     return (
         <div className="modal-header">
-            <div className="modal-title">Manage Package</div>
+            <div className="modal-title">Review Package</div>
             <button
                 type="button"
                 className="close"
@@ -26,11 +24,12 @@ const Header: React.FC = () => {
 };
 
 interface BodyProps {
-    form: PackageListingUpdateForm;
+    form: PackageListingReviewForm;
 }
 
 const Body: React.FC<BodyProps> = (props) => {
-    const context = useManagementContext().props;
+    const context = useReviewContext();
+    const state = context.props;
 
     return (
         <div className="modal-body">
@@ -38,17 +37,23 @@ const Body: React.FC<BodyProps> = (props) => {
                 Changes might take several minutes to show publicly! Info shown
                 below is always up to date.
             </div>
-            <form onSubmit={props.form.onSubmit}>
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                }}
+            >
                 <div className="mt-3">
-                    <h6>Package Status</h6>
-                    <PackageStatus isDeprecated={context.isDeprecated} />
+                    <h6>Review Status</h6>
+                    <ReviewStatusDisplay reviewStatus={state.reviewStatus} />
                 </div>
-                {context.canUpdateCategories && (
-                    <div className="mt-3">
-                        <h6>Edit categories</h6>
-                        <CategoriesSelect form={props.form} />
-                    </div>
-                )}
+                <div className="mt-3">
+                    <h6>Rejection reason (saved on reject)</h6>
+                    <textarea
+                        {...props.form.control.register("rejectionReason")}
+                        className={"code-input"}
+                        style={{ minHeight: "100px" }}
+                    />
+                </div>
             </form>
             {props.form.error && (
                 <div className={"alert alert-danger mt-2 mb-0"}>
@@ -70,29 +75,36 @@ const Body: React.FC<BodyProps> = (props) => {
 };
 
 interface FooterProps {
-    form: PackageListingUpdateForm;
+    form: PackageListingReviewForm;
 }
 
 const Footer: React.FC<FooterProps> = (props) => {
     return (
         <div className="modal-footer d-flex justify-content-between">
-            <DeprecationForm />
+            <button
+                type="button"
+                className="btn btn-danger"
+                disabled={props.form.status === "SUBMITTING"}
+                onClick={props.form.reject}
+            >
+                Reject
+            </button>
             <button
                 type="button"
                 className="btn btn-success"
                 disabled={props.form.status === "SUBMITTING"}
-                onClick={props.form.onSubmit}
+                onClick={props.form.approve}
             >
-                Save changes
+                Approve
             </button>
         </div>
     );
 };
-export const PackageManagementModal: React.FC = () => {
-    const context = useManagementContext();
-    const form = usePackageListingUpdateForm(
+export const PackageReviewModal: React.FC = () => {
+    const context = useReviewContext();
+    const form = usePackageReviewForm(
         context.props.packageListingId,
-        (result) => context.setCategories(result.categories)
+        context.props.rejectionReason
     );
     useOnEscape(context.closeModal);
 

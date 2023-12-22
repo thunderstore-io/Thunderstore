@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import TYPE_CHECKING, Optional
 
 from django.core.exceptions import ValidationError
@@ -162,6 +163,7 @@ class Community(TimestampMixin, models.Model):
         ):  # TODO: Maybe remove
             raise ValidationError("Must be a moderator or higher to manage packages")
 
+    @lru_cache
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_moderate_packages(user))
 
