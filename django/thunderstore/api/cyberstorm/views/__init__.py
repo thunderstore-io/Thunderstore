@@ -1,4 +1,4 @@
-from .community_detail import CommunityDetailAPIView
+from .community import CommunityAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
 from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
@@ -17,7 +17,7 @@ from .team import (
 )
 
 __all__ = [
-    "CommunityDetailAPIView",
+    "CommunityAPIView",
     "CommunityFiltersAPIView",
     "CommunityListAPIView",
     "CommunityPackageListAPIView",

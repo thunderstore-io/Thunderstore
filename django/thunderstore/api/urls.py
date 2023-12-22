@@ -2,7 +2,7 @@ from django.urls import path
 
 from thunderstore.api.cyberstorm.views import (
     AddTeamMemberAPIView,
-    CommunityDetailAPIView,
+    CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
     CommunityPackageListAPIView,
@@ -25,8 +25,8 @@ cyberstorm_urls = [
     ),
     path(
         "community/<str:community_id>/",
-        CommunityDetailAPIView.as_view(),
-        name="cyberstorm.community.detail",
+        CommunityAPIView.as_view(),
+        name="cyberstorm.community",
     ),
     path(
         "community/<str:community_id>/filters/",
