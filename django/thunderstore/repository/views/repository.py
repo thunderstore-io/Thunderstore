@@ -482,23 +482,35 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
 
     @property
     def can_manage(self):
+        return any(
+            (
+                self.can_manage_deprecation,
+                self.can_manage_categories,
+                self.can_unlist,
+            )
+        )
+
+    @cached_property
+    def can_manage_deprecation(self):
         return self.object.package.can_user_manage_deprecation(self.request.user)
 
     @property
     def can_manage_categories(self) -> bool:
-        return self.can_manage and check_validity(
+        return check_validity(
             lambda: self.object.ensure_update_categories_permission(self.request.user)
         )
 
-    @property
+    @cached_property
     def can_deprecate(self):
-        return self.can_manage and self.object.package.is_deprecated is False
+        return (
+            self.can_manage_deprecation and self.object.package.is_deprecated is False
+        )
 
-    @property
+    @cached_property
     def can_undeprecate(self):
-        return self.can_manage and self.object.package.is_deprecated is True
+        return self.can_manage_deprecation and self.object.package.is_deprecated is True
 
-    @property
+    @cached_property
     def can_unlist(self):
         return self.request.user.is_superuser
 
