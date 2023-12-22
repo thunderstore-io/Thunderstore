@@ -46,6 +46,7 @@ class CommunityAdmin(admin.ModelAdmin):
         "icon_height",
         "datetime_created",
         "datetime_updated",
+        "aggregated_fields",
     )
     inlines = (CommunityMembershipInline,)
 
