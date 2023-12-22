@@ -514,6 +514,15 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
     def can_unlist(self):
         return self.request.user.is_superuser
 
+    def get_review_panel(self):
+        if not self.object.community.can_user_manage_packages(self.request.user):
+            return None
+        return {
+            "reviewStatus": self.object.review_status,
+            "rejectionReason": self.object.rejection_reason,
+            "packageListingId": self.object.pk,
+        }
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
@@ -557,6 +566,7 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
             ],
             "packageListingId": package_listing.pk,
         }
+        context["review_panel_props"] = self.get_review_panel()
         context.update(
             **self.get_tab_context(self.request.user, package_listing, "details")
         )

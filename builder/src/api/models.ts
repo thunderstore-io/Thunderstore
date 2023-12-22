@@ -1,3 +1,5 @@
+export type ReviewStatus = "unreviewed" | "approved" | "rejected";
+
 export type JSONValue =
     | string
     | number

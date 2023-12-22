@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { ExperimentalApi, UpdatePackageListingResponse } from "../../api";
 import * as Sentry from "@sentry/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Control } from "react-hook-form/dist/types";
 
 type Status = undefined | "SUBMITTING" | "SUCCESS" | "ERROR";
@@ -48,16 +48,4 @@ export const usePackageListingUpdateForm = (
         error,
         status,
     };
-};
-
-export const useOnEscape = (onEscape: () => void) => {
-    const handleEvent = (event: KeyboardEvent) => {
-        if (event.key === "Escape") {
-            onEscape();
-        }
-    };
-    useEffect(() => {
-        document.addEventListener("keydown", handleEvent);
-        return () => document.removeEventListener("keydown", handleEvent);
-    }, [handleEvent]);
 };

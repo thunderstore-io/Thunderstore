@@ -23,6 +23,10 @@ export class ApiUrls {
         apiUrl("submission", "validate", "manifest-v1");
     static updatePackageListing = (packageListingId: string) =>
         apiUrl("package-listing", packageListingId, "update");
+    static approvePackageListing = (packageListingId: string) =>
+        apiUrl("package-listing", packageListingId, "approve");
+    static rejectPackageListing = (packageListingId: string) =>
+        apiUrl("package-listing", packageListingId, "reject");
     static packageWiki = (namespace: string, name: string) =>
         apiUrl("package", namespace, name, "wiki");
 }

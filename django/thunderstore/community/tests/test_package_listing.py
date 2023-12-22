@@ -290,7 +290,7 @@ def test_package_listing_ensure_update_categories_permission(
         TestUserTypes.no_user: "Must be authenticated",
         TestUserTypes.unauthenticated: "Must be authenticated",
         TestUserTypes.regular_user: (
-            None if has_perms else "Must have package management permission"
+            None if has_perms else "Must have listing management permission"
         ),
         TestUserTypes.deactivated_user: "User has been deactivated",
         TestUserTypes.service_account: "Service accounts are unable to perform this action",
