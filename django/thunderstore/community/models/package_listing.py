@@ -14,6 +14,7 @@ from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
+from thunderstore.permissions.utils import validate_user
 
 if TYPE_CHECKING:
     from thunderstore.community.models import PackageCategory
@@ -190,12 +191,7 @@ class PackageListing(TimestampMixin, models.Model):
         self.categories.set(categories)
 
     def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        if hasattr(user, "service_account"):
-            raise ValidationError("Service accounts are unable to perform this action")
+        user = validate_user(user)
         is_allowed = self.community.can_user_manage_packages(
             user
         ) or self.package.owner.can_user_manage_packages(user)

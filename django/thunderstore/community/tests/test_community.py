@@ -55,7 +55,7 @@ def test_community_ensure_user_can_manage_packages(
         assert "User has been deactivated" in error
     elif user_type == TestUserTypes.service_account:
         assert result is False
-        assert "Service accounts are unable to manage packages" in error
+        assert "Service accounts are unable to perform this action" in error
     elif role not in (
         CommunityMemberRole.moderator,
         CommunityMemberRole.owner,

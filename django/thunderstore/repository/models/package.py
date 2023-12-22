@@ -18,6 +18,7 @@ from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
+from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
 if TYPE_CHECKING:
@@ -297,10 +298,7 @@ class Package(models.Model):
         self.save(update_fields=("is_active",))
 
     def ensure_user_can_manage_deprecation(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
+        user = validate_user(user)
         if user.is_staff and (
             user.has_perm("repository.change_package")
             or user.has_perm("repository.deprecate_package")

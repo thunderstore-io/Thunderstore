@@ -103,7 +103,7 @@ def test_package_ensure_user_can_manage_deprecation(
     elif user_type in (TestUserTypes.site_admin, TestUserTypes.superuser):
         expected_error = None
     elif user_type == TestUserTypes.service_account:
-        expected_error = "Service accounts are unable to manage packages"
+        expected_error = "Service accounts are unable to perform this action"
     elif role in (TeamMemberRole.owner, TeamMemberRole.member):
         expected_error = None
     else:
@@ -154,7 +154,7 @@ def test_package_ensure_user_can_manage_wiki(
     elif user_type == TestUserTypes.deactivated_user:
         expected_error = "User has been deactivated"
     elif user_type == TestUserTypes.service_account:
-        expected_error = "Service accounts are unable to manage packages"
+        expected_error = "Service accounts are unable to perform this action"
     elif role in (TeamMemberRole.owner, TeamMemberRole.member):
         expected_error = None
     else:

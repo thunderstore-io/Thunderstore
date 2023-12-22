@@ -17,6 +17,7 @@ from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
+from thunderstore.permissions.utils import validate_user
 
 if TYPE_CHECKING:
     from thunderstore.community.models.community_site import CommunitySite
@@ -147,12 +148,7 @@ class Community(TimestampMixin, models.Model):
         return None if not bool(self.icon) else self.icon.url
 
     def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        if hasattr(user, "service_account"):
-            raise ValidationError("Service accounts are unable to manage packages")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if (
             not membership

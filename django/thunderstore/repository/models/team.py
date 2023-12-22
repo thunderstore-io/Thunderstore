@@ -10,6 +10,7 @@ from django.urls import reverse
 from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
+from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.models import Namespace, Package
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
@@ -231,10 +232,7 @@ class Team(models.Model):
         return self.__membership_cache[user.pk]
 
     def ensure_can_create_service_account(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to create a service account")
@@ -242,10 +240,7 @@ class Team(models.Model):
             raise ValidationError("Must be an owner to create a service account")
 
     def ensure_can_edit_service_account(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to edit a service account")
@@ -253,10 +248,7 @@ class Team(models.Model):
             raise ValidationError("Must be an owner to edit a service account")
 
     def ensure_can_delete_service_account(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member to delete a service account")
@@ -264,29 +256,18 @@ class Team(models.Model):
             raise ValidationError("Must be an owner to delete a service account")
 
     def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        if hasattr(user, "service_account"):
-            raise ValidationError("Service accounts are unable to manage members")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
             raise ValidationError("Must be an owner to manage team members")
 
     def ensure_user_can_access(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
+        user = validate_user(user, allow_serviceaccount=True)
         if not self.get_membership_for_user(user):
             raise ValidationError("Must be a member to access team")
 
     def ensure_can_upload_package(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
+        user = validate_user(user, allow_serviceaccount=True)
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member of team to upload package")
@@ -296,12 +277,7 @@ class Team(models.Model):
             )
 
     def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        if hasattr(user, "service_account"):
-            raise ValidationError("Service accounts are unable to manage packages")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
             raise ValidationError("Must be a member of team to manage packages")
@@ -328,12 +304,7 @@ class Team(models.Model):
                 raise ValidationError("Cannot remove last owner from team")
 
     def ensure_user_can_disband(self, user: Optional[UserType]):
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        if hasattr(user, "service_account"):
-            raise ValidationError("Service accounts are unable to disband teams")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
             raise ValidationError("Must be an owner to disband team")
@@ -341,12 +312,7 @@ class Team(models.Model):
             raise ValidationError("Unable to disband teams with packages")
 
     def ensure_user_can_edit_info(self, user: Optional[UserType]):
-        if not user or not user.is_authenticated:
-            raise ValidationError("Must be authenticated")
-        if not user.is_active:
-            raise ValidationError("User has been deactivated")
-        if hasattr(user, "service_account"):
-            raise ValidationError("Service accounts are unable to edit team info")
+        user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
             raise ValidationError("Must be an owner to edit team info")
