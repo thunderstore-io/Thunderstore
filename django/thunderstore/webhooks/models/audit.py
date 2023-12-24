@@ -48,12 +48,15 @@ class AuditWebhook(TimestampMixin):
 
     @staticmethod
     def render_event(event: AuditEvent) -> DiscordPayload:
-        agent = User.objects.prefetch_related("social_auth").get(pk=event.user_id)
-        agent_discord_mention = None
-        for entry in agent.social_auth.all():
-            if entry.provider == "discord":
-                agent_discord_mention = f"<@{entry.uid}>"
-                break
+        agent_username = "System"
+
+        if event.user_id:
+            agent = User.objects.prefetch_related("social_auth").get(pk=event.user_id)
+            agent_username = agent.username
+            for entry in agent.social_auth.all():
+                if entry.provider == "discord":
+                    agent_username = f"<@{entry.uid}>"
+                    break
 
         return DiscordPayload(
             embeds=[
@@ -66,7 +69,7 @@ class AuditWebhook(TimestampMixin):
                     fields=[
                         DiscordEmbedField(
                             name="Triggered by",
-                            value=agent_discord_mention or agent.username,
+                            value=agent_username,
                         )
                     ]
                     + event.fields,

@@ -18,7 +18,7 @@ class AuditEventField(BaseModel):
 
 class AuditEvent(BaseModel):
     timestamp: datetime
-    user_id: int
+    user_id: Optional[int]
     community_id: Optional[int]
     action: AuditAction
     message: Optional[str]

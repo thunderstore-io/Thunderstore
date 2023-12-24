@@ -136,7 +136,7 @@ class PackageListing(TimestampMixin, models.Model):
         self,
         *,
         action: AuditAction,
-        user_id: int,
+        user_id: Optional[int],
         message: Optional[str] = None,
     ) -> AuditEvent:
         return AuditEvent(
@@ -159,15 +159,17 @@ class PackageListing(TimestampMixin, models.Model):
         )
 
     @transaction.atomic
-    def reject(self, agent: Optional[UserType], rejection_reason: str):
-        if self.can_user_manage_approval_status(agent):
+    def reject(
+        self, agent: Optional[UserType], rejection_reason: str, is_system: bool = False
+    ):
+        if is_system or self.can_user_manage_approval_status(agent):
             self.rejection_reason = rejection_reason
             self.review_status = PackageListingReviewStatus.rejected
             self.save()
             fire_audit_event(
                 self.build_audit_event(
                     action=AuditAction.PACKAGE_REJECTED,
-                    user_id=agent.pk,
+                    user_id=agent.pk if agent else None,
                     message=rejection_reason,
                 )
             )
@@ -175,14 +177,14 @@ class PackageListing(TimestampMixin, models.Model):
             raise PermissionError()
 
     @transaction.atomic
-    def approve(self, agent: Optional[UserType]):
-        if self.can_user_manage_approval_status(agent):
+    def approve(self, agent: Optional[UserType], is_system: bool = False):
+        if is_system or self.can_user_manage_approval_status(agent):
             self.review_status = PackageListingReviewStatus.approved
             self.save()
             fire_audit_event(
                 self.build_audit_event(
                     action=AuditAction.PACKAGE_APPROVED,
-                    user_id=agent.pk,
+                    user_id=agent.pk if agent else None,
                 )
             )
         else:
