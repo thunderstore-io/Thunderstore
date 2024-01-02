@@ -312,5 +312,25 @@ def test_dependency_serializer__reads_is_active_from_correct_field(
     assert actual["is_active"] == (package_is_active and version_is_active)
 
 
+@pytest.mark.django_db
+def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_description() -> None:
+    # community_identifier is normally added using annotations, but
+    # it's irrelavant for this test case.
+    dependency = PackageVersionFactory()
+    dependency.community_identifier = "greendale"
+
+    actual = DependencySerializer(dependency).data
+
+    assert actual["description"].startswith("Desc_")
+    assert actual["icon_url"].startswith("http")
+
+    dependency.is_active = False
+    del dependency.is_effectively_active  # Clear cached property
+    actual = DependencySerializer(dependency).data
+
+    assert actual["description"] == "This package has been removed."
+    assert actual["icon_url"] is None
+
+
 def _date_to_z(value: datetime) -> str:
     return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")

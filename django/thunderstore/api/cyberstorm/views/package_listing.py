@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.db.models import (
     BooleanField,
     CharField,
@@ -27,17 +29,31 @@ class DependencySerializer(serializers.Serializer):
     """
     Dependencies of a given PackageVersion, listed in a given Community.
 
-    community_identifier and namespace are not present by default and
-    need to be annotated to the object.
+    community_identifier is not present by default and needs to be
+    annotated to the object.
+
+    Description and icon is not shown to clients if the dependency is
+    deactivated, since the fields may contain the very reason for the
+    deactivation.
     """
 
     community_identifier = serializers.CharField()
-    description = serializers.CharField()
-    icon_url = serializers.CharField(source="icon.url")
+    description = serializers.SerializerMethodField()
+    icon_url = serializers.SerializerMethodField()
     is_active = serializers.BooleanField(source="is_effectively_active")
     name = serializers.CharField()
     namespace = serializers.CharField(source="package.namespace.name")
     version_number = serializers.CharField()
+
+    def get_description(self, obj: PackageVersion) -> str:
+        return (
+            obj.description
+            if obj.is_effectively_active
+            else "This package has been removed."
+        )
+
+    def get_icon_url(self, obj: PackageVersion) -> Optional[str]:
+        return obj.icon.url if obj.is_effectively_active else None
 
 
 class TeamSerializer(serializers.Serializer):
