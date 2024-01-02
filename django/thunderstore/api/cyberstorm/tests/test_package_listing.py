@@ -4,7 +4,10 @@ from typing import Optional
 import pytest
 from rest_framework.test import APIClient
 
-from thunderstore.api.cyberstorm.views.package_listing import get_custom_package_listing
+from thunderstore.api.cyberstorm.views.package_listing import (
+    DependencySerializer,
+    get_custom_package_listing,
+)
 from thunderstore.community.factories import (
     CommunityFactory,
     PackageCategoryFactory,
@@ -278,6 +281,35 @@ def test_package_listing_view__serializes_url_correctly(api_client: APIClient) -
     actual = response.json()
 
     assert actual["website_url"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("package_is_active", "version_is_active"),
+    (
+        (False, False),
+        (True, False),
+        (False, True),
+        (True, True),
+    ),
+)
+def test_dependency_serializer__reads_is_active_from_correct_field(
+    package_is_active: bool,
+    version_is_active: bool,
+) -> None:
+    dependant = PackageVersionFactory()
+    dependency = PackageVersionFactory(is_active=version_is_active)
+    dependency.package.is_active = package_is_active
+    dependency.package.save()
+    dependant.dependencies.set([dependency])
+
+    # community_identifier is normally added using annotations, but
+    # it's irrelavant for this test case.
+    dependency.community_identifier = "greendale"
+
+    actual = DependencySerializer(dependency).data
+
+    assert actual["is_active"] == (package_is_active and version_is_active)
 
 
 def _date_to_z(value: datetime) -> str:

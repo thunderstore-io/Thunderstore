@@ -34,6 +34,7 @@ class DependencySerializer(serializers.Serializer):
     community_identifier = serializers.CharField()
     description = serializers.CharField()
     icon_url = serializers.CharField(source="icon.url")
+    is_active = serializers.BooleanField(source="is_effectively_active")
     name = serializers.CharField()
     namespace = serializers.CharField(source="package.namespace.name")
     version_number = serializers.CharField()
@@ -165,8 +166,7 @@ def get_custom_package_listing(
     )
 
     dependencies = (
-        listing.package.latest.dependencies.active()
-        .listed_in(community_id)
+        listing.package.latest.dependencies.listed_in(community_id)
         .annotate(
             community_identifier=Value(community_id, CharField()),
         )
