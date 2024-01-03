@@ -1,5 +1,5 @@
 from django.conf import settings
-from drf_yasg.utils import swagger_auto_schema, unset
+from drf_yasg.utils import swagger_auto_schema, unset  # type: ignore
 
 
 def conditional_swagger_auto_schema(*args, **kwargs):

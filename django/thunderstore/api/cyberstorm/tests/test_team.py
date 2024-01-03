@@ -232,8 +232,8 @@ def test_team_member_add_api_view__when_adding_a_member__succeeds(
     team: Team,
     user: UserType,
 ):
-    teamMember = TeamMemberFactory(team=team, role="owner")
-    api_client.force_authenticate(teamMember.user)
+    team_member = TeamMemberFactory(team=team, role="owner")
+    api_client.force_authenticate(team_member.user)
 
     response = api_client.post(
         f"/api/cyberstorm/team/{team.name}/member/add/",
@@ -254,8 +254,8 @@ def test_team_member_add_api_view__when_adding_a_member__fails_because_team_does
     team: Team,
     user: UserType,
 ):
-    teamMember = TeamMemberFactory(team=team, role="owner")
-    api_client.force_authenticate(teamMember.user)
+    team_member = TeamMemberFactory(team=team, role="owner")
+    api_client.force_authenticate(team_member.user)
 
     response = api_client.post(
         "/api/cyberstorm/team/FakeTeam/member/add/",
@@ -273,8 +273,8 @@ def test_team_member_add_api_view__when_adding_a_member__fails_because_user_is_a
     team: Team,
     user: UserType,
 ):
-    teamMember = TeamMemberFactory(team=team, role="owner")
-    api_client.force_authenticate(teamMember.user)
+    team_member = TeamMemberFactory(team=team, role="owner")
+    api_client.force_authenticate(team_member.user)
 
     response1 = api_client.post(
         f"/api/cyberstorm/team/{team.name}/member/add/",
