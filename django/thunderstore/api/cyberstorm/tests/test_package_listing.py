@@ -131,6 +131,25 @@ def test_get_custom_package_listing__augments_listing_with_dependant_count() -> 
 
 
 @pytest.mark.django_db
+def test_get_custom_package_listing__augments_listing_with_dependency_count() -> None:
+    listing = PackageListingFactory()
+    dependency_count = 5
+    dependencies = PackageListingFactory.create_batch(
+        dependency_count,
+        community=listing.community,
+    )
+    listing.package.latest.dependencies.set(d.package.latest for d in dependencies)
+
+    actual = get_custom_package_listing(
+        listing.community.identifier,
+        listing.package.namespace.name,
+        listing.package.name.upper(),
+    )
+
+    assert actual.dependency_count == dependency_count
+
+
+@pytest.mark.django_db
 def test_get_custom_package_listing__augments_listing_with_dependencies_from_same_community() -> None:
     dependant = PackageListingFactory()
     dependency1 = PackageListingFactory(community=dependant.community)
@@ -154,6 +173,25 @@ def test_get_custom_package_listing__augments_listing_with_dependencies_from_sam
     assert dependency1.package.latest in actual.dependencies
     assert dependency2.package.latest not in actual.dependencies
     assert dependency3.package.latest in actual.dependencies
+
+
+@pytest.mark.django_db
+def test_get_custom_package_listing__when_many_dependencies__returns_only_four() -> None:
+    listing = PackageListingFactory()
+    dependency_count = 6
+    dependencies = PackageListingFactory.create_batch(
+        dependency_count,
+        community=listing.community,
+    )
+    listing.package.latest.dependencies.set(d.package.latest for d in dependencies)
+
+    actual = get_custom_package_listing(
+        listing.community.identifier,
+        listing.package.namespace.name,
+        listing.package.name.upper(),
+    )
+
+    assert actual.dependencies.count() == 4
 
 
 @pytest.mark.django_db

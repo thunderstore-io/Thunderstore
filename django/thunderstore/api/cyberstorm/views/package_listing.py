@@ -73,6 +73,7 @@ class ResponseSerializer(serializers.Serializer):
     datetime_created = serializers.DateTimeField(source="package.latest.date_created")
     dependant_count = serializers.IntegerField(min_value=0)
     dependencies = DependencySerializer(many=True)
+    dependency_count = serializers.IntegerField(min_value=0)
     description = serializers.CharField(source="package.latest.description")
     download_count = serializers.IntegerField(min_value=0)
     download_url = serializers.CharField(source="package.latest.full_download_url")
@@ -112,6 +113,7 @@ class CustomListing(PackageListing):
 
     dependant_count: int
     dependencies: QuerySet[PackageVersion]
+    dependency_count: int
     download_count: int
     has_changelog: bool
     rating_count: int
@@ -162,8 +164,7 @@ def get_custom_package_listing(
         package__name__iexact=package_name,
     )
 
-    listing.dependant_count = get_package_dependants(listing.package.pk).count()
-    listing.dependencies = (
+    dependencies = (
         listing.package.latest.dependencies.active()
         .listed_in(community_id)
         .annotate(
@@ -172,5 +173,11 @@ def get_custom_package_listing(
         .select_related("package", "package__namespace")
         .order_by("package__namespace__name", "package__name")
     )
+
+    # Using .count() and slicing on dependencies does two database
+    # queries but prevents loading the whole result set into memory.
+    listing.dependencies = dependencies[:4]
+    listing.dependency_count = dependencies.count()
+    listing.dependant_count = get_package_dependants(listing.package.pk).count()
 
     return listing
