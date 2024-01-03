@@ -480,7 +480,7 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
             raise Http404("Package is waiting for approval or has been rejected")
         return listing
 
-    @property
+    @cached_property
     def can_manage(self):
         return any(
             (
@@ -494,7 +494,7 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
     def can_manage_deprecation(self):
         return self.object.package.can_user_manage_deprecation(self.request.user)
 
-    @property
+    @cached_property
     def can_manage_categories(self) -> bool:
         return check_validity(
             lambda: self.object.ensure_update_categories_permission(self.request.user)
@@ -514,12 +514,17 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
     def can_unlist(self):
         return self.request.user.is_superuser
 
+    @cached_property
+    def can_moderate(self) -> bool:
+        return self.object.community.can_user_manage_packages(self.request.user)
+
     def get_review_panel(self):
-        if not self.object.community.can_user_manage_packages(self.request.user):
+        if not self.can_moderate:
             return None
         return {
             "reviewStatus": self.object.review_status,
             "rejectionReason": self.object.rejection_reason,
+            "internalNotes": self.object.notes,
             "packageListingId": self.object.pk,
         }
 
@@ -546,6 +551,8 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
         context["show_package_admin_link"] = can_view_package_admin(
             self.request.user, package_listing.package
         )
+        context["show_review_status"] = self.can_manage
+        context["show_internal_notes"] = self.can_moderate
 
         def format_category(cat: PackageCategory):
             return {"name": cat.name, "slug": cat.slug}

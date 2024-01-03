@@ -49,6 +49,11 @@ class PackageListingUpdateApiView(GenericAPIView):
 
 class PackageListingRejectRequestSerializer(serializers.Serializer):
     rejection_reason = serializers.CharField()
+    internal_notes = serializers.CharField(
+        allow_blank=True,
+        allow_null=True,
+        required=False,
+    )
 
 
 class PackageListingRejectApiView(GenericAPIView):
@@ -70,6 +75,7 @@ class PackageListingRejectApiView(GenericAPIView):
             listing.reject(
                 agent=request.user,
                 rejection_reason=params["rejection_reason"],
+                internal_notes=params.get("internal_notes"),
             )
             get_package_listing_or_404.clear_cache_with_args(
                 namespace=listing.package.namespace.name,
@@ -79,6 +85,14 @@ class PackageListingRejectApiView(GenericAPIView):
             return Response(status=status.HTTP_200_OK)
         except PermissionError:
             raise PermissionDenied()
+
+
+class PackageListingApproveRequestSerializer(serializers.Serializer):
+    internal_notes = serializers.CharField(
+        allow_blank=True,
+        allow_null=True,
+        required=False,
+    )
 
 
 class PackageListingApproveApiView(GenericAPIView):
@@ -91,8 +105,15 @@ class PackageListingApproveApiView(GenericAPIView):
     def post(self, request, *args, **kwargs):
         listing: PackageListing = self.get_object()
 
+        request_serializer = PackageListingApproveRequestSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        params = request_serializer.validated_data
+
         try:
-            listing.approve(agent=request.user)
+            listing.approve(
+                agent=request.user,
+                internal_notes=params.get("internal_notes"),
+            )
             get_package_listing_or_404.clear_cache_with_args(
                 namespace=listing.package.namespace.name,
                 name=listing.package.name,

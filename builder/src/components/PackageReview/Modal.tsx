@@ -54,6 +54,14 @@ const Body: React.FC<BodyProps> = (props) => {
                         style={{ minHeight: "100px" }}
                     />
                 </div>
+                <div className="mt-3">
+                    <h6>Internal notes</h6>
+                    <textarea
+                        {...props.form.control.register("internalNotes")}
+                        className={"code-input"}
+                        style={{ minHeight: "100px" }}
+                    />
+                </div>
             </form>
             {props.form.error && (
                 <div className={"alert alert-danger mt-2 mb-0"}>
@@ -102,10 +110,7 @@ const Footer: React.FC<FooterProps> = (props) => {
 };
 export const PackageReviewModal: React.FC = () => {
     const context = useReviewContext();
-    const form = usePackageReviewForm(
-        context.props.packageListingId,
-        context.props.rejectionReason
-    );
+    const form = usePackageReviewForm(context.props);
     useOnEscape(context.closeModal);
 
     const style = {

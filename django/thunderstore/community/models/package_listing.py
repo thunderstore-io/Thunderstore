@@ -160,31 +160,55 @@ class PackageListing(TimestampMixin, models.Model):
 
     @transaction.atomic
     def reject(
-        self, agent: Optional[UserType], rejection_reason: str, is_system: bool = False
+        self,
+        agent: Optional[UserType],
+        rejection_reason: str,
+        is_system: bool = False,
+        internal_notes: Optional[str] = None,
     ):
         if is_system or self.can_user_manage_approval_status(agent):
             self.rejection_reason = rejection_reason
             self.review_status = PackageListingReviewStatus.rejected
-            self.save()
+            self.notes = internal_notes or self.notes
+            self.save(
+                update_fields=(
+                    "rejection_reason",
+                    "review_status",
+                    "notes",
+                )
+            )
+            message = "\n\n".join(filter(bool, (rejection_reason, internal_notes)))
             fire_audit_event(
                 self.build_audit_event(
                     action=AuditAction.PACKAGE_REJECTED,
                     user_id=agent.pk if agent else None,
-                    message=rejection_reason,
+                    message=message,
                 )
             )
         else:
             raise PermissionError()
 
     @transaction.atomic
-    def approve(self, agent: Optional[UserType], is_system: bool = False):
+    def approve(
+        self,
+        agent: Optional[UserType],
+        is_system: bool = False,
+        internal_notes: Optional[str] = None,
+    ):
         if is_system or self.can_user_manage_approval_status(agent):
             self.review_status = PackageListingReviewStatus.approved
-            self.save()
+            self.notes = internal_notes or self.notes
+            self.save(
+                update_fields=(
+                    "review_status",
+                    "notes",
+                )
+            )
             fire_audit_event(
                 self.build_audit_event(
                     action=AuditAction.PACKAGE_APPROVED,
                     user_id=agent.pk if agent else None,
+                    message=internal_notes,
                 )
             )
         else:
