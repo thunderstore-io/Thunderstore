@@ -73,6 +73,15 @@
     flex-grow: 1;
     flex-basis: 0;
 }
+.main_content_left {
+    order: 0;
+}
+.main_content_middle {
+    order: 1;
+}
+.main_content_right {
+    order: 2;
+}
 .main {
     flex: 1;
     display: flex;
