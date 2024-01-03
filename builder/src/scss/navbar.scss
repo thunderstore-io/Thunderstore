@@ -6,7 +6,11 @@
         padding: 1.5rem 1.75rem;
 
         .grid {
-            column-count: 3;
+            column-count: 4;
+
+            @media (max-width: 1500px) {
+                column-count: 3;
+            }
 
             @media (max-width: 1160px) {
                 column-count: 2;
