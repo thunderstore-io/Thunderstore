@@ -7,6 +7,7 @@ import { Control } from "react-hook-form/dist/types";
 type Status = undefined | "SUBMITTING" | "SUCCESS" | "ERROR";
 export type PackageListingReviewFormValues = {
     rejectionReason: string;
+    internalNotes: string;
 };
 
 export type PackageListingReviewForm = {
@@ -17,13 +18,19 @@ export type PackageListingReviewForm = {
     status: Status;
 };
 
-export const usePackageReviewForm = (
-    packageListingId: string,
-    rejectionReason?: string,
-    onSuccess?: () => void
-): PackageListingReviewForm => {
+export const usePackageReviewForm = (props: {
+    packageListingId: string;
+    rejectionReason?: string;
+    internalNotes?: string;
+    onSuccess?: () => void;
+}): PackageListingReviewForm => {
+    const { packageListingId, rejectionReason, internalNotes } = props;
+
     const { handleSubmit, control } = useForm<PackageListingReviewFormValues>({
-        defaultValues: { rejectionReason },
+        defaultValues: {
+            rejectionReason,
+            internalNotes,
+        },
     });
     const [status, setStatus] = useState<Status>(undefined);
     const [error, setError] = useState<string | undefined>(undefined);
@@ -45,12 +52,15 @@ export const usePackageReviewForm = (
         [setError, setStatus]
     );
 
-    const approve = handleSubmit(async () => {
+    const approve = handleSubmit(async (data) => {
         await handleState(async () => {
             await ExperimentalApi.approvePackageListing({
                 packageListingId: packageListingId,
+                data: {
+                    internal_notes: data.internalNotes,
+                },
             });
-            if (onSuccess) onSuccess();
+            if (props.onSuccess) props.onSuccess();
         });
     });
 
@@ -58,9 +68,12 @@ export const usePackageReviewForm = (
         await handleState(async () => {
             await ExperimentalApi.rejectPackageListing({
                 packageListingId: packageListingId,
-                data: { rejection_reason: data.rejectionReason },
+                data: {
+                    rejection_reason: data.rejectionReason,
+                    internal_notes: data.internalNotes,
+                },
             });
-            if (onSuccess) onSuccess();
+            if (props.onSuccess) props.onSuccess();
         });
     });
 

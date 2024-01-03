@@ -520,6 +520,7 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
         return {
             "reviewStatus": self.object.review_status,
             "rejectionReason": self.object.rejection_reason,
+            "internalNotes": self.object.notes,
             "packageListingId": self.object.pk,
         }
 

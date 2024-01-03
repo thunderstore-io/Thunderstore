@@ -5,6 +5,7 @@ export type ContextProps = {
     reviewStatus: ReviewStatus;
     rejectionReason: string;
     packageListingId: string;
+    internalNotes: string;
 };
 
 export interface IReviewContext {
