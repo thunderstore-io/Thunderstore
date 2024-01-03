@@ -1,20 +1,20 @@
 from django.urls import path
 
 from thunderstore.api.cyberstorm.views import (
-    AddTeamMemberAPIView,
-    CommunityDetailAPIView,
+    CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
-    CommunityPackageListAPIView,
-    NamespacePackageListAPIView,
-    PackageDependantsListAPIView,
-    PackageDetailAPIView,
+    PackageListingAPIView,
+    PackageListingByCommunityListAPIView,
+    PackageListingByDependencyListAPIView,
+    PackageListingByNamespaceListAPIView,
     PackageVersionChangelogAPIView,
+    PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
-    PackageVersionsAPIView,
-    TeamDetailAPIView,
-    TeamMembersAPIView,
-    TeamServiceAccountsAPIView,
+    TeamAPIView,
+    TeamMemberAddAPIView,
+    TeamMemberListAPIView,
+    TeamServiceAccountListAPIView,
 )
 
 cyberstorm_urls = [
@@ -25,8 +25,8 @@ cyberstorm_urls = [
     ),
     path(
         "community/<str:community_id>/",
-        CommunityDetailAPIView.as_view(),
-        name="cyberstorm.community.detail",
+        CommunityAPIView.as_view(),
+        name="cyberstorm.community",
     ),
     path(
         "community/<str:community_id>/filters/",
@@ -34,71 +34,68 @@ cyberstorm_urls = [
         name="cyberstorm.community.filters",
     ),
     path(
-        "package/<str:community_id>/",
-        CommunityPackageListAPIView.as_view(),
-        name="cyberstorm.package.community",
+        "listing/<str:community_id>/",
+        PackageListingByCommunityListAPIView.as_view(),
+        name="cyberstorm.listing.by-community-list",
     ),
     path(
-        "package/<str:community_id>/<str:namespace_id>/",
-        NamespacePackageListAPIView.as_view(),
-        name="cyberstorm.package.community.namespace",
+        "listing/<str:community_id>/<str:namespace_id>/",
+        PackageListingByNamespaceListAPIView.as_view(),
+        name="cyberstorm.listing.by-namespace-list",
     ),
     path(
-        "package/<str:community_id>/<str:namespace_id>/<str:package_name>/",
-        PackageDetailAPIView.as_view(),
-        name="cyberstorm.package.community.namespace.package-details",
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/",
+        PackageListingAPIView.as_view(),
+        name="cyberstorm.listing",
     ),
     path(
-        "package/<str:community_id>/<str:namespace_id>/<str:package_name>/dependants/",
-        PackageDependantsListAPIView.as_view(),
-        name="cyberstorm.package.community.namespace.package-dependants",
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/dependants/",
+        PackageListingByDependencyListAPIView.as_view(),
+        name="cyberstorm.listing.by-dependency-list",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/latest/changelog/",
+        PackageVersionChangelogAPIView.as_view(),
+        name="cyberstorm.package.latest.changelog",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/latest/readme/",
+        PackageVersionReadmeAPIView.as_view(),
+        name="cyberstorm.package.latest.readme",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/changelog/",
+        PackageVersionChangelogAPIView.as_view(),
+        name="cyberstorm.package.version.changelog",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/readme/",
+        PackageVersionReadmeAPIView.as_view(),
+        name="cyberstorm.package.version.readme",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/versions/",
+        PackageVersionListAPIView.as_view(),
+        name="cyberstorm.package.versions",
     ),
     path(
         "team/<str:team_id>/",
-        TeamDetailAPIView.as_view(),
-        name="cyberstorm.team.detail",
+        TeamAPIView.as_view(),
+        name="cyberstorm.team",
     ),
     path(
-        "team/<str:team_id>/members/",
-        TeamMembersAPIView.as_view(),
-        name="cyberstorm.team.members",
+        "team/<str:team_id>/member/",
+        TeamMemberListAPIView.as_view(),
+        name="cyberstorm.team.member.list",
     ),
     path(
-        "team/<str:team_name>/members/add/",
-        AddTeamMemberAPIView.as_view(),
-        name="cyberstorm.team.members.add",
+        "team/<str:team_name>/member/add/",
+        TeamMemberAddAPIView.as_view(),
+        name="cyberstorm.team.member.add",
     ),
     path(
-        "team/<str:team_id>/service-accounts/",
-        TeamServiceAccountsAPIView.as_view(),
-        name="cyberstorm.team.service-accounts",
-    ),
-    # TODO: rethink URL prefixes. Now "package" is in use for community
-    # scoped things, so have to use something else for actually package
-    # (version) scoped things.
-    path(
-        "changelog/<str:namespace_id>/<str:package_name>/",
-        PackageVersionChangelogAPIView.as_view(),
-        name="cyberstorm.package-version.changelog-latest",
-    ),
-    path(
-        "changelog/<str:namespace_id>/<str:package_name>/<str:version_number>/",
-        PackageVersionChangelogAPIView.as_view(),
-        name="cyberstorm.package-version.changelog",
-    ),
-    path(
-        "readme/<str:namespace_id>/<str:package_name>/",
-        PackageVersionReadmeAPIView.as_view(),
-        name="cyberstorm.package-version.readme-latest",
-    ),
-    path(
-        "readme/<str:namespace_id>/<str:package_name>/<str:version_number>/",
-        PackageVersionReadmeAPIView.as_view(),
-        name="cyberstorm.package-version.readme",
-    ),
-    path(
-        "versions/<str:namespace_id>/<str:package_name>/",
-        PackageVersionsAPIView.as_view(),
-        name="cyberstorm.package.versions",
+        "team/<str:team_id>/service-account/",
+        TeamServiceAccountListAPIView.as_view(),
+        name="cyberstorm.team.service-account",
     ),
 ]

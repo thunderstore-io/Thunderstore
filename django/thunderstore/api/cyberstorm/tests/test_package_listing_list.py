@@ -3,7 +3,9 @@ from unittest.mock import patch
 import pytest
 from rest_framework.test import APIClient, APIRequestFactory
 
-from thunderstore.api.cyberstorm.views.packages import BasePackageListAPIView
+from thunderstore.api.cyberstorm.views.package_listing_list import (
+    BasePackageListAPIView,
+)
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models import (
@@ -25,7 +27,7 @@ from thunderstore.repository.models import Team
 
 mock_base_package_list_api_view = patch.multiple(
     BasePackageListAPIView,
-    viewname="api:cyberstorm:cyberstorm.package.community",
+    viewname="api:cyberstorm:cyberstorm.listing.by-community-list",
 )
 
 
@@ -521,20 +523,20 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
     )
 
 
-#############################
-# CommunityPackageListAPIView
-#############################
+######################################
+# PackageListingByCommunityListAPIView
+######################################
 
 
 @pytest.mark.django_db
-def test_community_view__returns_only_packages_listed_in_community(
+def test_listing_by_community_view__returns_only_packages_listed_in_community(
     api_client: APIClient,
 ) -> None:
     expected = PackageListingFactory()
     PackageListingFactory()
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{expected.community.identifier}/",
+        f"/api/cyberstorm/listing/{expected.community.identifier}/",
     )
     result = response.json()
 
@@ -543,14 +545,14 @@ def test_community_view__returns_only_packages_listed_in_community(
 
 
 @pytest.mark.django_db
-def test_community_view__when_package_listed_in_multiple_communities__returns_only_one(
+def test_listing_by_community_view__when_package_listed_in_multiple_communities__returns_only_one(
     api_client: APIClient,
 ) -> None:
     pl1 = PackageListingFactory()
     pl2 = PackageListingFactory(package_=pl1.package)
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{pl1.community.identifier}/",
+        f"/api/cyberstorm/listing/{pl1.community.identifier}/",
     )
     result = response.json()
 
@@ -558,7 +560,7 @@ def test_community_view__when_package_listed_in_multiple_communities__returns_on
     assert result["results"][0]["community_identifier"] == pl1.community.identifier
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{pl2.community.identifier}/",
+        f"/api/cyberstorm/listing/{pl2.community.identifier}/",
     )
     result = response.json()
 
@@ -567,7 +569,7 @@ def test_community_view__when_package_listed_in_multiple_communities__returns_on
 
 
 @pytest.mark.django_db
-def test_community_view__when_package_listed_in_multiple_communities__returns_correct_community_info(
+def test_listing_by_community_view__when_package_listed_in_multiple_communities__returns_correct_community_info(
     api_client: APIClient,
 ) -> None:
     com1pack1 = PackageListingFactory()
@@ -579,7 +581,7 @@ def test_community_view__when_package_listed_in_multiple_communities__returns_co
     )
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{com1pack2.community.identifier}/",
+        f"/api/cyberstorm/listing/{com1pack2.community.identifier}/",
     )
     result = response.json()
 
@@ -593,7 +595,7 @@ def test_community_view__when_package_listed_in_multiple_communities__returns_co
     )
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{com2pack2.community.identifier}/",
+        f"/api/cyberstorm/listing/{com2pack2.community.identifier}/",
     )
     result = response.json()
 
@@ -608,7 +610,7 @@ def test_community_view__when_package_listed_in_multiple_communities__returns_co
 
 
 @pytest.mark.django_db
-def test_community_view__does_not_return_rejected_packages(
+def test_listing_by_community_view__does_not_return_rejected_packages(
     api_client: APIClient,
     community: Community,
 ) -> None:
@@ -626,7 +628,7 @@ def test_community_view__does_not_return_rejected_packages(
     )
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{community.identifier}/?ordering=newest",
+        f"/api/cyberstorm/listing/{community.identifier}/?ordering=newest",
     )
     result = response.json()
 
@@ -636,7 +638,7 @@ def test_community_view__does_not_return_rejected_packages(
 
 
 @pytest.mark.django_db
-def test_community_view__when_community_requires_review__returns_only_approved_packages(
+def test_listing_by_community_view__when_community_requires_review__returns_only_approved_packages(
     api_client: APIClient,
 ) -> None:
     community = CommunityFactory(require_package_listing_approval=True)
@@ -654,7 +656,7 @@ def test_community_view__when_community_requires_review__returns_only_approved_p
     )
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{community.identifier}/?ordering=newest",
+        f"/api/cyberstorm/listing/{community.identifier}/?ordering=newest",
     )
     result = response.json()
 
@@ -662,13 +664,13 @@ def test_community_view__when_community_requires_review__returns_only_approved_p
     assert result["results"][0]["name"] == approved.package.name
 
 
-#############################
-# NamespacePackageListAPIView
-#############################
+######################################
+# PackageListingByNamespaceListAPIView
+######################################
 
 
 @pytest.mark.django_db
-def test_namespace_view__returns_only_packages_listed_in_community_belonging_to_namespace(
+def test_listing_by_namespace_view__returns_only_packages_listed_in_community_belonging_to_namespace(
     api_client: APIClient,
     community: Community,
     team: Team,
@@ -682,7 +684,7 @@ def test_namespace_view__returns_only_packages_listed_in_community_belonging_to_
     PackageListingFactory(package_kwargs={"namespace": namespace})
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{community.identifier}/{namespace.name}/",
+        f"/api/cyberstorm/listing/{community.identifier}/{namespace.name}/",
     )
     result = response.json()
 
@@ -696,7 +698,7 @@ def test_namespace_view__returns_only_packages_listed_in_community_belonging_to_
 
 
 @pytest.mark.django_db
-def test_dependants_view__returns_only_dependants_of_requested_package(
+def test_listing_by_dependency_view__returns_only_dependants_of_requested_package(
     api_client: APIClient,
     community: Community,
 ) -> None:
@@ -726,7 +728,7 @@ def test_dependants_view__returns_only_dependants_of_requested_package(
     other_package.package.latest.dependencies.set([other_dependency.package.latest.id])
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{community.identifier}/{target_ns.name}/{package}/dependants/",
+        f"/api/cyberstorm/listing/{community.identifier}/{target_ns.name}/{package}/dependants/",
     )
     result = response.json()
 
@@ -736,7 +738,7 @@ def test_dependants_view__returns_only_dependants_of_requested_package(
 
 
 @pytest.mark.django_db
-def test_dependants_view__returns_only_packages_listed_in_community(
+def test_listing_by_dependency_view__returns_only_packages_listed_in_community(
     api_client: APIClient,
     community: Community,
 ) -> None:
@@ -748,7 +750,7 @@ def test_dependants_view__returns_only_packages_listed_in_community(
     other_community_listing.package.latest.dependencies.set([dependency_id])
 
     response = api_client.get(
-        f"/api/cyberstorm/package/{community.identifier}/{dependency_listing.package.namespace.name}/{dependency_listing.package.name}/dependants/",
+        f"/api/cyberstorm/listing/{community.identifier}/{dependency_listing.package.namespace.name}/{dependency_listing.package.name}/dependants/",
     )
     result = response.json()
 

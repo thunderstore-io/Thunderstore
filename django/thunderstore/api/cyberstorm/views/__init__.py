@@ -1,34 +1,34 @@
-from .community_detail import CommunityDetailAPIView
+from .community import CommunityAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
 from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
-from .package_detail import PackageDetailAPIView
-from .package_versions import PackageVersionsAPIView
-from .packages import (
-    CommunityPackageListAPIView,
-    NamespacePackageListAPIView,
-    PackageDependantsListAPIView,
+from .package_listing import PackageListingAPIView
+from .package_listing_list import (
+    PackageListingByCommunityListAPIView,
+    PackageListingByDependencyListAPIView,
+    PackageListingByNamespaceListAPIView,
 )
+from .package_version_list import PackageVersionListAPIView
 from .team import (
-    AddTeamMemberAPIView,
-    TeamDetailAPIView,
-    TeamMembersAPIView,
-    TeamServiceAccountsAPIView,
+    TeamAPIView,
+    TeamMemberAddAPIView,
+    TeamMemberListAPIView,
+    TeamServiceAccountListAPIView,
 )
 
 __all__ = [
-    "CommunityDetailAPIView",
+    "CommunityAPIView",
     "CommunityFiltersAPIView",
     "CommunityListAPIView",
-    "CommunityPackageListAPIView",
-    "NamespacePackageListAPIView",
-    "PackageDependantsListAPIView",
-    "PackageDetailAPIView",
+    "PackageListingAPIView",
+    "PackageListingByCommunityListAPIView",
+    "PackageListingByDependencyListAPIView",
+    "PackageListingByNamespaceListAPIView",
     "PackageVersionChangelogAPIView",
+    "PackageVersionListAPIView",
     "PackageVersionReadmeAPIView",
-    "PackageVersionsAPIView",
-    "TeamDetailAPIView",
-    "AddTeamMemberAPIView",
-    "TeamMembersAPIView",
-    "TeamServiceAccountsAPIView",
+    "TeamAPIView",
+    "TeamMemberAddAPIView",
+    "TeamMemberListAPIView",
+    "TeamServiceAccountListAPIView",
 ]

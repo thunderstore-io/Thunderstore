@@ -13,7 +13,7 @@ class CyberstormPackageVersionSerializer(serializers.Serializer):
     install_url = serializers.CharField()
 
 
-class PackageVersionsAPIView(CyberstormAutoSchemaMixin, ListAPIView):
+class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     """
     Return a list of available versions of the package.
     """

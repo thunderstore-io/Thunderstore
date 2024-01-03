@@ -5,7 +5,7 @@ from thunderstore.api.utils import conditional_swagger_auto_schema
 from thunderstore.community.models import Community
 
 
-class CommunityDetailAPIView(RetrieveAPIView):
+class CommunityAPIView(RetrieveAPIView):
     lookup_url_kwarg = "community_id"
     lookup_field = "identifier"
     permission_classes = []
