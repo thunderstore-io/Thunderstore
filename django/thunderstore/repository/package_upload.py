@@ -16,6 +16,10 @@ from thunderstore.repository.validation.categories import clean_community_catego
 from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.markdown import validate_markdown
+from thunderstore.repository.validation.zip import (
+    check_relative_paths,
+    check_zero_offset,
+)
 
 MAX_PACKAGE_SIZE = 1024 * 1024 * settings.REPOSITORY_MAX_PACKAGE_SIZE_MB
 MIN_PACKAGE_SIZE = 1  # Honestly impossible, but need to set some value
@@ -122,6 +126,14 @@ class PackageUploadForm(forms.ModelForm):
 
                 if unzip.testzip():
                     raise ValidationError("Corrupted zip file")
+
+                if check_relative_paths(unzip.infolist()):
+                    raise ValidationError("Relative paths inside a zip are not allowed")
+
+                if not check_zero_offset(unzip.infolist()):
+                    raise ValidationError(
+                        "The zip includes bogus data at the beginning of the file."
+                    )
 
                 try:
                     manifest = unzip.read("manifest.json")
