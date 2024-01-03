@@ -166,7 +166,8 @@
 
         <div class="main">
             <div class="main_content_left">{% block main_content_left %}{% dynamic_html "main_content_left" %}{% endblock %}</div>
-            <div class="container pt-2">
+            <div class="main_content_right">{% block main_content_right %}{% dynamic_html "main_content_right" %}{% endblock %}</div>
+            <div class="main_content_middle container pt-2">
                 {% for message in messages %}
                     <div class="alert mt-3 alert-{{ message.tags }}" role="alert"><p class="mb-0">{{ message }}</p></div>
                 {% endfor %}
@@ -184,7 +185,6 @@
                     {% dynamic_html "content_end" %}
                 {% endblock %}
             </div>
-            <div class="main_content_right">{% block main_content_right %}{% dynamic_html "main_content_right" %}{% endblock %}</div>
         </div>
         <div class="footer">
             <div class="footer_top">
