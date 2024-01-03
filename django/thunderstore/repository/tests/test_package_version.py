@@ -5,7 +5,7 @@ from django.db import IntegrityError
 
 from thunderstore.community.factories import PackageListingFactory
 from thunderstore.community.models.package_listing import PackageListing
-from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_formats import PackageFormats
 
@@ -109,3 +109,23 @@ def test_package_version_chunked_enumerate() -> None:
         package_ids.remove(entry.pk)
 
     assert len(package_ids) == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("package_is_active", "version_is_active"),
+    (
+        (False, False),
+        (True, False),
+        (False, True),
+        (True, True),
+    ),
+)
+def test_package_version_is_effectively_active(
+    package_is_active: bool,
+    version_is_active: bool,
+) -> None:
+    package = PackageFactory(is_active=package_is_active)
+    version = PackageVersionFactory(package=package, is_active=version_is_active)
+
+    assert version.is_effectively_active == (package_is_active and version_is_active)

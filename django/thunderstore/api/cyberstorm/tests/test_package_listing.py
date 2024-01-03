@@ -4,7 +4,10 @@ from typing import Optional
 import pytest
 from rest_framework.test import APIClient
 
-from thunderstore.api.cyberstorm.views.package_listing import get_custom_package_listing
+from thunderstore.api.cyberstorm.views.package_listing import (
+    DependencySerializer,
+    get_custom_package_listing,
+)
 from thunderstore.community.factories import (
     CommunityFactory,
     PackageCategoryFactory,
@@ -278,6 +281,55 @@ def test_package_listing_view__serializes_url_correctly(api_client: APIClient) -
     actual = response.json()
 
     assert actual["website_url"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("package_is_active", "version_is_active"),
+    (
+        (False, False),
+        (True, False),
+        (False, True),
+        (True, True),
+    ),
+)
+def test_dependency_serializer__reads_is_active_from_correct_field(
+    package_is_active: bool,
+    version_is_active: bool,
+) -> None:
+    dependant = PackageVersionFactory()
+    dependency = PackageVersionFactory(is_active=version_is_active)
+    dependency.package.is_active = package_is_active
+    dependency.package.save()
+    dependant.dependencies.set([dependency])
+
+    # community_identifier is normally added using annotations, but
+    # it's irrelavant for this test case.
+    dependency.community_identifier = "greendale"
+
+    actual = DependencySerializer(dependency).data
+
+    assert actual["is_active"] == (package_is_active and version_is_active)
+
+
+@pytest.mark.django_db
+def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_description() -> None:
+    # community_identifier is normally added using annotations, but
+    # it's irrelavant for this test case.
+    dependency = PackageVersionFactory()
+    dependency.community_identifier = "greendale"
+
+    actual = DependencySerializer(dependency).data
+
+    assert actual["description"].startswith("Desc_")
+    assert actual["icon_url"].startswith("http")
+
+    dependency.is_active = False
+    del dependency.is_effectively_active  # Clear cached property
+    actual = DependencySerializer(dependency).data
+
+    assert actual["description"] == "This package has been removed."
+    assert actual["icon_url"] is None
 
 
 def _date_to_z(value: datetime) -> str:

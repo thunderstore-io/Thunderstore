@@ -193,6 +193,10 @@ class PackageVersion(models.Model):
         return self.package.is_deprecated
 
     @cached_property
+    def is_effectively_active(self):
+        return self.is_active and self.package.is_active
+
+    @cached_property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"
 
