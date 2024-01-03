@@ -53,7 +53,7 @@
                             <div class="section">
                                 <h6 class="title">Popular communities</h6>
                                 <div class="grid" role="list">
-                                    {% for community in selectable_communities|slice:":6"|dictsort:"name" %}
+                                    {% for community in selectable_communities|slice:":8"|dictsort:"name" %}
                                         <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
                                     {% endfor %}
                                 </div>
@@ -62,7 +62,7 @@
                                 <div class="section">
                                     <h6 class="title">Other communities</h6>
                                     <div class="grid" role="list">
-                                        {% for community in selectable_communities|slice:"6:"|dictsort:"name" %}
+                                        {% for community in selectable_communities|slice:"8:"|dictsort:"name" %}
                                             <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
                                         {% endfor %}
                                     </div>
