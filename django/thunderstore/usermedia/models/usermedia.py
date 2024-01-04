@@ -41,7 +41,7 @@ class UserMedia(TimestampMixin, models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="usermedia",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
