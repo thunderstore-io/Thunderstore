@@ -127,6 +127,9 @@ class UserMedia(TimestampMixin, models.Model):
     def can_user_write(self, user: Optional[UserType]):
         return user == self.owner
 
+    def __str__(self):
+        return self.filename
+
     class Meta:
         verbose_name = "user media"
         verbose_name_plural = "user media"
