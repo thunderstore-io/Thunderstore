@@ -47,7 +47,7 @@ class UserMedia(TimestampMixin, models.Model):
     )
     filename = models.CharField(max_length=1024)
     key = models.CharField(max_length=2048)
-    size = models.PositiveIntegerField()
+    size = models.PositiveBigIntegerField()
     uuid = models.UUIDField(default=ulid2.generate_ulid_as_uuid, primary_key=True)
 
     # Prefix is the S3 storage bucket location prefix, only ever used for
