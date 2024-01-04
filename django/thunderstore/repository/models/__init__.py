@@ -1,4 +1,3 @@
-from .async_submission import *
 from .cache import *
 from .discord_bot import *
 from .namespace import *
@@ -6,5 +5,6 @@ from .package import *
 from .package_download import *
 from .package_rating import *
 from .package_version import *
+from .submission import *
 from .team import *
 from .wiki import *
