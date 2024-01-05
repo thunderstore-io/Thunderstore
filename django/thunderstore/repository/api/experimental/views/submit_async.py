@@ -9,7 +9,7 @@ from thunderstore.repository.api.experimental.serializers import (
     PackageSubmissionResult,
 )
 from thunderstore.repository.api.experimental.views.submit import get_usermedia_or_404
-from thunderstore.repository.models.async_submission import AsyncPackageSubmission
+from thunderstore.repository.models.submission import AsyncPackageSubmission
 
 
 class PackageSubmissionStatusSerializer(serializers.Serializer):

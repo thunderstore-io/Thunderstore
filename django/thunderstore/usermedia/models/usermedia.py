@@ -41,13 +41,13 @@ class UserMedia(TimestampMixin, models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="usermedia",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
     filename = models.CharField(max_length=1024)
     key = models.CharField(max_length=2048)
-    size = models.PositiveIntegerField()
+    size = models.PositiveBigIntegerField()
     uuid = models.UUIDField(default=ulid2.generate_ulid_as_uuid, primary_key=True)
 
     # Prefix is the S3 storage bucket location prefix, only ever used for
@@ -126,6 +126,9 @@ class UserMedia(TimestampMixin, models.Model):
 
     def can_user_write(self, user: Optional[UserType]):
         return user == self.owner
+
+    def __str__(self):
+        return self.filename
 
     class Meta:
         verbose_name = "user media"
