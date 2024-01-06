@@ -4,7 +4,7 @@ from thunderstore.community.models import PackageListing
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import PackageWikiFactory, TeamMemberFactory
-from thunderstore.repository.views.mixins import PackageTabsMixin, TabName
+from thunderstore.repository.views.mixins import PackageTabsMixin
 from thunderstore.wiki.factories import WikiPageFactory
 
 
@@ -13,7 +13,7 @@ from thunderstore.wiki.factories import WikiPageFactory
 def test_get_tab_context(
     user: UserType,
     active_package_listing: PackageListing,
-    active_tab: TabName,
+    active_tab: str,
 ) -> None:
     tabs_mixin = PackageTabsMixin()
     context = tabs_mixin.get_tab_context(
