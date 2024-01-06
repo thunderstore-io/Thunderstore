@@ -41,6 +41,9 @@ class PackageTabsMixin:
         tabs: Dict[str, PartialTab] = {
             **{
                 "details": PartialTab(url=listing.get_absolute_url(), title="Details"),
+                "versions": PartialTab(
+                    url=listing.get_versions_url(), title="Versions"
+                ),
                 "wiki": PartialTab(
                     url=listing.get_wiki_url(),
                     title="Wiki",

@@ -1,0 +1,19 @@
+<table class="table mb-0">
+    <tr>
+        <th>Upload date</th>
+        <th>Version number</th>
+        <th>Downloads</th>
+        <th>Actions</th>
+    </tr>
+    {% for version in versions %}
+        <tr>
+            <td>{{ version.date_created|date:"Y-n-j" }}</td>
+            <td>{{ version.version_number }}</td>
+            <td>{{ version.downloads }}</td>
+            <td class="d-flex gap-1">
+                <a href="{{ version.full_download_url }}" type="button" class="btn btn-primary">Download</a>
+                <a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a>
+            </td>
+        </tr>
+    {% endfor %}
+</table>

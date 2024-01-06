@@ -120,6 +120,15 @@ class PackageListing(TimestampMixin, models.Model):
             )
         )
 
+    def get_versions_url(self) -> str:
+        return reverse(
+            **get_community_url_reverse_args(
+                community=self.community,
+                viewname="packages.detail.versions",
+                kwargs={"owner": self.package.owner.name, "name": self.package.name},
+            )
+        )
+
     def get_full_url(self):
         hostname = (
             settings.PRIMARY_HOST
