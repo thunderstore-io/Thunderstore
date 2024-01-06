@@ -1,7 +1,6 @@
 # Custom
 node/
 .vscode/settings.json
-package/
 .env
 **/*.sql
 *.service-account.json

@@ -9,7 +9,7 @@ from thunderstore.community.api.experimental.serializers import (
     PackageListingUpdateResponseSerializer,
 )
 from thunderstore.community.models import PackageListing
-from thunderstore.repository.views.repository import get_package_listing_or_404
+from thunderstore.repository.views.package._utils import get_package_listing_or_404
 
 
 class PackageListingUpdateApiView(GenericAPIView):

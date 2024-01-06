@@ -15,7 +15,7 @@ from thunderstore.repository.models import Package
 from thunderstore.repository.models.wiki import PackageWiki
 from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
 from thunderstore.repository.views.mixins import PackageTabsMixin
-from thunderstore.repository.views.repository import get_package_listing_or_404
+from thunderstore.repository.views.package._utils import get_package_listing_or_404
 from thunderstore.wiki.models import WikiPage
 
 
