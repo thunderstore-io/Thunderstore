@@ -26,6 +26,7 @@ def test_api_v1_package_metrics(
     result = response.json()
     assert result["downloads"] == 200
     assert result["rating_score"] == 1
+    assert result["latest_version"] == active_package.latest.version_number
 
 
 @pytest.mark.django_db

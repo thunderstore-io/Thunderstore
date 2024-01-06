@@ -11,6 +11,7 @@ from thunderstore.repository.models import Package, PackageVersion
 class PackageMetricsSerializer(serializers.Serializer):
     downloads = serializers.IntegerField()
     rating_score = serializers.IntegerField()
+    latest_version = serializers.CharField(source="version_number")
 
 
 # This view is potentialy used by the shields.io project and should be kept
