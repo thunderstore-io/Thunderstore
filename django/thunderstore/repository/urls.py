@@ -13,6 +13,7 @@ from thunderstore.repository.views import (
     PackageListView,
     PackageVersionDetailView,
 )
+from thunderstore.repository.views.package.tabs.changelog import PackageChangelogTabView
 from thunderstore.repository.views.package.tabs.versions import PackageVersionsTabView
 from thunderstore.repository.views.team_settings import (
     SettingsTeamAddMemberView,
@@ -55,6 +56,11 @@ legacy_package_urls = (
             "<str:owner>/<str:name>/versions/",
             PackageVersionsTabView.as_view(),
             name="packages.detail.versions",
+        ),
+        path(
+            "<str:owner>/<str:name>/changelog/",
+            PackageChangelogTabView.as_view(),
+            name="packages.detail.changelog",
         ),
         path(
             "<str:owner>/<str:name>/wiki/",
@@ -114,6 +120,11 @@ package_urls = [
         "p/<str:owner>/<str:name>/versions/",
         PackageVersionsTabView.as_view(),
         name="packages.detail.versions",
+    ),
+    path(
+        "p/<str:owner>/<str:name>/changelog/",
+        PackageChangelogTabView.as_view(),
+        name="packages.detail.changelog",
     ),
     path(
         "p/<str:owner>/<str:name>/wiki/",

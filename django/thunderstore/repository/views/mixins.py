@@ -44,6 +44,11 @@ class PackageTabsMixin:
                 "versions": PartialTab(
                     url=listing.get_versions_url(), title="Versions"
                 ),
+                "changelog": PartialTab(
+                    url=listing.get_changelog_url(),
+                    title="Changelog",
+                    is_disabled=not listing.package.changelog(),
+                ),
                 "wiki": PartialTab(
                     url=listing.get_wiki_url(),
                     title="Wiki",
