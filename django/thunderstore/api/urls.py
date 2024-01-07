@@ -4,6 +4,7 @@ from thunderstore.api.cyberstorm.views import (
     CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
+    EditTeamMemberAPIView,
     PackageDeprecateAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
@@ -133,5 +134,10 @@ cyberstorm_urls = [
         "team/<str:team_name>/members/remove/",
         RemoveTeamMemberAPIView.as_view(),
         name="cyberstorm.team.members.remove",
+    ),
+    path(
+        "team/<str:team_name>/members/edit/",
+        EditTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.edit",
     ),
 ]
