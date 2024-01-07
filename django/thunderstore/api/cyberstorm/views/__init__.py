@@ -12,6 +12,7 @@ from .package_listing_list import (
 from .package_rating import PackageRatingRateAPIView
 from .package_version_list import PackageVersionListAPIView
 from .team import (
+    DisbandTeamAPIView,
     EditTeamAPIView,
     EditTeamMemberAPIView,
     RemoveTeamMemberAPIView,
@@ -44,4 +45,5 @@ __all__ = [
     "RemoveTeamMemberAPIView",
     "EditTeamMemberAPIView",
     "EditTeamAPIView",
+    "DisbandTeamAPIView",
 ]
