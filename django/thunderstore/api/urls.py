@@ -14,6 +14,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionChangelogAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
+    RemoveTeamMemberAPIView,
     TeamAPIView,
     TeamCreateAPIView,
     TeamMemberAddAPIView,
@@ -127,5 +128,10 @@ cyberstorm_urls = [
         "current-user/delete/",
         UserDeleteAPIView.as_view(),
         name="cyberstorm.current-user.delete",
+    ),
+    path(
+        "team/<str:team_name>/members/remove/",
+        RemoveTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.members.remove",
     ),
 ]
