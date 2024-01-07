@@ -104,4 +104,9 @@ cyberstorm_urls = [
         UserDeleteAPIView.as_view(),
         name="cyberstorm.current-user.delete",
     ),
+    path(
+        "current-user/delete/",
+        UserDeleteAPIView.as_view(),
+        name="cyberstorm.current-user.delete",
+    ),
 ]
