@@ -22,6 +22,7 @@ from thunderstore.api.utils import (
 from thunderstore.repository.forms import (
     AddTeamMemberForm,
     CreateTeamForm,
+    DisbandTeamForm,
     DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
@@ -117,6 +118,42 @@ class TeamCreateAPIView(APIView):
         if form.is_valid():
             team = form.save()
             return Response(CyberstormTeamCreateResponseSerialiazer(team).data)
+        else:
+            raise ValidationError(form.errors)
+
+
+class CyberstormDisbandTeamRequestSerialiazer(serializers.Serializer):
+    verification = serializers.CharField()
+
+
+class CyberstormDisbandTeamResponseSerialiazer(serializers.Serializer):
+    name = serializers.CharField()
+
+
+class DisbandTeamAPIView(APIView):
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormDisbandTeamRequestSerialiazer,
+        responses={200: CyberstormDisbandTeamResponseSerialiazer},
+        operation_id="cyberstorm.team.disband",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest, team_name: str):
+        serializer = CyberstormDisbandTeamRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team = get_object_or_404(Team, name__iexact=team_name)
+
+        form = DisbandTeamForm(
+            user=request.user,
+            instance=team,
+            data=serializer.validated_data,
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response(
+                CyberstormDisbandTeamResponseSerialiazer({"name": team_name}).data
+            )
         else:
             raise ValidationError(form.errors)
 
