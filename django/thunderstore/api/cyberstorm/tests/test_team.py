@@ -135,6 +135,93 @@ def test_team_membership_permission__when_fetching_team__is_case_insensitive(
 
 
 @pytest.mark.django_db
+def test_team_members_edit__when_changing_role__succeeds(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    api_client.force_authenticate(user)
+    just_a_member = TeamMemberFactory(team=team, role="owner")
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/members/edit/",
+        json.dumps({"username": just_a_member.user.username, "role": "member"}),
+        content_type="application/json",
+    )
+
+    response_json = response.json()
+    assert response.status_code == 200
+    assert response_json["team_name"] == team.name
+    assert response_json["username"] == just_a_member.user.username
+    assert response_json["role"] == "member"
+    assert TeamMember.objects.get(pk=just_a_member.pk).role == "member"
+
+
+@pytest.mark.django_db
+def test_team_members_edit__when_changing_role__fails_because_user_is_not_in_the_team(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    api_client.force_authenticate(user)
+    another_team = TeamFactory()
+    member_in_another_team = TeamMemberFactory(team=another_team, role="owner")
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/members/edit/",
+        json.dumps(
+            {"username": member_in_another_team.user.username, "role": "member"}
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 404
+    response_json = response.json()
+    assert response_json["detail"] == "Not found."
+
+
+@pytest.mark.django_db
+def test_team_members_edit__when_changing_role__fails_because_team_does_not_exist(
+    api_client: APIClient,
+    user: UserType,
+):
+    api_client.force_authenticate(user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/GhostTeam/members/edit/",
+        json.dumps({"username": user.username, "role": "member"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 404
+    response_json = response.json()
+    assert response_json["detail"] == "Not found."
+
+
+@pytest.mark.django_db
+def test_team_members_edit__when_changing_role__fails_because_user_is_not_authenticated(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    just_a_member = TeamMemberFactory(team=team, role="owner")
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/members/edit/",
+        json.dumps({"username": just_a_member.user.username, "role": "member"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    response_json = response.json()
+    assert response_json["detail"] == "Authentication credentials were not provided."
+    assert TeamMember.objects.get(pk=just_a_member.pk).role == "owner"
+
+
+@pytest.mark.django_db
 def test_team_member_list_api_view__for_member__returns_only_real_users(
     api_client: APIClient,
     team: Team,
