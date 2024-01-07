@@ -57,6 +57,70 @@ def test_team_api_view__for_inactive_team__returns_404(
 
 
 @pytest.mark.django_db
+def test_team_edit__when_editing_donation_link__succeeds(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    api_client.force_authenticate(user)
+
+    new_donation_link = "https://example.com"
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/edit/",
+        json.dumps({"donation_link": new_donation_link}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["donation_link"] == new_donation_link
+    assert Team.objects.get(pk=team.pk).donation_link == new_donation_link
+
+
+@pytest.mark.django_db
+def test_team_edit__when_editing_donation_link__fails_because_user_is_not_authenticated(
+    api_client: APIClient,
+    team: Team,
+):
+    new_donation_link = "https://example.com"
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/edit/",
+        json.dumps({"donation_link": new_donation_link}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    response_json = response.json()
+    assert response_json["detail"] == "Authentication credentials were not provided."
+    assert Team.objects.get(pk=team.pk).donation_link == None
+
+
+@pytest.mark.django_db
+def test_team_edit__when_editing_donation_link__fails_because_serializer_validators_check_fails(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    api_client.force_authenticate(user)
+
+    new_bad_donation_link = "example.com"
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/edit/",
+        json.dumps({"donation_link": new_bad_donation_link}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert "Enter a valid URL." in response_json["donation_link"]
+
+
+@pytest.mark.django_db
 def test_team_membership_permission__for_no_user__returns_403(
     api_client: APIClient,
     team: Team,
