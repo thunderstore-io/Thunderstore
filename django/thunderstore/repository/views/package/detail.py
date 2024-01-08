@@ -1,18 +1,13 @@
-from typing import Optional
-
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
 from django.middleware import csrf
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.generic import DetailView
 
-from thunderstore.community.models import PackageCategory, PackageListing
+from thunderstore.community.models import PackageCategory
 from thunderstore.core.utils import check_validity
-from thunderstore.repository.mixins import CommunityMixin
-from thunderstore.repository.views.mixins import PackageTabsMixin
+from thunderstore.repository.views.mixins import PackageListingDetailView
 from thunderstore.repository.views.package._utils import (
     can_view_listing_admin,
     can_view_package_admin,
@@ -21,19 +16,8 @@ from thunderstore.repository.views.package._utils import (
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
-class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
-    model = PackageListing
-    object: Optional[PackageListing]
-
-    def get_object(self, *args, **kwargs) -> PackageListing:
-        listing = get_package_listing_or_404(
-            namespace=self.kwargs["owner"],
-            name=self.kwargs["name"],
-            community=self.community,
-        )
-        if not listing.can_be_viewed_by_user(self.request.user):
-            raise Http404("Package is waiting for approval or has been rejected")
-        return listing
+class PackageDetailView(PackageListingDetailView):
+    tab_name = "details"
 
     @cached_property
     def can_manage(self):
@@ -129,9 +113,6 @@ class PackageDetailView(CommunityMixin, PackageTabsMixin, DetailView):
             "packageListingId": package_listing.pk,
         }
         context["review_panel_props"] = self.get_review_panel()
-        context.update(
-            **self.get_tab_context(self.request.user, package_listing, "details")
-        )
         return context
 
     def post_deprecate(self):

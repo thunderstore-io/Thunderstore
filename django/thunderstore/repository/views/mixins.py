@@ -1,11 +1,14 @@
 import dataclasses
-from typing import Dict, List, Literal, TypedDict, Union
+from typing import Dict, List, Optional, TypedDict
+
+from django.http import Http404
+from django.views.generic import DetailView
 
 from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
 from thunderstore.plugins.registry import plugin_registry
-
-TabName = Union[Literal["details"], Literal["wiki"], str]
+from thunderstore.repository.mixins import CommunityMixin
+from thunderstore.repository.views.package._utils import get_package_listing_or_404
 
 
 @dataclasses.dataclass
@@ -18,7 +21,7 @@ class PartialTab:
 @dataclasses.dataclass
 class Tab:
     title: str
-    name: TabName
+    name: str
     url: str
     is_disabled: bool
     is_active: bool
@@ -33,9 +36,9 @@ class PackageTabsMixin:
         self,
         user: UserType,
         listing: PackageListing,
-        active_tab: TabName,
+        active_tab: Optional[str],
     ) -> TabContext:
-        tabs: Dict[TabName, PartialTab] = {
+        tabs: Dict[str, PartialTab] = {
             **{
                 "details": PartialTab(url=listing.get_absolute_url(), title="Details"),
                 "wiki": PartialTab(
@@ -61,3 +64,34 @@ class PackageTabsMixin:
                 for k, v in tabs.items()
             ],
         }
+
+
+class PackageListingDetailView(CommunityMixin, PackageTabsMixin, DetailView):
+    model = PackageListing
+    object: Optional[PackageListing] = None
+    tab_name: Optional[str] = None
+
+    def get_tab_name(self) -> Optional[str]:
+        return self.tab_name
+
+    def get_object(self, queryset=None) -> PackageListing:
+        if not self.object:
+            listing = get_package_listing_or_404(
+                namespace=self.kwargs["owner"],
+                name=self.kwargs["name"],
+                community=self.community,
+            )
+            if not listing.can_be_viewed_by_user(self.request.user):
+                raise Http404("Package is waiting for approval or has been rejected")
+            self.object = listing
+        return self.object
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        package_listing = context["object"]
+        context.update(
+            **self.get_tab_context(
+                self.request.user, package_listing, self.get_tab_name()
+            )
+        )
+        return context

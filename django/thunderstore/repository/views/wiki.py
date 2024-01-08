@@ -1,45 +1,28 @@
 from typing import Optional
 
-from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound
 from django.middleware import csrf
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.generic import DetailView
 
-from thunderstore.community.models import PackageListing
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
-from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package
 from thunderstore.repository.models.wiki import PackageWiki
 from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
-from thunderstore.repository.views.mixins import PackageTabsMixin
-from thunderstore.repository.views.package._utils import get_package_listing_or_404
+from thunderstore.repository.views.mixins import PackageListingDetailView
 from thunderstore.wiki.models import WikiPage
 
 
-class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
-    model = PackageListing
-    object: Optional[PackageListing] = None
+class PackageWikiBaseView(PackageListingDetailView):
     wiki: Optional[PackageWiki] = None
+    tab_name = "wiki"
 
     def get_wiki(self, package: Package) -> Optional[PackageWiki]:
         if not self.wiki:
             self.wiki = PackageWiki.get_for_package(package, False)
         return self.wiki
-
-    def get_object(self, queryset=None) -> PackageListing:
-        if not self.object:
-            listing = get_package_listing_or_404(
-                namespace=self.kwargs["owner"],
-                name=self.kwargs["name"],
-                community=self.community,
-            )
-            if not listing.can_be_viewed_by_user(self.request.user):
-                raise Http404("Package is waiting for approval or has been rejected")
-            self.object = listing
-        return self.object
 
     def get_create_url(self) -> str:
         return reverse_lazy(
@@ -55,15 +38,11 @@ class PackageWikiBaseView(CommunityMixin, PackageTabsMixin, DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        package_listing = context["object"]
-        context["wiki"] = self.get_wiki(package_listing.package)
+        context["wiki"] = self.get_wiki(self.object.package)
         context["can_manage_wiki"] = self.object.package.can_user_manage_wiki(
             self.request.user
         )
         context["create_url"] = self.get_create_url()
-        context.update(
-            **self.get_tab_context(self.request.user, package_listing, "wiki")
-        )
         return context
 
 
