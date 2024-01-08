@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% load cache_until %}
+{% load community_url %}
+
+{% block title %}{{ object.package.display_name }} version history{% endblock %}
+{% block description %}Version history of {{ object.package.display_name }}{% endblock %}
+
+{% block opengraph %}
+    <meta property="og:title" content="{{ object.package.display_name }} version history" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:image" content="{% thumbnail object.package.icon 256x256 %}" />
+    <meta property="og:image:width" content="256" />
+    <meta property="og:image:height" content="256" />
+
+    <meta property="og:description" content="Version history of {{ object.package.display_name }}" />
+    <meta property="og:site_name" content="{{ site_name }}" />
+{% endblock %}
+
+{% block content %}
+{% cache_until "any_package_updated" "mod-detail-version-history" 300 object.package.pk community_identifier %}
+
+<nav class="mt-3" aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% community_url "packages.list" %}">Packages</a></li>
+        <li class="breadcrumb-item"><a href="{% community_url "packages.list_by_owner" owner=object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.package.display_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Versions</li>
+    </ol>
+</nav>
+
+<div class="card bg-light mt-2">
+    {% include "community/includes/package_tabs.html" with tabs=tabs %}
+    {% include "community/includes/package_header.html" with object=object %}
+</div>
+
+<div class="card bg-light mt-2 mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">Available versions</h2>
+    </div>
+    <div class="card-body pb-1">
+        <p>
+            Please note that the install buttons only work if you have compatible client
+            software installed, such as the
+            <a href="https://www.overwolf.com/app/Thunderstore-Thunderstore_Mod_Manager">Thunderstore Mod Manager</a>.
+            Otherwise use the zip download links instead.
+        </p>
+        {% include "community/includes/version_table.html" with versions=object.package.available_versions %}
+    </div>
+</div>
+
+{% endcache %}
+{% endblock %}
