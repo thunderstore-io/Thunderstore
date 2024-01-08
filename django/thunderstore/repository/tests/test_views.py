@@ -26,12 +26,8 @@ from ...frontend.url_reverse import get_community_url_reverse_args
 from ..factories import PackageFactory, PackageVersionFactory, TeamFactory
 from ..models import Package, Team, TeamMember, TeamMemberRole
 from ..package_upload import PackageUploadForm
-from ..views.repository import (
-    PackageListByOwnerView,
-    PackageVersionDetailView,
-    can_view_listing_admin,
-    can_view_package_admin,
-)
+from ..views import PackageListByOwnerView, PackageVersionDetailView
+from ..views.package._utils import can_view_listing_admin, can_view_package_admin
 
 
 @pytest.mark.django_db
