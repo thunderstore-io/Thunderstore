@@ -15,6 +15,7 @@ from thunderstore.frontend.views import (
     robots_txt_view,
 )
 from thunderstore.legal.urls import legal_urls
+from thunderstore.moderation.urls import moderation_urls
 from thunderstore.repository.urls import legacy_package_urls
 from thunderstore.repository.views import PackageListView
 
@@ -37,6 +38,7 @@ urlpatterns = [
     path("package/", include((legacy_package_urls, "old_urls"), namespace="old_urls")),
     path("c/", include((community_urls, "communities"), namespace="communities")),
     path("settings/", include(settings_urls)),
+    path("moderation/", include(moderation_urls)),
     path("favicon.ico", FaviconView.as_view()),
     path("djangoadmin/", admin.site.urls),
     path("healthcheck/", healthcheck_view, name="healthcheck"),
