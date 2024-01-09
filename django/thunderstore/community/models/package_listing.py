@@ -68,6 +68,9 @@ class PackageListing(TimestampMixin, models.Model):
         related_name="packages",
         blank=True,
     )
+    is_review_requested = models.BooleanField(
+        default=False,
+    )
     review_status = models.CharField(
         default=PackageListingReviewStatus.unreviewed,
         choices=PackageListingReviewStatus.as_choices(),
