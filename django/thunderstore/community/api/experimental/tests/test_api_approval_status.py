@@ -31,6 +31,8 @@ def test_api_experimental_package_listing_approve_success(
     active_package_listing: PackageListing,
     moderator: UserType,
 ):
+    active_package_listing.request_review()
+    assert active_package_listing.is_review_requested is True
     notes = "Internal note"
     api_client.force_authenticate(user=moderator)
     response = api_client.post(
@@ -43,6 +45,7 @@ def test_api_experimental_package_listing_approve_success(
     active_package_listing.refresh_from_db()
     assert active_package_listing.review_status == PackageListingReviewStatus.approved
     assert active_package_listing.notes == notes
+    assert active_package_listing.is_review_requested is False
 
 
 @pytest.mark.django_db
@@ -74,6 +77,8 @@ def test_api_experimental_package_listing_reject_success(
     active_package_listing: PackageListing,
     moderator: UserType,
 ):
+    active_package_listing.request_review()
+    assert active_package_listing.is_review_requested is True
     reason = "Bad upload"
     notes = "Internal note"
     api_client.force_authenticate(user=moderator)
@@ -93,6 +98,7 @@ def test_api_experimental_package_listing_reject_success(
     assert active_package_listing.review_status == PackageListingReviewStatus.rejected
     assert active_package_listing.rejection_reason == reason
     assert active_package_listing.notes == notes
+    assert active_package_listing.is_review_requested is False
 
 
 @pytest.mark.django_db

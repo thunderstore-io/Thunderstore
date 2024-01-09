@@ -180,6 +180,16 @@ class PackageListing(TimestampMixin, models.Model):
         )
 
     @transaction.atomic
+    def request_review(self):
+        self.is_review_requested = True
+        self.save(update_fields=("is_review_requested",))
+
+    @transaction.atomic
+    def clear_review_request(self):
+        self.is_review_requested = False
+        self.save(update_fields=("is_review_requested",))
+
+    @transaction.atomic
     def reject(
         self,
         agent: Optional[UserType],
