@@ -77,6 +77,7 @@ class PackageListingRejectApiView(GenericAPIView):
                 rejection_reason=params["rejection_reason"],
                 internal_notes=params.get("internal_notes"),
             )
+            listing.clear_review_request()
             get_package_listing_or_404.clear_cache_with_args(
                 namespace=listing.package.namespace.name,
                 name=listing.package.name,
@@ -114,6 +115,7 @@ class PackageListingApproveApiView(GenericAPIView):
                 agent=request.user,
                 internal_notes=params.get("internal_notes"),
             )
+            listing.clear_review_request()
             get_package_listing_or_404.clear_cache_with_args(
                 namespace=listing.package.namespace.name,
                 name=listing.package.name,

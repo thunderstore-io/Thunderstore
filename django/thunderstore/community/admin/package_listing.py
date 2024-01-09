@@ -40,12 +40,14 @@ class PackageListingAdmin(admin.ModelAdmin):
     raw_id_fields = ("package", "community")
     list_filter = (
         "has_nsfw_content",
-        "community",
+        "is_review_requested",
         "review_status",
+        "community",
     )
     list_display = (
         "id",
         "package",
+        "is_review_requested",
         "has_nsfw_content",
         "datetime_created",
         "datetime_updated",

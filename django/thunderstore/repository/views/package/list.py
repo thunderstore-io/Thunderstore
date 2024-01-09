@@ -1,6 +1,7 @@
 from typing import List, Optional, Set, Tuple
 
-from django.db.models import Count, OuterRef, Q, Subquery, Sum
+from django.core.exceptions import PermissionDenied
+from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -20,6 +21,7 @@ from thunderstore.community.models import (
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Team, get_package_dependants
+from thunderstore.repository.views.package._utils import get_moderatable_communities
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -31,8 +33,16 @@ class PackageListSearchView(CommunityMixin, ListView):
     paginate_by = MODS_PER_PAGE
     paginator_class = CachedPaginator
 
-    def get_base_queryset(self):
-        return self.model.objects.active().exclude(~Q(community=self.community))
+    def filter_community(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
+        return queryset.exclude(~Q(community=self.community))
+
+    def get_community_cache_vary(self) -> str:
+        return self.community_identifier
+
+    def get_base_queryset(self) -> QuerySet[PackageListing]:
+        return self.filter_community(self.model.objects.active())
 
     def get_page_title(self):
         return ""
@@ -45,7 +55,7 @@ class PackageListSearchView(CommunityMixin, ListView):
 
     def get_full_cache_vary(self):
         cache_vary = self.get_cache_vary()
-        cache_vary += f".{self.community_identifier}"
+        cache_vary += f".{self.get_community_cache_vary()}"
         cache_vary += f".{self.get_search_query()}"
         cache_vary += f".{self.get_active_ordering()}"
         cache_vary += f".{self.get_included_categories()}"
@@ -63,14 +73,15 @@ class PackageListSearchView(CommunityMixin, ListView):
             ("top-rated", "Top rated"),
         )
 
+    def get_sections(self) -> QuerySet[PackageListingSection]:
+        return self.community.package_listing_sections.order_by(
+            "-priority",
+            "datetime_created",
+        )
+
     @cached_property
     def sections(self) -> List[PackageListingSection]:
-        return list(
-            self.community.package_listing_sections.order_by(
-                "-priority",
-                "datetime_created",
-            ),
-        )
+        return list(self.get_sections())
 
     @cached_property
     def section_choices(self) -> List[Tuple[str, str]]:
@@ -197,6 +208,18 @@ class PackageListSearchView(CommunityMixin, ListView):
 
         return queryset.exclude(icontains_query).distinct()
 
+    def filter_approval_status(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
+        if self.community.require_package_listing_approval:
+            return queryset.exclude(
+                ~Q(review_status=PackageListingReviewStatus.approved),
+            )
+        else:
+            return queryset.exclude(
+                review_status=PackageListingReviewStatus.rejected,
+            )
+
     def get_queryset(self):
         listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
 
@@ -247,14 +270,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         if not self.get_is_deprecated_included():
             queryset = queryset.exclude(package__is_deprecated=True)
 
-        if self.community.require_package_listing_approval:
-            queryset = queryset.exclude(
-                ~Q(review_status=PackageListingReviewStatus.approved),
-            )
-        else:
-            queryset = queryset.exclude(
-                review_status=PackageListingReviewStatus.rejected,
-            )
+        queryset = self.filter_approval_status(queryset)
 
         search_query = self.get_search_query()
         if search_query:
@@ -404,3 +420,40 @@ class PackageListByDependencyView(PackageListSearchView):
 
     def get_cache_vary(self):
         return f"dependencies-{self.package_listing.package.id}"
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class PackageReviewListView(PackageListSearchView):
+    community_ids: List[str] = []
+
+    def filter_community(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
+        return queryset.exclude(~Q(community_id__in=self.community_ids))
+
+    def filter_approval_status(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
+        return queryset
+
+    def get_community_cache_vary(self) -> str:
+        return ".".join(self.community_ids)
+
+    def get_base_queryset(self) -> QuerySet[PackageListing]:
+        queryset = super().get_base_queryset()
+        return queryset.exclude(is_review_requested=False)
+
+    def get_sections(self) -> QuerySet[PackageListingSection]:
+        return PackageListingSection.objects.none()
+
+    def get_page_title(self):
+        return "Review queue"
+
+    def get_cache_vary(self):
+        return f"review-queue"
+
+    def dispatch(self, *args, **kwargs):
+        self.community_ids = get_moderatable_communities(self.request.user)
+        if not self.community_ids:
+            raise PermissionDenied()
+        return super().dispatch(*args, **kwargs)

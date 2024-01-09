@@ -68,6 +68,9 @@ class PackageListing(TimestampMixin, models.Model):
         related_name="packages",
         blank=True,
     )
+    is_review_requested = models.BooleanField(
+        default=False,
+    )
     review_status = models.CharField(
         default=PackageListingReviewStatus.unreviewed,
         choices=PackageListingReviewStatus.as_choices(),
@@ -175,6 +178,16 @@ class PackageListing(TimestampMixin, models.Model):
                 ),
             ],
         )
+
+    @transaction.atomic
+    def request_review(self):
+        self.is_review_requested = True
+        self.save(update_fields=("is_review_requested",))
+
+    @transaction.atomic
+    def clear_review_request(self):
+        self.is_review_requested = False
+        self.save(update_fields=("is_review_requested",))
 
     @transaction.atomic
     def reject(
