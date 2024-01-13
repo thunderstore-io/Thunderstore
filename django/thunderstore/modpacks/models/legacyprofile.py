@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, Manager
 
 from thunderstore.core.mixins import TimestampMixin
 
@@ -64,6 +64,21 @@ class LegacyProfile(TimestampMixin, models.Model):
         max_length=512, editable=False, blank=True, null=True
     )
     file_size = models.PositiveBigIntegerField()
+
+    def __str__(self):
+        return str(self.id)
+
+
+class LegacyProfileMetaData(TimestampMixin, models.Model):
+    objects: "Manager[LegacyProfileMetaData]"
+
+    id = models.UUIDField(
+        default=ulid2.generate_ulid_as_uuid,
+        primary_key=True,
+        editable=False,
+    )
+    profile = models.ForeignKey(LegacyProfile, related_name="meta_datas", on_delete=models.CASCADE)
+    profile_meta_data = models.JSONField(null=True)
 
     def __str__(self):
         return str(self.id)

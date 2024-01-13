@@ -9,9 +9,11 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
+from sentry_sdk import capture_exception
 
 from thunderstore.core.utils import replace_cdn
 from thunderstore.modpacks.models import LegacyProfile
+from thunderstore.modpacks.tasks import create_legacy_profile_metadata
 
 
 class LegacyProfileCreateResponseSerializer(serializers.Serializer):
@@ -48,6 +50,10 @@ class LegacyProfileCreateApiView(APIView):
             content=self.request.data["file"]
         )
         serializer = LegacyProfileCreateResponseSerializer({"key": profile.id})
+        try:
+            create_legacy_profile_metadata(profile=profile) # type: ignore
+        except Exception as e:
+            capture_exception(e)
         return Response(
             serializer.data,
             status=status.HTTP_200_OK,
