@@ -491,6 +491,7 @@ CACHALOT_UNCACHABLE_TABLES = frozenset(
         "repository_packageversion",
         "repository_packageversiondownloadevent",
         "repository_packagerating",
+        "modpacks_legacyprofile",
     )
 )
 
