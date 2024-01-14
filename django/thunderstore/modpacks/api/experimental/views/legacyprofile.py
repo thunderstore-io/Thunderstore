@@ -3,8 +3,7 @@ from django.utils import timezone
 from drf_yasg.openapi import TYPE_FILE, Schema
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
@@ -44,10 +43,10 @@ class LegacyProfileCreateApiView(APIView):
     def post(self, request, *args, **kwargs):
         if "file" not in self.request.data or not self.request.data["file"]:
             raise ValidationError(detail="Request body was empty")
-        profile = LegacyProfile.objects.get_or_create_from_upload(
+        key = LegacyProfile.objects.get_or_create_from_upload(
             content=self.request.data["file"]
         )
-        serializer = LegacyProfileCreateResponseSerializer({"key": profile.id})
+        serializer = LegacyProfileCreateResponseSerializer({"key": key})
         return Response(
             serializer.data,
             status=status.HTTP_200_OK,
@@ -63,7 +62,11 @@ class LegacyProfileRetrieveApiView(APIView):
         tags=["experimental"],
     )
     def get(self, request, key: str, *args, **kwargs):
-        profile = get_object_or_404(LegacyProfile, id=key)
-        url = self.request.build_absolute_uri(profile.file.url)
+        try:
+            url = LegacyProfile.objects.get_file_url(key)
+        except LegacyProfile.DoesNotExist:
+            raise NotFound()
+
+        url = self.request.build_absolute_uri(url)
         url = replace_cdn(url, request.query_params.get("cdn"))
         return redirect(url)

@@ -5,14 +5,17 @@ from typing import Any, Callable, Optional
 from urllib.parse import quote
 
 from django.conf import settings
-from django.core.cache import cache
 from redis.exceptions import LockError
 
 from thunderstore.cache.enums import CacheBustCondition
+from thunderstore.cache.utils import get_cache
 from thunderstore.repository.mixins import CommunityMixin
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
 CACHE_LOCK_TIMEOUT = 30
+
+
+cache = get_cache("legacy")
 
 
 def try_regenerate_cache(
