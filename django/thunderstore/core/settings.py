@@ -130,6 +130,7 @@ env = environ.Env(
         "https://gcdn.thunderstore.io/static/dev/schema/ecosystem-schema.0.0.2.json",
     ),
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
+    CACHALOT_ENABLED=(bool, True),
     DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
@@ -486,13 +487,14 @@ def get_redis_cache(env_key: str, fallback_key: Optional[str] = None):
 CACHES = {
     "default": get_redis_cache("REDIS_URL"),
     "profiles": {
-        **get_redis_cache("REDIS_URL", "REDIS_URL_PROFILES"),
+        **get_redis_cache("REDIS_URL_PROFILES", "REDIS_URL"),
         "TIMEOUT": None,
     },
 }
 
 
 CACHALOT_TIMEOUT = env.int("CACHALOT_TIMEOUT_SECONDS")
+CACHALOT_ENABLED = env.bool("CACHALOT_ENABLED")
 CACHALOT_UNCACHABLE_TABLES = frozenset(
     (
         # Should never return stale data
