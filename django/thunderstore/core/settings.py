@@ -104,6 +104,7 @@ env = environ.Env(
     MIRROR_S3_SECURE_URLS=(bool, True),
     MIRROR_S3_DEFAULT_ACL=(str, "private"),
     ALLOWED_CDNS=(list, []),
+    USE_MULTIPLE_CACHES=(bool, True),
     REDIS_URL=(str, ""),
     REDIS_URL_LEGACY=(str, None),
     REDIS_URL_PROFILES=(str, None),
@@ -460,6 +461,7 @@ if DEBUG_TOOLBAR_ENABLED:
 # Caching
 
 DISABLED_CACHE_BUST_CONDITIONS = env.list("DISABLED_CACHE_BUST_CONDITIONS")
+USE_MULTIPLE_CACHES = env.bool("USE_MULTIPLE_CACHES")
 
 
 def get_redis_cache(env_key: str, fallback_key: Optional[str] = None):

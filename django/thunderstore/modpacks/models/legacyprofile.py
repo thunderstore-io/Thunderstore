@@ -1,17 +1,16 @@
 from hashlib import sha256
-from typing import Union, cast
+from typing import Union
 from uuid import UUID
 
 import ulid2
 from django.conf import settings
-from django.core.cache import caches
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import models
 from django.db.models import Sum
-from django_redis.cache import RedisCache
 
+from thunderstore.cache.utils import get_cache
 from thunderstore.core.mixins import TimestampMixin
 
 LEGACYPROFILE_STORAGE_CAP = (
@@ -19,7 +18,7 @@ LEGACYPROFILE_STORAGE_CAP = (
 )
 
 
-cache = cast(RedisCache, caches["profiles"])
+cache = get_cache("profiles")
 
 
 def get_legacy_profile_file_path(instance: "LegacyProfile", filename: str):
