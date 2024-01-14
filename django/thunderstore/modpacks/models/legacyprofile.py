@@ -94,7 +94,11 @@ class LegacyProfile(TimestampMixin, models.Model):
         storage=get_storage_class(settings.MODPACK_FILE_STORAGE)(),
     )
     file_sha256 = models.CharField(
-        max_length=512, editable=False, blank=True, null=True
+        max_length=512,
+        editable=False,
+        blank=True,
+        null=True,
+        db_index=True,
     )
     file_size = models.PositiveBigIntegerField()
 
