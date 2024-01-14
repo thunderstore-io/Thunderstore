@@ -2,7 +2,8 @@ import base64
 import json
 import os
 import sys
-from typing import Tuple
+import warnings
+from typing import Optional, Tuple
 
 import environ
 from django.http import HttpRequest
@@ -104,6 +105,7 @@ env = environ.Env(
     MIRROR_S3_DEFAULT_ACL=(str, "private"),
     ALLOWED_CDNS=(list, []),
     REDIS_URL=(str, ""),
+    REDIS_URL_PROFILES=(str, ""),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
     DB_CLIENT_KEY=(str, ""),
@@ -456,21 +458,39 @@ if DEBUG_TOOLBAR_ENABLED:
 # Caching
 
 DISABLED_CACHE_BUST_CONDITIONS = env.list("DISABLED_CACHE_BUST_CONDITIONS")
-REDIS_URL = env.str("REDIS_URL")
-if REDIS_URL:
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": REDIS_URL,
-            "TIMEOUT": 300,
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                "IGNORE_EXCEPTIONS": True,
-                "SOCKET_CONNECT_TIMEOUT": 0.5,
-                "SOCKET_TIMEOUT": 5,
-            },
+
+
+def get_redis_cache(env_key: str, fallback_key: Optional[str] = None):
+    url = env.str(env_key)
+    if not url and fallback_key:
+        warnings.warn(
+            f"No redis URL for {env_key} was provided, using {fallback_key} as "
+            f"fallback. !!This creates extra connections to {fallback_key}!!"
+        )
+        url = env.str(fallback_key)
+    if not url and "manage.py" not in sys.argv:
+        raise RuntimeError(f"Missing redis URL: {env_key}")
+    return {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": url,
+        "TIMEOUT": 300,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,
+            "SOCKET_CONNECT_TIMEOUT": 0.5,
+            "SOCKET_TIMEOUT": 5,
         },
     }
+
+
+CACHES = {
+    "default": get_redis_cache("REDIS_URL"),
+    "profiles": {
+        **get_redis_cache("REDIS_URL", "REDIS_URL_PROFILES"),
+        "TIMEOUT": None,
+    },
+}
+
 
 CACHALOT_TIMEOUT = env.int("CACHALOT_TIMEOUT_SECONDS")
 CACHALOT_UNCACHABLE_TABLES = frozenset(
