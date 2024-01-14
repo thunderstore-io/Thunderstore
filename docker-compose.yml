@@ -11,7 +11,8 @@ x-django-service: &django-service
     CELERY_QUEUES: "celery,background.cache,background.task,background.long_running"
     DATABASE_URL: "psql://django:django@dbpool/django"
     REDIS_URL: "redis://redis:6379/0"
-    REDIS_URL_PROFILES: "redis://redis:6379/1"
+    REDIS_URL_LEGACY: "redis://redis:6379/1"
+    REDIS_URL_PROFILES: "redis://redis:6379/2"
     PROTOCOL: "http://"
 
     AWS_ACCESS_KEY_ID: "thunderstore"

@@ -105,7 +105,8 @@ env = environ.Env(
     MIRROR_S3_DEFAULT_ACL=(str, "private"),
     ALLOWED_CDNS=(list, []),
     REDIS_URL=(str, ""),
-    REDIS_URL_PROFILES=(str, ""),
+    REDIS_URL_LEGACY=(str, None),
+    REDIS_URL_PROFILES=(str, None),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
     DB_CLIENT_KEY=(str, ""),
@@ -486,6 +487,7 @@ def get_redis_cache(env_key: str, fallback_key: Optional[str] = None):
 
 CACHES = {
     "default": get_redis_cache("REDIS_URL"),
+    "legacy": get_redis_cache("REDIS_URL_LEGACY", "REDIS_URL"),
     "profiles": {
         **get_redis_cache("REDIS_URL_PROFILES", "REDIS_URL"),
         "TIMEOUT": None,

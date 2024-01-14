@@ -1,11 +1,12 @@
 import hashlib
 import time
 import warnings
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 from urllib.parse import quote
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
+from django_redis.cache import RedisCache
 from redis.exceptions import LockError
 
 from thunderstore.cache.enums import CacheBustCondition
@@ -13,6 +14,9 @@ from thunderstore.repository.mixins import CommunityMixin
 
 DEFAULT_CACHE_EXPIRY = 60 * 5
 CACHE_LOCK_TIMEOUT = 30
+
+
+cache = cast(RedisCache, caches["legacy"])
 
 
 def try_regenerate_cache(
