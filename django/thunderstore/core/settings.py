@@ -108,6 +108,7 @@ env = environ.Env(
     REDIS_URL=(str, ""),
     REDIS_URL_LEGACY=(str, None),
     REDIS_URL_PROFILES=(str, None),
+    REDIS_URL_DOWNLOADS=(str, None),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
     DB_CLIENT_KEY=(str, ""),
@@ -138,8 +139,7 @@ env = environ.Env(
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW=(bool, False),
-    USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS=(bool, False),
-    USE_LEGACY_PACKAGE_DOWNLOAD_METRICS=(bool, True),
+    USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS=(bool, True),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -377,6 +377,7 @@ SESSION_COOKIE_DOMAIN = env.str("SESSION_COOKIE_DOMAIN") or None
 # Celery
 class CeleryQueues:
     Default = "celery"
+    LogDownloads = "log.downloads"
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
@@ -492,6 +493,10 @@ CACHES = {
     "legacy": get_redis_cache("REDIS_URL_LEGACY", "REDIS_URL"),
     "profiles": {
         **get_redis_cache("REDIS_URL_PROFILES", "REDIS_URL"),
+        "TIMEOUT": None,
+    },
+    "downloads": {
+        **get_redis_cache("REDIS_URL_DOWNLOADS", "REDIS_URL"),
         "TIMEOUT": None,
     },
 }
@@ -791,9 +796,6 @@ USE_ASYNC_PACKAGE_SUBMISSION_FLOW = env.bool("USE_ASYNC_PACKAGE_SUBMISSION_FLOW"
 USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS = env.bool(
     "USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS"
 )
-
-# Enable the legacy package download metrics implementation
-USE_LEGACY_PACKAGE_DOWNLOAD_METRICS = env.bool("USE_LEGACY_PACKAGE_DOWNLOAD_METRICS")
 
 # Seconds to wait between logging download events
 DOWNLOAD_METRICS_TTL_SECONDS = env.int("DOWNLOAD_METRICS_TTL_SECONDS")

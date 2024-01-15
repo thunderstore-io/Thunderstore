@@ -17,7 +17,7 @@ class PackageDownloadView(CommunityMixin, View):
             version_number=kwargs["version"],
         )
         client_ip, _ = get_client_ip(self.request)
-        PackageVersion.log_download_event(obj, client_ip)
+        PackageVersion.log_download_event(obj.id, client_ip)
 
         url = self.request.build_absolute_uri(obj.file.url)
         url = replace_cdn(url, request.GET.get("cdn"))
