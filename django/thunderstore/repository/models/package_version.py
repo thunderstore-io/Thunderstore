@@ -12,14 +12,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from thunderstore.metrics.models import (
-    PackageVersionDownloadEvent as TimeseriesDownloadEvent,
-)
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package
-from thunderstore.repository.models import (
-    PackageVersionDownloadEvent as LegacyDownloadEvent,
-)
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
 from thunderstore.webhooks.models.release import Webhook
@@ -260,60 +254,32 @@ class PackageVersion(models.Model):
         return self.full_version_name
 
     @staticmethod
-    def _get_log_key(version: "PackageVersion", client_ip: str) -> str:
-        return f"metrics.{client_ip}.download.{version.pk}"
+    def _get_log_key(version_id: int, client_ip: str) -> str:
+        return f"metrics.{client_ip}.download.{version_id}"
 
     @staticmethod
-    def _can_log_download_event(
-        version: "PackageVersion", client_ip: Optional[str]
-    ) -> bool:
+    def _can_log_download_event(version_id: int, client_ip: Optional[str]) -> bool:
         if not client_ip:
             return False
 
-        if not any(
-            (
-                settings.USE_LEGACY_PACKAGE_DOWNLOAD_METRICS,
-                settings.USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS,
-            )
-        ):
+        if not settings.USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS:
             return False
 
         return cache.set(
-            key=PackageVersion._get_log_key(version, client_ip),
+            key=PackageVersion._get_log_key(version_id, client_ip),
             value=0,
             timeout=settings.DOWNLOAD_METRICS_TTL_SECONDS,
             nx=True,
         )
 
     @staticmethod
-    def log_download_event(version: "PackageVersion", client_ip: Optional[str]):
-        if not PackageVersion._can_log_download_event(version, client_ip):
+    def log_download_event(version_id: int, client_ip: Optional[str]):
+        from thunderstore.repository.tasks.downloads import log_version_download
+
+        if not PackageVersion._can_log_download_event(version_id, client_ip):
             return
 
-        if settings.USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS:
-            PackageVersion._log_download_event_timeseries(version)
-
-        if settings.USE_LEGACY_PACKAGE_DOWNLOAD_METRICS:
-            PackageVersion._log_download_event_legacy(version, client_ip)
-
-        version._increase_download_counter()
-
-    @staticmethod
-    def _log_download_event_timeseries(version: "PackageVersion"):
-        TimeseriesDownloadEvent.objects.create(
-            version_id=version.id,
-            timestamp=timezone.now(),
-        )
-
-    @staticmethod
-    def _log_download_event_legacy(version: "PackageVersion", client_ip: str):
-        download_event, created = LegacyDownloadEvent.objects.get_or_create(
-            version=version,
-            source_ip=client_ip,
-        )
-
-        if not created:
-            download_event.count_downloads_and_return_validity()
+        log_version_download.delay(version_id, timezone.now().isoformat())
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)

@@ -31,8 +31,12 @@ class LegacyProfileManager(models.Manager):
         return f"{checksum}.profile_id"
 
     @staticmethod
-    def file_cache(uuid: Union[str, UUID]):
+    def file_cache(uuid: Union[str, UUID]) -> str:
         return f"{uuid}.file_name"
+
+    @staticmethod
+    def size_cache() -> str:
+        return "total_size"
 
     def get_or_create_from_upload(self, content: TemporaryUploadedFile) -> "UUID":
         if content.size + self.get_total_used_disk_space() > LEGACYPROFILE_STORAGE_CAP:
@@ -60,6 +64,10 @@ class LegacyProfileManager(models.Manager):
                 file_size=content.size,
                 file_sha256=hexdigest,
             )
+            try:
+                cache.incr(self.size_cache(), delta=instance.file_size)
+            except ValueError:
+                pass
 
         cache.set_many(
             {
@@ -77,7 +85,12 @@ class LegacyProfileManager(models.Manager):
         return self.model._meta.get_field("file").storage.url(file_name)
 
     def get_total_used_disk_space(self) -> int:
-        return self.aggregate(total=Sum("file_size"))["total"] or 0
+        key = self.size_cache()
+        if size := cache.get(key):
+            return size
+        size = self.aggregate(total=Sum("file_size"))["total"] or 0
+        cache.set(key, size, timeout=600)
+        return size
 
 
 class LegacyProfile(TimestampMixin, models.Model):

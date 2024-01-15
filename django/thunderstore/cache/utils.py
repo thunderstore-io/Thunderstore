@@ -8,6 +8,7 @@ CacheName = Literal[
     "default",
     "legacy",
     "profiles",
+    "downloads",
 ]
 
 
