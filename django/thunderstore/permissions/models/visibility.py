@@ -27,3 +27,11 @@ class VisibilityFlags(models.Model):
     moderator_detail = models.BooleanField(db_index=True)
     admin_list = models.BooleanField(db_index=True)
     admin_detail = models.BooleanField(db_index=True)
+
+    def __str__(self) -> str:
+        flag_fields = (
+            field.name
+            for field in self._meta.get_fields()
+            if isinstance(field, models.BooleanField) and getattr(self, field.name)
+        )
+        return ", ".join(flag_fields) or "None"
