@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
+from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package
 from thunderstore.repository.package_formats import PackageFormats
@@ -27,7 +28,7 @@ def get_version_png_filepath(instance, filename):
     return f"repository/icons/{instance}.png"
 
 
-class PackageVersionQuerySet(models.QuerySet):
+class PackageVersionQuerySet(VisibilityQuerySet):
     def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
         return self.exclude(is_active=False)
 
@@ -59,7 +60,7 @@ class PackageVersionQuerySet(models.QuerySet):
         )
 
 
-class PackageVersion(models.Model):
+class PackageVersion(VisibilityMixin):
     objects: "Manager[PackageVersion]" = PackageVersionQuerySet.as_manager()
     id: int
 

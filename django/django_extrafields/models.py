@@ -10,10 +10,14 @@ class SafeReverseOnetoOneDescriptor(ReverseOneToOneDescriptor):
             return None
 
 
-class SafeOneToOneOrField(models.OneToOneField):
+class SafeOneToOneField(models.OneToOneField):
     """
     Same as OneToOneField but returns None instead of raising an exception if
     the relation doesn't exist.
     """
 
     related_accessor_class = SafeReverseOnetoOneDescriptor
+
+
+# Typo fix backwards compat
+SafeOneToOneOrField = SafeOneToOneField
