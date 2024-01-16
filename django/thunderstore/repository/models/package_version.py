@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from thunderstore.permissions.models.mixins import VisibilityMixin, VisibilityQuerySet
+from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package
 from thunderstore.repository.package_formats import PackageFormats

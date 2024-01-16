@@ -1,5 +1,7 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
+
+from thunderstore.permissions.models import VisibilityFlags
 
 
 class VisibilityQuerySet(models.QuerySet):
@@ -38,6 +40,12 @@ class VisibilityMixin(models.Model):
         null=True,
         on_delete=models.PROTECT,
     )
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.visibility:
+            self.visibility = VisibilityFlags.objects.create_public()
+        super().save()
 
     class Meta:
         abstract = True

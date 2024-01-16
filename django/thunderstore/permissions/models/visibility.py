@@ -1,7 +1,22 @@
 from django.db import models
 
 
+class VisibilityFlagsQuerySet(models.QuerySet):
+    def create_public(self):
+        return self.create(
+            public_list=True,
+            public_detail=True,
+            owner_list=True,
+            owner_detail=True,
+            moderator_list=True,
+            moderator_detail=True,
+            admin_list=True,
+            admin_detail=True,
+        )
+
+
 class VisibilityFlags(models.Model):
+    objects = VisibilityFlagsQuerySet.as_manager()
     id = models.BigAutoField(primary_key=True, editable=False)
 
     public_list = models.BooleanField(db_index=True)

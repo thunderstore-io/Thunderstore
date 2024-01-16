@@ -2,6 +2,7 @@ import factory
 from factory.django import DjangoModelFactory
 
 from thunderstore.core.factories import UserFactory
+from thunderstore.permissions.models import VisibilityFlags
 
 from ..usermedia.factories import UserMediaFactory
 from ..wiki.factories import WikiFactory

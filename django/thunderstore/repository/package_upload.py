@@ -9,6 +9,7 @@ from django.db import transaction
 
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
+from thunderstore.permissions.models import VisibilityFlags
 from thunderstore.repository.filetree import create_file_tree_from_zip_data
 from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_formats import PackageFormats
