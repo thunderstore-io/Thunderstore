@@ -135,6 +135,41 @@ services:
     <<: [*django-service, *django-volumes]
     command: celerybeat
 
+  kafka:
+    image: "confluentinc/cp-kafka:7.5.3"
+    environment:
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "BROKER://kafka:29092"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "BROKER://kafka:29092,CONTROLLER://kafka:29093"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "BROKER"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: "q1Sh-9_ISia_zwGINzRvyQ"
+
+  kafka-connect:
+    build:
+      context: "."
+      dockerfile: "docker/kafka-connect.Dockerfile"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:29092"
+      CONNECT_GROUP_ID: "default"
+      CONNECT_CONFIG_STORAGE_TOPIC: "default-config"
+      CONNECT_OFFSET_STORAGE_TOPIC: "default-offset"
+      CONNECT_STATUS_STORAGE_TOPIC: "default-status"
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+    depends_on: ["kafka"]
+
   builder:
     build:
       context: .
