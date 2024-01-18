@@ -19,5 +19,10 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     queryset = Community.objects.listed()
     filter_backends = [SearchFilter, StrictOrderingFilter]
     search_fields = ["description", "name"]
-    ordering_fields = ["datetime_created", "identifier", "name"]
+    ordering_fields = [
+        "aggregated_fields__download_count",
+        "datetime_created",
+        "identifier",
+        "name",
+    ]
     ordering = ["identifier"]
