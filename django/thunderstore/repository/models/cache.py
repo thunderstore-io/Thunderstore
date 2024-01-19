@@ -58,6 +58,8 @@ class APIV1PackageCache(S3FileMixin):
         blank=True,
         null=True,
     )
+    raw_size = models.BigIntegerField(blank=True, null=True)
+    encoded_size = models.BigIntegerField(blank=True, null=True)
 
     @classmethod
     def get_latest_for_community(
@@ -92,6 +94,8 @@ class APIV1PackageCache(S3FileMixin):
         return cls.objects.create(
             community=community,
             data=file,
+            raw_size=len(content),
+            encoded_size=file.size,
             content_type="application/json",
             content_encoding="gzip",
             last_modified=timestamp,

@@ -113,6 +113,7 @@ class PackageViewSet(
             )
             response["Last-Modified"] = http_date(last_modified)
             response["Content-Encoding"] = cache.content_encoding
+            response["X-Cache-Content-Length"] = cache.data.size
 
         return response
 
