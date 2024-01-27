@@ -66,6 +66,20 @@ def capture_exception(error=None, *args, **kwargs):
     capture_sentry_exception(error, *args, **kwargs)
 
 
+class ExceptionLogger:
+    def __init__(self, continue_on_error: bool):
+        self.continue_on_error = continue_on_error
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_val is not None:
+            capture_exception(exc_val)
+            if self.continue_on_error:
+                return True
+
+
 def make_full_url(request: Optional[HttpRequest], path: str):
     """Build an URL relative to a request using the proper request scheme"""
     url = path

@@ -3,6 +3,8 @@ from django.db import models
 
 class PackageInstaller(models.Model):
     identifier = models.SlugField(unique=True, db_index=True, editable=False)
+    name = models.TextField()
+    description = models.TextField()
 
     def __str__(self):
         return self.identifier
