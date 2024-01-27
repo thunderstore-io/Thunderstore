@@ -7,6 +7,7 @@ from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.serializer_fields import (
     DependencyField,
     PackageNameField,
+    PackageNamespaceField,
     PackageVersionField,
     StrictCharField,
 )
@@ -24,6 +25,7 @@ class ManifestV1Serializer(serializers.Serializer):
         super().__init__(*args, **kwargs)
 
     name = PackageNameField()
+    namespace = PackageNamespaceField(required=False)
     version_number = PackageVersionField()
     website_url = StrictCharField(
         max_length=PackageVersion._meta.get_field("website_url").max_length,

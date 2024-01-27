@@ -11,9 +11,10 @@ class PackageFormats(models.TextChoices):
           PackageVersion!
     """
 
-    v0_0 = "thunderstore.io:v0.0"
-    v0_1 = "thunderstore.io:v0.1"
-    v0_2 = "thunderstore.io:v0.2"
+    v0_0 = "thunderstore.io:v0.0"  # First version
+    v0_1 = "thunderstore.io:v0.1"  # Added `dependencies` field to manifest
+    v0_2 = "thunderstore.io:v0.2"  # Added support for `CHANGELOG.md`
+    v0_3 = "thunderstore.io:v0.3"  # Added `namespace` field to manifest
 
     @classmethod
     def as_query_filter(cls, field_name: str, allow_none: bool) -> Q:
@@ -26,8 +27,8 @@ class PackageFormats(models.TextChoices):
 
     @classmethod
     def get_supported_formats(cls) -> Tuple["PackageFormats"]:
-        return (cls.v0_1, cls.v0_2)
+        return (cls.v0_1, cls.v0_2, cls.v0_3)
 
     @classmethod
     def get_active_format(cls) -> "PackageFormats":
-        return PackageFormats.v0_2
+        return PackageFormats.v0_3

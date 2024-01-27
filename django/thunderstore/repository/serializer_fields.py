@@ -10,9 +10,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX, PACKAGE_VERSION_REGEX
-from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.models import Namespace, PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.validators import (
+    PackageReferenceComponentValidator,
     PackageReferenceValidator,
     VersionNumberValidator,
 )
@@ -109,6 +110,15 @@ class StrictCharField(serializers.CharField):
             self.fail("invalid")
         value = str(data)
         return value.strip() if self.trim_whitespace else value
+
+
+class PackageNamespaceField(StrictCharField):
+    def __init__(self, **kwargs):
+        kwargs["max_length"] = Namespace._meta.get_field("name").max_length
+        kwargs["allow_blank"] = False
+        super().__init__(**kwargs)
+        validator = PackageReferenceComponentValidator("Namespace name")
+        self.validators.append(validator)
 
 
 class PackageNameField(StrictCharField):
