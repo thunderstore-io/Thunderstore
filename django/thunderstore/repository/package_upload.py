@@ -173,7 +173,7 @@ class PackageUploadForm(forms.ModelForm):
         return clean_community_categories(self.cleaned_data.get("community_categories"))
 
     @transaction.atomic
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> PackageVersion:
         self.instance.name = self.manifest["name"]
         self.instance.version_number = self.manifest["version_number"]
         self.instance.website_url = self.manifest["website_url"]
@@ -215,4 +215,8 @@ class PackageUploadForm(forms.ModelForm):
         instance = super().save()
         for reference in self.manifest["dependencies"]:
             instance.dependencies.add(reference.instance)
+
+        for installer in self.manifest.get("installers", []):
+            instance.installers.add(installer["identifier"])
+
         return instance

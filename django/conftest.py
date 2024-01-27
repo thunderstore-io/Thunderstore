@@ -35,6 +35,7 @@ from thunderstore.repository.factories import (
     AsyncPackageSubmissionFactory,
     NamespaceFactory,
     PackageFactory,
+    PackageInstallerFactory,
     PackageVersionFactory,
     PackageWikiFactory,
     TeamFactory,
@@ -43,6 +44,7 @@ from thunderstore.repository.factories import (
 from thunderstore.repository.models import (
     AsyncPackageSubmission,
     Package,
+    PackageInstaller,
     PackageVersion,
     PackageWiki,
     Team,
@@ -425,11 +427,15 @@ def api_client(community_site) -> APIClient:
 
 
 @pytest.fixture(scope="session")
-def manifest_v1_package_bytes() -> bytes:
+def package_icon_bytes() -> bytes:
     icon_raw = io.BytesIO()
     icon = Image.new("RGB", (256, 256), "#FF0000")
     icon.save(icon_raw, format="PNG")
+    return icon_raw.getvalue()
 
+
+@pytest.fixture(scope="session")
+def manifest_v1_package_bytes(package_icon_bytes: bytes) -> bytes:
     readme = "# Test readme".encode("utf-8")
     manifest = json.dumps(
         {
@@ -443,7 +449,7 @@ def manifest_v1_package_bytes() -> bytes:
 
     files = [
         ("README.md", readme),
-        ("icon.png", icon_raw.getvalue()),
+        ("icon.png", package_icon_bytes),
         ("manifest.json", manifest),
     ]
 
@@ -498,6 +504,11 @@ def async_package_submission(
             "communities": [community.identifier],
         },
     )
+
+
+@pytest.fixture
+def package_installer() -> PackageInstaller:
+    return PackageInstallerFactory()
 
 
 def create_test_service_account_user():

@@ -47,7 +47,18 @@
                 <tr>
                     <td>name</td>
                     <td>✔</td>
-                    <td>Name of the mod, no spaces. Allowed characters: <code>a-z A-Z 0-9 _</code></td>
+                    <td>
+                        <p>Name of the mod, no spaces. Allowed characters: <code>a-z A-Z 0-9 _</code></p>
+                        <p>
+                            Underscores get replaced with a space for display purposes in some views on the
+                            website & mod manager.
+                        </p>
+                        <p>
+                            <strong>Important:</strong> This will become a part of the package
+                            ID and <strong>can not be changed</strong> without creating a new
+                            package.
+                        </p>
+                    </td>
                     <td><pre>"Some_Mod"</pre></td>
                 </tr>
                 <tr>
@@ -76,6 +87,42 @@
                     <td>✔</td>
                     <td>URL of the mod's website (e.g. GitHub repo). Can be an empty string.</td>
                     <td><pre>"https://example.com/"</pre></td>
+                </tr>
+                <tr>
+                    <td>installers</td>
+                    <td>❌</td>
+                    <td>
+                        <p>
+                            A list of installer declarations. Installer declarations can be used to explicitly
+                            control how a mod manager should install the package. If omitted, legacy install
+                            rules are automatically used.
+                        </p>
+                        <p>
+                            As of January 2024, the mod managers don't yet use this field for anything. Documentation
+                            will be updated with more details once an implementation exists.
+                        </p>
+                        <p>
+                            Documentation for the default (legacy) behavior is currently maintained as a wiki page on
+                            <a href="https://github.com/ebkr/r2modmanPlus/wiki/Structuring-your-Thunderstore-package">
+                                the r2modmanPlus wiki
+                            </a>
+                        </p>
+                        <p>
+                            This field should either contain a list of at least one valid installer declarations
+                            or be omitted entirely.
+                        </p>
+                        <p>
+                            This field will become mandatory in the future.
+                        </p>
+                    </td>
+                    <td><pre>[
+    { "identifier": "foo-installer" }
+]</pre>
+                        <p>
+                            The installer referred above does not actually exist,
+                            this is for illustrative purposes only.
+                        </p>
+                    </td>
                 </tr>
             </tbody>
         </table>
