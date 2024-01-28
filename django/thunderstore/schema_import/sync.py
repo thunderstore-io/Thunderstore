@@ -7,7 +7,13 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListingSection,
 )
-from thunderstore.schema_import.schema import Schema, SchemaCommunity
+from thunderstore.core.utils import ExceptionLogger
+from thunderstore.repository.models import PackageInstaller
+from thunderstore.schema_import.schema import (
+    Schema,
+    SchemaCommunity,
+    SchemaPackageInstaller,
+)
 
 
 def get_slogan_from_display_name(name: str) -> str:
@@ -77,7 +83,28 @@ def import_community(identifier: str, schema: SchemaCommunity):
 
 def import_schema_communities(schema: Schema):
     for identifier, community in schema.communities.items():
-        import_community(identifier, community)
+        with ExceptionLogger(continue_on_error=True):
+            import_community(identifier, community)
+
+
+@transaction.atomic
+def import_installer(identifier: str, schema: SchemaPackageInstaller):
+    if not (
+        installer := PackageInstaller.objects.filter(identifier=identifier).first()
+    ):
+        installer = PackageInstaller(identifier=identifier)
+    installer.name = schema.name
+    installer.description = schema.description
+    installer.save()
+
+
+def import_schema_package_installers(schema: Schema):
+    if schema.package_installers is None:
+        return
+
+    for identifier, installer in schema.package_installers.items():
+        with ExceptionLogger(continue_on_error=True):
+            import_installer(identifier, installer)
 
 
 def sync_thunderstore_schema():
@@ -85,4 +112,9 @@ def sync_thunderstore_schema():
         settings.ECOSYSTEM_SCHEMA_URL, headers={"accept-encoding": "gzip"}
     )
     schema = Schema.parse_obj(response.json())
-    import_schema_communities(schema)
+
+    with ExceptionLogger(continue_on_error=True):
+        import_schema_communities(schema)
+
+    with ExceptionLogger(continue_on_error=True):
+        import_schema_package_installers(schema)

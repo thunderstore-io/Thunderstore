@@ -30,7 +30,15 @@ class SchemaGame(BaseModel):
     thunderstore: Optional[SchemaCommunity]
 
 
+class SchemaPackageInstaller(BaseModel):
+    name: str
+    description: str
+
+
 class Schema(BaseModel):
     schema_version: str = Field(alias="schemaVersion")
     games: Dict[str, SchemaGame]
     communities: Dict[str, SchemaCommunity]
+    package_installers: Optional[Dict[str, SchemaPackageInstaller]] = Field(
+        None, alias="packageInstallers"
+    )

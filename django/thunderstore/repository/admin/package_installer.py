@@ -7,9 +7,9 @@ from thunderstore.repository.models import PackageInstaller
 @admin.register(PackageInstaller)
 class PackageInstallerAdmin(admin.ModelAdmin):
     readonly_fields = ("identifier",)
-    list_display_links = ("pk", "identifier")
-    list_display = ("pk", "identifier")
-    search_fields = ("pk", "identifier")
+    list_display = ("identifier", "name")
+    list_display_links = ("identifier", "name")
+    search_fields = ("identifier", "name")
 
     def has_add_permission(self, request: HttpRequest, obj=None) -> bool:
         return False
