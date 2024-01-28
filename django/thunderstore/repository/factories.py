@@ -10,6 +10,7 @@ from .models import (
     AsyncPackageSubmission,
     Namespace,
     Package,
+    PackageInstaller,
     PackageRating,
     PackageVersion,
     PackageWiki,
@@ -86,3 +87,10 @@ class AsyncPackageSubmissionFactory(DjangoModelFactory):
     owner = factory.SubFactory(UserFactory)
     file = factory.SubFactory(UserMediaFactory, owner=factory.SelfAttribute("..owner"))
     form_data = dict()
+
+
+class PackageInstallerFactory(DjangoModelFactory):
+    class Meta:
+        model = PackageInstaller
+
+    identifier = factory.Sequence(lambda n: f"package-installer-{n}")

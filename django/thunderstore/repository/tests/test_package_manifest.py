@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.exceptions import ValidationError
 
 from thunderstore.repository.factories import (
     NamespaceFactory,
@@ -546,3 +547,99 @@ def test_manifest_v1_invalid_key_formatting(user):
         data=data,
     )
     assert deserializer.is_valid() is False
+
+
+@pytest.mark.django_db
+def test_manifest_v1_installers_omitted_succeeds(user, manifest_v1_data):
+    assert "installers" not in manifest_v1_data
+    team = Team.get_or_create_for_user(user)
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=team,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid()
+
+
+def test_manifest_v1_installers_null_fails(user, manifest_v1_data):
+    team = Team.get_or_create_for_user(user)
+    manifest_v1_data["installers"] = None
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=team,
+        data=manifest_v1_data,
+    )
+    with pytest.raises(ValidationError, match="This field may not be null."):
+        serializer.is_valid(raise_exception=True)
+
+
+def test_manifest_v1_installers_empty_fails(user, manifest_v1_data):
+    team = Team.get_or_create_for_user(user)
+    manifest_v1_data["installers"] = []
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=team,
+        data=manifest_v1_data,
+    )
+    with pytest.raises(ValidationError, match="This list may not be empty."):
+        serializer.is_valid(raise_exception=True)
+
+
+def test_manifest_v1_installers_unknown_fails(user, manifest_v1_data):
+    team = Team.get_or_create_for_user(user)
+    manifest_v1_data["installers"] = [{"identifier": "foo"}]
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=team,
+        data=manifest_v1_data,
+    )
+    with pytest.raises(ValidationError, match="Matching installer not found."):
+        assert serializer.is_valid(raise_exception=True)
+
+
+def test_manifest_v1_installers_empty_entry_fails(user, manifest_v1_data):
+    team = Team.get_or_create_for_user(user)
+    manifest_v1_data["installers"] = [{}]
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=team,
+        data=manifest_v1_data,
+    )
+    with pytest.raises(ValidationError, match="This field is required."):
+        assert serializer.is_valid(raise_exception=True)
+
+
+def test_manifest_v1_installers_valid_entry_succeeds(
+    user, manifest_v1_data, package_installer
+):
+    team = Team.get_or_create_for_user(user)
+    manifest_v1_data["installers"] = [{"identifier": package_installer.identifier}]
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=team,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid(raise_exception=True)
+
+
+def test_manifest_v1_installers_duplicate_entries_fails(
+    user, manifest_v1_data, package_installer
+):
+    # TODO: Edit this test to accommodate duplicate calls to the same installer
+    #       if the arguments differ in a meaningful fashion once per-installer
+    #       arguments are supported.
+    team = Team.get_or_create_for_user(user)
+    manifest_v1_data["installers"] = [
+        {"identifier": package_installer.identifier},
+        {"identifier": package_installer.identifier},
+    ]
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=team,
+        data=manifest_v1_data,
+    )
+    with pytest.raises(
+        ValidationError,
+        match=f"Duplicate use of installer {package_installer.identifier}",
+    ):
+        assert serializer.is_valid(raise_exception=True)

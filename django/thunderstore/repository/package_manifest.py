@@ -1,16 +1,42 @@
+from typing import List, TypedDict
+
 from django.core.validators import URLValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.models import PackageInstaller, PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.serializer_fields import (
     DependencyField,
+    ModelChoiceField,
     PackageNameField,
     PackageVersionField,
     StrictCharField,
 )
 from thunderstore.repository.utils import does_contain_package, has_duplicate_packages
+
+
+class PackageInstallerSerializer(serializers.Serializer):
+    identifier = ModelChoiceField(
+        queryset=PackageInstaller.objects.all(),
+        required=True,
+        to_field="identifier",
+        error_messages={"not_found": "Matching installer not found."},
+    )
+    # Potential to expand this in the future with installer-specific arguments.
+    # Not yet added as to not create backwards incompatibilities if the field
+    # ends up unused.
+
+    class Type(TypedDict):
+        identifier: PackageInstaller
+
+
+def validate_unique_installers(installers: List[PackageInstallerSerializer.Type]):
+    seen = set()
+    for entry in [x["identifier"].identifier for x in installers]:
+        if entry in seen:
+            raise ValidationError(f"Duplicate use of installer {entry}")
+        seen.add(entry)
 
 
 class ManifestV1Serializer(serializers.Serializer):
@@ -38,6 +64,15 @@ class ManifestV1Serializer(serializers.Serializer):
         child=DependencyField(),
         max_length=1000,
         allow_empty=True,
+    )
+    installers = serializers.ListField(
+        child=PackageInstallerSerializer(),
+        validators=[validate_unique_installers],
+        max_length=100,
+        min_length=1,
+        allow_empty=False,
+        allow_null=False,
+        required=False,
     )
 
     def validate(self, data):

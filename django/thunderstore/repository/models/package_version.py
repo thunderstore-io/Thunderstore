@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import Iterator, Optional
+from typing import TYPE_CHECKING, Iterator, Optional
 
 from django.conf import settings
 from django.core.cache import cache
@@ -18,6 +18,12 @@ from thunderstore.repository.models import Package
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
 from thunderstore.webhooks.models.release import Webhook
+
+if TYPE_CHECKING:
+    from thunderstore.repository.models.package_installer import (
+        PackageInstaller,
+        PackageInstallerDeclaration,
+    )
 
 
 def get_version_zip_filepath(instance, filename):
@@ -61,6 +67,8 @@ class PackageVersionQuerySet(VisibilityQuerySet):
 
 
 class PackageVersion(VisibilityMixin):
+    installers: "Manager[PackageInstaller]"
+    installer_declarations: "Manager[PackageInstallerDeclaration]"
     objects: "Manager[PackageVersion]" = PackageVersionQuerySet.as_manager()
     id: int
 
@@ -100,6 +108,12 @@ class PackageVersion(VisibilityMixin):
         "self",
         related_name="dependants",
         symmetrical=False,
+        blank=True,
+    )
+    installers = models.ManyToManyField(
+        "repository.PackageInstaller",
+        through="repository.PackageInstallerDeclaration",
+        related_name="package_versions",
         blank=True,
     )
     readme = models.TextField()
