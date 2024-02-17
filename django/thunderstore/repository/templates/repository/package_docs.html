@@ -138,6 +138,29 @@
         "MythicManiac-TestMod-1.1.0"
     ]
 }</pre>
+        <p>
+            If your mod requires a specific folder structure, put your DLL and
+            its asset folders into a "plugins" folder.  Without this, everything
+            in your zip will be flattened when installed by Thunderstore or
+            R2modman.  For example:
+        </p>
+        <pre>Archive:  MyMod.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     4519  2022-06-16 08:45   README.md
+    51981  2022-06-16 08:45   icon.png
+      315  2022-06-16 08:45   manifest.json
+        0  2022-06-16 08:45   plugins/
+   134144  2022-06-16 08:45   plugins/MyMod.dll
+        0  2022-06-16 08:45   plugins/MyMod/
+        0  2022-06-16 08:45   plugins/MyMod/Assets/
+     2720  2022-06-16 08:45   plugins/MyMod/Assets/Sort icon.png
+        0  2022-06-16 08:42   plugins/MyMod/Assets/Translations/English/
+      128  2022-06-16 08:42   plugins/MyMod/Assets/Translations/English/bosses.json
+      566  2022-06-16 08:42   plugins/MyMod/Assets/Translations/English/stats.json
+        0  2022-06-16 08:42   plugins/MyMod/Assets/Translations/Italian/
+       69  2022-06-16 08:42   plugins/MyMod/Assets/Translations/Italian/bosses.json
+      188  2022-06-16 08:42   plugins/MyMod/Assets/Translations/Italian/stats.json</pre>
     </div>
 </div>
 
