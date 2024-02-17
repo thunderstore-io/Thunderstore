@@ -121,7 +121,7 @@ class LinkTargetChoices(TextChoices):
     Top = "_top"
 
 
-class NavLinkMixin(TimestampMixin):
+class LinkMixin(TimestampMixin):
     title = models.TextField()
     href = models.TextField()
     css_class = models.TextField(blank=True, null=True)
@@ -139,7 +139,7 @@ class NavLinkMixin(TimestampMixin):
         abstract = True
 
 
-class NavLink(NavLinkMixin):
+class NavLink(LinkMixin):
     objects: Manager["NavLink"]
 
     class Meta:
@@ -147,7 +147,7 @@ class NavLink(NavLinkMixin):
         indexes = [models.Index(fields=["is_active", "order", "title"])]
 
 
-class CommunityNavLink(NavLinkMixin):
+class CommunityNavLink(LinkMixin):
     objects: Manager["CommunityNavLink"]
 
     community = models.ForeignKey(
