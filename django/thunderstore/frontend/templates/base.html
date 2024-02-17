@@ -193,7 +193,7 @@
                 {% endblock %}
             </div>
             <div class="container footer_content">
-                <div class="footer_content_left mr-4">
+                <div class="footer_content_left">
                     <img class="thunderstore_logo" src="{% static 'ts-logo-horizontal.svg' %}" />
                     {% block footer_bottom %}
                         {% dynamic_html "footer_bottom" %}
@@ -203,20 +203,23 @@
                 <div class="footer_content_right">
                     {% if legal_contracts %}
                     <div class="footer_column">
-                        <h2>About</h2>
+                        <h2>Legal</h2>
                         {% for contract in legal_contracts %}
                         <a href="{{ contract.get_absolute_url }}">{{ contract.title }}</a>
                         {% endfor %}
                     </div>
                     {% endif %}
+                    {% for group in footer_link_groups %}
                     <div class="footer_column">
-                        <h2>Developers</h2>
-                        <a href="{% url 'swagger' %}">API Docs</a>
-                        <a href="https://github.com/thunderstore-io/Thunderstore">GitHub Repo</a>
-                        <a href="{% community_url 'packages.create.docs' %}">Package Format Docs</a>
-                        <a href="{% url 'tools.markdown-preview' %}">Markdown Preview</a>
-                        <a href="{% url 'tools.manifest-v1-validator' %}">Manifest Validator</a>
+                        <h2>{{ group.title }}</h2>
+                        {% for link in group.links %}
+                            <a
+                                {% if link.css_class %}class="{{ link.css_class }}"{% endif %}
+                                {% if link.target %}target="{{ link.target }}"{% endif %}
+                                href="{{ link.href }}">{{ link.title }}</a>
+                        {% endfor %}
                     </div>
+                    {% endfor %}
                 </div>
                 {% endcache %}
             </div>

@@ -161,4 +161,13 @@ class CommunityNavLink(LinkMixin):
         indexes = [models.Index(fields=["community", "is_active", "order", "title"])]
 
 
+class FooterLink(LinkMixin):
+    objects: Manager["FooterLink"]
+    group_title = models.TextField()
+
+    class Meta:
+        ordering = ("order", "title")
+        indexes = [models.Index(fields=["is_active", "group_title", "order", "title"])]
+
+
 signals.post_save.connect(DynamicHTML.post_save, sender=DynamicHTML)

@@ -61,14 +61,10 @@
 
 .footer_content_right {
     display: flex;
-    gap: 5rem;
-
-    @media (max-width: 575px) {
-        flex-direction: column-reverse;
-        justify-content: center;
-        align-items: center;
-        gap: 2rem;
-    }
+    flex-wrap: wrap;
+    gap: 4rem;
+    margin-left: 4rem;
+    margin-right: 4rem;
 }
 
 .footer_column {
