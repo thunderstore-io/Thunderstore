@@ -315,6 +315,7 @@ TEMPLATES = [
                 "thunderstore.community.context_processors.selectable_communities",
                 "thunderstore.legal.context_processors.legal_contracts",
                 "thunderstore.frontend.context.nav_links",
+                "thunderstore.frontend.context.footer_links",
             ],
         },
     },
