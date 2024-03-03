@@ -140,6 +140,12 @@ env = environ.Env(
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW=(bool, False),
     USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS=(bool, True),
+    MIRROR_DEFAULT_STORAGE=(bool, True),
+    MIRROR_THUMBNAIL_STORAGE=(bool, True),
+    MIRROR_PACKAGE_STORAGE=(bool, True),
+    MIRROR_MODPACK_STORAGE=(bool, True),
+    MIRROR_SCHEMA_STORAGE=(bool, True),
+    MIRROR_BLOB_STORAGE=(bool, True),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -706,12 +712,19 @@ if all(
         },
     )
     S3_MIRRORS = S3_MIRRORS + mirror
-    DEFAULT_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
-    THUMBNAIL_DEFAULT_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
-    PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
-    MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
-    SCHEMA_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
-    BLOB_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+
+    if env.bool("MIRROR_DEFAULT_STORAGE"):
+        DEFAULT_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    if env.bool("MIRROR_THUMBNAIL_STORAGE"):
+        THUMBNAIL_DEFAULT_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    if env.bool("MIRROR_PACKAGE_STORAGE"):
+        PACKAGE_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    if env.bool("MIRROR_MODPACK_STORAGE"):
+        MODPACK_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    if env.bool("MIRROR_SCHEMA_STORAGE"):
+        SCHEMA_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
+    if env.bool("MIRROR_BLOB_STORAGE"):
+        BLOB_FILE_STORAGE = "thunderstore.core.storage.MirroredS3Storage"
 
 ALLOWED_CDNS = env.list("ALLOWED_CDNS")
 
