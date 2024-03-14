@@ -16,6 +16,8 @@ import {
 } from "../api";
 import { calculateMD5, fetchWithProgress } from "../utils";
 import { WorkerManager, Workers } from "../workers";
+import { PromiseThrottler } from "../throttle";
+import { retry } from "../retry";
 
 export enum FileUploadStatus {
     NEW = "NEW",
@@ -26,6 +28,9 @@ export enum FileUploadStatus {
     CANCELED = "CANCELED",
 }
 
+const MAX_UPLOAD_ATTEMPTS = 10;
+const MAX_PARALLEL_REQUESTS = 3;
+
 export class FileUpload {
     @observable uploadErrors: string[] = [];
     @observable uploadStatus: FileUploadStatus = FileUploadStatus.NEW;
@@ -34,6 +39,10 @@ export class FileUpload {
     private _uploadInfo: UserMediaInitiateUploadResponse | null = null;
 
     private _ongoingRequests: Set<XMLHttpRequest> | null = null;
+
+    private throttler: PromiseThrottler = new PromiseThrottler(
+        MAX_PARALLEL_REQUESTS
+    );
 
     constructor() {
         makeObservable(this);
@@ -139,7 +148,7 @@ export class FileUpload {
         return result;
     }
 
-    async uploadPart(
+    async _uploadPart(
         file: File,
         partInfo: UploadPartUrl
     ): Promise<CompletedPart> {
@@ -194,6 +203,25 @@ export class FileUpload {
             ETag: completionInfo.headers.get("etag")!,
             PartNumber: partInfo.part_number,
         };
+    }
+
+    async uploadPart(
+        file: File,
+        partInfo: UploadPartUrl
+    ): Promise<CompletedPart> {
+        return await this.throttler.throttle(() =>
+            this.cancelGuard(() =>
+                retry(
+                    MAX_UPLOAD_ATTEMPTS,
+                    () =>
+                        this.cancelGuard(() =>
+                            this._uploadPart(file, partInfo)
+                        ),
+                    () => this.uploadStatus !== FileUploadStatus.CANCELED,
+                    (e) => this.logApiError(e)
+                )
+            )
+        );
     }
 
     public async cancelUpload() {
@@ -324,12 +352,18 @@ export class FileUpload {
             );
         }
 
-        await ExperimentalApi.finishUpload({
-            usermediaId: uploadInfo.user_media.uuid,
-            data: {
-                parts: completedParts,
-            },
-        });
+        await retry(
+            MAX_UPLOAD_ATTEMPTS,
+            () =>
+                ExperimentalApi.finishUpload({
+                    usermediaId: uploadInfo.user_media.uuid,
+                    data: {
+                        parts: completedParts,
+                    },
+                }),
+            () => true,
+            (e) => this.logApiError(e)
+        );
         this.setUploadStatus(FileUploadStatus.COMPLETE);
     }
 }
