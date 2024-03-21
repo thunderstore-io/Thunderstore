@@ -84,6 +84,7 @@ class ResponseSerializer(serializers.Serializer):
     Expects an annotated and customized CustomListing object.
     """
 
+    uuid4 = serializers.UUIDField(source="package.uuid4")
     categories = CyberstormPackageCategorySerializer(many=True)
     community_identifier = serializers.CharField(source="community.identifier")
     community_name = serializers.CharField(source="community.name")
