@@ -133,7 +133,9 @@ def get_unique_username(original_username: str) -> str:
     username = slugified
     attempts_remaining = 10  # Prevent infinite loops in case of bugs.
 
-    while attempts_remaining and User.objects.filter(username=username).exists():
+    while (
+        attempts_remaining and User.objects.filter(username__iexact=username).exists()
+    ):
         suffix = uuid4().hex[:suffix_length]
         username = slugified[: (max_length - suffix_length)] + suffix
         attempts_remaining -= 1

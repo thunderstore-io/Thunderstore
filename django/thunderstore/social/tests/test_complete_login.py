@@ -242,6 +242,21 @@ def test_get_unique_username_clips_usernames_only_when_needed() -> None:
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("old_name", "new_name"),
+    (
+        ("fabio", "Fabio"),
+        ("Fabio", "fabio"),
+    ),
+)
+def test_get_unique_username_is_case_insensitive(old_name, new_name) -> None:
+    User.objects.create(username=old_name)
+    actual = get_unique_username(new_name)
+
+    assert actual.lower() != old_name.lower()
+
+
+@pytest.mark.django_db
 def test_get_unique_username_adds_random_suffixes_only_when_needed() -> None:
     username1 = get_unique_username("Fabio")
     User.objects.create(username=username1)
