@@ -318,3 +318,63 @@ def test_team_member_add_api_view__when_adding_a_member__fails_because_user_is_n
         .count()
         == 0
     )
+
+
+@pytest.mark.django_db
+def test_team_create__when_creating_a_team__succeeds(
+    api_client: APIClient,
+    user: UserType,
+):
+    api_client.force_authenticate(user)
+
+    response = api_client.post(
+        "/api/cyberstorm/teams/create/",
+        json.dumps({"name": "CoolestTeamNameEver"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["name"] == "CoolestTeamNameEver"
+    assert (
+        Team.objects.get(name="CoolestTeamNameEver")
+        .members.filter(user__username=user.username)
+        .count()
+        == 1
+    )
+
+
+@pytest.mark.django_db
+def test_team_create__when_creating_a_team__fails_because_user_is_not_authenticated(
+    api_client: APIClient,
+    user: UserType,
+):
+    response = api_client.post(
+        "/api/cyberstorm/teams/create/",
+        json.dumps({"name": "CoolestTeamNameEver"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    response_json = response.json()
+    assert response_json["detail"] == "Authentication credentials were not provided."
+    assert Team.objects.filter(name="CoolestTeamNameEver").count() == 0
+
+
+@pytest.mark.django_db
+def test_team_create__when_creating_a_team__fails_because_team_with_provided_name_exists(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    api_client.force_authenticate(user)
+
+    response = api_client.post(
+        "/api/cyberstorm/teams/create/",
+        json.dumps({"name": team.name}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert "A team with the provided name already exists" in response_json["name"]
