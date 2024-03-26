@@ -10,6 +10,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
     PackageListingEditCategoriesAPIView,
+    PackageRatingRateAPIView,
     PackageVersionChangelogAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
@@ -88,6 +89,11 @@ cyberstorm_urls = [
     path(
         "package/<str:namespace_id>/<str:package_name>/deprecate/",
         PackageDeprecateAPIView.as_view(),
+        name="cyberstorm.package.deprecate",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/rate/",
+        PackageRatingRateAPIView.as_view(),
         name="cyberstorm.package.deprecate",
     ),
     path(
