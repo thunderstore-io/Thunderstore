@@ -4,7 +4,7 @@ import threading
 from copy import copy, deepcopy
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer as SuperHTTPServer
-from typing import Any
+from typing import Any, List
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
@@ -274,6 +274,18 @@ def package_category(community):
         slug="test",
         community=community,
     )
+
+
+@pytest.fixture()
+def package_categories(community) -> List[PackageCategory]:
+    return [
+        PackageCategory.objects.create(community=community, slug=slug, name=name)
+        for slug, name in [
+            ("cat-1", "Category One"),
+            ("cat-2", "Category Two"),
+            ("cat-3", "Category Three"),
+        ]
+    ]
 
 
 @pytest.fixture()
