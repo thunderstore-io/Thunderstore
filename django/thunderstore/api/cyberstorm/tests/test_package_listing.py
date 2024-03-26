@@ -1,5 +1,6 @@
+import json
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 import pytest
 from rest_framework.test import APIClient
@@ -13,11 +14,14 @@ from thunderstore.community.factories import (
     PackageCategoryFactory,
     PackageListingFactory,
 )
+from thunderstore.community.models.package_category import PackageCategory
+from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,
     TeamMemberFactory,
 )
+from thunderstore.repository.models.team import TeamMember
 
 
 @pytest.mark.django_db
@@ -330,6 +334,272 @@ def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_
 
     assert actual["description"] == "This package has been removed."
     assert actual["icon_url"] is None
+
+
+@pytest.mark.django_db
+def test_package_listing_edit_categories_view__returns_error_for_non_existent_package_listing(
+    api_client: APIClient,
+    team_member: TeamMember,
+    active_package_listing: PackageListing,
+    package_categories: List[PackageCategory],
+) -> None:
+    active_package_listing.categories.set(package_categories)
+    active_package_listing.save()
+    apl_categories = active_package_listing.categories.all()
+    assert len(apl_categories) == 3
+
+    api_client.force_authenticate(team_member.user)
+    response = api_client.post(
+        f"/api/cyberstorm/listing/BAD/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": [x.slug for x in apl_categories],
+                "new_categories": [
+                    x.slug for x in [apl_categories[0], apl_categories[1]]
+                ],
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert actual["detail"] == "Not found."
+    assert (
+        len(
+            set(apl_categories).symmetric_difference(
+                PackageListing.objects.get(
+                    pk=active_package_listing.pk
+                ).categories.all()
+            )
+        )
+        == 0
+    )
+
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/BAD/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": [x.slug for x in apl_categories],
+                "new_categories": [
+                    x.slug for x in [apl_categories[0], apl_categories[1]]
+                ],
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert actual["detail"] == "Not found."
+    assert (
+        len(
+            set(apl_categories).symmetric_difference(
+                PackageListing.objects.get(
+                    pk=active_package_listing.pk
+                ).categories.all()
+            )
+        )
+        == 0
+    )
+
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/{active_package_listing.package.namespace.name}/BAD/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": [x.slug for x in apl_categories],
+                "new_categories": [
+                    x.slug for x in [apl_categories[0], apl_categories[1]]
+                ],
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert actual["detail"] == "Not found."
+    assert (
+        len(
+            set(apl_categories).symmetric_difference(
+                PackageListing.objects.get(
+                    pk=active_package_listing.pk
+                ).categories.all()
+            )
+        )
+        == 0
+    )
+
+
+@pytest.mark.django_db
+def test_package_listing_edit_categories_view__correct_values__remove_one_category__succeeds(
+    api_client: APIClient,
+    team_member: TeamMember,
+    active_package_listing: PackageListing,
+    package_categories: List[PackageCategory],
+) -> None:
+    active_package_listing.categories.set(package_categories)
+    active_package_listing.save()
+    apl_categories = active_package_listing.categories.all()
+    assert len(apl_categories) == 3
+
+    api_client.force_authenticate(team_member.user)
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": [x.slug for x in apl_categories],
+                "new_categories": [
+                    x.slug for x in [apl_categories[0], apl_categories[1]]
+                ],
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert actual["categories"] == [
+        {"id": str(x.id), "name": x.name, "slug": x.slug}
+        for x in [apl_categories[0], apl_categories[1]]
+    ]
+
+
+@pytest.mark.django_db
+def test_package_listing_edit_categories_view__correct_values__no_user__fails(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    package_categories: List[PackageCategory],
+) -> None:
+    active_package_listing.categories.set(package_categories)
+    active_package_listing.save()
+    apl_categories = active_package_listing.categories.all()
+    assert len(apl_categories) == 3
+
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": [x.slug for x in apl_categories],
+                "new_categories": [
+                    x.slug for x in [apl_categories[0], apl_categories[1]]
+                ],
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert actual["detail"] == "Authentication credentials were not provided."
+
+
+@pytest.mark.django_db
+def test_package_listing_edit_categories_view__wrong_current_categories__fails(
+    api_client: APIClient,
+    team_member: TeamMember,
+    active_package_listing: PackageListing,
+    package_categories: List[PackageCategory],
+) -> None:
+    active_package_listing.categories.set(package_categories)
+    active_package_listing.save()
+    apl_categories = active_package_listing.categories.all()
+    assert len(apl_categories) == 3
+
+    api_client.force_authenticate(team_member.user)
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {"current_categories": [apl_categories[0].slug], "new_categories": []}
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert actual["__all__"] == [
+        "Listings current categories do not match provided ones"
+    ]
+    assert (
+        len(
+            set(apl_categories).symmetric_difference(
+                PackageListing.objects.get(
+                    pk=active_package_listing.pk
+                ).categories.all()
+            )
+        )
+        == 0
+    )
+
+
+@pytest.mark.django_db
+def test_package_listing_edit_categories_view__correct_values__remove_all_categories__succeeds(
+    api_client: APIClient,
+    team_member: TeamMember,
+    active_package_listing: PackageListing,
+    package_categories: List[PackageCategory],
+) -> None:
+    active_package_listing.categories.set(package_categories)
+    active_package_listing.save()
+    apl_categories = active_package_listing.categories.all()
+    assert len(apl_categories) == 3
+
+    api_client.force_authenticate(team_member.user)
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": [x.slug for x in apl_categories],
+                "new_categories": [],
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert len(actual["categories"]) == 0
+
+
+@pytest.mark.django_db
+def test_package_listing_edit_categories_view__bad_values__fails(
+    api_client: APIClient,
+    team_member: TeamMember,
+    active_package_listing: PackageListing,
+    package_categories: List[PackageCategory],
+) -> None:
+    active_package_listing.categories.set(package_categories)
+    active_package_listing.save()
+    apl_categories = active_package_listing.categories.all()
+    assert len(apl_categories) == 3
+
+    api_client.force_authenticate(team_member.user)
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": [x.slug for x in apl_categories],
+                "new_categories": "bad",
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert 'Expected a list of items but got type "str".' in str(
+        actual["new_categories"]
+    )
+
+    response = api_client.post(
+        f"/api/cyberstorm/listing/{active_package_listing.community.identifier}/{active_package_listing.package.namespace.name}/{active_package_listing.package.name}/edit/categories/",
+        json.dumps(
+            {
+                "current_categories": "bad",
+                "new_categories": [
+                    x.slug for x in [apl_categories[0], apl_categories[1]]
+                ],
+            }
+        ),
+        content_type="application/json",
+    )
+    actual = response.json()
+
+    assert 'Expected a list of items but got type "str".' in str(
+        actual["current_categories"]
+    )
 
 
 def _date_to_z(value: datetime) -> str:

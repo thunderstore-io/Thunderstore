@@ -12,16 +12,25 @@ from django.db.models import (
     Sum,
     Value,
 )
+from django.http import HttpRequest
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
     CyberstormTeamMemberSerializer,
 )
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import (
+    CyberstormAutoSchemaMixin,
+    conditional_swagger_auto_schema,
+)
+from thunderstore.community.models.package_category import PackageCategory
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.repository.forms import PackageListingEditCategoriesForm
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
 
@@ -199,3 +208,66 @@ def get_custom_package_listing(
     listing.dependant_count = get_package_dependants(listing.package.pk).count()
 
     return listing
+
+
+class CyberstormListingEditCategoriesRequestSerialiazer(serializers.Serializer):
+    current_categories = serializers.ListSerializer(child=serializers.SlugField())
+    new_categories = serializers.ListSerializer(child=serializers.SlugField())
+
+
+class CyberstormListingEditCategoriesResponseSerialiazer(serializers.Serializer):
+    categories = serializers.ListSerializer(child=CyberstormPackageCategorySerializer())
+
+
+class PackageListingEditCategoriesAPIView(APIView):
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormListingEditCategoriesRequestSerialiazer,
+        responses={200: CyberstormListingEditCategoriesResponseSerialiazer},
+        operation_id="cyberstorm.listing.edit.categories",
+        tags=["cyberstorm"],
+    )
+    def post(
+        self,
+        request: HttpRequest,
+        community_id: str,
+        namespace_id: str,
+        package_name: str,
+    ):
+        serializer = CyberstormListingEditCategoriesRequestSerialiazer(
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        listing = get_object_or_404(
+            PackageListing,
+            community__identifier=community_id,
+            package__namespace__name=namespace_id,
+            package__name__iexact=package_name,
+        )
+
+        current_categories = [
+            get_object_or_404(
+                PackageCategory, community__identifier=community_id, slug=cat_slug
+            )
+            for cat_slug in serializer.validated_data["current_categories"]
+        ]
+
+        new_categories = [
+            get_object_or_404(
+                PackageCategory, community__identifier=community_id, slug=cat_slug
+            )
+            for cat_slug in serializer.validated_data["new_categories"]
+        ]
+
+        form = PackageListingEditCategoriesForm(
+            user=request.user,
+            instance=listing,
+            initial={"categories": current_categories},
+            data={"categories": new_categories},
+        )
+        if form.is_valid():
+            listing = form.save()
+            return Response(
+                CyberstormListingEditCategoriesResponseSerialiazer(listing).data
+            )
+        else:
+            raise ValidationError(form.errors)
