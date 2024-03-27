@@ -4,10 +4,13 @@ from thunderstore.api.cyberstorm.views import (
     CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
+    PackageDeprecateAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
+    PackageListingEditCategoriesAPIView,
+    PackageRatingRateAPIView,
     PackageVersionChangelogAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
@@ -49,6 +52,11 @@ cyberstorm_urls = [
         name="cyberstorm.listing",
     ),
     path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/edit/categories/",
+        PackageListingEditCategoriesAPIView.as_view(),
+        name="cyberstorm.listing.edit.categories",
+    ),
+    path(
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/dependants/",
         PackageListingByDependencyListAPIView.as_view(),
         name="cyberstorm.listing.by-dependency-list",
@@ -77,6 +85,16 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/versions/",
         PackageVersionListAPIView.as_view(),
         name="cyberstorm.package.versions",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/deprecate/",
+        PackageDeprecateAPIView.as_view(),
+        name="cyberstorm.package.deprecate",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/rate/",
+        PackageRatingRateAPIView.as_view(),
+        name="cyberstorm.package.deprecate",
     ),
     path(
         "team/<str:team_id>/",
