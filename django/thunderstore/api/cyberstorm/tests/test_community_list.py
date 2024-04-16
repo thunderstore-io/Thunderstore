@@ -17,6 +17,7 @@ def test_api_cyberstorm_community_list_get_success(
     client: APIClient,
     community_site: CommunitySite,
     dummy_image,
+    dummy_cover_image,
 ):
     community1 = CommunityFactory(
         aggregated_fields=CommunityAggregatedFields.objects.create(),
@@ -24,6 +25,7 @@ def test_api_cyberstorm_community_list_get_success(
     community2 = CommunityFactory(
         aggregated_fields=CommunityAggregatedFields.objects.create(),
         background_image=dummy_image,
+        cover_image=dummy_cover_image,
     )
 
     for _ in range(10):
@@ -65,6 +67,7 @@ def test_api_cyberstorm_community_list_get_success(
         assert results[index]["total_download_count"] == c.aggregated.download_count
         assert results[index]["total_package_count"] == c.aggregated.package_count
         assert results[index]["background_image_url"] == c.background_image_url
+        assert results[index]["cover_image_url"] == c.cover_image_url
         assert results[index]["description"] == c.description
         assert results[index]["discord_url"] == c.discord_url
 

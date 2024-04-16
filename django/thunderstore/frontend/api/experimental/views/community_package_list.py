@@ -267,6 +267,7 @@ class CommunityPackageListApiView(APIView):
         return CommunityPackageListSerializer(
             {
                 "bg_image_src": community.background_image_url,
+                "cover_image_src": community.cover_image_url,
                 "categories": [
                     PackageCategorySerializer(c).data
                     for c in community.package_categories.all()

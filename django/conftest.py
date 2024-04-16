@@ -471,6 +471,15 @@ def dummy_image() -> Image:
 
 
 @pytest.fixture(scope="function")
+def dummy_cover_image() -> Image:
+    file_obj = io.BytesIO()
+    image = Image.new("RGB", (1, 1), "#C0FFEE")
+    image.save(file_obj, format="PNG")
+    file_obj.seek(0)
+    return File(file_obj, name="test_cover.png")
+
+
+@pytest.fixture(scope="function")
 def manifest_v1_package_upload_id(
     manifest_v1_package_bytes: bytes,
     api_client: APIClient,
