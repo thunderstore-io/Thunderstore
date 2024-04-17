@@ -108,6 +108,7 @@ class PackageDetailApiView(APIView):
         return PackageDetailViewContentSerializer(
             {
                 "bg_image_src": listing.community.background_image_url,
+                "cover_image_src": listing.community.cover_image_url,
                 "categories": [
                     PackageCategorySerializer(c).data for c in listing.categories.all()
                 ],

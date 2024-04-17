@@ -44,6 +44,8 @@ class CommunityAdmin(admin.ModelAdmin):
         "background_image_height",
         "icon_width",
         "icon_height",
+        "cover_image_width",
+        "cover_image_height",
         "datetime_created",
         "datetime_updated",
         "aggregated_fields",

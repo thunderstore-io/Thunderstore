@@ -8,6 +8,7 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     discord_url = serializers.CharField(required=False)
     datetime_created = serializers.DateTimeField()
     background_image_url = serializers.CharField(required=False)
+    cover_image_url = serializers.CharField(required=False)
     icon_url = serializers.CharField(required=False)
     total_download_count = serializers.SerializerMethodField()
     total_package_count = serializers.SerializerMethodField()

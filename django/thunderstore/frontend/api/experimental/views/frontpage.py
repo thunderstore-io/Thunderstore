@@ -43,6 +43,7 @@ class FrontPageApiView(APIView):
         communities = [
             {
                 "bg_image_src": c.background_image_url,
+                "cover_image_src": c.cover_image_url,
                 "download_count": c.aggregated.download_count,
                 "identifier": c.identifier,
                 "name": c.name,
