@@ -172,6 +172,14 @@ window.ts.PackageManagementPanel(
 
 {% dynamic_html "package_page_actions" %}
 
+<div id="package-report-button"></div>
+<script type="text/javascript">
+    window.ts.ReportButton(
+        document.getElementById("package-report-button"),
+        {{ report_button_props|encode_props }}
+    );
+</script>
+
 {% with object.package.dependencies as dependencies %}
 {% if dependencies %}
     {% include "repository/includes/dependencies.html" with dependencies=dependencies %}

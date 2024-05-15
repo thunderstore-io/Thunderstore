@@ -2,14 +2,18 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from thunderstore.community.api.experimental.serializers import (
+    PackageListingReportRequestSerializer,
     PackageListingUpdateRequestSerializer,
     PackageListingUpdateResponseSerializer,
 )
 from thunderstore.community.models import PackageListing
-from thunderstore.repository.views.package._utils import get_package_listing_or_404
+from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.views.repository import get_package_listing_or_404
+from thunderstore.ts_reports.models import PackageReport, PackageReportReason
 
 
 class PackageListingUpdateApiView(GenericAPIView):
@@ -124,3 +128,37 @@ class PackageListingApproveApiView(GenericAPIView):
             return Response(status=status.HTTP_200_OK)
         except PermissionError:
             raise PermissionDenied()
+
+
+class PackageListingReportApiView(GenericAPIView):
+    queryset = PackageListing.objects.active().select_related(
+        "community",
+        "package",
+    )
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_id="experimental.package_listing.report",
+        request_body=PackageListingReportRequestSerializer,
+        responses={200: "Success"},
+        tags=["experimental"],
+    )
+    def post(self, request, *args, **kwargs):
+        request_serializer = PackageListingReportRequestSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        listing: PackageListing = self.get_object()
+
+        version: PackageVersion = request_serializer.validated_data[
+            "package_version_id"
+        ]
+        reason: PackageReportReason = request_serializer.validated_data["reason"]
+
+        PackageReport.handle_user_report(
+            submitted_by=request.user,
+            package_listing=listing,
+            package_version=version,
+            reason=reason,
+            description=request_serializer.validated_data["description"],
+        )
+
+        raise PermissionDenied(f"You tried to report {version.full_version_name}")
