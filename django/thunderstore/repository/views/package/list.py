@@ -20,7 +20,7 @@ from thunderstore.community.models import (
 )
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
-from thunderstore.repository.models import Team, get_package_dependants
+from thunderstore.repository.models import Team, get_package_dependants, Package
 from thunderstore.repository.views.package._utils import get_moderatable_communities
 
 # Should be divisible by 4 and 3
@@ -161,6 +161,9 @@ class PackageListSearchView(CommunityMixin, ListView):
     def get_search_query(self):
         return self.request.GET.get("q", "")
 
+    def get_search_blob(self):
+        return self.request.GET.get("blob", "")
+
     def order_queryset(self, queryset):
         active_ordering = self.get_active_ordering()
         if active_ordering == "newest":
@@ -208,6 +211,11 @@ class PackageListSearchView(CommunityMixin, ListView):
 
         return queryset.exclude(icontains_query).distinct()
 
+    def search_for_blob(self, queryset, blob):
+        return queryset.filter(
+            package__latest__file_tree__entries__blob__checksum_sha256=blob
+        )
+
     def filter_approval_status(
         self, queryset: QuerySet[PackageListing]
     ) -> QuerySet[PackageListing]:
@@ -250,6 +258,10 @@ class PackageListSearchView(CommunityMixin, ListView):
             )
         )
 
+        search_blob = self.get_search_blob()
+        if search_blob:
+            queryset = self.search_for_blob(queryset, search_blob)
+
         included_categories = self.filter_require_categories
         if included_categories:
             include_categories_qs = Q()
@@ -275,6 +287,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         search_query = self.get_search_query()
         if search_query:
             queryset = self.perform_search(queryset, search_query)
+
         return self.order_queryset(queryset)
 
     def get_breadcrumbs(self):
