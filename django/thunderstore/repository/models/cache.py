@@ -1,14 +1,20 @@
 import gzip
 import io
+import json
 from datetime import timedelta
-from typing import Optional
+from typing import List, Optional
 
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
-from thunderstore.community.models import Community
-from thunderstore.core.mixins import S3FileMixin
+from thunderstore.community.models import Community, PackageListing
+from thunderstore.core.mixins import S3FileMixin, SafeDeleteMixin
+from thunderstore.repository.cache import (
+    get_package_listing_queryset,
+    order_package_listing_queryset,
+)
+from thunderstore.storage.models import DataBlob, DataBlobGroup
 
 
 class APIExperimentalPackageIndexCache(S3FileMixin):
@@ -111,3 +117,166 @@ class APIV1PackageCache(S3FileMixin):
                 entry.delete()
         for entry in cls.objects.filter(community=None).iterator():
             entry.delete()
+
+
+# TODO: unit tests
+class APIV1ChunkedPackageCache(SafeDeleteMixin):
+    community: Community = models.ForeignKey(
+        "community.Community",
+        related_name="chunked_package_list_cache",
+        on_delete=models.CASCADE,
+    )
+    index: DataBlob = models.OneToOneField(
+        "storage.DataBlob",
+        related_name="chunked_package_indexes",
+        on_delete=models.PROTECT,
+    )
+    chunks: DataBlobGroup = models.ForeignKey(
+        "storage.DataBlobGroup",
+        related_name="chunked_package_list_cache",
+        on_delete=models.PROTECT,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        get_latest_by = "created_at"
+
+    @classmethod
+    def get_latest_for_community(
+        cls,
+        community: Community,
+    ) -> Optional["APIV1ChunkedPackageCache"]:
+        return cls.objects.filter(community=community.pk).latest()
+
+    @classmethod
+    def update_for_community(cls, community: Community) -> None:
+        """
+        Chunk community's PackageListings into blob files and create an
+        index blob that points to URLs of the chunks.
+        """
+        uncompressed_blob_size = 14000000  # 14MB compresses into ~1MB files.
+        group = DataBlobGroup.objects.create(
+            name=f"Chunked package list: {community.identifier}",
+        )
+        chunk_content = bytearray()
+
+        def finalize_blob() -> None:
+            group.add_entry(
+                gzip.compress(b"[" + chunk_content + b"]"),
+                name=f"Package list chunk for {community.identifier}",
+                content_type="application/json",
+                content_encoding="gzip",
+            )
+
+        for listing in get_package_listings(community):
+            listing_bytes = listing_to_json(listing)
+
+            # Start new blob if adding current chuck would exceed the size limit.
+            # +2 for closing brackets
+            if len(chunk_content) + len(listing_bytes) + 2 > uncompressed_blob_size:
+                finalize_blob()
+                chunk_content = bytearray(listing_bytes)
+            else:
+                chunk_content.extend(
+                    listing_bytes if not len(chunk_content) else b"," + listing_bytes,
+                )
+
+        if len(chunk_content):
+            finalize_blob()
+
+        group.set_complete()
+        index = get_index_blob(group)
+        cls.objects.create(community=community, index=index, chunks=group)
+
+    @classmethod
+    def drop_stale_cache(cls) -> None:
+        """
+        Delete objects from database and blob files from S3 buckets.
+        Cutoff period is used to ensure blobs still referenced by
+        cached data is not dropped prematurely.
+
+        TODO: only soft deletes the parent object until we've figured
+        # out how to safely delete the blobs from the main and mirror
+        # storages. When the hard deletes are implemented, acknowledge
+        # that identical (e.g. empty) index/package chunk blobs are
+        # shared between the caches. Therefore a blob can't be deleted
+        # just because it's no longer used by *a* cache.
+        """
+        for community in Community.objects.iterator():
+            latest = cls.get_latest_for_community(community)
+            if latest is None:
+                continue
+
+            cutoff = latest.created_at - timedelta(hours=3)
+            cls.objects.filter(created_at__lte=cutoff, community=community).update(
+                is_deleted=True,
+            )
+
+
+def get_package_listings(community: Community) -> models.QuerySet["PackageListing"]:
+    listing_ids = get_package_listing_queryset(community.identifier).values_list(
+        "id",
+        flat=True,
+    )
+    listing_ref = PackageListing.objects.filter(pk=models.OuterRef("pk"))
+
+    return order_package_listing_queryset(
+        PackageListing.objects.filter(id__in=listing_ids)
+        .select_related("community", "package", "package__owner")
+        .prefetch_related("categories", "community__sites", "package__versions")
+        .annotate(
+            _rating_score=models.Subquery(
+                listing_ref.annotate(
+                    ratings=models.Count("package__package_ratings"),
+                ).values("ratings"),
+            ),
+        ),
+    )
+
+
+def listing_to_json(listing: PackageListing) -> bytes:
+    return json.dumps(
+        {
+            "name": listing.package.name,
+            "full_name": listing.package.full_package_name,
+            "owner": listing.package.owner.name,
+            "package_url": listing.get_full_url(),
+            "donation_link": listing.package.owner.donation_link,
+            "date_created": listing.package.date_created.isoformat(),
+            "date_updated": listing.package.date_updated.isoformat(),
+            "uuid4": str(listing.package.uuid4),
+            "rating_score": listing.rating_score,
+            "is_pinned": listing.package.is_pinned,
+            "is_deprecated": listing.package.is_deprecated,
+            "has_nsfw_content": listing.has_nsfw_content,
+            "categories": [c.name for c in listing.categories.all()],
+            # TODO: god-awful performance from OVER NINE THOUSAAAAND database hits
+            "versions": [
+                {
+                    "name": version.name,
+                    "full_name": version.full_version_name,
+                    "description": version.description,
+                    "icon": version.icon.url,
+                    "version_number": version.version_number,
+                    "dependencies": [
+                        d.full_version_name for d in version.dependencies.all()
+                    ],
+                    "download_url": version.full_download_url,
+                    "downloads": version.downloads,
+                    "date_created": version.date_created.isoformat(),
+                    "website_url": version.website_url,
+                    # TODO: what is this needed for, inactive ones have been filtered out anyway?
+                    "is_active": version.is_active,
+                    "uuid4": str(version.uuid4),
+                    "file_size": version.file_size,
+                }
+                for version in listing.package.available_versions
+            ],
+        },
+    ).encode()
+
+
+def get_index_blob(group: DataBlobGroup) -> DataBlob:
+    chunk_urls: List[str] = [e.blob.data_url for e in group.entries.all()]
+    index_content = gzip.compress(json.dumps(chunk_urls).encode())
+    return DataBlob.get_or_create(index_content)
