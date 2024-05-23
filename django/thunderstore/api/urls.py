@@ -4,6 +4,7 @@ from thunderstore.api.cyberstorm.views import (
     CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
+    DynamicHTMLAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -18,6 +19,11 @@ from thunderstore.api.cyberstorm.views import (
 )
 
 cyberstorm_urls = [
+    path(
+        "dynamichtml/<str:placement>/",
+        DynamicHTMLAPIView.as_view(),
+        name="cyberstorm.dynamichtml",
+    ),
     path(
         "community/",
         CommunityListAPIView.as_view(),

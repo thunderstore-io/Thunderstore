@@ -22,6 +22,10 @@ class DynamicPlacement(ChoiceEnum):
     package_page_actions = "package_page_actions"
     main_content_left = "main_content_left"
     main_content_right = "main_content_right"
+    cyberstorm_header = "cyberstorm_header"
+    cyberstorm_body_beginning = "cyberstorm_body_beginning"
+    cyberstorm_content_left = "cyberstorm_content_left"
+    cyberstorm_content_right = "cyberstorm_content_right"
 
 
 class DynamicHTML(models.Model):
