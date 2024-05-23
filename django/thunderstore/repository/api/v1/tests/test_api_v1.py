@@ -13,7 +13,10 @@ from thunderstore.community.models import CommunitySite, PackageListing
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.api.v1.tasks import update_api_v1_caches
 from thunderstore.repository.api.v1.viewsets import PACKAGE_SERIALIZER
-from thunderstore.repository.models.cache import APIV1PackageCache
+from thunderstore.repository.models.cache import (
+    APIV1ChunkedPackageCache,
+    APIV1PackageCache,
+)
 
 
 @pytest.mark.django_db
@@ -240,3 +243,19 @@ def test_api_v1_package_listing_serializer_donation_link_omission(
         assert result[0]["donation_link"] == donation_link
     else:
         assert "donation_link" not in result[0]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("has_cache", (False, True))
+def test_api_v1_community_package_listing_index__depending_on_cache__returns_302_or_503(
+    api_client: APIClient,
+    community_site: CommunitySite,
+    has_cache: bool,
+) -> None:
+    if has_cache:
+        APIV1ChunkedPackageCache.update_for_community(community_site.community)
+
+    url = f"/c/{community_site.community.identifier}/api/v1/package-listing-index/"
+    response = api_client.get(url)
+
+    assert response.status_code == (302 if has_cache else 503)
