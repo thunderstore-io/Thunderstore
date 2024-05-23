@@ -2,7 +2,7 @@ import gzip
 import io
 import json
 from datetime import timedelta
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from django.core.files.base import ContentFile
 from django.db import models
@@ -119,14 +119,13 @@ class APIV1PackageCache(S3FileMixin):
             entry.delete()
 
 
-# TODO: unit tests
 class APIV1ChunkedPackageCache(SafeDeleteMixin):
     community: Community = models.ForeignKey(
         "community.Community",
         related_name="chunked_package_list_cache",
         on_delete=models.CASCADE,
     )
-    index: DataBlob = models.OneToOneField(
+    index: DataBlob = models.ForeignKey(
         "storage.DataBlob",
         related_name="chunked_package_indexes",
         on_delete=models.PROTECT,
@@ -141,20 +140,30 @@ class APIV1ChunkedPackageCache(SafeDeleteMixin):
     class Meta:
         get_latest_by = "created_at"
 
+    CACHE_CUTOFF_HOURS = 3
+    UNCOMPRESSED_CHUNK_LIMIT = 14000000  # 14MB compresses into ~1MB files.
+
     @classmethod
     def get_latest_for_community(
         cls,
         community: Community,
     ) -> Optional["APIV1ChunkedPackageCache"]:
-        return cls.objects.filter(community=community.pk).latest()
+        try:
+            return cls.objects.filter(community=community.pk).latest()
+        except APIV1ChunkedPackageCache.DoesNotExist:
+            return None
 
     @classmethod
-    def update_for_community(cls, community: Community) -> None:
+    def update_for_community(
+        cls,
+        community: Community,
+        chunk_size_limit: Optional[int] = None,
+    ) -> None:
         """
         Chunk community's PackageListings into blob files and create an
         index blob that points to URLs of the chunks.
         """
-        uncompressed_blob_size = 14000000  # 14MB compresses into ~1MB files.
+        uncompressed_blob_size = chunk_size_limit or cls.UNCOMPRESSED_CHUNK_LIMIT
         group = DataBlobGroup.objects.create(
             name=f"Chunked package list: {community.identifier}",
         )
@@ -162,7 +171,7 @@ class APIV1ChunkedPackageCache(SafeDeleteMixin):
 
         def finalize_blob() -> None:
             group.add_entry(
-                gzip.compress(b"[" + chunk_content + b"]"),
+                gzip.compress(b"[" + chunk_content + b"]", mtime=0),
                 name=f"Package list chunk for {community.identifier}",
                 content_type="application/json",
                 content_encoding="gzip",
@@ -171,17 +180,18 @@ class APIV1ChunkedPackageCache(SafeDeleteMixin):
         for listing in get_package_listings(community):
             listing_bytes = listing_to_json(listing)
 
-            # Start new blob if adding current chuck would exceed the size limit.
-            # +2 for closing brackets
-            if len(chunk_content) + len(listing_bytes) + 2 > uncompressed_blob_size:
+            # Always add the first listing regardless of the size limit.
+            if not chunk_content:
+                chunk_content.extend(listing_bytes)
+            # Start new blob if adding current chunck would exceed the size limit.
+            # +2 for opening and closing brackets
+            elif len(chunk_content) + len(listing_bytes) + 2 > uncompressed_blob_size:
                 finalize_blob()
                 chunk_content = bytearray(listing_bytes)
             else:
-                chunk_content.extend(
-                    listing_bytes if not len(chunk_content) else b"," + listing_bytes,
-                )
+                chunk_content.extend(b"," + listing_bytes)
 
-        if len(chunk_content):
+        if len(chunk_content) or not group.entries.exists():
             finalize_blob()
 
         group.set_complete()
@@ -207,10 +217,18 @@ class APIV1ChunkedPackageCache(SafeDeleteMixin):
             if latest is None:
                 continue
 
-            cutoff = latest.created_at - timedelta(hours=3)
+            cutoff = latest.created_at - timedelta(hours=cls.CACHE_CUTOFF_HOURS)
             cls.objects.filter(created_at__lte=cutoff, community=community).update(
                 is_deleted=True,
             )
+
+    @classmethod
+    def get_blob_content(cls, blob: DataBlob) -> List[Any]:
+        """
+        QoL method for returning the content of either index or chunk blob.
+        """
+        with gzip.open(blob.data, "rb") as f:
+            return json.loads(f.read())
 
 
 def get_package_listings(community: Community) -> models.QuerySet["PackageListing"]:
@@ -278,5 +296,5 @@ def listing_to_json(listing: PackageListing) -> bytes:
 
 def get_index_blob(group: DataBlobGroup) -> DataBlob:
     chunk_urls: List[str] = [e.blob.data_url for e in group.entries.all()]
-    index_content = gzip.compress(json.dumps(chunk_urls).encode())
+    index_content = gzip.compress(json.dumps(chunk_urls).encode(), mtime=0)
     return DataBlob.get_or_create(index_content)
