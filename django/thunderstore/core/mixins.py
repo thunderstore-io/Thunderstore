@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, connections, models
 from django.db.models import Q
 from django.shortcuts import redirect
+from django.urls import reverse
 
 from thunderstore.cache.storage import CACHE_STORAGE
 
@@ -106,3 +107,14 @@ class S3FileMixin(SafeDeleteMixin):
         indexes = [
             models.Index(fields=["last_modified"]),
         ]
+
+
+class AdminMixin(models.Model):
+    def get_admin_url(self):
+        return reverse(
+            "admin:%s_%s_change" % (self._meta.app_label, self._meta.model_name),
+            args=[self.pk],
+        )
+
+    class Meta:
+        abstract = True

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.http import HttpRequest
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from thunderstore.storage.admin.mixins import ReadOnlyInline
@@ -9,17 +10,23 @@ from thunderstore.storage.models import DataBlobGroup, DataBlobReference
 class DataBlobReferenceInline(ReadOnlyInline, admin.TabularInline):
     model = DataBlobReference
     fields = (
-        "name",
+        "link",
         "data_size",
         "file",
     )
     readonly_fields = (
+        "link",
         "data_size",
         "file",
     )
 
     def file(self, obj: DataBlobReference):
         return mark_safe(f'<a href="{obj.data_url}">{obj.blob.data}</a>')
+
+    def link(self, obj: DataBlobReference):
+        return mark_safe(f'<a href="{obj.get_admin_url()}">{obj}</a>')
+
+    link.short_description = "Name"
 
 
 @admin.register(DataBlobGroup)
