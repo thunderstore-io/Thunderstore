@@ -41,6 +41,7 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "package__owner__name",
         "package__namespace__name",
         "version_number",
+        "file_tree__entries__blob__checksum_sha256",
     )
     date_hierarchy = "date_created"
     readonly_fields = [x.name for x in PackageVersion._meta.fields] + [
