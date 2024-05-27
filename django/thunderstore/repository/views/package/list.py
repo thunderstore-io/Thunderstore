@@ -57,7 +57,6 @@ class PackageListSearchView(CommunityMixin, ListView):
         cache_vary = self.get_cache_vary()
         cache_vary += f".{self.get_community_cache_vary()}"
         cache_vary += f".{self.get_search_query()}"
-        cache_vary += f".{self.get_blob_query()}"
         cache_vary += f".{self.get_active_ordering()}"
         cache_vary += f".{self.get_included_categories()}"
         cache_vary += f".{self.get_excluded_categories()}"
@@ -162,9 +161,6 @@ class PackageListSearchView(CommunityMixin, ListView):
     def get_search_query(self):
         return self.request.GET.get("q", "")
 
-    def get_blob_query(self):
-        return self.request.GET.get("blob", "")
-
     def order_queryset(self, queryset):
         active_ordering = self.get_active_ordering()
         if active_ordering == "newest":
@@ -254,13 +250,6 @@ class PackageListSearchView(CommunityMixin, ListView):
             )
         )
 
-        # If the URL has a query parameter for blob (/?blob=X), filter out all packages that don't include that blob
-        blob_query_parameter = self.get_blob_query()
-        if blob_query_parameter:
-            queryset = queryset.filter(
-                package__latest__file_tree__entries__blob__checksum_sha256=blob_query_parameter
-            ).distinct()
-
         included_categories = self.filter_require_categories
         if included_categories:
             include_categories_qs = Q()
@@ -342,7 +331,6 @@ class PackageListSearchView(CommunityMixin, ListView):
             "included_categories",
             "section",
             "page",
-            "blob",
         }
         breadcrumbs = self.get_breadcrumbs()
         if len(breadcrumbs) > 1:
