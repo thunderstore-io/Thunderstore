@@ -5,14 +5,14 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import get_storage_class
 from django.db import models
 
-from thunderstore.core.mixins import AdminMixin, SafeDeleteMixin
+from thunderstore.core.mixins import AdminLinkMixin, SafeDeleteMixin
 
 
 def get_object_file_path(_, filename: str) -> str:
     return f"blob-storage/sha256/{filename}.sha256.blob"
 
 
-class DataBlob(SafeDeleteMixin, AdminMixin):
+class DataBlob(SafeDeleteMixin, AdminLinkMixin):
     """
     The DataBlob class is responsible for storing arbitrary blobs of data with
     automatic deduplication by blob sha256 checksum. It is not interested in

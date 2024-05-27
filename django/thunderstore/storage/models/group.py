@@ -2,11 +2,11 @@ from typing import Optional
 
 from django.db import models
 
-from thunderstore.core.mixins import AdminMixin, TimestampMixin
+from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.storage.models.reference import DataBlobReference
 
 
-class DataBlobGroup(TimestampMixin, AdminMixin):
+class DataBlobGroup(TimestampMixin, AdminLinkMixin):
     """
     The DataBlobGroup class is intended to support grouping of multiple
     data blobs into logical groups, e.g. file trees. It does not hold much

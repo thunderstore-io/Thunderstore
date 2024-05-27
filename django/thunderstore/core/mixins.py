@@ -109,10 +109,10 @@ class S3FileMixin(SafeDeleteMixin):
         ]
 
 
-class AdminMixin(models.Model):
+class AdminLinkMixin(models.Model):
     def get_admin_url(self):
         return reverse(
-            "admin:%s_%s_change" % (self._meta.app_label, self._meta.model_name),
+            f"admin:{self._meta.app_label}_{self._meta.model_name}_change",
             args=[self.pk],
         )
 
