@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.http import HttpRequest
-from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from thunderstore.storage.admin.mixins import ReadOnlyInline
