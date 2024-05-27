@@ -32,7 +32,7 @@ class BasePlugin(ABC):
 
     @classmethod
     def get_package_tabs(
-        cls, user_type: "UserType", listing: "PackageListing"
+        cls,
     ) -> Dict[str, Callable[["UserType", "PackageListing"], "PartialTab"]]:
         return {}
 

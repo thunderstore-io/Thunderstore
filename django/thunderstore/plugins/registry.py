@@ -48,7 +48,7 @@ class PluginRegistry:
         self, user: "UserType", listing: "PackageListing"
     ) -> Dict[str, "PartialTab"]:
         result = {}
-        for entry in (x.get_package_tabs(user, listing) for x in self.plugins):
+        for entry in (x.get_package_tabs() for x in self.plugins):
             for key, getter in entry.items():
                 result[key] = getter(user, listing)
         return result
