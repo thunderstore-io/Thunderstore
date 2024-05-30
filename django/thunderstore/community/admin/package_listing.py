@@ -62,6 +62,7 @@ class PackageListingAdmin(admin.ModelAdmin):
         "package__namespace__name",
         "package__owner__name",
         "package__name",
+        "package__versions__file_tree__entries__blob__checksum_sha256",
     )
     list_select_related = (
         "package",
