@@ -16,6 +16,7 @@ from thunderstore.cache.cache import cache_function_result
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.enums import OptionalBoolChoice
+from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.permissions.utils import validate_user
@@ -43,7 +44,7 @@ def get_package_dependants_list(package_pk: int):
     return list(get_package_dependants(package_pk))
 
 
-class Package(models.Model):
+class Package(AdminLinkMixin, models.Model):
     objects = PackageQueryset.as_manager()
     wiki: Optional["PackageWiki"]
 

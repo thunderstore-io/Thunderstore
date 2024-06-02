@@ -4,6 +4,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.tasks.files import extract_package_version_file_tree
 
@@ -44,9 +45,16 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "file_tree__entries__blob__checksum_sha256",
     )
     date_hierarchy = "date_created"
-    readonly_fields = [x.name for x in PackageVersion._meta.fields] + [
+    readonly_fields = (
         "file_tree_link",
-    ]
+        "listings",
+    )
+    exclude = (
+        "website_url",
+        "file_tree",
+        "readme",
+        "changelog",
+    )
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return (
@@ -73,6 +81,15 @@ class PackageVersionAdmin(admin.ModelAdmin):
             kwargs={"object_id": obj.file_tree.pk},
         )
         return mark_safe(f'<a href="{url}">{obj.file_tree}</a>')
+
+    file_tree_link.short_description = "File tree"
+
+    def listings(self, obj):
+        listings = PackageListing.objects.filter(package__versions=obj)
+        links = ""
+        for listing in listings:
+            links += f'<a href="{listing.get_admin_url()}">{listing.community}</a><br/>'
+        return mark_safe(links)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

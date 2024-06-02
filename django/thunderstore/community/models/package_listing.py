@@ -11,7 +11,7 @@ from django.utils.functional import cached_property
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.core.mixins import TimestampMixin
+from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
@@ -46,7 +46,7 @@ class PackageListingQueryset(models.QuerySet):
 # TODO: Add a db constraint that ensures a package listing and it's categories
 #       belong to the same community. This might require actually specifying
 #       the intermediate model in code rather than letting Django handle it
-class PackageListing(TimestampMixin, models.Model):
+class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
     """
     Represents a package's relation to how it's displayed on the site and APIs
     """

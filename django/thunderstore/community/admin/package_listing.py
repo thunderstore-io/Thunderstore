@@ -3,6 +3,7 @@ from typing import Optional
 from django.contrib import admin
 from django.db import transaction
 from django.db.models import QuerySet
+from django.utils.safestring import mark_safe
 
 from ..consts import PackageListingReviewStatus
 from ..forms import PackageListingAdminForm
@@ -71,11 +72,16 @@ class PackageListingAdmin(admin.ModelAdmin):
         "community",
     )
     readonly_fields = (
-        "package",
+        "package_link",
         "community",
         "datetime_created",
         "datetime_updated",
     )
+
+    def package_link(self, obj):
+        return mark_safe(f'<a href="{obj.package.get_admin_url()}">{obj.package}</a>')
+
+    package_link.short_description = "Package"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

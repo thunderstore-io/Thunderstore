@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.db import transaction
 from django.db.models import QuerySet
 from django.http import HttpRequest
+from django.utils.safestring import mark_safe
 
 from thunderstore.repository.admin.actions import activate, deactivate
 from thunderstore.repository.models import Package, PackageVersion
@@ -12,6 +13,7 @@ from thunderstore.repository.models import Package, PackageVersion
 class PackageVersionInline(admin.StackedInline):
     model = PackageVersion
     readonly_fields = (
+        "version_link",
         "date_created",
         "description",
         "downloads",
@@ -19,12 +21,18 @@ class PackageVersionInline(admin.StackedInline):
         "file_size",
         "format_spec",
         "icon",
+        "file_tree_link",
+        "visibility",
+    )
+    exclude = (
         "version_number",
         "website_url",
         "file_tree",
-        "visibility",
+        "readme",
+        "changelog",
+        "dependencies",
+        "name",
     )
-    exclude = ("readme", "changelog", "dependencies", "name")
     extra = 0
 
     def has_add_permission(self, request: HttpRequest, obj) -> bool:
@@ -32,6 +40,20 @@ class PackageVersionInline(admin.StackedInline):
 
     def has_delete_permission(self, request: HttpRequest, obj=None) -> bool:
         return False
+
+    def version_link(self, obj):
+        return mark_safe(f'<a href="{obj.get_admin_url()}">{obj}</a>')
+
+    version_link.short_description = "Version"
+
+    def file_tree_link(self, obj):
+        if not obj.file_tree:
+            return None
+        return mark_safe(
+            f'<a href="{obj.file_tree.get_admin_url()}">{obj.file_tree}</a>'
+        )
+
+    file_tree_link.short_description = "File Tree"
 
 
 @transaction.atomic

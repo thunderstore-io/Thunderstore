@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
+from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 from thunderstore.repository.models import Package
@@ -66,7 +67,7 @@ class PackageVersionQuerySet(VisibilityQuerySet):
         )
 
 
-class PackageVersion(VisibilityMixin):
+class PackageVersion(VisibilityMixin, AdminLinkMixin):
     installers: "Manager[PackageInstaller]"
     installer_declarations: "Manager[PackageInstallerDeclaration]"
     objects: "Manager[PackageVersion]" = PackageVersionQuerySet.as_manager()
