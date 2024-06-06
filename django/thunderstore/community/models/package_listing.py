@@ -85,6 +85,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
         blank=True,
     )
     has_nsfw_content = models.BooleanField(default=False)
+    is_auto_imported = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
