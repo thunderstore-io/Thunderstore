@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 
 from thunderstore.api.cyberstorm.views.package_listing_list import (
@@ -607,6 +609,247 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
     assert (
         result["results"][1]["community_identifier"] == com2pack2.community.identifier
     )
+
+
+@pytest.mark.django_db
+def test_listing_by_community_view__returns_created_recent(
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    now = timezone.now()
+    recent = PackageListingFactory(
+        community_=community,
+        package_kwargs={"date_created": now - timedelta(days=0)},
+    )
+    old = PackageListingFactory(
+        community_=community,
+        package_kwargs={"date_created": now - timedelta(days=6)},
+    )
+    PackageListingFactory(
+        community_=community,
+        package_kwargs={"date_created": now - timedelta(days=12)},
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?created_recent=1",
+    )
+    result = response.json()
+
+    assert result["count"] == 1
+    assert any(item["name"] == recent.package.name for item in result["results"])
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?created_recent=7",
+    )
+    result1 = response.json()
+
+    assert result1["count"] == 2
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?created_recent=999",
+    )
+    result = response.json()
+
+    assert result["count"] == 3
+
+
+@pytest.mark.django_db
+def test_listing_by_community_view__returns_updated_recent(
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    now = timezone.now()
+    p1v1 = PackageVersionFactory(
+        version_number="1.0.0",
+    )
+    p1v1.date_created = now - timedelta(days=1)
+    p1v1.save()
+    p1v2 = PackageVersionFactory(
+        version_number="2.0.0",
+        package=p1v1.package,
+    )
+    p1v2.date_created = now - timedelta(days=10)
+    p1v2.save()
+    p1v3 = PackageVersionFactory(
+        version_number="3.0.0",
+        package=p1v1.package,
+    )
+    p1v3.date_created = now - timedelta(days=20)
+    p1v3.save()
+
+    p2v1 = PackageVersionFactory(
+        version_number="1.0.0",
+    )
+    p2v1.date_created = now - timedelta(days=20)
+    p2v1.save()
+    p2v2 = PackageVersionFactory(
+        version_number="2.0.0",
+        package=p2v1.package,
+    )
+    p2v2.date_created = now - timedelta(days=30)
+    p2v2.save()
+
+    p3v1 = PackageVersionFactory(
+        version_number="1.0.0",
+    )
+    p3v1.date_created = now - timedelta(days=365)
+    p3v1.save()
+
+    PackageListingFactory(
+        community_=community,
+        package=p1v1.package,
+    )
+    PackageListingFactory(
+        community_=community,
+        package=p2v1.package,
+    )
+    PackageListingFactory(
+        community_=community,
+        package=p3v1.package,
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?updated_recent=7",
+    )
+    result = response.json()
+
+    assert result["count"] == 1
+    assert p1v2.package.name == result["results"][0]["name"]
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?updated_recent=25",
+    )
+    result = response.json()
+
+    assert result["count"] == 2
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/??updated_recent=999",
+    )
+    result = response.json()
+
+    assert result["count"] == 3
+
+
+@pytest.mark.django_db
+def test_listing_by_community_view__returns_created_within_specified_date_range(
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    PackageListingFactory(
+        community_=community,
+        package_kwargs={"date_created": "2024-01-01 01:23:45Z"},
+    )
+    day7 = PackageListingFactory(
+        community_=community,
+        package_kwargs={"date_created": "2024-01-07 00:00:01Z"},
+    )
+    day14 = PackageListingFactory(
+        community_=community,
+        package_kwargs={"date_created": "2024-01-14 23:59:59Z"},
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?created_before=2024-01-14&created_after=2024-01-07",
+    )
+    result1 = response.json()
+
+    assert result1["count"] == 2
+    assert any(item["name"] == day7.package.name for item in result1["results"])
+    assert any(item["name"] == day14.package.name for item in result1["results"])
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?created_after=2024-01-07",
+    )
+    result2 = response.json()
+
+    assert result2["count"] == 2
+    assert any(item["name"] == day7.package.name for item in result2["results"])
+    assert any(item["name"] == day14.package.name for item in result2["results"])
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?created_before=2024-01-06",
+    )
+    result3 = response.json()
+
+    assert result3["count"] == 1
+
+
+@pytest.mark.django_db
+def test_listing_by_community_view__returns_updated_within_specified_date_range(
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    p1v1 = PackageVersionFactory(
+        version_number="1.0.0",
+    )
+    p1v1.date_created = datetime(2024, 1, 1, 0, 0, 0, 0, timezone.utc)
+    p1v1.save()
+    p1v2 = PackageVersionFactory(
+        version_number="2.0.0",
+        package=p1v1.package,
+    )
+    p1v2.date_created = datetime(2024, 1, 7, 0, 0, 0, 0, timezone.utc)
+    p1v2.save()
+    p1v3 = PackageVersionFactory(
+        version_number="3.0.0",
+        package=p1v1.package,
+    )
+    p1v3.date_created = datetime(2024, 1, 14, 0, 0, 0, 0, timezone.utc)
+    p1v3.save()
+
+    p2v1 = PackageVersionFactory(
+        version_number="1.0.0",
+    )
+    p2v1.date_created = datetime(2024, 1, 3, 0, 0, 0, 0, timezone.utc)
+    p2v1.save()
+    p2v2 = PackageVersionFactory(
+        version_number="2.0.0",
+        package=p2v1.package,
+    )
+    p2v2.date_created = datetime(2024, 1, 14, 0, 0, 0, 0, timezone.utc)
+    p2v2.save()
+
+    p3v1 = PackageVersionFactory(
+        version_number="1.0.0",
+    )
+    p3v1.date_created = datetime(2024, 2, 1, 0, 0, 0, 0, timezone.utc)
+    p3v1.save()
+
+    PackageListingFactory(
+        community_=community,
+        package=p1v1.package,
+    )
+    PackageListingFactory(
+        community_=community,
+        package=p2v1.package,
+    )
+    PackageListingFactory(
+        community_=community,
+        package=p3v1.package,
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?updated_before=2024-01-10&updated_after=2024-01-05",
+    )
+    result = response.json()
+
+    assert result["count"] == 1
+    assert p1v2.package.name == result["results"][0]["name"]
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?updated_before=2024-01-02",
+    )
+    result = response.json()
+
+    assert result["count"] == 1
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/?updated_after=2024-01-05",
+    )
+    result = response.json()
+
+    assert result["count"] == 3
 
 
 @pytest.mark.django_db
