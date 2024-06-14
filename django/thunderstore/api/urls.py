@@ -82,7 +82,7 @@ cyberstorm_urls = [
     path(
         "package/<str:namespace_id>/<str:package_name>/rate/",
         PackageRatingRateAPIView.as_view(),
-        name="cyberstorm.package.deprecate",
+        name="cyberstorm.package_rating.rate",
     ),
     path(
         "team/<str:team_id>/",
