@@ -172,18 +172,18 @@ window.ts.PackageManagementPanel(
 
 {% dynamic_html "package_page_actions" %}
 
-{% with object.package.dependencies as dependencies %}
-{% if dependencies %}
-    {% include "repository/includes/dependencies.html" with dependencies=dependencies %}
-{% endif %}
-{% endwith %}
-
 <div class="card bg-light mb-2 mt-2">
     <div class="card-header"><h4 class="mb-0">README</h4></div>
     <div class="card-body markdown-body">
         {{ object.package.readme|markdownify }}
     </div>
 </div>
+
+{% with object.package.dependencies as dependencies %}
+{% if dependencies %}
+    {% include "repository/includes/dependencies.html" with dependencies=dependencies %}
+{% endif %}
+{% endwith %}
 
 {% endcache %}
 {% endblock %}
