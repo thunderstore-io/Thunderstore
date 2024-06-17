@@ -25,6 +25,7 @@ class Tab:
     name: str
     url: str
     is_disabled: bool
+    is_visible: bool
     is_active: bool
 
 
@@ -68,6 +69,7 @@ class PackageTabsMixin:
                     name=k,
                     url=v.url,
                     is_disabled=v.is_disabled and k != active_tab,
+                    is_visible=v.is_visible or k == active_tab,
                     is_active=k == active_tab,
                 )
                 for k, v in tabs.items()

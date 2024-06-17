@@ -50,9 +50,7 @@ class PluginRegistry:
         result = {}
         for entry in (x.get_package_tabs() for x in self.plugins):
             for key, getter in entry.items():
-                tab = getter(user, listing)
-                if tab.is_visible:
-                    result[key] = tab
+                result[key] = getter(user, listing)
         return result
 
     def get_settings_links(self) -> List[SettingsLink]:
