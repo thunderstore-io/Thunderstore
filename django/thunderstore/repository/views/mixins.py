@@ -16,6 +16,7 @@ class PartialTab:
     url: str
     title: str
     is_disabled: bool = False
+    is_visible: bool = True
 
 
 @dataclasses.dataclass
