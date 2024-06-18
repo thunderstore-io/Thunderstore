@@ -73,6 +73,7 @@ class PackageTabsMixin:
                     is_active=k == active_tab,
                 )
                 for k, v in tabs.items()
+                if (v.is_visible or k == active_tab)
             ],
         }
 
