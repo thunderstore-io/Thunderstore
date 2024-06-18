@@ -49,12 +49,7 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "file_tree_link",
         "listings",
     )
-    exclude = (
-        "website_url",
-        "file_tree",
-        "readme",
-        "changelog",
-    )
+    exclude = ("file_tree",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return (

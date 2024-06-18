@@ -26,10 +26,7 @@ class PackageVersionInline(admin.StackedInline):
     )
     exclude = (
         "version_number",
-        "website_url",
         "file_tree",
-        "readme",
-        "changelog",
         "dependencies",
         "name",
     )
