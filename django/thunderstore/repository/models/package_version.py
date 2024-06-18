@@ -103,6 +103,8 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     )
     website_url = models.CharField(
         max_length=1024,
+        blank=True,
+        null=True,
     )
     description = models.CharField(max_length=256)
     dependencies = models.ManyToManyField(
@@ -117,7 +119,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         related_name="package_versions",
         blank=True,
     )
-    readme = models.TextField()
+    readme = models.TextField(blank=True, null=True)
     changelog = models.TextField(blank=True, null=True)
 
     # <packagename>.zip
