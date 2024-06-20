@@ -6,9 +6,9 @@
         <h4>This mod requires the following mods to function</h4>
     </div>
     <div class="card-body p-0">
-        <div class="list-group" style="max-height:450px; overflow-y:scroll;">
+        <div class="list-group overflow-auto" style="max-height:450px;">
             {% for dependency in object.package.dependencies.all %}
-                <div class="list-group-item flex-column align-items-start media" style="border-radius:0;">
+                <div class="list-group-item flex-column align-items-start media">
                     <div class="media">
                         <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
                         <div class="media-body">
