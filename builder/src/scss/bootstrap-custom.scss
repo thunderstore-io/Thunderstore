@@ -1,5 +1,3 @@
-@import "./node_modules/bootstrap/scss/bootstrap";
-
 // Copypasta from https://stackoverflow.com/a/57089704
 @each $breakpoint in map-keys($grid-breakpoints) {
     @include media-breakpoint-up($breakpoint) {
