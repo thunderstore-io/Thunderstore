@@ -14,6 +14,7 @@ from django.db.models import (
 )
 from rest_framework import serializers
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.permissions import AllowAny
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
@@ -114,6 +115,7 @@ class ResponseSerializer(serializers.Serializer):
 
 
 class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResponseSerializer
 
     def get_object(self):

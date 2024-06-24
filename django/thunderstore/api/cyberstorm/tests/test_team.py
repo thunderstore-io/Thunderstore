@@ -57,13 +57,13 @@ def test_team_api_view__for_inactive_team__returns_404(
 
 
 @pytest.mark.django_db
-def test_team_membership_permission__for_unauthenticated_user__returns_401(
+def test_team_membership_permission__for_no_user__returns_403(
     api_client: APIClient,
     team: Team,
 ):
     response = api_client.get(f"/api/cyberstorm/team/{team.name}/member/")
 
-    assert response.status_code == 401
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

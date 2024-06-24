@@ -9,6 +9,7 @@ from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import FileUploadParser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -28,7 +29,7 @@ class SchemaFileUploadParser(FileUploadParser):
 
 
 class SchemaChannelApiView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
     parser_classes = [SchemaFileUploadParser]
     throttle_classes = []
 
@@ -65,7 +66,7 @@ class SchemaChannelApiView(APIView):
 
 
 class SchemaChannelLatestApiView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         responses={200: Schema(title="content", type=TYPE_FILE)},

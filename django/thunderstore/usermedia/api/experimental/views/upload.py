@@ -5,7 +5,6 @@ from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from thunderstore.usermedia.api.experimental.serializers import (
@@ -27,7 +26,6 @@ from thunderstore.usermedia.s3_upload import (
 class UserMediaInitiateUploadApiView(GenericAPIView):
     queryset = UserMedia.objects.active()
     serializer_class = UserMediaInitiateUploadResponseSerializer
-    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         request_body=UserMediaInitiateUploadParams,
@@ -72,7 +70,6 @@ class UserMediaFinishUploadApiView(GenericAPIView):
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
     serializer_class = UserMediaFinishUploadParamsSerializer
-    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         request_body=UserMediaFinishUploadParamsSerializer(),
@@ -104,7 +101,6 @@ class UserMediaAbortUploadApiView(GenericAPIView):
     queryset = UserMedia.objects.active()
     lookup_field = "uuid"
     lookup_url_kwarg = "uuid"
-    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         responses={200: UserMediaSerializer()},

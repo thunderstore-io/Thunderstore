@@ -9,6 +9,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView, RetrieveAPIView, get_object_or_404
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from thunderstore.repository.models import Package, PackageWiki
@@ -23,6 +24,7 @@ from thunderstore.wiki.models import Wiki, WikiPage
 
 
 class PackageWikiApiView(RetrieveAPIView):
+    permission_classes = [AllowAny]
     queryset = Wiki.objects.all().prefetch_related("pages")
     serializer_class = WikiSerializer
 
@@ -136,6 +138,7 @@ class PackageWikiListResponse(serializers.Serializer):
 
 
 class PackageWikiListAPIView(GenericAPIView):
+    permission_classes = [AllowAny]
     queryset = (
         PackageWiki.objects.all()
         .annotate(namespace=F("package__owner__name"), name=F("package__name"))

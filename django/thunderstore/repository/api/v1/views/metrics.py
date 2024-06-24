@@ -1,6 +1,7 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,6 +18,8 @@ class PackageMetricsSerializer(serializers.Serializer):
 # This view is potentialy used by the shields.io project and should be kept
 # backwards-compatible
 class PackageMetricsApiView(APIView):
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_id="api_v1_package_metrics",
         responses={200: PackageMetricsSerializer()},
@@ -38,6 +41,8 @@ class PackageVersionMetricsSerializer(serializers.Serializer):
 # This view is potentialy used by the shields.io project and should be kept
 # backwards-compatible
 class PackageVersionMetricsApiView(APIView):
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_id="api_v1_package_version_metrics",
         responses={200: PackageVersionMetricsSerializer()},
