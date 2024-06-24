@@ -575,6 +575,9 @@ REST_FRAMEWORK = {
         "thunderstore.account.authentication.UserSessionTokenAuthentication",
     ],
     "EXCEPTION_HANDLER": "thunderstore.core.exception_handler.exception_handler",
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
 
 # Thumbnails
