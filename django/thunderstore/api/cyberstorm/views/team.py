@@ -22,6 +22,7 @@ from thunderstore.api.utils import (
 from thunderstore.repository.forms import (
     AddTeamMemberForm,
     CreateTeamForm,
+    DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
 )
@@ -49,6 +50,41 @@ class TeamRestrictedAPIView(ListAPIView):
 
         if not team.can_user_access(request.user):
             raise PermissionDenied()
+
+
+class CyberstormEditTeamRequestSerialiazer(serializers.Serializer):
+    donation_link = serializers.CharField(
+        max_length=Team._meta.get_field("donation_link").max_length,
+        validators=Team._meta.get_field("donation_link").validators,
+    )
+
+
+class CyberstormEditTeamResponseSerialiazer(serializers.Serializer):
+    donation_link = serializers.CharField()
+
+
+class EditTeamAPIView(APIView):
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormEditTeamRequestSerialiazer,
+        responses={200: CyberstormEditTeamResponseSerialiazer},
+        operation_id="cyberstorm.team.edit",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest, team_name: str):
+        serializer = CyberstormEditTeamRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        team = get_object_or_404(Team, name__iexact=team_name)
+        form = DonationLinkTeamForm(
+            user=request.user,
+            instance=team,
+            data=serializer.validated_data,
+        )
+
+        if form.is_valid():
+            team = form.save()
+            return Response(CyberstormEditTeamResponseSerialiazer(team).data)
+        else:
+            raise ValidationError(form.errors)
 
 
 class CyberstormTeamCreateRequestSerialiazer(serializers.Serializer):
