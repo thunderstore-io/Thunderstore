@@ -3,6 +3,7 @@ from typing import Optional
 from django.http import Http404
 from rest_framework import serializers
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.permissions import AllowAny
 
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
 from thunderstore.markdown.templatetags.markdownify import render_markdown
@@ -20,6 +21,7 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     If no version number is provided, the latest version is used.
     """
 
+    permission_classes = [AllowAny]
     serializer_class = CyberstormMarkdownResponseSerializer
 
     def get_object(self):
@@ -39,6 +41,7 @@ class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView)
     If no version number is provided, the latest version is used.
     """
 
+    permission_classes = [AllowAny]
     serializer_class = CyberstormMarkdownResponseSerializer
 
     def get_object(self):

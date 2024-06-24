@@ -2,7 +2,7 @@ from django.db.models import Q, QuerySet
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,6 +23,7 @@ from thunderstore.repository.models.team import Team, TeamMember
 
 
 class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
     lookup_field = "name__iexact"
@@ -33,8 +34,6 @@ class TeamRestrictedAPIView(ListAPIView):
     """
     Ensure the user is a member of the Team.
     """
-
-    permission_classes = [IsAuthenticated]
 
     def check_permissions(self, request: Request) -> None:
         super().check_permissions(request)
@@ -47,6 +46,7 @@ class TeamRestrictedAPIView(ListAPIView):
 
 
 class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
+    permission_classes = [AllowAny]
     serializer_class = CyberstormTeamMemberSerializer
     filter_backends = [StrictOrderingFilter]
     ordering = ["-role", "user__username"]
@@ -73,8 +73,6 @@ class CyberstormTeamAddMemberResponseSerialiazer(serializers.Serializer):
 
 
 class TeamMemberAddAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
     @conditional_swagger_auto_schema(
         request_body=CyberstormTeamAddMemberRequestSerialiazer,
         responses={200: CyberstormTeamAddMemberResponseSerialiazer},
