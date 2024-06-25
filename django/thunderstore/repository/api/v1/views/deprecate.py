@@ -1,5 +1,3 @@
-from typing import Optional
-
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
@@ -47,8 +45,6 @@ class DeprecateModApiView(JWTApiView):
     def post(
         self,
         request: HttpRequestType,
-        format: Optional[str] = None,
-        community_identifier: Optional[str] = None,
     ) -> Response:
         package = self.get_package(request.decoded.get("package"))
 
