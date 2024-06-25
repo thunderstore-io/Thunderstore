@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework import routers
 
 from thunderstore.repository.api.v1.views.deprecate import DeprecateModApiView
+from thunderstore.repository.api.v1.views.listing_index import PackageListingIndex
 from thunderstore.repository.api.v1.views.metrics import (
     PackageMetricsApiView,
     PackageVersionMetricsApiView,
@@ -15,6 +16,11 @@ v1_router.register(r"package", PackageViewSet, basename="package")
 
 community_urls = [
     path("", include(v1_router.urls)),
+    path(
+        "package-listing-index/",
+        PackageListingIndex.as_view(),
+        name="package-listing-index",
+    ),
 ]
 communityless_urls = [
     path("current-user/info/", CurrentUserInfoView.as_view(), name="current-user.info"),
