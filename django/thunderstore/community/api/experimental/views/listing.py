@@ -102,6 +102,8 @@ class PackageListingApproveApiView(GenericAPIView):
     @swagger_auto_schema(
         operation_id="experimental.package_listing.approve",
         tags=["experimental"],
+        request_body=PackageListingApproveRequestSerializer,
+        responses={200: "Success"},
     )
     def post(self, request, *args, **kwargs):
         listing: PackageListing = self.get_object()

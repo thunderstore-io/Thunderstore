@@ -3,7 +3,7 @@ from datetime import timedelta
 from botocore.exceptions import ClientError
 from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -107,6 +107,7 @@ class UserMediaAbortUploadApiView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
+        request_body=serializers.Serializer,
         responses={200: UserMediaSerializer()},
         operation_id="experimental.usermedia.abort-upload",
         tags=["usermedia"],
