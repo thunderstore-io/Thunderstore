@@ -19,6 +19,7 @@ class SchemaCommunity(BaseModel):
     sections: Dict[str, SchemaThunderstoreSection]
     discord_url: Optional[str] = Field(alias="discordUrl")
     wiki_url: Optional[str] = Field(alias="wikiUrl")
+    autolist_package_ids: Optional[List[str]] = Field(alias="autolistPackageIds")
 
 
 class SchemaGameMeta(BaseModel):
