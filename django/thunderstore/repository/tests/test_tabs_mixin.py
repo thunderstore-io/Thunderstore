@@ -98,3 +98,28 @@ def test_get_tab_context_changelog_disabled(
     active_package_listing.package.latest.changelog = "# Foo bar"
     active_package_listing.package.latest.save()
     assert_disabled(user, False)
+
+
+@pytest.mark.django_db
+def test_active_tabs_are_visible(
+    user: UserType,
+    active_package_listing: PackageListing,
+) -> None:
+    tabs_mixin = PackageTabsMixin()
+
+    tabs1 = tabs_mixin.get_tab_context(
+        user,
+        active_package_listing,
+        "details",
+    )["tabs"]
+
+    for tab1 in tabs1:
+        tabs2 = tabs_mixin.get_tab_context(
+            user,
+            active_package_listing,
+            tab1.name,
+        )["tabs"]
+
+        for tab2 in tabs2:
+            if tab2.is_active:
+                assert tab2.is_visible

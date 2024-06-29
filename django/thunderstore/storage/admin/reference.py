@@ -9,7 +9,7 @@ from thunderstore.storage.models import DataBlobReference
 class DataBlobReferenceAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "group",
+        "linked_group",
         "data_size",
         "content_type",
         "content_encoding",
@@ -33,6 +33,11 @@ class DataBlobReferenceAdmin(admin.ModelAdmin):
 
     def file(self, obj: DataBlobReference):
         return mark_safe(f'<a href="{obj.data_url}">{obj.blob.data}</a>')
+
+    def linked_group(self, obj: DataBlobReference):
+        return mark_safe(f'<a href="{obj.group.get_admin_url()}">{obj.group}</a>')
+
+    linked_group.short_description = "group"
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

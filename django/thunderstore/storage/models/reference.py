@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional
 
 from django.db import models
 
-from thunderstore.core.mixins import TimestampMixin
+from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.storage.models.blob import DataBlob
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ class DataBlobReferenceManager(models.Manager):
         return super().get_queryset().select_related("blob")
 
 
-class DataBlobReference(TimestampMixin):
+class DataBlobReference(TimestampMixin, AdminLinkMixin):
     """
     Acts as a middle man between DataBlob and the consumers of DataBlob, and
     is responsible for storing contextual use-case dependant information (such
