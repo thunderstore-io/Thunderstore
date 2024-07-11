@@ -44,6 +44,8 @@ class AuditWebhook(TimestampMixin):
             return 5763719
         if action == AuditAction.PACKAGE_REJECTED:
             return 15548997
+        if action == AuditAction.PACKAGE_WARNING:
+            return 16705372
         return 9807270
 
     @staticmethod

@@ -15,6 +15,7 @@ from thunderstore.webhooks.tasks import process_audit_event
     (
         AuditAction.PACKAGE_APPROVED,
         AuditAction.PACKAGE_REJECTED,
+        AuditAction.PACKAGE_WARNING,
     ),
 )
 @pytest.mark.parametrize("message", (None, "Test message"))

@@ -4,6 +4,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.tasks.files import extract_package_version_file_tree
 
@@ -41,10 +42,15 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "package__owner__name",
         "package__namespace__name",
         "version_number",
+        "file_tree__entries__blob__checksum_sha256",
     )
     date_hierarchy = "date_created"
     readonly_fields = [x.name for x in PackageVersion._meta.fields] + [
         "file_tree_link",
+        "listings",
+    ]
+    exclude = [
+        "file_tree",
     ]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
@@ -57,6 +63,9 @@ class PackageVersionAdmin(admin.ModelAdmin):
                 )
             )
         )
+
+    def get_readonly_fields(self, request, obj=None):
+        return [x for x in self.readonly_fields if x not in self.exclude]
 
     def has_file_tree(self, obj):
         return obj.has_file_tree
@@ -72,6 +81,16 @@ class PackageVersionAdmin(admin.ModelAdmin):
             kwargs={"object_id": obj.file_tree.pk},
         )
         return mark_safe(f'<a href="{url}">{obj.file_tree}</a>')
+
+    file_tree_link.short_description = "File tree"
+
+    def listings(self, obj):
+        url = reverse(
+            f"admin:{PackageListing._meta.app_label}_{PackageListing._meta.model_name}_changelist",
+        )
+        return mark_safe(
+            f'<a href="{url}?package__exact={obj.package.pk}">View package listings</a>'
+        )
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

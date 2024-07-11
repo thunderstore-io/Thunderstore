@@ -1,8 +1,10 @@
+from html import escape
 from typing import Optional
 
 from django.contrib import admin
 from django.db import transaction
 from django.db.models import QuerySet
+from django.utils.safestring import mark_safe
 
 from ..consts import PackageListingReviewStatus
 from ..forms import PackageListingAdminForm
@@ -62,6 +64,7 @@ class PackageListingAdmin(admin.ModelAdmin):
         "package__namespace__name",
         "package__owner__name",
         "package__name",
+        "package__versions__file_tree__entries__blob__checksum_sha256",
     )
     list_select_related = (
         "package",
@@ -70,15 +73,29 @@ class PackageListingAdmin(admin.ModelAdmin):
         "community",
     )
     readonly_fields = (
-        "package",
+        "package_link",
         "community",
         "datetime_created",
         "datetime_updated",
     )
+    exclude = ("package",)
+
+    def package_link(self, obj):
+        return mark_safe(
+            f'<a href="{obj.package.get_admin_url()}">{escape(str(obj.package))}</a>'
+        )
+
+    package_link.short_description = "Package"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return self.readonly_fields
+        else:
+            return []
+
+    def get_exclude(self, request, obj=None):
+        if obj:
+            return self.exclude
         else:
             return []
 

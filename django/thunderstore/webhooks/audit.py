@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class AuditAction(str, Enum):
     PACKAGE_REJECTED = "PACKAGE_REJECTED"
     PACKAGE_APPROVED = "PACKAGE_APPROVED"
+    PACKAGE_WARNING = "PACKAGE_WARNING"
 
 
 class AuditEventField(BaseModel):

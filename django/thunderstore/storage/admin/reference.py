@@ -1,3 +1,5 @@
+from html import escape
+
 from django.contrib import admin
 from django.http import HttpRequest
 from django.utils.safestring import mark_safe
@@ -9,7 +11,7 @@ from thunderstore.storage.models import DataBlobReference
 class DataBlobReferenceAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "group",
+        "linked_group",
         "data_size",
         "content_type",
         "content_encoding",
@@ -32,7 +34,14 @@ class DataBlobReferenceAdmin(admin.ModelAdmin):
     date_hierarchy = "datetime_created"
 
     def file(self, obj: DataBlobReference):
-        return mark_safe(f'<a href="{obj.data_url}">{obj.blob.data}</a>')
+        return mark_safe(f'<a href="{obj.data_url}">{escape(str(obj.blob.data))}</a>')
+
+    def linked_group(self, obj: DataBlobReference):
+        return mark_safe(
+            f'<a href="{obj.group.get_admin_url()}">{escape(str(obj.group))}</a>'
+        )
+
+    linked_group.short_description = "group"
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

@@ -1,9 +1,11 @@
+from html import escape
 from typing import Optional
 
 from django.contrib import admin
 from django.db import transaction
 from django.db.models import QuerySet
 from django.http import HttpRequest
+from django.utils.safestring import mark_safe
 
 from thunderstore.repository.admin.actions import activate, deactivate
 from thunderstore.repository.models import Package, PackageVersion
@@ -12,6 +14,7 @@ from thunderstore.repository.models import Package, PackageVersion
 class PackageVersionInline(admin.StackedInline):
     model = PackageVersion
     readonly_fields = (
+        "version_link",
         "date_created",
         "description",
         "downloads",
@@ -19,12 +22,18 @@ class PackageVersionInline(admin.StackedInline):
         "file_size",
         "format_spec",
         "icon",
-        "version_number",
-        "website_url",
-        "file_tree",
+        "file_tree_link",
         "visibility",
+        "website_url",
     )
-    exclude = ("readme", "changelog", "dependencies", "name")
+    exclude = (
+        "version_number",
+        "file_tree",
+        "dependencies",
+        "name",
+        "readme",
+        "changelog",
+    )
     extra = 0
 
     def has_add_permission(self, request: HttpRequest, obj) -> bool:
@@ -32,6 +41,20 @@ class PackageVersionInline(admin.StackedInline):
 
     def has_delete_permission(self, request: HttpRequest, obj=None) -> bool:
         return False
+
+    def version_link(self, obj):
+        return mark_safe(f'<a href="{obj.get_admin_url()}">{escape(str(obj))}</a>')
+
+    version_link.short_description = "Version"
+
+    def file_tree_link(self, obj):
+        if not obj.file_tree:
+            return None
+        return mark_safe(
+            f'<a href="{obj.file_tree.get_admin_url()}">{escape(str(obj.file_tree))}</a>'
+        )
+
+    file_tree_link.short_description = "File Tree"
 
 
 @transaction.atomic
@@ -93,6 +116,7 @@ class PackageAdmin(admin.ModelAdmin):
         "name",
         "namespace__name",
         "owner__name",
+        "versions__file_tree__entries__blob__checksum_sha256",
     )
     list_select_related = (
         "latest",
