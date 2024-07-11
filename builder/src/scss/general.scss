@@ -96,3 +96,18 @@
         transform: rotate(360deg);
     }
 }
+
+.dependency-list {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+
+    max-height: 450px;
+    overflow: auto;
+
+    .list-group-item {
+        &:first-child {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+    }
+}
