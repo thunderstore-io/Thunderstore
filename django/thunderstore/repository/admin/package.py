@@ -1,3 +1,4 @@
+from html import escape
 from typing import Optional
 
 from django.contrib import admin
@@ -23,12 +24,15 @@ class PackageVersionInline(admin.StackedInline):
         "icon",
         "file_tree_link",
         "visibility",
+        "website_url",
     )
     exclude = (
         "version_number",
         "file_tree",
         "dependencies",
         "name",
+        "readme",
+        "changelog",
     )
     extra = 0
 
@@ -39,7 +43,7 @@ class PackageVersionInline(admin.StackedInline):
         return False
 
     def version_link(self, obj):
-        return mark_safe(f'<a href="{obj.get_admin_url()}">{obj}</a>')
+        return mark_safe(f'<a href="{obj.get_admin_url()}">{escape(str(obj))}</a>')
 
     version_link.short_description = "Version"
 
@@ -47,7 +51,7 @@ class PackageVersionInline(admin.StackedInline):
         if not obj.file_tree:
             return None
         return mark_safe(
-            f'<a href="{obj.file_tree.get_admin_url()}">{obj.file_tree}</a>'
+            f'<a href="{obj.file_tree.get_admin_url()}">{escape(str(obj.file_tree))}</a>'
         )
 
     file_tree_link.short_description = "File Tree"

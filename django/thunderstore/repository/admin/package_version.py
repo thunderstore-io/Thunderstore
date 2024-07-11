@@ -45,11 +45,13 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "file_tree__entries__blob__checksum_sha256",
     )
     date_hierarchy = "date_created"
-    readonly_fields = (
+    readonly_fields = [x.name for x in PackageVersion._meta.fields] + [
         "file_tree_link",
         "listings",
-    )
-    exclude = ("file_tree",)
+    ]
+    exclude = [
+        "file_tree",
+    ]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return (
@@ -61,6 +63,9 @@ class PackageVersionAdmin(admin.ModelAdmin):
                 )
             )
         )
+
+    def get_readonly_fields(self, request, obj=None):
+        return [x for x in self.readonly_fields if x not in self.exclude]
 
     def has_file_tree(self, obj):
         return obj.has_file_tree
@@ -80,11 +85,12 @@ class PackageVersionAdmin(admin.ModelAdmin):
     file_tree_link.short_description = "File tree"
 
     def listings(self, obj):
-        listings = PackageListing.objects.filter(package__versions=obj)
-        links = ""
-        for listing in listings:
-            links += f'<a href="{listing.get_admin_url()}">{listing.community}</a><br/>'
-        return mark_safe(links)
+        url = reverse(
+            f"admin:{PackageListing._meta.app_label}_{PackageListing._meta.model_name}_changelist",
+        )
+        return mark_safe(
+            f'<a href="{url}?package__exact={obj.package.pk}">View package listings</a>'
+        )
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

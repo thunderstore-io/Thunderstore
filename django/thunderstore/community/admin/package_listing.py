@@ -1,3 +1,4 @@
+from html import escape
 from typing import Optional
 
 from django.contrib import admin
@@ -77,15 +78,24 @@ class PackageListingAdmin(admin.ModelAdmin):
         "datetime_created",
         "datetime_updated",
     )
+    exclude = ("package",)
 
     def package_link(self, obj):
-        return mark_safe(f'<a href="{obj.package.get_admin_url()}">{obj.package}</a>')
+        return mark_safe(
+            f'<a href="{obj.package.get_admin_url()}">{escape(str(obj.package))}</a>'
+        )
 
     package_link.short_description = "Package"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return self.readonly_fields
+        else:
+            return []
+
+    def get_exclude(self, request, obj=None):
+        if obj:
+            return self.exclude
         else:
             return []
 
