@@ -198,3 +198,38 @@ def test_create_test_data_only_filter_invalid() -> None:
         CommandError, match="Invalid --only selection provided, options are"
     ):
         call_command("create_test_data", "--only", "badfilter")
+
+
+@override_settings(DEBUG=True)
+@pytest.mark.django_db
+@pytest.mark.parametrize("reuse", (True, False))
+def test_create_test_data_reuse_icon(reuse: bool) -> None:
+    args = [
+        "create_test_data",
+        "--community-count",
+        1,
+        "--team-count",
+        1,
+        "--package-count",
+        1,
+        "--version-count",
+        2,
+        "--dependency-count",
+        0,
+        "--wiki-page-count",
+        0,
+        "--contract-count",
+        0,
+        "--contract-version-count",
+        0,
+    ]
+    if reuse:
+        args.append("--reuse-icon")
+
+    assert not PackageVersion.objects.exists()
+
+    call_command(*args)
+    icon_paths = PackageVersion.objects.values_list("icon", flat=True)
+
+    assert len(icon_paths) == 2
+    assert (icon_paths[0] == icon_paths[1]) == reuse

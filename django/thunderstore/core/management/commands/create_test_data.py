@@ -73,6 +73,15 @@ class Command(BaseCommand):
         parser.add_argument("--dependency-count", type=int, default=20)
         parser.add_argument("--clear", default=False, action="store_true")
         parser.add_argument(
+            "--reuse-icon",
+            default=False,
+            action="store_true",
+            help=(
+                "Reuse the same icon file for all PackageVersions to speed up"
+                "creating large data sets."
+            ),
+        )
+        parser.add_argument(
             "--only",
             type=str,
             default=None,
@@ -130,5 +139,6 @@ class Command(BaseCommand):
             contract_count=kwargs.get("contract_count", 0),
             contract_version_count=kwargs.get("contract_version_count", 0),
             wiki_page_count=kwargs.get("wiki_page_count", 0),
+            reuse_icon=kwargs.get("reuse_icon", False),
         )
         self.populate(context)

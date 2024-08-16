@@ -1,10 +1,13 @@
 import functools
+import io
 import os
 from abc import ABC
 from dataclasses import dataclass, field
 from typing import Collection, List, Type
 
+from django.core.files.base import File
 from django.db.models import Model
+from PIL import Image
 
 from django_contracts.models import LegalContract
 from thunderstore.community.models import Community
@@ -27,6 +30,7 @@ class ContentPopulatorContext:
     contract_count: int = 0
     contract_version_count: int = 0
     wiki_page_count: int = 0
+    reuse_icon: bool = False
 
 
 class ContentPopulator(ABC):
@@ -75,3 +79,11 @@ aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi 
 Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
 occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 """
+
+
+def dummy_package_icon() -> File:
+    file_obj = io.BytesIO()
+    image = Image.new("RGB", (256, 256), "#231F36")
+    image.save(file_obj, format="PNG")
+    file_obj.seek(0)
+    return File(file_obj, name="dummy.png")

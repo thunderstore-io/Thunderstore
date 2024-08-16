@@ -3,8 +3,8 @@ from django.db.models import signals
 from thunderstore.core.management.commands.content.base import (
     ContentPopulator,
     ContentPopulatorContext,
+    dummy_package_icon,
 )
-from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.utils.iterators import print_progress
 
@@ -23,12 +23,14 @@ class PackageVersionPopulator(ContentPopulator):
         signals.post_save.disconnect(Package.post_save, sender=Package)
         signals.post_delete.disconnect(Package.post_delete, sender=Package)
 
+        uploaded_icon = None
+
         for i, package in print_progress(
             enumerate(context.packages), len(context.packages)
         ):
             vercount = package.versions.count()
             for vernum in range(context.version_count - vercount):
-                PackageVersionFactory.create(
+                pv = PackageVersion(
                     package=package,
                     name=package.name,
                     version_number=f"{vernum + vercount}.0.0",
@@ -36,7 +38,16 @@ class PackageVersionPopulator(ContentPopulator):
                     description=f"Example mod {i}",
                     readme=f"# This is an example mod number {i}",
                     changelog=f"# Example changelog for mod number {i}",
+                    file_size=5242880,
                 )
+
+                if context.reuse_icon and uploaded_icon:
+                    pv.icon = uploaded_icon
+                else:
+                    pv.icon = dummy_package_icon()
+
+                pv.save()
+                uploaded_icon = pv.icon.name
 
             # Manually calling would-be signals once per package, as it doesn't
             # actually make use of the sender param at all (and can be None)
