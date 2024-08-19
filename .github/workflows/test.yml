@@ -91,8 +91,8 @@ jobs:
         run: docker load --input /tmp/thunderstore.tar
       - name: Run pytest
         run: |
-          DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker-compose -f docker/docker-compose.pytest.yml up --exit-code-from django
-          docker-compose -f docker/docker-compose.pytest.yml down -f
+          DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker compose -f docker/docker-compose.pytest.yml up --exit-code-from django
+          DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker compose -f docker/docker-compose.pytest.yml down
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v1
