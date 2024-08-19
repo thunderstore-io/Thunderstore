@@ -8,10 +8,10 @@ Thunderstore is a mod database and API for downloading mods.
 
 -   Copy `.env.template` to `.env` and modify as you see fit - If you have access to the `python-packages` submodule & it's cloned, make
     sure to set `BUILD_INSTALL_EXTRAS` to `true`. Any other value will not work. Changing this setting will require
-    rebuilding the environment (e.g. with `docker-compose build`) for it to take effect.
--   Run `docker-compose up`
--   Run `docker-compose exec django python manage.py migrate` in another terminal
--   Run `docker-compose exec django python manage.py shell` and enter the
+    rebuilding the environment (e.g. with `docker compose build`) for it to take effect.
+-   Run `docker compose up`
+-   Run `docker compose exec django python manage.py migrate` in another terminal
+-   Run `docker compose exec django python manage.py shell` and enter the
     following code:
 
 ```python
@@ -43,7 +43,7 @@ There's a script for populating the local database with test data. You can run
 it as follows:
 
 ```bash
-docker-compose exec django python manage.py create_test_data
+docker compose exec django python manage.py create_test_data
 ```
 
 ## Minio
@@ -69,7 +69,7 @@ need an admin account.
 Assuming docker is being used, the admin account can be created as follows:
 
 ```
-docker-compose exec django python manage.py createsuperuser
+docker compose exec django python manage.py createsuperuser
 ```
 
 Do note that if you're running on Windows, you will need to use winpty for
@@ -214,7 +214,7 @@ supported.
 
 The default local database configured in `docker-compose.yml` can be accessed:
 
--   From shell: `docker-compose exec db psql -U django`
+-   From shell: `docker compose exec db psql -U django`
 -   From browser: navigate to `localhost:8080/?pgsql=db&username=django`
     and use password `django`
 
@@ -227,16 +227,16 @@ You can enable caching to the redis backend by supplying a redis URL
 
 ## Testing
 
-Tests can be run with this command: `docker-compose exec django pytest`
+Tests can be run with this command: `docker compose exec django pytest`
 If you need to recreate to database,
-use the following: `docker-compose exec django pytest --create-db --migrations`
+use the following: `docker compose exec django pytest --create-db --migrations`
 
 The CI pipeline checks that new PRs don't lower the test coverage. Since this
 process is rather slow, you might want to check the coverage locally before
 submitting a PR.
 
--   To update coverage file, run `docker-compose exec django coverage run -m pytest`
--   To see the coverage report, run `docker-compose exec django coverage report -m`
+-   To update coverage file, run `docker compose exec django coverage run -m pytest`
+-   To see the coverage report, run `docker compose exec django coverage report -m`
 
 ### Test duration estimates
 
@@ -252,5 +252,5 @@ The test duration database can be updated by running the full test suite with
 the `--store-durations` flag. So a full command example would be
 
 ```bash
-docker-compose exec django pytest --store-durations
+docker compose exec django pytest --store-durations
 ```
