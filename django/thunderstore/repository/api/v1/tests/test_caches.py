@@ -1,6 +1,7 @@
 import gzip
 import json
 from datetime import timedelta
+from random import shuffle
 from typing import Any
 
 import pytest
@@ -17,6 +18,7 @@ from thunderstore.repository.api.v1.tasks import (
     update_api_v1_chunked_package_caches,
 )
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
+from thunderstore.repository.models.cache import get_package_listing_chunk
 
 
 @pytest.mark.django_db
@@ -210,3 +212,18 @@ def test_api_v1_chunked_package_cache__drops_stale_caches() -> None:
     second_cache.refresh_from_db()
     assert first_cache.is_deleted
     assert not second_cache.is_deleted
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("count", (0, 1, 2, 3, 5, 8, 13))
+def test_get_package_listing_chunk__retains_received_ordering(count: int) -> None:
+    assert not PackageListing.objects.exists()
+    for _ in range(count):
+        PackageListingFactory()
+
+    ordering = list(PackageListing.objects.all().values_list("id", flat=True))
+    shuffle(ordering)
+    listings = get_package_listing_chunk(ordering)
+
+    for i, listing in enumerate(listings):
+        assert listing.id == ordering[i]

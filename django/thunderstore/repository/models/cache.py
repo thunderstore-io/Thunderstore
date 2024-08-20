@@ -2,7 +2,7 @@ import gzip
 import io
 import json
 from datetime import timedelta
-from typing import Any, List, Optional
+from typing import Any, Iterable, List, Optional
 
 from django.core.files.base import ContentFile
 from django.db import models
@@ -11,10 +11,11 @@ from django.utils import timezone
 from thunderstore.community.models import Community, PackageListing
 from thunderstore.core.mixins import S3FileMixin, SafeDeleteMixin
 from thunderstore.repository.cache import (
-    get_package_listing_queryset,
+    get_package_listing_base_queryset,
     order_package_listing_queryset,
 )
 from thunderstore.storage.models import DataBlob, DataBlobGroup
+from thunderstore.utils.batch import batch
 
 
 class APIExperimentalPackageIndexCache(S3FileMixin):
@@ -177,19 +178,22 @@ class APIV1ChunkedPackageCache(SafeDeleteMixin):
                 content_encoding="gzip",
             )
 
-        for listing in get_package_listings(community):
-            listing_bytes = listing_to_json(listing)
+        for listing_ids in get_package_listing_ids(community):
+            for listing in get_package_listing_chunk(listing_ids):
+                listing_bytes = listing_to_json(listing)
 
-            # Always add the first listing regardless of the size limit.
-            if not chunk_content:
-                chunk_content.extend(listing_bytes)
-            # Start new blob if adding current chunck would exceed the size limit.
-            # +2 for opening and closing brackets
-            elif len(chunk_content) + len(listing_bytes) + 2 > uncompressed_blob_size:
-                finalize_blob()
-                chunk_content = bytearray(listing_bytes)
-            else:
-                chunk_content.extend(b"," + listing_bytes)
+                # Always add the first listing regardless of the size limit.
+                if not chunk_content:
+                    chunk_content.extend(listing_bytes)
+                # Start new blob if adding current chunck would exceed the size limit.
+                # +2 for opening and closing brackets
+                elif (
+                    len(chunk_content) + len(listing_bytes) + 2 > uncompressed_blob_size
+                ):
+                    finalize_blob()
+                    chunk_content = bytearray(listing_bytes)
+                else:
+                    chunk_content.extend(b"," + listing_bytes)
 
         if len(chunk_content) or not group.entries.exists():
             finalize_blob()
@@ -231,14 +235,28 @@ class APIV1ChunkedPackageCache(SafeDeleteMixin):
             return json.loads(f.read())
 
 
-def get_package_listings(community: Community) -> models.QuerySet["PackageListing"]:
-    listing_ids = get_package_listing_queryset(community.identifier).values_list(
-        "id",
-        flat=True,
+def get_package_listing_ids(community: Community) -> Iterable[List[int]]:
+    """
+    Iterate over the PackageListing in chunks to limit the amount of
+    data Django keeps in memory concurrently.
+    """
+    listing_ids = order_package_listing_queryset(
+        get_package_listing_base_queryset(community.identifier)
+    ).values_list("id", flat=True)
+
+    yield from batch(1000, listing_ids)
+
+
+def get_package_listing_chunk(
+    listing_ids: List[int],
+) -> models.QuerySet["PackageListing"]:
+    # Keep the ordering as it was when the whole id list was read.
+    ordering = models.Case(
+        *[models.When(id=id, then=pos) for pos, id in enumerate(listing_ids)]
     )
     listing_ref = PackageListing.objects.filter(pk=models.OuterRef("pk"))
 
-    return order_package_listing_queryset(
+    return (
         PackageListing.objects.filter(id__in=listing_ids)
         .select_related("community", "package", "package__owner")
         .prefetch_related("categories", "community__sites", "package__versions")
@@ -248,7 +266,8 @@ def get_package_listings(community: Community) -> models.QuerySet["PackageListin
                     ratings=models.Count("package__package_ratings"),
                 ).values("ratings"),
             ),
-        ),
+        )
+        .order_by(ordering)
     )
 
 
@@ -268,7 +287,7 @@ def listing_to_json(listing: PackageListing) -> bytes:
             "is_deprecated": listing.package.is_deprecated,
             "has_nsfw_content": listing.has_nsfw_content,
             "categories": [c.name for c in listing.categories.all()],
-            # TODO: god-awful performance from OVER NINE THOUSAAAAND database hits
+            # TODO: this generates awfully lot of database hits
             "versions": [
                 {
                     "name": version.name,
