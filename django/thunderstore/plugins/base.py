@@ -31,6 +31,10 @@ class BasePlugin(ABC):
         return []
 
     @classmethod
+    def get_api_urls(cls) -> List[URLPattern]:
+        return []
+
+    @classmethod
     def get_package_tabs(
         cls,
     ) -> Dict[str, Callable[["UserType", "PackageListing"], "PartialTab"]]:
