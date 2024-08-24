@@ -202,11 +202,14 @@ class PackageListSearchView(CommunityMixin, ListView):
 
         icontains_query = Q()
         parts = [x for x in search_query.split(" ") if x]
-        for part in parts:
-            for field in search_fields:
-                icontains_query &= ~Q(**{f"{field}__icontains": part})
 
-        return queryset.exclude(icontains_query).distinct()
+        for part in parts:
+            part_query = Q()
+            for field in search_fields:
+                part_query |= Q(**{f"{field}__icontains": part})
+            icontains_query &= part_query
+
+        return queryset.filter(icontains_query).distinct()
 
     def filter_approval_status(
         self, queryset: QuerySet[PackageListing]
