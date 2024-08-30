@@ -8,6 +8,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 from thunderstore.community.urls import community_urls
+from thunderstore.community.views import CommunityListView
 from thunderstore.frontend.views import (
     ManifestV1ValidatorView,
     MarkdownPreviewView,
@@ -37,6 +38,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
     path("package/", include((legacy_package_urls, "old_urls"), namespace="old_urls")),
     path("c/", include((community_urls, "communities"), namespace="communities")),
+    path("communities/", CommunityListView.as_view(), name="communities"),
     path("settings/", include(settings_urls)),
     path("moderation/", include(moderation_urls)),
     path("favicon.ico", FaviconView.as_view()),

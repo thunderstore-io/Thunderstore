@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load cache %}
+{% load thumbnail %}
+
+{% block title %}All communities{% endblock %}
+
+{% block content %}
+{% cache 300 templates.community.list %}
+
+<div class="row">
+    <h3 class="col-12 mt-4">{{ page_title }}</h3>
+</div>
+
+{% if object_list %}
+    <div class="d-flex flex-row flex-wrap mb-3 package-list">
+        {% for object in object_list %}
+            <div class="col-6 col-md-4 col-lg-3 mb-2 p-1 d-flex flex-column">
+                <div class="p-0 bg-light">
+                    <a href="{{ object.full_url }}">
+                        {% if object.cover_image %}
+                        <img class="w-100" src="{% thumbnail object.cover_image 360x480 crop %}" alt="{{ object.name }} icon">
+                        {% else %}
+                        <img class="w-100" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAAHgAQMAAACyyGUjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAADUExURSMfNp+RXmQAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAtSURBVHja7cExAQAAAMKg9U9tDQ8gAAAAAAAAAAAAAAAAAAAAAAAAAAAADtUAVkAAAQ2c1aEAAAAASUVORK5CYII=" alt="{{ object.name }} icon">
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="bg-light p-2">
+                    <h5 class="mb-1 overflow-hidden text-nowrap w-100" title="{{ object.name }}">{{ object.name }}</h5>
+                    <div class="row mb-0">
+                        <div class="col-6" title="Packages">
+                            <span><i class="fas fa-cube text-dark mr-1"></i>&nbsp;{{ object.aggregated_fields.package_count }}</span>
+                        </div>
+                        <div class="col-6 text-right" title="Downloads">
+                            {{ object.aggregated_fields.download_count }}&nbsp;<i class="fas fa-download text-dark ml-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <li class="my-4">No communities available</li>
+{% endif %}
+
+{% endcache %}
+{% endblock %}

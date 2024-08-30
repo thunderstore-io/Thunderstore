@@ -58,16 +58,9 @@
                                     {% endfor %}
                                 </div>
                             </div>
-                            {% if selectable_communities|length > 6 %}
-                                <div class="section">
-                                    <h6 class="title">Other communities</h6>
-                                    <div class="grid" role="list">
-                                        {% for community in selectable_communities|slice:"8:"|dictsort:"name" %}
-                                            <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            {% endif %}
+                            <div class="section">
+                                <a class="link" href="{% url 'communities' %}">View all communities ({{ selectable_communities|length }})</a>
+                            </div>
                         </div>
                         {% endif %}
                     </div>
