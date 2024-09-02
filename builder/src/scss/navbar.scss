@@ -6,7 +6,7 @@
         padding: 1.5rem 1.75rem;
 
         .grid {
-            column-count: 4;
+            column-count: 2;
 
             @media (max-width: 1500px) {
                 column-count: 3;
@@ -41,6 +41,11 @@
         .title {
             padding: 0 0.25rem;
             opacity: 0.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .link {
+            padding: 0 0.25rem;
             margin-bottom: 0.75rem;
         }
     }
