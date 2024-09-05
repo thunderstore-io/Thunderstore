@@ -116,7 +116,6 @@ class PackageAdmin(admin.ModelAdmin):
         "name",
         "namespace__name",
         "owner__name",
-        "versions__file_tree__entries__blob__checksum_sha256",
     )
     list_select_related = (
         "latest",
