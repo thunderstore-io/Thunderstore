@@ -5,10 +5,12 @@ from django.db import transaction
 from thunderstore.community.models import (
     Community,
     PackageCategory,
+    PackageListing,
     PackageListingSection,
 )
 from thunderstore.core.utils import ExceptionLogger
 from thunderstore.repository.models import PackageInstaller
+from thunderstore.repository.package_reference import PackageReference
 from thunderstore.schema_import.schema import (
     Schema,
     SchemaCommunity,
@@ -45,6 +47,17 @@ def import_community(identifier: str, schema: SchemaCommunity):
     community.discord_url = schema.discord_url
     community.wiki_url = schema.wiki_url
     community.save()
+
+    if schema.autolist_package_ids:
+        for package_id in schema.autolist_package_ids:
+            with ExceptionLogger(continue_on_error=True):
+                package = PackageReference.parse(package_id).package
+                if package.get_package_listing(community) is None:
+                    PackageListing.objects.create(
+                        package=package,
+                        community=community,
+                        is_auto_imported=True,
+                    )
 
     for k, v in schema.categories.items():
         if not (
