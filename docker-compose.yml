@@ -86,11 +86,6 @@ services:
     image: redis:7.0-rc2-alpine3.15
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru --maxmemory-clients 10%
 
-  adminer:
-    image: adminer:4.7.5
-    ports:
-      - "127.0.0.1:8080:8080"
-
   rabbitmq:
     image: rabbitmq:3.8.14-alpine@sha256:11d8cd02ac340e99de628053f76bb1182ce3df3b41d3e8f399377276ba489409
     hostname: rabbitmq
