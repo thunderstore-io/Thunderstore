@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/browser";
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
     Community,
     ExperimentalApi,
@@ -19,6 +19,7 @@ import { FormSelectField } from "./components/FormSelectField";
 import { CommunityCategorySelector } from "./components/CommunitySelector";
 import { FormRow } from "./components/FormRow";
 import { SubmitPackage } from "./api/packageSubmit";
+import { BlobReader, ZipReader } from "./vendor/zip-fs-full";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus == FileUploadStatus.CANCELED) {
@@ -43,16 +44,15 @@ function getSubmissionProgressBarcolor(
 }
 
 class FormErrors {
-    fileError: string | null = null;
     teamError: string | null = null;
     communitiesError: string | null = null;
     categoriesError: string | null = null;
     nsfwError: string | null = null;
     generalErrors: string[] = [];
+    fileErrors: string[] = [];
 
     get hasErrors(): boolean {
         return !(
-            this.fileError == null &&
             this.teamError == null &&
             this.communitiesError == null &&
             this.categoriesError == null &&
@@ -81,6 +81,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     const [formErrors, setFormErrors] = useState<FormErrors>(new FormErrors());
     const [file, setFile] = useState<File | null>(null);
     const [fileUpload, setFileUpload] = useState<FileUpload | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [
         submissionStatus,
         setSubmissionStatus,
@@ -115,6 +116,12 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         if (fileUpload) {
             await fileUpload.cancelUpload();
         }
+
+        const input = fileInputRef.current;
+        if (input) {
+            input.value = "";
+        }
+
         setFileUpload(null);
         setSubmissionStatus(null);
         setFormErrors(new FormErrors());
@@ -130,12 +137,213 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     const onFileChange = (files: FileList) => {
         const file = files.item(0);
         setFile(file);
+
+        if (file) {
+            validateZip(file).then((result) => {
+                if (result) {
+                    console.log("Zip successfully validated.");
+                } else {
+                    console.log("Failed to validate zip.");
+                }
+            });
+        }
     };
+
+    async function validateZip(file: File): Promise<boolean> {
+        console.log("Selected file: " + file.name);
+
+        let errors = new FormErrors();
+
+        let blockUpload = false;
+
+        let isZip = true;
+        if (!file.name.toLowerCase().endsWith(".zip")) {
+            errors.fileErrors.push("The file you selected is not a .zip!");
+            isZip = false;
+            blockUpload = true;
+        }
+
+        if (isZip) {
+            try {
+                const blobReader = new BlobReader(file);
+                const zipReader = new ZipReader(blobReader);
+
+                const entries = await zipReader.getEntries();
+
+                let dllCount = 0;
+                let hasBepInEx = false;
+                let hasAssemblyCSharp = false;
+                let maybeModpack = false;
+                let noRootFiles = true;
+                let rootManifest = false;
+                let hasIcon = false;
+                let rootIcon = false;
+                let hasManifest = false;
+                let hasReadMe = false;
+                let rootReadMe = false;
+
+                for (const entry of entries) {
+                    // console.log(entry.filename);
+
+                    if (!entry || !(typeof entry.getData === "function")) {
+                        continue;
+                    }
+
+                    if (entry.filename.toLowerCase().endsWith(".dll")) {
+                        dllCount++;
+                    }
+
+                    if (
+                        entry.filename.toLowerCase().split("/").pop() ==
+                        "assembly-csharp.dll"
+                    ) {
+                        hasAssemblyCSharp = true;
+                    }
+
+                    if (
+                        entry.filename.toLowerCase().split("/").pop() ==
+                        "bepinex.dll"
+                    ) {
+                        hasBepInEx = true;
+                        maybeModpack = true;
+                    }
+
+                    if (noRootFiles) {
+                        if (!entry.filename.includes("/")) {
+                            noRootFiles = false;
+                        }
+                    }
+                    if (
+                        entry.filename.toLowerCase().endsWith("manifest.json")
+                    ) {
+                        hasManifest = true;
+                        if (entry.filename.toLowerCase() == "manifest.json") {
+                            rootManifest = true;
+                        }
+                    }
+                    if (entry.filename.toLowerCase().endsWith("icon.png")) {
+                        hasIcon = true;
+                        if (entry.filename.toLowerCase() == "icon.png") {
+                            rootIcon = true;
+                        }
+                    }
+                    if (entry.filename.toLowerCase().endsWith("readme.md")) {
+                        hasReadMe = true;
+                        if (entry.filename.toLowerCase() == "readme.md") {
+                            rootReadMe = true;
+                        }
+                    }
+                }
+
+                if (hasBepInEx) {
+                    errors.fileErrors.push(
+                        "You have BepInEx.dll in your .zip file. BepInEx should probably be a dependency in your manifest.json file instead."
+                    );
+                }
+
+                if (hasAssemblyCSharp) {
+                    errors.fileErrors.push(
+                        "You have Assembly-CSharp.dll in your .zip file. Your mod may be removed if you do not have permission to distribute this file."
+                    );
+                }
+
+                if (dllCount > 8) {
+                    errors.fileErrors.push(
+                        "You have " +
+                            dllCount +
+                            " .dll files in your .zip file. Some of these files may be unnecessary."
+                    );
+                    maybeModpack = true;
+                }
+
+                if (maybeModpack) {
+                    errors.fileErrors.push(
+                        "If you're making a modpack, do not include the files for each mod in your .zip file. Instead, put the dependency string for each mod inside your manifest.json file."
+                    );
+                }
+
+                if (
+                    noRootFiles &&
+                    hasManifest &&
+                    hasIcon &&
+                    hasReadMe &&
+                    !rootManifest &&
+                    !rootIcon &&
+                    !rootReadMe
+                ) {
+                    blockUpload = true;
+                    errors.fileErrors.push(
+                        "Your manifest, icon, and README files should be at the root of the .zip file. You can prevent this by compressing the contents of a folder, rather than the folder itself."
+                    );
+                } else {
+                    if (!hasManifest) {
+                        blockUpload = true;
+                        errors.fileErrors.push(
+                            "Your package is missing a manifest.json file!"
+                        );
+                    } else if (!rootManifest) {
+                        blockUpload = true;
+                        errors.fileErrors.push(
+                            "Your manifest.json file is not at the root of the .zip!"
+                        );
+                    }
+
+                    if (!hasIcon) {
+                        blockUpload = true;
+                        errors.fileErrors.push(
+                            "Your package is missing an icon.png file!"
+                        );
+                    } else if (!rootIcon) {
+                        blockUpload = true;
+                        errors.fileErrors.push(
+                            "Your icon.png file is not at the root of the .zip!"
+                        );
+                    }
+
+                    if (!hasReadMe) {
+                        blockUpload = true;
+                        errors.fileErrors.push(
+                            "Your package is missing a README.md file!"
+                        );
+                    } else if (!rootReadMe) {
+                        blockUpload = true;
+                        errors.fileErrors.push(
+                            "Your README.md file is not at the root of the .zip!"
+                        );
+                    }
+                }
+
+                await zipReader.close();
+            } catch (e) {
+                console.log("Error reading zip: " + e);
+                return false;
+            }
+        }
+
+        if (errors.fileErrors.length > 0) {
+            setFormErrors(errors);
+
+            if (blockUpload) {
+                errors.generalErrors.push(
+                    "An error with your selected file is preventing submission."
+                );
+                setSubmissionStatus(SubmissionStatus.ERROR);
+                return false;
+            }
+            return true;
+        } else {
+            return true;
+        }
+    }
 
     const onSubmit = async (data: any) => {
         // TODO: Convert to react-hook-form validation
+
+        let fileErrors = formErrors.fileErrors;
         setFormErrors(new FormErrors());
         const errors = new FormErrors();
+
+        errors.fileErrors = fileErrors;
 
         const uploadTeam = data.team ? data.team.value : null;
         const uploadCommunities = data.communities
@@ -245,6 +453,8 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         (fileUpload?.uploadErrors ?? []).length > 0 ||
         formErrors.generalErrors.length > 0;
 
+    const hasFileErrors = formErrors.fileErrors.length > 0;
+
     const hasEtagError =
         fileUpload &&
         fileUpload.uploadErrors.some(
@@ -297,9 +507,18 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                     title={file ? file.name : "Choose or drag file here"}
                     onChange={onFileChange}
                     readonly={!!file}
+                    fileInputRef={fileInputRef}
                 />
             </div>
-
+            {hasFileErrors && (
+                <div className="mb-0 px-3 py-3 alert alert-info field-errors mt-2">
+                    <ul className="mx-0 my-0 pl-3">
+                        {formErrors.fileErrors.map((e, idx) => (
+                            <li key={`general-${idx}`}>{e}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {currentCommunity != null &&
             teams != null &&
             communities != null ? (
@@ -372,7 +591,11 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
 
                     <button
                         type={"submit"}
-                        disabled={!file || !!fileUpload}
+                        disabled={
+                            !file ||
+                            !!fileUpload ||
+                            submissionStatus == SubmissionStatus.ERROR
+                        }
                         className="btn btn-primary btn-block"
                     >
                         Submit
