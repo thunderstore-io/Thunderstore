@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from thunderstore.account.factories import ServiceAccountFactory
+from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import TeamFactory, TeamMemberFactory
 from thunderstore.repository.models.team import Team, TeamMember
@@ -531,6 +532,239 @@ def test_team_service_account_list_api_view__for_member__sorts_results(
     assert result[0]["name"] == alice.first_name
     assert result[1]["name"] == bob.first_name
     assert result[2]["name"] == charlie.first_name
+
+
+@pytest.mark.django_db
+def test_team_service_account_create__when_creating_a_service_account__succeeds(
+    api_client: APIClient,
+    team_owner: TeamMember,
+):
+    api_client.force_authenticate(team_owner.user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team_owner.team.name}/service-account/create/",
+        json.dumps(
+            {
+                "nickname": "CoolestTeamServiceAccountName",
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["nickname"] == "CoolestTeamServiceAccountName"
+    assert response_json["team_name"] == team_owner.team.name
+    assert response_json["api_token"][:4] == "tss_"
+    assert (
+        ServiceAccount.objects.filter(
+            owner__name=team_owner.team.name,
+            user__first_name="CoolestTeamServiceAccountName",
+        ).count()
+        == 1
+    )
+
+
+@pytest.mark.django_db
+def test_team_service_account_create__when_creating_a_service_account__fails_because_nickname_too_long(
+    api_client: APIClient,
+    team_owner: TeamMember,
+):
+    api_client.force_authenticate(team_owner.user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team_owner.team.name}/service-account/create/",
+        json.dumps(
+            {
+                "nickname": "LongestCoolestTeamServiceAccountNameEver",
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["nickname"] == [
+        "Ensure this value has at most 32 characters (it has 40)."
+    ]
+    assert (
+        ServiceAccount.objects.filter(
+            owner__name=team_owner.team.name,
+            user__first_name="LongestCoolestTeamServiceAccountNameEver",
+        ).count()
+        == 0
+    )
+
+
+@pytest.mark.django_db
+def test_team_service_account_create__when_creating_a_service_account__fails_because_user_is_not_authenticated(
+    api_client: APIClient,
+    team: Team,
+):
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/service-account/create/",
+        json.dumps(
+            {
+                "nickname": "CoolestTeamServiceAccountName",
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    response_json = response.json()
+    assert response_json["detail"] == "Authentication credentials were not provided."
+    assert (
+        ServiceAccount.objects.filter(
+            owner__name=team.name, user__first_name="CoolestTeamServiceAccountName"
+        ).count()
+        == 0
+    )
+
+
+@pytest.mark.django_db
+def test_team_service_account_create__when_creating_a_service_account__fails_because_user_is_not_team_member(
+    api_client: APIClient,
+    team: Team,
+):
+    non_team_user = User.objects.create()
+    api_client.force_authenticate(non_team_user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/service-account/create/",
+        json.dumps(
+            {
+                "nickname": "CoolestTeamServiceAccountName",
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["team"] == [
+        "Select a valid choice. That choice is not one of the available choices."
+    ]
+    assert (
+        ServiceAccount.objects.filter(
+            owner__name=team.name, user__first_name="CoolestTeamServiceAccountName"
+        ).count()
+        == 0
+    )
+
+
+@pytest.mark.django_db
+def test_team_service_account_create__when_creating_a_service_account__fails_because_user_is_not_team_owner(
+    api_client: APIClient,
+    team: Team,
+    team_member: TeamMember,
+):
+
+    api_client.force_authenticate(team_member.user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/service-account/create/",
+        json.dumps(
+            {
+                "nickname": "CoolestTeamServiceAccountName",
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["team"] == ["Must be an owner to create a service account"]
+    assert (
+        ServiceAccount.objects.filter(
+            owner__name=team.name, user__first_name="CoolestTeamServiceAccountName"
+        ).count()
+        == 0
+    )
+
+
+@pytest.mark.django_db
+def test_team_service_account_delete__when_deleting_a_service_account__succeeds(
+    api_client: APIClient,
+    team_owner: TeamMember,
+    service_account: ServiceAccount,
+):
+    api_client.force_authenticate(team_owner.user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{service_account.owner.name}/service-account/delete/",
+        json.dumps({"service_account_uuid": str(service_account.uuid)}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["detail"] == "Service account deleted"
+    assert ServiceAccount.objects.filter(uuid=service_account.uuid).count() == 0
+
+
+@pytest.mark.django_db
+def test_team_service_account_delete__when_deleting_a_service_account__fails_because_user_is_not_authenticated(
+    api_client: APIClient,
+    team: Team,
+    service_account: ServiceAccount,
+):
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/service-account/delete/",
+        json.dumps({"service_account_uuid": str(service_account.uuid)}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    response_json = response.json()
+    assert response_json["detail"] == "Authentication credentials were not provided."
+    assert ServiceAccount.objects.filter(uuid=service_account.uuid).count() == 1
+
+
+@pytest.mark.django_db
+def test_team_service_account_delete__when_deleting_a_service_account__fails_because_user_is_not_team_member(
+    api_client: APIClient,
+    team: Team,
+    service_account: ServiceAccount,
+):
+    non_team_user = User.objects.create()
+    api_client.force_authenticate(non_team_user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/service-account/delete/",
+        json.dumps({"service_account_uuid": str(service_account.uuid)}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["service_account"] == [
+        "Select a valid choice. That choice is not one of the available choices."
+    ]
+    assert ServiceAccount.objects.filter(uuid=service_account.uuid).count() == 1
+
+
+@pytest.mark.django_db
+def test_team_service_account_delete__when_deleting_a_service_account__fails_because_user_is_not_team_owner(
+    api_client: APIClient,
+    team_member: TeamMember,
+    team: Team,
+    service_account: ServiceAccount,
+):
+    api_client.force_authenticate(team_member.user)
+
+    response = api_client.post(
+        f"/api/cyberstorm/team/{team.name}/service-account/delete/",
+        json.dumps({"service_account_uuid": str(service_account.uuid)}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    response_json = response.json()
+    assert response_json["service_account"] == [
+        "Must be an owner to delete a service account"
+    ]
+    assert ServiceAccount.objects.filter(uuid=service_account.uuid).count() == 1
 
 
 @pytest.mark.django_db

@@ -8,6 +8,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.account.forms import (
+    CreateServiceAccountForm,
+    DeleteServiceAccountForm,
+)
 from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormServiceAccountSerializer,
@@ -318,3 +322,82 @@ class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPI
         return ServiceAccount.objects.exclude(
             ~Q(owner__name__iexact=self.kwargs["team_id"]),
         ).select_related("user")
+
+
+class TeamCreateServiceAccountRequestSerialiazer(serializers.Serializer):
+    nickname = serializers.CharField()
+
+
+class TeamCreateServiceAccountResponseSerialiazer(serializers.Serializer):
+    nickname = serializers.CharField()
+    team_name = serializers.CharField()
+    api_token = serializers.CharField()
+
+
+class TeamCreateServiceAccountAPIView(APIView):
+    @conditional_swagger_auto_schema(
+        request_body=TeamCreateServiceAccountRequestSerialiazer,
+        responses={200: TeamCreateServiceAccountResponseSerialiazer},
+        operation_id="cyberstorm.team.service-account.create",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest, team_name: str):
+        serializer = TeamCreateServiceAccountRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        team = get_object_or_404(Team, name__iexact=team_name)
+        form = CreateServiceAccountForm(
+            user=request.user,
+            data={
+                **serializer.validated_data,
+                "team": team,
+            },
+        )
+
+        if form.is_valid():
+            service_account = form.save()
+            return Response(
+                TeamCreateServiceAccountResponseSerialiazer(
+                    {
+                        "nickname": service_account.nickname,
+                        "team_name": service_account.owner.name,
+                        "api_token": form.api_token,
+                    }
+                ).data
+            )
+        else:
+            raise ValidationError(form.errors)
+
+
+class TeamDeleteServiceAccountRequestSerialiazer(serializers.Serializer):
+    service_account_uuid = serializers.CharField()
+
+
+class TeamDeleteServiceAccountResponseSerialiazer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
+class TeamDeleteServiceAccountAPIView(APIView):
+    @conditional_swagger_auto_schema(
+        request_body=TeamDeleteServiceAccountRequestSerialiazer,
+        responses={200: TeamDeleteServiceAccountResponseSerialiazer},
+        operation_id="cyberstorm.team.service-account.delete",
+        tags=["cyberstorm"],
+    )
+    def post(self, request: HttpRequest, team_name: str):
+        serializer = TeamDeleteServiceAccountRequestSerialiazer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service_account = get_object_or_404(
+            ServiceAccount,
+            owner__name__iexact=team_name,
+            uuid=serializer.validated_data["service_account_uuid"],
+        )
+        form = DeleteServiceAccountForm(
+            user=request.user,
+            data={"service_account": service_account},
+        )
+
+        if form.is_valid():
+            form.save()
+            return Response({"detail": "Service account deleted"})
+        else:
+            raise ValidationError(form.errors)
