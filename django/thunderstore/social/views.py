@@ -49,6 +49,9 @@ class DeleteAccountForm(forms.Form):
             raise forms.ValidationError("Invalid verification")
         return data
 
+    def delete_user(self):
+        self.user.delete()
+
 
 class DeleteAccountView(SettingsViewMixin, RequireAuthenticationMixin, FormView):
     template_name = "settings/delete_account.html"
@@ -66,5 +69,5 @@ class DeleteAccountView(SettingsViewMixin, RequireAuthenticationMixin, FormView)
         return kwargs
 
     def form_valid(self, form):
-        self.request.user.delete()
+        form.delete_user()
         return super().form_valid(form)
