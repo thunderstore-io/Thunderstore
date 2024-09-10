@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from rest_framework import serializers
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
 
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
 from thunderstore.api.utils import conditional_swagger_auto_schema
@@ -105,6 +106,7 @@ class BasePackageListAPIView(ListAPIView):
     methods, whereas the rest are overwritten methods from ListAPIView.
     """
 
+    permission_classes = [AllowAny]
     pagination_class = PackageListPaginator
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass

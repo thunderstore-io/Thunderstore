@@ -1,6 +1,7 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from thunderstore.cache.cache import ManualCacheCommunityMixin
@@ -59,6 +60,7 @@ class PackageVersionDetailApiView(PackageVersionDetailMixin):
     Get a single package version
     """
 
+    permission_classes = [AllowAny]
     serializer_class = PackageVersionSerializerExperimental
 
     @swagger_auto_schema(
@@ -74,6 +76,7 @@ class PackageVersionChangelogApiView(PackageVersionDetailMixin):
     Get a package verion's changelog
     """
 
+    permission_classes = [AllowAny]
     serializer_class = MarkdownResponseSerializer
 
     @swagger_auto_schema(
@@ -94,6 +97,7 @@ class PackageVersionReadmeApiView(PackageVersionDetailMixin):
     Get a package verion's readme
     """
 
+    permission_classes = [AllowAny]
     serializer_class = MarkdownResponseSerializer
 
     @swagger_auto_schema(
