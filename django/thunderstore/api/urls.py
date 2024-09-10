@@ -30,6 +30,7 @@ from thunderstore.api.cyberstorm.views.user import (
     UserDeleteAPIView,
     UserLinkedAccountDisconnectAPIView,
 )
+from thunderstore.plugins.registry import plugin_registry
 
 cyberstorm_urls = [
     path(
@@ -172,4 +173,4 @@ cyberstorm_urls = [
         EditTeamMemberAPIView.as_view(),
         name="cyberstorm.team.members.edit",
     ),
-]
+] + plugin_registry.get_api_urls()
