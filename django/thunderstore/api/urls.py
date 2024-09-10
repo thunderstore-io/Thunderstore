@@ -24,7 +24,10 @@ from thunderstore.api.cyberstorm.views import (
     TeamMemberListAPIView,
     TeamServiceAccountListAPIView,
 )
-from thunderstore.api.cyberstorm.views.user import UserDeleteAPIView
+from thunderstore.api.cyberstorm.views.user import (
+    UserDeleteAPIView,
+    UserLinkedAccountDisconnectAPIView,
+)
 
 cyberstorm_urls = [
     path(
@@ -141,6 +144,11 @@ cyberstorm_urls = [
         "current-user/delete/",
         UserDeleteAPIView.as_view(),
         name="cyberstorm.current-user.delete",
+    ),
+    path(
+        "current-user/linked-account-disconnect/",
+        UserLinkedAccountDisconnectAPIView.as_view(),
+        name="cyberstorm.current-user.linked-account-disconnect",
     ),
     path(
         "team/<str:team_name>/members/remove/",

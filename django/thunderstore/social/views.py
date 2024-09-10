@@ -6,8 +6,42 @@ from thunderstore.core.mixins import RequireAuthenticationMixin
 from thunderstore.frontend.views import SettingsViewMixin
 
 
+class LinkedAccountDisconnectExecption(Exception):
+    """Some problem with disconnecting a linked account"""
+
+    pass
+
+
 class LinkedAccountDisconnectForm(forms.Form):
     provider = forms.CharField()
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+
+    @property
+    def can_disconnect(self):
+        return self.user.social_auth.count() > 1
+
+    def clean_provider(self):
+        data = self.cleaned_data["provider"]
+        if data in ["github", "discord", "overwolf"]:
+            return data
+        else:
+            raise forms.ValidationError("Invalid provider")
+
+    def disconnect_account(self, with_raise=False):
+        if not self.can_disconnect:
+            if with_raise:
+                raise LinkedAccountDisconnectExecption(
+                    "User must have at least one linked account"
+                )
+            else:
+                return
+        social_auth = self.user.social_auth.filter(
+            provider=self.cleaned_data["provider"]
+        ).first()
+        social_auth.delete()
 
 
 class LinkedAccountsView(SettingsViewMixin, RequireAuthenticationMixin, FormView):
@@ -25,14 +59,8 @@ class LinkedAccountsView(SettingsViewMixin, RequireAuthenticationMixin, FormView
     def can_disconnect(self):
         return self.request.user.social_auth.count() > 1
 
-    def disconnect_account(self, provider):
-        if not self.can_disconnect:
-            return
-        social_auth = self.request.user.social_auth.filter(provider=provider).first()
-        social_auth.delete()
-
     def form_valid(self, form):
-        self.disconnect_account(form.cleaned_data["provider"])
+        form.disconnect_account()
         return super().form_valid(form)
 
 
