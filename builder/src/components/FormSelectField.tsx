@@ -11,6 +11,7 @@ interface FormSelectFieldProps<T, F extends Record<string, any>> {
     getOption: (t: T) => { value: string; label: string };
     default?: T | T[];
     isMulti?: boolean;
+    required?: boolean;
 }
 export const FormSelectField: React.FC<FormSelectFieldProps<any, any>> = (
     props
@@ -34,6 +35,7 @@ export const FormSelectField: React.FC<FormSelectFieldProps<any, any>> = (
                     name={props.name}
                     control={props.control}
                     defaultValue={defaultValue}
+                    rules={{ required: props.required }}
                     render={({ field }) => (
                         <Select
                             {...field}

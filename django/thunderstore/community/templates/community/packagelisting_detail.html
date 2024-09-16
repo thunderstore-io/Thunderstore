@@ -56,6 +56,13 @@ window.ts.PackageManagementPanel(
     <li class="breadcrumb-item"><a href="{% community_url "packages.list" %}">Packages</a></li>
     <li class="breadcrumb-item"><a href="{% community_url "packages.list_by_owner" owner=object.package.owner.name %}">{{ object.package.owner.name }}</a></li>
     <li class="breadcrumb-item active" aria-current="page">{{ object.package.display_name }}</li>
+    <li class="ml-auto" style="margin: -7px -11px -7px 0;" id="package-report-button"></li>
+    <script type="text/javascript">
+        window.ts.ReportButton(
+            document.getElementById("package-report-button"),
+            {{ report_button_props|encode_props }}
+        );
+    </script>
   </ol>
 </nav>
 
