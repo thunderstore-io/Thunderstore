@@ -57,7 +57,6 @@ class PackageReport(TimestampMixin):
     @classmethod
     def handle_user_report(
         cls,
-        category: str,
         reason: str,
         submitted_by: UserType,
         package: Package,
@@ -66,7 +65,7 @@ class PackageReport(TimestampMixin):
         description: Optional[str],
     ) -> "PackageReport":
         return cls.objects.create(
-            category=category,
+            category="UserReport",
             reason=reason,
             submitted_by=submitted_by,
             package=package,
