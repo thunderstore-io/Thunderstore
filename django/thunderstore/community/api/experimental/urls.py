@@ -10,6 +10,7 @@ from thunderstore.community.api.experimental.views.community import (
 from thunderstore.community.api.experimental.views.listing import (
     PackageListingApproveApiView,
     PackageListingRejectApiView,
+    PackageListingReportApiView,
     PackageListingUpdateApiView,
 )
 
@@ -43,5 +44,10 @@ urls = [
         "package-listing/<int:pk>/reject/",
         PackageListingRejectApiView.as_view(),
         name="package-listing.reject",
+    ),
+    path(
+        "package-listing/<int:pk>/report/",
+        PackageListingReportApiView.as_view(),
+        name="package-listing.report",
     ),
 ]
