@@ -2,14 +2,18 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from thunderstore.community.api.experimental.serializers import (
+    PackageListingReportRequestSerializer,
     PackageListingUpdateRequestSerializer,
     PackageListingUpdateResponseSerializer,
 )
 from thunderstore.community.models import PackageListing
+from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.repository.views.package._utils import get_package_listing_or_404
+from thunderstore.ts_reports.models import PackageReport
 
 
 class PackageListingUpdateApiView(GenericAPIView):
@@ -122,6 +126,41 @@ class PackageListingApproveApiView(GenericAPIView):
                 namespace=listing.package.namespace.name,
                 name=listing.package.name,
                 community=listing.community,
+            )
+            return Response(status=status.HTTP_200_OK)
+        except PermissionError:
+            raise PermissionDenied()
+
+
+class PackageListingReportApiView(GenericAPIView):
+    queryset = PackageListing.objects.active().select_related(
+        "package",
+    )
+    serializer_class = PackageListingReportRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_id="experimental.package_listing.report",
+        request_body=PackageListingReportRequestSerializer,
+        responses={200: "Success"},
+        tags=["experimental"],
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        listing: PackageListing = self.get_object()
+        package: Package = listing.package
+        version: PackageVersion = serializer.validated_data["package_version_id"]
+
+        try:
+            PackageReport.handle_user_report(
+                reason=serializer.validated_data["reason"],
+                submitted_by=request.user,
+                package=package,
+                package_listing=listing,
+                package_version=version,
+                description=serializer.validated_data["description"],
             )
             return Response(status=status.HTTP_200_OK)
         except PermissionError:
