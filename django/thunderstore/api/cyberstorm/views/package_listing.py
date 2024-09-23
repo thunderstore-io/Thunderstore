@@ -179,7 +179,7 @@ def get_custom_package_listing(
         qs,
         community__identifier=community_id,
         package__namespace__name=namespace_id,
-        package__name__iexact=package_name,
+        package__name=package_name,
     )
 
     dependencies = (
