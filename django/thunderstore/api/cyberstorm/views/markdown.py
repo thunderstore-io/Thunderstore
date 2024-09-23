@@ -62,7 +62,7 @@ def get_package_version(
     package = get_object_or_404(
         Package.objects.active(),
         namespace__name=namespace_id,
-        name__iexact=package_name,
+        name=package_name,
     )
 
     if version_number:
