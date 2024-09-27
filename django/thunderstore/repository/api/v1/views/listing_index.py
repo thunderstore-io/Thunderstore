@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from thunderstore.community.models import Community
+from thunderstore.core.utils import replace_cdn
 from thunderstore.repository.models import APIV1ChunkedPackageCache
 
 
@@ -28,6 +29,8 @@ class PackageListingIndex(APIView):
         cache = APIV1ChunkedPackageCache.get_latest_for_community(community)
 
         if cache:
-            return redirect(request.build_absolute_uri(cache.index.data_url))
+            url = request.build_absolute_uri(cache.index.data_url)
+            url = replace_cdn(url, request.query_params.get("cdn"))
+            return redirect(url)
 
         return Response({"error": "No cache available"}, status=503)
