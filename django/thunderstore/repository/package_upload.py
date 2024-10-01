@@ -17,7 +17,8 @@ from thunderstore.repository.validation.icon import validate_icon
 from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.markdown import validate_markdown
 from thunderstore.repository.validation.zip import (
-    check_relative_paths,
+    check_duplicate_filenames,
+    check_unsafe_paths,
     check_zero_offset,
 )
 
@@ -127,12 +128,19 @@ class PackageUploadForm(forms.ModelForm):
                 if unzip.testzip():
                     raise ValidationError("Corrupted zip file")
 
-                if check_relative_paths(unzip.infolist()):
-                    raise ValidationError("Relative paths inside a zip are not allowed")
+                if check_unsafe_paths(unzip.infolist()):
+                    raise ValidationError(
+                        "There is an error with the zip's folder structure"
+                    )
 
                 if not check_zero_offset(unzip.infolist()):
                     raise ValidationError(
                         "The zip includes bogus data at the beginning of the file."
+                    )
+
+                if check_duplicate_filenames(unzip.infolist()):
+                    raise ValidationError(
+                        "The zip includes multiple files with the same file name."
                     )
 
                 try:
