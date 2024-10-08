@@ -23,7 +23,7 @@ class PackageListingIndex(APIView):
     )
     def get(self, request: Request, community_identifier: str):
         community = get_object_or_404(
-            Community.objects.listed(),
+            Community.objects,
             identifier=community_identifier,
         )
         cache = APIV1ChunkedPackageCache.get_latest_for_community(community)
