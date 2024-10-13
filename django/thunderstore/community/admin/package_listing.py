@@ -3,11 +3,13 @@ from typing import Optional
 
 from django.contrib import admin
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
+from django.http import HttpRequest
 from django.utils.safestring import mark_safe
 
 from ..consts import PackageListingReviewStatus
 from ..forms import PackageListingAdminForm
+from ..models.community import Community
 from ..models.package_listing import PackageListing
 
 
@@ -31,6 +33,18 @@ def approve_listing(modeladmin, request, queryset: QuerySet[PackageListing]):
 approve_listing.short_description = "Approve"
 
 
+class CommunityFilter(admin.SimpleListFilter):
+    title = "Community"
+    parameter_name = "community"
+
+    def lookups(self, request: HttpRequest, model_admin):
+        return Community.objects.order_by("name").values_list("identifier", "name")
+
+    def queryset(self, request: HttpRequest, queryset: QuerySet[PackageListing]):
+        if self.value():
+            return queryset.exclude(~Q(community__identifier=self.value()))
+
+
 @admin.register(PackageListing)
 class PackageListingAdmin(admin.ModelAdmin):
     form = PackageListingAdminForm
@@ -44,7 +58,7 @@ class PackageListingAdmin(admin.ModelAdmin):
         "has_nsfw_content",
         "is_review_requested",
         "review_status",
-        "community",
+        CommunityFilter,
     )
     list_display = (
         "id",
