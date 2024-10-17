@@ -190,6 +190,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.changelog = self.changelog
         self.instance.file_size = self.file_size
         self.instance.format_spec = self.format_spec
+        self.instance.uploaded_by = self.user
 
         team = self.cleaned_data["team"]
         team.ensure_can_upload_package(self.user)
