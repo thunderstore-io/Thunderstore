@@ -35,6 +35,7 @@ def test_current_user_info__for_unauthenticated_user__is_empty_structure(
     assert len(user_info["capabilities"]) == 0
     assert len(user_info["connections"]) == 0
     assert len(user_info["rated_packages"]) == 0
+    assert len(user_info["rated_packages_cyberstorm"]) == 0
     assert len(user_info["teams"]) == 0
 
 
@@ -53,6 +54,7 @@ def test_current_user_info__for_authenticated_user__has_basic_values(
     assert user_info["username"] == "Test"
     assert type(user_info["capabilities"]) == list
     assert type(user_info["rated_packages"]) == list
+    assert type(user_info["rated_packages_cyberstorm"]) == list
 
 
 @pytest.mark.django_db
