@@ -1,7 +1,8 @@
 import datetime
 from typing import List, Optional, Set, TypedDict
 
-from django.db.models import Q
+from django.db.models import Q, Value
+from django.db.models.functions import Concat
 from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from pydantic import BaseModel
@@ -68,6 +69,7 @@ class UserProfile(TypedDict):
     connections: List[SocialAuthConnection]
     subscription: SubscriptionStatus
     rated_packages: List[str]
+    rated_packages_cyberstorm: List[str]
     teams: List[str]
     teams_full: List[UserTeam]
 
@@ -78,6 +80,7 @@ class UserProfileSerializer(serializers.Serializer):
     connections = SocialAuthConnectionSerializer(many=True)
     subscription = SubscriptionStatusSerializer()
     rated_packages = serializers.ListField()
+    rated_packages_cyberstorm = serializers.ListField()
     teams = (
         serializers.ListField()
     )  # This is in active use by the Django frontend react components at least
@@ -91,6 +94,7 @@ def get_empty_profile() -> UserProfile:
         "connections": [],
         "subscription": get_subscription_status(user=None),
         "rated_packages": [],
+        "rated_packages_cyberstorm": [],
         "teams": [],
         "teams_full": [],
     }
@@ -107,6 +111,15 @@ def get_user_profile(user: UserType) -> UserProfile:
         ),
     )
 
+    rated_packages_cyberstorm = list(
+        user.package_ratings.select_related("package")
+        .annotate(P=Concat("package__namespace__name", Value("-"), "package__name"))
+        .values_list(
+            "P",
+            flat=True,
+        )
+    )
+
     teams = get_teams(user)
 
     return UserProfileSerializer(
@@ -116,6 +129,7 @@ def get_user_profile(user: UserType) -> UserProfile:
             "connections": get_social_auth_connections(user),
             "subscription": get_subscription_status(user),
             "rated_packages": rated_packages,
+            "rated_packages_cyberstorm": rated_packages_cyberstorm,
             "teams": [x.name for x in teams],
             "teams_full": teams,
         }
