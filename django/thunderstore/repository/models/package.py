@@ -162,11 +162,36 @@ class Package(AdminLinkMixin, models.Model):
     @cached_property
     def available_versions(self):
         # TODO: Caching
+        if hasattr(self, "unavailable_versions"):
+            del self.unavailable_versions
         versions = (
             self.versions.filter(is_active=True)
             .public_list()
             .values_list("pk", "version_number")
         )
+        ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
+        pk_list = [version[0] for version in reversed(ordered)]
+        preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
+        return (
+            self.versions.filter(pk__in=pk_list)
+            .order_by(preserved)
+            .prefetch_related(
+                "dependencies",
+                "dependencies__package",
+                "dependencies__package__owner",
+            )
+            .select_related(
+                "package",
+                "package__owner",
+            )
+        )
+
+    @cached_property
+    def unavailable_versions(self):
+        # TODO: Caching
+        versions = self.versions.filter(
+            is_active=True, review_status__in=["pending", "rejected"]
+        ).values_list("pk", "version_number")
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])

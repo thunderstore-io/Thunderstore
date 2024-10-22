@@ -19,7 +19,7 @@
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-detail-version-history" 300 object.package.pk community_identifier %}
+{% cache_until "any_package_updated" "mod-detail-version-history" 300 object.package.pk community_identifier object.package.available_versions %}
 
 <nav class="mt-3" aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -51,4 +51,20 @@
 </div>
 
 {% endcache %}
+
+{% if show_management_panel and object.package.unavailable_versions %}
+<div class="card bg-light mt-2 mb-2">
+    <div class="card-header">
+        <h2 class="mb-0">Unavailable versions</h2>
+    </div>
+    <div class="card-body pb-1">
+        <p>
+            The versions below are awaiting approval. If this takes more than 24 hours, please reach out to the moderators in
+            <a href="https://discord.thunderstore.io/">our Discord server</a>.
+        </p>
+        {% include "community/includes/version_table.html" with versions=object.package.unavailable_versions %}
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
