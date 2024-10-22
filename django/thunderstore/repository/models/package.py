@@ -162,8 +162,10 @@ class Package(AdminLinkMixin, models.Model):
     @cached_property
     def available_versions(self):
         # TODO: Caching
-        versions = self.versions.filter(is_active=True).values_list(
-            "pk", "version_number"
+        versions = (
+            self.versions.filter(is_active=True)
+            .public_list()
+            .values_list("pk", "version_number")
         )
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
@@ -272,7 +274,7 @@ class Package(AdminLinkMixin, models.Model):
         if hasattr(self, "available_versions"):
             del self.available_versions  # Bust the version cache
         self.latest = self.available_versions.first()
-        if old_latest != self.latest:
+        if old_latest != self.latest and self.latest is not None:
             self.save()
 
     def handle_created_version(self, version):
