@@ -49,7 +49,7 @@ window.ts.PackageManagementPanel(
 </script>
 {% endif %}
 
-{% cache_until "any_package_updated" "mod-detail-header" 300 object.package.pk community_identifier %}
+{% cache_until "any_package_updated" "mod-detail-header" 300 object.package.pk community_identifier object.package.latest.pk %}
 
 <nav class="mt-3" aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -67,6 +67,12 @@ window.ts.PackageManagementPanel(
 {% endif %}
 
 {% endcache %}
+
+{% if show_review_status and object.package.unavailable_versions %}
+    <div class="alert alert-danger" role="alert">
+        One or more versions of this package are awaiting approval.
+    </div>
+{% endif %}
 
 {% if show_review_status and object.is_rejected %}
 <div class="card text-white bg-danger mt-2">
@@ -114,7 +120,7 @@ window.ts.PackageManagementPanel(
 
 <div class="card bg-light mt-2">
     {% include "community/includes/package_tabs.html" with tabs=tabs %}
-    {% cache_until "any_package_updated" "mod-detail-content" 300 object.package.pk community_identifier %}
+    {% cache_until "any_package_updated" "mod-detail-content" 300 object.package.pk community_identifier object.package.latest.pk %}
     {% include "community/includes/package_header.html" with object=object %}
     <div class="card-body pb-1">
         <table class="table mb-0">
