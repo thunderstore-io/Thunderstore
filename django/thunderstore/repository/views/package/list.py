@@ -271,6 +271,7 @@ class PackageListSearchView(CommunityMixin, ListView):
             queryset = queryset.exclude(package__is_deprecated=True)
 
         queryset = self.filter_approval_status(queryset)
+        queryset = queryset.public_list()
 
         search_query = self.get_search_query()
         if search_query:
