@@ -11,6 +11,18 @@ class VisibilityQuerySet(models.QuerySet):
     def public_detail(self):
         return self.exclude(visibility__public_detail=False)
 
+    def owner_list(self):
+        return self.exclude(visibility__owner_list=False)
+
+    def owner_detail(self):
+        return self.exclude(visibility__owner_detail=False)
+
+    def moderator_list(self):
+        return self.exclude(visibility__moderator_list=False)
+
+    def moderator_detail(self):
+        return self.exclude(visibility__moderator_detail=False)
+
     def visible_list(self, is_owner: bool, is_moderator: bool, is_admin: bool):
         filter = Q(visibility__public_list=True)
         if is_owner:
@@ -44,7 +56,7 @@ class VisibilityMixin(models.Model):
     @transaction.atomic
     def save(self, *args, **kwargs):
         if not self.pk and not self.visibility:
-            self.visibility = VisibilityFlags.objects.create_public()
+            self.visibility = VisibilityFlags.objects.create_private()
         super().save()
 
     class Meta:
