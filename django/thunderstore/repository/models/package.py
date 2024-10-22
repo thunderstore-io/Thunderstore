@@ -276,6 +276,8 @@ class Package(AdminLinkMixin, models.Model):
         self.latest = self.available_versions.first()
         if old_latest != self.latest and self.latest is not None:
             self.save()
+        for listing in self.community_listings.all():
+            listing.update_visibility()
 
     def handle_created_version(self, version):
         self.date_updated = timezone.now()
