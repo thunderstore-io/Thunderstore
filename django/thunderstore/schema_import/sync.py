@@ -52,12 +52,13 @@ def import_community(identifier: str, schema: SchemaCommunity):
         for package_id in schema.autolist_package_ids:
             with ExceptionLogger(continue_on_error=True):
                 package = PackageReference.parse(package_id).package
-                if package.get_package_listing(community) is None:
-                    PackageListing.objects.create(
-                        package=package,
-                        community=community,
-                        is_auto_imported=True,
-                    )
+                if package is not None:
+                    if package.get_package_listing(community) is None:
+                        PackageListing.objects.create(
+                            package=package,
+                            community=community,
+                            is_auto_imported=True,
+                        )
 
     for k, v in schema.categories.items():
         if not (
