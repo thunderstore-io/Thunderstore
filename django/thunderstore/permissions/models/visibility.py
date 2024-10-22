@@ -14,6 +14,18 @@ class VisibilityFlagsQuerySet(models.QuerySet):
             admin_detail=True,
         )
 
+    def create_private(self):
+        return self.create(
+            public_list=False,
+            public_detail=False,
+            owner_list=True,
+            owner_detail=True,
+            moderator_list=True,
+            moderator_detail=True,
+            admin_list=True,
+            admin_detail=True,
+        )
+
 
 class VisibilityFlags(models.Model):
     objects = VisibilityFlagsQuerySet.as_manager()
