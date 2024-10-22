@@ -1,10 +1,15 @@
 from django.contrib import admin
+from django.core.cache import cache
+from django.db import transaction
 from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from thunderstore.cache.enums import CacheBustCondition
+from thunderstore.cache.tasks import invalidate_cache
 from thunderstore.community.models import PackageListing
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.tasks.files import extract_package_version_file_tree
 
@@ -17,11 +22,35 @@ def extract_file_list(modeladmin, request, queryset: QuerySet):
 extract_file_list.short_description = "Queue file list extraction"
 
 
+@transaction.atomic
+def reject_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
+    for version in queryset:
+        version.review_status = PackageVersionReviewStatus.rejected
+        version.save(update_fields=("review_status",))
+        version.package.recache_latest()
+
+
+reject_version.short_description = "Reject"
+
+
+@transaction.atomic
+def approve_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
+    for version in queryset:
+        version.review_status = PackageVersionReviewStatus.approved
+        version.save(update_fields=("review_status",))
+        version.package.recache_latest()
+
+
+approve_version.short_description = "Approve"
+
+
 @admin.register(PackageVersion)
 class PackageVersionAdmin(admin.ModelAdmin):
     model = PackageVersion
     actions = [
         extract_file_list,
+        reject_version,
+        approve_version,
     ]
     list_select_related = (
         "package",
@@ -33,6 +62,7 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "package",
         "version_number",
         "is_active",
+        "review_status",
         "file_size",
         "downloads",
         "date_created",

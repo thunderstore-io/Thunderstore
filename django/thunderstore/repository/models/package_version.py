@@ -14,7 +14,10 @@ from django.utils.functional import cached_property
 
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
-from thunderstore.repository.consts import PACKAGE_NAME_REGEX
+from thunderstore.repository.consts import (
+    PACKAGE_NAME_REGEX,
+    PackageVersionReviewStatus,
+)
 from thunderstore.repository.models import Package
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
@@ -38,6 +41,9 @@ def get_version_png_filepath(instance, filename):
 class PackageVersionQuerySet(VisibilityQuerySet):
     def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
         return self.exclude(is_active=False)
+
+    def filter_by_review_status(self):
+        return self.exclude(review_status__in=["pending", "rejected"])
 
     def chunked_enumerate(self, chunk_size=1000) -> Iterator["PackageVersion"]:
         """
@@ -120,6 +126,13 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     readme = models.TextField()
     changelog = models.TextField(blank=True, null=True)
 
+    # TODO: Default should be pending once all versions require automated scanning before appearing to users
+    review_status = models.CharField(
+        default=PackageVersionReviewStatus.skipped,
+        choices=PackageVersionReviewStatus.as_choices(),
+        max_length=512,
+    )
+
     # <packagename>.zip
     file = models.FileField(
         upload_to=get_version_zip_filepath,
@@ -148,6 +161,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
     def save(self, *args, **kwargs):
         self.validate()
+
+        old_review_status = PackageVersion.objects.get(pk=self.pk).review_status
+        if old_review_status != self.review_status:
+            self.update_visibility()
+
         return super().save(*args, **kwargs)
 
     class Meta:
@@ -296,6 +314,23 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             return
 
         log_version_download.delay(version_id, timezone.now().isoformat())
+
+    def update_visibility(self):
+        self.visibility.public_detail = True
+        self.visibility.public_list = True
+        self.visibility.owner_detail = True
+        self.visibility.owner_list = True
+        self.visibility.moderator_detail = True
+        self.visibility.moderator_list = True
+
+        if (
+            self.review_status == PackageVersionReviewStatus.rejected
+            or self.review_status == PackageVersionReviewStatus.pending
+        ):
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+        self.visibility.save()
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
