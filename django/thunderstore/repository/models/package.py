@@ -299,8 +299,12 @@ class Package(AdminLinkMixin, models.Model):
         if hasattr(self, "available_versions"):
             del self.available_versions  # Bust the version cache
         self.latest = self.available_versions.first()
-        if old_latest != self.latest and self.latest is not None:
+        if self.latest is None:
+            self.latest = self.versions.filter(is_active=True).first()
+        if old_latest != self.latest:
             self.save()
+
+        self.latest.update_visibility()
         for listing in self.community_listings.all():
             listing.update_visibility()
 
