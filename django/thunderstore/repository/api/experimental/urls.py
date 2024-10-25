@@ -11,6 +11,10 @@ from thunderstore.repository.api.experimental.views import (
 from thunderstore.repository.api.experimental.views.package_index import (
     PackageIndexApiView,
 )
+from thunderstore.repository.api.experimental.views.package_version import (
+    PackageVersionApproveApiView,
+    PackageVersionRejectApiView,
+)
 from thunderstore.repository.api.experimental.views.submit import SubmitPackageApiView
 from thunderstore.repository.api.experimental.views.submit_async import (
     CreateAsyncPackageSubmissionApiView,
@@ -89,5 +93,15 @@ urls = [
         "submission/validate/icon/",
         IconValidatorApiView.as_view(),
         name="submission.validate.icon",
+    ),
+    path(
+        "package-version/<int:pk>/approve/",
+        PackageVersionApproveApiView.as_view(),
+        name="package-version.approve",
+    ),
+    path(
+        "package-version/<int:pk>/reject/",
+        PackageVersionRejectApiView.as_view(),
+        name="package-version.reject",
     ),
 ]

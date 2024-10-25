@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import Community
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
@@ -25,6 +26,12 @@ from thunderstore.repository.consts import (
 from thunderstore.repository.models import Package
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
+from thunderstore.webhooks.audit import (
+    AuditAction,
+    AuditEvent,
+    AuditEventField,
+    fire_audit_event,
+)
 from thunderstore.webhooks.models.release import Webhook
 
 if TYPE_CHECKING:
@@ -320,6 +327,80 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             return
 
         log_version_download.delay(version_id, timezone.now().isoformat())
+
+    def build_audit_event(
+        self,
+        *,
+        action: AuditAction,
+        user_id: Optional[int],
+        message: Optional[str] = None,
+    ) -> AuditEvent:
+        return AuditEvent(
+            timestamp=timezone.now(),
+            user_id=user_id,
+            action=action,
+            message=message,
+            related_url=self.package.get_view_on_site_url(),
+            fields=[
+                AuditEventField(
+                    name="Package",
+                    value=self.package.full_package_name,
+                ),
+            ],
+        )
+
+    @transaction.atomic
+    def reject(
+        self,
+        agent: Optional[UserType],
+        is_system: bool = False,
+    ):
+        if self.review_status == PackageVersionReviewStatus.immune:
+            raise PermissionError()
+
+        if is_system or self.can_user_manage_approval_status(agent):
+            self.review_status = PackageVersionReviewStatus.rejected
+            self.save(update_fields=("review_status",))
+
+            fire_audit_event(
+                self.build_audit_event(
+                    action=AuditAction.VERSION_REJECTED,
+                    user_id=agent.pk if agent else None,
+                )
+            )
+        else:
+            raise PermissionError()
+
+    @transaction.atomic
+    def approve(
+        self,
+        agent: Optional[UserType],
+        is_system: bool = False,
+    ):
+        if self.review_status == PackageVersionReviewStatus.immune:
+            raise PermissionError()
+
+        if is_system or self.can_user_manage_approval_status(agent):
+            self.review_status = PackageVersionReviewStatus.approved
+            self.save(update_fields=("review_status",))
+
+            fire_audit_event(
+                self.build_audit_event(
+                    action=AuditAction.VERSION_APPROVED,
+                    user_id=agent.pk if agent else None,
+                )
+            )
+        else:
+            raise PermissionError()
+
+    def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
+        if self.review_status == PackageVersionReviewStatus.immune:
+            return False
+
+        for listing in self.package.community_listings.all():
+            if listing.can_user_manage_approval_status(user):
+                return True
+        return False
 
     def ensure_can_be_viewed_by_user(
         self, user: Optional[UserType], community: Community
