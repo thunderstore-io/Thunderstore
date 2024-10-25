@@ -146,6 +146,7 @@ def get_custom_package_listing(
     qs = (
         PackageListing.objects.active()
         .filter_by_community_approval_rule()
+        .public_list()
         .select_related(
             "community",
             "package__latest",
