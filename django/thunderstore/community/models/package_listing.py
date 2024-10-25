@@ -16,6 +16,7 @@ from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
+from thunderstore.permissions.models import VisibilityFlags
 from thunderstore.permissions.utils import validate_user
 from thunderstore.webhooks.audit import (
     AuditAction,
@@ -104,9 +105,10 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
         self.validate()
 
         old_self = PackageListing.objects.filter(pk=self.pk).first()
-        if old_self is not None:
-            if old_self.review_status != self.review_status:
-                self.update_visibility()
+        if old_self is None:
+            self.update_visibility()
+        elif old_self.review_status != self.review_status:
+            self.update_visibility()
 
         return super().save(*args, **kwargs)
 
@@ -380,7 +382,11 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
     def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
 
+    @transaction.atomic
     def update_visibility(self):
+        if not self.visibility:
+            self.visibility = VisibilityFlags.objects.create_private()
+
         self.visibility.public_detail = True
         self.visibility.public_list = True
         self.visibility.owner_detail = True

@@ -27,7 +27,6 @@ def reject_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
     for version in queryset:
         version.review_status = PackageVersionReviewStatus.rejected
         version.save(update_fields=("review_status",))
-        version.package.recache_latest()
 
 
 reject_version.short_description = "Reject"
@@ -38,7 +37,6 @@ def approve_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
     for version in queryset:
         version.review_status = PackageVersionReviewStatus.approved
         version.save(update_fields=("review_status",))
-        version.package.recache_latest()
 
 
 approve_version.short_description = "Approve"

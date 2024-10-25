@@ -196,6 +196,9 @@ class PackageUploadForm(forms.ModelForm):
             zip_data=self.cleaned_data["file"],
         )
 
+        self.instance.icon.save("icon.png", self.icon)
+        instance = super().save()
+
         community_categories = self.cleaned_data.get("community_categories", {})
         for community in self.cleaned_data.get("communities", []):
             categories = community_categories.get(community.identifier, [])
@@ -211,8 +214,6 @@ class PackageUploadForm(forms.ModelForm):
                 community=community,
             )
 
-        self.instance.icon.save("icon.png", self.icon)
-        instance = super().save()
         for reference in self.manifest["dependencies"]:
             instance.dependencies.add(reference.instance)
 
