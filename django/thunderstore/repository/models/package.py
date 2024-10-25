@@ -190,7 +190,7 @@ class Package(AdminLinkMixin, models.Model):
     def unavailable_versions(self):
         # TODO: Caching
         versions = self.versions.filter(
-            is_active=True, review_status__in=["pending", "rejected"]
+            is_active=True, visibility__public_list=False, visibility__owner_list=True
         ).values_list("pk", "version_number")
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
@@ -299,10 +299,10 @@ class Package(AdminLinkMixin, models.Model):
         if hasattr(self, "available_versions"):
             del self.available_versions  # Bust the version cache
         self.latest = self.available_versions.first()
-        if old_latest != self.latest and self.latest is not None:
+        if self.latest is None:
+            self.latest = self.versions.filter(is_active=True).first()
+        if old_latest != self.latest:
             self.save()
-        for listing in self.community_listings.all():
-            listing.update_visibility()
 
     def handle_created_version(self, version):
         self.date_updated = timezone.now()

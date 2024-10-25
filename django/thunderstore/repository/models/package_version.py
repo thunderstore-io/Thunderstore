@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Manager, Q, QuerySet, Sum, signals
 from django.urls import reverse
 from django.utils import timezone
@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
+from thunderstore.permissions.models import VisibilityFlags
 from thunderstore.repository.consts import (
     PACKAGE_NAME_REGEX,
     PackageVersionReviewStatus,
@@ -163,9 +164,10 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         self.validate()
 
         old_self = PackageVersion.objects.filter(pk=self.pk).first()
-        if old_self is not None:
-            if old_self.review_status != self.review_status:
-                self.update_visibility()
+        if old_self is None:
+            self.update_visibility()
+        elif old_self.review_status != self.review_status:
+            self.update_visibility()
 
         return super().save(*args, **kwargs)
 
@@ -316,7 +318,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
         log_version_download.delay(version_id, timezone.now().isoformat())
 
+    @transaction.atomic
     def update_visibility(self):
+        if not self.visibility:
+            self.visibility = VisibilityFlags.objects.create_private()
+
         self.visibility.public_detail = True
         self.visibility.public_list = True
         self.visibility.owner_detail = True
@@ -332,6 +338,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             self.visibility.public_list = False
 
         self.visibility.save()
+        for listing in self.package.community_listings.all():
+            listing.update_visibility()
+        self.package.recache_latest()
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
