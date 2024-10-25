@@ -4,16 +4,87 @@
         <th>Version number</th>
         <th>Downloads</th>
         <th>Actions</th>
+        {% if can_moderate %}
+            <th>Moderation</th>
+        {% endif %}
     </tr>
     {% for version in versions %}
         <tr>
             <td>{{ version.date_created|date:"Y-n-j" }}</td>
             <td>{{ version.version_number }}</td>
             <td>{{ version.downloads }}</td>
-            <td class="d-flex gap-1">
-                <a href="{{ version.full_download_url }}" type="button" class="btn btn-primary">Download</a>
-                <a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a>
+            <td>
+                <div class="d-flex gap-1">
+                    <a href="{{ version.full_download_url }}" type="button" class="btn btn-primary">Download</a>
+                    <a href="{{ version.install_url }}" type="button" class="btn btn-primary">Install</a>
+                </div>
             </td>
+            {% if can_moderate %}
+                <td>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-danger" onclick="reviewVersion({{ version.pk }}, false)">REJECT</button>
+                        <button class="btn btn-success" onclick="reviewVersion({{ version.pk }}, true)">APPROVE</button>
+                    </div>
+                </td>
+            {% endif %}
         </tr>
     {% endfor %}
 </table>
+
+{% if can_moderate %}
+    <script>
+        function reviewVersion(version, approve) {
+            let apiURL = '/api/experimental/package-version/' + version;
+            if(approve)
+            {
+                apiURL += '/approve/';
+            }
+            else
+            {
+                apiURL += '/reject/';
+            }
+
+            fetch(apiURL, {
+                method: 'POST',
+                headers: {
+                    'authorization': `Session ${getCookie("sessionid")}`,
+                    'X-CSRFToken': getCookie("csrftoken"),
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response;
+                })
+                .then(data => {
+                    console.log('Success:', data);
+                    alert('Successfully reviewed package version');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to review package version');
+                    location.reload();
+                });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                let cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    let cookie = cookies[i].trim();
+
+                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(
+                            cookie.substring(name.length + 1)
+                        );
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+{% endif %}

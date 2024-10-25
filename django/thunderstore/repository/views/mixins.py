@@ -157,6 +157,7 @@ class PackagePermissionsMixin:
         )
         context["show_review_status"] = self.can_manage
         context["show_internal_notes"] = self.can_moderate
+        context["can_moderate"] = self.can_moderate
 
         context["management_panel_props"] = {
             "isDeprecated": package_listing.package.is_deprecated,
