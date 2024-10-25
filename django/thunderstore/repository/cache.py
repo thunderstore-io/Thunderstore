@@ -32,6 +32,7 @@ def get_package_listing_base_queryset(
     return (
         PackageListing.objects.active()
         .filter_by_community_approval_rule()
+        .public_list()
         .exclude(~Q(community__identifier=community_identifier))
     )
 
