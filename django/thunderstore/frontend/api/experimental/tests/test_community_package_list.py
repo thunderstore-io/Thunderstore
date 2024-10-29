@@ -11,6 +11,8 @@ from thunderstore.community.factories import CommunitySiteFactory, PackageListin
 from thunderstore.community.models import PackageCategory, PackageListingSection
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.frontend.api.experimental.views import CommunityPackageListApiView
+from thunderstore.permissions.factories import VisibilityFlagsFactory
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,
@@ -107,6 +109,65 @@ def test_only_approved_packages_are_returned_when_approval_is_required(
     data = __query_api(api_client, listing1.community.identifier)
 
     __assert_packages_by_listings(data, listing2)
+
+
+@pytest.mark.django_db
+def test_only_visible_packages_are_returned(api_client: APIClient) -> None:
+    listing1 = PackageListingFactory()
+    listing1.visibility = VisibilityFlagsFactory(public_list=True)
+    listing1.save()
+
+    listing2 = PackageListingFactory(
+        community_=listing1.community,
+    )
+    listing2.visibility = VisibilityFlagsFactory(public_list=True)
+    listing2.save()
+
+    listing3 = PackageListingFactory(
+        community_=listing1.community,
+    )
+    listing3.visibility = VisibilityFlagsFactory(public_list=False)
+    listing3.save()
+
+    data = __query_api(api_client, listing1.community.identifier)
+
+    assert len(data["packages"]) == 2
+    __assert_packages_by_listings(data, [listing2, listing1])
+
+
+@pytest.mark.django_db
+def test_packages_with_only_rejected_versions_are_not_returned(
+    api_client: APIClient,
+) -> None:
+    listing1 = PackageListingFactory()
+    listing1.visibility = VisibilityFlagsFactory(public_list=True)
+    listing1.save()
+
+    listing2 = PackageListingFactory(community_=listing1.community)
+    listing2.visibility = VisibilityFlagsFactory(public_list=True)
+    listing2.save()
+    PackageVersionFactory(
+        package=listing2.package,
+        version_number="2.0.0",
+    )
+
+    listing3 = PackageListingFactory(community_=listing1.community)
+    listing3.visibility = VisibilityFlagsFactory(public_list=True)
+    listing3.save()
+
+    listing1.package.latest.review_status = PackageVersionReviewStatus.rejected
+    listing1.package.latest.save()
+
+    listing2.package.latest.review_status = PackageVersionReviewStatus.rejected
+    listing2.package.latest.save()
+
+    listing2.package.recache_latest()  # can't wait for post_save() here
+    listing2.package.latest.review_status = PackageVersionReviewStatus.rejected
+    listing2.package.latest.save()
+
+    data = __query_api(api_client, listing1.community.identifier)
+
+    assert len(data["packages"]) == 1
 
 
 @pytest.mark.django_db
