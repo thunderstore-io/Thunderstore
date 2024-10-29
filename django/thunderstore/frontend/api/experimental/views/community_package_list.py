@@ -91,6 +91,7 @@ class CommunityPackageListApiView(APIView):
             .filter(
                 community_listings__community__pk=community.pk,
                 community_listings__review_status__in=review_statuses,
+                community_listings__visibility__public_list=True,
             )
             .prefetch_related(
                 community_listings,
