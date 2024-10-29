@@ -354,17 +354,18 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
         if not self.visibility:
             raise ValidationError("Insufficient permissions to view")
 
-        if not self.visibility.public_detail:
-            if not (
-                self.visibility.owner_detail
-                and self.package.owner.can_user_access(user)
-            ):
+        if user is not None:
+            if not self.visibility.public_detail:
                 if not (
-                    self.visibility.moderator_detail
-                    and self.community.can_user_manage_packages(user)
+                    self.visibility.owner_detail
+                    and self.package.owner.can_user_access(user)
                 ):
-                    if not (self.visibility.admin_detail and user.is_superuser):
-                        raise ValidationError("Insufficient permissions to view")
+                    if not (
+                        self.visibility.moderator_detail
+                        and self.community.can_user_manage_packages(user)
+                    ):
+                        if not (self.visibility.admin_detail and user.is_superuser):
+                            raise ValidationError("Insufficient permissions to view")
 
         if self.community.require_package_listing_approval:
             if (

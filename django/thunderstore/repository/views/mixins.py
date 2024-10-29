@@ -136,9 +136,6 @@ class PackagePermissionsMixin:
             "packageListingId": self.object.pk,
         }
 
-    def format_category(cat: PackageCategory):
-        return {"name": cat.name, "slug": cat.slug}
-
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         package_listing = context["object"]
@@ -159,6 +156,9 @@ class PackagePermissionsMixin:
         context["show_internal_notes"] = self.can_moderate
         context["can_moderate"] = self.can_moderate
 
+        def format_category(cat: PackageCategory):
+            return {"name": cat.name, "slug": cat.slug}
+
         context["management_panel_props"] = {
             "isDeprecated": package_listing.package.is_deprecated,
             "canDeprecate": self.can_deprecate,
@@ -167,10 +167,10 @@ class PackagePermissionsMixin:
             "canUpdateCategories": self.can_manage_categories,
             "csrfToken": csrf.get_token(self.request),
             "currentCategories": [
-                self.format_category(x) for x in package_listing.categories.all()
+                format_category(x) for x in package_listing.categories.all()
             ],
             "availableCategories": [
-                self.format_category(x)
+                format_category(x)
                 for x in package_listing.community.package_categories.all()
             ],
             "packageListingId": package_listing.pk,

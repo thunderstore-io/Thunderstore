@@ -220,6 +220,11 @@ class PackageListSearchView(CommunityMixin, ListView):
                 review_status=PackageListingReviewStatus.rejected,
             )
 
+    def filter_visibility(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
+        return queryset.public_list()
+
     def get_queryset(self):
         listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
 
@@ -271,7 +276,7 @@ class PackageListSearchView(CommunityMixin, ListView):
             queryset = queryset.exclude(package__is_deprecated=True)
 
         queryset = self.filter_approval_status(queryset)
-        queryset = queryset.public_list()
+        queryset = self.filter_visibility(queryset)
 
         search_query = self.get_search_query()
         if search_query:
@@ -436,6 +441,11 @@ class PackageReviewListView(PackageListSearchView):
         self, queryset: QuerySet[PackageListing]
     ) -> QuerySet[PackageListing]:
         return queryset
+
+    def filter_visibility(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
+        return queryset.moderator_list()
 
     def get_community_cache_vary(self) -> str:
         return ".".join(self.community_ids)
