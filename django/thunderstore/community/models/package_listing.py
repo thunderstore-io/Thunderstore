@@ -221,7 +221,7 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
             message = "\n\n".join(filter(bool, (rejection_reason, internal_notes)))
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_REJECTED,
+                    action=AuditAction.LISTING_REJECTED,
                     user_id=agent.pk if agent else None,
                     message=message,
                 )
@@ -247,7 +247,7 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
             )
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_APPROVED,
+                    action=AuditAction.LISTING_APPROVED,
                     user_id=agent.pk if agent else None,
                     message=internal_notes,
                 )

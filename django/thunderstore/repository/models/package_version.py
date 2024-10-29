@@ -354,6 +354,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         self,
         agent: Optional[UserType],
         is_system: bool = False,
+        message: Optional[str] = None,
     ):
         if self.review_status == PackageVersionReviewStatus.immune:
             raise PermissionError()
@@ -366,6 +367,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
                 self.build_audit_event(
                     action=AuditAction.VERSION_REJECTED,
                     user_id=agent.pk if agent else None,
+                    message=message,
                 )
             )
         else:
@@ -376,6 +378,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         self,
         agent: Optional[UserType],
         is_system: bool = False,
+        message: Optional[str] = None,
     ):
         if self.review_status == PackageVersionReviewStatus.immune:
             raise PermissionError()
@@ -388,6 +391,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
                 self.build_audit_event(
                     action=AuditAction.VERSION_APPROVED,
                     user_id=agent.pk if agent else None,
+                    message=message,
                 )
             )
         else:
