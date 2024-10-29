@@ -1,6 +1,8 @@
 import pytest
 from rest_framework.test import APIClient
 
+from thunderstore.permissions.factories import VisibilityFlagsFactory
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import Package
 
@@ -48,3 +50,55 @@ def test_package_version_list_api_view__returns_versions(
 
     assert len(actual) == 1
     assert actual[0]["version_number"] == expected.version_number
+
+
+@pytest.mark.django_db
+def test_only_visible_versions_are_returned(
+    api_client: APIClient,
+) -> None:
+    version1 = PackageVersionFactory(version_number="1.0.0")
+    version1.visibility = VisibilityFlagsFactory(public_list=True)
+    version1.save()
+
+    version2 = PackageVersionFactory(package=version1.package, version_number="2.0.0")
+    version2.visibility = VisibilityFlagsFactory(public_list=False)
+    version2.save()
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{version1.package.namespace}/{version1.package.name}/versions/",
+    )
+    actual = response.json()
+
+    assert len(actual) == 1
+    assert actual[0]["version_number"] == version1.version_number
+
+
+@pytest.mark.django_db
+def test_latest_is_visible_if_possible(
+    api_client: APIClient,
+) -> None:
+    version1 = PackageVersionFactory(version_number="1.0.0")
+    version1.visibility = VisibilityFlagsFactory(public_list=True)
+    version1.save()
+
+    version2 = PackageVersionFactory(package=version1.package, version_number="2.0.0")
+    version2.visibility = VisibilityFlagsFactory(public_list=True)
+    version2.save()
+
+    version1.package.recache_latest()
+
+    assert version1.package.latest == version2
+
+    version2.review_status = PackageVersionReviewStatus.rejected
+    version2.save()
+
+    version1.package.recache_latest()
+
+    assert version1.package.latest == version1
+
+    version1.review_status = PackageVersionReviewStatus.rejected
+    version1.save()
+
+    version1.package.recache_latest()
+
+    assert version1.package.latest == version1
