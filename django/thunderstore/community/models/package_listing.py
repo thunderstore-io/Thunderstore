@@ -399,6 +399,13 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
             self.visibility.public_detail = False
             self.visibility.public_list = False
 
+        if (
+            self.community.require_package_listing_approval
+            and self.review_status == PackageListingReviewStatus.unreviewed
+        ):
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
         versions = self.package.versions.filter(is_active=True).all()
         if versions.exclude(visibility__public_detail=False).count() == 0:
             self.visibility.public_detail = False
