@@ -4,7 +4,7 @@ from zipfile import ZipFile
 import pytest
 
 from thunderstore.repository.validation.zip import (
-    check_relative_paths,
+    check_unsafe_paths,
     check_zero_offset,
 )
 
@@ -13,14 +13,14 @@ from thunderstore.repository.validation.zip import (
     ("path", "expected"),
     (("foo.txt", False), ("foo/../foo.txt", True), ("../foo.txt", True)),
 )
-def test_zip_check_relative_paths(path: str, expected: bool):
+def test_zip_check_unsafe_paths(path: str, expected: bool):
     buffer = BytesIO()
 
     with ZipFile(buffer, "w") as zf:
         zf.writestr(path, "foo")
 
     with ZipFile(buffer, "r") as zf:
-        assert check_relative_paths(zf.infolist()) is expected
+        assert check_unsafe_paths(zf.infolist()) is expected
 
 
 @pytest.mark.parametrize(
