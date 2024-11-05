@@ -3,10 +3,7 @@ from zipfile import ZipFile
 
 import pytest
 
-from thunderstore.repository.validation.zip import (
-    check_unsafe_paths,
-    check_zero_offset,
-)
+from thunderstore.repository.validation.zip import check_unsafe_paths, check_zero_offset
 
 
 @pytest.mark.parametrize(
