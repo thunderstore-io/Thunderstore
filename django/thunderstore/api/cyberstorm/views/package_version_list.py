@@ -27,4 +27,4 @@ class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
             name__iexact=self.kwargs["package_name"],
         )
 
-        return package.available_versions
+        return package.versions.public_list()
