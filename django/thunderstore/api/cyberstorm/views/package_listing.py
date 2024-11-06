@@ -144,9 +144,7 @@ def get_custom_package_listing(
     listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
 
     qs = (
-        PackageListing.objects.active()
-        .filter_by_community_approval_rule()
-        .public_list()
+        PackageListing.objects.public_list()
         .select_related(
             "community",
             "package__latest",

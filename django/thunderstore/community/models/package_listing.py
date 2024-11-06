@@ -35,6 +35,9 @@ class PackageListingQueryset(VisibilityQuerySet):
             ~Q(package__versions__is_active=True)
         )
 
+    def public_list(self):
+        return super(PackageListingQueryset, self.active()).public_list()
+
     def approved(self):
         return self.exclude(~Q(review_status=PackageListingReviewStatus.approved))
 

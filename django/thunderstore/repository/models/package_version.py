@@ -53,6 +53,9 @@ class PackageVersionQuerySet(VisibilityQuerySet):
     def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
         return self.exclude(is_active=False)
 
+    def public_list(self):
+        return super(PackageVersionQuerySet, self.active()).public_list()
+
     def filter_by_review_status(self):
         return self.exclude(review_status__in=["pending", "rejected"])
 
