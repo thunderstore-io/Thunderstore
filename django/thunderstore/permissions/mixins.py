@@ -56,7 +56,7 @@ class VisibilityMixin(models.Model):
     @transaction.atomic
     def save(self, *args, **kwargs):
         if not self.pk and not self.visibility:
-            self.visibility = VisibilityFlags.objects.create_private()
+            self.visibility = VisibilityFlags.objects.create_unpublished()
         super().save()
 
     class Meta:

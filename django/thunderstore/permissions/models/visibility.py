@@ -14,7 +14,7 @@ class VisibilityFlagsQuerySet(models.QuerySet):
             admin_detail=True,
         )
 
-    def create_private(self):
+    def create_unpublished(self):
         return self.create(
             public_list=False,
             public_detail=False,

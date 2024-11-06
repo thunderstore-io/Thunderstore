@@ -386,7 +386,7 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
     @transaction.atomic
     def update_visibility(self):
         if not self.visibility:
-            self.visibility = VisibilityFlags.objects.create_private()
+            self.visibility = VisibilityFlags.objects.create_unpublished()
 
         self.visibility.public_detail = True
         self.visibility.public_list = True
