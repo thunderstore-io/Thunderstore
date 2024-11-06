@@ -48,5 +48,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_default_visibility_for_existing_records),
+        migrations.RunPython(
+            create_default_visibility_for_existing_records, migrations.RunPython.noop
+        ),
     ]

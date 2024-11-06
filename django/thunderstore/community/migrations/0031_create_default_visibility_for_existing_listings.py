@@ -35,6 +35,13 @@ def update_visibility(listing):
         listing.visibility.public_detail = False
         listing.visibility.public_list = False
 
+    if (
+        listing.community.require_package_listing_approval
+        and listing.review_status == PackageListingReviewStatus.unreviewed
+    ):
+        listing.visibility.public_detail = False
+        listing.visibility.public_list = False
+
     versions = listing.package.versions.filter(is_active=True).all()
     if versions.exclude(visibility__public_detail=False).count() == 0:
         listing.visibility.public_detail = False
@@ -59,5 +66,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_default_visibility_for_existing_records),
+        migrations.RunPython(
+            create_default_visibility_for_existing_records, migrations.RunPython.noop
+        ),
     ]
