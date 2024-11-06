@@ -172,13 +172,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
     def save(self, *args, **kwargs):
         self.validate()
-
-        old_self = PackageVersion.objects.filter(pk=self.pk).first()
-        if old_self is None:
-            self.update_visibility()
-        elif old_self.review_status != self.review_status:
-            self.update_visibility()
-
         return super().save(*args, **kwargs)
 
     class Meta:

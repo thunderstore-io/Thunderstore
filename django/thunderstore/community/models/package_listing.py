@@ -103,13 +103,6 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
 
     def save(self, *args, **kwargs):
         self.validate()
-
-        old_self = PackageListing.objects.filter(pk=self.pk).first()
-        if old_self is None:
-            self.update_visibility()
-        elif old_self.review_status != self.review_status:
-            self.update_visibility()
-
         return super().save(*args, **kwargs)
 
     def __str__(self):
