@@ -36,6 +36,11 @@
   </ol>
 </nav>
 
+{% if not object.visibility.public_list %}
+    <div class="alert alert-danger" role="alert">
+        This version is not currently available to the public.
+    </div>
+{% endif %}
 {% if object.is_deprecated %}
     <div class="alert alert-danger" role="alert">
         This package has been marked as deprecated, and it's suggested another
