@@ -162,8 +162,6 @@ class Package(AdminLinkMixin, models.Model):
     @cached_property
     def available_versions(self):
         # TODO: Caching
-        if hasattr(self, "unavailable_versions"):
-            del self.unavailable_versions
         versions = self.versions.public_list().values_list("pk", "version_number")
         ordered = sorted(versions, key=lambda version: StrictVersion(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
@@ -184,7 +182,6 @@ class Package(AdminLinkMixin, models.Model):
 
     @cached_property
     def unavailable_versions(self):
-        # TODO: Caching
         versions = self.versions.filter(
             is_active=True, visibility__public_list=False, visibility__owner_list=True
         ).values_list("pk", "version_number")
