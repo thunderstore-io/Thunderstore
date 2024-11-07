@@ -57,12 +57,15 @@ def test_only_visible_versions_are_returned(
     api_client: APIClient,
 ) -> None:
     version1 = PackageVersionFactory(version_number="1.0.0")
-    version1.visibility = VisibilityFlagsFactory(public_list=True)
+    version1.review_status = PackageVersionReviewStatus.approved
     version1.save()
 
     version2 = PackageVersionFactory(package=version1.package, version_number="2.0.0")
-    version2.visibility = VisibilityFlagsFactory(public_list=False)
+    version2.review_status = PackageVersionReviewStatus.rejected
     version2.save()
+
+    assert version1.visibility.public_list is True
+    assert version2.visibility.public_list is False
 
     response = api_client.get(
         f"/api/cyberstorm/package/{version1.package.namespace}/{version1.package.name}/versions/",

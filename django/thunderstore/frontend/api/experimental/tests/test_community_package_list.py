@@ -114,22 +114,26 @@ def test_only_approved_packages_are_returned_when_approval_is_required(
 @pytest.mark.django_db
 def test_only_visible_packages_are_returned(api_client: APIClient) -> None:
     listing1 = PackageListingFactory()
-    listing1.visibility = VisibilityFlagsFactory(public_list=True)
+    listing1.review_status = PackageListingReviewStatus.approved
     listing1.save()
 
     listing2 = PackageListingFactory(
         community_=listing1.community,
     )
-    listing2.visibility = VisibilityFlagsFactory(public_list=True)
+    listing2.review_status = PackageListingReviewStatus.approved
     listing2.save()
 
     listing3 = PackageListingFactory(
         community_=listing1.community,
     )
-    listing3.visibility = VisibilityFlagsFactory(public_list=False)
+    listing3.review_status = PackageListingReviewStatus.rejected
     listing3.save()
 
     data = __query_api(api_client, listing1.community.identifier)
+
+    assert listing1.visibility.public_list is True
+    assert listing2.visibility.public_list is True
+    assert listing3.visibility.public_list is False
 
     assert len(data["packages"]) == 2
     __assert_packages_by_listings(data, [listing2, listing1])
@@ -140,11 +144,11 @@ def test_packages_with_only_rejected_versions_are_not_returned(
     api_client: APIClient,
 ) -> None:
     listing1 = PackageListingFactory()
-    listing1.visibility = VisibilityFlagsFactory(public_list=True)
+    listing1.review_status = PackageListingReviewStatus.approved
     listing1.save()
 
     listing2 = PackageListingFactory(community_=listing1.community)
-    listing2.visibility = VisibilityFlagsFactory(public_list=True)
+    listing1.review_status = PackageListingReviewStatus.approved
     listing2.save()
     PackageVersionFactory(
         package=listing2.package,
@@ -152,7 +156,7 @@ def test_packages_with_only_rejected_versions_are_not_returned(
     )
 
     listing3 = PackageListingFactory(community_=listing1.community)
-    listing3.visibility = VisibilityFlagsFactory(public_list=True)
+    listing1.review_status = PackageListingReviewStatus.approved
     listing3.save()
 
     listing1.package.latest.review_status = PackageVersionReviewStatus.rejected
