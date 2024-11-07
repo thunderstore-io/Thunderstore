@@ -445,7 +445,7 @@ class PackageReviewListView(PackageListSearchView):
     def filter_visibility(
         self, queryset: QuerySet[PackageListing]
     ) -> QuerySet[PackageListing]:
-        return queryset.moderator_list()
+        return queryset.exclude(visibility__moderator_list=False)
 
     def get_community_cache_vary(self) -> str:
         return ".".join(self.community_ids)
