@@ -3,7 +3,6 @@
 {% load arrow %}
 {% load markdownify %}
 {% load cache_until %}
-{% load encode_props %}
 {% load dynamic_html community_url %}
 
 {% block title %}{{ object.package.display_name }}{% endblock %}
@@ -22,32 +21,8 @@
 {% endblock %}
 
 {% block content %}
-{% if show_management_panel %}
-<div class="d-flex justify-content-end gap-1">
-    {% if review_panel_props %}
-    <div id="package-review-panel"></div>
-    <script type="text/javascript">
-        window.ts.PackageReviewPanel(
-            document.getElementById("package-review-panel"),
-            {{ review_panel_props|encode_props }}
-        );
-    </script>
-    {% endif %}
-    <div id="package-management-panel"></div>
-    {% if show_listing_admin_link %}
-    <a href="{% url "admin:community_packagelisting_change" object.pk %}" type="button" class="btn btn-primary"><span class="fas fa-external-link-alt"></span>&nbsp;&nbsp;Listing admin</a>
-    {% endif %}
-    {% if show_package_admin_link %}
-    <a href="{% url "admin:repository_package_change" object.package.pk %}" type="button" class="btn btn-primary"><span class="fas fa-external-link-alt"></span>&nbsp;&nbsp;Package admin</a>
-    {% endif %}
-</div>
-<script type="text/javascript">
-window.ts.PackageManagementPanel(
-    document.getElementById("package-management-panel"),
-    {{ management_panel_props|encode_props }}
-);
-</script>
-{% endif %}
+
+{% include "community/includes/package_management_panel.html" %}
 
 {% cache_until "any_package_updated" "mod-detail-header" 300 object.package.pk community_identifier object.package.latest.pk %}
 
@@ -59,64 +34,10 @@ window.ts.PackageManagementPanel(
   </ol>
 </nav>
 
-{% if object.package.is_deprecated %}
-    <div class="alert alert-danger" role="alert">
-        This package has been marked as deprecated, and it's suggested another
-        alternative is used.
-    </div>
-{% endif %}
-
 {% endcache %}
 
-{% if show_review_status and object.package.unavailable_versions %}
-    <div class="alert alert-danger" role="alert">
-        One or more versions of this package are awaiting approval.
-    </div>
-{% endif %}
+{% include "community/includes/package_status.html" %}
 
-{% if show_review_status and object.is_rejected %}
-<div class="card text-white bg-danger mt-2">
-    <div class="card-body">
-        <h4 class="card-title">
-            Package rejected
-        </h4>
-        <p class="card-text">
-            This package has been rejected by site or community moderators.
-            If you think this is a mistake, please reach out to the moderators in
-            <a href="https://discord.thunderstore.io/">our Discord server</a>
-        </p>
-        {% if object.rejection_reason %}
-        <p class="card-text">
-            Reason: {{ object.rejection_reason }}
-        </p>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
-
-{% if show_review_status and object.is_waiting_for_approval %}
-<div class="card text-white bg-warning mt-2">
-    <div class="card-body">
-        <h4 class="card-title">
-            Waiting for approval
-        </h4>
-        <p class="card-text">
-            This package is waiting for approval by site or community moderators
-        </p>
-    </div>
-</div>
-{% endif %}
-
-{% if show_internal_notes and object.notes %}
-    <div class="card text-white bg-info mt-2">
-        <div class="card-body">
-            <h4 class="card-title">
-                Internal notes
-            </h4>
-            <p class="card-text">{{ object.notes }}</p>
-        </div>
-    </div>
-{% endif %}
 
 <div class="card bg-light mt-2">
     {% include "community/includes/package_tabs.html" with tabs=tabs %}

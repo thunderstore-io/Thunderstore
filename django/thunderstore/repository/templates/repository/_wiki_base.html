@@ -29,6 +29,8 @@
 
 {% block content %}
 
+{% include "community/includes/package_management_panel.html" %}
+
 <nav class="mt-3" aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% community_url "packages.list" %}">Packages</a></li>
@@ -41,7 +43,9 @@
     </ol>
 </nav>
 
-<div class="card bg-light">
+{% include "community/includes/package_status.html" %}
+
+<div class="card bg-light mt-2">
     {% include "community/includes/package_tabs.html" with tabs=tabs%}
     {% block wiki_content %}{% endblock %}
 </div>

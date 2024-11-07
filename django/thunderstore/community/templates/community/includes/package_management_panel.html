@@ -1,0 +1,28 @@
+{% load encode_props %}
+
+{% if show_management_panel %}
+<div class="d-flex justify-content-end gap-1">
+    {% if review_panel_props %}
+    <div id="package-review-panel"></div>
+    <script type="text/javascript">
+        window.ts.PackageReviewPanel(
+            document.getElementById("package-review-panel"),
+            {{ review_panel_props|encode_props }}
+        );
+    </script>
+    {% endif %}
+    <div id="package-management-panel"></div>
+    {% if show_listing_admin_link %}
+    <a href="{% url "admin:community_packagelisting_change" object.pk %}" type="button" class="btn btn-primary"><span class="fas fa-external-link-alt"></span>&nbsp;&nbsp;Listing admin</a>
+    {% endif %}
+    {% if show_package_admin_link %}
+    <a href="{% url "admin:repository_package_change" object.package.pk %}" type="button" class="btn btn-primary"><span class="fas fa-external-link-alt"></span>&nbsp;&nbsp;Package admin</a>
+    {% endif %}
+</div>
+<script type="text/javascript">
+window.ts.PackageManagementPanel(
+    document.getElementById("package-management-panel"),
+    {{ management_panel_props|encode_props }}
+);
+</script>
+{% endif %}

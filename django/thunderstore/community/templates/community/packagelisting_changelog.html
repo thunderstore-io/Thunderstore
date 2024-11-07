@@ -20,7 +20,10 @@
 {% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-detail-changelog-tab" 300 object.package.pk object.package.latest.pk community_identifier %}
+
+{% include "community/includes/package_management_panel.html" %}
+
+{% cache_until "any_package_updated" "mod-detail-changelog-header" 300 object.package.pk object.package.latest.pk community_identifier %}
 
 <nav class="mt-3" aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -30,6 +33,12 @@
         <li class="breadcrumb-item active" aria-current="page">Changelog</li>
     </ol>
 </nav>
+
+{% endcache %}
+
+{% include "community/includes/package_status.html" %}
+
+{% cache_until "any_package_updated" "mod-detail-changelog" 300 object.package.pk object.package.latest.pk community_identifier %}
 
 <div class="card bg-light mt-2">
     {% include "community/includes/package_tabs.html" with tabs=tabs %}
