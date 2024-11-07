@@ -439,6 +439,14 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         self.visibility.moderator_detail = True
         self.visibility.moderator_list = True
 
+        if not self.is_active or not self.package.is_active:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+            self.visibility.owner_detail = False
+            self.visibility.owner_list = False
+            self.visibility.moderator_detail = False
+            self.visibility.moderator_list = False
+
         if (
             self.review_status == PackageVersionReviewStatus.rejected
             or self.review_status == PackageVersionReviewStatus.pending

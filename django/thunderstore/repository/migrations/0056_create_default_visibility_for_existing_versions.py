@@ -31,6 +31,14 @@ def update_visibility(version):
     version.visibility.moderator_detail = True
     version.visibility.moderator_list = True
 
+    if not version.is_active or not version.package.is_active:
+        version.visibility.public_detail = False
+        version.visibility.public_list = False
+        version.visibility.owner_detail = False
+        version.visibility.owner_list = False
+        version.visibility.moderator_detail = False
+        version.visibility.moderator_list = False
+
     if (
         version.review_status == PackageVersionReviewStatus.rejected
         or version.review_status == PackageVersionReviewStatus.pending

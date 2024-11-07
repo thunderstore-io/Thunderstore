@@ -31,6 +31,14 @@ def update_visibility(listing):
     listing.visibility.moderator_detail = True
     listing.visibility.moderator_list = True
 
+    if not listing.package.is_active:
+        listing.visibility.public_detail = False
+        listing.visibility.public_list = False
+        listing.visibility.owner_detail = False
+        listing.visibility.owner_list = False
+        listing.visibility.moderator_detail = False
+        listing.visibility.moderator_list = False
+
     if listing.review_status == PackageListingReviewStatus.rejected:
         listing.visibility.public_detail = False
         listing.visibility.public_list = False
