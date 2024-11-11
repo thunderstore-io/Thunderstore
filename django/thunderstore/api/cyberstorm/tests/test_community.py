@@ -43,6 +43,7 @@ def test_api_cyberstorm_community_detail_success(
     assert c.cover_image_url == response_data["cover_image_url"]
     assert c.description == response_data["description"]
     assert c.discord_url == response_data["discord_url"]
+    assert c.wiki_url == response_data["wiki_url"]
 
 
 @pytest.mark.django_db
