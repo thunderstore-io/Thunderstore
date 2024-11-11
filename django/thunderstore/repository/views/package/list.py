@@ -275,7 +275,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         if not self.get_is_deprecated_included():
             queryset = queryset.exclude(package__is_deprecated=True)
 
-        queryset = self.filter_approval_status(queryset)
+        # queryset = self.filter_approval_status(queryset)
         queryset = self.filter_visibility(queryset)
 
         search_query = self.get_search_query()
@@ -356,6 +356,17 @@ class PackageListView(PackageListSearchView):
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageListByOwnerView(PackageListSearchView):
     owner: Optional[Team]
+    requester_has_community_permissions: bool
+    requester_has_owner_permissions: bool
+
+    def filter_visibility(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
+        if self.requester_has_community_permissions:
+            return queryset.exclude(visibility__moderator_list=False)
+        if self.requester_has_owner_permissions:
+            return queryset.exclude(visibility__owner_list=False)
+        return queryset.exclude(visibility__public_list=False)
 
     def get_breadcrumbs(self):
         breadcrumbs = super().get_breadcrumbs()
@@ -375,8 +386,17 @@ class PackageListByOwnerView(PackageListSearchView):
     def cache_owner(self):
         self.owner = get_object_or_404(Team, name=self.kwargs["owner"])
 
+    def cache_permissions(self):
+        self.requester_has_community_permissions = (
+            self.community.can_user_manage_packages(self.request.user)
+        )
+        self.requester_has_owner_permissions = self.owner.can_user_manage_packages(
+            self.request.user
+        )
+
     def dispatch(self, *args, **kwargs):
         self.cache_owner()
+        self.cache_permissions()
         return super().dispatch(*args, **kwargs)
 
     def get_base_queryset(self):
@@ -388,7 +408,10 @@ class PackageListByOwnerView(PackageListSearchView):
         return f"Mods uploaded by {self.owner.name}"
 
     def get_cache_vary(self):
-        return f"authorer-{self.owner.name}"
+        cache_vary = f"authorer-{self.owner.name}"
+        cache_vary += f".{self.requester_has_community_permissions}"
+        cache_vary += f".{self.requester_has_owner_permissions}"
+        return cache_vary
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")

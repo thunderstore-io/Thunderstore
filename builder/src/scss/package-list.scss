@@ -16,6 +16,13 @@
     transform-origin: center;
 }
 
+.unavailable {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    text-align: right;
+}
+
 .search-options {
     .checkbox {
         display: flex;

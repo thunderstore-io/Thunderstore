@@ -152,6 +152,13 @@
         <div class="col-6 col-md-4 col-lg-3 mb-2 p-1 d-flex flex-column
                     {% if object.package.is_deprecated %}text-dark deleted{% endif %}">
             <div class="p-0 bg-light">
+                {% if not object.visibility.public_detail %}
+                <div class="unavailable w-100">
+                    <div class="mr-2 p-1 px-2 bg-danger">
+                        Unavailable <span class="fa fa-lock ml-1"></span>
+                    </div>
+                </div>
+                {% endif %}
                 {% if object.package.is_pinned %}
                 <div class="pin w-100">
                     <div class="mr-2 p-1 px-2 bg-primary w-auto w-fit-content">
