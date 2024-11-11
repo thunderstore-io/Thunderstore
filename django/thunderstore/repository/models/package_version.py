@@ -402,31 +402,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
                 return True
         return False
 
-    def ensure_can_be_viewed_by_user(
-        self, user: Optional[UserType], community: Community
-    ) -> None:
-        if not self.visibility:
-            raise ValidationError("Insufficient permissions to view")
-
-        if not self.visibility.public_detail:
-            if not (
-                self.visibility.owner_detail
-                and self.package.owner.can_user_access(user)
-            ):
-                if not (
-                    self.visibility.moderator_detail
-                    and community.can_user_manage_packages(user)
-                ):
-                    if not (self.visibility.admin_detail and user.is_superuser):
-                        raise ValidationError("Insufficient permissions to view")
-
-    def can_be_viewed_by_user(
-        self, user: Optional[UserType], community: Community
-    ) -> bool:
-        return check_validity(
-            lambda: self.ensure_can_be_viewed_by_user(user, community)
-        )
-
     @transaction.atomic
     def update_visibility(self):
         if not self.visibility:

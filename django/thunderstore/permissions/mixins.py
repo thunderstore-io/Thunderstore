@@ -1,6 +1,7 @@
 from django.db import models, transaction
 from django.db.models import Q
 
+from thunderstore.core.types import UserType
 from thunderstore.permissions.models import VisibilityFlags
 
 
@@ -56,3 +57,29 @@ class VisibilityMixin(models.Model):
 
     class Meta:
         abstract = True
+
+    def is_visible_to_user(self, user: UserType) -> bool:
+        if not self.visibility:
+            return False
+
+        if self.visibility.public_detail:
+            return True
+
+        if user is None:
+            return False
+
+        if hasattr(self, "package"):
+            if self.visibility.owner_detail:
+                if self.package.owner.can_user_access(user):
+                    return True
+
+            if self.visibility.moderator_detail:
+                for listing in self.package.community_listings.all():
+                    if listing.community.can_user_manage_packages(user):
+                        return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False

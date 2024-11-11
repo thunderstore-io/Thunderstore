@@ -336,49 +336,6 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
         return self.can_be_moderated_by_user(user)
 
-    def ensure_can_be_viewed_by_user(self, user: Optional[UserType]) -> None:
-        def get_has_perms() -> bool:
-            return (
-                user is not None
-                and user.is_authenticated
-                and (
-                    self.community.can_user_manage_packages(user)
-                    or self.package.owner.can_user_access(user)
-                )
-            )
-
-        if not self.visibility:
-            raise ValidationError("Insufficient permissions to view")
-
-        if user is not None:
-            if not self.visibility.public_detail:
-                if not (
-                    self.visibility.owner_detail
-                    and self.package.owner.can_user_access(user)
-                ):
-                    if not (
-                        self.visibility.moderator_detail
-                        and self.community.can_user_manage_packages(user)
-                    ):
-                        if not (self.visibility.admin_detail and user.is_superuser):
-                            raise ValidationError("Insufficient permissions to view")
-
-        if self.community.require_package_listing_approval:
-            if (
-                self.review_status != PackageListingReviewStatus.approved
-                and not get_has_perms()
-            ):
-                raise ValidationError("Insufficient permissions to view")
-        else:
-            if (
-                self.review_status == PackageListingReviewStatus.rejected
-                and not get_has_perms()
-            ):
-                raise ValidationError("Insufficient permissions to view")
-
-    def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
-
     @transaction.atomic
     def update_visibility(self):
         if not self.visibility:

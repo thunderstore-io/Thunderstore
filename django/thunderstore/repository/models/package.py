@@ -109,6 +109,8 @@ class Package(AdminLinkMixin, models.Model):
 
     def save(self, *args, **kwargs):
         self.validate()
+        for listing in self.community_listings.all():
+            listing.update_visibility()
         return super().save(*args, **kwargs)
 
     def get_or_create_package_listing(self, community):

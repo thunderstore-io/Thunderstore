@@ -25,7 +25,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             package__name=name,
             community=self.community,
         )
-        if not listing.can_be_viewed_by_user(self.request.user):
+        if not listing.is_visible_to_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
         if not listing.package.is_active:
             raise Http404("Main package is deactivated")
@@ -34,7 +34,7 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
             package=listing.package,
             version_number=version_number,
         )
-        if not version.can_be_viewed_by_user(self.request.user, listing.community):
+        if not version.is_visible_to_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
         return version
 

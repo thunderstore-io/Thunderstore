@@ -44,7 +44,7 @@ class PackageDetailApiView(APIView):
             package__name=package_name,
         )
 
-        if not listing.can_be_viewed_by_user(request.user):
+        if not listing.is_visible_to_user(request.user):
             raise Http404()
 
         serializer = self.serialize_results(listing)

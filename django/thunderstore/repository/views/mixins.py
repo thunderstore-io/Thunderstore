@@ -229,7 +229,7 @@ class PackageListingDetailView(
                 name=self.kwargs["name"],
                 community=self.community,
             )
-            if not listing.can_be_viewed_by_user(self.request.user):
+            if not listing.is_visible_to_user(self.request.user):
                 raise Http404("Package is waiting for approval or has been rejected")
             self.object = listing
         return self.object
