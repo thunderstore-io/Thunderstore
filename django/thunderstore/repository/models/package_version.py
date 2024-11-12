@@ -141,10 +141,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     changelog = models.TextField(blank=True, null=True)
 
     # TODO: Default should be pending once all versions require automated scanning before appearing to users
-    review_status = models.CharField(
+    review_status = models.TextField(
         default=PackageVersionReviewStatus.skipped,
         choices=PackageVersionReviewStatus.as_choices(),
-        max_length=512,
     )
 
     # <packagename>.zip

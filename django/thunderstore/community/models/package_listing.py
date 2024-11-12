@@ -76,10 +76,9 @@ class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Mod
     is_review_requested = models.BooleanField(
         default=False,
     )
-    review_status = models.CharField(
+    review_status = models.TextField(
         default=PackageListingReviewStatus.unreviewed,
         choices=PackageListingReviewStatus.as_choices(),
-        max_length=512,
     )
     rejection_reason = models.TextField(
         null=True,
