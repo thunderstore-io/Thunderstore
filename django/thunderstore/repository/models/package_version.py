@@ -401,6 +401,31 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
                 return True
         return False
 
+    def is_visible_to_user(self, user: UserType) -> bool:
+        if not self.visibility:
+            return False
+
+        if self.visibility.public_detail:
+            return True
+
+        if user is None:
+            return False
+
+        if self.visibility.owner_detail:
+            if self.package.owner.can_user_access(user):
+                return True
+
+        if self.visibility.moderator_detail:
+            for listing in self.package.community_listings.all():
+                if listing.community.can_user_manage_packages(user):
+                    return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False
+
     @transaction.atomic
     def update_visibility(self):
         self.visibility.public_detail = True
