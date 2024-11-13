@@ -167,7 +167,13 @@
                 </div>
                 {% endif %}
                 <a href="{{ object.get_full_url }}">
-                    <img class="w-100" src="{% thumbnail object.package.icon 256x256 crop %}" alt="{{ object.package }} icon">
+                    <img class="w-100" src="
+                    {% if object.package.latest %}
+                        {% thumbnail object.package.icon 256x256 crop %}
+                    {% else %}
+                        {% thumbnail object.package.versions.first.icon 256x256 crop %}
+                    {% endif %}
+                    " alt="{{ object.package }} icon">
                 </a>
             </div>
             <div class="bg-light p-2">
@@ -183,7 +189,11 @@
                 <div class="overflow-hidden text-nowrap w-100">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></div>
             </div>
             <div class="bg-light px-2 flex-grow-1">
-                {{ object.package.description }}
+                {% if object.package.latest %}
+                    {{ object.package.description }}
+                {% else %}
+                    {{ object.package.versions.first.description }}
+                {% endif %}
             </div>
             <div class="category-badge-container bg-light px-2 pt-2 flex-grow-1 d-flex flex-row flex-wrap align-items-end align-content-end ">
                 {% for category in object.categories.all %}

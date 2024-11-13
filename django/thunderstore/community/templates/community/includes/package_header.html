@@ -2,16 +2,16 @@
 
 <div class="card-header">
     <div class="media">
-        <img class="align-self-center mr-3" src="{% thumbnail object.package.icon 128x128 %}" alt="{{ object.package }} icon">
+        <img class="align-self-center mr-3" src="{% thumbnail version.icon 128x128 %}" alt="{{ object.package }} icon">
         <div class="media-body">
             <h1 class="mt-0">{{ object.package.display_name }}</h1>
-            <p>{{ object.package.description }}</p>
+            <p>{{ version.description }}</p>
             <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1">By <a href="{{ object.owner_url }}">{{ object.package.owner.name }}</a></h5>
-                {% if object.package.website_url %}
-                    <a class="text-nowrap" href="{{ object.package.website_url }}">
+                {% if version.website_url %}
+                    <a class="text-nowrap" href="{{ version.website_url }}">
                         <span class="fa fa-globe-americas fa-fw"></span>
-                        {{ object.package.website_url }}</a>
+                        {{ version.website_url }}</a>
                 {% endif %}
             </div>
         </div>

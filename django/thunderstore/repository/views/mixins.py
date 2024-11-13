@@ -58,7 +58,8 @@ class PackageTabsMixin:
                 "changelog": PartialTab(
                     url=listing.get_changelog_url(),
                     title="Changelog",
-                    is_disabled=not listing.package.changelog(),
+                    is_disabled=not listing.package.latest
+                    or not listing.package.changelog(),
                 ),
                 "wiki": PartialTab(
                     url=listing.get_wiki_url(),
@@ -242,4 +243,12 @@ class PackageListingDetailView(
                 self.request.user, package_listing, self.get_tab_name()
             )
         )
+
+        version = package_listing.package.latest
+        if not version:
+            version = package_listing.package.unavailable_versions.first()
+
+        context["version"] = version
+        context["dependencies"] = version.dependencies.all()
+
         return context
