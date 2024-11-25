@@ -83,6 +83,21 @@ def test_background_image_url_when_community_has_image(dummy_image):
 
 
 @pytest.mark.django_db
+def test_hero_image_url_when_community_has_no_image():
+    community = CommunityFactory()
+    url = community.hero_image_url
+    assert url is None
+
+
+@pytest.mark.django_db
+def test_hero_image_url_when_community_has_image(dummy_hero_image):
+    community = CommunityFactory(hero_image=dummy_hero_image)
+    url = community.hero_image_url
+    assert isinstance(url, str)
+    assert len(url) > 0
+
+
+@pytest.mark.django_db
 def test_cover_image_url_when_community_has_no_image():
     community = CommunityFactory()
     url = community.cover_image_url
