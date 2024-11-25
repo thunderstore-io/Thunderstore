@@ -6,6 +6,7 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     identifier = serializers.CharField()
     description = serializers.CharField(required=False)
     discord_url = serializers.CharField(required=False)
+    wiki_url = serializers.CharField(required=False)
     datetime_created = serializers.DateTimeField()
     background_image_url = serializers.CharField(required=False)
     cover_image_url = serializers.CharField(required=False)
