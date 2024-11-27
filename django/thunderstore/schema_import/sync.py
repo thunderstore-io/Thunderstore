@@ -40,6 +40,7 @@ def import_community(identifier: str, schema: SchemaCommunity):
         return
 
     community.slogan = get_slogan_from_display_name(schema.display_name)
+    community.short_description = schema.short_description
     community.description = (
         "Thunderstore is a mod database and API for downloading mods"
     )

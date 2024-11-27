@@ -17,6 +17,7 @@ class SchemaCommunity(BaseModel):
     display_name: str = Field(alias="displayName")
     categories: Dict[str, SchemaThunderstoreCategory]
     sections: Dict[str, SchemaThunderstoreSection]
+    short_description: Optional[str] = Field(alias="shortDescription")
     discord_url: Optional[str] = Field(alias="discordUrl")
     wiki_url: Optional[str] = Field(alias="wikiUrl")
     autolist_package_ids: Optional[List[str]] = Field(alias="autolistPackageIds")
