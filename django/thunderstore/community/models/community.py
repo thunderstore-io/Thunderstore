@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Manager, QuerySet
+from django.db.models import Count, Manager, QuerySet
 from django.urls import reverse
 from django.utils.functional import cached_property
 
@@ -282,10 +282,11 @@ class CommunityAggregatedFields(TimestampMixin, models.Model):
         Assumes the CommunityAggregatedFields objects has been created
         previously, e.g. by calling .create_missing()
         """
-        listings = community.package_listings.active()
-
-        if community.require_package_listing_approval:
-            listings = listings.approved()
+        listings = (
+            community.package_listings.public_list()
+            .annotate(listing_count=Count("package__community_listings"))
+            .exclude(listing_count__gt=1)
+        )
 
         community.aggregated_fields.package_count = listings.count()
         community.aggregated_fields.download_count = sum(
