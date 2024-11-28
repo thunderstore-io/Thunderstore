@@ -187,10 +187,7 @@ class SettingsTeamLeaveView(TeamDetailView, UserFormKwargs, FormView):
         context = super().get_context_data(**kwargs)
         context["page_title"] = "Leave Team"
         context["membership"] = self.membership
-        context["can_leave"] = (
-            self.object.members.real_users().filter(role=TeamMemberRole.owner).count()
-            > 1
-        )
+        context["can_leave"] = not self.object.is_last_owner(self.membership.user)
         return context
 
     def form_invalid(self, form):
