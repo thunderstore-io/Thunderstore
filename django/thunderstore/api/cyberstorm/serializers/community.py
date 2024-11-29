@@ -9,6 +9,7 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     wiki_url = serializers.CharField(required=False)
     datetime_created = serializers.DateTimeField()
     background_image_url = serializers.CharField(required=False)
+    hero_image_url = serializers.CharField(required=False)
     cover_image_url = serializers.CharField(required=False)
     icon_url = serializers.CharField(required=False)
     total_download_count = serializers.SerializerMethodField()

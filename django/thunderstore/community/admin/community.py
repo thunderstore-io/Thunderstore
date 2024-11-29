@@ -42,6 +42,8 @@ class CommunityAdmin(admin.ModelAdmin):
         "identifier",
         "background_image_width",
         "background_image_height",
+        "hero_image_width",
+        "hero_image_height",
         "icon_width",
         "icon_height",
         "cover_image_width",
