@@ -48,6 +48,7 @@ class Community(TimestampMixin, models.Model):
         null=True,
     )
     slogan = models.CharField(max_length=512, blank=True, null=True)
+    short_description = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)
 
     icon = models.ImageField(

@@ -4,6 +4,7 @@ from rest_framework import serializers
 class CyberstormCommunitySerializer(serializers.Serializer):
     name = serializers.CharField()
     identifier = serializers.CharField()
+    short_description = serializers.CharField(required=False)
     description = serializers.CharField(required=False)
     discord_url = serializers.CharField(required=False)
     wiki_url = serializers.CharField(required=False)
