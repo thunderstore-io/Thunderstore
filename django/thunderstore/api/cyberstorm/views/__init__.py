@@ -1,6 +1,7 @@
 from .community import CommunityAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
+from .dynamic_html import DynamicHTMLAPIView
 from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
 from .package_listing import PackageListingAPIView
 from .package_listing_list import (
@@ -31,4 +32,5 @@ __all__ = [
     "TeamMemberAddAPIView",
     "TeamMemberListAPIView",
     "TeamServiceAccountListAPIView",
+    "DynamicHTMLAPIView",
 ]
