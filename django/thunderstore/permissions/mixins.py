@@ -1,6 +1,7 @@
 from django.db import models, transaction
 from django.db.models import Q
 
+from thunderstore.core.types import UserType
 from thunderstore.permissions.models import VisibilityFlags
 
 
@@ -42,10 +43,20 @@ class VisibilityMixin(models.Model):
     )
 
     @transaction.atomic
+    def update_visibility(self):
+        pass
+
+    @transaction.atomic
     def save(self, *args, **kwargs):
         if not self.pk and not self.visibility:
             self.visibility = VisibilityFlags.objects.create_public()
+
+        self.update_visibility()
+
         super().save()
 
     class Meta:
         abstract = True
+
+    def is_visible_to_user(self, user: UserType) -> bool:
+        return False

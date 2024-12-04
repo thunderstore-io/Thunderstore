@@ -18,22 +18,25 @@ class PackageVersionDetailView(CommunityMixin, DetailView):
     def get_object(self, *args, **kwargs):
         owner = self.kwargs["owner"]
         name = self.kwargs["name"]
-        version = self.kwargs["version"]
+        version_number = self.kwargs["version"]
         listing = get_object_or_404(
             PackageListing,
             package__owner__name=owner,
             package__name=name,
             community=self.community,
         )
-        if not listing.can_be_viewed_by_user(self.request.user):
+        if not listing.is_visible_to_user(self.request.user):
             raise Http404("Package is waiting for approval or has been rejected")
         if not listing.package.is_active:
             raise Http404("Main package is deactivated")
-        return get_object_or_404(
+        version = get_object_or_404(
             PackageVersion,
             package=listing.package,
-            version_number=version,
+            version_number=version_number,
         )
+        if not version.is_visible_to_user(self.request.user):
+            raise Http404("Package is waiting for approval or has been rejected")
+        return version
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

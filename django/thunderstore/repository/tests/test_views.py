@@ -170,6 +170,8 @@ def test_package_detail_version_view_cannot_be_viewed_by_user(
     community_site.community.require_package_listing_approval = True
     community_site.community.save()
 
+    active_version_with_listing.update_visibility()
+
     # Try with user that is member of owner team
     client.force_login(user=team_member.user)
     response = client.get(
@@ -244,7 +246,7 @@ def test_package_detail_version_view_get_object(
     active_version_with_listing.package.save()
     with pytest.raises(Http404) as excinfo:
         view.get_object()
-    assert "Main package is deactivated" in str(excinfo.value)
+    assert "Package is waiting for approval or has been rejected" in str(excinfo.value)
 
     # Remove user from view, so that the view doesn't have permissions to view the listing
     mock_request.user = None

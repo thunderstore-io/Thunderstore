@@ -15,6 +15,8 @@ from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
+from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
+from thunderstore.permissions.models import VisibilityFlags
 from thunderstore.permissions.utils import validate_user
 from thunderstore.webhooks.audit import (
     AuditAction,
@@ -27,11 +29,14 @@ if TYPE_CHECKING:
     from thunderstore.community.models import PackageCategory
 
 
-class PackageListingQueryset(models.QuerySet):
+class PackageListingQueryset(VisibilityQuerySet):
     def active(self):
         return self.exclude(package__is_active=False).exclude(
             ~Q(package__versions__is_active=True)
         )
+
+    def public_list(self):
+        return super(PackageListingQueryset, self.active()).public_list()
 
     def approved(self):
         return self.exclude(~Q(review_status=PackageListingReviewStatus.approved))
@@ -46,7 +51,7 @@ class PackageListingQueryset(models.QuerySet):
 # TODO: Add a db constraint that ensures a package listing and it's categories
 #       belong to the same community. This might require actually specifying
 #       the intermediate model in code rather than letting Django handle it
-class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
+class PackageListing(TimestampMixin, VisibilityMixin, AdminLinkMixin, models.Model):
     """
     Represents a package's relation to how it's displayed on the site and APIs
     """
@@ -71,10 +76,9 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
     is_review_requested = models.BooleanField(
         default=False,
     )
-    review_status = models.CharField(
+    review_status = models.TextField(
         default=PackageListingReviewStatus.unreviewed,
         choices=PackageListingReviewStatus.as_choices(),
-        max_length=512,
     )
     rejection_reason = models.TextField(
         null=True,
@@ -212,7 +216,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             message = "\n\n".join(filter(bool, (rejection_reason, internal_notes)))
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_REJECTED,
+                    action=AuditAction.LISTING_REJECTED,
                     user_id=agent.pk if agent else None,
                     message=message,
                 )
@@ -238,7 +242,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             )
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_APPROVED,
+                    action=AuditAction.LISTING_APPROVED,
                     user_id=agent.pk if agent else None,
                     message=internal_notes,
                 )
@@ -331,32 +335,74 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
         return self.can_be_moderated_by_user(user)
 
-    def ensure_can_be_viewed_by_user(self, user: Optional[UserType]) -> None:
-        def get_has_perms() -> bool:
-            return (
-                user is not None
-                and user.is_authenticated
-                and (
-                    self.community.can_user_manage_packages(user)
-                    or self.package.owner.can_user_access(user)
-                )
-            )
+    def is_visible_to_user(self, user: UserType) -> bool:
+        if not self.visibility:
+            return False
 
-        if self.community.require_package_listing_approval:
-            if (
-                self.review_status != PackageListingReviewStatus.approved
-                and not get_has_perms()
-            ):
-                raise ValidationError("Insufficient permissions to view")
-        else:
-            if (
-                self.review_status == PackageListingReviewStatus.rejected
-                and not get_has_perms()
-            ):
-                raise ValidationError("Insufficient permissions to view")
+        if self.visibility.public_detail:
+            return True
 
-    def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
+        if user is None:
+            return False
+
+        if self.visibility.owner_detail:
+            if self.package.owner.can_user_access(user):
+                return True
+
+        if self.visibility.moderator_detail:
+            for listing in self.package.community_listings.all():
+                if listing.community.can_user_manage_packages(user):
+                    return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False
+
+    @transaction.atomic
+    def update_visibility(self):
+        self.visibility.public_detail = True
+        self.visibility.public_list = True
+        self.visibility.owner_detail = True
+        self.visibility.owner_list = True
+        self.visibility.moderator_detail = True
+        self.visibility.moderator_list = True
+
+        if not self.package.is_active:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+            self.visibility.owner_detail = False
+            self.visibility.owner_list = False
+            self.visibility.moderator_detail = False
+            self.visibility.moderator_list = False
+
+        if self.review_status == PackageListingReviewStatus.rejected:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+        if (
+            self.community.require_package_listing_approval
+            and self.review_status == PackageListingReviewStatus.unreviewed
+        ):
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+        versions = self.package.versions.filter(is_active=True).all()
+        if versions.exclude(visibility__public_detail=False).count() == 0:
+            self.visibility.public_detail = False
+        if versions.exclude(visibility__public_list=False).count() == 0:
+            self.visibility.public_list = False
+        if versions.exclude(visibility__owner_detail=False).count() == 0:
+            self.visibility.owner_detail = False
+        if versions.exclude(visibility__owner_list=False).count() == 0:
+            self.visibility.owner_list = False
+        if versions.exclude(visibility__moderator_detail=False).count() == 0:
+            self.visibility.moderator_detail = False
+        if versions.exclude(visibility__moderator_list=False).count() == 0:
+            self.visibility.moderator_list = False
+
+        self.visibility.save()
 
 
 signals.post_save.connect(PackageListing.post_save, sender=PackageListing)

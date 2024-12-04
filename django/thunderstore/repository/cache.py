@@ -29,10 +29,8 @@ def order_package_listing_queryset(
 def get_package_listing_base_queryset(
     community_identifier: str,
 ) -> QuerySet[PackageListing]:
-    return (
-        PackageListing.objects.active()
-        .filter_by_community_approval_rule()
-        .exclude(~Q(community__identifier=community_identifier))
+    return PackageListing.objects.public_list().exclude(
+        ~Q(community__identifier=community_identifier)
     )
 
 

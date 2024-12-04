@@ -1,6 +1,8 @@
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.exceptions import ValidationError
-from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework import permissions, status
+from rest_framework.authentication import BasicAuthentication, SessionAuthentication
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.generics import GenericAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.response import Response
 
 from thunderstore.cache.cache import ManualCacheCommunityMixin
@@ -107,3 +109,41 @@ class PackageVersionReadmeApiView(PackageVersionDetailMixin):
         instance = self.get_object()
         serializer = self.get_serializer({"markdown": instance.readme})
         return Response(serializer.data)
+
+
+class PackageVersionRejectApiView(GenericAPIView):
+    queryset = PackageVersion.objects
+
+    @swagger_auto_schema(
+        operation_id="experimental.package_version.reject",
+        tags=["experimental"],
+    )
+    def post(self, request, *args, **kwargs):
+        version: PackageVersion = self.get_object()
+
+        try:
+            version.reject(
+                agent=request.user,
+            )
+            return Response(status=status.HTTP_200_OK)
+        except PermissionError:
+            raise PermissionDenied()
+
+
+class PackageVersionApproveApiView(GenericAPIView):
+    queryset = PackageVersion.objects
+
+    @swagger_auto_schema(
+        operation_id="experimental.package_version.approve",
+        tags=["experimental"],
+    )
+    def post(self, request, *args, **kwargs):
+        version: PackageVersion = self.get_object()
+
+        try:
+            version.approve(
+                agent=request.user,
+            )
+            return Response(status=status.HTTP_200_OK)
+        except PermissionError:
+            raise PermissionDenied()
