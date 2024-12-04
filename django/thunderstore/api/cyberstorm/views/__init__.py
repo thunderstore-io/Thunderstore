@@ -8,6 +8,7 @@ from .package_listing_list import (
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
 )
+from .package_rating import RatePackageAPIView
 from .package_version_list import PackageVersionListAPIView
 from .team import (
     TeamAPIView,
@@ -31,4 +32,5 @@ __all__ = [
     "TeamMemberAddAPIView",
     "TeamMemberListAPIView",
     "TeamServiceAccountListAPIView",
+    "RatePackageAPIView",
 ]
