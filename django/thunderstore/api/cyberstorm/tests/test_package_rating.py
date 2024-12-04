@@ -10,13 +10,13 @@ from thunderstore.repository.models import Package
 @pytest.mark.django_db
 def test_package_rating_api_view__succeeds(
     api_client: APIClient,
-    package: Package,
+    active_package: Package,
     user: UserType,
 ) -> None:
     api_client.force_authenticate(user)
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{package.namespace}/{package.name}/rate/",
+        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
@@ -26,7 +26,7 @@ def test_package_rating_api_view__succeeds(
     assert actual["score"] == 1
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{package.namespace}/{package.name}/rate/",
+        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
         json.dumps({"target_state": "unrated"}),
         content_type="application/json",
     )
@@ -55,10 +55,10 @@ def test_package_rating_api_view__returns_error_for_non_existent_package(
 @pytest.mark.django_db
 def test_package_rating_api_view__returns_error_for_no_user(
     api_client: APIClient,
-    package: Package,
+    active_package: Package,
 ) -> None:
     response = api_client.post(
-        f"/api/cyberstorm/package/{package.namespace}/{package.name}/rate/",
+        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
         json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
@@ -70,15 +70,13 @@ def test_package_rating_api_view__returns_error_for_no_user(
 @pytest.mark.django_db
 def test_package_rating_api_view__returns_error_for_bad_data(
     api_client: APIClient,
-    package: Package,
+    active_package: Package,
     user: UserType,
 ) -> None:
     api_client.force_authenticate(user)
-    package.is_active = False
-    package.save()
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{package.namespace}/{package.name}/rate/",
+        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
         json.dumps({"bad_data": "rated"}),
         content_type="application/json",
     )
@@ -87,10 +85,10 @@ def test_package_rating_api_view__returns_error_for_bad_data(
     assert actual["target_state"] == ["This field is required."]
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{package.namespace}/{package.name}/rate/",
+        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
         json.dumps({"target_state": "bad"}),
         content_type="application/json",
     )
     actual = response.json()
 
-    assert actual["__all__"] == ["Given target_state is invalid"]
+    assert actual["non_field_errors"] == ["Invalid target_state"]

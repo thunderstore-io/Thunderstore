@@ -1,53 +1,51 @@
 from django.http import HttpRequest
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from thunderstore.api.utils import conditional_swagger_auto_schema
-from thunderstore.repository.forms import RateForm
-from thunderstore.repository.models import Package
+from thunderstore.repository.models import Package, PackageRating
 
 
-class CyberstormPackageRatingRateRequestSerialiazer(serializers.Serializer):
+class CyberstormRatePackageRequestSerializer(serializers.Serializer):
     target_state = serializers.CharField()
 
 
-class CyberstormPackageRatingRateResponseSerialiazer(serializers.Serializer):
+class CyberstormRatePackageResponseSerializer(serializers.Serializer):
     state = serializers.CharField()
     score = serializers.IntegerField()
 
 
-class PackageRatingRateAPIView(APIView):
+class RatePackageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @conditional_swagger_auto_schema(
-        request_body=CyberstormPackageRatingRateRequestSerialiazer,
-        responses={200: CyberstormPackageRatingRateResponseSerialiazer},
-        operation_id="cyberstorm.package_rating.rate",
+        request_body=CyberstormRatePackageRequestSerializer,
+        responses={200: CyberstormRatePackageResponseSerializer},
+        operation_id="cyberstorm.package.rate",
         tags=["cyberstorm"],
     )
     def post(self, request: HttpRequest, namespace_id: str, package_name: str):
-        serializer = CyberstormPackageRatingRateRequestSerialiazer(data=request.data)
+        serializer = CyberstormRatePackageRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         package = get_object_or_404(
-            Package,
+            Package.objects.active(),
             namespace__name=namespace_id,
-            name__iexact=package_name,
+            name=package_name,
         )
-        form = RateForm(
-            user=request.user,
+        result_state = PackageRating.rate_package(
+            agent=request.user,
             package=package,
-            data=serializer.validated_data,
+            target_state=serializer.validated_data["target_state"],
         )
-        if form.is_valid():
-            (result_state, score) = form.execute()
-            return Response(
-                CyberstormPackageRatingRateResponseSerialiazer(
-                    {"state": result_state, "score": score}
-                ).data
-            )
-        else:
-            raise ValidationError(form.errors)
+        package = Package.objects.get(pk=package.pk)
+        return Response(
+            CyberstormRatePackageResponseSerializer(
+                {
+                    "state": result_state,
+                    "score": package.rating_score,
+                }
+            ).data
+        )

@@ -8,11 +8,12 @@ if TYPE_CHECKING:
 
     from thunderstore.account.models import UserSettings
     from thunderstore.community.models import Community
-    from thunderstore.repository.models import Team
+    from thunderstore.repository.models import PackageRating, Team
 
     class UserType(User):
         teams: "Manager[Team]"
         settings: Optional[UserSettings]
+        package_ratings: "Manager[PackageRating]"
 
     class HttpRequestType(HttpRequest):
         community: "Optional[Community]"
