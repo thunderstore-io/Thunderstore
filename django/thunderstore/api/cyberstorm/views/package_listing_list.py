@@ -339,7 +339,7 @@ class PackageListingByDependencyListAPIView(BasePackageListAPIView):
             listings,
             community__identifier=community_id,
             package__namespace__name=namespace_id,
-            package__name__iexact=package_name,
+            package__name=package_name,
         )
 
         queryset = get_package_dependants(listing.package.pk)
