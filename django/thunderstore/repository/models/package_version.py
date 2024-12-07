@@ -3,6 +3,7 @@ import uuid
 from typing import TYPE_CHECKING, Iterator, Optional
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
@@ -25,6 +26,8 @@ if TYPE_CHECKING:
         PackageInstaller,
         PackageInstallerDeclaration,
     )
+
+User = get_user_model()
 
 
 def get_version_zip_filepath(instance, filename):
@@ -81,6 +84,13 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     is_active = models.BooleanField(
         default=True,
         db_index=True,
+    )
+    uploaded_by = models.ForeignKey(
+        User,
+        related_name="uploaded_versions",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
     )
     date_created = models.DateTimeField(
         auto_now_add=True,
