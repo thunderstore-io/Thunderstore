@@ -127,7 +127,9 @@ class Team(models.Model):
             for validator in self._meta.get_field("name").validators:
                 validator(self.name)
             if Team.objects.filter(name__iexact=self.name.lower()).exists():
-                raise ValidationError("The author name already exists")
+                raise ValidationError("Team with this name already exists")
+            if Namespace.objects.filter(name__iexact=self.name.lower()).exists():
+                raise ValidationError("Namespace with this name already exists")
         if self.donation_link is not None:
             for validator in self._meta.get_field("donation_link").validators:
                 validator(self.donation_link)

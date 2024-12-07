@@ -7,7 +7,11 @@ from conftest import TestUserTypes
 from thunderstore.account.factories import ServiceAccountFactory
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
-from thunderstore.repository.factories import TeamFactory, TeamMemberFactory
+from thunderstore.repository.factories import (
+    NamespaceFactory,
+    TeamFactory,
+    TeamMemberFactory,
+)
 from thunderstore.repository.models import (
     Namespace,
     Package,
@@ -277,7 +281,15 @@ def test_team_validation_duplicates_ignore_case() -> None:
     TeamFactory.create(name="test")
     with pytest.raises(ValidationError) as e:
         TeamFactory.create(name="Test")
-    assert "The author name already exists" in str(e.value)
+    assert "Team with this name already exists" in str(e.value)
+
+
+@pytest.mark.django_db
+def test_create_team_validation_fails_if_namespace_exists() -> None:
+    NamespaceFactory.create(name="test")
+    with pytest.raises(ValidationError) as e:
+        TeamFactory.create(name="test")
+    assert "Namespace with this name already exists" in str(e.value)
 
 
 @pytest.mark.parametrize("role", TeamMemberRole.options())
@@ -674,11 +686,10 @@ def test_team_get_namespace(team):
     team_named_ns = Namespace.objects.get_or_create(name=team.name, team=team)[0]
     assert team.get_namespace() == team_named_ns
     Namespace.objects.create(name="anotherone", team=team)
-    another_team = Team(name="anotherone")
-    another_team.save()
     with pytest.raises(ValidationError) as exc:
-        another_team.get_namespace()
-    assert "The namespace name already exists" in str(exc.value)
+        another_team = Team(name="anotherone")
+        another_team.save()
+    assert "Namespace with this name already exists" in str(exc.value)
 
 
 @pytest.mark.django_db

@@ -5,7 +5,13 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import Team, TeamMember, TeamMemberRole, transaction
+from thunderstore.repository.models import (
+    Namespace,
+    Team,
+    TeamMember,
+    TeamMemberRole,
+    transaction,
+)
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
 User = get_user_model()
@@ -28,6 +34,8 @@ class CreateTeamForm(forms.ModelForm):
         name = self.cleaned_data["name"]
         if Team.objects.filter(name__iexact=name.lower()).exists():
             raise ValidationError(f"A team with the provided name already exists")
+        if Namespace.objects.filter(name__iexact=name.lower()).exists():
+            raise ValidationError("A namespace with the provided name already exists")
         return name
 
     def clean(self):
