@@ -35,7 +35,7 @@ class CommunityFiltersAPIView(APIView):
         filters = {
             "package_categories": community.package_categories.all(),
             "sections": community.package_listing_sections.listed().order_by(
-                "priority",
+                "-priority",
             ),
         }
 
