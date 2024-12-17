@@ -7,7 +7,7 @@
     </div>
     <div class="card-body p-0">
         <div class="list-group dependency-list">
-            {% for dependency in object.package.dependencies.all %}
+            {% for dependency in dependencies %}
                 <div class="list-group-item flex-column align-items-start media">
                     <div class="media">
                         <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">

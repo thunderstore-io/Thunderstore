@@ -141,11 +141,10 @@ def get_custom_package_listing(
     namespace_id: str,
     package_name: str,
 ) -> CustomListing:
-    listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
+    listing_ref = PackageListing.objects.public_list().filter(pk=OuterRef("pk"))
 
     qs = (
-        PackageListing.objects.active()
-        .filter_by_community_approval_rule()
+        PackageListing.objects.public_list()
         .select_related(
             "community",
             "package__latest",
