@@ -16,7 +16,6 @@ from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
-from thunderstore.permissions.models import VisibilityFlags
 from thunderstore.permissions.utils import validate_user
 from thunderstore.webhooks.audit import (
     AuditAction,
@@ -34,9 +33,6 @@ class PackageListingQueryset(VisibilityQuerySet):
         return self.exclude(package__is_active=False).exclude(
             ~Q(package__versions__is_active=True)
         )
-
-    def public_list(self):
-        return super(PackageListingQueryset, self.active()).public_list()
 
     def approved(self):
         return self.exclude(~Q(review_status=PackageListingReviewStatus.approved))

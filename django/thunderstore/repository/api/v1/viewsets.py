@@ -42,7 +42,7 @@ def serialize_package_list_for_community(community: Community) -> bytes:
     result.write(b"[")
     for index, ids in enumerate(batch(batch_size, listing_ids)):
         queryset = order_package_listing_queryset(
-            PackageListing.objects.filter(id__in=ids)
+            PackageListing.objects.system().filter(id__in=ids)
         )
         serializer = PACKAGE_SERIALIZER(
             queryset,

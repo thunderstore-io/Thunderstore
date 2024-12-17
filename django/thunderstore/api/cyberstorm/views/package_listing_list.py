@@ -334,7 +334,7 @@ class PackageListingByDependencyListAPIView(BasePackageListAPIView):
         community_id = self.kwargs["community_id"]
         namespace_id = self.kwargs["namespace_id"]
         package_name = self.kwargs["package_name"]
-        listings = PackageListing.objects.active()  # type: ignore
+        listings = PackageListing.objects.public_list()
         listing = get_object_or_404(
             listings,
             community__identifier=community_id,

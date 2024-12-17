@@ -45,7 +45,7 @@ class PackageVersionMetricsApiView(APIView):
     )
     def get(self, request: Request, namespace: str, name: str, version: str):
         obj = get_object_or_404(
-            PackageVersion.objects.active(),
+            PackageVersion.objects.system().active(),
             package__is_active=True,
             package__namespace__name=namespace,
             name=name,

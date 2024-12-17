@@ -13,9 +13,13 @@ from thunderstore.repository.views.package._utils import get_package_listing_or_
 
 
 class PackageListingUpdateApiView(GenericAPIView):
-    queryset = PackageListing.objects.active().select_related(
-        "community",
-        "package",
+    queryset = (
+        PackageListing.objects.system()
+        .active()
+        .select_related(
+            "community",
+            "package",
+        )
     )
     serializer_class = PackageListingUpdateResponseSerializer
 
@@ -57,7 +61,7 @@ class PackageListingRejectRequestSerializer(serializers.Serializer):
 
 
 class PackageListingRejectApiView(GenericAPIView):
-    queryset = PackageListing.objects.select_related("community", "package")
+    queryset = PackageListing.objects.system().select_related("community", "package")
 
     @swagger_auto_schema(
         operation_id="experimental.package_listing.reject",
@@ -97,7 +101,7 @@ class PackageListingApproveRequestSerializer(serializers.Serializer):
 
 
 class PackageListingApproveApiView(GenericAPIView):
-    queryset = PackageListing.objects.select_related("community", "package")
+    queryset = PackageListing.objects.system().select_related("community", "package")
 
     @swagger_auto_schema(
         operation_id="experimental.package_listing.approve",

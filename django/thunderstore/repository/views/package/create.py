@@ -72,10 +72,14 @@ class PackageCreateOldView(CommunityMixin, CreateView):
     @transaction.atomic
     def form_valid(self, form):
         instance: PackageVersion = form.save()
-        listing = PackageListing.objects.filter(
-            package=instance.package,
-            community__in=form.cleaned_data.get("communities"),
-        ).first()
+        listing = (
+            PackageListing.objects.system()
+            .filter(
+                package=instance.package,
+                community__in=form.cleaned_data.get("communities"),
+            )
+            .first()
+        )
         # TODO: Remove reliance on instance.get_absolute_url()
         redirect_url = (
             listing.get_full_url() if listing else instance.get_absolute_url()

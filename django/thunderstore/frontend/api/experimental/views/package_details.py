@@ -58,7 +58,8 @@ class PackageDetailApiView(APIView):
         results by version number.
         """
         return (
-            PackageListing.objects.active()
+            PackageListing.objects.system()
+            .active()
             .select_related(
                 "package",
                 "package__latest",

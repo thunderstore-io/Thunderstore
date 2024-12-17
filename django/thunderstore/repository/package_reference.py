@@ -188,7 +188,7 @@ class PackageReference:
         :rtype: QuerySet of PackageVersion or Package
         """
         if self.version:
-            return PackageVersion.objects.filter(**self.get_filter_kwargs())
+            return PackageVersion.objects.system().filter(**self.get_filter_kwargs())
         else:
             return Package.objects.filter(**self.get_filter_kwargs())
 

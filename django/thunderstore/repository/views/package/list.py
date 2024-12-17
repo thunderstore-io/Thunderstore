@@ -226,7 +226,7 @@ class PackageListSearchView(CommunityMixin, ListView):
         return queryset.public_list()
 
     def get_queryset(self):
-        listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
+        listing_ref = PackageListing.objects.system().filter(pk=OuterRef("pk"))
 
         queryset = (
             self.get_base_queryset()
@@ -440,8 +440,12 @@ class PackageListByDependencyView(PackageListSearchView):
         return super().dispatch(*args, **kwargs)
 
     def get_base_queryset(self):
-        return PackageListing.objects.exclude(
-            ~Q(package__in=get_package_dependants(self.package_listing.package.pk)),
+        return (
+            PackageListing.objects.system()
+            .active()
+            .exclude(
+                ~Q(package__in=get_package_dependants(self.package_listing.package.pk)),
+            )
         )
 
     def get_page_title(self):

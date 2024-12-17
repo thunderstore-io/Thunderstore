@@ -28,7 +28,8 @@ def get_download_meta(
             pass
 
     data = (
-        PackageVersion.objects.filter(
+        PackageVersion.objects.system()
+        .filter(
             package__namespace__name=namespace,
             package__name=name,
             version_number=version_number,

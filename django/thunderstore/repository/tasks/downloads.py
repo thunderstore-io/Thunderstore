@@ -18,6 +18,6 @@ def log_version_download(version_id: int, timestamp: str):
             version_id=version_id,
             timestamp=datetime.fromisoformat(timestamp),
         )
-        PackageVersion.objects.filter(id=version_id).update(
+        PackageVersion.objects.system().active().filter(id=version_id).update(
             downloads=F("downloads") + 1
         )

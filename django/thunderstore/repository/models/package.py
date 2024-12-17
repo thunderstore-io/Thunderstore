@@ -125,10 +125,15 @@ class Package(AdminLinkMixin, models.Model):
     def get_package_listing(self, community):
         from thunderstore.community.models import PackageListing
 
-        return PackageListing.objects.filter(
-            package=self,
-            community=community,
-        ).first()
+        return (
+            PackageListing.objects.system()
+            .active()
+            .filter(
+                package=self,
+                community=community,
+            )
+            .first()
+        )
 
     def update_listing(self, has_nsfw_content, categories, community):
         listing = self.get_or_create_package_listing(community)
@@ -268,7 +273,7 @@ class Package(AdminLinkMixin, models.Model):
         # TODO: Point this to the main page of a package once that exists as a concept
         from thunderstore.community.models import PackageListing
 
-        listing = PackageListing.objects.active().filter(package=self).first()
+        listing = PackageListing.objects.system().active().filter(package=self).first()
         return listing.get_full_url() if listing else None
 
     def get_page_url(self, community_identifier: str) -> str:

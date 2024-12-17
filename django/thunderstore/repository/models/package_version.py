@@ -50,11 +50,8 @@ def get_version_png_filepath(instance, filename):
 
 
 class PackageVersionQuerySet(VisibilityQuerySet):
-    def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
+    def active(self):
         return self.exclude(is_active=False)
-
-    def public_list(self):
-        return super(PackageVersionQuerySet, self.active()).public_list()
 
     def filter_by_review_status(self):
         return self.exclude(review_status__in=["pending", "rejected"])
@@ -279,7 +276,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
     @classmethod
     def get_total_used_disk_space(cls):
-        return cls.objects.aggregate(total=Sum("file_size"))["total"] or 0
+        return cls.objects.system().aggregate(total=Sum("file_size"))["total"] or 0
 
     @run_after_commit
     def announce_release(self):
