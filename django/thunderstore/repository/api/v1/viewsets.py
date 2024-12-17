@@ -24,7 +24,6 @@ from thunderstore.repository.cache import (
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package, PackageRating
 from thunderstore.repository.models.cache import APIV1PackageCache
-from thunderstore.repository.permissions import ensure_can_rate_package
 from thunderstore.utils.batch import batch
 
 PACKAGE_SERIALIZER = PackageListingSerializer
@@ -134,15 +133,10 @@ class PackageViewSet(
         community_identifier: Optional[str] = None,
     ) -> Response:
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
-        user = request.user
-        ensure_can_rate_package(user, package)
-        target_state = request.data.get("target_state")
-        if target_state == "rated":
-            PackageRating.objects.get_or_create(rater=user, package=package)
-            result_state = "rated"
-        else:
-            PackageRating.objects.filter(rater=user, package=package).delete()
-            result_state = "unrated"
+        result_state = PackageRating.rate_package(
+            request.user, package, request.data.get("target_state")
+        )
+        package = Package.objects.get(pk=package.pk)
         return Response(
             {
                 "state": result_state,

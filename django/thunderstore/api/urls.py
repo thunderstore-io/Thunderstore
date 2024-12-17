@@ -11,6 +11,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionChangelogAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
+    RatePackageAPIView,
     TeamAPIView,
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
@@ -77,6 +78,11 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/versions/",
         PackageVersionListAPIView.as_view(),
         name="cyberstorm.package.versions",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/rate/",
+        RatePackageAPIView.as_view(),
+        name="cyberstorm.package.rate",
     ),
     path(
         "team/<str:team_id>/",

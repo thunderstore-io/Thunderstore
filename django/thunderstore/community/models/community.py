@@ -48,6 +48,7 @@ class Community(TimestampMixin, models.Model):
         null=True,
     )
     slogan = models.CharField(max_length=512, blank=True, null=True)
+    short_description = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)
 
     icon = models.ImageField(
@@ -79,6 +80,16 @@ class Community(TimestampMixin, models.Model):
     )
     background_image_width = models.PositiveIntegerField(default=0)
     background_image_height = models.PositiveIntegerField(default=0)
+
+    hero_image = models.ImageField(
+        upload_to=get_community_filepath,
+        width_field="hero_image_width",
+        height_field="hero_image_height",
+        blank=True,
+        null=True,
+    )
+    hero_image_width = models.PositiveIntegerField(default=0)
+    hero_image_height = models.PositiveIntegerField(default=0)
 
     identifier = models.CharField(max_length=256, unique=True, db_index=True)
     name = models.CharField(max_length=256)
@@ -128,6 +139,17 @@ class Community(TimestampMixin, models.Model):
                         "background_image_height",
                     ),
                 )
+        if not self.hero_image:
+            self.hero_image_width = 0
+            self.hero_image_height = 0
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = set(
+                    kwargs["update_fields"]
+                    + (
+                        "hero_image_width",
+                        "hero_image_height",
+                    ),
+                )
         if not self.cover_image:
             self.cover_image_width = 0
             self.cover_image_height = 0
@@ -161,6 +183,13 @@ class Community(TimestampMixin, models.Model):
         Return URL to the community's background image if one exists.
         """
         return None if not bool(self.background_image) else self.background_image.url
+
+    @cached_property
+    def hero_image_url(self) -> Optional[str]:
+        """
+        Return URL to the community's hero image if one exists.
+        """
+        return None if not bool(self.hero_image) else self.hero_image.url
 
     @cached_property
     def cover_image_url(self) -> Optional[str]:
