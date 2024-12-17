@@ -246,6 +246,8 @@ class PackageListingDetailView(
 
         version = package_listing.package.latest
         if not version:
+            version = package_listing.package.available_versions.first()
+        if not version:
             version = package_listing.package.unavailable_versions.first()
 
         context["version"] = version
