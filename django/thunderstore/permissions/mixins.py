@@ -1,15 +1,19 @@
 from django.db import models, transaction
 from django.db.models import Q
 
+from thunderstore.core.types import UserType
 from thunderstore.permissions.models import VisibilityFlags
 
 
 class VisibilityQuerySet(models.QuerySet):
+    def active(self):
+        return self
+
     def public_list(self):
-        return self.exclude(visibility__public_list=False)
+        return self.active().exclude(visibility__public_list=False)
 
     def public_detail(self):
-        return self.exclude(visibility__public_detail=False)
+        return self.active().exclude(visibility__public_detail=False)
 
     def visible_list(self, is_owner: bool, is_moderator: bool, is_admin: bool):
         filter = Q(visibility__public_list=True)
@@ -19,7 +23,7 @@ class VisibilityQuerySet(models.QuerySet):
             filter |= Q(visibility__moderator_list=True)
         if is_admin:
             filter |= Q(visibility__admin_list=True)
-        return self.exclude(~filter)
+        return self.active().exclude(~filter)
 
     def visible_detail(self, is_owner: bool, is_moderator: bool, is_admin: bool):
         filter = Q(visibility__public_detail=True)
@@ -29,7 +33,10 @@ class VisibilityQuerySet(models.QuerySet):
             filter |= Q(visibility__moderator_detail=True)
         if is_admin:
             filter |= Q(visibility__admin_detail=True)
-        return self.exclude(~filter)
+        return self.active().exclude(~filter)
+
+    def system(self):
+        return self
 
 
 class VisibilityMixin(models.Model):
@@ -42,10 +49,20 @@ class VisibilityMixin(models.Model):
     )
 
     @transaction.atomic
+    def update_visibility(self):
+        pass
+
+    @transaction.atomic
     def save(self, *args, **kwargs):
         if not self.pk and not self.visibility:
             self.visibility = VisibilityFlags.objects.create_public()
+
+        self.update_visibility()
+
         super().save()
 
     class Meta:
         abstract = True
+
+    def is_visible_to_user(self, user: UserType) -> bool:
+        return False

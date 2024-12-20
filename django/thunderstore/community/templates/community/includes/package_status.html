@@ -1,0 +1,56 @@
+{% if object.package.is_deprecated %}
+    <div class="alert alert-danger" role="alert">
+        This package has been marked as deprecated, and it's suggested another
+        alternative is used.
+    </div>
+{% endif %}
+
+{% if show_review_status and object.package.unavailable_versions %}
+    <div class="alert alert-danger" role="alert">
+        One or more versions of this package are awaiting approval.
+    </div>
+{% endif %}
+
+{% if show_review_status and object.is_rejected %}
+<div class="card text-white bg-danger mt-2">
+    <div class="card-body">
+        <h4 class="card-title">
+            Package rejected
+        </h4>
+        <p class="card-text">
+            This package has been rejected by site or community moderators.
+            If you think this is a mistake, please reach out to the moderators in
+            <a href="https://discord.thunderstore.io/">our Discord server</a>
+        </p>
+        {% if object.rejection_reason %}
+        <p class="card-text">
+            Reason: {{ object.rejection_reason }}
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if show_review_status and object.is_waiting_for_approval %}
+<div class="card text-white bg-warning mt-2">
+    <div class="card-body">
+        <h4 class="card-title">
+            Waiting for approval
+        </h4>
+        <p class="card-text">
+            This package is waiting for approval by site or community moderators
+        </p>
+    </div>
+</div>
+{% endif %}
+
+{% if show_internal_notes and object.notes %}
+    <div class="card text-white bg-info mt-2">
+        <div class="card-body">
+            <h4 class="card-title">
+                Internal notes
+            </h4>
+            <p class="card-text">{{ object.notes }}</p>
+        </div>
+    </div>
+{% endif %}

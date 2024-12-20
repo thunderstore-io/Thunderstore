@@ -23,7 +23,8 @@ def get_package_listing_or_404(
 ) -> PackageListing:
     owner = get_object_or_404(Team, name=namespace)
     package_listing = (
-        PackageListing.objects.active()
+        PackageListing.objects.system()
+        .active()
         .filter(
             package__owner=owner,
             package__name=name,

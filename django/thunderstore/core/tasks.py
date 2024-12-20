@@ -6,7 +6,7 @@ from celery import shared_task
 from thunderstore.core.settings import CeleryQueues
 
 
-@shared_task(queue=CeleryQueues.Default)
+@shared_task(queue=CeleryQueues.Default, rate_limit="2/s")
 def celery_post(
     webhook_url: str,
     data: Optional[str] = None,
