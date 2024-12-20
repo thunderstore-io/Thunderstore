@@ -11,7 +11,7 @@
     <meta property="og:title" content="{{ object.package.display_name }} changelog" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
-    <meta property="og:image" content="{% thumbnail object.package.icon 256x256 %}" />
+    <meta property="og:image" content="{% thumbnail version.icon 256x256 %}" />
     <meta property="og:image:width" content="256" />
     <meta property="og:image:height" content="256" />
 
@@ -23,7 +23,7 @@
 
 {% include "community/includes/package_management_panel.html" %}
 
-{% cache_until "any_package_updated" "mod-detail-changelog-header" 300 object.package.pk object.package.latest.pk community_identifier %}
+{% cache_until "any_package_updated" "mod-detail-changelog-header" 300 object.package.pk version.pk community_identifier %}
 
 <nav class="mt-3" aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -38,7 +38,7 @@
 
 {% include "community/includes/package_status.html" %}
 
-{% cache_until "any_package_updated" "mod-detail-changelog" 300 object.package.pk object.package.latest.pk community_identifier %}
+{% cache_until "any_package_updated" "mod-detail-changelog" 300 object.package.pk version.pk community_identifier %}
 
 <div class="card bg-light mt-2">
     {% include "community/includes/package_tabs.html" with tabs=tabs %}
@@ -47,9 +47,9 @@
 
 <div class="card bg-light mb-2 mt-2">
     <div class="card-header"><h4 class="mb-0">CHANGELOG</h4></div>
-    {% if object.package.changelog %}
+    {% if version.changelog %}
     <div class="card-body markdown-body">
-        {{ object.package.changelog|markdownify }}
+        {{ version.changelog|markdownify }}
     </div>
     {% else %}
     <div class="card-body">
