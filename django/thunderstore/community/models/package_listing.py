@@ -42,6 +42,15 @@ class PackageListingQueryset(models.QuerySet):
             & ~Q(review_status=PackageListingReviewStatus.approved),
         )
 
+    def filter_with_single_community(self):
+        """
+        Get PackageListings that are associated with packages belonging to only
+        a single community.
+        """
+        return self.annotate(
+            community_count=models.Count("package__community_listings", distinct=True)
+        ).exclude(~Q(community_count=1))
+
 
 # TODO: Add a db constraint that ensures a package listing and it's categories
 #       belong to the same community. This might require actually specifying
