@@ -75,9 +75,21 @@ def test_community_aggregated_fields__update_for_community__calculates_packages(
     assert community1.aggregated.package_count == 5
     assert community2.aggregated.package_count == 0
 
+    # The following listings are shared between the two communities and will not affect
+    # the package count of community2 and for community1.
     for _ in range(10):
         pl = PackageListingFactory(community_=community1)
         PackageListingFactory(community_=community2, package=pl.package)
+
+    CommunityAggregatedFields.update_for_community(community1)
+    CommunityAggregatedFields.update_for_community(community2)
+
+    assert community1.aggregated.package_count == 5
+    assert community2.aggregated.package_count == 0
+
+    for _ in range(10):
+        PackageListingFactory(community_=community1)
+        PackageListingFactory(community_=community2)
 
     CommunityAggregatedFields.update_for_community(community1)
     CommunityAggregatedFields.update_for_community(community2)
@@ -100,7 +112,7 @@ def test_community_aggregated_fields__update_for_community__calculates_downloads
 
     PackageListingFactory(
         community_=community2,
-        package_version_kwargs={"downloads": 0},
+        package_version_kwargs={"downloads": 1},
     )
     PackageListingFactory(
         community_=community3,
@@ -112,13 +124,18 @@ def test_community_aggregated_fields__update_for_community__calculates_downloads
     CommunityAggregatedFields.update_for_community(community3)
 
     assert community1.aggregated.download_count == 0
-    assert community2.aggregated.download_count == 0
+    assert community2.aggregated.download_count == 1
     assert community3.aggregated.download_count == 1
 
+    # This listing will not affect the download count of community2 since it is shared
+    # with community3.
     listing = PackageListingFactory(
         community_=community2,
         package_version_kwargs={"downloads": 2},
     )
+
+    # This listing will not affect the download count of community3 since it is shared
+    # with community2.
     PackageListingFactory(community_=community3, package=listing.package)
 
     CommunityAggregatedFields.update_for_community(community1)
@@ -126,8 +143,27 @@ def test_community_aggregated_fields__update_for_community__calculates_downloads
     CommunityAggregatedFields.update_for_community(community3)
 
     assert community1.aggregated.download_count == 0
-    assert community2.aggregated.download_count == 2
-    assert community3.aggregated.download_count == 3
+    assert community2.aggregated.download_count == 1
+    assert community3.aggregated.download_count == 1
+
+    for _ in range(10):
+        PackageListingFactory(
+            community_=community1, package_version_kwargs={"downloads": 1}
+        )
+        PackageListingFactory(
+            community_=community2, package_version_kwargs={"downloads": 2}
+        )
+        PackageListingFactory(
+            community_=community3, package_version_kwargs={"downloads": 3}
+        )
+
+    CommunityAggregatedFields.update_for_community(community1)
+    CommunityAggregatedFields.update_for_community(community2)
+    CommunityAggregatedFields.update_for_community(community3)
+
+    assert community1.aggregated.download_count == 10
+    assert community2.aggregated.download_count == 21
+    assert community3.aggregated.download_count == 31
 
 
 @pytest.mark.django_db
