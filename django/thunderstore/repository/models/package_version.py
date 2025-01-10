@@ -191,6 +191,12 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         )
 
     @cached_property
+    def is_removed(self):
+        if self.package.is_removed:
+            return True
+        return not self.is_active
+
+    @cached_property
     def display_name(self):
         return self.name.replace("_", " ")
 
