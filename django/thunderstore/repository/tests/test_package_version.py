@@ -129,3 +129,24 @@ def test_package_version_is_effectively_active(
     version = PackageVersionFactory(package=package, is_active=version_is_active)
 
     assert version.is_effectively_active == (package_is_active and version_is_active)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("package_is_active", "version_is_active", "expected_is_removed"),
+    (
+        (False, False, True),
+        (True, False, True),
+        (False, True, True),
+        (True, True, False),
+    ),
+)
+def test_package_version_is_removed(
+    package_is_active: bool,
+    version_is_active: bool,
+    expected_is_removed: bool,
+) -> None:
+    package = PackageFactory(is_active=package_is_active)
+    version = PackageVersionFactory(package=package, is_active=version_is_active)
+
+    assert version.is_removed == expected_is_removed

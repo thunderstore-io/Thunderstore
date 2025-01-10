@@ -10,7 +10,7 @@ from conftest import TestUserTypes
 from thunderstore.community.factories import PackageCategoryFactory, SiteFactory
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.types import UserType
-from thunderstore.repository.factories import PackageFactory
+from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import (
     Namespace,
     Package,
@@ -224,3 +224,24 @@ def test_package_update_listing(
     assert listing.categories.count() == 3
     for entry in cats:
         assert entry in listing.categories.all()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("package_is_active", "version_is_active", "expected_is_removed"),
+    (
+        (False, False, True),
+        (True, False, True),
+        (False, True, True),
+        (True, True, False),
+    ),
+)
+def test_package_is_removed(
+    package_is_active: bool,
+    version_is_active: bool,
+    expected_is_removed: bool,
+) -> None:
+    package = PackageFactory(is_active=package_is_active)
+    PackageVersionFactory(package=package, is_active=version_is_active)
+
+    assert package.is_removed == expected_is_removed
