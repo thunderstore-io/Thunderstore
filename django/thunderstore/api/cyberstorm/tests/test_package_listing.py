@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from unittest.mock import PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 from rest_framework.test import APIClient
@@ -373,3 +373,39 @@ def test_package_listing_is_removed(
 
     assert "is_removed" in response_dependencies
     assert response_dependencies["is_removed"] == return_val
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+@patch("thunderstore.repository.models.package_version.PackageVersion.is_unavailable")
+def test_package_listing_is_unavailable(
+    is_unavailable_func: Mock,
+    return_val: bool,
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    is_unavailable_func.return_value = return_val
+
+    package = "Mod"
+    target_ns = NamespaceFactory()
+
+    target_dependency = PackageListingFactory(
+        community_=community,
+        package_kwargs={"name": package, "namespace": target_ns},
+    )
+
+    target_package = PackageListingFactory(community_=community)
+    target_package.package.latest.dependencies.set(
+        [target_dependency.package.latest.id],
+    )
+
+    community_id = target_package.community.identifier
+    namespace = target_package.package.namespace.name
+    package_name = target_package.package.name
+
+    url = f"/api/cyberstorm/listing/{community_id}/{namespace}/{package_name}/"
+    response = api_client.get(url)
+    response_dependencies = response.json()["dependencies"][0]
+
+    assert "is_unavailable" in response_dependencies
+    assert response_dependencies["is_unavailable"] == return_val

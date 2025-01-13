@@ -23,6 +23,7 @@ from thunderstore.api.utils import CyberstormAutoSchemaMixin
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
+from thunderstore.community.models.community import Community
 
 
 class DependencySerializer(serializers.Serializer):
@@ -45,6 +46,7 @@ class DependencySerializer(serializers.Serializer):
     namespace = serializers.CharField(source="package.namespace.name")
     version_number = serializers.CharField()
     is_removed = serializers.BooleanField()
+    is_unavailable = serializers.SerializerMethodField()
 
     def get_description(self, obj: PackageVersion) -> str:
         return (
@@ -55,6 +57,13 @@ class DependencySerializer(serializers.Serializer):
 
     def get_icon_url(self, obj: PackageVersion) -> Optional[str]:
         return obj.icon.url if obj.is_effectively_active else None
+
+    def get_is_unavailable(self, obj: PackageVersion) -> bool:
+        community = Community.objects.filter(
+            identifier=obj.community_identifier
+        ).first()
+
+        return obj.is_unavailable(community)
 
 
 class TeamSerializer(serializers.Serializer):
