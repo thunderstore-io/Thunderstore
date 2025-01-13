@@ -197,6 +197,12 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             },
         )
 
+    def is_unavailable(self, community) -> bool:
+        unavailable = self.package.is_unavailable(community)
+        if unavailable:
+            return True
+        return self.is_active is False
+
     @cached_property
     def is_removed(self):
         if self.package.is_removed:
