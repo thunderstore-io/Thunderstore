@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     curl build-essential git \
  && rm -rf /var/lib/apt/lists/*
 
+COPY ./flake8-thunderstore/ /flake8-thunderstore
 COPY ./python-packages/ /python-packages
 COPY ./django/pyproject.toml ./django/poetry.lock /app/
 

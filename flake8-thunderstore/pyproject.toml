@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "flake8-thunderstore"
+version = "1.0.2"
+description = "Custom Flake8 plugins for Thunderstore"
+authors = ["753 <753@753.network>"]
+packages = [
+    { include = "flake8_thunderstore" },
+]
+
+[tool.poetry.dependencies]
+python = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."flake8.extension"]
+VIS = 'flake8_thunderstore.visibility_coding_conventions:VisibilityCodingConventions'

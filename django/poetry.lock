@@ -1200,6 +1200,20 @@ files = [
 flake8-plugin-utils = ">=1.3.1,<2.0.0"
 
 [[package]]
+name = "flake8-thunderstore"
+version = "1.0.2"
+description = "Custom Flake8 plugins for Thunderstore"
+category = "dev"
+optional = false
+python-versions = "*"
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "../flake8-thunderstore"
+
+[[package]]
 name = "freezegun"
 version = "1.2.1"
 description = "Let your Python tests travel through time"
@@ -3136,4 +3150,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "623250fdf603ca415bb23c6a46c57bfa86499fb51c77b1ef0a6c6f1d74ef6e29"
+content-hash = "74f60c439cb2cb3633591a4e7f5a573b80664da66a52d89db894d07e0eab1a69"
