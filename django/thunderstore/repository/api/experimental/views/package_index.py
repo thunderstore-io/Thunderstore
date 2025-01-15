@@ -43,7 +43,8 @@ class PackageIndexEntry(serializers.Serializer):
 
 def serialize_package_index() -> bytes:
     versions: PackageVersionQuerySet = (
-        PackageVersion.objects.active()
+        PackageVersion.objects.system()
+        .active()
         .annotate(namespace=F("package__namespace"))
         .prefetch_related("dependencies", "dependencies__package")
     )

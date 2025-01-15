@@ -181,12 +181,14 @@ def test_package_listing_ensure_can_be_viewed_by_user(
     team_role: str,
 ):
     listing = active_package_listing
-    listing.review_status = review_status
-    listing.save()
 
     community = listing.community
     community.require_package_listing_approval = require_approval
     community.save()
+
+    listing.review_status = review_status
+    listing.save()
+
     user = TestUserTypes.get_user_by_type(user_type)
     if community_role is not None and user_type not in TestUserTypes.fake_users():
         CommunityMembership.objects.create(
@@ -201,46 +203,30 @@ def test_package_listing_ensure_can_be_viewed_by_user(
             role=team_role,
         )
 
-    result = listing.can_be_viewed_by_user(user)
-    errors = []
-    expected_error = "Insufficient permissions to view"
-    try:
-        listing.ensure_can_be_viewed_by_user(user)
-    except ValidationError as e:
-        errors = e.messages
+    result = listing.is_visible_to_user(user)
 
     if require_approval:
         if review_status == PackageListingReviewStatus.approved:
             assert result is True
-            assert not errors
         elif user is None:
             assert result is False
-            assert expected_error in errors
         elif not user.is_authenticated:
             assert result is False
-            assert expected_error in errors
         elif community.can_user_manage_packages(user):
             assert result is True
-            assert not errors
         elif listing.package.owner.can_user_access(user):
             assert result is True
-            assert not errors
     else:
         if review_status != PackageListingReviewStatus.rejected:
             assert result is True
-            assert not errors
         elif user is None:
             assert result is False
-            assert expected_error in errors
         elif not user.is_authenticated:
             assert result is False
-            assert expected_error in errors
         elif community.can_user_manage_packages(user):
             assert result is True
-            assert not errors
         elif listing.package.owner.can_user_access(user):
             assert result is True
-            assert not errors
 
 
 @pytest.mark.django_db

@@ -254,10 +254,11 @@ def get_package_listing_chunk(
     ordering = models.Case(
         *[models.When(id=id, then=pos) for pos, id in enumerate(listing_ids)]
     )
-    listing_ref = PackageListing.objects.filter(pk=models.OuterRef("pk"))
+    listing_ref = PackageListing.objects.system().filter(pk=models.OuterRef("pk"))
 
     return (
-        PackageListing.objects.filter(id__in=listing_ids)
+        PackageListing.objects.system()
+        .filter(id__in=listing_ids)
         .select_related("community", "package", "package__owner")
         .prefetch_related("categories", "community__sites", "package__versions")
         .annotate(
