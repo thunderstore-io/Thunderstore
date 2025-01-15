@@ -23,6 +23,7 @@ jobs:
         run: echo "::set-output name=node-version::$(node --version)"
       - uses: snok/install-poetry@v1
         with:
+          version: 1.4.1
           virtualenvs-in-project: true
       - name: Cache poetry venv
         id: cache-poetry
