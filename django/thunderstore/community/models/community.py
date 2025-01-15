@@ -114,6 +114,9 @@ class Community(TimestampMixin, models.Model):
         default=OptionalBoolChoice.NONE,
     )
 
+    # Will hide/show "Install with Mod Manager" button on package pages
+    has_mod_manager_support = models.BooleanField(default=True)
+
     @property
     def aggregated(self) -> "AggregatedFields":
         return (
