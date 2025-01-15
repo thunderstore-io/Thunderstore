@@ -256,6 +256,10 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             raise PermissionError()
 
     @cached_property
+    def has_mod_manager_support(self):
+        return self.community.has_mod_manager_support
+
+    @cached_property
     def owner_url(self):
         return reverse(
             **get_community_url_reverse_args(
