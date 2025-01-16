@@ -3,12 +3,11 @@ from typing import Any, Literal, Union
 import pytest
 from django.db import IntegrityError
 
-from thunderstore.community.factories import PackageListingFactory
+from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_formats import PackageFormats
-from thunderstore.community.factories import CommunityFactory
 
 
 @pytest.mark.django_db

@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import (
     CommunityFactory,
     PackageCategoryFactory,
@@ -24,7 +25,6 @@ from thunderstore.repository.models import (
     TeamMemberRole,
 )
 from thunderstore.wiki.factories import WikiPageFactory
-from thunderstore.community.consts import PackageListingReviewStatus
 
 User = get_user_model()
 

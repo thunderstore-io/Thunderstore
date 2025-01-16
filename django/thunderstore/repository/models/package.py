@@ -139,10 +139,12 @@ class Package(AdminLinkMixin, models.Model):
         if listing is None:
             return True
 
-        return any([
-            listing.is_rejected,
-            listing.is_waiting_for_approval,
-        ])
+        return any(
+            [
+                listing.is_rejected,
+                listing.is_waiting_for_approval,
+            ]
+        )
 
     def is_unavailable(self, community) -> bool:
         if self.is_effectively_active is False:

@@ -20,10 +20,10 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamMemberSerializer,
 )
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.community.models.community import Community
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
-from thunderstore.community.models.community import Community
 
 
 class DependencySerializer(serializers.Serializer):
