@@ -1,7 +1,7 @@
+from unittest.mock import PropertyMock, patch
+
 import pytest
 from django.urls import reverse
-
-from unittest.mock import patch, PropertyMock
 
 
 @pytest.mark.django_db

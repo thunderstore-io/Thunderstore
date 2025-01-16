@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('community', '0031_community_short_description'),
+        ("community", "0031_community_short_description"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='community',
-            name='has_mod_manager_support',
+            model_name="community",
+            name="has_mod_manager_support",
             field=models.BooleanField(default=True),
         ),
     ]
