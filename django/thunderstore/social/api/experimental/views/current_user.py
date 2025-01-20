@@ -81,6 +81,7 @@ class UserProfile(TypedDict):
     rated_packages: List[str]
     teams: List[str]
     teams_full: List[UserTeam]
+    is_staff: Optional[bool]
 
 
 class UserProfileSerializer(serializers.Serializer):
@@ -93,6 +94,7 @@ class UserProfileSerializer(serializers.Serializer):
         serializers.ListField()
     )  # This is in active use by the Django frontend react components at least
     teams_full = UserTeamSerializer(many=True)
+    is_staff = serializers.BooleanField(allow_null=True)
 
 
 def get_empty_profile() -> UserProfile:
@@ -104,6 +106,7 @@ def get_empty_profile() -> UserProfile:
         "rated_packages": [],
         "teams": [],
         "teams_full": [],
+        "is_staff": None,
     }
 
 
@@ -133,6 +136,7 @@ def get_user_profile(user: UserType) -> UserProfile:
     username = user.username
     capabilities = {"package.rate"}
     teams = get_teams(user)
+    is_staff = user.is_staff
 
     return UserProfileSerializer(
         {
@@ -143,6 +147,7 @@ def get_user_profile(user: UserType) -> UserProfile:
             "rated_packages": [],
             "teams": [x.name for x in teams],
             "teams_full": teams,
+            "is_staff": is_staff,
         }
     ).data
 
