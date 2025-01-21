@@ -220,6 +220,10 @@ class Package(AdminLinkMixin, models.Model):
         )
 
     @cached_property
+    def is_removed(self):
+        return not self.is_effectively_active
+
+    @cached_property
     def is_effectively_active(self):
         return self.is_active and self.versions.filter(is_active=True).count() > 0
 

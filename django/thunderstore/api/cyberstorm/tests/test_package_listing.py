@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from unittest.mock import PropertyMock, patch
 
 import pytest
 from rest_framework.test import APIClient
@@ -9,11 +10,13 @@ from thunderstore.api.cyberstorm.views.package_listing import (
     get_custom_package_listing,
 )
 from thunderstore.community.factories import (
+    Community,
     CommunityFactory,
     PackageCategoryFactory,
     PackageListingFactory,
 )
 from thunderstore.repository.factories import (
+    NamespaceFactory,
     PackageRatingFactory,
     PackageVersionFactory,
     TeamMemberFactory,
@@ -334,3 +337,39 @@ def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_
 
 def _date_to_z(value: datetime) -> str:
     return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+def test_package_listing_is_removed(
+    return_val: bool,
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    package = "Mod"
+    target_ns = NamespaceFactory()
+
+    target_dependency = PackageListingFactory(
+        community_=community,
+        package_kwargs={"name": package, "namespace": target_ns},
+    )
+
+    target_package = PackageListingFactory(community_=community)
+    target_package.package.latest.dependencies.set(
+        [target_dependency.package.latest.id],
+    )
+
+    community_id = target_package.community.identifier
+    namespace = target_package.package.namespace.name
+    package_name = target_package.package.name
+
+    url = f"/api/cyberstorm/listing/{community_id}/{namespace}/{package_name}/"
+
+    path = "thunderstore.repository.models.package_version.PackageVersion.is_removed"
+    with patch(path, new_callable=PropertyMock) as is_removed_property:
+        is_removed_property.return_value = return_val
+        response = api_client.get(url)
+        response_dependencies = response.json()["dependencies"][0]
+
+    assert "is_removed" in response_dependencies
+    assert response_dependencies["is_removed"] == return_val

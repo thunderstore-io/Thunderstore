@@ -44,6 +44,7 @@ class DependencySerializer(serializers.Serializer):
     name = serializers.CharField()
     namespace = serializers.CharField(source="package.namespace.name")
     version_number = serializers.CharField()
+    is_removed = serializers.BooleanField()
 
     def get_description(self, obj: PackageVersion) -> str:
         return (
