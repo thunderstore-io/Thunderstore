@@ -48,13 +48,17 @@ def test_counts_when_no_packages_exists(api_client: APIClient) -> None:
 @pytest.mark.django_db
 def test_counts_when_packages_have_been_downloaded(api_client: APIClient) -> None:
     site = CommunitySite.objects.get()
+
     ver1 = PackageVersionFactory(downloads=0)
     ver2 = PackageVersionFactory(downloads=3)
     ver3 = PackageVersionFactory(downloads=5)
+
     ver3.package.is_deprecated = True  # This should still count.
+
     PackageListing.objects.create(community=site.community, package=ver1.package)
     PackageListing.objects.create(community=site.community, package=ver2.package)
     PackageListing.objects.create(community=site.community, package=ver3.package)
+
     CommunityAggregatedFields.create_missing()
     site.community.refresh_from_db()
     CommunityAggregatedFields.update_for_community(site.community)
@@ -62,8 +66,11 @@ def test_counts_when_packages_have_been_downloaded(api_client: APIClient) -> Non
     data = __query_api(api_client)
 
     assert len(data["communities"]) == 1
+
     assert data["communities"][0]["download_count"] == 8
     assert data["communities"][0]["package_count"] == 3
+
+    # Total counts should be the same given the same packages for both communities.
     assert data["download_count"] == 8
     assert data["package_count"] == 3
 

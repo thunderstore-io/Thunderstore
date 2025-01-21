@@ -8,9 +8,11 @@ from thunderstore.community.factories import (
     CommunityFactory,
     CommunitySiteFactory,
     PackageListingFactory,
+    PackageVersionFactory,
 )
 from thunderstore.community.models import (
     Community,
+    CommunityAggregatedFields,
     CommunityMemberRole,
     CommunityMembership,
     PackageCategory,
@@ -369,3 +371,48 @@ def test_package_listing_queryset_filter_by_community_approval_rule(
             assert count == 0
         else:
             assert count == 1
+
+
+@pytest.mark.django_db
+def test_package_listing_filter_with_single_community_packages() -> None:
+    communities = [
+        CommunityFactory(aggregated_fields=CommunityAggregatedFields.objects.create())
+        for _ in range(3)
+    ]
+
+    [PackageListingFactory(community_=community) for community in communities]
+
+    for community in communities:
+        CommunityAggregatedFields.update_for_community(community)
+        count = community.package_listings.filter_with_single_community().count()
+        assert count == 1
+        assert community.aggregated.package_count == count
+
+
+@pytest.mark.django_db
+def test_package_listing_filter_with_multiple_community_packages() -> None:
+    communities = [
+        CommunityFactory(aggregated_fields=CommunityAggregatedFields.objects.create())
+        for _ in range(3)
+    ]
+
+    # Setup a shared package listing for another community.
+    shared_package = PackageVersionFactory().package
+    extra_community = CommunityFactory(
+        aggregated_fields=CommunityAggregatedFields.objects.create()
+    )
+    extra_listing = PackageListingFactory(
+        community_=extra_community, package_=shared_package
+    )
+
+    # Add two package listings for each community, one with the shared package and one
+    # with a unique package.
+    for community in communities:
+        PackageListingFactory(community_=community, package_=extra_listing.package)
+        PackageListingFactory(community_=community)
+        CommunityAggregatedFields.update_for_community(community)
+
+    for community in communities:
+        count = community.package_listings.filter_with_single_community().count()
+        assert count == 1
+        assert community.aggregated.package_count == count

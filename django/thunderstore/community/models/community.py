@@ -316,6 +316,9 @@ class CommunityAggregatedFields(TimestampMixin, models.Model):
         if community.require_package_listing_approval:
             listings = listings.approved()
 
+        # Exclude listings that are shared with other communities
+        listings = listings.filter_with_single_community()
+
         community.aggregated_fields.package_count = listings.count()
         community.aggregated_fields.download_count = sum(
             listing.total_downloads for listing in listings
