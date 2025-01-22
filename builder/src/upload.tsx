@@ -19,7 +19,7 @@ import { FormSelectField } from "./components/FormSelectField";
 import { CommunityCategorySelector } from "./components/CommunitySelector";
 import { FormRow } from "./components/FormRow";
 import { SubmitPackage } from "./api/packageSubmit";
-import { BlobReader, ZipReader } from "./vendor/zip-fs-full";
+import { validateZip } from "./uploadZipValidation";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus == FileUploadStatus.CANCELED) {
@@ -43,7 +43,7 @@ function getSubmissionProgressBarcolor(
     return "bg-warning";
 }
 
-class FormErrors {
+export class FormErrors {
     teamError: string | null = null;
     communitiesError: string | null = null;
     categoriesError: string | null = null;
@@ -140,201 +140,19 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
 
         if (file) {
             validateZip(file).then((result) => {
-                if (result) {
-                    console.log("Zip successfully validated.");
-                } else {
-                    console.log("Failed to validate zip.");
+                if (result.errors.fileErrors.length > 0) {
+                    setFormErrors(result.errors);
+
+                    if (result.blockUpload) {
+                        result.errors.generalErrors.push(
+                            "An error with your selected file is preventing submission."
+                        );
+                        setSubmissionStatus(SubmissionStatus.ERROR);
+                    }
                 }
             });
         }
     };
-
-    async function validateZip(file: File): Promise<boolean> {
-        console.log("Selected file: " + file.name);
-
-        let errors = new FormErrors();
-
-        let blockUpload = false;
-
-        let isZip = true;
-        if (!file.name.toLowerCase().endsWith(".zip")) {
-            errors.fileErrors.push("The file you selected is not a .zip!");
-            isZip = false;
-            blockUpload = true;
-        }
-
-        if (isZip) {
-            try {
-                const blobReader = new BlobReader(file);
-                const zipReader = new ZipReader(blobReader);
-
-                const entries = await zipReader.getEntries();
-
-                let dllCount = 0;
-                let hasBepInEx = false;
-                let hasAssemblyCSharp = false;
-                let maybeModpack = false;
-                let noRootFiles = true;
-                let rootManifest = false;
-                let hasIcon = false;
-                let rootIcon = false;
-                let hasManifest = false;
-                let hasReadMe = false;
-                let rootReadMe = false;
-
-                for (const entry of entries) {
-                    // console.log(entry.filename);
-
-                    if (!entry || !(typeof entry.getData === "function")) {
-                        continue;
-                    }
-
-                    if (entry.filename.toLowerCase().endsWith(".dll")) {
-                        dllCount++;
-                    }
-
-                    if (
-                        entry.filename.toLowerCase().split("/").pop() ==
-                        "assembly-csharp.dll"
-                    ) {
-                        hasAssemblyCSharp = true;
-                    }
-
-                    if (
-                        entry.filename.toLowerCase().split("/").pop() ==
-                        "bepinex.dll"
-                    ) {
-                        hasBepInEx = true;
-                        maybeModpack = true;
-                    }
-
-                    if (noRootFiles) {
-                        if (!entry.filename.includes("/")) {
-                            noRootFiles = false;
-                        }
-                    }
-                    if (
-                        entry.filename.toLowerCase().endsWith("manifest.json")
-                    ) {
-                        hasManifest = true;
-                        if (entry.filename.toLowerCase() == "manifest.json") {
-                            rootManifest = true;
-                        }
-                    }
-                    if (entry.filename.toLowerCase().endsWith("icon.png")) {
-                        hasIcon = true;
-                        if (entry.filename.toLowerCase() == "icon.png") {
-                            rootIcon = true;
-                        }
-                    }
-                    if (entry.filename.toLowerCase().endsWith("readme.md")) {
-                        hasReadMe = true;
-                        if (entry.filename.toLowerCase() == "readme.md") {
-                            rootReadMe = true;
-                        }
-                    }
-                }
-
-                if (hasBepInEx) {
-                    errors.fileErrors.push(
-                        "You have BepInEx.dll in your .zip file. BepInEx should probably be a dependency in your manifest.json file instead."
-                    );
-                }
-
-                if (hasAssemblyCSharp) {
-                    errors.fileErrors.push(
-                        "You have Assembly-CSharp.dll in your .zip file. Your mod may be removed if you do not have permission to distribute this file."
-                    );
-                }
-
-                if (dllCount > 8) {
-                    errors.fileErrors.push(
-                        "You have " +
-                            dllCount +
-                            " .dll files in your .zip file. Some of these files may be unnecessary."
-                    );
-                    maybeModpack = true;
-                }
-
-                if (maybeModpack) {
-                    errors.fileErrors.push(
-                        "If you're making a modpack, do not include the files for each mod in your .zip file. Instead, put the dependency string for each mod inside your manifest.json file."
-                    );
-                }
-
-                if (
-                    noRootFiles &&
-                    hasManifest &&
-                    hasIcon &&
-                    hasReadMe &&
-                    !rootManifest &&
-                    !rootIcon &&
-                    !rootReadMe
-                ) {
-                    blockUpload = true;
-                    errors.fileErrors.push(
-                        "Your manifest, icon, and README files should be at the root of the .zip file. You can prevent this by compressing the contents of a folder, rather than the folder itself."
-                    );
-                } else {
-                    if (!hasManifest) {
-                        blockUpload = true;
-                        errors.fileErrors.push(
-                            "Your package is missing a manifest.json file!"
-                        );
-                    } else if (!rootManifest) {
-                        blockUpload = true;
-                        errors.fileErrors.push(
-                            "Your manifest.json file is not at the root of the .zip!"
-                        );
-                    }
-
-                    if (!hasIcon) {
-                        blockUpload = true;
-                        errors.fileErrors.push(
-                            "Your package is missing an icon.png file!"
-                        );
-                    } else if (!rootIcon) {
-                        blockUpload = true;
-                        errors.fileErrors.push(
-                            "Your icon.png file is not at the root of the .zip!"
-                        );
-                    }
-
-                    if (!hasReadMe) {
-                        blockUpload = true;
-                        errors.fileErrors.push(
-                            "Your package is missing a README.md file!"
-                        );
-                    } else if (!rootReadMe) {
-                        blockUpload = true;
-                        errors.fileErrors.push(
-                            "Your README.md file is not at the root of the .zip!"
-                        );
-                    }
-                }
-
-                await zipReader.close();
-            } catch (e) {
-                console.log("Error reading zip: " + e);
-                return false;
-            }
-        }
-
-        if (errors.fileErrors.length > 0) {
-            setFormErrors(errors);
-
-            if (blockUpload) {
-                errors.generalErrors.push(
-                    "An error with your selected file is preventing submission."
-                );
-                setSubmissionStatus(SubmissionStatus.ERROR);
-                return false;
-            }
-            return true;
-        } else {
-            return true;
-        }
-    }
 
     const onSubmit = async (data: any) => {
         // TODO: Convert to react-hook-form validation
