@@ -86,7 +86,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         db_index=True,
     )
     uploaded_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         related_name="uploaded_versions",
         on_delete=models.SET_NULL,
         blank=True,
