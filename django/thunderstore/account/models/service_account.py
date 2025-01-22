@@ -32,7 +32,7 @@ class ServiceAccount(models.Model):
     api_token = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         related_name="created_service_accounts",
         on_delete=models.SET_NULL,
         blank=True,
