@@ -1,3 +1,5 @@
+from typing import Optional
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import PermissionDenied
@@ -152,15 +154,17 @@ class PackageListingReportApiView(GenericAPIView):
         listing: PackageListing = self.get_object()
         package: Package = listing.package
         version: PackageVersion = serializer.validated_data["package_version_id"]
+        reason: str = serializer.validated_data["reason"]
+        description: Optional[str] = serializer.validated_data.get("description", None)
 
         try:
             PackageReport.handle_user_report(
-                reason=serializer.validated_data["reason"],
+                reason=reason,
                 submitted_by=request.user,
                 package=package,
                 package_listing=listing,
                 package_version=version,
-                description=serializer.validated_data["description"],
+                description=description,
             )
             return Response(status=status.HTTP_200_OK)
         except PermissionError:
