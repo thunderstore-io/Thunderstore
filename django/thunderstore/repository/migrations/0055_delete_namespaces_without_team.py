@@ -6,7 +6,7 @@ from django.db import migrations
 def forwards(apps, schema_editor):
     Namespace = apps.get_model("repository", "Namespace")
 
-    Namespace.objects.filter(team__isnull=True).delete()
+    Namespace.objects.filter(team__isnull=True, packages=None).delete()
 
 
 class Migration(migrations.Migration):
