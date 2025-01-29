@@ -59,11 +59,9 @@ class DependencySerializer(serializers.Serializer):
         return obj.icon.url if obj.is_effectively_active else None
 
     def get_is_unavailable(self, obj: PackageVersion) -> bool:
-        community = Community.objects.filter(
-            identifier=obj.community_identifier
-        ).first()
-
-        return obj.is_unavailable(community)
+        # Annotated result of PackageVersion.is_unavailable
+        # See get_custom_package_listing()
+        return obj.version_is_unavailable
 
 
 class TeamSerializer(serializers.Serializer):
@@ -191,10 +189,14 @@ def get_custom_package_listing(
         package__name__iexact=package_name,
     )
 
+    community = listing.community
+    version_is_unavailable = listing.package.latest.is_unavailable(community)
+
     dependencies = (
         listing.package.latest.dependencies.listed_in(community_id)
         .annotate(
             community_identifier=Value(community_id, CharField()),
+            version_is_unavailable=Value(version_is_unavailable, BooleanField()),
         )
         .select_related("package", "package__namespace")
         .order_by("package__namespace__name", "package__name")
