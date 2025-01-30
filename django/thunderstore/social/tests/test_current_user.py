@@ -249,8 +249,8 @@ def _run_current_user_is_staff_test(
     [
         (True, True, True),
         (True, False, False),
-        (False, True, None),
-        (False, False, None),
+        (False, True, False),
+        (False, False, False),
     ],
 )
 def test_current_user_is_staff_experimental_api(
@@ -271,8 +271,8 @@ def test_current_user_is_staff_experimental_api(
     [
         (True, True, True),
         (True, False, False),
-        (False, True, None),
-        (False, False, None),
+        (False, True, False),
+        (False, False, False),
     ],
 )
 def test_current_user_is_staff_v1_api(

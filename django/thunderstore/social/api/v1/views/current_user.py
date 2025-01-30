@@ -15,7 +15,7 @@ class CurrentUserInfoView(APIView):
     def get(self, request, format=None, community_identifier=None):
         capabilities = set()
         rated_packages = []
-        is_staff = None
+        is_staff = False
 
         if request.user.is_authenticated:
             capabilities.add("package.rate")

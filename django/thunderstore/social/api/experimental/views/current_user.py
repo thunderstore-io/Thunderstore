@@ -94,7 +94,7 @@ class UserProfileSerializer(serializers.Serializer):
         serializers.ListField()
     )  # This is in active use by the Django frontend react components at least
     teams_full = UserTeamSerializer(many=True)
-    is_staff = serializers.BooleanField(allow_null=True)
+    is_staff = serializers.BooleanField()
 
 
 def get_empty_profile() -> UserProfile:
@@ -106,7 +106,7 @@ def get_empty_profile() -> UserProfile:
         "rated_packages": [],
         "teams": [],
         "teams_full": [],
-        "is_staff": None,
+        "is_staff": False,
     }
 
 
