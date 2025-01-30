@@ -1,8 +1,5 @@
 from rest_framework import serializers
 
-from thunderstore.repository.models import PackageVersion
-from thunderstore.repository.serializer_fields import ModelChoiceField
-
 
 class ReportPackageListingRequestSerializer(serializers.Serializer):
     reason = serializers.CharField(
