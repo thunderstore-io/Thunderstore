@@ -12,17 +12,24 @@ from django.db.models import (
     Sum,
     Value,
 )
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
     CyberstormTeamMemberSerializer,
 )
+from thunderstore.api.cyberstorm.serializers.listing import (
+    ReportPackageListingRequestSerializer,
+)
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
 from thunderstore.community.models.package_listing import PackageListing
-from thunderstore.repository.models.package import get_package_dependants
+from thunderstore.repository.models.package import Package, get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
+from thunderstore.ts_reports.models import PackageReport
 
 
 class DependencySerializer(serializers.Serializer):
@@ -198,3 +205,34 @@ def get_custom_package_listing(
     listing.dependant_count = get_package_dependants(listing.package.pk).count()
 
     return listing
+
+
+class ReportListingAPIView(PackageListingAPIView):
+    queryset = PackageListing.objects.active().select_related(
+        "package",
+    )
+    serializer_class = ReportPackageListingRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        listing: PackageListing = self.get_object()
+        package: Package = listing.package
+        version: PackageVersion = package.latest
+        reason: str = serializer.validated_data["reason"]
+        description: Optional[str] = serializer.validated_data.get("description", None)
+
+        try:
+            PackageReport.handle_user_report(
+                reason=reason,
+                submitted_by=request.user,
+                package=package,
+                package_listing=listing,
+                package_version=version,
+                description=description,
+            )
+            return Response(status=status.HTTP_200_OK)
+        except PermissionError:
+            raise PermissionDenied()
