@@ -35,8 +35,12 @@ PERMISSIONS_CHECKER_TEST_PARAMETERS = [
 ]
 
 
-def get_url(namespace_id: str, package_name: str) -> str:
-    return f"/api/cyberstorm/package/{namespace_id}/{package_name}/permissions/"
+def get_url(lising: PackageListing) -> str:
+    community_id = lising.community.identifier
+    namespace_id = lising.package.namespace.name
+    package_name = lising.package.name
+    base_url = "/api/cyberstorm/package"
+    return f"{base_url}/{community_id}/{namespace_id}/{package_name}/permissions/"
 
 
 @pytest.mark.django_db
@@ -44,10 +48,7 @@ def test_package_permissions_not_logged_in(
     api_client: APIClient,
     active_package_listing: PackageListing,
 ) -> None:
-    package_name = active_package_listing.package.name
-    namespace_id = active_package_listing.package.namespace.name
-    url = get_url(namespace_id, package_name)
-
+    url = get_url(active_package_listing)
     response = api_client.get(url, content_type="application/json")
     assert response.status_code == 401
     assert response.json() == {
@@ -62,11 +63,7 @@ def test_package_permissions_logged_in(
     user: UserType,
 ) -> None:
     api_client.force_authenticate(user)
-
-    package_name = active_package_listing.package.name
-    namespace_id = active_package_listing.package.namespace.name
-    url = get_url(namespace_id, package_name)
-
+    url = get_url(active_package_listing)
     response = api_client.get(url, content_type="application/json")
     assert response.status_code == 200
 
@@ -88,10 +85,7 @@ def test_package_permissions_response_values(
     """
 
     api_client.force_authenticate(user)
-
-    package_name = active_package_listing.package.name
-    namespace_id = active_package_listing.package.namespace.name
-    url = get_url(namespace_id, package_name)
+    url = get_url(active_package_listing)
 
     property_path = f"{PERMISSIONS_CHECKER_PATH}.{permissions_func_name}"
     with patch(property_path, new_callable=PropertyMock) as mock_checker_function:
@@ -99,7 +93,12 @@ def test_package_permissions_response_values(
         response = api_client.get(url, content_type="application/json")
 
     assert response.status_code == 200
-    assert response.json()[permissions_func_name] == expected_value
+    assert response.json()["permissions"][permissions_func_name] == expected_value
+    assert response.json()["package"] == {
+        "community_id": active_package_listing.community.identifier,
+        "namespace_id": active_package_listing.package.namespace.name,
+        "package_name": active_package_listing.package.name,
+    }
 
 
 @pytest.mark.django_db
@@ -111,13 +110,8 @@ def test_package_permissions_not_found(
     user: UserType,
 ) -> None:
     mock_get_permissions.return_value = {}
-
     api_client.force_authenticate(user)
-
-    package_name = active_package_listing.package.name
-    namespace_id = active_package_listing.package.namespace.name
-    url = get_url(namespace_id, package_name)
-
+    url = get_url(active_package_listing)
     response = api_client.get(url, content_type="application/json")
     assert response.status_code == 404
     assert response.json() == {"message": "Permissions not found."}
