@@ -99,6 +99,27 @@ class PackageDetailView(PackageListingDetailView):
             "packageListingId": self.object.pk,
         }
 
+    def get_report_panel(self):
+        return {
+            "packageListingId": self.object.pk,
+            "packageVersionId": self.object.package.latest.pk,
+            "csrfToken": self.csrf_token,
+            "reasonChoices": [
+                {"value": "Spam", "label": "Spam"},
+                {"value": "Malware", "label": "Suspected malware"},
+                {"value": "Reupload", "label": "Unauthorized reupload"},
+                {
+                    "value": "CopyrightOrLicense",
+                    "label": "Copyright / License issue",
+                },
+                {"value": "Harassment", "label": "Harassment"},
+                {"value": "WrongCommunity", "label": "Wrong community"},
+                {"value": "WrongCategories", "label": "Wrong categories"},
+                {"value": "Other", "label": "Other"},
+            ],
+            "descriptionMaxLength": 2048,
+        }
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
@@ -147,25 +168,7 @@ class PackageDetailView(PackageListingDetailView):
             "packageListingId": package_listing.pk,
         }
 
-        context["report_button_props"] = {
-            "packageListingId": package_listing.pk,
-            "packageVersionId": package_listing.package.latest.pk,
-            "csrfToken": csrf_token,
-            "reasonChoices": [
-                {"value": "Spam", "label": "Spam"},
-                {"value": "Malware", "label": "Suspected malware"},
-                {"value": "Reupload", "label": "Unauthorized reupload"},
-                {
-                    "value": "CopyrightOrLicense",
-                    "label": "Copyright / License issue",
-                },
-                {"value": "Harassment", "label": "Harassment"},
-                {"value": "WrongCommunity", "label": "Wrong community"},
-                {"value": "WrongCategories", "label": "Wrong categories"},
-                {"value": "Other", "label": "Other"},
-            ],
-            "descriptionMaxLength": 2048,
-        }
+        context["report_button_props"] = self.get_report_panel()
 
         context["review_panel_props"] = self.get_review_panel()
         return context
