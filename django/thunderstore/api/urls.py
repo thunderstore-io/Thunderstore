@@ -86,7 +86,7 @@ cyberstorm_urls = [
         name="cyberstorm.package.rate",
     ),
     path(
-        "package/<str:namespace_id>/<str:package_name>/permissions/",
+        "package/<str:community_id>/<str:namespace_id>/<str:package_name>/permissions/",
         PackagePermissionsAPIView.as_view(),
         name="cyberstorm.package.permissions",
     ),

@@ -1,5 +1,6 @@
 from django.http import HttpRequest
 from rest_framework import serializers, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,7 +11,13 @@ from thunderstore.repository.views.package._utils import get_package_listing_or_
 from thunderstore.repository.views.package.detail import PermissionsChecker
 
 
-class PackagePermissionsSerializer(serializers.Serializer):
+class PackageInfoSerializer(serializers.Serializer):
+    community_id = serializers.CharField()
+    namespace_id = serializers.CharField()
+    package_name = serializers.CharField()
+
+
+class PermissionsSerializer(serializers.Serializer):
     can_manage = serializers.BooleanField()
     can_manage_deprecation = serializers.BooleanField()
     can_manage_categories = serializers.BooleanField()
@@ -20,6 +27,11 @@ class PackagePermissionsSerializer(serializers.Serializer):
     can_moderate = serializers.BooleanField()
     can_view_package_admin_page = serializers.BooleanField()
     can_view_listing_admin_page = serializers.BooleanField()
+
+
+class PackagePermissionsSerializer(serializers.Serializer):
+    package = PackageInfoSerializer()
+    permissions = PermissionsSerializer()
 
 
 class BasePackagePermissionsAPIView(APIView):
@@ -44,8 +56,9 @@ class BasePackagePermissionsAPIView(APIView):
         )
 
     def get_permissions_data(
-        self, namespace_id: str, package_name: str, community: Community
+        self, namespace_id: str, package_name: str, community_id: str
     ) -> dict:
+        community = get_object_or_404(Community, identifier=community_id)
         listing = self.get_listing(namespace_id, package_name, community)
 
         permissions_checker = self.permissions_checker(listing)
@@ -54,19 +67,6 @@ class BasePackagePermissionsAPIView(APIView):
 
         permission_data = permissions_checker.get_permissions()
         return permission_data
-
-    def get(
-        self, request: HttpRequest, namespace_id: str, package_name: str
-    ) -> Response:
-        data = self.get_permissions_data(namespace_id, package_name, request.community)
-        if not data:
-            return Response(
-                {"message": "Permissions not found."}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = PackagePermissionsSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
 
 
 class PackagePermissionsAPIView(BasePackagePermissionsAPIView):
@@ -80,6 +80,29 @@ class PackagePermissionsAPIView(BasePackagePermissionsAPIView):
         tags=["cyberstorm"],
     )
     def get(
-        self, request: HttpRequest, namespace_id: str, package_name: str
+        self,
+        request: HttpRequest,
+        community_id: str,
+        namespace_id: str,
+        package_name: str,
     ) -> Response:
-        return super().get(request, namespace_id, package_name)
+        permission_data = self.get_permissions_data(
+            namespace_id, package_name, community_id
+        )
+        if not permission_data:
+            return Response(
+                {"message": "Permissions not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        data = {
+            "package": {
+                "community_id": community_id,
+                "namespace_id": namespace_id,
+                "package_name": package_name,
+            },
+            "permissions": {**permission_data},
+        }
+
+        serializer = PackagePermissionsSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
