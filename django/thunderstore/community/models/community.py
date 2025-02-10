@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -22,6 +22,13 @@ from thunderstore.permissions.utils import validate_user
 
 if TYPE_CHECKING:
     from thunderstore.community.models.community_site import CommunitySite
+
+
+@dataclass
+class ImageField:
+    name: str
+    width_field: str
+    height_field: str
 
 
 class CommunityManager(models.Manager):
@@ -112,55 +119,59 @@ class Community(TimestampMixin, models.Model):
             else CommunityAggregatedFields.get_empty()
         )
 
+    def _get_image_field_data(self) -> List[ImageField]:
+        return [
+            ImageField(
+                name="icon", width_field="icon_width", height_field="icon_height"
+            ),
+            ImageField(
+                name="background_image",
+                width_field="background_image_width",
+                height_field="background_image_height",
+            ),
+            ImageField(
+                name="hero_image",
+                width_field="hero_image_width",
+                height_field="hero_image_height",
+            ),
+            ImageField(
+                name="cover_image",
+                width_field="cover_image_width",
+                height_field="cover_image_height",
+            ),
+        ]
+
+    def _set_default_image_dimensions(self, kwargs: dict) -> None:
+        """
+        Sets the width and height of image fields to 0 if the image fields are None
+        upon creation.
+        """
+
+        image_fields = self._get_image_field_data()
+
+        for field in image_fields:
+            if getattr(self, field.name):
+                continue
+
+            setattr(self, field.width_field, 0)
+            setattr(self, field.height_field, 0)
+
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = set(
+                    kwargs["update_fields"] + (field.width_field, field.height_field),
+                )
+
+    def _validate_identifier(self) -> None:
+        if not self.pk:
+            return
+
+        in_db = type(self).objects.get(pk=self.pk)
+        if in_db.identifier != self.identifier:
+            raise ValidationError("Field 'identifier' is read only")
+
     def save(self, *args, **kwargs):
-        if self.pk:
-            in_db = type(self).objects.get(pk=self.pk)
-            if in_db.identifier != self.identifier:
-                raise ValidationError("Field 'identifier' is read only")
-        if not self.icon:
-            self.icon_width = 0
-            self.icon_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "icon_width",
-                        "icon_height",
-                    ),
-                )
-        if not self.background_image:
-            self.background_image_width = 0
-            self.background_image_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "background_image_width",
-                        "background_image_height",
-                    ),
-                )
-        if not self.hero_image:
-            self.hero_image_width = 0
-            self.hero_image_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "hero_image_width",
-                        "hero_image_height",
-                    ),
-                )
-        if not self.cover_image:
-            self.cover_image_width = 0
-            self.cover_image_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "cover_image_width",
-                        "cover_image_height",
-                    ),
-                )
+        self._validate_identifier()
+        self._set_default_image_dimensions(kwargs)
         return super().save(*args, **kwargs)
 
     def __str__(self):

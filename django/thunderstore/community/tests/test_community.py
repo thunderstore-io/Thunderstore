@@ -187,3 +187,11 @@ def test_community_should_use_old_urls(
 
 def test_community_should_use_old_urls_no_community() -> None:
     assert Community.should_use_old_urls(None) is True
+
+
+@pytest.mark.django_db
+def test_community_validate_identifier():
+    community = CommunityFactory()
+    community.identifier = "test"
+    with pytest.raises(ValidationError):
+        community.save()
