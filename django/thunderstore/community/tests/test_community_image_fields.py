@@ -30,27 +30,14 @@ def _generate_test_image(width: int, height: int) -> SimpleUploadedFile:
 
 
 @pytest.mark.django_db
-def test_update_community_default_image_dimensions() -> None:
+@pytest.mark.parametrize("image_field_name", IMAGE_FIELD_NAMES)
+def test_update_community_default_image_dimensions(image_field_name) -> None:
     community = CommunityFactory()
-
-    for image_field_name in IMAGE_FIELD_NAMES:
-        setattr(community, image_field_name, None)
+    setattr(community, image_field_name, None)
     community.save()
 
-    assert community.icon_width == 0
-    assert community.icon_height == 0
-
-    assert community.background_image_width == 0
-    assert community.background_image_height == 0
-
-    assert community.hero_image_width == 0
-    assert community.hero_image_height == 0
-
-    assert community.cover_image_width == 0
-    assert community.cover_image_height == 0
-
-    assert community.community_icon_width == 0
-    assert community.community_icon_height == 0
+    assert getattr(community, f"{image_field_name}_height") == 0
+    assert getattr(community, f"{image_field_name}_width") == 0
 
 
 @pytest.mark.django_db
