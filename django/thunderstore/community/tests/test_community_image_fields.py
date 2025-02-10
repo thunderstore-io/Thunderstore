@@ -7,7 +7,13 @@ from PIL import Image
 from thunderstore.community.factories import CommunityFactory
 
 # Image fields currently in the Community model
-IMAGE_FIELD_NAMES = ("icon", "background_image", "hero_image", "cover_image")
+IMAGE_FIELD_NAMES = (
+    "icon",
+    "background_image",
+    "hero_image",
+    "cover_image",
+    "community_icon",
+)
 
 
 def _generate_test_image(width: int, height: int) -> SimpleUploadedFile:
@@ -42,6 +48,9 @@ def test_update_community_default_image_dimensions() -> None:
 
     assert community.cover_image_width == 0
     assert community.cover_image_height == 0
+
+    assert community.community_icon_width == 0
+    assert community.community_icon_height == 0
 
 
 @pytest.mark.django_db

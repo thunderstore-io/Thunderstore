@@ -98,6 +98,16 @@ class Community(TimestampMixin, models.Model):
     hero_image_width = models.PositiveIntegerField(default=0)
     hero_image_height = models.PositiveIntegerField(default=0)
 
+    community_icon = models.ImageField(
+        upload_to=get_community_filepath,
+        width_field="community_icon_width",
+        height_field="community_icon_height",
+        blank=True,
+        null=True,
+    )
+    community_icon_width = models.PositiveIntegerField(default=0)
+    community_icon_height = models.PositiveIntegerField(default=0)
+
     identifier = models.CharField(max_length=256, unique=True, db_index=True)
     name = models.CharField(max_length=256)
     discord_url = models.CharField(max_length=512, blank=True, null=True)
@@ -139,14 +149,14 @@ class Community(TimestampMixin, models.Model):
                 width_field="cover_image_width",
                 height_field="cover_image_height",
             ),
+            ImageField(
+                name="community_icon",
+                width_field="community_icon_width",
+                height_field="community_icon_height",
+            ),
         ]
 
     def _set_default_image_dimensions(self, kwargs: dict) -> None:
-        """
-        Sets the width and height of image fields to 0 if the image fields are None
-        upon creation.
-        """
-
         image_fields = self._get_image_field_data()
 
         for field in image_fields:
@@ -187,6 +197,13 @@ class Community(TimestampMixin, models.Model):
         if user.pk not in self.__membership_cache:
             self.__membership_cache[user.pk] = self.members.filter(user=user).first()
         return self.__membership_cache[user.pk]
+
+    @cached_property
+    def community_icon_url(self) -> Optional[str]:
+        """
+        Return URL to the community's icon image if one exists.
+        """
+        return None if not bool(self.community_icon) else self.community_icon.url
 
     @cached_property
     def background_image_url(self) -> Optional[str]:

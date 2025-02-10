@@ -68,6 +68,20 @@ def test_community_ensure_user_can_manage_packages(
 
 
 @pytest.mark.django_db
+def test_community_image_url_without_image():
+    community = CommunityFactory()
+    url = community.community_icon_url
+    assert url is None
+
+
+@pytest.mark.django_db
+def test_community_image_url_with_image(dummy_image):
+    community = CommunityFactory(community_icon=dummy_image)
+    url = community.community_icon_url
+    assert isinstance(url, str)
+
+
+@pytest.mark.django_db
 def test_background_image_url_when_community_has_no_image():
     community = CommunityFactory()
     url = community.background_image_url
