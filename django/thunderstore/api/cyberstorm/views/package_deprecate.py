@@ -22,7 +22,7 @@ class DeprecatePackageAPIView(APIView):
         return package
 
     def validate_permissions(self, package: Package) -> None:
-        if not package.ensure_user_can_manage_deprecation(self.request.user):
+        if not package.can_user_manage_deprecation(self.request.user):
             raise PermissionDenied()
 
     @swagger_auto_schema(

@@ -8,8 +8,8 @@ from rest_framework.test import APIClient
 from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
 
-ENSURE_USER_CAN_MANAGE_DEPRECATION_PATH = (
-    "thunderstore.repository.models.package.Package.ensure_user_can_manage_deprecation"
+CAN_USER_MANAGE_DEPRECATION_PATH = (
+    "thunderstore.repository.models.package.Package.can_user_manage_deprecation"
 )
 
 
@@ -21,7 +21,7 @@ def get_deprecate_package_url(listing: PackageListing) -> str:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("is_deprecated", [True, False])
-@patch(ENSURE_USER_CAN_MANAGE_DEPRECATION_PATH)
+@patch(CAN_USER_MANAGE_DEPRECATION_PATH)
 def test_deprecate_package(
     mock_ensure_user_can_manage_deprecation,
     api_client: APIClient,
@@ -44,7 +44,7 @@ def test_deprecate_package(
 
 
 @pytest.mark.django_db
-@patch(ENSURE_USER_CAN_MANAGE_DEPRECATION_PATH)
+@patch(CAN_USER_MANAGE_DEPRECATION_PATH)
 def test_deprecate_package_permission_denied(
     mock_ensure_user_can_manage_deprecation,
     api_client: APIClient,
