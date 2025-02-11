@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from typing import Optional
 from unittest.mock import PropertyMock, patch
@@ -6,9 +5,6 @@ from unittest.mock import PropertyMock, patch
 import pytest
 from rest_framework.test import APIClient
 
-from thunderstore.api.cyberstorm.serializers.listing import (
-    ReportPackageListingRequestSerializer,
-)
 from thunderstore.api.cyberstorm.views.package_listing import (
     DependencySerializer,
     get_custom_package_listing,
@@ -19,14 +15,12 @@ from thunderstore.community.factories import (
     PackageCategoryFactory,
     PackageListingFactory,
 )
-from thunderstore.core.types import UserType
 from thunderstore.repository.factories import (
     NamespaceFactory,
     PackageRatingFactory,
     PackageVersionFactory,
     TeamMemberFactory,
 )
-from thunderstore.ts_reports.models import PackageReport
 
 
 @pytest.mark.django_db
@@ -379,80 +373,3 @@ def test_package_listing_is_removed(
 
     assert "is_removed" in response_dependencies
     assert response_dependencies["is_removed"] == return_val
-
-
-@pytest.mark.django_db
-def test_report_listing_view(
-    api_client: APIClient,
-    user: UserType,
-):
-    listing = PackageListingFactory()
-
-    api_client.force_authenticate(user)
-
-    response = api_client.post(
-        f"/api/cyberstorm/listing/wrong-community/{listing.package.namespace}/{listing.package.name}/report/",
-        json.dumps({"reason": "Spam", "description": ""}),
-        content_type="application/json",
-    )
-
-    assert response.status_code == 404
-
-    response = api_client.post(
-        f"/api/experimental/package-listing/{listing.pk}/report/",
-        json.dumps({"reason": "", "description": ""}),
-        content_type="application/json",
-    )
-
-    assert response.status_code == 400
-    assert response.data["reason"][0] == "This field may not be blank."
-
-    assert PackageReport.objects.count() == 0
-
-    response = api_client.post(
-        f"/api/cyberstorm/listing/{listing.community.identifier}/{listing.package.namespace}/{listing.package.name}/report/",
-        json.dumps({"reason": "Spam", "description": ""}),
-        content_type="application/json",
-    )
-
-    assert response.status_code == 200
-    assert PackageReport.objects.count() == 1
-
-
-@pytest.mark.django_db
-def test_report_listing_view__requires_login(
-    api_client: APIClient,
-):
-    listing = PackageListingFactory()
-    response = api_client.post(
-        f"/api/cyberstorm/listing/{listing.community.identifier}/{listing.package.namespace}/{listing.package.name}/report/",
-        json.dumps(
-            {
-                "reason": "Spam",
-                "description": "",
-            }
-        ),
-        content_type="application/json",
-    )
-
-    assert response.status_code == 401
-    assert response.data["detail"] == "Authentication credentials were not provided."
-
-
-@pytest.mark.django_db
-def test_package_listing_report_serializer():
-    data = {
-        "reason": "Spam",
-        "description": "This is spam.",
-    }
-    serializer = ReportPackageListingRequestSerializer(data=data)
-
-    assert serializer.is_valid() is True
-
-    serialized = serializer.data
-    assert serialized["reason"] == "Spam"
-    assert serialized["description"] == "This is spam."
-
-    deserialized = serializer.validated_data
-    assert deserialized["reason"] == "Spam"
-    assert deserialized["description"] == "This is spam."

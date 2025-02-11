@@ -22,7 +22,3 @@ class CyberstormAutoSchemaMixin:  # pragma: no cover
     @conditional_swagger_auto_schema(tags=["cyberstorm"])
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
-
-    @conditional_swagger_auto_schema(tags=["cyberstorm"])
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
