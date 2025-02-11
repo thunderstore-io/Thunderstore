@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.relations import PrimaryKeyRelatedField
 
 from thunderstore.community.models import PackageCategory
 from thunderstore.repository.api.experimental.serializers import (
@@ -19,8 +20,8 @@ class PackageListingUpdateRequestSerializer(serializers.Serializer):
 
 
 class PackageListingReportRequestSerializer(serializers.Serializer):
-    package_version_id = ModelChoiceField(
-        PackageVersion.objects.all(), "pk", required=True
+    package_version_id = PrimaryKeyRelatedField(
+        queryset=PackageVersion.objects.all(), required=True
     )
     reason = serializers.CharField(
         required=True,
