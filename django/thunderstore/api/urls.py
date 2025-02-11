@@ -14,7 +14,6 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
     RatePackageAPIView,
-    ReportListingAPIView,
     TeamAPIView,
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
@@ -56,11 +55,6 @@ cyberstorm_urls = [
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/dependants/",
         PackageListingByDependencyListAPIView.as_view(),
         name="cyberstorm.listing.by-dependency-list",
-    ),
-    path(
-        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/report/",
-        ReportListingAPIView.as_view(),
-        name="cyberstorm.listing.report",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/latest/changelog/",
