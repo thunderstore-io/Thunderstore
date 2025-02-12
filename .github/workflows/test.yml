@@ -63,7 +63,7 @@ jobs:
       - name: Export Docker image
         run: docker save --output /tmp/thunderstore.tar thunderstore:${GITHUB_SHA}
       - name: Upload Docker image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: /tmp/thunderstore.tar
@@ -84,7 +84,7 @@ jobs:
         with:
           submodules: false
       - name: Download Docker image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-image
           path: /tmp
@@ -108,7 +108,7 @@ jobs:
         with:
           submodules: false
       - name: Download Docker image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-image
           path: /tmp
@@ -132,7 +132,7 @@ jobs:
         with:
           submodules: false
       - name: Download Docker image
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-image
           path: /tmp
