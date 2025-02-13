@@ -1,7 +1,7 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.response import Response
 
 from thunderstore.api.cyberstorm.serializers.package_listing import (
@@ -15,7 +15,9 @@ from thunderstore.repository.views.package._utils import get_package_listing_or_
 
 class BasePackageListingActionView(GenericAPIView):
     def get_community(self) -> Community:
-        return Community.objects.get(identifier=self.kwargs["community_id"])
+        community_id = self.kwargs.get("community_id")
+        community = get_object_or_404(Community, identifier=community_id)
+        return community
 
     def get_object(self) -> PackageListing:
         return get_package_listing_or_404(

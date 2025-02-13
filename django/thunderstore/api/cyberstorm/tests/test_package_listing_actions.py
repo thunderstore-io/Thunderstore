@@ -169,3 +169,27 @@ def test_approve_package_listing_permission_denied(
     response = api_client.post(url, data=data, content_type="application/json")
     active_package_listing.refresh_from_db()
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("url_action", ["update", "approve", "reject"])
+def test_get_community_404(
+    url_action: str,
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+):
+    namespace_id = active_package_listing.package.namespace.name
+    package_name = active_package_listing.package.name
+    url = (
+        f"/api/cyberstorm/listing/invalid_community_id/"
+        f"{namespace_id}/{package_name}/{url_action}/"
+    )
+    data = json.dumps(
+        {
+            "rejection_reason": "Invalid content",
+            "internal_notes": "Some internal notes",
+        }
+    )
+    response = api_client.post(url, data=data, content_type="application/json")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
