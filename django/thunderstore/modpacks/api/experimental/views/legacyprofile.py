@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+from thunderstore.core.mixins import AllowAllCORSMixin
 from thunderstore.core.utils import replace_cdn
 from thunderstore.modpacks.models import LegacyProfile
 
@@ -53,7 +54,7 @@ class LegacyProfileCreateApiView(APIView):
         )
 
 
-class LegacyProfileRetrieveApiView(APIView):
+class LegacyProfileRetrieveApiView(AllowAllCORSMixin, APIView):
     permission_classes = []
 
     @swagger_auto_schema(
