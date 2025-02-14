@@ -5,6 +5,8 @@ from thunderstore.api.cyberstorm.views import (
     CommunityFiltersAPIView,
     CommunityListAPIView,
     DeprecatePackageAPIView,
+    CreateServiceAccountAPIView,
+    DeleteServiceAccountAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -109,5 +111,15 @@ cyberstorm_urls = [
         "team/<str:team_id>/service-account/",
         TeamServiceAccountListAPIView.as_view(),
         name="cyberstorm.team.service-account",
+    ),
+    path(
+        "team/<str:team_id>/service-account/create/",
+        CreateServiceAccountAPIView.as_view(),
+        name="cyberstorm.team.service-account.create",
+    ),
+    path(
+        "team/<str:team_id>/service-account/delete/",
+        DeleteServiceAccountAPIView.as_view(),
+        name="cyberstorm.team.service-account.delete",
     ),
 ]
