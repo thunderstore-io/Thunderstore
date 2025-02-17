@@ -139,6 +139,11 @@ class Team(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def public_members(self) -> "Manager[TeamMember]":
+        # TODO: Filter & return team members that are publicly visible
+        return self.members.none()
+
+    @property
     def real_user_count(self):
         return self.members.real_users().count()
 
