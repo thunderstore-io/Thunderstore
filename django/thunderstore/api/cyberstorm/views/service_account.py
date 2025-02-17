@@ -22,7 +22,7 @@ class TeamPermissionMixin:
         return super().dispatch(request, *args, **kwargs)
 
     def get_team(self) -> Team:
-        team_name = self.kwargs.get("team_id")
+        team_name = self.kwargs.get("team_name")
         return get_object_or_404(Team, name__iexact=team_name)
 
     def check_permissions(self, request: HttpRequest) -> None:
@@ -82,7 +82,7 @@ class DeleteServiceAccountAPIView(TeamPermissionMixin, GenericAPIView):
             )
 
     def get_object(self, uuid: str) -> ServiceAccount:
-        team_name = self.kwargs.get("team_id")
+        team_name = self.kwargs.get("team_name")
         obj = get_object_or_404(
             ServiceAccount,
             owner__name__iexact=team_name,

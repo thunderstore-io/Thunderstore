@@ -107,12 +107,12 @@ cyberstorm_urls = [
         name="cyberstorm.team.service-account",
     ),
     path(
-        "team/<str:team_id>/service-account/create/",
+        "team/<str:team_name>/service-account/create/",
         CreateServiceAccountAPIView.as_view(),
         name="cyberstorm.team.service-account.create",
     ),
     path(
-        "team/<str:team_id>/service-account/delete/",
+        "team/<str:team_name>/service-account/delete/",
         DeleteServiceAccountAPIView.as_view(),
         name="cyberstorm.team.service-account.delete",
     ),
