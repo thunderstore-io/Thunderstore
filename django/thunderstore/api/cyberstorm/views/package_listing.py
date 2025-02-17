@@ -63,7 +63,7 @@ class TeamSerializer(serializers.Serializer):
     """
 
     name = serializers.CharField()
-    members = CyberstormTeamMemberSerializer(many=True)
+    members = CyberstormTeamMemberSerializer(many=True, source="public_members")
 
 
 class EmptyStringAsNoneField(serializers.Field):
