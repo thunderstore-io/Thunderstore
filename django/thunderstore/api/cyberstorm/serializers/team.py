@@ -55,9 +55,9 @@ class CyberstormCreateTeamSerializer(serializers.Serializer):
     )
 
     def validate_name(self, value: str) -> str:
-        if Team.objects.filter(name__iexact=value.lower()).exists():
+        if Team.objects.filter(name__iexact=value).exists():
             raise ValidationError("A team with the provided name already exists")
-        if Namespace.objects.filter(name__iexact=value.lower()).exists():
+        if Namespace.objects.filter(name__iexact=value).exists():
             raise ValidationError("A namespace with the provided name already exists")
         return value
 
