@@ -11,6 +11,7 @@ from .package_listing_list import (
 from .package_rating import RatePackageAPIView
 from .package_version_list import PackageVersionListAPIView
 from .team import (
+    DisbandTeamAPIView,
     TeamAPIView,
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
@@ -21,6 +22,7 @@ __all__ = [
     "CommunityAPIView",
     "CommunityFiltersAPIView",
     "CommunityListAPIView",
+    "DisbandTeamAPIView",
     "PackageListingAPIView",
     "PackageListingByCommunityListAPIView",
     "PackageListingByDependencyListAPIView",
