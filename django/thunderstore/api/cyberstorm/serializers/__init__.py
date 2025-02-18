@@ -7,15 +7,15 @@ from .package import CyberstormPackagePreviewSerializer, PackagePermissionsSeria
 from .team import (
     CyberstormCreateTeamSerializer,
     CyberstormServiceAccountSerializer,
-    CyberstormTeamAddMemberRequestSerialiazer,
-    CyberstormTeamAddMemberResponseSerialiazer,
+    CyberstormTeamAddMemberRequestSerializer,
+    CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
 )
 
 __all__ = [
-    "CyberstormTeamAddMemberRequestSerialiazer",
-    "CyberstormTeamAddMemberResponseSerialiazer",
+    "CyberstormTeamAddMemberRequestSerializer",
+    "CyberstormTeamAddMemberResponseSerializer",
     "CyberstormCreateTeamSerializer",
     "CyberstormCommunitySerializer",
     "CyberstormPackageCategorySerializer",

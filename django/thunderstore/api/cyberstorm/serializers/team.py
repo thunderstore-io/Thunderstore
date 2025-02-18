@@ -36,14 +36,14 @@ class CyberstormServiceAccountSerializer(serializers.Serializer):
     last_used = serializers.DateTimeField()
 
 
-class CyberstormTeamAddMemberRequestSerialiazer(serializers.Serializer):
+class CyberstormTeamAddMemberRequestSerializer(serializers.Serializer):
     username = serializers.CharField()
     role = serializers.ChoiceField(
         choices=AddTeamMemberForm.base_fields["role"].choices
     )
 
 
-class CyberstormTeamAddMemberResponseSerialiazer(serializers.Serializer):
+class CyberstormTeamAddMemberResponseSerializer(serializers.Serializer):
     username = serializers.CharField(source="user")
     role = serializers.CharField()
     team = serializers.CharField()

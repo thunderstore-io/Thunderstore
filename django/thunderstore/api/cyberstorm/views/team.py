@@ -17,8 +17,8 @@ from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormCreateTeamSerializer,
     CyberstormServiceAccountSerializer,
-    CyberstormTeamAddMemberRequestSerialiazer,
-    CyberstormTeamAddMemberResponseSerialiazer,
+    CyberstormTeamAddMemberRequestSerializer,
+    CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
 )
@@ -100,14 +100,14 @@ class TeamMemberAddAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @conditional_swagger_auto_schema(
-        request_body=CyberstormTeamAddMemberRequestSerialiazer,
-        responses={200: CyberstormTeamAddMemberResponseSerialiazer},
+        request_body=CyberstormTeamAddMemberRequestSerializer,
+        responses={200: CyberstormTeamAddMemberResponseSerializer},
         operation_id="cyberstorm.team.member.add",
         tags=["cyberstorm"],
     )
     def post(self, request, team_name, format=None):
         team = get_object_or_404(Team, name__iexact=team_name)
-        serializer = CyberstormTeamAddMemberRequestSerialiazer(data=request.data)
+        serializer = CyberstormTeamAddMemberRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         form = AddTeamMemberForm(
@@ -121,9 +121,7 @@ class TeamMemberAddAPIView(APIView):
 
         if form.is_valid():
             team_member = form.save()
-            return Response(
-                CyberstormTeamAddMemberResponseSerialiazer(team_member).data
-            )
+            return Response(CyberstormTeamAddMemberResponseSerializer(team_member).data)
         else:
             raise ValidationError(form.errors)
 
