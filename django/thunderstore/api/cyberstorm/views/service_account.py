@@ -1,14 +1,13 @@
 from django.http import HttpRequest
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import CreateAPIView, GenericAPIView, get_object_or_404
+from rest_framework.generics import CreateAPIView, DestroyAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.api.cyberstorm.serializers.service_account import (
     CreateServiceAccountSerializer,
-    DeleteServiceAccountSerializer,
 )
 from thunderstore.api.utils import conditional_swagger_auto_schema
 from thunderstore.repository.models import Team
@@ -69,9 +68,9 @@ class CreateServiceAccountAPIView(TeamPermissionMixin, CreateAPIView):
         return super().post(request, *args, **kwargs)
 
 
-class DeleteServiceAccountAPIView(TeamPermissionMixin, GenericAPIView):
+class DeleteServiceAccountAPIView(TeamPermissionMixin, DestroyAPIView):
     queryset = ServiceAccount.objects.all()
-    serializer_class = DeleteServiceAccountSerializer
+    lookup_field = "uuid"
 
     def check_permissions(self, request: HttpRequest) -> None:
         super().check_permissions(request)
@@ -81,30 +80,10 @@ class DeleteServiceAccountAPIView(TeamPermissionMixin, GenericAPIView):
                 "for this team."
             )
 
-    def get_object(self, uuid: str) -> ServiceAccount:
-        team_name = self.kwargs.get("team_name")
-        obj = get_object_or_404(
-            ServiceAccount,
-            owner__name__iexact=team_name,
-            uuid=uuid,
-        )
-        return obj
-
-    def perform_delete(self, request, *args, **kwargs) -> Response:
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        uuid = serializer.validated_data["uuid"]
-
-        service_account = self.get_object(uuid=uuid)
-        service_account.delete()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
     @conditional_swagger_auto_schema(
-        request_body=serializer_class,
         responses={status.HTTP_204_NO_CONTENT: ""},
         operation_id="cyberstorm.team.service-account.delete",
         tags=["cyberstorm"],
     )
-    def post(self, request, *args, **kwargs) -> Response:
-        return self.perform_delete(request, *args, **kwargs)
+    def delete(self, request, *args, **kwargs) -> Response:
+        return super().delete(request, *args, **kwargs)
