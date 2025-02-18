@@ -24,7 +24,7 @@ class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
         package = get_object_or_404(
             Package.objects.active(),
             namespace__name=self.kwargs["namespace_id"],
-            name__iexact=self.kwargs["package_name"],
+            name=self.kwargs["package_name"],
         )
 
         return package.versions.active()
