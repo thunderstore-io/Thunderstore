@@ -57,6 +57,10 @@ class PackageDetailView(PackageListingDetailView):
     def can_moderate(self) -> bool:
         return self.object.community.can_user_manage_packages(self.request.user)
 
+    @cached_property
+    def csrf_token(self) -> str:
+        return csrf.get_token(self.request)
+
     def get_review_panel(self):
         if not self.can_moderate:
             return None
@@ -65,6 +69,27 @@ class PackageDetailView(PackageListingDetailView):
             "rejectionReason": self.object.rejection_reason,
             "internalNotes": self.object.notes,
             "packageListingId": self.object.pk,
+        }
+
+    def get_report_panel(self):
+        return {
+            "packageListingId": self.object.pk,
+            "packageVersionId": self.object.package.latest.pk,
+            "csrfToken": self.csrf_token,
+            "reasonChoices": [
+                {"value": "Spam", "label": "Spam"},
+                {"value": "Malware", "label": "Suspected malware"},
+                {"value": "Reupload", "label": "Unauthorized reupload"},
+                {
+                    "value": "CopyrightOrLicense",
+                    "label": "Copyright / License issue",
+                },
+                {"value": "Harassment", "label": "Harassment"},
+                {"value": "WrongCommunity", "label": "Wrong community"},
+                {"value": "WrongCategories", "label": "Wrong categories"},
+                {"value": "Other", "label": "Other"},
+            ],
+            "descriptionMaxLength": 2048,
         }
 
     def get_context_data(self, *args, **kwargs):
@@ -102,7 +127,7 @@ class PackageDetailView(PackageListingDetailView):
             "canUndeprecate": self.can_undeprecate,
             "canUnlist": self.can_unlist,
             "canUpdateCategories": self.can_manage_categories,
-            "csrfToken": csrf.get_token(self.request),
+            "csrfToken": self.csrf_token,
             "currentCategories": [
                 format_category(x) for x in package_listing.categories.all()
             ],
@@ -112,6 +137,9 @@ class PackageDetailView(PackageListingDetailView):
             ],
             "packageListingId": package_listing.pk,
         }
+
+        context["report_button_props"] = self.get_report_panel()
+
         context["review_panel_props"] = self.get_review_panel()
         return context
 
