@@ -27,7 +27,7 @@ jobs:
           virtualenvs-in-project: true
       - name: Cache poetry venv
         id: cache-poetry
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: django/.venv
           key: "poetry-${{ runner.os }}-\
@@ -40,7 +40,7 @@ jobs:
           cd django/
           poetry install
       - name: Cache pre-commit cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: "pre-commit-${{ runner.os }}-\
