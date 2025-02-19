@@ -1,7 +1,12 @@
 from django.db.models import Q, QuerySet
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
+from rest_framework.generics import (
+    DestroyAPIView,
+    ListAPIView,
+    RetrieveAPIView,
+    get_object_or_404,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,6 +27,21 @@ from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
 
 
+class TeamPermissionsMixin:
+    permission_classes = [IsAuthenticated]
+
+    def _get_team_object(self) -> Team:
+        teams = Team.objects.exclude(is_active=False)
+        team_identifier = self.kwargs.get("team_id") or self.kwargs.get("team_name")
+        return get_object_or_404(teams, name__iexact=team_identifier)
+
+    def check_permissions(self, request: Request) -> None:
+        super().check_permissions(request)
+        team = self._get_team_object()
+        if not team.can_user_access(request.user):
+            raise PermissionDenied("You do not have permission to access this team.")
+
+
 class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
@@ -29,21 +49,8 @@ class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     lookup_url_kwarg = "team_id"
 
 
-class TeamRestrictedAPIView(ListAPIView):
-    """
-    Ensure the user is a member of the Team.
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def check_permissions(self, request: Request) -> None:
-        super().check_permissions(request)
-
-        teams = Team.objects.exclude(is_active=False)
-        team = get_object_or_404(teams, name__iexact=self.kwargs["team_id"])
-
-        if not team.can_user_access(request.user):
-            raise PermissionDenied()
+class TeamRestrictedAPIView(TeamPermissionsMixin, ListAPIView):
+    pass
 
 
 class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
@@ -113,3 +120,23 @@ class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPI
         return ServiceAccount.objects.exclude(
             ~Q(owner__name__iexact=self.kwargs["team_id"]),
         ).select_related("user")
+
+
+class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
+    queryset = Team.objects.all()
+    lookup_url_kwarg = "team_name"
+    lookup_field = "name__iexact"
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        team = self.get_object()
+        if not team.can_user_disband(request.user):
+            raise PermissionDenied("You do not have permission to disband this team.")
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.disband",
+        tags=["cyberstorm"],
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
