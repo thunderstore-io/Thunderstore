@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 
 import pytest
 from django.utils import timezone
@@ -18,6 +19,11 @@ def request_user_info(api_client: APIClient) -> Response:
         "/api/experimental/current-user/",
         HTTP_ACCEPT="application/json",
     )
+
+
+def request_user_info_v1(api_client: APIClient) -> Response:
+    url = "/api/v1/current-user/info/"
+    return api_client.get(url, HTTP_ACCEPT="application/json")
 
 
 @pytest.mark.django_db
@@ -212,3 +218,75 @@ def test_current_user_info__for_team_member__has_teams(
     team2 = next(t for t in user_info["teams_full"] if t["name"] == member2.team.name)
     assert team2["role"] == TeamMemberRole.member
     assert team2["member_count"] == 2  # ServiceAccounts do not count.
+
+
+def _run_current_user_is_staff_test(
+    api_client: APIClient,
+    user: UserType,
+    is_authorized: bool,
+    is_staff: bool,
+    expected_status: Optional[bool],
+    is_v1_api: bool,
+):
+    user.is_staff = is_staff
+
+    if is_authorized:
+        api_client.force_authenticate(user=user)
+
+    if is_v1_api:
+        response = request_user_info_v1(api_client)
+    else:
+        # Experimental API
+        response = request_user_info(api_client)
+
+    assert response.status_code == 200
+    assert response.json()["is_staff"] == expected_status
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("is_authorized", "is_staff", "expected_status"),
+    [
+        (True, True, True),
+        (True, False, False),
+        (False, True, False),
+        (False, False, False),
+    ],
+)
+def test_current_user_is_staff_experimental_api(
+    api_client: APIClient,
+    user: UserType,
+    is_authorized: bool,
+    is_staff: bool,
+    expected_status: Optional[bool],
+):
+    _run_current_user_is_staff_test(
+        api_client, user, is_authorized, is_staff, expected_status, False
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("is_authorized", "is_staff", "expected_status"),
+    [
+        (True, True, True),
+        (True, False, False),
+        (False, True, False),
+        (False, False, False),
+    ],
+)
+def test_current_user_is_staff_v1_api(
+    api_client: APIClient,
+    user: UserType,
+    is_authorized: bool,
+    is_staff: bool,
+    expected_status: Optional[bool],
+):
+    _run_current_user_is_staff_test(
+        api_client,
+        user,
+        is_authorized,
+        is_staff,
+        expected_status,
+        True,
+    )
