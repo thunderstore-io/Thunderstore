@@ -82,6 +82,13 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         default=True,
         db_index=True,
     )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="uploaded_versions",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     date_created = models.DateTimeField(
         auto_now_add=True,
     )
