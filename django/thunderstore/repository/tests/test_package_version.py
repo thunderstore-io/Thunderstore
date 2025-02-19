@@ -3,7 +3,7 @@ from typing import Any, Literal, Union
 import pytest
 from django.db import IntegrityError
 
-from thunderstore.community.factories import PackageListingFactory
+from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import PackageVersion
@@ -150,3 +150,26 @@ def test_package_version_is_removed(
     version = PackageVersionFactory(package=package, is_active=version_is_active)
 
     assert version.is_removed == expected_is_removed
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("package_is_unavailable", "version_is_active", "expected_is_unavailable"),
+    [
+        (True, True, True),
+        (True, False, True),
+        (False, True, False),
+        (False, False, True),
+    ],
+)
+def test_package_version_is_unavailable(
+    package_is_unavailable: bool,
+    version_is_active: bool,
+    expected_is_unavailable: bool,
+) -> None:
+    community = CommunityFactory()
+    package = PackageFactory()
+    package.is_unavailable = lambda _: package_is_unavailable
+    version = PackageVersionFactory(package=package, is_active=version_is_active)
+
+    assert version.is_unavailable(community) == expected_is_unavailable
