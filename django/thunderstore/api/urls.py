@@ -4,6 +4,7 @@ from thunderstore.api.cyberstorm.views import (
     CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
+    DeprecatePackageAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -83,6 +84,11 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/rate/",
         RatePackageAPIView.as_view(),
         name="cyberstorm.package.rate",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/deprecate/",
+        DeprecatePackageAPIView.as_view(),
+        name="cyberstorm.package.deprecate",
     ),
     path(
         "team/<str:team_id>/",
