@@ -5,7 +5,6 @@ from rest_framework.response import Response
 
 from thunderstore.cache.cache import ManualCacheCommunityMixin
 from thunderstore.cache.enums import CacheBustCondition
-from thunderstore.core.mixins import AllowAllCORSMixin
 from thunderstore.repository.api.experimental.serializers import (
     MarkdownResponseSerializer,
     PackageVersionSerializerExperimental,
@@ -55,7 +54,7 @@ class PackageVersionDetailMixin(ManualCacheCommunityMixin, RetrieveAPIView):
         )
 
 
-class PackageVersionDetailApiView(AllowAllCORSMixin, PackageVersionDetailMixin):
+class PackageVersionDetailApiView(PackageVersionDetailMixin):
     """
     Get a single package version
     """
@@ -70,7 +69,7 @@ class PackageVersionDetailApiView(AllowAllCORSMixin, PackageVersionDetailMixin):
         return super().get(*args, **kwargs)
 
 
-class PackageVersionChangelogApiView(AllowAllCORSMixin, PackageVersionDetailMixin):
+class PackageVersionChangelogApiView(PackageVersionDetailMixin):
     """
     Get a package verion's changelog
     """
@@ -90,7 +89,7 @@ class PackageVersionChangelogApiView(AllowAllCORSMixin, PackageVersionDetailMixi
         return Response(serializer.data)
 
 
-class PackageVersionReadmeApiView(AllowAllCORSMixin, PackageVersionDetailMixin):
+class PackageVersionReadmeApiView(PackageVersionDetailMixin):
     """
     Get a package verion's readme
     """

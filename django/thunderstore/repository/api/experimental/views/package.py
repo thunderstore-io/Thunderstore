@@ -6,7 +6,6 @@ from rest_framework.pagination import CursorPagination
 
 from thunderstore.cache.cache import ManualCacheCommunityMixin
 from thunderstore.cache.enums import CacheBustCondition
-from thunderstore.core.mixins import AllowAllCORSMixin
 from thunderstore.repository.api.experimental.serializers import (
     PackageSerializerExperimental,
 )
@@ -65,9 +64,7 @@ class PackageListApiView(ManualCacheCommunityMixin, ListAPIView):
         return get_package_queryset()
 
 
-class PackageDetailApiView(
-    AllowAllCORSMixin, ManualCacheCommunityMixin, RetrieveAPIView
-):
+class PackageDetailApiView(ManualCacheCommunityMixin, RetrieveAPIView):
     """
     Get a single package
     """
