@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("repository", "0054_alter_chunked_package_cache_index"),
+        ("repository", "0055_delete_namespaces_without_team"),
     ]
 
     operations = [
