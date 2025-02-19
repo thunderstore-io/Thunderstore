@@ -21,10 +21,6 @@ class DeprecatePackageAPIView(APIView):
         package = get_object_or_404(Package, name=package_name, namespace=namespace)
         return package
 
-    def validate_permissions(self, package: Package) -> None:
-        if not package.can_user_manage_deprecation(self.request.user):
-            raise PermissionDenied()
-
     @swagger_auto_schema(
         operation_id="cyberstorm.package.deprecate",
         request_body=DeprecatePackageSerializer,
@@ -32,7 +28,9 @@ class DeprecatePackageAPIView(APIView):
     )
     def post(self, request, namespace_id: str, package_name: str) -> Response:
         package = self.get_object(namespace_id, package_name)
-        self.validate_permissions(package)
+
+        if not package.can_user_manage_deprecation(self.request.user):
+            raise PermissionDenied()
 
         serializer = DeprecatePackageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
