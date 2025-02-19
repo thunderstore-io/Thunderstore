@@ -41,6 +41,7 @@ def test_api_cyberstorm_community_detail_success(
     assert c.aggregated.package_count == response_data["total_package_count"]
     assert c.background_image_url == response_data["background_image_url"]
     assert c.hero_image_url == response_data["hero_image_url"]
+    assert c.community_icon_url == response_data["community_icon_url"]
     assert c.cover_image_url == response_data["cover_image_url"]
     assert c.short_description == response_data["short_description"]
     assert c.description == response_data["description"]

@@ -69,6 +69,7 @@ def test_api_cyberstorm_community_list_get_success(
         assert results[index]["total_download_count"] == c.aggregated.download_count
         assert results[index]["total_package_count"] == c.aggregated.package_count
         assert results[index]["background_image_url"] == c.background_image_url
+        assert results[index]["community_icon_url"] == c.community_icon_url
         assert results[index]["hero_image_url"] == c.hero_image_url
         assert results[index]["cover_image_url"] == c.cover_image_url
         assert results[index]["description"] == c.description
