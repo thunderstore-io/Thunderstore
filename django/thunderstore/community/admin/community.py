@@ -18,6 +18,7 @@ class CommunityAdmin(admin.ModelAdmin):
         "is_listed",
         "block_auto_updates",
         "show_decompilation_results",
+        "has_mod_manager_support",
     )
     list_display = (
         "id",
@@ -25,6 +26,7 @@ class CommunityAdmin(admin.ModelAdmin):
         "name",
         "is_listed",
         "block_auto_updates",
+        "has_mod_manager_support",
         "datetime_created",
         "datetime_updated",
         "show_decompilation_results",

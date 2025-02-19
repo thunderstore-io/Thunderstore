@@ -1,3 +1,5 @@
+from unittest.mock import PropertyMock, patch
+
 import pytest
 from django.urls import reverse
 
@@ -12,6 +14,28 @@ def test_package_detail_view(client, active_package_listing, community_site):
     text_result = response.content.decode("utf-8")
     assert package.name in text_result
     assert package.full_package_name in text_result
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("visible", (False, True))
+def test_package_detail_view_install_with_mod_manager_button_visibility(
+    visible: bool,
+    client,
+    active_package_listing,
+    community_site,
+) -> None:
+    url = active_package_listing.get_absolute_url()
+    install_url = active_package_listing.package.latest.install_url
+
+    path = (
+        "thunderstore.community.models.package_listing."
+        "PackageListing.has_mod_manager_support"
+    )
+    with patch(path, new_callable=PropertyMock) as mock_has_mod_manager_support:
+        mock_has_mod_manager_support.return_value = visible
+        response = client.get(url, HTTP_HOST=community_site.site.domain)
+
+    assert (install_url in str(response.content)) == visible
 
 
 @pytest.mark.django_db
