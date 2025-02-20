@@ -112,12 +112,12 @@ def test_can_unlist(permissions_checker, is_superuser):
     "ensure_user_can_moderate_packages"
 )
 def test_can_moderate(
-    mock_ensure_update_categories_permission, return_val, permissions_checker
+    mock_ensure_can_moderate_packages, return_val, permissions_checker
 ):
     if return_val is True:
-        mock_ensure_update_categories_permission.return_value = return_val
+        mock_ensure_can_moderate_packages.return_value = return_val
     else:
-        mock_ensure_update_categories_permission.side_effect = ValidationError("Failed")
+        mock_ensure_can_moderate_packages.side_effect = ValidationError("Failed")
     assert permissions_checker.can_moderate == return_val
 
 

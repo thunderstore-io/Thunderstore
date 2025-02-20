@@ -35,10 +35,10 @@ PERMISSIONS_CHECKER_TEST_PARAMETERS = [
 ]
 
 
-def get_url(lising: PackageListing) -> str:
-    community_id = lising.community.identifier
-    namespace_id = lising.package.namespace.name
-    package_name = lising.package.name
+def get_url(listing: PackageListing) -> str:
+    community_id = listing.community.identifier
+    namespace_id = listing.package.namespace.name
+    package_name = listing.package.name
     base_url = "/api/cyberstorm/package"
     return f"{base_url}/{community_id}/{namespace_id}/{package_name}/permissions/"
 
