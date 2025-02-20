@@ -25,7 +25,9 @@ class CreateServiceAccountForm(forms.Form):
     def save(self) -> ServiceAccount:
         owner = self.cleaned_data["team"]
         nickname = self.cleaned_data["nickname"]
-        (service_account, token) = ServiceAccount.create(owner, nickname)
+        (service_account, token) = ServiceAccount.create(
+            owner=owner, nickname=nickname, creator=self.user
+        )
         self.api_token = token
         return service_account
 
