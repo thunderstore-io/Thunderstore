@@ -85,6 +85,7 @@
                 {% endfor %}
             </ul>
             <ul class="navbar-nav ml-auto">
+                {% dynamic_html "nav_bar_right_nav" %}
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
                         <a href="{% community_url 'packages.list_by_owner' owner=team %}" class="nav-link text-dark">{{ request.user.username }}</a>

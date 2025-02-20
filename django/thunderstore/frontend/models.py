@@ -15,6 +15,7 @@ class DynamicPlacement(ChoiceEnum):
     robots_txt = "robots_txt"
     html_head = "html_head"
     html_body_beginning = "html_body_beginning"
+    nav_bar_right_nav = "nav_bar_right_nav"
     content_beginning = "content_beginning"
     footer_top = "footer_top"
     footer_bottom = "footer_bottom"
