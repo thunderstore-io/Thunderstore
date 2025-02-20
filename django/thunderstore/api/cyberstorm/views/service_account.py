@@ -51,7 +51,12 @@ class CreateServiceAccountAPIView(TeamPermissionMixin, CreateAPIView):
         serializer.instance = service_account_data
 
     def create_service_account(self, nickname: str):
-        service_account, token = ServiceAccount.create(self.team, nickname)
+        service_account, token = ServiceAccount.create(
+            owner=self.team,
+            nickname=nickname,
+            creator=self.request.user,
+        )
+
         return {
             "nickname": service_account.nickname,
             "team_name": service_account.owner.name,
