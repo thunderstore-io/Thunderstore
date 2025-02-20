@@ -13,6 +13,7 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     hero_image_url = serializers.CharField(required=False)
     cover_image_url = serializers.CharField(required=False)
     icon_url = serializers.CharField(required=False)
+    community_icon_url = serializers.CharField(required=False)
     total_download_count = serializers.SerializerMethodField()
     total_package_count = serializers.SerializerMethodField()
 

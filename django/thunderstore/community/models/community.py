@@ -61,6 +61,16 @@ class Community(TimestampMixin, models.Model):
     icon_width = models.PositiveIntegerField(default=0)
     icon_height = models.PositiveIntegerField(default=0)
 
+    community_icon = models.ImageField(
+        upload_to=get_community_filepath,
+        width_field="community_icon_width",
+        height_field="community_icon_height",
+        blank=True,
+        null=True,
+    )
+    community_icon_width = models.PositiveIntegerField(default=0)
+    community_icon_height = models.PositiveIntegerField(default=0)
+
     cover_image = models.ImageField(
         upload_to=get_community_filepath,
         width_field="cover_image_width",
@@ -161,6 +171,17 @@ class Community(TimestampMixin, models.Model):
                         "cover_image_height",
                     ),
                 )
+        if not self.community_icon:
+            self.community_icon_width = 0
+            self.community_icon_height = 0
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = set(
+                    kwargs["update_fields"]
+                    + (
+                        "community_icon_width",
+                        "community_icon_height",
+                    ),
+                )
         return super().save(*args, **kwargs)
 
     def __str__(self):
@@ -197,6 +218,13 @@ class Community(TimestampMixin, models.Model):
         Return URL to the community's cover image if one exists.
         """
         return None if not bool(self.cover_image) else self.cover_image.url
+
+    @cached_property
+    def community_icon_url(self) -> Optional[str]:
+        """
+        Return URL to the community's icon image if one exists.
+        """
+        return None if not bool(self.community_icon) else self.community_icon.url
 
     @cached_property
     def icon_url(self) -> Optional[str]:
