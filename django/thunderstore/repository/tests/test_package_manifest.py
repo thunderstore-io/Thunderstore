@@ -75,6 +75,16 @@ def test_manifest_v1_serializer_package_already_exists_with_different_case(
     assert "Package name already exists with different capitalization" in str(
         serializer.errors["non_field_errors"][0]
     )
+    # Updating packages that already exist with different case should still be valid
+    PackageFactory(
+        owner=package.owner, name=package.name.swapcase(), namespace=package.namespace
+    )
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=package.owner,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid() is True
 
 
 @pytest.mark.django_db
