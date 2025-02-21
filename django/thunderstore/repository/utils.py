@@ -42,14 +42,6 @@ def has_duplicate_packages(packages: List["PackageReference"]) -> bool:
     return False
 
 
-def has_different_case(reference: "PackageReference") -> bool:
-    if reference.exists:
-        return False
-    elif reference.exists_in_any_case:
-        return True
-    return False
-
-
 def unpack_serializer_errors(field, errors, error_dict=None):
     if error_dict is None:
         error_dict = {}
