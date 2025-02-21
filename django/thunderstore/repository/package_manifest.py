@@ -96,6 +96,13 @@ class ManifestV1Serializer(serializers.Serializer):
             )
         if does_contain_package(result["dependencies"], reference):
             raise ValidationError("Package depending on itself is not allowed")
+        if not reference.without_version.exists:  # if we're making a new package
+            if (
+                reference.without_version.exists_in_any_case
+            ):  # if it exists in a different case
+                raise ValidationError(
+                    "Package name already exists with different capitalization"
+                )
         return result
 
     def update(self, instance, validated_data):
