@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, useContext, useState } from "react";
 import { MarkdownPreviewProvider } from "./MarkdownPreviewContext";
 import {
-    BaseApiError,
+    BaseValidationError,
     ExperimentalApi,
     ThunderstoreApiError,
     WikiDeleteError,
@@ -88,7 +88,7 @@ const useStoredState = (
 };
 
 function parseApiError<
-    ErrorType extends ErrorList & BaseApiError,
+    ErrorType extends ErrorList & BaseValidationError,
     Fields extends ErrorList
 >(
     e: unknown | ThunderstoreApiError,
