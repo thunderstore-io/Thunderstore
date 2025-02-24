@@ -304,8 +304,6 @@ def test_dependency_serializer__reads_is_active_from_correct_field(
     dependency.package.save()
     dependant.dependencies.set([dependency])
 
-    # community_identifier and version_is_unavailable is normally added using
-    # annotations, but it's irrelavant for this test case.
     dependency.community_identifier = "greendale"
     dependency.version_is_unavailable = False
 
@@ -316,8 +314,6 @@ def test_dependency_serializer__reads_is_active_from_correct_field(
 
 @pytest.mark.django_db
 def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_description() -> None:
-    # community_identifier and version_is_unavailable is normally added using
-    # annotations, but it's irrelavant for this test case.
     dependency = PackageVersionFactory()
     dependency.community_identifier = "greendale"
     dependency.version_is_unavailable = False
