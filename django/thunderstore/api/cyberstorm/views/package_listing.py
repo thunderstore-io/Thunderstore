@@ -20,6 +20,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamMemberSerializer,
 )
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.community.models.community import Community
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
@@ -45,6 +46,7 @@ class DependencySerializer(serializers.Serializer):
     namespace = serializers.CharField(source="package.namespace.name")
     version_number = serializers.CharField()
     is_removed = serializers.BooleanField()
+    is_unavailable = serializers.SerializerMethodField()
 
     def get_description(self, obj: PackageVersion) -> str:
         return (
@@ -55,6 +57,11 @@ class DependencySerializer(serializers.Serializer):
 
     def get_icon_url(self, obj: PackageVersion) -> Optional[str]:
         return obj.icon.url if obj.is_effectively_active else None
+
+    def get_is_unavailable(self, obj: PackageVersion) -> bool:
+        # Annotated result of PackageVersion.is_unavailable
+        # See get_custom_package_listing()
+        return obj.version_is_unavailable
 
 
 class TeamSerializer(serializers.Serializer):
@@ -182,10 +189,14 @@ def get_custom_package_listing(
         package__name__iexact=package_name,
     )
 
+    community = listing.community
+    version_is_unavailable = listing.package.latest.is_unavailable(community)
+
     dependencies = (
         listing.package.latest.dependencies.listed_in(community_id)
         .annotate(
             community_identifier=Value(community_id, CharField()),
+            version_is_unavailable=Value(version_is_unavailable, BooleanField()),
         )
         .select_related("package", "package__namespace")
         .order_by("package__namespace__name", "package__name")
