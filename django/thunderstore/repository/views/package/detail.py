@@ -5,7 +5,8 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from thunderstore.community.models import PackageCategory
+from thunderstore.community.models import PackageCategory, PackageListing
+from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.repository.views.mixins import PackageListingDetailView
 from thunderstore.repository.views.package._utils import (
@@ -15,12 +16,13 @@ from thunderstore.repository.views.package._utils import (
 )
 
 
-@method_decorator(ensure_csrf_cookie, name="dispatch")
-class PackageDetailView(PackageListingDetailView):
-    tab_name = "details"
+class PermissionsChecker:
+    def __init__(self, package_listing: PackageListing, user: UserType) -> None:
+        self.listing = package_listing
+        self.user = user
 
     @cached_property
-    def can_manage(self):
+    def can_manage(self) -> bool:
         return any(
             (
                 self.can_manage_deprecation,
@@ -30,35 +32,65 @@ class PackageDetailView(PackageListingDetailView):
         )
 
     @cached_property
-    def can_manage_deprecation(self):
-        return self.object.package.can_user_manage_deprecation(self.request.user)
+    def can_manage_deprecation(self) -> bool:
+        return self.listing.package.can_user_manage_deprecation(self.user)
 
     @cached_property
     def can_manage_categories(self) -> bool:
         return check_validity(
-            lambda: self.object.ensure_update_categories_permission(self.request.user)
+            lambda: self.listing.ensure_update_categories_permission(self.user)
         )
 
     @cached_property
-    def can_deprecate(self):
-        return (
-            self.can_manage_deprecation and self.object.package.is_deprecated is False
-        )
+    def can_deprecate(self) -> bool:
+        is_not_deprecated = self.listing.package.is_deprecated is False
+        return self.can_manage_deprecation and is_not_deprecated
 
     @cached_property
-    def can_undeprecate(self):
-        return self.can_manage_deprecation and self.object.package.is_deprecated is True
+    def can_undeprecate(self) -> bool:
+        is_deprecated = self.listing.package.is_deprecated is True
+        return self.can_manage_deprecation and is_deprecated
 
     @cached_property
-    def can_unlist(self):
-        return self.request.user.is_superuser
+    def can_unlist(self) -> bool:
+        return self.user.is_superuser
 
     @cached_property
     def can_moderate(self) -> bool:
-        return self.object.community.can_user_manage_packages(self.request.user)
+        return self.listing.community.can_user_manage_packages(self.user)
+
+    @cached_property
+    def can_view_package_admin_page(self) -> bool:
+        return can_view_package_admin(self.user, self.listing.package)
+
+    @cached_property
+    def can_view_listing_admin_page(self) -> bool:
+        return can_view_listing_admin(self.user, self.listing)
+
+    def get_permissions(self) -> dict:
+        return {
+            "can_manage": self.can_manage,
+            "can_manage_deprecation": self.can_manage_deprecation,
+            "can_manage_categories": self.can_manage_categories,
+            "can_deprecate": self.can_deprecate,
+            "can_undeprecate": self.can_undeprecate,
+            "can_unlist": self.can_unlist,
+            "can_moderate": self.can_moderate,
+            "can_view_package_admin_page": self.can_view_package_admin_page,
+            "can_view_listing_admin_page": self.can_view_listing_admin_page,
+        }
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class PackageDetailView(PackageListingDetailView):
+    tab_name = "details"
+
+    @cached_property
+    def permissions_checker(self):
+        return PermissionsChecker(self.object, self.request.user)
 
     def get_review_panel(self):
-        if not self.can_moderate:
+        if not self.permissions_checker.can_moderate:
             return None
         return {
             "reviewStatus": self.object.review_status,
@@ -83,25 +115,25 @@ class PackageDetailView(PackageListingDetailView):
             )
 
         context["dependants_string"] = dependants_string
-        context["show_management_panel"] = self.can_manage
-        context["show_listing_admin_link"] = can_view_listing_admin(
-            self.request.user, package_listing
-        )
-        context["show_package_admin_link"] = can_view_package_admin(
-            self.request.user, package_listing.package
-        )
-        context["show_review_status"] = self.can_manage
-        context["show_internal_notes"] = self.can_moderate
+        context["show_management_panel"] = self.permissions_checker.can_manage
+        context[
+            "show_listing_admin_link"
+        ] = self.permissions_checker.can_view_listing_admin_page
+        context[
+            "show_package_admin_link"
+        ] = self.permissions_checker.can_view_package_admin_page
+        context["show_review_status"] = self.permissions_checker.can_manage
+        context["show_internal_notes"] = self.permissions_checker.can_moderate
 
         def format_category(cat: PackageCategory):
             return {"name": cat.name, "slug": cat.slug}
 
         context["management_panel_props"] = {
             "isDeprecated": package_listing.package.is_deprecated,
-            "canDeprecate": self.can_deprecate,
-            "canUndeprecate": self.can_undeprecate,
-            "canUnlist": self.can_unlist,
-            "canUpdateCategories": self.can_manage_categories,
+            "canDeprecate": self.permissions_checker.can_deprecate,
+            "canUndeprecate": self.permissions_checker.can_undeprecate,
+            "canUnlist": self.permissions_checker.can_unlist,
+            "canUpdateCategories": self.permissions_checker.can_manage_categories,
             "csrfToken": csrf.get_token(self.request),
             "currentCategories": [
                 format_category(x) for x in package_listing.categories.all()
@@ -116,23 +148,23 @@ class PackageDetailView(PackageListingDetailView):
         return context
 
     def post_deprecate(self):
-        if not self.can_deprecate:
+        if not self.permissions_checker.can_deprecate:
             raise PermissionDenied()
         self.object.package.deprecate()
 
     def post_undeprecate(self):
-        if not self.can_undeprecate:
+        if not self.permissions_checker.can_undeprecate:
             raise PermissionDenied()
         self.object.package.undeprecate()
 
     def post_unlist(self):
-        if not self.can_unlist:
+        if not self.permissions_checker.can_unlist:
             raise PermissionDenied()
         self.object.package.deactivate()
 
     def post(self, request, **kwargs):
         self.object = self.get_object()
-        if not self.can_manage:
+        if not self.permissions_checker.can_manage:
             raise PermissionDenied()
         if "deprecate" in request.POST:
             self.post_deprecate()

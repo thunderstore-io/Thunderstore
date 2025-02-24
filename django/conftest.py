@@ -53,6 +53,7 @@ from thunderstore.repository.models import (
     Webhook,
 )
 from thunderstore.repository.models.namespace import Namespace
+from thunderstore.repository.views.package.detail import PermissionsChecker
 from thunderstore.schema_server.factories import SchemaChannelFactory
 from thunderstore.usermedia.tests.utils import create_and_upload_usermedia
 from thunderstore.webhooks.models.release import WebhookType
@@ -527,6 +528,11 @@ def async_package_submission(
 @pytest.fixture
 def package_installer() -> PackageInstaller:
     return PackageInstallerFactory()
+
+
+@pytest.fixture(scope="function")
+def permissions_checker(active_package_listing, user) -> PermissionsChecker:
+    return PermissionsChecker(active_package_listing, user)
 
 
 def create_test_service_account_user():

@@ -9,6 +9,7 @@ from .package_listing_list import (
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
 )
+from .package_permissions import PackagePermissionsAPIView
 from .package_rating import RatePackageAPIView
 from .package_version_list import PackageVersionListAPIView
 from .team import (
@@ -27,6 +28,7 @@ __all__ = [
     "PackageListingByCommunityListAPIView",
     "PackageListingByDependencyListAPIView",
     "PackageListingByNamespaceListAPIView",
+    "PackagePermissionsAPIView",
     "PackageVersionChangelogAPIView",
     "PackageVersionListAPIView",
     "PackageVersionReadmeAPIView",

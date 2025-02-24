@@ -7,6 +7,29 @@ from thunderstore.community.models import Community
 from thunderstore.repository.models import Namespace, Package, PackageVersion
 
 
+class PackageInfoSerializer(serializers.Serializer):
+    community_id = serializers.CharField()
+    namespace_id = serializers.CharField()
+    package_name = serializers.CharField()
+
+
+class PermissionsSerializer(serializers.Serializer):
+    can_manage = serializers.BooleanField()
+    can_manage_deprecation = serializers.BooleanField()
+    can_manage_categories = serializers.BooleanField()
+    can_deprecate = serializers.BooleanField()
+    can_undeprecate = serializers.BooleanField()
+    can_unlist = serializers.BooleanField()
+    can_moderate = serializers.BooleanField()
+    can_view_package_admin_page = serializers.BooleanField()
+    can_view_listing_admin_page = serializers.BooleanField()
+
+
+class PackagePermissionsSerializer(serializers.Serializer):
+    package = PackageInfoSerializer()
+    permissions = PermissionsSerializer()
+
+
 class CyberstormPackagePreviewSerializer(serializers.Serializer):
     """
     Data shown on "PackageCard" component on frontend.
