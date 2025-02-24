@@ -151,11 +151,13 @@ window.ts.PackageManagementPanel(
 </div>
 
 <div class="row my-2">
+    {% if object.has_mod_manager_support %}
     <div class="col-12 col-sm-6 px-3 pl-sm-3 pr-sm-1">
         <a href="{{ object.package.latest.install_url }}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-rocket mr-2" aria-hidden="true"></i>Install with Mod Manager
         </a>
     </div>
+    {% endif %}
     <div class="col-12 col-sm-6 px-3 pr-sm-3 pl-sm-1 mt-1 mt-sm-0">
         <a href="{{ object.package.latest.full_download_url }}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-download mr-2" aria-hidden="true"></i>Manual Download

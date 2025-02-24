@@ -416,3 +416,11 @@ def test_package_listing_filter_with_multiple_community_packages() -> None:
         count = community.package_listings.filter_with_single_community().count()
         assert count == 1
         assert community.aggregated.package_count == count
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("mod_manager_support", (False, True))
+def test_package_listing_has_mod_manager_support(mod_manager_support: bool) -> None:
+    community = CommunityFactory(has_mod_manager_support=mod_manager_support)
+    package_listing = PackageListingFactory(community_=community)
+    assert package_listing.has_mod_manager_support == mod_manager_support
