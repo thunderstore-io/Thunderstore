@@ -9,6 +9,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
+    PackagePermissionsAPIView,
     PackageVersionChangelogAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
@@ -89,6 +90,11 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/deprecate/",
         DeprecatePackageAPIView.as_view(),
         name="cyberstorm.package.deprecate",
+    ),
+    path(
+        "package/<str:community_id>/<str:namespace_id>/<str:package_name>/permissions/",
+        PackagePermissionsAPIView.as_view(),
+        name="cyberstorm.package.permissions",
     ),
     path(
         "team/<str:team_id>/",
