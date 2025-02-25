@@ -5,6 +5,13 @@
 
 interface FileEntry {}
 
+export var useWebWorkers: boolean;
+export var workerScriptsPath: string;
+export var workerScripts: {
+    deflater?: string[] | undefined;
+    inflater?: string[] | undefined;
+};
+
 export class Reader {
     public size: number;
     public init(callback: () => void, onerror: (error: any) => void): void;
