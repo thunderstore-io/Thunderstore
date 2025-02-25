@@ -257,3 +257,22 @@ class PackageReference:
         :rtype: bool
         """
         return self.queryset.exists()
+
+    @cached_property
+    def exists_in_any_case(self) -> bool:
+        """
+        Check if a package with a name with different capitalization exists in the db
+
+        :return: True if a different case package exists, False otherwise
+        :rtype: bool
+        """
+        if self.version:
+            return Package.objects.filter(
+                package__owner__name=self.namespace,
+                package__name__iexact=self.name,
+                version_number=self.version_str,
+            ).exists()
+        else:
+            return Package.objects.filter(
+                owner__name=self.namespace, name__iexact=self.name
+            ).exists()
