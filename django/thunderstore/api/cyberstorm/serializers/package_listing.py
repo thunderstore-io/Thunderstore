@@ -11,6 +11,10 @@ class PackageCategorySerializer(serializers.Serializer):
     slug = serializers.SlugField()
 
 
+class PackageListingCategoriesSerializer(serializers.Serializer):
+    categories = PackageCategorySerializer(many=True)
+
+
 class PackageListingUpdateSerializer(serializers.Serializer):
     categories = serializers.ListField(
         child=CommunityFilteredModelChoiceField(
@@ -19,14 +23,6 @@ class PackageListingUpdateSerializer(serializers.Serializer):
         allow_empty=True,
     )
 
-    def to_representation(self, instance):
-        categories_data = [
-            PackageCategorySerializer(instance=category).data
-            for category in instance.categories.all()
-        ]
-
-        return {"categories": categories_data}
-
 
 class PackageListingRejectSerializer(serializers.Serializer):
     rejection_reason = serializers.CharField()
@@ -34,14 +30,8 @@ class PackageListingRejectSerializer(serializers.Serializer):
         allow_blank=True, allow_null=True, required=False
     )
 
-    def to_representation(self, instance):
-        return {}  # Empty response
-
 
 class PackageListingApproveSerializer(serializers.Serializer):
     internal_notes = serializers.CharField(
         allow_blank=True, allow_null=True, required=False
     )
-
-    def to_representation(self, instance):
-        return {}  # Empty response

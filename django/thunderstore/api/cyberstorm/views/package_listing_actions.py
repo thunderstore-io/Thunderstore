@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from thunderstore.api.cyberstorm.serializers.package_listing import (
     PackageListingApproveSerializer,
+    PackageListingCategoriesSerializer,
     PackageListingRejectSerializer,
     PackageListingUpdateSerializer,
 )
@@ -33,11 +34,6 @@ class BasePackageListingActionView(GenericAPIView):
             community=listing.community,
         )
 
-    def validate_serializer_and_get_params(self, data: dict) -> dict:
-        serializer = self.serializer_class(data=data)
-        serializer.is_valid(raise_exception=True)
-        return serializer.validated_data
-
 
 class UpdatePackageListingCategoriesAPIView(BasePackageListingActionView):
     queryset = PackageListing.objects.active().select_related(
@@ -47,25 +43,8 @@ class UpdatePackageListingCategoriesAPIView(BasePackageListingActionView):
     serializer_class = PackageListingUpdateSerializer
 
     def _update_categories(self, listing: PackageListing, categories: list) -> None:
-        listing.update_categories(
-            agent=self.request.user,
-            categories=categories,
-        )
+        listing.update_categories(agent=self.request.user, categories=categories)
         self.clear_package_listing_cache_with_args(listing)
-
-    def get_object(self) -> PackageListing:
-        listing = super().get_object()
-        if not listing.check_update_categories_permission(self.request.user):
-            raise PermissionDenied()
-        return listing
-
-    def validate_data(
-        self, data: dict, listing: PackageListing
-    ) -> PackageListingUpdateSerializer:
-        ctx = {"community": listing.community}
-        serializer = self.serializer_class(data=data, context=ctx)
-        serializer.is_valid(raise_exception=True)
-        return serializer
 
     @swagger_auto_schema(
         operation_id="cyberstorm.package_listing.update",
@@ -74,14 +53,19 @@ class UpdatePackageListingCategoriesAPIView(BasePackageListingActionView):
         tags=["cyberstorm"],
     )
     def post(self, request, *args, **kwargs) -> Response:
-        listing: PackageListing = self.get_object()
-        serializer = self.validate_data(request.data, listing)
-        categories = serializer.validated_data["categories"]
+        listing = self.get_object()
+        if not listing.check_update_categories_permission(self.request.user):
+            raise PermissionDenied()
 
+        ctx = {"community": listing.community}
+        serializer = self.serializer_class(data=request.data, context=ctx)
+        serializer.is_valid(raise_exception=True)
+
+        categories = serializer.validated_data["categories"]
         self._update_categories(listing, categories)
 
-        serializer = self.serializer_class(instance=listing)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response_serializer = PackageListingCategoriesSerializer(instance=listing)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 
 class RejectPackageListingAPIView(BasePackageListingActionView):
@@ -91,10 +75,8 @@ class RejectPackageListingAPIView(BasePackageListingActionView):
     def _reject(self, listing: PackageListing, params: dict) -> None:
         reason = params["rejection_reason"]
         notes = params.get("internal_notes")
-
-        listing.reject(
-            agent=self.request.user, rejection_reason=reason, internal_notes=notes
-        )
+        user = self.request.user
+        listing.reject(agent=user, rejection_reason=reason, internal_notes=notes)
         listing.clear_review_request()
         self.clear_package_listing_cache_with_args(listing)
 
@@ -105,11 +87,12 @@ class RejectPackageListingAPIView(BasePackageListingActionView):
         tags=["cyberstorm"],
     )
     def post(self, request, *args, **kwargs) -> Response:
-        listing: PackageListing = self.get_object()
-        params = self.validate_serializer_and_get_params(request.data)
+        listing = self.get_object()
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         try:
-            self._reject(listing, params)
+            self._reject(listing, serializer.validated_data)
             return Response({"message": "Success"}, status=200)
         except PermissionError:
             raise PermissionDenied()
@@ -132,11 +115,12 @@ class ApprovePackageListingAPIView(BasePackageListingActionView):
         tags=["cyberstorm"],
     )
     def post(self, request, *args, **kwargs) -> Response:
-        listing: PackageListing = self.get_object()
-        params = self.validate_serializer_and_get_params(request.data)
+        listing = self.get_object()
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         try:
-            self._approve(listing, params)
+            self._approve(listing, serializer.validated_data)
             return Response({"message": "Success"}, status=200)
         except PermissionError:
             raise PermissionDenied()
