@@ -15,6 +15,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionReadmeAPIView,
     RatePackageAPIView,
     TeamAPIView,
+    TeamCreateAPIView,
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
     TeamServiceAccountListAPIView,
@@ -85,6 +86,11 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/rate/",
         RatePackageAPIView.as_view(),
         name="cyberstorm.package.rate",
+    ),
+    path(
+        "team/new/",
+        TeamCreateAPIView.as_view(),
+        name="cyberstorm.team.create",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/deprecate/",
