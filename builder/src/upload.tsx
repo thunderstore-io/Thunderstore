@@ -269,11 +269,12 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
 
         promise.then((result) => {
             const next = current.concat(result.results);
-            next.sort((a, b) =>
-                a.identifier == props.currentCommunity.identifier
-                    ? -1
-                    : a.name.localeCompare(b.name)
-            );
+            next.sort((a, b) => {
+                if (a.identifier == props.currentCommunity.identifier)
+                    return -1;
+                if (b.identifier == props.currentCommunity.identifier) return 1;
+                return a.name.localeCompare(b.name);
+            });
             setCommunities(next);
             if (result.pagination.next_link) {
                 enumerateCommunities(next, result.pagination.next_link);
