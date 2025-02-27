@@ -638,6 +638,42 @@ def test_listing_by_community_view__does_not_return_rejected_packages(
 
 
 @pytest.mark.django_db
+def test_listing_by_community__does_not_return_rejected_multi_community_packages(
+    api_client: APIClient,
+    active_package,
+) -> None:
+    """
+    Ensure that a package listed in multiple communities, but rejected in one of them,
+    does not appear in the listing of the community where it has been rejected.
+    """
+
+    community1 = CommunityFactory()
+    community2 = CommunityFactory()
+
+    PackageListingFactory(
+        community_=community1,
+        package_=active_package,
+        review_status=PackageListingReviewStatus.approved,
+    )
+
+    PackageListingFactory(
+        community_=community2,
+        package_=active_package,
+        review_status=PackageListingReviewStatus.rejected,
+    )
+
+    # Should return one package since it is approved in community1
+    url = f"/api/cyberstorm/listing/{community1.identifier}/"
+    response = api_client.get(url)
+    assert response.json()["count"] == 1
+
+    # Should return zero packages since it is rejected in community2
+    url = f"/api/cyberstorm/listing/{community2.identifier}/"
+    response = api_client.get(url)
+    assert response.json()["count"] == 0
+
+
+@pytest.mark.django_db
 def test_listing_by_community_view__when_community_requires_review__returns_only_approved_packages(
     api_client: APIClient,
 ) -> None:
