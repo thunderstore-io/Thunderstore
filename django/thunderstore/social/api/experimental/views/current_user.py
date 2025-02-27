@@ -202,6 +202,7 @@ def get_teams(user: UserType) -> List[UserTeam]:
         )
         .exclude(team__is_active=False)
         .exclude(~Q(user=user))
+        .order_by("id")
     )
 
     return [
