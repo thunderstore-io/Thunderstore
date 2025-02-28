@@ -54,3 +54,4 @@ class CyberstormPackagePreviewSerializer(serializers.Serializer):
     )
     rating_count = serializers.IntegerField(min_value=0)
     size = serializers.IntegerField(min_value=0)
+    datetime_created = serializers.DateTimeField()
