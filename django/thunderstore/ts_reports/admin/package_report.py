@@ -84,7 +84,7 @@ class PackageReportAdmin(admin.ModelAdmin):
     link_package.short_description = "Package"
 
     def link_listing(self, obj):
-        if obj.package_version:
+        if obj.package_listing:
             return mark_safe(
                 f'<a href="{obj.package_listing.get_admin_url()}">{escape(str(obj.package_listing.community.name))}</a>'
             )
