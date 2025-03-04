@@ -3,7 +3,7 @@ from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
 from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
 from .package_deprecate import DeprecatePackageAPIView
-from .package_listing import PackageListingAPIView, ReportListingAPIView
+from .package_listing import PackageListingAPIView
 from .package_listing_list import (
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -25,7 +25,6 @@ __all__ = [
     "CommunityListAPIView",
     "DeprecatePackageAPIView",
     "PackageListingAPIView",
-    "ReportListingAPIView",
     "PackageListingByCommunityListAPIView",
     "PackageListingByDependencyListAPIView",
     "PackageListingByNamespaceListAPIView",
