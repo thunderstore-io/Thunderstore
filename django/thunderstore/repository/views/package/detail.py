@@ -89,6 +89,10 @@ class PackageDetailView(PackageListingDetailView):
     def permissions_checker(self):
         return PermissionsChecker(self.object, self.request.user)
 
+    @cached_property
+    def csrf_token(self) -> str:
+        return csrf.get_token(self.request)
+
     def get_review_panel(self):
         if not self.permissions_checker.can_moderate:
             return None
@@ -149,15 +153,13 @@ class PackageDetailView(PackageListingDetailView):
         def format_category(cat: PackageCategory):
             return {"name": cat.name, "slug": cat.slug}
 
-        csrf_token = csrf.get_token(self.request)
-
         context["management_panel_props"] = {
             "isDeprecated": package_listing.package.is_deprecated,
-            "canDeprecate": self.permissions_checker.can_deprecate,
-            "canUndeprecate": self.permissions_checker.can_undeprecate,
-            "canUnlist": self.permissions_checker.can_unlist,
-            "canUpdateCategories": self.permissions_checker.can_manage_categories,
-            "csrfToken": csrf_token,
+            "canDeprecate": self.can_deprecate,
+            "canUndeprecate": self.can_undeprecate,
+            "canUnlist": self.can_unlist,
+            "canUpdateCategories": self.can_manage_categories,
+            "csrfToken": self.csrf_token,
             "currentCategories": [
                 format_category(x) for x in package_listing.categories.all()
             ],
