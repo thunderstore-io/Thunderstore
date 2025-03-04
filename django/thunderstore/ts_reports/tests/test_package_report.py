@@ -70,7 +70,10 @@ def test_api_package_listing_report_denied(
     )
 
     assert response.status_code == 400
-    assert response.data["package_version_id"][0] == "Object not found"
+    assert (
+        response.data["package_version_id"][0]
+        == 'Invalid pk "-1" - object does not exist.'
+    )
 
     response = api_client.post(
         f"/api/experimental/package-listing/{-1}/report/",
@@ -109,7 +112,7 @@ def test_package_listing_report_serializer():
     assert serializer.is_valid() is True
 
     serialized = serializer.data
-    assert serialized["package_version_id"] == str(version.pk)
+    assert serialized["package_version_id"] == version.pk
     assert serialized["reason"] == "Spam"
     assert serialized["description"] == "This is spam."
 
