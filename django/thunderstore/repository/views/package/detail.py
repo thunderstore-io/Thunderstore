@@ -155,10 +155,10 @@ class PackageDetailView(PackageListingDetailView):
 
         context["management_panel_props"] = {
             "isDeprecated": package_listing.package.is_deprecated,
-            "canDeprecate": self.can_deprecate,
-            "canUndeprecate": self.can_undeprecate,
-            "canUnlist": self.can_unlist,
-            "canUpdateCategories": self.can_manage_categories,
+            "canDeprecate": self.permissions_checker.can_deprecate,
+            "canUndeprecate": self.permissions_checker.can_undeprecate,
+            "canUnlist": self.permissions_checker.can_unlist,
+            "canUpdateCategories": self.permissions_checker.can_manage_categories,
             "csrfToken": self.csrf_token,
             "currentCategories": [
                 format_category(x) for x in package_listing.categories.all()
