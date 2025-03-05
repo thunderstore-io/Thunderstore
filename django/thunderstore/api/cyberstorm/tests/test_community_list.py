@@ -164,3 +164,39 @@ def __query_api(client: APIClient, query: str = "", response_status_code=200) ->
     response = client.get(f"{url}?{query}")
     assert response.status_code == response_status_code
     return response.json()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "query, search_keywords, name, should_match",
+    [
+        ("repo", ["repo"], "R.E.P.O", True),
+        ("repo", None, "R.E.P.O", False),
+        ("ror2", ["ror2"], "Risk of Rain 2", True),
+        ("ror2", None, "Risk of Rain 2", False),
+        ("ror", ["ror"], "Risk of Rain 2", True),
+        ("ror", None, "Risk of Rain 2", False),
+        ("lethal", ["lethal", "lc", "lethalcompany"], "Lethal Company", True),
+        ("lc", ["lethal", "lc", "lethalcompany"], "Lethal Company", True),
+        ("lethalcompany", ["lethal", "lc", "lethalcompany"], "Lethal Company", True),
+        ("hello", ["lethal", "lc", "lethalcompany"], "Lethal Company", False),
+        ("LETHAL", ["lethal", "lc"], "Lethal Company", True),
+        ("Lc", ["lethal", "LC"], "Lethal Company", True),
+    ],
+)
+def test_api_cyberstorm_community_search_with_keywords(
+    api_client: APIClient,
+    query: str,
+    search_keywords: List[str],
+    name: str,
+    should_match: bool,
+) -> None:
+    CommunityFactory(name=name, search_keywords=search_keywords)
+    data = __query_api(api_client, query=f"search={query}")
+
+    if should_match:
+        assert data["count"] == 1
+        assert data["results"][0]["name"] == name
+    else:
+        assert data["count"] == 0
+        assert data["results"] == []
