@@ -33,6 +33,39 @@ mock_base_package_list_api_view = patch.multiple(
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
+def test_base_view__return_data_structure() -> None:
+    pl = PackageListingFactory()
+    request = APIRequestFactory().get("/")
+    response = BasePackageListAPIView().dispatch(
+        request,
+        community_id=pl.community.identifier,
+    )
+
+    expected_results_keys = [
+        "categories",
+        "community_identifier",
+        "description",
+        "download_count",
+        "icon_url",
+        "is_deprecated",
+        "is_nsfw",
+        "is_pinned",
+        "last_updated",
+        "name",
+        "namespace",
+        "rating_count",
+        "size",
+        "datetime_created",
+    ]
+
+    assert response.status_code == 200
+
+    response_results = response.data["results"][0]
+    assert expected_results_keys == list(response_results.keys())
+
+
+@mock_base_package_list_api_view
+@pytest.mark.django_db
 def test_base_view__by_default__filters_out_inactive_packages() -> None:
     pl = PackageListingFactory(package_kwargs={"is_active": False})
 

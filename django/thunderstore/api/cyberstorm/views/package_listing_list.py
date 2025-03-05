@@ -238,6 +238,7 @@ class BasePackageListAPIView(ListAPIView):
                     "name": p.name,
                     "rating_count": p.rating_count,
                     "size": p.latest.file_size,
+                    "datetime_created": listing.datetime_created,
                 },
             )
 
