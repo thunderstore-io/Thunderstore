@@ -13,7 +13,11 @@ from thunderstore.repository.serializer_fields import (
     PackageVersionField,
     StrictCharField,
 )
-from thunderstore.repository.utils import does_contain_package, has_duplicate_packages
+from thunderstore.repository.utils import (
+    does_contain_package,
+    has_duplicate_packages,
+    package_exists_in_any_case,
+)
 
 
 class PackageInstallerSerializer(serializers.Serializer):
@@ -97,8 +101,8 @@ class ManifestV1Serializer(serializers.Serializer):
         if does_contain_package(result["dependencies"], reference):
             raise ValidationError("Package depending on itself is not allowed")
         if not reference.without_version.exists:  # if we're making a new package
-            if (
-                reference.without_version.exists_in_any_case
+            if package_exists_in_any_case(
+                reference.namespace, reference.name
             ):  # if it exists in a different case
                 raise ValidationError(
                     "Package name already exists with different capitalization"
