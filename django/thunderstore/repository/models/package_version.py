@@ -6,18 +6,28 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Manager, Q, QuerySet, Sum, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
 from thunderstore.core.mixins import AdminLinkMixin
+from thunderstore.core.types import UserType
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
-from thunderstore.repository.consts import PACKAGE_NAME_REGEX
+from thunderstore.repository.consts import (
+    PACKAGE_NAME_REGEX,
+    PackageVersionReviewStatus,
+)
 from thunderstore.repository.models import Package
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.utils.decorators import run_after_commit
+from thunderstore.webhooks.audit import (
+    AuditAction,
+    AuditEvent,
+    AuditEventField,
+    fire_audit_event,
+)
 from thunderstore.webhooks.models.release import Webhook
 
 if TYPE_CHECKING:
@@ -126,6 +136,12 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     )
     readme = models.TextField()
     changelog = models.TextField(blank=True, null=True)
+
+    # TODO: Default should be pending once all versions require automated scanning before appearing to users
+    review_status = models.TextField(
+        default=PackageVersionReviewStatus.skipped,
+        choices=PackageVersionReviewStatus.as_choices(),
+    )
 
     # <packagename>.zip
     file = models.FileField(
@@ -309,6 +325,138 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             return
 
         log_version_download.delay(version_id, timezone.now().isoformat())
+
+    def build_audit_event(
+        self,
+        *,
+        action: AuditAction,
+        user_id: Optional[int],
+        message: Optional[str] = None,
+    ) -> AuditEvent:
+        return AuditEvent(
+            timestamp=timezone.now(),
+            user_id=user_id,
+            action=action,
+            message=message,
+            related_url=self.package.get_view_on_site_url(),
+            fields=[
+                AuditEventField(
+                    name="Package",
+                    value=self.package.full_package_name,
+                ),
+            ],
+        )
+
+    @transaction.atomic
+    def reject(
+        self,
+        agent: Optional[UserType],
+        is_system: bool = False,
+        message: Optional[str] = None,
+    ):
+        if self.review_status == PackageVersionReviewStatus.immune:
+            raise PermissionError()
+
+        if is_system or self.can_user_manage_approval_status(agent):
+            self.review_status = PackageVersionReviewStatus.rejected
+            self.save(update_fields=("review_status",))
+
+            fire_audit_event(
+                self.build_audit_event(
+                    action=AuditAction.VERSION_REJECTED,
+                    user_id=agent.pk if agent else None,
+                    message=message,
+                )
+            )
+        else:
+            raise PermissionError()
+
+    @transaction.atomic
+    def approve(
+        self,
+        agent: Optional[UserType],
+        is_system: bool = False,
+        message: Optional[str] = None,
+    ):
+        if self.review_status == PackageVersionReviewStatus.immune:
+            raise PermissionError()
+
+        if is_system or self.can_user_manage_approval_status(agent):
+            self.review_status = PackageVersionReviewStatus.approved
+            self.save(update_fields=("review_status",))
+
+            fire_audit_event(
+                self.build_audit_event(
+                    action=AuditAction.VERSION_APPROVED,
+                    user_id=agent.pk if agent else None,
+                    message=message,
+                )
+            )
+        else:
+            raise PermissionError()
+
+    def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
+        if self.review_status == PackageVersionReviewStatus.immune:
+            return False
+
+        for listing in self.package.community_listings.all():
+            if listing.can_user_manage_approval_status(user):
+                return True
+        return False
+
+    def is_visible_to_user(self, user: UserType) -> bool:
+        if not self.visibility:
+            return False
+
+        if self.visibility.public_detail:
+            return True
+
+        if user is None:
+            return False
+
+        if self.visibility.owner_detail:
+            if self.package.owner.can_user_access(user):
+                return True
+
+        if self.visibility.moderator_detail:
+            for listing in self.package.community_listings.all():
+                if listing.community.can_user_manage_packages(user):
+                    return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False
+
+    @transaction.atomic
+    def update_visibility(self):
+        self.visibility.public_detail = True
+        self.visibility.public_list = True
+        self.visibility.owner_detail = True
+        self.visibility.owner_list = True
+        self.visibility.moderator_detail = True
+        self.visibility.moderator_list = True
+
+        if not self.is_active or not self.package.is_active:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+            self.visibility.owner_detail = False
+            self.visibility.owner_list = False
+            self.visibility.moderator_detail = False
+            self.visibility.moderator_list = False
+
+        if (
+            self.review_status == PackageVersionReviewStatus.rejected
+            or self.review_status == PackageVersionReviewStatus.pending
+        ):
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+        self.visibility.save()
+        for listing in self.package.community_listings.all():
+            listing.update_visibility()
+        self.package.recache_latest()
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
