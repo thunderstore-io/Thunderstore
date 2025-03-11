@@ -1,9 +1,9 @@
 import pytest
-from rest_framework.test import APIClient
-from thunderstore.core.types import UserType
 from django.contrib.auth import get_user_model
-from thunderstore.core.factories import UserFactory
+from rest_framework.test import APIClient
 
+from thunderstore.core.factories import UserFactory
+from thunderstore.core.types import UserType
 
 User = get_user_model()
 
