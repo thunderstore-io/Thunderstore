@@ -86,7 +86,7 @@ def test_disconnect_user_non_existent_linked_account(
     )
     response = api_client.delete(url, content_type="application/json")
     assert response.status_code == 404
-    assert response.data["detail"] == "Not found."
+    assert response.json() == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
@@ -95,7 +95,7 @@ def test_disconnect_user_with_no_social_auth(user: UserType, api_client: APIClie
     url = get_disconnect_user_linked_account_url(user.username, "non-existent")
     response = api_client.delete(url, content_type="application/json")
     assert response.status_code == 404
-    assert response.data["detail"] == "Not found."
+    assert response.json() == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
@@ -107,7 +107,7 @@ def test_disconnect_user_linked_account_fail_permission_denied(
     url = get_disconnect_user_linked_account_url(another_user.username, "discord")
     response = api_client.delete(url, content_type="application/json")
     assert response.status_code == 403
-    assert response.data["detail"] == "Cannot disconnect another user's account."
+    assert response.json() == {"detail": "Cannot disconnect another user's account."}
 
 
 @pytest.mark.django_db
@@ -120,6 +120,5 @@ def test_disconnect_user_linked_account_fail_last_linked_account(
         user_with_social_auths.username, "github"
     )
     response = api_client.delete(url, content_type="application/json")
-    expected_response = {"detail": "Cannot disconnect last linked auth method."}
     assert response.status_code == 403
-    assert response.json() == expected_response
+    assert response.json() == {"detail": "Cannot disconnect last linked auth method."}

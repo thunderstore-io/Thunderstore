@@ -22,7 +22,7 @@ User = get_user_model()
 )
 class DeleteUserAPIView(DestroyAPIView):
     queryset = User.objects.filter(is_active=True)
-    lookup_field = "username__iexact"
+    lookup_field = "username"
     lookup_url_kwarg = "username"
     permission_classes = [IsAuthenticated]
 
@@ -44,13 +44,22 @@ class DisconnectUserLinkedAccountAPIView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserSocialAuth.objects.all()
 
+    def is_last_linked_auth_method(self, target_user, provider):
+        total_count = target_user.social_auth.count()
+        if total_count == 1:
+            return target_user.social_auth.filter(provider=provider).exists()
+        return False
+
     def check_permissions(self, request):
         super().check_permissions(request)
+
         username = self.kwargs["username"]
-        target_user = get_object_or_404(User, username__iexact=username)
+        provider = self.kwargs["provider"]
+        target_user = get_object_or_404(User, username=username)
+
         if request.user != target_user:
             raise PermissionDenied("Cannot disconnect another user's account.")
-        if target_user.social_auth.count() == 1:
+        if self.is_last_linked_auth_method(target_user, provider):
             raise PermissionDenied("Cannot disconnect last linked auth method.")
 
     def get_object(self):
@@ -58,8 +67,8 @@ class DisconnectUserLinkedAccountAPIView(DestroyAPIView):
         username = self.kwargs["username"]
         obj = get_object_or_404(
             self.get_queryset(),
-            user__username__iexact=username,
-            provider__iexact=provider,
+            user__username=username,
+            provider=provider,
         )
         self.check_object_permissions(self.request, obj)
         return obj
