@@ -1,7 +1,8 @@
 from django.db.models import Q, QuerySet
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import (
+    CreateAPIView,
     DestroyAPIView,
     ListAPIView,
     RetrieveAPIView,
@@ -14,7 +15,10 @@ from rest_framework.views import APIView
 
 from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
+    CyberstormCreateTeamSerializer,
     CyberstormServiceAccountSerializer,
+    CyberstormTeamAddMemberRequestSerializer,
+    CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
 )
@@ -24,6 +28,7 @@ from thunderstore.api.utils import (
     conditional_swagger_auto_schema,
 )
 from thunderstore.repository.forms import AddTeamMemberForm
+from thunderstore.repository.models import TeamMemberRole
 from thunderstore.repository.models.team import Team, TeamMember
 
 
@@ -53,6 +58,31 @@ class TeamRestrictedAPIView(TeamPermissionsMixin, ListAPIView):
     pass
 
 
+class TeamCreateAPIView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = Team.objects.exclude(is_active=False)
+    serializer_class = CyberstormCreateTeamSerializer
+
+    def _create_team(self, name: str) -> Team:
+        team = Team.objects.create(name=name)
+        team.add_member(user=self.request.user, role=TeamMemberRole.owner)
+        return team
+
+    def perform_create(self, serializer) -> None:
+        team_name = serializer.validated_data["name"]
+        instance = self._create_team(team_name)
+        serializer.instance = instance
+
+    @conditional_swagger_auto_schema(
+        request_body=serializer_class,
+        responses={201: serializer_class},
+        operation_id="cyberstorm.team.create",
+        tags=["cyberstorm"],
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+
 class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
     serializer_class = CyberstormTeamMemberSerializer
     filter_backends = [StrictOrderingFilter]
@@ -66,31 +96,18 @@ class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
         )
 
 
-class CyberstormTeamAddMemberRequestSerialiazer(serializers.Serializer):
-    username = serializers.CharField()
-    role = serializers.ChoiceField(
-        choices=AddTeamMemberForm.base_fields["role"].choices
-    )
-
-
-class CyberstormTeamAddMemberResponseSerialiazer(serializers.Serializer):
-    username = serializers.CharField(source="user")
-    role = serializers.CharField()
-    team = serializers.CharField()
-
-
 class TeamMemberAddAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @conditional_swagger_auto_schema(
-        request_body=CyberstormTeamAddMemberRequestSerialiazer,
-        responses={200: CyberstormTeamAddMemberResponseSerialiazer},
+        request_body=CyberstormTeamAddMemberRequestSerializer,
+        responses={200: CyberstormTeamAddMemberResponseSerializer},
         operation_id="cyberstorm.team.member.add",
         tags=["cyberstorm"],
     )
     def post(self, request, team_name, format=None):
         team = get_object_or_404(Team, name__iexact=team_name)
-        serializer = CyberstormTeamAddMemberRequestSerialiazer(data=request.data)
+        serializer = CyberstormTeamAddMemberRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         form = AddTeamMemberForm(
@@ -104,9 +121,7 @@ class TeamMemberAddAPIView(APIView):
 
         if form.is_valid():
             team_member = form.save()
-            return Response(
-                CyberstormTeamAddMemberResponseSerialiazer(team_member).data
-            )
+            return Response(CyberstormTeamAddMemberResponseSerializer(team_member).data)
         else:
             raise ValidationError(form.errors)
 
