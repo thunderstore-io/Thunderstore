@@ -109,6 +109,9 @@ class Package(AdminLinkMixin, models.Model):
 
     def save(self, *args, **kwargs):
         self.validate()
+        if self.pk is not None:  # Check if the instance already exists
+            for version in self.versions.all():
+                version.update_visibility()
         return super().save(*args, **kwargs)
 
     def get_or_create_package_listing(self, community):
