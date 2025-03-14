@@ -5,6 +5,7 @@ from thunderstore.api.cyberstorm.views import (
     CommunityFiltersAPIView,
     CommunityListAPIView,
     DeprecatePackageAPIView,
+    DisbandTeamAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -100,6 +101,11 @@ cyberstorm_urls = [
         "team/<str:team_id>/",
         TeamAPIView.as_view(),
         name="cyberstorm.team",
+    ),
+    path(
+        "team/<str:team_name>/disband/",
+        DisbandTeamAPIView.as_view(),
+        name="cyberstorm.team.disband",
     ),
     path(
         "team/<str:team_id>/member/",
