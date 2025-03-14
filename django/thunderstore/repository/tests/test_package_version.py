@@ -5,6 +5,7 @@ from django.db import IntegrityError
 
 from thunderstore.community.factories import PackageListingFactory
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.package_formats import PackageFormats
@@ -150,3 +151,71 @@ def test_package_version_is_removed(
     version = PackageVersionFactory(package=package, is_active=version_is_active)
 
     assert version.is_removed == expected_is_removed
+
+
+# TODO: visibility tests will need to be rewritten once the default visibility is no longer public
+
+
+def assert_version_is_public(version: PackageVersion) -> None:
+    assert version.visibility.public_list is True
+    assert version.visibility.public_detail is True
+    assert version.visibility.owner_list is True
+    assert version.visibility.owner_detail is True
+    assert version.visibility.moderator_list is True
+    assert version.visibility.moderator_detail is True
+
+
+def assert_version_is_not_public(version: PackageVersion) -> None:
+    assert version.visibility.public_list is False
+    assert version.visibility.public_detail is False
+    assert version.visibility.owner_list is True
+    assert version.visibility.owner_detail is True
+    assert version.visibility.moderator_list is True
+    assert version.visibility.moderator_detail is True
+
+
+def assert_version_is_not_visible(version: PackageVersion) -> None:
+    assert version.visibility.public_list is False
+    assert version.visibility.public_detail is False
+    assert version.visibility.owner_list is False
+    assert version.visibility.owner_detail is False
+    assert version.visibility.moderator_list is False
+    assert version.visibility.moderator_detail is False
+
+
+@pytest.mark.django_db
+def test_package_version_visibility_updates_with_review_status(
+    package_version: PackageVersion,
+) -> None:
+    assert_version_is_public(package_version)
+
+    package_version.review_status = PackageVersionReviewStatus.rejected
+    package_version.save()
+
+    assert_version_is_not_public(package_version)
+
+    package_version.review_status = PackageVersionReviewStatus.approved
+    package_version.save()
+
+    assert_version_is_public(package_version)
+
+
+@pytest.mark.django_db
+def test_package_listing_visibility_updates_with_package_is_active(
+    package_version: PackageVersion,
+) -> None:
+    assert_version_is_public(package_version)
+
+    package = package_version.package
+
+    package.is_active = False
+    package.save()
+
+    package_version.refresh_from_db()
+    assert_version_is_not_visible(package_version)
+
+    package.is_active = True
+    package.save()
+
+    package_version.refresh_from_db()
+    assert_version_is_public(package_version)
