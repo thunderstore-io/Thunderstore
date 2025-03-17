@@ -158,11 +158,13 @@ window.ts.PackageManagementPanel(
         </a>
     </div>
     {% endif %}
-    <div class="col-12 col-sm-6 px-3 pr-sm-3 pl-sm-1 mt-1 mt-sm-0">
+
+    <div class="{% if object.has_mod_manager_support %} col-12 col-sm-6 px-3 pr-sm-3 pl-sm-1 mt-1 mt-sm-0 {% else %}col-12{% endif %}">
         <a href="{{ object.package.latest.full_download_url }}" type="button" class="btn btn-primary w-100 text-large">
             <i class="fa fa-download mr-2" aria-hidden="true"></i>Manual Download
         </a>
     </div>
+
     {% if object.package.owner.donation_link %}
     <div class="col-12 mt-2">
         <a href="{{ object.package.owner.donation_link }}" target="_blank" rel="noopener" type="button" class="btn btn-info w-100 text-large">
