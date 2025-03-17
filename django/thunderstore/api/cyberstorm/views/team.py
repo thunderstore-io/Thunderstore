@@ -6,6 +6,7 @@ from rest_framework.generics import (
     DestroyAPIView,
     ListAPIView,
     RetrieveAPIView,
+    UpdateAPIView,
     get_object_or_404,
 )
 from rest_framework.permissions import IsAuthenticated
@@ -20,6 +21,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamAddMemberRequestSerializer,
     CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
+    CyberstormTeamMemberUpdateSerializer,
     CyberstormTeamSerializer,
 )
 from thunderstore.api.ordering import StrictOrderingFilter
@@ -155,3 +157,41 @@ class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
+
+
+class UpdateTeamMemberAPIView(TeamPermissionsMixin, UpdateAPIView):
+    queryset = TeamMember.objects.real_users()
+    serializer_class = CyberstormTeamMemberUpdateSerializer
+    http_method_names = ["patch"]
+
+    def get_object(self):
+        team_name = self.kwargs.get("team_name")
+        team_member = self.kwargs.get("team_member")
+        return get_object_or_404(
+            self.queryset,
+            team__name=team_name,
+            user__username=team_member,
+        )
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        team_member = self.get_object()
+        new_role = self.request.data.get("role")
+
+        team_member.team.ensure_member_role_can_be_changed(team_member, new_role)
+        if not team_member.team.can_user_manage_members(request.user):
+            raise PermissionDenied("You do not have permission to edit team members.")
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        instance.role = serializer.validated_data["role"]
+        instance.save()
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.member.update",
+        tags=["cyberstorm"],
+        responses={status.HTTP_200_OK: serializer_class},
+    )
+    def update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)
