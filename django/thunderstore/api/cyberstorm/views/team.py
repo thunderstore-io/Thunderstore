@@ -6,6 +6,7 @@ from rest_framework.generics import (
     DestroyAPIView,
     ListAPIView,
     RetrieveAPIView,
+    UpdateAPIView,
     get_object_or_404,
 )
 from rest_framework.permissions import IsAuthenticated
@@ -21,6 +22,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
+    CyberstormTeamUpdateSerializer,
 )
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
@@ -155,3 +157,31 @@ class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
+
+
+class UpdateTeamAPIView(TeamPermissionsMixin, UpdateAPIView):
+    queryset = Team.objects.filter(is_active=True)
+    lookup_url_kwarg = "team_name"
+    lookup_field = "name"
+    serializer_class = CyberstormTeamUpdateSerializer
+    http_method_names = ["patch"]
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        team = self.get_object()
+        team.ensure_user_can_edit_info(self.request.user)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        instance.donation_link = serializer.validated_data["donation_link"]
+        instance.save()
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.update",
+        tags=["cyberstorm"],
+        request_body=CyberstormTeamUpdateSerializer,
+        responses={status.HTTP_200_OK: serializer_class},
+    )
+    def patch(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)

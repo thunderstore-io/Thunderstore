@@ -1,5 +1,6 @@
 from typing import Optional
 
+from django.core.validators import URLValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -67,3 +68,9 @@ class CyberstormCreateTeamSerializer(serializers.Serializer):
         if getattr(user, "service_account", None) is not None:
             raise ValidationError("Service accounts cannot create teams")
         return attrs
+
+
+class CyberstormTeamUpdateSerializer(serializers.Serializer):
+    donation_link = serializers.CharField(
+        max_length=1024, validators=[URLValidator(["https"])]
+    )
