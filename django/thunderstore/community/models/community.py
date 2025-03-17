@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING, Optional
 
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Manager, QuerySet
@@ -116,6 +117,13 @@ class Community(TimestampMixin, models.Model):
 
     # Will hide/show "Install with Mod Manager" button on package pages
     has_mod_manager_support = models.BooleanField(default=True)
+
+    search_keywords = ArrayField(
+        models.CharField(max_length=512),
+        blank=True,
+        null=True,
+        default=list,
+    )
 
     @property
     def aggregated(self) -> "AggregatedFields":

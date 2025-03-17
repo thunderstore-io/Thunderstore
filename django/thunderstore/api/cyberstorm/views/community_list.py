@@ -18,7 +18,7 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     pagination_class = CommunityPaginator
     queryset = Community.objects.listed()
     filter_backends = [SearchFilter, StrictOrderingFilter]
-    search_fields = ["name"]
+    search_fields = ["name", "search_keywords"]
     ordering_fields = [
         "aggregated_fields__download_count",
         "aggregated_fields__package_count",
