@@ -40,11 +40,12 @@ class AuditWebhook(TimestampMixin):
 
     @staticmethod
     def get_event_color(action: AuditAction) -> int:
-        if action == AuditAction.PACKAGE_APPROVED:
+        action_str = str(action).lower()
+        if "approve" in action_str:
             return 5763719
-        if action == AuditAction.PACKAGE_REJECTED:
+        if "reject" in action_str:
             return 15548997
-        if action == AuditAction.PACKAGE_WARNING:
+        if "warning" in action_str:
             return 16705372
         return 9807270
 
