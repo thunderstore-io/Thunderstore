@@ -106,6 +106,7 @@ class ResponseSerializer(serializers.Serializer):
     latest_version_number = serializers.CharField(
         source="package.latest.version_number",
     )
+    version_count = serializers.IntegerField(source="package.version_count")
     name = serializers.CharField(source="package.name")
     namespace = serializers.CharField(source="package.namespace.name")
     rating_count = serializers.IntegerField(min_value=0)
