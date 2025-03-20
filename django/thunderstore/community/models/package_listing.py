@@ -298,6 +298,13 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
+        if created:
+            from thunderstore.community.tasks import detect_and_assign_modpack_category
+
+            transaction.on_commit(
+                lambda: (detect_and_assign_modpack_category.delay(instance.pk))
+            )
+
         invalidate_cache_on_commit_async(CacheBustCondition.any_package_updated)
 
     @staticmethod

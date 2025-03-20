@@ -7,6 +7,7 @@ from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import (
     CommunityFactory,
     CommunitySiteFactory,
+    PackageCategoryFactory,
     PackageListingFactory,
     PackageVersionFactory,
 )
@@ -18,6 +19,7 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
+from thunderstore.community.tasks import detect_and_assign_modpack_category
 from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
 
@@ -424,3 +426,53 @@ def test_package_listing_has_mod_manager_support(mod_manager_support: bool) -> N
     community = CommunityFactory(has_mod_manager_support=mod_manager_support)
     package_listing = PackageListingFactory(community_=community)
     assert package_listing.has_mod_manager_support == mod_manager_support
+
+
+@pytest.mark.django_db
+def test_detect_and_assign_modpack_category() -> None:
+    community = CommunityFactory()
+    modpacks_category = PackageCategoryFactory(
+        name="Modpacks", slug="modpacks", community=community
+    )
+    libraries_category = PackageCategoryFactory(
+        name="Libraries", slug="libraries", community=community
+    )
+
+    version_with_dependencies = PackageVersionFactory()
+    for _ in range(5):
+        version_with_dependencies.dependencies.add(PackageVersionFactory())
+
+    listing_with_dependencies = PackageListingFactory(
+        package=version_with_dependencies.package, community=community
+    )
+
+    for version in version_with_dependencies.dependencies.all():
+        PackageListingFactory(package=version.package, community=community)
+
+    assert listing_with_dependencies.categories.all().count() == 0
+    assert not listing_with_dependencies.categories.filter(slug="modpacks").exists()
+
+    detect_and_assign_modpack_category(listing_with_dependencies.id)
+
+    assert listing_with_dependencies.categories.all().count() == 1
+    assert listing_with_dependencies.categories.filter(slug="modpacks").exists()
+
+    # packages that depend on a lot of libraries shouldn't be given the modpack category
+
+    version_with_libraries = PackageVersionFactory()
+    for _ in range(5):
+        version_with_libraries.dependencies.add(PackageVersionFactory())
+
+    listing_with_libraries = PackageListingFactory(
+        package=version_with_libraries.package, community=community
+    )
+
+    for version in version_with_libraries.dependencies.all():
+        PackageListingFactory(
+            package=version.package, community=community
+        ).categories.add(libraries_category)
+
+    detect_and_assign_modpack_category(listing_with_libraries.id)
+
+    assert listing_with_libraries.categories.all().count() == 0
+    assert not listing_with_libraries.categories.filter(slug="modpacks").exists()
