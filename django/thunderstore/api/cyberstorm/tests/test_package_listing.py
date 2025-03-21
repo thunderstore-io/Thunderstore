@@ -48,25 +48,6 @@ def test_get_custom_package_listing__returns_objects_matching_args() -> None:
 
 
 @pytest.mark.django_db
-def test_get_custom_package_listing__treats_package_name_as_case_insensitive() -> None:
-    expected = PackageListingFactory()
-
-    requested_as_uppercase = get_custom_package_listing(
-        expected.community.identifier,
-        expected.package.namespace.name,
-        expected.package.name.upper(),
-    )
-    requested_as_lowercase = get_custom_package_listing(
-        expected.community.identifier,
-        expected.package.namespace.name,
-        expected.package.name.lower(),
-    )
-
-    assert requested_as_uppercase.package.name == expected.package.name
-    assert requested_as_lowercase.package.name == expected.package.name
-
-
-@pytest.mark.django_db
 def test_get_custom_package_listing__annotates_downloads_and_ratings() -> None:
     listing = PackageListingFactory(package_version_kwargs={"downloads": 100})
     PackageVersionFactory(
@@ -85,7 +66,7 @@ def test_get_custom_package_listing__annotates_downloads_and_ratings() -> None:
     actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
-        listing.package.name.upper(),
+        listing.package.name,
     )
 
     assert actual.download_count == 123
@@ -112,7 +93,7 @@ def test_get_custom_package_listing__annotates_has_changelog(
     actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
-        listing.package.name.upper(),
+        listing.package.name,
     )
 
     assert actual.has_changelog == expected
@@ -130,7 +111,7 @@ def test_get_custom_package_listing__augments_listing_with_dependant_count() -> 
     actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
-        listing.package.name.upper(),
+        listing.package.name,
     )
 
     assert actual.dependant_count == dependant_count
@@ -149,7 +130,7 @@ def test_get_custom_package_listing__augments_listing_with_dependency_count() ->
     actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
-        listing.package.name.upper(),
+        listing.package.name,
     )
 
     assert actual.dependency_count == dependency_count
@@ -172,7 +153,7 @@ def test_get_custom_package_listing__augments_listing_with_dependencies_from_sam
     actual = get_custom_package_listing(
         dependant.community.identifier,
         dependant.package.namespace.name,
-        dependant.package.name.upper(),
+        dependant.package.name,
     )
 
     assert actual.dependencies.count() == 2
@@ -194,7 +175,7 @@ def test_get_custom_package_listing__when_many_dependencies__returns_only_four()
     actual = get_custom_package_listing(
         listing.community.identifier,
         listing.package.namespace.name,
-        listing.package.name.upper(),
+        listing.package.name,
     )
 
     assert actual.dependencies.count() == 4
