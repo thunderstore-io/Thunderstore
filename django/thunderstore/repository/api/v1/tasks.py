@@ -1,3 +1,5 @@
+from typing import Iterator
+
 from thunderstore.community.models import Community, CommunitySite
 from thunderstore.core.utils import capture_exception
 from thunderstore.repository.api.v1.viewsets import serialize_package_list_for_community
@@ -33,7 +35,17 @@ def update_api_v1_indexes() -> None:
 
 
 def update_api_v1_chunked_package_caches() -> None:
-    for community in Community.objects.iterator():
+    communities = Community.objects.exclude(identifier="lethal-company").iterator()
+    _update_api_v1_chunked_package_caches(communities)
+
+
+def update_api_v1_chunked_package_caches_lc() -> None:
+    communities = Community.objects.filter(identifier="lethal-company").iterator()
+    _update_api_v1_chunked_package_caches(communities)
+
+
+def _update_api_v1_chunked_package_caches(communities: Iterator[Community]) -> None:
+    for community in communities:
         try:
             APIV1ChunkedPackageCache.update_for_community(community)
         except Exception as e:  # pragma: no cover
