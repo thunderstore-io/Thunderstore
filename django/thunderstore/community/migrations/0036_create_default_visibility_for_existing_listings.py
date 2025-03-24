@@ -70,7 +70,7 @@ def update_visibility(listing):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("community", "0034_packagelisting_visibility"),
+        ("community", "0035_packagelisting_visibility"),
         ("repository", "0058_create_default_visibility_for_existing_versions"),
     ]
 
