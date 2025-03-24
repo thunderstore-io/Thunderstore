@@ -407,6 +407,13 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
 
     @transaction.atomic
     def update_visibility(self):
+        """
+        Updates the package listing's visibility based on whether its package is active, its review status,
+        and the visibility of its active versions.
+
+        By default, listings are visible to everyone (for now). Rejected listings aren't publicly visible,
+        and listings with inactive packages aren't visible at all.
+        """
         self.visibility.public_detail = True
         self.visibility.public_list = True
         self.visibility.owner_detail = True
