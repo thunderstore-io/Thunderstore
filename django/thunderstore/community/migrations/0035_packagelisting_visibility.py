@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("permissions", "0001_initial"),
-        ("community", "0033_add_mod_manager_support_field"),
+        ("community", "0034_add_search_keywords"),
     ]
 
     operations = [
