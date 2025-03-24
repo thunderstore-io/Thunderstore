@@ -143,7 +143,7 @@ class BasePackageListAPIView(ListAPIView):
         require_approval = community.require_package_listing_approval
         params = self._get_validated_query_params()
 
-        qs = filter_by_review_status(require_approval, queryset)
+        qs = filter_by_review_status(require_approval, queryset, community)
         qs = filter_by_listed_in_community(community.identifier, qs)
         qs = filter_deprecated(params["deprecated"], qs)
         qs = filter_nsfw(params["nsfw"], qs)
@@ -467,12 +467,14 @@ def filter_by_query(
 def filter_by_review_status(
     require_approval: bool,
     queryset: QuerySet[Package],
+    community: Community,
 ) -> QuerySet[Package]:
     review_statuses = [PackageListingReviewStatus.approved]
 
     if not require_approval:
         review_statuses.append(PackageListingReviewStatus.unreviewed)
 
-    return queryset.exclude(
-        ~Q(community_listings__review_status__in=review_statuses),
+    return queryset.filter(
+        community_listings__community=community,
+        community_listings__review_status__in=review_statuses,
     )
