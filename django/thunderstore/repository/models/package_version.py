@@ -431,6 +431,13 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
     @transaction.atomic
     def update_visibility(self):
+        """
+        Updates the version's visibility based on whether it or its package is active and its review status.
+        This may also change the visibility of related listings, so it calls update_visibility() on them.
+
+        By default, versions are visible to everyone (for now). Rejected versions aren't publicly visible,
+        and inactive versions or versions with inactive packages aren't visible at all.
+        """
         self.visibility.public_detail = True
         self.visibility.public_list = True
         self.visibility.owner_detail = True
