@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pytest
+from django.urls import reverse
 from rest_framework.test import APIClient, APIRequestFactory
 
 from thunderstore.api.cyberstorm.views.package_listing_list import (
@@ -11,6 +12,7 @@ from thunderstore.community.factories import CommunityFactory, PackageListingFac
 from thunderstore.community.models import (
     Community,
     PackageCategory,
+    PackageListing,
     PackageListingSection,
 )
 from thunderstore.repository.factories import (
@@ -826,3 +828,15 @@ def test_listing_by_dependency_view__returns_only_packages_listed_in_community(
     assert result["count"] == 1
     assert result["results"][0]["namespace"] == expected.package.namespace.name
     assert result["results"][0]["name"] == expected.package.name
+
+
+@mock_base_package_list_api_view
+@pytest.mark.django_db
+def test_annotate_queryset__adds_annotation_fields() -> None:
+    PackageListingFactory()
+    view = BasePackageListAPIView()
+    qs = PackageListing.objects.all()
+    annotated_qs = view._annotate_queryset(qs)
+
+    assert "download_count" in annotated_qs.query.annotations
+    assert "rating_count" in annotated_qs.query.annotations
