@@ -30,8 +30,14 @@ def update_community_aggregated_fields() -> None:
     name="thunderstore.community.tasks.detect_and_assign_modpack_category",
 )
 def detect_and_assign_modpack_category(package_listing_pk: int):
-    listing = PackageListing.objects.select_related("package__latest", "community").get(
-        pk=package_listing_pk
+    listing = (
+        PackageListing.objects.select_related("package__latest", "community")
+        .only(
+            "categories",
+            "community__id",
+            "package__latest__dependencies",
+        )
+        .get(pk=package_listing_pk)
     )
     latest = listing.package.latest
     community = listing.community
@@ -46,9 +52,11 @@ def detect_and_assign_modpack_category(package_listing_pk: int):
     )
 
     if mod_dependencies_count > 4:
-        modpacks_category = PackageCategory.objects.filter(
-            slug="modpacks", community=community
-        ).first()
+        modpacks_category = (
+            PackageCategory.objects.filter(slug="modpacks", community=community)
+            .only("id")
+            .first()
+        )
         if not modpacks_category:
             return f"{community.identifier} community has no modpacks category"
         listing.categories.add(modpacks_category)
