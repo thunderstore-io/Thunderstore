@@ -155,3 +155,33 @@ class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
+
+
+class RemoveTeamMemberAPIView(TeamPermissionsMixin, DestroyAPIView):
+    queryset = TeamMember.objects.real_users()
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        team_member = self.get_object()
+
+        if team_member.user != request.user:
+            team_member.team.ensure_user_can_manage_members(request.user)
+        team_member.team.ensure_member_can_be_removed(team_member)
+
+    def get_object(self):
+        team_member = self.kwargs.get("team_member")
+        team_name = self.kwargs.get("team_name")
+
+        return get_object_or_404(
+            self.queryset,
+            team__name=team_name,
+            user__username=team_member,
+        )
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.member.remove",
+        tags=["cyberstorm"],
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
