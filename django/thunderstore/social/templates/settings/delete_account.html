@@ -7,15 +7,16 @@
 <p>
     You are about to delete your account. Once deleted, it will be gone forever.
 </p>
+{% if team_names %}
 <p>
     You will lose access to these teams:
     <br>
     <kbd class="text-info">{{ team_names }}</kbd>
 </p>
+{% endif %}
 <p>
-    The mods that have been uploaded to these teams will remain on the
-    site even after account deletion. If you need them to be taken down as well, please
-    contact an administrator in the Thunderstore Discord server.
+    Any content you have uploaded will remain on the site even after account deletion.
+    If you need it taken down as well, please contact an administrator in the Thunderstore Discord server.
 </p>
 <p>
     As a precaution, to delete your account, please input <kbd class="text-info">{{ request.user.username }}</kbd>
