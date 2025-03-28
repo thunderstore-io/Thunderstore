@@ -6,12 +6,17 @@
 {% block settings_content %}
 <p>
     You are about to delete your account. Once deleted, it will be gone forever.
-    Please be certain.
 </p>
+{% if team_names %}
 <p>
-    The mods that have been uploaded on this account will remain public on the
-    site even after deletion. If you need them to be taken down as well, please
-    contact an administrator on the community Discord server.
+    You will lose access to these teams:
+    <br>
+    <kbd class="text-info">{{ team_names }}</kbd>
+</p>
+{% endif %}
+<p>
+    Any content you have uploaded will remain on the site even after account deletion.
+    If you need it taken down as well, please contact an administrator in the Thunderstore Discord server.
 </p>
 <p>
     As a precaution, to delete your account, please input <kbd class="text-info">{{ request.user.username }}</kbd>
@@ -22,7 +27,7 @@
     {% csrf_token %}
     <div class="col-12 p-0 mb-2">
         <div class="text-danger">{{ form.verification.errors }}</div>
-        <input type="text" class="form-control" name="verification" placeholder="Verification">
+        <input type="text" class="form-control" name="verification" placeholder="Verification" autocomplete="off">
     </div>
     <div class="col-12 p-0">
         <input type="submit" class="btn btn-outline-danger" value="I understand this action is irrevocable and want to continue">
