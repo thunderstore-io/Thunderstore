@@ -414,6 +414,8 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         By default, listings are visible to everyone (for now). Rejected listings aren't publicly visible,
         and listings with inactive packages aren't visible at all.
         """
+        original_visibility_bitstring = self.visibility.bitstring()
+
         self.visibility.public_detail = True
         self.visibility.public_list = True
         self.visibility.owner_detail = True
@@ -454,7 +456,8 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         if versions.exclude(visibility__moderator_list=False).count() == 0:
             self.visibility.moderator_list = False
 
-        self.visibility.save()
+        if self.visibility.bitstring != original_visibility_bitstring:
+            self.visibility.save()
 
 
 signals.post_save.connect(PackageListing.post_save, sender=PackageListing)
