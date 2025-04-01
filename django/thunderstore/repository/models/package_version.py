@@ -438,6 +438,8 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         By default, versions are visible to everyone (for now). Rejected versions aren't publicly visible,
         and inactive versions or versions with inactive packages aren't visible at all.
         """
+        original_visibility_bitstring = self.visibility.bitstring()
+
         self.visibility.public_detail = True
         self.visibility.public_list = True
         self.visibility.owner_detail = True
@@ -460,10 +462,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             self.visibility.public_detail = False
             self.visibility.public_list = False
 
-        self.visibility.save()
-        for listing in self.package.community_listings.all():
-            listing.update_visibility()
-        self.package.recache_latest()
+        if self.visibility.bitstring != original_visibility_bitstring:
+            self.visibility.save()
+            for listing in self.package.community_listings.all():
+                listing.update_visibility()
+            self.package.recache_latest()
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
