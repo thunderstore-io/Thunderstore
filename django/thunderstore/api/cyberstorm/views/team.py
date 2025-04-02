@@ -38,7 +38,7 @@ class TeamPermissionsMixin:
     def _get_team_object(self) -> Team:
         teams = Team.objects.exclude(is_active=False)
         team_identifier = self.kwargs.get("team_id") or self.kwargs.get("team_name")
-        return get_object_or_404(teams, name__iexact=team_identifier)
+        return get_object_or_404(teams, name=team_identifier)
 
     def check_permissions(self, request: Request) -> None:
         super().check_permissions(request)
@@ -50,7 +50,7 @@ class TeamPermissionsMixin:
 class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
-    lookup_field = "name__iexact"
+    lookup_field = "name"
     lookup_url_kwarg = "team_id"
 
 
@@ -80,7 +80,10 @@ class TeamCreateAPIView(CreateAPIView):
         tags=["cyberstorm"],
     )
     def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+        # return super().post(request, *args, **kwargs)
+        # TODO: See comments about business logic consolidation
+        #       in the DisbandTeamAPIView
+        raise NotImplementedError("Changes needed")
 
 
 class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
@@ -91,7 +94,7 @@ class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
     def get_queryset(self) -> QuerySet[TeamMember]:
         return (
             TeamMember.objects.real_users()
-            .exclude(~Q(team__name__iexact=self.kwargs["team_id"]))
+            .exclude(~Q(team__name=self.kwargs["team_id"]))
             .prefetch_related("user__social_auth")
         )
 
@@ -106,7 +109,7 @@ class TeamMemberAddAPIView(APIView):
         tags=["cyberstorm"],
     )
     def post(self, request, team_name, format=None):
-        team = get_object_or_404(Team, name__iexact=team_name)
+        team = get_object_or_404(Team, name=team_name)
         serializer = CyberstormTeamAddMemberRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -133,14 +136,14 @@ class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPI
 
     def get_queryset(self) -> QuerySet[ServiceAccount]:
         return ServiceAccount.objects.exclude(
-            ~Q(owner__name__iexact=self.kwargs["team_id"]),
+            ~Q(owner__name=self.kwargs["team_id"]),
         ).select_related("user")
 
 
 class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
     queryset = Team.objects.all()
     lookup_url_kwarg = "team_name"
-    lookup_field = "name__iexact"
+    lookup_field = "name"
 
     def check_permissions(self, request):
         super().check_permissions(request)
@@ -154,4 +157,23 @@ class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        return super().delete(request, *args, **kwargs)
+        # Shouldn't directly call delete on the object, the business logic for deletion of teams is currently
+        # maintained in the DisbandTeamForm class and we don't want to double-implement/fork it and end up with
+        # different implementations of the same functionality.
+
+        # Just deleting objects from the db in general is a bad idea in this project, you can more or less always
+        # expect business logic to be associated with it and bypassing that logic is not a good idea.
+
+        # I don't mind which way around this is done, but either this API view should call the form internally
+        # (probably the easiest way to do it & what I'd recommend, this pattern is used already with some endpoints),
+        # or the form should call this API view internally. I'm also open to suggestions as to what convention
+        # should we use going forward & standardize around, but I'm fairly certain that is not directly running
+        # logic in the API views in any case (as we might end up needing same pieces of business logic in multiple
+        # different API views after all). Extending the model manager classes could be one option for example.
+
+        # In either case, I don't think we should create multiple avenues/competing business logic implementations
+        # for the same actions, so before publishing this endpoint I'd want to ensure they're consolidated somehow
+
+        # Old code:
+        # return super().delete(request, *args, **kwargs)
+        raise NotImplementedError("Changes needed")
