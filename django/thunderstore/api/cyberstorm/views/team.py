@@ -3,7 +3,6 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import (
     CreateAPIView,
-    DestroyAPIView,
     ListAPIView,
     RetrieveAPIView,
     get_object_or_404,
@@ -38,7 +37,7 @@ class TeamPermissionsMixin:
     def _get_team_object(self) -> Team:
         teams = Team.objects.exclude(is_active=False)
         team_identifier = self.kwargs.get("team_id") or self.kwargs.get("team_name")
-        return get_object_or_404(teams, name__iexact=team_identifier)
+        return get_object_or_404(teams, name=team_identifier)
 
     def check_permissions(self, request: Request) -> None:
         super().check_permissions(request)
@@ -50,7 +49,7 @@ class TeamPermissionsMixin:
 class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
-    lookup_field = "name__iexact"
+    lookup_field = "name"
     lookup_url_kwarg = "team_id"
 
 
@@ -137,21 +136,13 @@ class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPI
         ).select_related("user")
 
 
-class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
-    queryset = Team.objects.all()
-    lookup_url_kwarg = "team_name"
-    lookup_field = "name__iexact"
-
-    def check_permissions(self, request):
-        super().check_permissions(request)
-        team = self.get_object()
-        if not team.can_user_disband(request.user):
-            raise PermissionDenied("You do not have permission to disband this team.")
-
+class DisbandTeamAPIView(TeamPermissionsMixin, APIView):
     @conditional_swagger_auto_schema(
         operation_id="cyberstorm.team.disband",
         tags=["cyberstorm"],
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        return super().delete(request, *args, **kwargs)
+        team = get_object_or_404(Team, name=self.kwargs["team_name"])
+        team.disband(user=self.request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)

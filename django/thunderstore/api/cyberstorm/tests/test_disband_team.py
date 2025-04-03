@@ -60,8 +60,8 @@ def test_disband_team_fail_because_user_is_not_owner(
     TeamMemberFactory(team=team, user=user, role="member")
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {"detail": "You do not have permission to disband this team."}
-    assert response.status_code == 403
+    expected_response = {"non_field_errors": ["User cannot disband this team"]}
+    assert response.status_code == 400
     assert response.json() == expected_response
 
 

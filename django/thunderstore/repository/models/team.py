@@ -357,3 +357,8 @@ class Team(models.Model):
 
     def can_user_edit_info(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_edit_info(user))
+
+    def disband(self, user: Optional[UserType]) -> None:
+        if not self.can_user_disband(user):
+            raise ValidationError("User cannot disband this team")
+        self.delete()
