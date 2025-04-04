@@ -47,6 +47,7 @@ def test_api_cyberstorm_community_detail_success(
     assert c.description == response_data["description"]
     assert c.discord_url == response_data["discord_url"]
     assert c.wiki_url == response_data["wiki_url"]
+    assert c.has_mod_manager_support == response_data["has_mod_manager_support"]
 
 
 @pytest.mark.django_db
