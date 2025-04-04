@@ -9,7 +9,7 @@ from thunderstore.repository.models.team import Team
 
 
 def get_create_team_url() -> str:
-    return "/api/cyberstorm/team/new/"
+    return "/api/cyberstorm/team/create/"
 
 
 def make_request(api_client: APIClient, team_name: str):
