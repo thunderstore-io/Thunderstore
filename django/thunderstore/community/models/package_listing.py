@@ -15,6 +15,8 @@ from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
+from thunderstore.permissions.mixins import VisibilityMixin
+from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
 from thunderstore.webhooks.audit import (
     AuditAction,
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
     from thunderstore.community.models import PackageCategory
 
 
-class PackageListingQueryset(models.QuerySet):
+class PackageListingQueryset(VisibilityFlagsQuerySet):
     def active(self):
         return self.exclude(package__is_active=False).exclude(
             ~Q(package__versions__is_active=True)
@@ -55,7 +57,7 @@ class PackageListingQueryset(models.QuerySet):
 # TODO: Add a db constraint that ensures a package listing and it's categories
 #       belong to the same community. This might require actually specifying
 #       the intermediate model in code rather than letting Django handle it
-class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
+class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     """
     Represents a package's relation to how it's displayed on the site and APIs
     """
@@ -370,6 +372,82 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
 
     def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
+
+    def is_visible_to_user(self, user: Optional[UserType]) -> bool:
+        if self.visibility.public_detail:
+            return True
+
+        if user is None:
+            return False
+
+        if self.visibility.owner_detail:
+            if self.package.owner.can_user_access(user):
+                return True
+
+        if self.visibility.moderator_detail:
+            for listing in self.package.community_listings.all():
+                if listing.community.can_user_manage_packages(user):
+                    return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False
+
+    @transaction.atomic
+    def update_visibility(self):
+        """
+        Updates the package listing's visibility based on whether its package is active, its review status,
+        and the visibility of its active versions.
+
+        By default, listings are visible to everyone (for now). Rejected listings aren't publicly visible,
+        and listings with inactive packages aren't visible at all.
+        """
+        original_visibility_bitstring = self.visibility.bitstring()
+
+        self.visibility.public_detail = True
+        self.visibility.public_list = True
+        self.visibility.owner_detail = True
+        self.visibility.owner_list = True
+        self.visibility.moderator_detail = True
+        self.visibility.moderator_list = True
+
+        if not self.package.is_active:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+            self.visibility.owner_detail = False
+            self.visibility.owner_list = False
+            self.visibility.moderator_detail = False
+            self.visibility.moderator_list = False
+
+        if self.review_status == PackageListingReviewStatus.rejected:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+        if (
+            self.community.require_package_listing_approval
+            and self.review_status == PackageListingReviewStatus.unreviewed
+        ):
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+        versions = self.package.versions.filter(is_active=True).all()
+        if versions.exclude(visibility__public_detail=False).count() == 0:
+            self.visibility.public_detail = False
+        if versions.exclude(visibility__public_list=False).count() == 0:
+            self.visibility.public_list = False
+        if versions.exclude(visibility__owner_detail=False).count() == 0:
+            self.visibility.owner_detail = False
+        if versions.exclude(visibility__owner_list=False).count() == 0:
+            self.visibility.owner_list = False
+        if versions.exclude(visibility__moderator_detail=False).count() == 0:
+            self.visibility.moderator_detail = False
+        if versions.exclude(visibility__moderator_list=False).count() == 0:
+            self.visibility.moderator_list = False
+
+        if self.visibility.bitstring != original_visibility_bitstring:
+            self.visibility.save()
 
 
 signals.post_save.connect(PackageListing.post_save, sender=PackageListing)
