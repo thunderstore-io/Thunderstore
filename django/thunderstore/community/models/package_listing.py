@@ -336,7 +336,14 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             raise ValidationError("Must have listing management permission")
 
     def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
-        self.ensure_user_can_manage_listing(user)
+        user = validate_user(user)
+        is_allowed = (
+            self.can_be_moderated_by_user(user)
+            or self.package.owner.can_user_manage_packages(user)
+            or self.community.can_user_manage_categories(user)
+        )
+        if not is_allowed:
+            raise ValidationError("User is missing necessary roles or permissions")
 
     def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_update_categories_permission(user))
