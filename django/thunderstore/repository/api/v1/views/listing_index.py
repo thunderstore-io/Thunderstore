@@ -1,4 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.cache import get_conditional_response
+from django.utils.http import http_date
 from drf_yasg.utils import swagger_auto_schema  # type: ignore
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -28,9 +30,17 @@ class PackageListingIndex(APIView):
         )
         cache = APIV1ChunkedPackageCache.get_latest_for_community(community)
 
-        if cache:
-            url = request.build_absolute_uri(cache.index.data_url)
-            url = replace_cdn(url, request.query_params.get("cdn"))
-            return redirect(url)
+        if not cache:
+            return Response({"error": "No cache available"}, status=503)
 
-        return Response({"error": "No cache available"}, status=503)
+        last_modified = int(cache.created_at.timestamp())
+        response = get_conditional_response(request, last_modified=last_modified)
+
+        if response:
+            return response
+
+        url = request.build_absolute_uri(cache.index.data_url)
+        url = replace_cdn(url, request.query_params.get("cdn"))
+        response = redirect(url)
+        response["Last-Modified"] = http_date(last_modified)
+        return response
