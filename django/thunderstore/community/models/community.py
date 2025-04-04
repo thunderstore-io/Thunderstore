@@ -262,15 +262,14 @@ class Community(TimestampMixin, models.Model):
     def ensure_user_can_manage_categories(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
-        if (
-            not membership
-            or membership.role
-            not in (
-                CommunityMemberRole.janitor,
-                CommunityMemberRole.moderator,
-                CommunityMemberRole.owner,
-            )
-        ) and not (
+
+        allowed_roles = [
+            CommunityMemberRole.janitor,
+            CommunityMemberRole.moderator,
+            CommunityMemberRole.owner,
+        ]
+
+        if (not membership or membership.role not in allowed_roles) and not (
             user.is_superuser or user.is_staff
         ):  # TODO: Maybe remove
             raise ValidationError("Must be a janitor or higher to manage categories")
