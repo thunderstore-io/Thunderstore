@@ -9,7 +9,7 @@ from thunderstore.community.models import Community
 
 
 class CommunityPaginator(PageNumberPagination):
-    page_size = 150
+    page_size = 300
 
 
 class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
