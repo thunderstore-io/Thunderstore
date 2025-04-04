@@ -3,6 +3,7 @@ from typing import Optional
 from social_django.models import UserSocialAuth  # type: ignore
 
 from thunderstore.core.types import UserType
+from thunderstore.repository.models import Package
 
 
 def get_connection_avatar_url(connection: UserSocialAuth) -> Optional[str]:
@@ -42,3 +43,7 @@ def get_user_avatar_url(user: UserType) -> Optional[str]:
             return avatar_url
 
     return None
+
+
+def package_exists_in_any_case(namespace: str, name: str) -> bool:
+    return Package.objects.filter(owner__name=namespace, name__iexact=name).exists()

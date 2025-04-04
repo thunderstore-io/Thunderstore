@@ -55,6 +55,54 @@ def test_manifest_v1_serializer_version_already_exists(
     )
 
 
+@pytest.mark.parametrize(
+    ("is_new_package", "is_different_case", "expected_validity"),
+    (
+        (True, True, False),  # do not allow new packages with different case
+        (False, True, True),
+        (True, False, True),
+        (False, False, True),
+    ),
+)
+@pytest.mark.django_db
+def test_manifest_v1_serializer_validity_with_package_name_case(
+    user,
+    manifest_v1_data,
+    package,
+    is_new_package,
+    is_different_case,
+    expected_validity,
+):
+    TeamMember.objects.create(
+        user=user,
+        team=package.owner,
+        role=TeamMemberRole.owner,
+    )
+
+    if not is_new_package:
+        PackageFactory(
+            owner=package.owner,
+            name=package.name.swapcase(),
+            namespace=package.namespace,
+        )
+
+    if is_different_case:
+        manifest_v1_data["name"] = package.name.swapcase()
+
+    serializer = ManifestV1Serializer(
+        user=user,
+        team=package.owner,
+        data=manifest_v1_data,
+    )
+    assert serializer.is_valid() is expected_validity
+
+    if expected_validity is False:
+        assert len(serializer.errors["non_field_errors"]) == 1
+        assert "Package name already exists with different capitalization" in str(
+            serializer.errors["non_field_errors"][0]
+        )
+
+
 @pytest.mark.django_db
 def test_manifest_v1_serializer_duplicate_dependency(
     user, manifest_v1_data, package_version, namespace
