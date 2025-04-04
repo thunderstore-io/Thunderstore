@@ -33,14 +33,16 @@ def test_team_api_view__for_nonexisting_team__returns_404(api_client: APIClient)
 
 
 @pytest.mark.django_db
-def test_team_api_view__when_fetching_team__is_case_insensitive(
+def test_team_api_view__when_fetching_team__is_case_sensitive(
     api_client: APIClient,
 ):
     TeamFactory(name="RaDTeAm")
 
-    response = api_client.get("/api/cyberstorm/team/radteam/")
-
+    response = api_client.get("/api/cyberstorm/team/RaDTeAm/")
     assert response.status_code == 200
+
+    response = api_client.get("/api/cyberstorm/team/radteam/")
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -121,7 +123,7 @@ def test_team_membership_permission__for_member__returns_200(
 
 
 @pytest.mark.django_db
-def test_team_membership_permission__when_fetching_team__is_case_insensitive(
+def test_team_membership_permission__when_fetching_team__is_case_sensitive(
     api_client: APIClient,
     user: UserType,
 ):
@@ -129,9 +131,11 @@ def test_team_membership_permission__when_fetching_team__is_case_insensitive(
     TeamMemberFactory(team=team, user=user)
     api_client.force_authenticate(user)
 
-    response = api_client.get("/api/cyberstorm/team/thundergods/member/")
-
+    response = api_client.get("/api/cyberstorm/team/ThunderGods/member/")
     assert response.status_code == 200
+
+    response = api_client.get("/api/cyberstorm/team/thundergods/member/")
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

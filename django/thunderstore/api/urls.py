@@ -107,7 +107,7 @@ cyberstorm_urls = [
         name="cyberstorm.package.rate",
     ),
     path(
-        "team/new/",
+        "team/create/",
         TeamCreateAPIView.as_view(),
         name="cyberstorm.team.create",
     ),
