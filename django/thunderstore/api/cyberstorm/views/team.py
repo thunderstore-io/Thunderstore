@@ -3,7 +3,6 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import (
     CreateAPIView,
-    DestroyAPIView,
     ListAPIView,
     RetrieveAPIView,
     get_object_or_404,
@@ -22,6 +21,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
 )
+from thunderstore.api.cyberstorm.services import team as team_services
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
@@ -140,16 +140,8 @@ class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPI
         ).select_related("user")
 
 
-class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
-    queryset = Team.objects.all()
-    lookup_url_kwarg = "team_name"
-    lookup_field = "name"
-
-    def check_permissions(self, request):
-        super().check_permissions(request)
-        team = self.get_object()
-        if not team.can_user_disband(request.user):
-            raise PermissionDenied("You do not have permission to disband this team.")
+class DisbandTeamAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     @conditional_swagger_auto_schema(
         operation_id="cyberstorm.team.disband",
@@ -157,23 +149,6 @@ class DisbandTeamAPIView(TeamPermissionsMixin, DestroyAPIView):
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        # Shouldn't directly call delete on the object, the business logic for deletion of teams is currently
-        # maintained in the DisbandTeamForm class and we don't want to double-implement/fork it and end up with
-        # different implementations of the same functionality.
-
-        # Just deleting objects from the db in general is a bad idea in this project, you can more or less always
-        # expect business logic to be associated with it and bypassing that logic is not a good idea.
-
-        # I don't mind which way around this is done, but either this API view should call the form internally
-        # (probably the easiest way to do it & what I'd recommend, this pattern is used already with some endpoints),
-        # or the form should call this API view internally. I'm also open to suggestions as to what convention
-        # should we use going forward & standardize around, but I'm fairly certain that is not directly running
-        # logic in the API views in any case (as we might end up needing same pieces of business logic in multiple
-        # different API views after all). Extending the model manager classes could be one option for example.
-
-        # In either case, I don't think we should create multiple avenues/competing business logic implementations
-        # for the same actions, so before publishing this endpoint I'd want to ensure they're consolidated somehow
-
-        # Old code:
-        # return super().delete(request, *args, **kwargs)
-        raise NotImplementedError("Changes needed")
+        team_name = kwargs["team_name"]
+        team_services.disband_team(user=request.user, team_name=team_name)
+        return Response(status=status.HTTP_204_NO_CONTENT)
