@@ -1,12 +1,7 @@
 from django.db.models import Q, QuerySet
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.generics import (
-    CreateAPIView,
-    ListAPIView,
-    RetrieveAPIView,
-    get_object_or_404,
-)
+from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -28,7 +23,6 @@ from thunderstore.api.utils import (
     conditional_swagger_auto_schema,
 )
 from thunderstore.repository.forms import AddTeamMemberForm
-from thunderstore.repository.models import TeamMemberRole
 from thunderstore.repository.models.team import Team, TeamMember
 
 
@@ -58,32 +52,24 @@ class TeamRestrictedAPIView(TeamPermissionsMixin, ListAPIView):
     pass
 
 
-class TeamCreateAPIView(CreateAPIView):
+class TeamCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    queryset = Team.objects.exclude(is_active=False)
-    serializer_class = CyberstormCreateTeamSerializer
-
-    def _create_team(self, name: str) -> Team:
-        team = Team.objects.create(name=name)
-        team.add_member(user=self.request.user, role=TeamMemberRole.owner)
-        return team
-
-    def perform_create(self, serializer) -> None:
-        team_name = serializer.validated_data["name"]
-        instance = self._create_team(team_name)
-        serializer.instance = instance
 
     @conditional_swagger_auto_schema(
-        request_body=serializer_class,
-        responses={201: serializer_class},
+        request_body=CyberstormCreateTeamSerializer,
+        responses={201: CyberstormTeamSerializer},
         operation_id="cyberstorm.team.create",
         tags=["cyberstorm"],
     )
     def post(self, request, *args, **kwargs):
-        # return super().post(request, *args, **kwargs)
-        # TODO: See comments about business logic consolidation
-        #       in the DisbandTeamAPIView
-        raise NotImplementedError("Changes needed")
+        serializer = CyberstormCreateTeamSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team_name = serializer.validated_data["name"]
+        team = team_services.create_team(user=request.user, team_name=team_name)
+        return_data = CyberstormTeamSerializer(team).data
+
+        return Response(return_data, status=status.HTTP_201_CREATED)
 
 
 class TeamMemberListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
