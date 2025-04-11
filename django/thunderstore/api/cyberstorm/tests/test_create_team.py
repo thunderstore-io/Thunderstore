@@ -3,7 +3,6 @@ import json
 import pytest
 from rest_framework.test import APIClient
 
-from thunderstore.api import error_messages
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models.team import Team
@@ -54,9 +53,12 @@ def test_create_team__fail_because_team_with_provided_name_exists(
 ):
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
+    expected_response = {
+        "non_field_errors": ["A team with the provided name already exists"]
+    }
 
     assert response.status_code == 400
-    assert response.json() == [error_messages.RESOURCE_EXISTS_ERROR]
+    assert response.json() == expected_response
 
 
 @pytest.mark.django_db
@@ -67,9 +69,12 @@ def test_create_team__fail_because_team_with_provided_namespace_exists(
     api_client.force_authenticate(user)
     NamespaceFactory(name="CoolestTeamNameEver")
     response = make_request(api_client, "CoolestTeamNameEver")
+    expected_response = {
+        "non_field_errors": ["A namespace with the provided name already exists"]
+    }
 
     assert response.status_code == 400
-    assert response.json() == [error_messages.RESOURCE_EXISTS_ERROR]
+    assert response.json() == expected_response
 
 
 @pytest.mark.django_db
@@ -134,7 +139,8 @@ def test_create_team_with_service_account(api_client: APIClient, service_account
     api_client.force_authenticate(service_account.user)
     assert Team.objects.filter(name="CoolestTeamNameEver").count() == 0
     response = make_request(api_client, "CoolestTeamNameEver")
+    expected_response = {"non_field_errors": ["Service accounts cannot create teams"]}
 
     assert response.status_code == 400
-    assert response.json() == [error_messages.ACTION_DENIED_ERROR]
+    assert response.json() == expected_response
     assert Team.objects.filter(name="CoolestTeamNameEver").count() == 0

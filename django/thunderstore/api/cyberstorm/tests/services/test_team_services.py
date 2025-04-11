@@ -1,8 +1,7 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.http import Http404
-from rest_framework.exceptions import PermissionDenied, ValidationError
 
-from thunderstore.api import error_messages
 from thunderstore.api.cyberstorm.services import team as team_services
 from thunderstore.repository.models import Namespace, Team, TeamMemberRole
 
@@ -23,13 +22,13 @@ def test_disband_team_team_not_found(user):
 @pytest.mark.django_db
 def test_disband_team_user_cannot_access_team(user):
     team = Team.objects.create(name="TestTeam")
-    with pytest.raises(PermissionDenied, match=error_messages.RESOURCE_DENIED_ERROR):
+    with pytest.raises(ValidationError, match="Must be a member to access team"):
         team_services.disband_team(user, team.name)
 
 
 @pytest.mark.django_db
 def test_disband_team_user_cannot_disband(team_member):
-    with pytest.raises(PermissionDenied, match=error_messages.ACTION_DENIED_ERROR):
+    with pytest.raises(ValidationError, match="Must be an owner to disband team"):
         team_services.disband_team(team_member.user, team_member.team.name)
 
 
@@ -37,7 +36,8 @@ def test_disband_team_user_cannot_disband(team_member):
 def test_create_team_name_exists_in_team(user):
     Team.objects.create(name="existing_team")
 
-    with pytest.raises(ValidationError, match=error_messages.RESOURCE_EXISTS_ERROR):
+    error_msg = "A team with the provided name already exists"
+    with pytest.raises(ValidationError, match=error_msg):
         team_services.create_team(user, "existing_team")
 
 
@@ -45,7 +45,8 @@ def test_create_team_name_exists_in_team(user):
 def test_create_team_name_exists_in_namespace(user):
     Namespace.objects.create(name="existing_namespace")
 
-    with pytest.raises(ValidationError, match=error_messages.RESOURCE_EXISTS_ERROR):
+    error_msg = "A namespace with the provided name already exists"
+    with pytest.raises(ValidationError, match=error_msg):
         team_services.create_team(user, "existing_namespace")
 
 
@@ -53,7 +54,8 @@ def test_create_team_name_exists_in_namespace(user):
 def test_create_team_user_is_service_account(service_account):
     service_account_user = service_account.user
 
-    with pytest.raises(ValidationError, match=error_messages.ACTION_DENIED_ERROR):
+    error_msg = "Service accounts cannot create teams"
+    with pytest.raises(ValidationError, match=error_msg):
         team_services.create_team(service_account_user, "new_team")
 
 

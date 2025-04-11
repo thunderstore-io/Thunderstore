@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q, QuerySet
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -64,11 +65,9 @@ class TeamCreateAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = CyberstormCreateTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         team_name = serializer.validated_data["name"]
         team = team_services.create_team(user=request.user, team_name=team_name)
         return_data = CyberstormTeamSerializer(team).data
-
         return Response(return_data, status=status.HTTP_201_CREATED)
 
 

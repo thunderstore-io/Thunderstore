@@ -1,7 +1,6 @@
 import pytest
 from rest_framework.test import APIClient
 
-from thunderstore.api import error_messages
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import TeamMemberFactory
 from thunderstore.repository.models.team import Team
@@ -61,8 +60,8 @@ def test_disband_team_fail_because_user_is_not_owner(
     TeamMemberFactory(team=team, user=user, role="member")
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {"detail": error_messages.ACTION_DENIED_ERROR}
-    assert response.status_code == 403
+    expected_response = {"non_field_errors": ["Must be an owner to disband team"]}
+    assert response.status_code == 400
     assert response.json() == expected_response
 
 
@@ -74,6 +73,6 @@ def test_disband_team_fail_because_user_cannot_access_team(
 ):
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {"detail": error_messages.RESOURCE_DENIED_ERROR}
-    assert response.status_code == 403
+    expected_response = {"non_field_errors": ["Must be a member to access team"]}
+    assert response.status_code == 400
     assert response.json() == expected_response
