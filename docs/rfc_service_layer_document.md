@@ -95,6 +95,10 @@ Move business logic from views to a separate service layer in each app with a cl
     -   Each app will have a new `services` directory.
     -   Each service directory will contain files with functions that encapsulate core business logic (e.g., permissions checks, object manipulation).
     -   Functions will be small, focused on a single task, and will raise appropriate exceptions when necessary.
+    -   Functions will be annotated with type hints.
+    -   Functions will be tested in isolation.
+    -   Functions should utilize the validation methods defined in the models whenever possible.
+        -   If model-based validation is not feasible, the service layer should implement its own validation logic and raise the appropriate exceptions.
 
 -   **Example**:
 
@@ -102,14 +106,24 @@ Move business logic from views to a separate service layer in each app with a cl
     # file: services/team.py
     def disband_team(team_name: str, user: User) -> None:
         team = get_object_or_404(Team, name=team_name)
-        if not team.can_user_access(user):
-            raise PermissionDenied(...)
-        if not team.can_user_disband(user):
-            raise PermissionDenied(...)
+        team.ensure_user_can_access(user)  # Raises django's ValidationError
+        team.ensure_user_can_disband(user)  # Raises django's ValidationError
         team.delete()
+
+
+    def create_team(team_name: str, user: User) -> Team:
+        if Team.objects.filter(name=team_name).exists():
+            raise ValidationError("...")  # django's ValidationError
+        if NameSpace.objects.filter(name=team_name).exists():
+            raise ValidationError("...")  # django's ValidationError
+        # etc...
+
+        team = Team.objects.create(name=team_name)
+        team.add_member(user=user, role=TeamMemberRole.owner)
+        return team
     ```
 
-## 4.2 View Layer Design
+## 4.2 REST API View Layer Design
 
 With the business logic extracted into a service layer function, the view can be simplified:
 
@@ -127,7 +141,45 @@ class DisbandTeamAPIView(APIView):
         team_name = kwargs["team_name"]
         disband_team(team_name, request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CreateTeamAPIView(APIView):
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.create",
+        tags=["cyberstorm"],
+        responses={status.HTTP_201_CREATED: CyberstormTeamSerializer(},
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = CyberstormCreateTeamSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        team_name = serializer.validated_data["name"]
+        team = team_services.create_team(user=request.user, team_name=team_name)
+        return_data = CyberstormTeamSerializer(team).data
+        return Response(return_data, status=status.HTTP_201_CREATED)
 ```
+
+## 4.3 Form View Layer Design
+
+When utilizing the service layer in Django form views, exceptions must be handled manually, and any raised exceptions should be added to the form's errors.
+
+Basic example(syntax may vary depending on the type of view):
+
+```python
+def form_valid(self, request, form):
+    try:
+        team_name = form.cleaned_data["team_name"]
+        team_services.create_team(team_name=team_name, user=request.user)
+    except ValidationError as e:
+        form.add_error(None, e)  # Attach error manually to form
+        return self.form_invalid(form)
+    return redirect(self.get_success_url())
+```
+
+## 4.4 Error Handling
+
+The `django.core.exceptions` module should be utilized within the service layer. Any `ValidationError` raised will be automatically handled by the default exception handler in Django Rest Framework views. Additionally, Django's `PermissionDenied` and `Http404` exceptions are also handled by Django Rest Framework by default.
+
+For form-based views, exceptions raised within the service layer will require explicit manual handling, depending on the context in which the exceptions occur.
 
 # 5. Testing Strategy
 
@@ -150,7 +202,8 @@ def test_disband_team(team, user):
 
 def test_disband_team_permission_denied(team):
     user = User.objects.create_user(username="testuser", password="testpass")
-    with pytest.raises(PermissionDenied):
+    error_message = "..."
+    with pytest.raises(ValidationError, match=error_message):
         disband_team(team.name, user)
 
 def test_disband_team_not_found(user):
@@ -166,7 +219,7 @@ Integration tests will ensure that views handle requests and responses correctly
 -   **Error Cases**: The view should return appropriate error responses when given invalid input, including authentication and authorization errors, serialization/deserialization errors, and valid payloads.
 -   **Correct Delegation to Services**.
 
-**Simple Basic Example**:
+**Basic Example**:
 
 ```python
 # file: my_app/tests/test_views/test_some_view.py

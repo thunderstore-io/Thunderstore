@@ -51,16 +51,14 @@ my_app/
 # file: services/team.py
 def disband_team(team_name: str, user: User) -> None:
     team = get_object_or_404(Team, name=team_name)
-    if not team.can_user_access(user):
-        raise PermissionDenied(...)
-    if not team.can_user_disband(user):
-        raise PermissionDenied(...)
+    team.ensure_user_can_access(user)
+    team.ensure_user_can_disband(user)
     team.delete()
 ```
 
 ## View Layer Design
 
-### Example
+### Example of REST API view
 
 ```python
 # file: views/team.py
@@ -78,6 +76,19 @@ class DisbandTeamAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 ```
 
+### Example of Form view
+
+```python
+def form_valid(self, request, form):
+    try:
+        team_name = form.cleaned_data["team_name"]
+        team_services.create_team(team_name=team_name, user=request.user)
+    except ValidationError as e:
+        form.add_error(None, e)  # Attach error manually to form
+        return self.form_invalid(form)
+    return redirect(self.get_success_url())
+```
+
 ## Testing Strategy
 
 ### Unit Testing Service Layer
@@ -87,6 +98,14 @@ Each service layer function should be unit tested in isolation. Tests should cov
 ### Integration Testing Views
 
 Integration tests should ensure that views handle requests and responses correctly and delegate tasks to the service layer appropriately.
+
+## Exception Handling
+
+The service layer should raise exceptions for error cases. Views should handle these exceptions and return appropriate HTTP responses.
+
+Exceptions from django.core.exceptions are to be used in the service layer. Django Rest Framework provides a way to handle ValidationErrors, PermissionDenied, and NotFound exceptions automatically(when using django.core.exceptions).
+
+Exceptions need to be manually handled in Form views(depending on where they are raised).
 
 ## Benefits
 
