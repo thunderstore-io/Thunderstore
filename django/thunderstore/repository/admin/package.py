@@ -13,6 +13,21 @@ from thunderstore.repository.models import Package, PackageVersion
 
 class PackageVersionInline(admin.StackedInline):
     model = PackageVersion
+    fields = (
+        "is_active",
+        "version_link",
+        "date_created",
+        "description",
+        "downloads",
+        "file",
+        "file_size",
+        "format_spec",
+        "icon",
+        "file_tree_link",
+        "uploaded_by",
+        "visibility",
+        "website_url",
+    )
     readonly_fields = (
         "version_link",
         "date_created",
@@ -23,16 +38,9 @@ class PackageVersionInline(admin.StackedInline):
         "format_spec",
         "icon",
         "file_tree_link",
+        "uploaded_by",
         "visibility",
         "website_url",
-    )
-    exclude = (
-        "version_number",
-        "file_tree",
-        "dependencies",
-        "name",
-        "readme",
-        "changelog",
     )
     extra = 0
 
