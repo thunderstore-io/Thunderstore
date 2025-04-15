@@ -9,7 +9,7 @@ from thunderstore.repository.models.team import Team
 
 
 def get_create_team_url() -> str:
-    return "/api/cyberstorm/team/new/"
+    return "/api/cyberstorm/team/create/"
 
 
 def make_request(api_client: APIClient, team_name: str):
@@ -53,10 +53,12 @@ def test_create_team__fail_because_team_with_provided_name_exists(
 ):
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
+    expected_response = {
+        "non_field_errors": ["A team with the provided name already exists"]
+    }
 
     assert response.status_code == 400
-    error_message = "A team with the provided name already exists"
-    assert error_message in response.json()["name"]
+    assert response.json() == expected_response
 
 
 @pytest.mark.django_db
@@ -67,10 +69,12 @@ def test_create_team__fail_because_team_with_provided_namespace_exists(
     api_client.force_authenticate(user)
     NamespaceFactory(name="CoolestTeamNameEver")
     response = make_request(api_client, "CoolestTeamNameEver")
+    expected_response = {
+        "non_field_errors": ["A namespace with the provided name already exists"]
+    }
 
     assert response.status_code == 400
-    error_message = "A namespace with the provided name already exists"
-    assert error_message in response.json()["name"]
+    assert response.json() == expected_response
 
 
 @pytest.mark.django_db
@@ -135,8 +139,8 @@ def test_create_team_with_service_account(api_client: APIClient, service_account
     api_client.force_authenticate(service_account.user)
     assert Team.objects.filter(name="CoolestTeamNameEver").count() == 0
     response = make_request(api_client, "CoolestTeamNameEver")
+    expected_response = {"non_field_errors": ["Service accounts cannot create teams"]}
 
     assert response.status_code == 400
-    error_message = "Service accounts cannot create teams"
-    assert error_message in response.json()["non_field_errors"]
+    assert response.json() == expected_response
     assert Team.objects.filter(name="CoolestTeamNameEver").count() == 0

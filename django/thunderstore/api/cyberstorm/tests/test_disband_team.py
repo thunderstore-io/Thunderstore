@@ -39,7 +39,7 @@ def test_disband_team_fail_because_team_doesnt_exist(
 
 
 @pytest.mark.django_db
-def test_disband_team__fails_because_user_is_not_authenticated(
+def test_disband_team_fail_because_user_is_not_authenticated(
     api_client: APIClient,
     team: Team,
 ):
@@ -60,8 +60,8 @@ def test_disband_team_fail_because_user_is_not_owner(
     TeamMemberFactory(team=team, user=user, role="member")
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {"detail": "You do not have permission to disband this team."}
-    assert response.status_code == 403
+    expected_response = {"non_field_errors": ["Must be an owner to disband team"]}
+    assert response.status_code == 400
     assert response.json() == expected_response
 
 
@@ -73,6 +73,6 @@ def test_disband_team_fail_because_user_cannot_access_team(
 ):
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {"detail": "You do not have permission to access this team."}
-    assert response.status_code == 403
+    expected_response = {"non_field_errors": ["Must be a member to access team"]}
+    assert response.status_code == 400
     assert response.json() == expected_response

@@ -53,17 +53,3 @@ class CyberstormCreateTeamSerializer(serializers.Serializer):
     name = serializers.CharField(
         max_length=64, validators=[PackageReferenceComponentValidator("Author name")]
     )
-
-    def validate_name(self, value: str) -> str:
-        if Team.objects.filter(name__iexact=value).exists():
-            raise ValidationError("A team with the provided name already exists")
-        if Namespace.objects.filter(name__iexact=value).exists():
-            raise ValidationError("A namespace with the provided name already exists")
-        return value
-
-    def validate(self, attrs):
-        attrs = super().validate(attrs)
-        user = self.context["request"].user
-        if getattr(user, "service_account", None) is not None:
-            raise ValidationError("Service accounts cannot create teams")
-        return attrs
