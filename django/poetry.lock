@@ -1705,6 +1705,23 @@ files = [
 ]
 
 [[package]]
+name = "ts-moderation"
+version = "0.1.0"
+description = ""
+category = "dev"
+optional = false
+python-versions = "^3.8"
+files = []
+develop = true
+
+[package.dependencies]
+Django = "*"
+
+[package.source]
+type = "directory"
+url = "../python-packages/ts-moderation"
+
+[[package]]
 name = "mypy"
 version = "0.812"
 description = "Optional static typing for Python"
