@@ -4,6 +4,7 @@ from django.views.generic.edit import FormView
 
 from thunderstore.core.mixins import RequireAuthenticationMixin
 from thunderstore.frontend.views import SettingsViewMixin
+from thunderstore.repository.models import TeamMember
 
 
 class LinkedAccountDisconnectForm(forms.Form):
@@ -58,6 +59,12 @@ class DeleteAccountView(SettingsViewMixin, RequireAuthenticationMixin, FormView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_title"] = "Delete Account"
+        context["team_names"] = ", ".join(
+            TeamMember.objects.filter(
+                user=self.request.user,
+                team__is_active=True,
+            ).values_list("team__name", flat=True)
+        )
         return context
 
     def get_form_kwargs(self, *args, **kwargs):
