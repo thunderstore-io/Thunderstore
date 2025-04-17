@@ -16,6 +16,7 @@ from thunderstore.account.forms import (
     CreateServiceAccountForm,
     DeleteServiceAccountForm,
 )
+from thunderstore.api.cyberstorm.services import team as team_service
 from thunderstore.core.mixins import RequireAuthenticationMixin
 from thunderstore.core.utils import capture_exception
 from thunderstore.frontend.views import SettingsViewMixin
@@ -26,7 +27,6 @@ from thunderstore.repository.forms import (
     DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
-    TeamMemberRole,
 )
 from thunderstore.repository.models import Team, TeamMember, reverse
 
@@ -152,8 +152,13 @@ class SettingsTeamCreateView(
 
     @transaction.atomic
     def form_valid(self, form):
-        instance = form.save()
-        return redirect(instance.settings_url)
+        try:
+            team_name = form.cleaned_data["name"]
+            team_service.create_team(self.request.user, team_name)
+        except ValidationError as e:
+            form.add_error(None, e)
+            return self.form_invalid(form)
+        return redirect(reverse("settings.teams"))
 
 
 class SettingsTeamDisbandView(TeamDetailView, UserFormKwargs, FormView):
@@ -174,7 +179,11 @@ class SettingsTeamDisbandView(TeamDetailView, UserFormKwargs, FormView):
 
     @transaction.atomic
     def form_valid(self, form):
-        form.save()
+        try:
+            team_service.disband_team(self.request.user, self.object.name)
+        except ValidationError as e:
+            form.add_error(None, e)
+            return self.form_invalid(form)
         return redirect(reverse("settings.teams"))
 
 

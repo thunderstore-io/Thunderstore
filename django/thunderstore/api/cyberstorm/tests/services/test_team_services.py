@@ -33,6 +33,40 @@ def test_disband_team_user_cannot_disband(team_member):
 
 
 @pytest.mark.django_db
+def test_disband_team_with_packages(package, team_owner):
+    team = team_owner.team
+    package.owner = team
+    package.save()
+
+    with pytest.raises(ValidationError, match="Unable to disband teams with packages"):
+        team_services.disband_team(team_owner.user, team.name)
+
+
+@pytest.mark.django_db
+def test_disband_team_user_is_service_account(service_account, team):
+    service_account_user = service_account.user
+    with pytest.raises(
+        ValidationError, match="Service accounts are unable to perform this action"
+    ):
+        team_services.disband_team(service_account_user, team.name)
+
+
+@pytest.mark.django_db
+def test_disband_team_user_not_authenticated(team):
+    with pytest.raises(ValidationError, match="Must be authenticated"):
+        team_services.disband_team(None, team.name)
+
+
+@pytest.mark.django_db
+def test_disband_team_user_not_active(user, team):
+    user.is_active = False
+    user.save()
+
+    with pytest.raises(ValidationError, match="User has been deactivated"):
+        team_services.disband_team(user, team.name)
+
+
+@pytest.mark.django_db
 def test_create_team_name_exists_in_team(user):
     Team.objects.create(name="existing_team")
 
@@ -67,3 +101,20 @@ def test_create_team_success(user):
     assert Team.objects.filter(name=team_name).exists()
     assert team.name == team_name
     assert team.members.filter(user=user, role=TeamMemberRole.owner).exists()
+
+
+@pytest.mark.django_db
+def test_create_team_user_not_authenticated():
+    error_msg = "Must be authenticated to create teams"
+    with pytest.raises(ValidationError, match=error_msg):
+        team_services.create_team(None, "new_team")
+
+
+@pytest.mark.django_db
+def test_create_team_user_not_active(user):
+    user.is_active = False
+    user.save()
+
+    error_msg = "Must be authenticated to create teams"
+    with pytest.raises(ValidationError, match=error_msg):
+        team_services.create_team(user, "new_team")
