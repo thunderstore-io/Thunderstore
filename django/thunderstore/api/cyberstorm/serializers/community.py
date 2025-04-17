@@ -16,6 +16,7 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     community_icon_url = serializers.CharField(required=False)
     total_download_count = serializers.SerializerMethodField()
     total_package_count = serializers.SerializerMethodField()
+    has_mod_manager_support = serializers.BooleanField()
 
     def get_total_download_count(self, obj) -> int:
         return obj.aggregated.download_count
