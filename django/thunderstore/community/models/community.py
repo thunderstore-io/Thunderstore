@@ -259,9 +259,28 @@ class Community(TimestampMixin, models.Model):
         ):  # TODO: Maybe remove
             raise ValidationError("Must be a moderator or higher to manage packages")
 
+    def ensure_user_can_manage_categories(self, user: Optional[UserType]) -> None:
+        user = validate_user(user)
+        membership = self.get_membership_for_user(user)
+
+        allowed_roles = [
+            CommunityMemberRole.janitor,
+            CommunityMemberRole.moderator,
+            CommunityMemberRole.owner,
+        ]
+
+        if (not membership or membership.role not in allowed_roles) and not (
+            user.is_superuser or user.is_staff
+        ):  # TODO: Maybe remove
+            raise ValidationError("Must be a janitor or higher to manage categories")
+
     @lru_cache
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_moderate_packages(user))
+
+    @lru_cache
+    def can_user_manage_categories(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_manage_categories(user))
 
     @staticmethod
     def should_use_old_urls(instance: Optional["Community"]) -> bool:

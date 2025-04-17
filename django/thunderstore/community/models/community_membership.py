@@ -9,6 +9,7 @@ from thunderstore.core.utils import ChoiceEnum
 class CommunityMemberRole(ChoiceEnum):
     owner = "owner"
     moderator = "moderator"
+    janitor = "janitor"
     member = "member"
 
 
