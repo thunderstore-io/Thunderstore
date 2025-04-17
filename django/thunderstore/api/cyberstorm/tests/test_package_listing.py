@@ -238,6 +238,7 @@ def test_package_listing_view__returns_info(api_client: APIClient) -> None:
     assert actual["team"]["name"] == listing.package.owner.name
     assert len(actual["team"]["members"]) == 0
     assert actual["website_url"] == latest.website_url
+    assert actual["version_count"] == listing.package.version_count
 
 
 @pytest.mark.django_db

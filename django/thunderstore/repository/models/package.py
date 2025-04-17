@@ -183,6 +183,10 @@ class Package(AdminLinkMixin, models.Model):
         )
 
     @cached_property
+    def version_count(self):
+        return self.versions.filter(is_active=True).count()
+
+    @cached_property
     def downloads(self):
         # TODO: Caching
         return self.versions.aggregate(downloads=Sum("downloads"))["downloads"]
