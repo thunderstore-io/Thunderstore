@@ -35,3 +35,16 @@ class VisibilityFlags(models.Model):
             if isinstance(field, models.BooleanField) and getattr(self, field.name)
         )
         return ", ".join(flag_fields) or "None"
+
+    def bitstring(self) -> str:
+        fields = [
+            self.public_list,
+            self.public_detail,
+            self.owner_list,
+            self.owner_detail,
+            self.moderator_list,
+            self.moderator_detail,
+            self.admin_list,
+            self.admin_detail,
+        ]
+        return "".join("1" if field else "0" for field in fields)

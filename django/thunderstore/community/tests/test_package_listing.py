@@ -18,6 +18,7 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
 
@@ -425,3 +426,102 @@ def test_package_listing_has_mod_manager_support(mod_manager_support: bool) -> N
     community = CommunityFactory(has_mod_manager_support=mod_manager_support)
     package_listing = PackageListingFactory(community_=community)
     assert package_listing.has_mod_manager_support == mod_manager_support
+
+
+# TODO: visibility tests will need to be rewritten once the default visibility is no longer public
+
+
+def assert_listing_is_public(listing: PackageListing) -> None:
+    assert listing.visibility.public_list is True
+    assert listing.visibility.public_detail is True
+    assert listing.visibility.owner_list is True
+    assert listing.visibility.owner_detail is True
+    assert listing.visibility.moderator_list is True
+    assert listing.visibility.moderator_detail is True
+
+
+def assert_listing_is_not_public(listing: PackageListing) -> None:
+    assert listing.visibility.public_list is False
+    assert listing.visibility.public_detail is False
+    assert listing.visibility.owner_list is True
+    assert listing.visibility.owner_detail is True
+    assert listing.visibility.moderator_list is True
+    assert listing.visibility.moderator_detail is True
+
+
+def assert_listing_is_not_visible(listing: PackageListing) -> None:
+    assert listing.visibility.public_list is False
+    assert listing.visibility.public_detail is False
+    assert listing.visibility.owner_list is False
+    assert listing.visibility.owner_detail is False
+    assert listing.visibility.moderator_list is False
+    assert listing.visibility.moderator_detail is False
+
+
+@pytest.mark.django_db
+def test_package_listing_visibility_updates_with_review_status(
+    active_package_listing: PackageListing,
+) -> None:
+    assert_listing_is_public(active_package_listing)
+
+    active_package_listing.review_status = PackageListingReviewStatus.rejected
+    active_package_listing.save()
+
+    assert_listing_is_not_public(active_package_listing)
+
+    active_package_listing.review_status = PackageListingReviewStatus.approved
+    active_package_listing.save()
+
+    assert_listing_is_public(active_package_listing)
+
+
+@pytest.mark.django_db
+def test_package_listing_visibility_updates_with_package_is_active(
+    active_package_listing: PackageListing,
+) -> None:
+    assert_listing_is_public(active_package_listing)
+
+    package = active_package_listing.package
+
+    package.is_active = False
+    package.save()
+
+    active_package_listing.refresh_from_db()
+    assert_listing_is_not_visible(active_package_listing)
+
+    package.is_active = True
+    package.save()
+
+    active_package_listing.refresh_from_db()
+    assert_listing_is_public(active_package_listing)
+
+
+@pytest.mark.django_db
+def test_package_listing_visibility_updates_when_all_versions_not_visible(
+    active_package_listing: PackageListing,
+) -> None:
+    assert_listing_is_public(active_package_listing)
+
+    package = active_package_listing.package
+
+    for version in package.versions.all():
+        version.review_status = PackageVersionReviewStatus.rejected
+        version.save()
+
+    active_package_listing.refresh_from_db()
+    assert_listing_is_not_public(active_package_listing)
+
+    for version in package.versions.all():
+        version.is_active = False
+        version.save()
+
+    active_package_listing.refresh_from_db()
+    assert_listing_is_not_visible(active_package_listing)
+
+    for version in package.versions.all():
+        version.review_status = PackageVersionReviewStatus.approved
+        version.is_active = True
+        version.save()
+
+    active_package_listing.refresh_from_db()
+    assert_listing_is_public(active_package_listing)
