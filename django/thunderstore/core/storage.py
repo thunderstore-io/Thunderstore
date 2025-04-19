@@ -1,6 +1,7 @@
 from typing import IO, Any, Dict, Optional, TypedDict
 
 from django.conf import settings
+from django.core.cache import cache
 from django.utils.deconstruct import deconstructible
 from storages.backends.s3boto3 import S3Boto3Storage  # type: ignore
 
@@ -46,11 +47,20 @@ class MirroredS3Storage(S3Boto3Storage):
         Calling .save() closes the file, so use temporary copies for
         mirrors and call the main bucket with the actual file last.
         """
-        for storage_mirror in self.mirrors:
-            with TemporarySpooledCopy(content) as tmp_content:
-                storage_mirror.save(name, tmp_content, max_length)
 
-        return super().save(name, content, max_length)
+        cache_key = f"cache_mirror_storage_{name}"
+
+        if not cache.add(cache_key, "LOCKED", timeout=5):
+            raise Exception("Another save operation is in progress for this file.")
+
+        try:
+            for storage_mirror in self.mirrors:
+                with TemporarySpooledCopy(content) as tmp_content:
+                    storage_mirror.save(name, tmp_content, max_length)
+
+            return super().save(name, content, max_length)
+        finally:
+            cache.delete(cache_key)
 
     def delete(self, name: str) -> None:
         """
