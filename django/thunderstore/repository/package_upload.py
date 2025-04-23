@@ -18,6 +18,7 @@ from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.markdown import validate_markdown
 from thunderstore.repository.validation.zip import (
     check_duplicate_filenames,
+    check_exceeds_max_file_count_per_zip,
     check_unsafe_paths,
     check_zero_offset,
 )
@@ -106,10 +107,24 @@ class PackageUploadForm(forms.ModelForm):
         except ValidationError as e:
             self.add_error(None, e)
 
-    def clean_file(self):
+    def clean_team(self):
+        team = self.cleaned_data["team"]
+        team.ensure_can_upload_package(self.user)
+        return team
+
+    def clean_community_categories(self):
+        return clean_community_categories(self.cleaned_data.get("community_categories"))
+
+    def clean(self):
+        self.cleaned_data = super().clean()
         file = self.cleaned_data.get("file", None)
+        team = self.cleaned_data.get("team", None)
+
         if not file:
             raise ValidationError("Must upload a file")
+
+        if not team:
+            raise ValidationError("A team must be selected")
 
         if file.size > MAX_PACKAGE_SIZE:
             raise ValidationError(
@@ -143,6 +158,9 @@ class PackageUploadForm(forms.ModelForm):
                         "The zip includes multiple files with the same file name."
                     )
 
+                if check_exceeds_max_file_count_per_zip(unzip.infolist(), team):
+                    raise ValidationError("There are too many files in the zip.")
+
                 try:
                     manifest = unzip.read("manifest.json")
                     self.validate_manifest(manifest)
@@ -169,16 +187,6 @@ class PackageUploadForm(forms.ModelForm):
 
         except (BadZipFile, NotImplementedError):
             raise ValidationError("Invalid zip file format")
-
-        return file
-
-    def clean_team(self):
-        team = self.cleaned_data["team"]
-        team.ensure_can_upload_package(self.user)
-        return team
-
-    def clean_community_categories(self):
-        return clean_community_categories(self.cleaned_data.get("community_categories"))
 
     @transaction.atomic
     def save(self, *args, **kwargs) -> PackageVersion:
