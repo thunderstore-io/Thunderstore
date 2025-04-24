@@ -106,7 +106,7 @@ class ResponseSerializer(serializers.Serializer):
     latest_version_number = serializers.CharField(
         source="package.latest.version_number",
     )
-    version_count = serializers.IntegerField(source="package.version_count")
+    version_count = serializers.IntegerField()
     name = serializers.CharField(source="package.name")
     namespace = serializers.CharField(source="package.namespace.name")
     rating_count = serializers.IntegerField(min_value=0)
@@ -172,6 +172,9 @@ def get_custom_package_listing(
             has_changelog=ExpressionWrapper(
                 Q(package__latest__changelog__isnull=False),
                 output_field=BooleanField(),
+            ),
+            version_count=Count(
+                "package__versions", filter=Q(package__versions__is_active=True)
             ),
         )
     )
