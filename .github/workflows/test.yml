@@ -96,9 +96,9 @@ jobs:
           DJANGO_IMAGE="thunderstore:${GITHUB_SHA}" docker compose -f docker/docker-compose.pytest.yml down
       - name: Upload coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage_results/coverage.xml
+          files: ./coverage_results/coverage.xml
   test-mypy:
     name: Test mypy
     runs-on: ubuntu-latest
