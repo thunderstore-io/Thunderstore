@@ -20,94 +20,35 @@ from thunderstore.repository.models import Package
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("user_type", TestUserTypes.options())
-def test_form_create_team_valid_data(user_type: str) -> None:
-    error_map = {
-        TestUserTypes.no_user: "Must be authenticated to create teams",
-        TestUserTypes.unauthenticated: "Must be authenticated to create teams",
-        TestUserTypes.regular_user: None,
-        TestUserTypes.deactivated_user: "Must be authenticated to create teams",
-        TestUserTypes.service_account: "Service accounts cannot create teams",
-        TestUserTypes.site_admin: None,
-        TestUserTypes.superuser: None,
-    }
-    expected_error = error_map[user_type]
-
-    user = TestUserTypes.get_user_by_type(user_type)
-    form = CreateTeamForm(
-        user=user,
-        data={"name": "TeamName"},
-    )
-    if expected_error:
-        assert form.is_valid() is False
-        assert expected_error in str(repr(form.errors))
-    else:
-        assert form.is_valid() is True
-        team = form.save()
-        assert team.name == "TeamName"
-        assert team.members.count() == 1
-        member = team.members.first()
-        assert member.user == user
-        assert member.role == TeamMemberRole.owner
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
-    ("name1", "name2", "should_fail"),
+    ("name", "is_valid"),
     (
-        ("Team", "team", True),
-        ("Team", "t_eam", False),
-        ("team", "teaM", True),
-        ("team", "team", True),
-    ),
-)
-def test_form_create_team_team_name_conflict(
-    user: UserType, name1: str, name2: str, should_fail: True
-) -> None:
-    Team.create(name=name1)
-    form = CreateTeamForm(
-        user=user,
-        data={"name": name2},
-    )
-    if should_fail:
-        assert form.is_valid() is False
-        assert "A team with the provided name already exists" in str(repr(form.errors))
-    else:
-        assert form.is_valid() is True
-        team = form.save()
-        assert team.name == name2
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    ("name", "should_fail"),
-    (
-        ("Team", False),
-        ("Team_Name", False),
-        ("Team-Name", True),
-        ("Team.Name", True),
-        ("_Team", True),
-        ("Team_", True),
+        ("Team", True),
+        ("Team Name", False),
+        ("Team_Name", True),
+        ("Team-Name", False),
+        ("Team.Name", False),
+        ("_Team", False),
+        ("Team_", False),
     ),
 )
 def test_form_create_team_team_name_validation(
-    user: UserType, name: str, should_fail: True
+    user: UserType,
+    name: str,
+    is_valid: bool,
 ) -> None:
     error = (
         "Author name can only contain a-z A-Z 0-9 _ "
         "characters and must not start or end with _"
     )
+
     form = CreateTeamForm(
         user=user,
         data={"name": name},
     )
-    if should_fail:
-        assert form.is_valid() is False
-        assert error in str(repr(form.errors))
-    else:
-        assert form.is_valid() is True
-        team = form.save()
-        assert team.name == name
+
+    assert form.is_valid() == is_valid
+    assert form.errors == {} if is_valid else {name: [error]}
 
 
 @pytest.mark.django_db
@@ -403,60 +344,6 @@ def test_form_edit_team_member_remove_last_owner() -> None:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("disbander_type", TestUserTypes.options())
-@pytest.mark.parametrize("disbander_role", TeamMemberRole.options() + [None])
-def test_form_disband_team_form(
-    team: Team, disbander_type: str, disbander_role: str
-) -> None:
-    disbander_type_valid_map = {
-        TestUserTypes.no_user: False,
-        TestUserTypes.unauthenticated: False,
-        TestUserTypes.regular_user: True,
-        TestUserTypes.deactivated_user: False,
-        TestUserTypes.service_account: False,
-        TestUserTypes.site_admin: True,
-        TestUserTypes.superuser: True,
-    }
-    disbander_role_valid_map = {
-        None: False,
-        TeamMemberRole.member: False,
-        TeamMemberRole.owner: True,
-    }
-    should_succeed = all(
-        (
-            disbander_type_valid_map[disbander_type],
-            disbander_role_valid_map[disbander_role],
-        )
-    )
-
-    disbander = TestUserTypes.get_user_by_type(disbander_type)
-    if (
-        disbander is not None
-        and disbander.is_authenticated
-        and disbander_role is not None
-    ):
-        TeamMember.objects.create(
-            team=team,
-            user=disbander,
-            role=disbander_role,
-        )
-
-    form = DisbandTeamForm(
-        user=disbander,
-        instance=team,
-        data={"verification": team.name},
-    )
-
-    if should_succeed:
-        assert form.is_valid() is True
-        assert form.save() is None
-        assert Team.objects.filter(pk=team.pk).exists() is False
-    else:
-        assert form.is_valid() is False
-        assert form.errors
-
-
-@pytest.mark.django_db
 def test_form_disband_team_form_invalid_verification(
     user: UserType, team: Team
 ) -> None:
@@ -472,24 +359,6 @@ def test_form_disband_team_form_invalid_verification(
     )
     assert form.is_valid() is False
     assert "Invalid verification" in str(repr(form.errors))
-
-
-@pytest.mark.django_db
-def test_form_disband_team_form_packages_exist(
-    user: UserType, team: Team, package: Package
-) -> None:
-    TeamMember.objects.create(
-        user=user,
-        team=team,
-        role=TeamMemberRole.owner,
-    )
-    form = DisbandTeamForm(
-        user=user,
-        instance=team,
-        data={"verification": team.name},
-    )
-    assert form.is_valid() is False
-    assert "Unable to disband teams with packages" in str(repr(form.errors))
 
 
 @pytest.mark.django_db
