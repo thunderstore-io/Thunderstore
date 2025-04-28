@@ -1,4 +1,3 @@
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404
@@ -6,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.api.utils import conditional_swagger_auto_schema
 from thunderstore.repository.models import Namespace, Package
 
 
@@ -21,9 +21,10 @@ class DeprecatePackageAPIView(APIView):
         package = get_object_or_404(Package, name=package_name, namespace=namespace)
         return package
 
-    @swagger_auto_schema(
-        operation_id="cyberstorm.package.deprecate",
+    @conditional_swagger_auto_schema(
         request_body=DeprecatePackageSerializer,
+        responses={200: "Success"},
+        operation_id="cyberstorm.package.deprecate",
         tags=["cyberstorm"],
     )
     def post(self, request, namespace_id: str, package_name: str) -> Response:
