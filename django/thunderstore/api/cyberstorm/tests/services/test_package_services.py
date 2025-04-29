@@ -1,15 +1,15 @@
 import pytest
-from thunderstore.core.exceptions import PermissionValidationError
-from rest_framework.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied
 
+from conftest import TestUserTypes
 from thunderstore.api.cyberstorm.services.package import (
     deprecate_package,
     rate_package,
     undeprecate_package,
 )
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.repository.models import TeamMember, TeamMemberRole
-from conftest import TestUserTypes
 
 
 @pytest.mark.django_db

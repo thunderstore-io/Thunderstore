@@ -1,14 +1,13 @@
 import pytest
-from thunderstore.core.exceptions import PermissionValidationError
 
+from conftest import TestUserTypes
 from thunderstore.api.cyberstorm.services.package_listing import (
     approve_package_listing,
     reject_package_listing,
     update_categories,
 )
 from thunderstore.community.consts import PackageListingReviewStatus
-
-from conftest import TestUserTypes
+from thunderstore.core.exceptions import PermissionValidationError
 
 
 @pytest.mark.django_db
