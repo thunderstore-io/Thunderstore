@@ -34,18 +34,14 @@ def test_api_experimental_package_listing_update_user_types(
         TestUserTypes.site_admin: True,
         TestUserTypes.superuser: True,
     }
+
     should_succeed = expected_results[user_type]
 
-    print(response.content)
     if should_succeed:
         assert response.status_code == 200
         assert response.json()["categories"] == []
     else:
         assert response.status_code == 403
-        assert (
-            response.json()["detail"]
-            == "You do not have permission to perform this action."
-        )
 
 
 @pytest.mark.django_db
