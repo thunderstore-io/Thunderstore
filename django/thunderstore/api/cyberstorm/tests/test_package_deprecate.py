@@ -1,16 +1,12 @@
 import json
-from unittest.mock import patch
 
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from conftest import TestUserTypes
 from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
-
-CAN_USER_MANAGE_DEPRECATION_PATH = (
-    "thunderstore.repository.models.package.Package.can_user_manage_deprecation"
-)
 
 
 def get_deprecate_package_url(listing: PackageListing) -> str:
@@ -20,60 +16,97 @@ def get_deprecate_package_url(listing: PackageListing) -> str:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("is_deprecated", [True, False])
-@patch(CAN_USER_MANAGE_DEPRECATION_PATH)
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
 def test_deprecate_package(
-    mock_ensure_user_can_manage_deprecation,
     api_client: APIClient,
     user: UserType,
     active_package_listing: PackageListing,
-    is_deprecated: bool,
+    user_type: str,
 ) -> None:
-    mock_ensure_user_can_manage_deprecation.return_value = True
-    api_client.force_authenticate(user=user)
 
-    data = json.dumps({"deprecate": is_deprecated})
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    is_fake_user = user in TestUserTypes.fake_users()
+    is_unauthenticated = user_type == TestUserTypes.unauthenticated
+
+    if not is_fake_user and not is_unauthenticated:
+        api_client.force_authenticate(user=user)
+
+    data = json.dumps({"deprecate": True})
     url = get_deprecate_package_url(active_package_listing)
-
     response = api_client.post(url, data=data, content_type="application/json")
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {"message": "Success"}
 
-    active_package_listing.refresh_from_db()
-    assert active_package_listing.package.is_deprecated is is_deprecated
+    expected_status_code = {
+        TestUserTypes.no_user: status.HTTP_401_UNAUTHORIZED,
+        TestUserTypes.unauthenticated: status.HTTP_401_UNAUTHORIZED,
+        TestUserTypes.regular_user: status.HTTP_403_FORBIDDEN,
+        TestUserTypes.deactivated_user: status.HTTP_403_FORBIDDEN,
+        TestUserTypes.service_account: status.HTTP_403_FORBIDDEN,
+        TestUserTypes.site_admin: status.HTTP_200_OK,
+        TestUserTypes.superuser: status.HTTP_200_OK,
+    }
+
+    assert response.status_code == expected_status_code[user_type]
 
 
 @pytest.mark.django_db
-@patch(CAN_USER_MANAGE_DEPRECATION_PATH)
-def test_deprecate_package_permission_denied(
-    mock_ensure_user_can_manage_deprecation,
+def test_deprecate_package_404(
     api_client: APIClient,
     active_package_listing: PackageListing,
     user: UserType,
 ) -> None:
-    mock_ensure_user_can_manage_deprecation.return_value = False
+    active_package_listing.package.owner.add_member(user, role="owner")
     api_client.force_authenticate(user=user)
-
     data = json.dumps({"deprecate": True})
-    url = get_deprecate_package_url(active_package_listing)
+    url = "/api/cyberstorm/package/invalid_namespace/invalid_package/deprecate/"
 
     response = api_client.post(url, data=data, content_type="application/json")
-    expected_response = {"detail": "You do not have permission to perform this action."}
-
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json() == expected_response
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
-def test_deprecate_package_not_authenticated(
+def test_deprecate_package_invalid_payload(
     api_client: APIClient,
     active_package_listing: PackageListing,
+    user: UserType,
 ) -> None:
-    data = json.dumps({"deprecate": True})
+    active_package_listing.package.owner.add_member(user, role="owner")
+    api_client.force_authenticate(user=user)
+    data = json.dumps({"deprecate": "invalid_value"})
     url = get_deprecate_package_url(active_package_listing)
 
     response = api_client.post(url, data=data, content_type="application/json")
-    expected_response = {"detail": "Authentication credentials were not provided."}
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {"deprecate": ["Must be a valid boolean."]}
+
+
+@pytest.mark.django_db
+def test_deprecate_package_required_fields(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    user: UserType,
+) -> None:
+    active_package_listing.package.owner.add_member(user, role="owner")
+    api_client.force_authenticate(user=user)
+    url = get_deprecate_package_url(active_package_listing)
+
+    response = api_client.post(
+        url, data=json.dumps({}), content_type="application/json"
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {"deprecate": ["This field is required."]}
+
+
+@pytest.mark.django_db
+def test_deprecate_package_unauthenticated(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+) -> None:
+    url = get_deprecate_package_url(active_package_listing)
+    data = json.dumps({"deprecate": True})
+    response = api_client.post(url, data=data, content_type="application/json")
+    expect_response = {"detail": "Authentication credentials were not provided."}
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == expected_response
+    assert response.json() == expect_response

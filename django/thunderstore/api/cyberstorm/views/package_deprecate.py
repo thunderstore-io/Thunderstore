@@ -1,12 +1,15 @@
+from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.repository.models import Namespace, Package
+from thunderstore.api.cyberstorm.services.package import (
+    deprecate_package,
+    undeprecate_package,
+)
+from thunderstore.repository.models import Package
 
 
 class DeprecatePackageSerializer(serializers.Serializer):
@@ -16,9 +19,12 @@ class DeprecatePackageSerializer(serializers.Serializer):
 class DeprecatePackageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, namespace_id: str, package_name: str) -> Package:
-        namespace = get_object_or_404(Namespace, name=namespace_id)
-        package = get_object_or_404(Package, name=package_name, namespace=namespace)
+    def get_package(self, namespace_name: str, package_name: str) -> Package:
+        package = get_object_or_404(
+            Package.objects.active(),
+            namespace__name=namespace_name,
+            name=package_name,
+        )
         return package
 
     @swagger_auto_schema(
@@ -27,15 +33,14 @@ class DeprecatePackageAPIView(APIView):
         tags=["cyberstorm"],
     )
     def post(self, request, namespace_id: str, package_name: str) -> Response:
-        package = self.get_object(namespace_id, package_name)
-
-        if not package.can_user_manage_deprecation(self.request.user):
-            raise PermissionDenied()
-
         serializer = DeprecatePackageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         should_deprecate = serializer.validated_data["deprecate"]
-        package.deprecate() if should_deprecate else package.undeprecate()
+        package = self.get_package(namespace_id, package_name)
 
-        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+        if should_deprecate:
+            deprecate_package(package, request.user)
+        else:
+            undeprecate_package(package, request.user)
+
+        return Response(status=status.HTTP_200_OK)

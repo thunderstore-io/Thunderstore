@@ -7,8 +7,14 @@ from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package
 
 
+def get_package_rating_url(package: Package) -> str:
+    namespace_id = package.namespace.name
+    package_name = package.name
+    return f"/api/cyberstorm/package/{namespace_id}/{package_name}/rate/"
+
+
 @pytest.mark.django_db
-def test_package_rating_api_view__succeeds(
+def test_rate_package(
     api_client: APIClient,
     active_package: Package,
     user: UserType,
@@ -16,59 +22,63 @@ def test_package_rating_api_view__succeeds(
     api_client.force_authenticate(user)
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
-        json.dumps({"target_state": "rated"}),
+        get_package_rating_url(active_package),
+        data=json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
-    actual = response.json()
 
-    assert actual["state"] == "rated"
-    assert actual["score"] == 1
+    assert response.status_code == 200
+    assert response.json() == {
+        "state": "rated",
+        "score": 1,
+    }
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
-        json.dumps({"target_state": "unrated"}),
+        get_package_rating_url(active_package),
+        data=json.dumps({"target_state": "unrated"}),
         content_type="application/json",
     )
-    actual = response.json()
 
-    assert actual["state"] == "unrated"
-    assert actual["score"] == 0
+    assert response.status_code == 200
+    assert response.json() == {
+        "state": "unrated",
+        "score": 0,
+    }
 
 
 @pytest.mark.django_db
-def test_package_rating_api_view__returns_error_for_non_existent_package(
-    api_client: APIClient,
-    user: UserType,
-) -> None:
+def test_rate_package_404(api_client: APIClient, user: UserType) -> None:
     api_client.force_authenticate(user)
+
     response = api_client.post(
         f"/api/cyberstorm/package/BAD/BAD/rate/",
-        json.dumps({"target_state": "rated"}),
+        data=json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
-    actual = response.json()
 
-    assert actual["detail"] == "Not found."
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
 
 
 @pytest.mark.django_db
-def test_package_rating_api_view__returns_error_for_no_user(
+def test_rate_package_401(
     api_client: APIClient,
     active_package: Package,
 ) -> None:
     response = api_client.post(
-        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
-        json.dumps({"target_state": "rated"}),
+        get_package_rating_url(active_package),
+        data=json.dumps({"target_state": "rated"}),
         content_type="application/json",
     )
-    actual = response.json()
 
-    assert actual["detail"] == "Authentication credentials were not provided."
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Authentication credentials were not provided.",
+    }
 
 
 @pytest.mark.django_db
-def test_package_rating_api_view__returns_error_for_bad_data(
+def test_rate_package_required_field(
     api_client: APIClient,
     active_package: Package,
     user: UserType,
@@ -76,19 +86,30 @@ def test_package_rating_api_view__returns_error_for_bad_data(
     api_client.force_authenticate(user)
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
-        json.dumps({"bad_data": "rated"}),
+        get_package_rating_url(active_package),
+        data=json.dumps({}),
         content_type="application/json",
     )
-    actual = response.json()
 
-    assert actual["target_state"] == ["This field is required."]
+    assert response.status_code == 400
+    assert response.json() == {
+        "target_state": ["This field is required."],
+    }
+
+
+@pytest.mark.django_db
+def test_rate_package_invalid_target_state(
+    api_client: APIClient,
+    active_package: Package,
+    user: UserType,
+) -> None:
+    api_client.force_authenticate(user)
 
     response = api_client.post(
-        f"/api/cyberstorm/package/{active_package.namespace}/{active_package.name}/rate/",
-        json.dumps({"target_state": "bad"}),
+        get_package_rating_url(active_package),
+        data=json.dumps({"target_state": "invalid_state"}),
         content_type="application/json",
     )
-    actual = response.json()
 
-    assert actual["non_field_errors"] == ["Invalid target_state"]
+    assert response.status_code == 400
+    assert response.json() == {"non_field_errors": ["Invalid target_state"]}
