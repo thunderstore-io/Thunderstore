@@ -37,8 +37,8 @@ class PackageListingUpdateApiView(GenericAPIView):
         request_serializer.is_valid(raise_exception=True)
 
         update_categories(
+            agent=request.user,
             categories=request_serializer.validated_data["categories"],
-            user=request.user,
             listing=listing,
         )
 
@@ -70,9 +70,9 @@ class PackageListingRejectApiView(GenericAPIView):
         request_serializer.is_valid(raise_exception=True)
 
         reject_package_listing(
+            agent=request.user,
             reason=request_serializer.validated_data["rejection_reason"],
             notes=request_serializer.validated_data.get("internal_notes"),
-            agent=request.user,
             listing=listing,
         )
 
@@ -103,8 +103,8 @@ class PackageListingApproveApiView(GenericAPIView):
         request_serializer.is_valid(raise_exception=True)
 
         approve_package_listing(
-            notes=request_serializer.validated_data.get("internal_notes"),
             agent=request.user,
+            notes=request_serializer.validated_data.get("internal_notes"),
             listing=listing,
         )
 

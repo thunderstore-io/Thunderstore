@@ -33,11 +33,11 @@ def test_update_categories(
     if not can_moderate:
         with pytest.raises(PermissionValidationError):
             update_categories(
-                categories=categories, user=user, listing=active_package_listing
+                agent=user, categories=categories, listing=active_package_listing
             )
     else:
         update_categories(
-            categories=categories, user=user, listing=active_package_listing
+            agent=user, categories=categories, listing=active_package_listing
         )
         active_package_listing.refresh_from_db()
         assert active_package_listing.categories.count() == 1
@@ -63,16 +63,16 @@ def test_reject_package_listing(active_package_listing, user_role, can_reject):
     if not can_reject:
         with pytest.raises(PermissionValidationError):
             reject_package_listing(
+                agent=agent,
                 reason="Inappropriate content",
                 notes="This package contains inappropriate content.",
-                agent=agent,
                 listing=active_package_listing,
             )
     else:
         reject_package_listing(
+            agent=agent,
             reason="Inappropriate content",
             notes="This package contains inappropriate content.",
-            agent=agent,
             listing=active_package_listing,
         )
         active_package_listing.refresh_from_db()
@@ -98,14 +98,14 @@ def test_approve_package_listing(active_package_listing, user_role, can_approve)
     if not can_approve:
         with pytest.raises(PermissionValidationError):
             approve_package_listing(
-                notes="This package is approved.",
                 agent=agent,
+                notes="This package is approved.",
                 listing=active_package_listing,
             )
     else:
         approve_package_listing(
-            notes="This package is approved.",
             agent=agent,
+            notes="This package is approved.",
             listing=active_package_listing,
         )
         active_package_listing.refresh_from_db()
@@ -118,8 +118,8 @@ def test_approve_package_listing(active_package_listing, user_role, can_approve)
 def test_approve_package_listing_no_community_membership(active_package_listing, user):
     with pytest.raises(PermissionValidationError):
         approve_package_listing(
-            notes="This package is approved.",
             agent=user,
+            notes="This package is approved.",
             listing=active_package_listing,
         )
 
@@ -132,7 +132,7 @@ def test_update_categories_no_community_membership(
 
     with pytest.raises(PermissionValidationError):
         update_categories(
-            categories=categories, user=user, listing=active_package_listing
+            agent=user, categories=categories, listing=active_package_listing
         )
 
 
@@ -140,8 +140,8 @@ def test_update_categories_no_community_membership(
 def test_reject_package_listing_no_community_membership(active_package_listing, user):
     with pytest.raises(PermissionValidationError):
         reject_package_listing(
+            agent=user,
             reason="Inappropriate content",
             notes="This package contains inappropriate content.",
-            agent=user,
             listing=active_package_listing,
         )

@@ -9,11 +9,11 @@ from thunderstore.repository.views.package._utils import get_package_listing_or_
 
 @transaction.atomic
 def update_categories(
-    categories: list, user: UserType, listing: PackageListing
+    agent: UserType, categories: list, listing: PackageListing
 ) -> None:
     try:
-        listing.ensure_update_categories_permission(user)
-        listing.update_categories(agent=user, categories=categories)
+        listing.ensure_update_categories_permission(agent)
+        listing.update_categories(agent=agent, categories=categories)
     except ValidationError as e:
         raise PermissionValidationError(e.message)
 
@@ -26,9 +26,9 @@ def update_categories(
 
 @transaction.atomic
 def reject_package_listing(
+    agent: UserType,
     reason: str,
     notes: str,
-    agent: UserType,
     listing: PackageListing,
 ) -> None:
     try:
@@ -49,7 +49,7 @@ def reject_package_listing(
 
 @transaction.atomic
 def approve_package_listing(
-    notes: str, agent: UserType, listing: PackageListing
+    agent: UserType, notes: str, listing: PackageListing
 ) -> None:
     try:
         listing.community.ensure_user_can_moderate_packages(agent)

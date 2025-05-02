@@ -53,7 +53,7 @@ class UpdatePackageListingCategoriesAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         categories = serializer.validated_data["categories"]
-        update_categories(categories=categories, user=request.user, listing=listing)
+        update_categories(agent=request.user, categories=categories, listing=listing)
 
         response_serializer = PackageListingCategoriesSerializer(instance=listing)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -80,9 +80,9 @@ class RejectPackageListingAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         reject_package_listing(
+            agent=request.user,
             reason=serializer.validated_data["rejection_reason"],
             notes=serializer.validated_data.get("internal_notes"),
-            agent=request.user,
             listing=listing,
         )
 
@@ -110,8 +110,8 @@ class ApprovePackageListingAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         approve_package_listing(
-            notes=serializer.validated_data.get("internal_notes"),
             agent=request.user,
+            notes=serializer.validated_data.get("internal_notes"),
             listing=listing,
         )
 
