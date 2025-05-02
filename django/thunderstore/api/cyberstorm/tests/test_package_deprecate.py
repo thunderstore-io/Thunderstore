@@ -5,25 +5,32 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from conftest import TestUserTypes
-from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
+from thunderstore.repository.models import Package
 
 
-def get_deprecate_package_url(listing: PackageListing) -> str:
-    namespace_id = listing.package.namespace.name
-    package_name = listing.package.name
+def get_deprecate_package_url(package: Package) -> str:
+    namespace_id = package.namespace.name
+    package_name = package.name
     return f"/api/cyberstorm/package/{namespace_id}/{package_name}/deprecate/"
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("user_type", TestUserTypes.options())
-def test_deprecate_package(
+@pytest.mark.parametrize(
+    "user_type, deprecate_value",
+    [
+        (user_type, deprecate_value)
+        for user_type in TestUserTypes.options()
+        for deprecate_value in [True, False]
+    ],
+)
+def test_deprecate_package_user_roles(
     api_client: APIClient,
     user: UserType,
-    active_package_listing: PackageListing,
+    active_package: Package,
     user_type: str,
+    deprecate_value: bool,
 ) -> None:
-
     user = TestUserTypes.get_user_by_type(user_type)
 
     is_fake_user = user in TestUserTypes.fake_users()
@@ -32,8 +39,8 @@ def test_deprecate_package(
     if not is_fake_user and not is_unauthenticated:
         api_client.force_authenticate(user=user)
 
-    data = json.dumps({"deprecate": True})
-    url = get_deprecate_package_url(active_package_listing)
+    data = json.dumps({"deprecate": deprecate_value})
+    url = get_deprecate_package_url(active_package)
     response = api_client.post(url, data=data, content_type="application/json")
 
     expected_status_code = {
@@ -48,14 +55,18 @@ def test_deprecate_package(
 
     assert response.status_code == expected_status_code[user_type]
 
+    if response.status_code == status.HTTP_200_OK:
+        active_package.refresh_from_db()
+        assert active_package.is_deprecated == deprecate_value
+
 
 @pytest.mark.django_db
 def test_deprecate_package_404(
     api_client: APIClient,
-    active_package_listing: PackageListing,
+    active_package: Package,
     user: UserType,
 ) -> None:
-    active_package_listing.package.owner.add_member(user, role="owner")
+    active_package.owner.add_member(user, role="owner")
     api_client.force_authenticate(user=user)
     data = json.dumps({"deprecate": True})
     url = "/api/cyberstorm/package/invalid_namespace/invalid_package/deprecate/"
@@ -68,13 +79,13 @@ def test_deprecate_package_404(
 @pytest.mark.django_db
 def test_deprecate_package_invalid_payload(
     api_client: APIClient,
-    active_package_listing: PackageListing,
+    active_package: Package,
     user: UserType,
 ) -> None:
-    active_package_listing.package.owner.add_member(user, role="owner")
+    active_package.owner.add_member(user, role="owner")
     api_client.force_authenticate(user=user)
     data = json.dumps({"deprecate": "invalid_value"})
-    url = get_deprecate_package_url(active_package_listing)
+    url = get_deprecate_package_url(active_package)
 
     response = api_client.post(url, data=data, content_type="application/json")
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -84,12 +95,12 @@ def test_deprecate_package_invalid_payload(
 @pytest.mark.django_db
 def test_deprecate_package_required_fields(
     api_client: APIClient,
-    active_package_listing: PackageListing,
+    active_package: Package,
     user: UserType,
 ) -> None:
-    active_package_listing.package.owner.add_member(user, role="owner")
+    active_package.owner.add_member(user, role="owner")
     api_client.force_authenticate(user=user)
-    url = get_deprecate_package_url(active_package_listing)
+    url = get_deprecate_package_url(active_package)
 
     response = api_client.post(
         url, data=json.dumps({}), content_type="application/json"
@@ -101,9 +112,9 @@ def test_deprecate_package_required_fields(
 @pytest.mark.django_db
 def test_deprecate_package_unauthenticated(
     api_client: APIClient,
-    active_package_listing: PackageListing,
+    active_package: Package,
 ) -> None:
-    url = get_deprecate_package_url(active_package_listing)
+    url = get_deprecate_package_url(active_package)
     data = json.dumps({"deprecate": True})
     response = api_client.post(url, data=data, content_type="application/json")
     expect_response = {"detail": "Authentication credentials were not provided."}

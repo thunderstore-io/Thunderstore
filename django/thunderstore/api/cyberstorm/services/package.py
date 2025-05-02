@@ -7,9 +7,9 @@ from thunderstore.repository.models import Package, PackageRating
 
 
 @transaction.atomic
-def deprecate_package(package: Package, user: UserType) -> Package:
+def deprecate_package(agent: UserType, package: Package) -> Package:
     try:
-        package.ensure_user_can_manage_deprecation(user)
+        package.ensure_user_can_manage_deprecation(agent)
     except ValidationError as e:
         raise PermissionValidationError(e.message)
 
@@ -18,9 +18,9 @@ def deprecate_package(package: Package, user: UserType) -> Package:
 
 
 @transaction.atomic
-def undeprecate_package(package: Package, user: UserType) -> Package:
+def undeprecate_package(agent: UserType, package: Package) -> Package:
     try:
-        package.ensure_user_can_manage_deprecation(user)
+        package.ensure_user_can_manage_deprecation(agent)
     except ValidationError as e:
         raise PermissionValidationError(e.message)
 
@@ -29,7 +29,7 @@ def undeprecate_package(package: Package, user: UserType) -> Package:
 
 
 @transaction.atomic
-def rate_package(package: Package, agent: UserType, target_state: str):
+def rate_package(agent: UserType, package: Package, target_state: str):
     result_state = PackageRating.rate_package(
         agent=agent,
         package=package,

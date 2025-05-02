@@ -39,8 +39,8 @@ class DeprecatePackageAPIView(APIView):
         package = self.get_package(namespace_id, package_name)
 
         if should_deprecate:
-            deprecate_package(package, request.user)
+            deprecate_package(agent=request.user, package=package)
         else:
-            undeprecate_package(package, request.user)
+            undeprecate_package(agent=request.user, package=package)
 
-        return Response(status=status.HTTP_200_OK)
+        return Response("message: Success", status=status.HTTP_200_OK)

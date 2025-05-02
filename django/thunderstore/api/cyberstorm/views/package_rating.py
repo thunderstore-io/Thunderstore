@@ -43,8 +43,8 @@ class RatePackageAPIView(APIView):
         package = self.get_package(namespace_id, package_name)
 
         rating_score, result_state = rate_package(
-            package=package,
             agent=request.user,
+            package=package,
             target_state=target_state,
         )
         response_data = {"state": result_state, "score": rating_score}
