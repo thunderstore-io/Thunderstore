@@ -63,9 +63,7 @@ schema_view = get_schema_view(
         title=f"{settings.SITE_NAME} API",
         default_version="v1",
         description=("Schema is automatically generated and not completely accurate."),
-        contact=openapi.Contact(
-            name="Mythic#0001", url="https://discord.gg/UWpWhjZken"
-        ),
+        contact=openapi.Contact(name="Discord", url="https://discord.thunderstore.io/"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
