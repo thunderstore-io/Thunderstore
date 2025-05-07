@@ -1,3 +1,5 @@
+from typing import Literal, Tuple, Union
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -28,8 +30,13 @@ def undeprecate_package(agent: UserType, package: Package) -> Package:
     return package
 
 
+RATING_STATE = Union[Literal["rated"], Literal["unrated"]]
+
+
 @transaction.atomic
-def rate_package(agent: UserType, package: Package, target_state: str):
+def rate_package(
+    agent: UserType, package: Package, target_state: RATING_STATE
+) -> Tuple[int, RATING_STATE]:
     result_state = PackageRating.rate_package(
         agent=agent,
         package=package,
