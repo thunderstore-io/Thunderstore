@@ -1,31 +1,21 @@
 from typing import Literal, Tuple, Union
 
-from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package, PackageRating
 
 
 @transaction.atomic
 def deprecate_package(agent: UserType, package: Package) -> Package:
-    try:
-        package.ensure_user_can_manage_deprecation(agent)
-    except ValidationError as e:
-        raise PermissionValidationError(e.message)
-
+    package.ensure_user_can_manage_deprecation(agent)
     package.deprecate()
     return package
 
 
 @transaction.atomic
 def undeprecate_package(agent: UserType, package: Package) -> Package:
-    try:
-        package.ensure_user_can_manage_deprecation(agent)
-    except ValidationError as e:
-        raise PermissionValidationError(e.message)
-
+    package.ensure_user_can_manage_deprecation(agent)
     package.undeprecate()
     return package
 
