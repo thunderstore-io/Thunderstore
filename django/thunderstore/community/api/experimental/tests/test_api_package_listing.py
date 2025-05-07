@@ -1,7 +1,8 @@
 import json
-from typing import Union
+from typing import Any
 
 import pytest
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.test import APIClient
 
 from conftest import TestUserTypes
@@ -17,7 +18,7 @@ def test_api_experimental_package_listing_update_user_types(
     active_package_listing: PackageListing,
 ):
     user = TestUserTypes.get_user_by_type(user_type)
-    if user not in TestUserTypes.fake_users():
+    if user_type not in TestUserTypes.fake_users():
         api_client.force_authenticate(user=user)
 
     response = api_client.post(
@@ -27,24 +28,27 @@ def test_api_experimental_package_listing_update_user_types(
     )
 
     expected_error_content = {
-        TestUserTypes.no_user: True,
-        TestUserTypes.unauthenticated: True,
-        TestUserTypes.regular_user: "User is missing necessary roles or permissions",
-        TestUserTypes.deactivated_user: "User has been deactivated",
-        TestUserTypes.service_account: "Service accounts are unable to perform this action",
+        TestUserTypes.no_user: {"detail": PermissionDenied.default_detail},
+        TestUserTypes.unauthenticated: {"detail": PermissionDenied.default_detail},
+        TestUserTypes.regular_user: {
+            "non_field_errors": ["User is missing necessary roles or permissions"]
+        },
+        TestUserTypes.deactivated_user: {"detail": PermissionDenied.default_detail},
+        TestUserTypes.service_account: {
+            "non_field_errors": ["Service accounts are unable to perform this action"]
+        },
         TestUserTypes.site_admin: None,
         TestUserTypes.superuser: None,
     }
 
-    expected_error: Union[str, bool, None] = expected_error_content[user_type]
+    expected_error: Any = expected_error_content[user_type]
 
     if not expected_error:
         assert response.status_code == 200
         assert response.json()["categories"] == []
     else:
         assert response.status_code == 403
-        if isinstance(expected_error, str):
-            assert response.json()["non_field_errors"] == expected_error
+        assert response.json() == expected_error
 
 
 @pytest.mark.django_db
