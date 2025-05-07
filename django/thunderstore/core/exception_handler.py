@@ -19,13 +19,13 @@ def serialize_validation_error(error: DjangoValidationError):
 
 
 def exception_handler(exc: Exception, context: Any) -> Optional[Response]:
-    if isinstance(exc, DjangoValidationError):
-        exc = django_validation_to_drf_error(exc)
-
     if isinstance(exc, PermissionValidationError):
         exc = PermissionDenied(detail=exc)
 
-    if isinstance(exc, PermissionError):
+    elif isinstance(exc, DjangoValidationError):
+        exc = django_validation_to_drf_error(exc)
+
+    elif isinstance(exc, PermissionError):
         exc = PermissionDenied(detail=exc)
 
     response = drf_exception_handler(exc, context)
