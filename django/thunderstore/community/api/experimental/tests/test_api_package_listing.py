@@ -1,4 +1,5 @@
 import json
+from typing import Union
 
 import pytest
 from rest_framework.test import APIClient
@@ -25,23 +26,25 @@ def test_api_experimental_package_listing_update_user_types(
         content_type="application/json",
     )
 
-    expected_results = {
-        TestUserTypes.no_user: False,
-        TestUserTypes.unauthenticated: False,
-        TestUserTypes.regular_user: False,
-        TestUserTypes.deactivated_user: False,
-        TestUserTypes.service_account: False,
-        TestUserTypes.site_admin: True,
-        TestUserTypes.superuser: True,
+    expected_error_content = {
+        TestUserTypes.no_user: True,
+        TestUserTypes.unauthenticated: True,
+        TestUserTypes.regular_user: "User is missing necessary roles or permissions",
+        TestUserTypes.deactivated_user: "User has been deactivated",
+        TestUserTypes.service_account: "Service accounts are unable to perform this action",
+        TestUserTypes.site_admin: None,
+        TestUserTypes.superuser: None,
     }
 
-    should_succeed = expected_results[user_type]
+    expected_error: Union[str, bool, None] = expected_error_content[user_type]
 
-    if should_succeed:
+    if not expected_error:
         assert response.status_code == 200
         assert response.json()["categories"] == []
     else:
         assert response.status_code == 403
+        if isinstance(expected_error, str):
+            assert response.json()["non_field_errors"] == expected_error
 
 
 @pytest.mark.django_db
