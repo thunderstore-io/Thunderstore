@@ -16,18 +16,25 @@ from thunderstore.api.cyberstorm.services.package_listing import (
     reject_package_listing,
     update_categories,
 )
-from thunderstore.repository.models import Community, PackageListing
-from thunderstore.repository.views.package._utils import get_package_listing_or_404
+from thunderstore.repository.models import PackageListing
 
 
 def get_package_listing(
     namespace_id: str, package_name: str, community_id: str
 ) -> PackageListing:
-    community = get_object_or_404(Community, identifier=community_id)
-    return get_package_listing_or_404(
-        namespace=namespace_id,
-        name=package_name,
-        community=community,
+    return get_object_or_404(
+        PackageListing.objects.active()
+        .select_related(
+            "package",
+            "package__owner",
+            "package__latest",
+        )
+        .prefetch_related(
+            "categories",
+        ),
+        package__namespace__name=namespace_id,
+        package__name=package_name,
+        community__identifier=community_id,
     )
 
 

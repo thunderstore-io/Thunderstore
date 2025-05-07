@@ -19,14 +19,6 @@ class DeprecatePackageSerializer(serializers.Serializer):
 class DeprecatePackageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_package(self, namespace_name: str, package_name: str) -> Package:
-        package = get_object_or_404(
-            Package.objects.active(),
-            namespace__name=namespace_name,
-            name=package_name,
-        )
-        return package
-
     @swagger_auto_schema(
         operation_id="cyberstorm.package.deprecate",
         request_body=DeprecatePackageSerializer,
@@ -35,12 +27,15 @@ class DeprecatePackageAPIView(APIView):
     def post(self, request, namespace_id: str, package_name: str) -> Response:
         serializer = DeprecatePackageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        should_deprecate = serializer.validated_data["deprecate"]
-        package = self.get_package(namespace_id, package_name)
+        package = get_object_or_404(
+            Package.objects.active(),
+            namespace__name=namespace_id,
+            name=package_name,
+        )
 
-        if should_deprecate:
+        if serializer.validated_data["deprecate"]:
             deprecate_package(agent=request.user, package=package)
         else:
             undeprecate_package(agent=request.user, package=package)
 
-        return Response("message: Success", status=status.HTTP_200_OK)
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)

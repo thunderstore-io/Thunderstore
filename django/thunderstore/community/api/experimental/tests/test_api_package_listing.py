@@ -18,8 +18,7 @@ def test_api_experimental_package_listing_update_user_types(
     active_package_listing: PackageListing,
 ):
     user = TestUserTypes.get_user_by_type(user_type)
-    if user_type not in TestUserTypes.fake_users():
-        api_client.force_authenticate(user=user)
+    api_client.force_authenticate(user=user)
 
     response = api_client.post(
         f"/api/experimental/package-listing/{active_package_listing.pk}/update/",
@@ -28,8 +27,8 @@ def test_api_experimental_package_listing_update_user_types(
     )
 
     expected_error_content = {
-        TestUserTypes.no_user: {"detail": PermissionDenied.default_detail},
-        TestUserTypes.unauthenticated: {"detail": PermissionDenied.default_detail},
+        TestUserTypes.no_user: {"non_field_errors": ["Must be authenticated"]},
+        TestUserTypes.unauthenticated: {"non_field_errors": ["Must be authenticated"]},
         TestUserTypes.regular_user: {
             "non_field_errors": ["User is missing necessary roles or permissions"]
         },

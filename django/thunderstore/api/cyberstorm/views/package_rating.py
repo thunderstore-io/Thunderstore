@@ -22,14 +22,6 @@ class CyberstormRatePackageResponseSerializer(serializers.Serializer):
 class RatePackageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_package(self, namespace_name: str, package_name: str) -> Package:
-        package = get_object_or_404(
-            Package.objects.active(),
-            namespace__name=namespace_name,
-            name=package_name,
-        )
-        return package
-
     @conditional_swagger_auto_schema(
         request_body=CyberstormRatePackageRequestSerializer,
         responses={200: CyberstormRatePackageResponseSerializer},
@@ -39,17 +31,21 @@ class RatePackageAPIView(APIView):
     def post(self, request: HttpRequest, namespace_id: str, package_name: str):
         serializer = CyberstormRatePackageRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        target_state = serializer.validated_data["target_state"]
-        package = self.get_package(namespace_id, package_name)
+        package = get_object_or_404(
+            Package.objects.active(),
+            namespace__name=namespace_id,
+            name=package_name,
+        )
 
         rating_score, result_state = rate_package(
             agent=request.user,
             package=package,
-            target_state=target_state,
+            target_state=serializer.validated_data["target_state"],
         )
-        response_data = {"state": result_state, "score": rating_score}
 
         return Response(
-            CyberstormRatePackageResponseSerializer(response_data).data,
+            CyberstormRatePackageResponseSerializer(
+                {"state": result_state, "score": rating_score}
+            ).data,
             status=status.HTTP_200_OK,
         )
