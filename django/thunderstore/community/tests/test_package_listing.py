@@ -18,6 +18,7 @@ from thunderstore.community.models import (
     PackageCategory,
     PackageListing,
 )
+from thunderstore.core.factories import UserFactory
 from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
@@ -525,3 +526,89 @@ def test_package_listing_visibility_updates_when_all_versions_not_visible(
 
     active_package_listing.refresh_from_db()
     assert_listing_is_public(active_package_listing)
+
+
+@pytest.mark.django_db
+def test_is_visible_to_user_true_if_public_detail():
+    listing = PackageListingFactory()
+    listing.visibility.public_detail = True
+    listing.visibility.save()
+
+    user = UserFactory.create()
+
+    assert listing.is_visible_to_user(None)
+    assert listing.is_visible_to_user(user)
+
+
+@pytest.mark.django_db
+def test_is_visible_to_user_false_if_no_user_and_not_public():
+    listing = PackageListingFactory()
+    listing.visibility.public_detail = False
+    listing.visibility.save()
+
+    assert not listing.is_visible_to_user(None)
+
+
+@pytest.mark.django_db
+def test_is_visible_to_users_with_sufficient_permissions():
+    listing = PackageListingFactory()
+    listing.visibility.public_detail = False
+    listing.visibility.save()
+
+    user = UserFactory.create()
+
+    assert not listing.is_visible_to_user(user)
+
+    owner = UserFactory.create()
+    TeamMember.objects.create(
+        user=owner,
+        team=listing.package.owner,
+        role=TeamMemberRole.owner,
+    )
+
+    moderator = UserFactory.create()
+    CommunityMembership.objects.create(
+        user=moderator,
+        community=listing.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    superuser = UserFactory.create(is_superuser=True)
+
+    assert listing.is_visible_to_user(owner)
+    assert listing.is_visible_to_user(moderator)
+    assert listing.is_visible_to_user(superuser)
+
+
+@pytest.mark.django_db
+def test_is_visible_to_user_false_if_visible_detail_false():
+    listing = PackageListingFactory()
+    listing.visibility.public_detail = False
+    listing.visibility.owner_detail = False
+    listing.visibility.moderator_detail = False
+    listing.visibility.admin_detail = False
+    listing.visibility.save()
+
+    user = UserFactory.create()
+
+    assert not listing.is_visible_to_user(user)
+
+    TeamMember.objects.create(
+        user=user,
+        team=listing.package.owner,
+        role=TeamMemberRole.owner,
+    )
+
+    assert not listing.is_visible_to_user(user)
+
+    CommunityMembership.objects.create(
+        user=user,
+        community=listing.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    assert not listing.is_visible_to_user(user)
+
+    user.is_superuser = True
+
+    assert not listing.is_visible_to_user(user)
