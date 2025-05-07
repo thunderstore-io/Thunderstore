@@ -4,7 +4,9 @@ import pytest
 from django.db import IntegrityError
 
 from thunderstore.community.factories import PackageListingFactory
+from thunderstore.community.models import CommunityMemberRole, CommunityMembership
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.core.factories import UserFactory
 from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import PackageVersion
@@ -219,3 +221,53 @@ def test_package_listing_visibility_updates_with_package_is_active(
 
     package_version.refresh_from_db()
     assert_version_is_public(package_version)
+
+
+@pytest.mark.django_db
+def test_can_user_manage_approval_status_false_if_immune():
+    user = UserFactory.create()
+
+    listing = PackageListingFactory(
+        package_version_kwargs={"review_status": PackageVersionReviewStatus.immune}
+    )
+
+    CommunityMembership.objects.create(
+        user=user,
+        community=listing.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    version = listing.package.latest
+
+    assert version.review_status == PackageVersionReviewStatus.immune
+    assert not version.can_user_manage_approval_status(user)
+
+
+@pytest.mark.django_db
+def test_can_user_manage_approval_status_true_if_one_listing_allows():
+    user = UserFactory.create()
+
+    listing1 = PackageListingFactory()
+    listing2 = PackageListingFactory(package=listing1.package)
+
+    CommunityMembership.objects.create(
+        user=user,
+        community=listing2.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    version = listing1.package.latest
+
+    assert version.can_user_manage_approval_status(user)
+
+
+@pytest.mark.django_db
+def test_can_user_manage_approval_status_false_if_none_allow():
+    user = UserFactory.create()
+
+    listing1 = PackageListingFactory()
+    listing2 = PackageListingFactory(package=listing1.package)
+
+    version = listing1.package.latest
+
+    assert not version.can_user_manage_approval_status(user)
