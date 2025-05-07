@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.community.consts import PackageListingReviewStatus
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
@@ -333,7 +334,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             user
         ) or self.package.owner.can_user_manage_packages(user)
         if not is_allowed:
-            raise ValidationError("Must have listing management permission")
+            raise PermissionValidationError("Must have listing management permission")
 
     def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
@@ -343,7 +344,9 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             or self.community.can_user_manage_categories(user)
         )
         if not is_allowed:
-            raise ValidationError("User is missing necessary roles or permissions")
+            raise PermissionValidationError(
+                "User is missing necessary roles or permissions"
+            )
 
     def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_update_categories_permission(user))
@@ -367,13 +370,13 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
                 self.review_status != PackageListingReviewStatus.approved
                 and not get_has_perms()
             ):
-                raise ValidationError("Insufficient permissions to view")
+                raise PermissionValidationError("Insufficient permissions to view")
         else:
             if (
                 self.review_status == PackageListingReviewStatus.rejected
                 and not get_has_perms()
             ):
-                raise ValidationError("Insufficient permissions to view")
+                raise PermissionValidationError("Insufficient permissions to view")
 
     def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))

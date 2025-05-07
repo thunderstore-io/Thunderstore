@@ -1,6 +1,8 @@
 import json
+from typing import Any
 
 import pytest
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.test import APIClient
 
 from conftest import TestUserTypes
@@ -16,8 +18,7 @@ def test_api_experimental_package_listing_update_user_types(
     active_package_listing: PackageListing,
 ):
     user = TestUserTypes.get_user_by_type(user_type)
-    if user not in TestUserTypes.fake_users():
-        api_client.force_authenticate(user=user)
+    api_client.force_authenticate(user=user)
 
     response = api_client.post(
         f"/api/experimental/package-listing/{active_package_listing.pk}/update/",
@@ -25,27 +26,28 @@ def test_api_experimental_package_listing_update_user_types(
         content_type="application/json",
     )
 
-    expected_results = {
-        TestUserTypes.no_user: False,
-        TestUserTypes.unauthenticated: False,
-        TestUserTypes.regular_user: False,
-        TestUserTypes.deactivated_user: False,
-        TestUserTypes.service_account: False,
-        TestUserTypes.site_admin: True,
-        TestUserTypes.superuser: True,
+    expected_error_content = {
+        TestUserTypes.no_user: {"non_field_errors": ["Must be authenticated"]},
+        TestUserTypes.unauthenticated: {"non_field_errors": ["Must be authenticated"]},
+        TestUserTypes.regular_user: {
+            "non_field_errors": ["User is missing necessary roles or permissions"]
+        },
+        TestUserTypes.deactivated_user: {"detail": PermissionDenied.default_detail},
+        TestUserTypes.service_account: {
+            "non_field_errors": ["Service accounts are unable to perform this action"]
+        },
+        TestUserTypes.site_admin: None,
+        TestUserTypes.superuser: None,
     }
-    should_succeed = expected_results[user_type]
 
-    print(response.content)
-    if should_succeed:
+    expected_error: Any = expected_error_content[user_type]
+
+    if not expected_error:
         assert response.status_code == 200
         assert response.json()["categories"] == []
     else:
         assert response.status_code == 403
-        assert (
-            response.json()["detail"]
-            == "You do not have permission to perform this action."
-        )
+        assert response.json() == expected_error
 
 
 @pytest.mark.django_db

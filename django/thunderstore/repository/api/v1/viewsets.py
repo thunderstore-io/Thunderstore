@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
+from thunderstore.api.cyberstorm.services.package import rate_package
 from thunderstore.community.models import Community, PackageListing
 from thunderstore.core.types import HttpRequestType
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
@@ -22,7 +23,7 @@ from thunderstore.repository.cache import (
     order_package_listing_queryset,
 )
 from thunderstore.repository.mixins import CommunityMixin
-from thunderstore.repository.models import Package, PackageRating
+from thunderstore.repository.models import Package
 from thunderstore.repository.models.cache import APIV1PackageCache
 from thunderstore.utils.batch import batch
 
@@ -133,13 +134,16 @@ class PackageViewSet(
         community_identifier: Optional[str] = None,
     ) -> Response:
         package = get_object_or_404(Package.objects.active(), uuid4=uuid4)
-        result_state = PackageRating.rate_package(
-            request.user, package, request.data.get("target_state")
+
+        rating_score, result_state = rate_package(
+            agent=request.user,
+            package=package,
+            target_state=request.data["target_state"],
         )
-        package = Package.objects.get(pk=package.pk)
+
         return Response(
             {
                 "state": result_state,
-                "score": package.rating_score,
+                "score": rating_score,
             },
         )

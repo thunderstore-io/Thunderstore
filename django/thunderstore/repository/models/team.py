@@ -8,6 +8,7 @@ from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
 
 from thunderstore.core.enums import OptionalBoolChoice
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
 from thunderstore.permissions.utils import validate_user
@@ -242,42 +243,56 @@ class Team(models.Model):
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise ValidationError("Must be a member to create a service account")
+            raise PermissionValidationError(
+                "Must be a member to create a service account"
+            )
         if membership.role != TeamMemberRole.owner:
-            raise ValidationError("Must be an owner to create a service account")
+            raise PermissionValidationError(
+                "Must be an owner to create a service account"
+            )
 
     def ensure_can_edit_service_account(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise ValidationError("Must be a member to edit a service account")
+            raise PermissionValidationError(
+                "Must be a member to edit a service account"
+            )
         if membership.role != TeamMemberRole.owner:
-            raise ValidationError("Must be an owner to edit a service account")
+            raise PermissionValidationError(
+                "Must be an owner to edit a service account"
+            )
 
     def ensure_can_delete_service_account(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise ValidationError("Must be a member to delete a service account")
+            raise PermissionValidationError(
+                "Must be a member to delete a service account"
+            )
         if membership.role != TeamMemberRole.owner:
-            raise ValidationError("Must be an owner to delete a service account")
+            raise PermissionValidationError(
+                "Must be an owner to delete a service account"
+            )
 
     def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise ValidationError("Must be an owner to manage team members")
+            raise PermissionValidationError("Must be an owner to manage team members")
 
     def ensure_user_can_access(self, user: Optional[UserType]) -> None:
         user = validate_user(user, allow_serviceaccount=True)
         if not self.get_membership_for_user(user):
-            raise ValidationError("Must be a member to access team")
+            raise PermissionValidationError("Must be a member to access team")
 
     def ensure_can_upload_package(self, user: Optional[UserType]) -> None:
         user = validate_user(user, allow_serviceaccount=True)
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise ValidationError("Must be a member of team to upload package")
+            raise PermissionValidationError(
+                "Must be a member of team to upload package"
+            )
         if not self.is_active:
             raise ValidationError(
                 "The team has been deactivated and as such cannot receive new packages"
@@ -287,7 +302,9 @@ class Team(models.Model):
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise ValidationError("Must be a member of team to manage packages")
+            raise PermissionValidationError(
+                "Must be a member of team to manage packages"
+            )
 
     def ensure_member_can_be_removed(self, member: Optional[TeamMember]) -> None:
         if not member:
@@ -314,7 +331,7 @@ class Team(models.Model):
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise ValidationError("Must be an owner to disband team")
+            raise PermissionValidationError("Must be an owner to disband team")
         if self.owned_packages.exists():
             raise ValidationError("Unable to disband teams with packages")
 
@@ -322,7 +339,7 @@ class Team(models.Model):
         user = validate_user(user)
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise ValidationError("Must be an owner to edit team info")
+            raise PermissionValidationError("Must be an owner to edit team info")
 
     def can_user_upload(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_upload_package(user))

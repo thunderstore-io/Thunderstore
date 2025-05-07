@@ -1,12 +1,13 @@
 from django.http import HttpRequest
-from rest_framework import serializers
-from rest_framework.generics import get_object_or_404
+from django.shortcuts import get_object_or_404
+from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.api.cyberstorm.services.package import rate_package
 from thunderstore.api.utils import conditional_swagger_auto_schema
-from thunderstore.repository.models import Package, PackageRating
+from thunderstore.repository.models import Package
 
 
 class CyberstormRatePackageRequestSerializer(serializers.Serializer):
@@ -35,17 +36,16 @@ class RatePackageAPIView(APIView):
             namespace__name=namespace_id,
             name=package_name,
         )
-        result_state = PackageRating.rate_package(
+
+        rating_score, result_state = rate_package(
             agent=request.user,
             package=package,
             target_state=serializer.validated_data["target_state"],
         )
-        package = Package.objects.get(pk=package.pk)
+
         return Response(
             CyberstormRatePackageResponseSerializer(
-                {
-                    "state": result_state,
-                    "score": package.rating_score,
-                }
-            ).data
+                {"state": result_state, "score": rating_score}
+            ).data,
+            status=status.HTTP_200_OK,
         )

@@ -141,6 +141,6 @@ def test_create_team_with_service_account(api_client: APIClient, service_account
     response = make_request(api_client, "CoolestTeamNameEver")
     expected_response = {"non_field_errors": ["Service accounts cannot create teams"]}
 
-    assert response.status_code == 400
+    assert response.status_code == 403
     assert response.json() == expected_response
     assert Team.objects.filter(name="CoolestTeamNameEver").count() == 0

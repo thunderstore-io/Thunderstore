@@ -4,6 +4,7 @@ from django.core.validators import URLValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.repository.models import PackageInstaller, PackageVersion
 from thunderstore.repository.package_reference import PackageReference
 from thunderstore.repository.serializer_fields import (
@@ -81,7 +82,7 @@ class ManifestV1Serializer(serializers.Serializer):
         if self.team is None:
             raise ValidationError("Unable to validate package when no team is selected")
         if not self.team.can_user_upload(self.user):
-            raise ValidationError(
+            raise PermissionValidationError(
                 f"Missing privileges to upload under author {self.team.name}"
             )
         reference = PackageReference(
