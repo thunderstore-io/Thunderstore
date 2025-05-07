@@ -60,7 +60,7 @@ def test_disband_team_fail_because_user_is_not_owner(
     TeamMemberFactory(team=team, user=user, role="member")
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {"non_field_errors": ["Must be an owner to disband team"]}
+    expected_response = {"detail": ["Must be an owner to disband team"]}
     assert response.status_code == 403
     assert response.json() == expected_response
 
@@ -73,6 +73,6 @@ def test_disband_team_fail_because_user_cannot_access_team(
 ):
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {"non_field_errors": ["Must be a member to access team"]}
+    expected_response = {"detail": ["Must be a member to access team"]}
     assert response.status_code == 403
     assert response.json() == expected_response
