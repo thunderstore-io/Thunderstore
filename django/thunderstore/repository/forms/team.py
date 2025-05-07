@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import (
     Namespace,
@@ -40,9 +41,9 @@ class CreateTeamForm(forms.ModelForm):
 
     def clean(self):
         if not self.user or not self.user.is_authenticated or not self.user.is_active:
-            raise ValidationError("Must be authenticated to create teams")
+            raise PermissionValidationError("Must be authenticated to create teams")
         if getattr(self.user, "service_account", None) is not None:
-            raise ValidationError("Service accounts cannot create teams")
+            raise PermissionValidationError("Service accounts cannot create teams")
         return super().clean()
 
     @transaction.atomic

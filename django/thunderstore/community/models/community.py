@@ -16,6 +16,7 @@ from thunderstore.community.models.community_membership import (
     CommunityMembership,
 )
 from thunderstore.core.enums import OptionalBoolChoice
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
@@ -257,7 +258,9 @@ class Community(TimestampMixin, models.Model):
         ) and not (
             user.is_superuser or user.is_staff
         ):  # TODO: Maybe remove
-            raise ValidationError("Must be a moderator or higher to manage packages")
+            raise PermissionValidationError(
+                "Must be a moderator or higher to manage packages"
+            )
 
     def ensure_user_can_manage_categories(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
@@ -272,7 +275,9 @@ class Community(TimestampMixin, models.Model):
         if (not membership or membership.role not in allowed_roles) and not (
             user.is_superuser or user.is_staff
         ):  # TODO: Maybe remove
-            raise ValidationError("Must be a janitor or higher to manage categories")
+            raise PermissionValidationError(
+                "Must be a janitor or higher to manage categories"
+            )
 
     @lru_cache
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
