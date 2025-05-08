@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q, QuerySet
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -17,7 +16,11 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
 )
-from thunderstore.api.cyberstorm.services import team as team_services
+from thunderstore.api.cyberstorm.services.team import (
+    create_team,
+    disband_team,
+    remove_team_member,
+)
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
@@ -25,6 +28,21 @@ from thunderstore.api.utils import (
 )
 from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
+
+
+def get_team_object_or_404(team_name: str) -> Team:
+    return get_object_or_404(
+        Team.objects.exclude(is_active=False),
+        name=team_name,
+    )
+
+
+def get_team_member_object_or_404(team_name: str, team_member: str) -> TeamMember:
+    return get_object_or_404(
+        TeamMember.objects.real_users(),
+        team__name=team_name,
+        user__username=team_member,
+    )
 
 
 class TeamPermissionsMixin:
@@ -66,7 +84,7 @@ class TeamCreateAPIView(APIView):
         serializer = CyberstormCreateTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         team_name = serializer.validated_data["name"]
-        team = team_services.create_team(user=request.user, team_name=team_name)
+        team = create_team(user=request.user, team_name=team_name)
         return_data = CyberstormTeamSerializer(team).data
         return Response(return_data, status=status.HTTP_201_CREATED)
 
@@ -135,5 +153,22 @@ class DisbandTeamAPIView(APIView):
     )
     def delete(self, request, *args, **kwargs):
         team_name = kwargs["team_name"]
-        team_services.disband_team(user=request.user, team_name=team_name)
+        disband_team(user=request.user, team_name=team_name)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RemoveTeamMemberAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.member.remove",
+        tags=["cyberstorm"],
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        team_member = get_team_member_object_or_404(
+            team_name=kwargs["team_name"],
+            team_member=kwargs["team_member"],
+        )
+        remove_team_member(agent=request.user, team_member=team_member)
         return Response(status=status.HTTP_204_NO_CONTENT)
