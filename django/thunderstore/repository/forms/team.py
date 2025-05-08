@@ -93,16 +93,6 @@ class RemoveTeamMemberForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.user = user
 
-    def clean_membership(self):
-        membership = self.cleaned_data["membership"]
-        if membership.user != self.user:
-            membership.team.ensure_user_can_manage_members(self.user)
-        membership.team.ensure_member_can_be_removed(membership)
-        return membership
-
-    def save(self):
-        self.cleaned_data["membership"].delete()
-
 
 class EditTeamMemberForm(forms.ModelForm):
     class Meta:

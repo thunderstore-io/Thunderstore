@@ -180,86 +180,8 @@ def test_form_add_team_member(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("remover_type", TestUserTypes.options())
-@pytest.mark.parametrize("removed_type", TestUserTypes.options())
-@pytest.mark.parametrize("remover_role", TeamMemberRole.options() + [None])
-@pytest.mark.parametrize("removed_role", TeamMemberRole.options() + [None])
-def test_form_remove_team_member(
-    remover_type: str, removed_type: str, remover_role: str, removed_role: str
-) -> None:
-    remover_type_valid_map = {
-        TestUserTypes.no_user: False,
-        TestUserTypes.unauthenticated: False,
-        TestUserTypes.regular_user: True,
-        TestUserTypes.deactivated_user: False,
-        TestUserTypes.service_account: False,
-        TestUserTypes.site_admin: True,
-        TestUserTypes.superuser: True,
-    }
-    removed_type_valid_map = {
-        **remover_type_valid_map,
-        **{TestUserTypes.deactivated_user: True},
-    }
-    remover_role_valid_map = {
-        None: False,
-        TeamMemberRole.member: False,
-        TeamMemberRole.owner: True,
-    }
-    removed_role_valid_map = {
-        None: False,
-        TeamMemberRole.member: True,
-        TeamMemberRole.owner: True,
-    }
-    remover_valid = all(
-        (
-            remover_type_valid_map[remover_type],
-            remover_role_valid_map[remover_role],
-        )
-    )
-    removed_valid = all(
-        (
-            removed_type_valid_map[removed_type],
-            removed_role_valid_map[removed_role],
-        )
-    )
-
-    remover = TestUserTypes.get_user_by_type(remover_type)
-    removed = TestUserTypes.get_user_by_type(removed_type)
-    team = Team.create(name="Test")
-
-    if remover is not None and remover.is_authenticated and remover_role is not None:
-        TeamMember.objects.create(
-            team=team,
-            user=remover,
-            role=remover_role,
-        )
-
-    if removed is not None and removed.is_authenticated and removed_role is not None:
-        membership = TeamMember.objects.create(
-            team=team,
-            user=removed,
-            role=removed_role,
-        ).pk
-    else:
-        membership = None
-
-    form = RemoveTeamMemberForm(
-        user=remover,
-        data={"membership": membership},
-    )
-    should_be_valid = all((remover_valid, removed_valid))
-    if should_be_valid:
-        assert form.is_valid() is True
-        assert form.save() is None
-        assert TeamMember.objects.filter(pk=membership).exists() is False
-    else:
-        assert form.is_valid() is False
-        assert form.errors
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize("role", TeamMemberRole.options())
-def test_form_remove_team_member_works_on_self(role: str) -> None:
+def test_form_remove_team_member_valid_membership_roles(role: str) -> None:
     user = UserFactory()
     team = Team.create(name="Test")
     TeamMember.objects.create(
@@ -277,25 +199,6 @@ def test_form_remove_team_member_works_on_self(role: str) -> None:
         data={"membership": membership.pk},
     )
     assert form.is_valid() is True
-    assert form.save() is None
-    assert TeamMember.objects.filter(pk=membership.pk).exists() is False
-
-
-@pytest.mark.django_db
-def test_form_remove_team_member_last_owner() -> None:
-    user = UserFactory()
-    team = Team.create(name="Test")
-    last_owner = TeamMember.objects.create(
-        user=user,
-        team=team,
-        role=TeamMemberRole.owner,
-    )
-    form = RemoveTeamMemberForm(
-        user=user,
-        data={"membership": last_owner.pk},
-    )
-    assert form.is_valid() is False
-    assert "Cannot remove last owner from team" in str(repr(form.errors))
 
 
 @pytest.mark.django_db
