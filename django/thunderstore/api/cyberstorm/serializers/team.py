@@ -1,10 +1,9 @@
 from typing import Optional
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from thunderstore.repository.forms import AddTeamMemberForm
-from thunderstore.repository.models import Namespace, Team
+from thunderstore.repository.models.team import TeamMemberRole
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 from thunderstore.social.utils import get_user_avatar_url
 
@@ -53,3 +52,9 @@ class CyberstormCreateTeamSerializer(serializers.Serializer):
     name = serializers.CharField(
         max_length=64, validators=[PackageReferenceComponentValidator("Author name")]
     )
+
+
+class CyberstormTeamMemberUpdateSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=TeamMemberRole.as_choices())
+    team_name = serializers.CharField(source="team.name", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
