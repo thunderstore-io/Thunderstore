@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.core.paginator import Page
-from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
+from django.db.models import Count, Q, QuerySet, Sum
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from rest_framework import serializers
@@ -23,9 +23,9 @@ from thunderstore.repository.models import Namespace, Package, get_package_depen
 
 # Keys are values expected in requests, values are args for .order_by().
 ORDER_ARGS = {
-    "last-updated": "-date_updated",
+    "last-updated": "-package__date_updated",
     "most-downloaded": "-download_count",  # annotated field
-    "newest": "-date_created",
+    "newest": "-package__date_created",
     "top-rated": "-rating_count",  # annotated field
 }
 
@@ -133,17 +133,19 @@ class BasePackageListAPIView(ListAPIView):
         package_list = self._get_packages_dicts(package_page)
         return super().get_serializer(package_list, **kwargs)
 
-    def get_queryset(self) -> QuerySet[Package]:
-        queryset = Package.objects.active()  # type: ignore
+    def get_queryset(self) -> QuerySet[PackageListing]:
+        queryset = PackageListing.objects.active()  # type: ignore
         queryset = self._annotate_queryset(queryset)
         return self._select_and_prefetch(queryset)
 
-    def filter_queryset(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
+    def filter_queryset(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
         community = self._get_community()
         require_approval = community.require_package_listing_approval
         params = self._get_validated_query_params()
 
-        qs = filter_by_review_status(require_approval, queryset, community)
+        qs = filter_by_review_status(require_approval, queryset)
         qs = filter_by_listed_in_community(community.identifier, qs)
         qs = filter_deprecated(params["deprecated"], qs)
         qs = filter_nsfw(params["nsfw"], qs)
@@ -153,11 +155,11 @@ class BasePackageListAPIView(ListAPIView):
         qs = filter_by_query(params.get("q"), qs)
 
         return qs.order_by(
-            "-is_pinned",
-            "is_deprecated",
+            "-package__is_pinned",
+            "package__is_deprecated",
             ORDER_ARGS[params["ordering"]],
-            "-date_updated",
-            "-pk",
+            "-package__date_updated",
+            "-package__pk",
         )
 
     def _get_community(self) -> Community:
@@ -167,35 +169,34 @@ class BasePackageListAPIView(ListAPIView):
         community_id = self.kwargs["community_id"]
         return get_object_or_404(Community, identifier=community_id)
 
-    def _annotate_queryset(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
+    def _annotate_queryset(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
         """
         Add annotations required to serialize the results.
         """
-
-        this_package = Package.objects.filter(pk=OuterRef("pk"))
-
         return queryset.annotate(
-            download_count=Subquery(
-                this_package.annotate(
-                    downloads=Sum("versions__downloads"),
-                ).values("downloads"),
-            ),
-        ).annotate(
-            rating_count=Subquery(
-                this_package.annotate(
-                    ratings=Count("package_ratings"),
-                ).values("ratings"),
-            ),
+            download_count=Sum("package__versions__downloads"),
+            rating_count=Count("package__package_ratings"),
         )
 
-    def _select_and_prefetch(self, queryset: QuerySet[Package]) -> QuerySet[Package]:
+    def _select_and_prefetch(
+        self, queryset: QuerySet[PackageListing]
+    ) -> QuerySet[PackageListing]:
         """
         Add query optimizations.
         """
 
-        return queryset.select_related("latest", "namespace").prefetch_related(
-            "community_listings__categories",
-            "community_listings__community",
+        return queryset.select_related(
+            "package",
+            "community",
+            "package__latest",
+            "package__owner",
+            "package__namespace",
+        ).prefetch_related(
+            "categories",
+            "package__versions",
+            "package__package_ratings",
         )
 
     def _get_validated_query_params(self) -> OrderedDict:
@@ -220,24 +221,23 @@ class BasePackageListAPIView(ListAPIView):
         community_id = self.kwargs["community_id"]
         packages = []
 
-        for p in package_page:
-            listing = p.community_listings.get(community__identifier=community_id)
-
+        for listing in package_page:
+            package = listing.package
             packages.append(
                 {
                     "categories": listing.categories.all(),
                     "community_identifier": community_id,
-                    "description": p.latest.description,
-                    "download_count": p.download_count,
-                    "icon_url": p.latest.icon.url,
-                    "is_deprecated": p.is_deprecated,
+                    "description": package.latest.description,
+                    "download_count": listing.download_count,
+                    "icon_url": package.latest.icon.url,
+                    "is_deprecated": package.is_deprecated,
                     "is_nsfw": listing.has_nsfw_content,
-                    "is_pinned": p.is_pinned,
-                    "last_updated": p.date_updated,
-                    "namespace": p.namespace.name,
-                    "name": p.name,
-                    "rating_count": p.rating_count,
-                    "size": p.latest.file_size,
+                    "is_pinned": package.is_pinned,
+                    "last_updated": package.date_updated,
+                    "namespace": package.namespace.name,
+                    "name": package.name,
+                    "rating_count": listing.rating_count,
+                    "size": package.latest.file_size,
                     "datetime_created": listing.datetime_created,
                 },
             )
@@ -310,7 +310,7 @@ class PackageListingByNamespaceListAPIView(BasePackageListAPIView):
         namespace = get_object_or_404(Namespace, name__iexact=namespace_id)
 
         community_scoped_qs = super().get_queryset()
-        return community_scoped_qs.exclude(~Q(namespace=namespace))
+        return community_scoped_qs.exclude(~Q(package__namespace=namespace))
 
 
 @method_decorator(
@@ -331,7 +331,7 @@ class PackageListingByDependencyListAPIView(BasePackageListAPIView):
 
     viewname = "api:cyberstorm:cyberstorm.listing.by-dependency-list"
 
-    def get_queryset(self) -> QuerySet[Package]:
+    def get_queryset(self) -> QuerySet[PackageListing]:
         community_id = self.kwargs["community_id"]
         namespace_id = self.kwargs["namespace_id"]
         package_name = self.kwargs["package_name"]
@@ -344,46 +344,45 @@ class PackageListingByDependencyListAPIView(BasePackageListAPIView):
         )
 
         queryset = get_package_dependants(listing.package.pk)
+        queryset = PackageListing.objects.filter(package__in=queryset)  # type: ignore
         queryset = self._annotate_queryset(queryset)
         return self._select_and_prefetch(queryset)
 
 
 def filter_by_listed_in_community(
     community_identifier: str,
-    queryset: QuerySet[Package],
-) -> QuerySet[Package]:
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
     """
     Exclude packages not listed in given community.
     """
-    return queryset.exclude(
-        ~Q(community_listings__community__identifier=community_identifier),
-    )
+    return queryset.exclude(~Q(community__identifier=community_identifier))
 
 
 def filter_deprecated(
     show_deprecated: bool,
-    queryset: QuerySet[Package],
-) -> QuerySet[Package]:
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
     if show_deprecated:
         return queryset
 
-    return queryset.exclude(is_deprecated=True)
+    return queryset.exclude(package__is_deprecated=True)
 
 
 def filter_nsfw(
     show_nsfw: bool,
-    queryset: QuerySet[Package],
-) -> QuerySet[Package]:
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
     if show_nsfw:
         return queryset
 
-    return queryset.exclude(community_listings__has_nsfw_content=True)
+    return queryset.exclude(has_nsfw_content=True)
 
 
 def filter_in_categories(
     category_ids: List[str],
-    queryset: QuerySet[Package],
-) -> QuerySet[Package]:
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
     """
     Include only packages belonging to specific categories.
 
@@ -393,15 +392,13 @@ def filter_in_categories(
     if not category_ids:
         return queryset
 
-    return queryset.exclude(
-        ~Q(community_listings__categories__id__in=category_ids),
-    )
+    return queryset.exclude(~Q(categories__id__in=category_ids))
 
 
 def filter_not_in_categories(
     category_ids: List[str],
-    queryset: QuerySet[Package],
-) -> QuerySet[Package]:
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
     """
     Exclude packages belonging to specific categories.
 
@@ -411,15 +408,13 @@ def filter_not_in_categories(
     if not category_ids:
         return queryset
 
-    return queryset.exclude(
-        community_listings__categories__id__in=category_ids,
-    )
+    return queryset.exclude(categories__id__in=category_ids)
 
 
 def filter_by_section(
     section_uuid: Optional[str],
-    queryset: QuerySet[Package],
-) -> QuerySet[Package]:
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
     """
     PackageListingSections can be used as shortcut for multiple
     category filters.
@@ -445,15 +440,19 @@ def filter_by_section(
 
 def filter_by_query(
     query: Optional[str],
-    queryset: QuerySet[Package],
-) -> QuerySet[Package]:
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
     """
     Filter packages by free text search.
     """
     if not query:
         return queryset
 
-    search_fields = ("name", "owner__name", "latest__description")
+    search_fields = (
+        "package__name",
+        "package__owner__name",
+        "package__latest__description",
+    )
     icontains_query = Q()
     parts = [x for x in query.split(" ") if x]
 
@@ -466,15 +465,10 @@ def filter_by_query(
 
 def filter_by_review_status(
     require_approval: bool,
-    queryset: QuerySet[Package],
-    community: Community,
-) -> QuerySet[Package]:
-    review_statuses = [PackageListingReviewStatus.approved]
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
+    review_status_to_reject = [PackageListingReviewStatus.rejected]
+    if require_approval:
+        review_status_to_reject.append(PackageListingReviewStatus.unreviewed)
 
-    if not require_approval:
-        review_statuses.append(PackageListingReviewStatus.unreviewed)
-
-    return queryset.filter(
-        community_listings__community=community,
-        community_listings__review_status__in=review_statuses,
-    )
+    return queryset.exclude(review_status__in=review_status_to_reject)
