@@ -23,6 +23,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamMemberListAPIView,
     TeamServiceAccountListAPIView,
     UpdatePackageListingCategoriesAPIView,
+    UpdateTeamMemberAPIView,
 )
 
 cyberstorm_urls = [
@@ -145,5 +146,10 @@ cyberstorm_urls = [
         "team/<str:team_id>/service-account/",
         TeamServiceAccountListAPIView.as_view(),
         name="cyberstorm.team.service-account",
+    ),
+    path(
+        "team/<str:team_name>/member/<str:team_member>/update/",
+        UpdateTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.update.member",
     ),
 ]

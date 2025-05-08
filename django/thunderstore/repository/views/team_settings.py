@@ -16,6 +16,7 @@ from thunderstore.account.forms import (
     CreateServiceAccountForm,
     DeleteServiceAccountForm,
 )
+from thunderstore.api.cyberstorm.services.team import update_team_member
 from thunderstore.core.mixins import RequireAuthenticationMixin
 from thunderstore.core.utils import capture_exception
 from thunderstore.frontend.views import SettingsViewMixin
@@ -111,14 +112,29 @@ class SettingsTeamDetailView(TeamDetailView, UserFormKwargs, FormView):
         return context
 
     def form_invalid(self, form):
-        messages.error(
-            self.request, "There was a problem performing the requested action"
-        )
+        error_msg = "There was a problem performing the requested action"
+        messages.error(self.request, error_msg)
         capture_exception(ValidationError(form.errors))
         return super().form_invalid(form)
 
     def form_valid(self, form):
+        if "demote" in self.request.POST or "promote" in self.request.POST:
+            return self._handle_demote_and_promote(form)
+
         form.save()
+        messages.success(self.request, "Action performed successfully")
+        return redirect(self.object.settings_url)
+
+    def _handle_demote_and_promote(self, form):
+        try:
+            update_team_member(
+                agent=self.request.user,
+                team_member=form.instance,
+                role=form.cleaned_data["role"],
+            )
+        except ValidationError as e:
+            return self.form_invalid(form)
+
         messages.success(self.request, "Action performed successfully")
         return redirect(self.object.settings_url)
 

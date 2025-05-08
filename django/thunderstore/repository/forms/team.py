@@ -2,7 +2,7 @@ from typing import Optional
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
@@ -104,39 +104,27 @@ class RemoveTeamMemberForm(forms.Form):
         self.cleaned_data["membership"].delete()
 
 
-class EditTeamMemberForm(forms.ModelForm):
-    class Meta:
-        model = TeamMember
-        fields = ["role"]
+class EditTeamMemberForm(forms.Form):
+    role = forms.CharField(max_length=64)
 
-    def __init__(self, user: Optional[UserType], *args, **kwargs):
+    def __init__(
+        self,
+        user: Optional[UserType],
+        instance: Optional[TeamMember] = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.user = user
+        self.instance = instance
 
     def clean_role(self):
-        new_role = self.cleaned_data.get("role", None)
-        try:
-            team = self.instance.team
-        except ObjectDoesNotExist:
-            team = None
-        if team:
-            team.ensure_member_role_can_be_changed(
-                member=self.instance, new_role=new_role
-            )
-        else:
-            raise ValidationError("Team is missing")
-        return new_role
+        role = self.cleaned_data.get("role")
 
-    def clean(self):
-        try:
-            team = self.instance.team
-        except ObjectDoesNotExist:
-            team = None
-        if team:
-            team.ensure_user_can_manage_members(self.user)
-        else:
-            raise ValidationError("Team is missing")
-        return super().clean()
+        if role not in TeamMemberRole.options():
+            raise forms.ValidationError(f"Invalid role: {role}")
+
+        return role
 
 
 class DisbandTeamForm(forms.ModelForm):
