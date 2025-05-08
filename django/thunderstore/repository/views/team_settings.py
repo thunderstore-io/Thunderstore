@@ -16,6 +16,7 @@ from thunderstore.account.forms import (
     CreateServiceAccountForm,
     DeleteServiceAccountForm,
 )
+from thunderstore.api.cyberstorm.services.team import remove_team_member
 from thunderstore.core.mixins import RequireAuthenticationMixin
 from thunderstore.core.utils import capture_exception
 from thunderstore.frontend.views import SettingsViewMixin
@@ -26,7 +27,6 @@ from thunderstore.repository.forms import (
     DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
-    TeamMemberRole,
 )
 from thunderstore.repository.models import Team, TeamMember, reverse
 
@@ -111,14 +111,28 @@ class SettingsTeamDetailView(TeamDetailView, UserFormKwargs, FormView):
         return context
 
     def form_invalid(self, form):
-        messages.error(
-            self.request, "There was a problem performing the requested action"
-        )
+        error_msg = "There was a problem performing the requested action"
+        messages.error(self.request, error_msg)
         capture_exception(ValidationError(form.errors))
         return super().form_invalid(form)
 
     def form_valid(self, form):
+        if "kick" in self.request.POST:
+            return self._handle_kick_action(form)
+
         form.save()
+        messages.success(self.request, "Action performed successfully")
+        return redirect(self.object.settings_url)
+
+    def _handle_kick_action(self, form):
+        try:
+            remove_team_member(
+                agent=self.request.user,
+                team_member=form.cleaned_data["membership"],
+            )
+        except ValidationError:
+            return self.form_invalid(form)
+
         messages.success(self.request, "Action performed successfully")
         return redirect(self.object.settings_url)
 
@@ -191,15 +205,20 @@ class SettingsTeamLeaveView(TeamDetailView, UserFormKwargs, FormView):
         return context
 
     def form_invalid(self, form):
-        messages.error(
-            self.request, "There was a problem performing the requested action"
-        )
+        error_msg = "There was a problem performing the requested action"
+        messages.error(self.request, error_msg)
         capture_exception(ValidationError(form.errors))
         return super().form_invalid(form)
 
     @transaction.atomic
     def form_valid(self, form):
-        form.save()
+        try:
+            remove_team_member(
+                agent=self.request.user,
+                team_member=form.cleaned_data["membership"],
+            )
+        except ValidationError:
+            return self.form_invalid(form)
         return redirect(reverse("settings.teams"))
 
 
