@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import Namespace, Team
+from thunderstore.repository.models import Namespace, Team, TeamMember
 from thunderstore.repository.models.team import TeamMemberRole
 
 
@@ -31,3 +31,21 @@ def create_team(user: UserType, team_name: str) -> Team:
     team = Team.objects.create(name=team_name)
     team.add_member(user=user, role=TeamMemberRole.owner)
     return team
+
+
+@transaction.atomic
+def update_team_member(
+    agent: UserType,
+    team_member: TeamMember,
+    role: str,
+) -> TeamMember:
+    team = team_member.team
+
+    team.ensure_user_can_access(agent)
+    team.ensure_user_can_manage_members(agent)
+    team.ensure_member_role_can_be_changed(team_member, role)
+
+    team_member.role = role
+    team_member.save()
+
+    return team_member
