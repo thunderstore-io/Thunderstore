@@ -299,110 +299,6 @@ def test_form_remove_team_member_last_owner() -> None:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("editor_type", TestUserTypes.options())
-@pytest.mark.parametrize("edited_type", TestUserTypes.options())
-@pytest.mark.parametrize("editor_role", TeamMemberRole.options() + [None])
-@pytest.mark.parametrize("edited_role", TeamMemberRole.options() + [None])
-@pytest.mark.parametrize("new_role", TeamMemberRole.options() + [None])
-def test_form_edit_team_member(
-    editor_type: str,
-    edited_type: str,
-    editor_role: str,
-    edited_role: str,
-    new_role: str,
-) -> None:
-    editor_type_valid_map = {
-        TestUserTypes.no_user: False,
-        TestUserTypes.unauthenticated: False,
-        TestUserTypes.regular_user: True,
-        TestUserTypes.deactivated_user: False,
-        TestUserTypes.service_account: False,
-        TestUserTypes.site_admin: True,
-        TestUserTypes.superuser: True,
-    }
-    edited_type_valid_map = {
-        **editor_type_valid_map,
-        **{TestUserTypes.deactivated_user: True, TestUserTypes.service_account: True},
-    }
-    editor_role_valid_map = {
-        None: False,
-        TeamMemberRole.member: False,
-        TeamMemberRole.owner: True,
-    }
-    edited_role_valid_map = {
-        None: False,
-        TeamMemberRole.member: True,
-        TeamMemberRole.owner: True,
-    }
-    editor_valid = all(
-        (
-            editor_type_valid_map[editor_type],
-            editor_role_valid_map[editor_role],
-        )
-    )
-    edited_valid = all(
-        (
-            edited_type_valid_map[edited_type],
-            edited_role_valid_map[edited_role],
-        )
-    )
-    new_role_valid = new_role is not None
-    is_valid = all((editor_valid, edited_valid, new_role_valid))
-
-    editor = TestUserTypes.get_user_by_type(editor_type)
-    edited = TestUserTypes.get_user_by_type(edited_type)
-    team = Team.create(name="Test")
-
-    if editor is not None and editor.is_authenticated and editor_role is not None:
-        TeamMember.objects.create(
-            team=team,
-            user=editor,
-            role=editor_role,
-        )
-
-    if edited is not None and edited.is_authenticated and edited_role is not None:
-        membership = TeamMember.objects.create(
-            team=team,
-            user=edited,
-            role=edited_role,
-        )
-    else:
-        membership = None
-
-    form = EditTeamMemberForm(
-        user=editor,
-        instance=membership,
-        data={"role": new_role},
-    )
-    if is_valid:
-        assert form.is_valid() is True
-        assert form.save() is membership
-        membership.refresh_from_db()
-        assert membership.role == new_role
-    else:
-        assert form.is_valid() is False
-        assert form.errors
-
-
-@pytest.mark.django_db
-def test_form_edit_team_member_remove_last_owner() -> None:
-    user = UserFactory()
-    team = Team.create(name="Test")
-    last_owner = TeamMember.objects.create(
-        user=user,
-        team=team,
-        role=TeamMemberRole.owner,
-    )
-    form = EditTeamMemberForm(
-        user=user,
-        instance=last_owner,
-        data={"role": TeamMemberRole.member},
-    )
-    assert form.is_valid() is False
-    assert "Cannot remove last owner from team" in str(repr(form.errors))
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize("disbander_type", TestUserTypes.options())
 @pytest.mark.parametrize("disbander_role", TeamMemberRole.options() + [None])
 def test_form_disband_team_form(
@@ -605,3 +501,18 @@ def test_form_donation_link_team_form_no_instance(
     )
     assert form.is_valid() is False
     assert "Missing team instance" in str(repr(form.errors))
+
+
+@pytest.mark.parametrize("valid_role", TeamMemberRole.options())
+def test_valid_role(valid_role, user):
+    form = EditTeamMemberForm(data={"role": valid_role}, user=user)
+    assert form.is_valid()
+
+
+@pytest.mark.parametrize("invalid_role", ["invalid_role", "", None])
+def test_invalid_role(invalid_role, user):
+    form = EditTeamMemberForm(data={"role": invalid_role}, user=user)
+    assert not form.is_valid()
+    assert "role" in form.errors
+    if invalid_role:
+        assert f"Invalid role: {invalid_role}" in form.errors["role"]
