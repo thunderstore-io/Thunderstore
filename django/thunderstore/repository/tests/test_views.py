@@ -480,6 +480,62 @@ def test_team_settings_donation_link_view(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
+def test_team_settings_donation_link_view_permissions(
+    client: APIClient,
+    community_site: CommunitySite,
+    team: Team,
+    user_type: str,
+    role: Optional[str],
+) -> None:
+    valid_user_type_map = {
+        TestUserTypes.no_user: False,
+        TestUserTypes.unauthenticated: False,
+        TestUserTypes.regular_user: True,
+        TestUserTypes.deactivated_user: False,
+        TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
+        TestUserTypes.superuser: True,
+    }
+
+    valid_role_map = {
+        None: False,
+        TeamMemberRole.member: False,
+        TeamMemberRole.owner: True,
+    }
+
+    user = TestUserTypes.get_user_by_type(user_type)
+    if role is not None and user_type not in TestUserTypes.fake_users():
+        TeamMember.objects.create(user=user, team=team, role=role)
+        client.force_login(user)
+
+    should_succeed = all(
+        (
+            valid_user_type_map[user_type],
+            valid_role_map[role],
+        )
+    )
+
+    kwargs = {"name": team.name}
+    response = client.post(
+        reverse("settings.teams.detail.donation_link", kwargs=kwargs),
+        {"donation_link": "https://example.org/"},
+        HTTP_HOST=community_site.site.domain,
+        follow=True,
+    )
+
+    if should_succeed:
+        assert b"Donation link saved" in response.content
+        team.refresh_from_db()
+        assert team.donation_link == "https://example.org/"
+    else:
+        assert b"Donation link saved" not in response.content
+        team.refresh_from_db()
+        assert team.donation_link is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
 def test_view_package_detail_management_option_visibility_without_team(
     client: APIClient,
     user_type: str,
