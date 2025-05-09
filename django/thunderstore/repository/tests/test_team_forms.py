@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
 from thunderstore.core.factories import UserFactory
@@ -552,8 +553,11 @@ def test_form_donation_link_team_form_permissions(
         team.refresh_from_db()
         assert team.donation_link == link
     else:
+        form.save()
         assert form.is_valid() is False
         assert form.errors
+        team.refresh_from_db()
+        assert team.donation_link is None
 
 
 @pytest.mark.django_db
