@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
+from thunderstore.api.cyberstorm.services.team import update_team
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import (
@@ -183,10 +184,20 @@ class DonationLinkTeamForm(forms.ModelForm):
     def clean(self):
         if not self.instance.pk:
             raise ValidationError("Missing team instance")
-        self.instance.ensure_user_can_edit_info(self.user)
         return super().clean()
 
     @transaction.atomic
     def save(self, **kwargs):
-        self.instance.ensure_user_can_edit_info(self.user)
-        return super().save(**kwargs)
+        if self.errors:
+            raise ValidationError(self.errors)
+
+        try:
+            update_team(
+                agent=self.user,
+                team=self.instance,
+                donation_link=self.cleaned_data["donation_link"],
+            )
+        except ValidationError as e:
+            self.add_error(None, e)
+
+        return self.instance
