@@ -6,16 +6,16 @@ from django.db import transaction
 from pydantic import BaseModel
 
 
+class AuditTarget(str, Enum):
+    PACKAGE = "PACKAGE"
+    LISTING = "LISTING"
+    VERSION = "VERSION"
+
+
 class AuditAction(str, Enum):
-    PACKAGE_REJECTED = "PACKAGE_REJECTED"
-    PACKAGE_APPROVED = "PACKAGE_APPROVED"
-    PACKAGE_WARNING = "PACKAGE_WARNING"
-    LISTING_REJECTED = "LISTING_REJECTED"
-    LISTING_APPROVED = "LISTING_APPROVED"
-    LISTING_WARNING = "LISTING_WARNING"
-    VERSION_REJECTED = "VERSION_REJECTED"
-    VERSION_APPROVED = "VERSION_APPROVED"
-    VERSION_WARNING = "VERSION_WARNING"
+    REJECTED = "REJECTED"
+    APPROVED = "APPROVED"
+    WARNING = "WARNING"
 
 
 class AuditEventField(BaseModel):
@@ -27,6 +27,7 @@ class AuditEvent(BaseModel):
     timestamp: datetime
     user_id: Optional[int]
     community_id: Optional[int]
+    target: AuditTarget
     action: AuditAction
     message: Optional[str]
     related_url: Optional[str]

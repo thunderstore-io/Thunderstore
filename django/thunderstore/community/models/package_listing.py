@@ -23,6 +23,7 @@ from thunderstore.webhooks.audit import (
     AuditAction,
     AuditEvent,
     AuditEventField,
+    AuditTarget,
     fire_audit_event,
 )
 
@@ -169,6 +170,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     def build_audit_event(
         self,
         *,
+        target: AuditTarget,
         action: AuditAction,
         user_id: Optional[int],
         message: Optional[str] = None,
@@ -177,6 +179,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
             timestamp=timezone.now(),
             user_id=user_id,
             community_id=self.community.pk,
+            target=target,
             action=action,
             message=message,
             related_url=self.get_full_url(),
@@ -224,7 +227,8 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
             message = "\n\n".join(filter(bool, (rejection_reason, internal_notes)))
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_REJECTED,
+                    target=AuditTarget.LISTING,
+                    action=AuditAction.REJECTED,
                     user_id=agent.pk if agent else None,
                     message=message,
                 )
@@ -250,7 +254,8 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
             )
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_APPROVED,
+                    target=AuditTarget.LISTING,
+                    action=AuditAction.APPROVED,
                     user_id=agent.pk if agent else None,
                     message=internal_notes,
                 )
