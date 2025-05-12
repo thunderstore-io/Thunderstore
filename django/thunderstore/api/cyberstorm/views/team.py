@@ -30,13 +30,6 @@ from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
 
 
-def get_team_object_or_404(team_name: str) -> Team:
-    return get_object_or_404(
-        Team.objects.exclude(is_active=False),
-        name=team_name,
-    )
-
-
 def get_team_member_object_or_404(team_name: str, team_member: str) -> TeamMember:
     return get_object_or_404(
         TeamMember.objects.real_users(),
