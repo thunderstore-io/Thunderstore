@@ -380,8 +380,15 @@ def test_form_edit_team_member(
         membership.refresh_from_db()
         assert membership.role == new_role
     else:
-        assert form.is_valid() is False
-        assert form.errors
+        if form.errors:
+            # Test the errors raised by form.clean()
+            assert form.is_valid() is False
+            assert form.errors
+        else:
+            # Test post clean validation errors added to form in form.save()
+            form.save()
+            assert form.is_valid() is False
+            assert form.errors
 
 
 @pytest.mark.django_db
