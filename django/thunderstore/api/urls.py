@@ -150,6 +150,6 @@ cyberstorm_urls = [
     path(
         "team/<str:team_name>/member/<str:team_member>/update/",
         UpdateTeamMemberAPIView.as_view(),
-        name="cyberstorm.team.update.member",
+        name="cyberstorm.team.member.update",
     ),
 ]
