@@ -31,3 +31,14 @@ def create_team(user: UserType, team_name: str) -> Team:
     team = Team.objects.create(name=team_name)
     team.add_member(user=user, role=TeamMemberRole.owner)
     return team
+
+
+@transaction.atomic
+def update_team(agent: UserType, team: Team, donation_link: str) -> Team:
+    team.ensure_user_can_access(agent)
+    team.ensure_user_can_edit_info(agent)
+
+    team.donation_link = donation_link
+    team.save()
+
+    return team
