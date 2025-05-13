@@ -203,7 +203,7 @@ def test_package_version_visibility_updates_with_review_status(
 
 
 @pytest.mark.django_db
-def test_package_listing_visibility_updates_with_package_is_active(
+def test_package_version_visibility_updates_with_package_is_active(
     package_version: PackageVersion,
 ) -> None:
     assert_version_is_public(package_version)

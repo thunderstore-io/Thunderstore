@@ -24,20 +24,15 @@ def create_default_visibility_for_existing_records(apps, schema_editor):
 
 
 def update_visibility(listing):
-    listing.visibility.public_detail = True
-    listing.visibility.public_list = True
-    listing.visibility.owner_detail = True
-    listing.visibility.owner_list = True
-    listing.visibility.moderator_detail = True
-    listing.visibility.moderator_list = True
-
-    if not listing.package.is_active:
-        listing.visibility.public_detail = False
-        listing.visibility.public_list = False
-        listing.visibility.owner_detail = False
-        listing.visibility.owner_list = False
-        listing.visibility.moderator_detail = False
-        listing.visibility.moderator_list = False
+    package = listing.package
+    listing.visibility.public_detail = package.visibility.public_detail
+    listing.visibility.public_list = package.visibility.public_list
+    listing.visibility.owner_detail = package.visibility.owner_detail
+    listing.visibility.owner_list = package.visibility.owner_list
+    listing.visibility.moderator_detail = package.visibility.moderator_detail
+    listing.visibility.moderator_list = package.visibility.moderator_list
+    listing.visibility.admin_detail = package.visibility.admin_detail
+    listing.visibility.admin_list = package.visibility.admin_list
 
     if listing.review_status == PackageListingReviewStatus.rejected:
         listing.visibility.public_detail = False
@@ -50,20 +45,6 @@ def update_visibility(listing):
         listing.visibility.public_detail = False
         listing.visibility.public_list = False
 
-    versions = listing.package.versions.filter(is_active=True).all()
-    if versions.exclude(visibility__public_detail=False).count() == 0:
-        listing.visibility.public_detail = False
-    if versions.exclude(visibility__public_list=False).count() == 0:
-        listing.visibility.public_list = False
-    if versions.exclude(visibility__owner_detail=False).count() == 0:
-        listing.visibility.owner_detail = False
-    if versions.exclude(visibility__owner_list=False).count() == 0:
-        listing.visibility.owner_list = False
-    if versions.exclude(visibility__moderator_detail=False).count() == 0:
-        listing.visibility.moderator_detail = False
-    if versions.exclude(visibility__moderator_list=False).count() == 0:
-        listing.visibility.moderator_list = False
-
     listing.visibility.save()
 
 
@@ -71,7 +52,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("community", "0036_packagelisting_visibility"),
-        ("repository", "0058_create_default_visibility_for_existing_versions"),
+        ("repository", "0058_package_visibility"),
+        ("repository", "0059_create_default_visibility_for_existing_records"),
     ]
 
     operations = [
