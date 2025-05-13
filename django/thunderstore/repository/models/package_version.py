@@ -434,24 +434,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
         return False
 
-    @transaction.atomic
-    def update_visibility(self):
-        """
-        Updates the version's visibility based on whether it or its package is active and its review status.
-        This may also change the visibility of related listings, so it calls update_visibility() on them.
-
-        By default, versions are visible to everyone (for now). Rejected versions aren't publicly visible,
-        and inactive versions or versions with inactive packages aren't visible at all.
-        """
-        original_visibility_bitstring = self.visibility.bitstring()
-
-        self.visibility.public_detail = True
-        self.visibility.public_list = True
-        self.visibility.owner_detail = True
-        self.visibility.owner_list = True
-        self.visibility.moderator_detail = True
-        self.visibility.moderator_list = True
-
+    def set_visibility_from_active_status(self):
         if not self.is_active or not self.package.is_active:
             self.visibility.public_detail = False
             self.visibility.public_list = False
@@ -460,6 +443,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             self.visibility.moderator_detail = False
             self.visibility.moderator_list = False
 
+    def set_visibility_from_review_status(self):
         if (
             self.review_status == PackageVersionReviewStatus.rejected
             or self.review_status == PackageVersionReviewStatus.pending
@@ -467,11 +451,20 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             self.visibility.public_detail = False
             self.visibility.public_list = False
 
-        if self.visibility.bitstring != original_visibility_bitstring:
-            self.visibility.save()
-            for listing in self.package.community_listings.all():
-                listing.update_visibility()
-            self.package.recache_latest()
+    @transaction.atomic
+    def update_visibility(self):
+        original = self.visibility.as_tuple()
+
+        self.set_default_visibility()
+
+        self.set_visibility_from_active_status()
+
+        self.set_visibility_from_review_status()
+
+        self.visibility.save()
+
+        if self.visibility.as_tuple() != original:
+            self.package.update_visibility()  # package's visibility may change because of its versions
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)

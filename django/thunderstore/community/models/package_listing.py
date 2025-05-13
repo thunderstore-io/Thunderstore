@@ -410,32 +410,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
 
         return False
 
-    @transaction.atomic
-    def update_visibility(self):
-        """
-        Updates the package listing's visibility based on whether its package is active, its review status,
-        and the visibility of its active versions.
-
-        By default, listings are visible to everyone (for now). Rejected listings aren't publicly visible,
-        and listings with inactive packages aren't visible at all.
-        """
-        original_visibility_bitstring = self.visibility.bitstring()
-
-        self.visibility.public_detail = True
-        self.visibility.public_list = True
-        self.visibility.owner_detail = True
-        self.visibility.owner_list = True
-        self.visibility.moderator_detail = True
-        self.visibility.moderator_list = True
-
-        if not self.package.is_active:
-            self.visibility.public_detail = False
-            self.visibility.public_list = False
-            self.visibility.owner_detail = False
-            self.visibility.owner_list = False
-            self.visibility.moderator_detail = False
-            self.visibility.moderator_list = False
-
+    def set_visibility_from_review_status(self):
         if self.review_status == PackageListingReviewStatus.rejected:
             self.visibility.public_detail = False
             self.visibility.public_list = False
@@ -447,22 +422,13 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
             self.visibility.public_detail = False
             self.visibility.public_list = False
 
-        versions = self.package.versions.filter(is_active=True).all()
-        if versions.exclude(visibility__public_detail=False).count() == 0:
-            self.visibility.public_detail = False
-        if versions.exclude(visibility__public_list=False).count() == 0:
-            self.visibility.public_list = False
-        if versions.exclude(visibility__owner_detail=False).count() == 0:
-            self.visibility.owner_detail = False
-        if versions.exclude(visibility__owner_list=False).count() == 0:
-            self.visibility.owner_list = False
-        if versions.exclude(visibility__moderator_detail=False).count() == 0:
-            self.visibility.moderator_detail = False
-        if versions.exclude(visibility__moderator_list=False).count() == 0:
-            self.visibility.moderator_list = False
+    @transaction.atomic
+    def update_visibility(self):
+        self.visibility.copy_from(self.package.visibility)
 
-        if self.visibility.bitstring != original_visibility_bitstring:
-            self.visibility.save()
+        self.set_visibility_from_review_status()
+
+        self.visibility.save()
 
 
 signals.post_save.connect(PackageListing.post_save, sender=PackageListing)

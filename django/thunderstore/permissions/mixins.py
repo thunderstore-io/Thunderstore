@@ -57,6 +57,16 @@ class VisibilityMixin(models.Model):
     def update_visibility(self):
         pass
 
+    def set_default_visibility(self):
+        self.visibility.public_detail = True
+        self.visibility.public_list = True
+        self.visibility.owner_detail = True
+        self.visibility.owner_list = True
+        self.visibility.moderator_detail = True
+        self.visibility.moderator_list = True
+        self.visibility.admin_detail = True
+        self.visibility.admin_list = True
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         if not self.pk and not self.visibility:

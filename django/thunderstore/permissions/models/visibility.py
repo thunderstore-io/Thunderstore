@@ -36,8 +36,8 @@ class VisibilityFlags(models.Model):
         )
         return ", ".join(flag_fields) or "None"
 
-    def bitstring(self) -> str:
-        fields = [
+    def as_tuple(self):
+        return (
             self.public_list,
             self.public_detail,
             self.owner_list,
@@ -46,5 +46,14 @@ class VisibilityFlags(models.Model):
             self.moderator_detail,
             self.admin_list,
             self.admin_detail,
-        ]
-        return "".join("1" if field else "0" for field in fields)
+        )
+
+    def copy_from(self, from_visibility):
+        self.public_detail = from_visibility.public_detail
+        self.public_list = from_visibility.public_list
+        self.owner_detail = from_visibility.owner_detail
+        self.owner_list = from_visibility.owner_list
+        self.moderator_detail = from_visibility.moderator_detail
+        self.moderator_list = from_visibility.moderator_list
+        self.admin_detail = from_visibility.admin_detail
+        self.admin_list = from_visibility.admin_list
