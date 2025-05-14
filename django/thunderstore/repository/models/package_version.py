@@ -409,7 +409,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
                 return True
         return False
 
-    def is_visible_to_user(self, user: UserType) -> bool:
+    def is_visible_to_user(self, user: Optional[UserType]) -> bool:
         if not self.visibility:
             return False
 

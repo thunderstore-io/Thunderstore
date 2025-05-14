@@ -324,6 +324,31 @@ class Package(VisibilityMixin, AdminLinkMixin):
     def __str__(self):
         return self.full_package_name
 
+    def is_visible_to_user(self, user: Optional[UserType]) -> bool:
+        if not self.visibility:
+            return False
+
+        if self.visibility.public_detail:
+            return True
+
+        if user is None:
+            return False
+
+        if self.visibility.owner_detail:
+            if self.owner.can_user_access(user):
+                return True
+
+        if self.visibility.moderator_detail:
+            for listing in self.community_listings.all():
+                if listing.community.can_user_manage_packages(user):
+                    return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False
+
     def set_visibility_from_active_status(self):
         if not self.is_active:
             self.visibility.public_detail = False
