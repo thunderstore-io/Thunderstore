@@ -22,8 +22,9 @@ extract_file_list.short_description = "Queue file list extraction"
 @transaction.atomic
 def reject_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
     for version in queryset:
-        version.review_status = PackageVersionReviewStatus.rejected
-        version.save(update_fields=("review_status",))
+        version.reject(
+            agent=request.user, rejection_reason="Invalid submission", is_system=False
+        )
 
 
 reject_version.short_description = "Reject"
@@ -32,8 +33,7 @@ reject_version.short_description = "Reject"
 @transaction.atomic
 def approve_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
     for version in queryset:
-        version.review_status = PackageVersionReviewStatus.approved
-        version.save(update_fields=("review_status",))
+        version.approve(agent=request.user, is_system=False)
 
 
 approve_version.short_description = "Approve"
