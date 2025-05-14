@@ -16,8 +16,9 @@ from ..models.package_listing import PackageListing
 @transaction.atomic
 def reject_listing(modeladmin, request, queryset: QuerySet[PackageListing]):
     for listing in queryset:
-        listing.review_status = PackageListingReviewStatus.rejected
-        listing.save(update_fields=("review_status",))
+        listing.reject(
+            agent=request.user, rejection_reason="Invalid submission", is_system=False
+        )
 
 
 reject_listing.short_description = "Reject"
@@ -26,8 +27,7 @@ reject_listing.short_description = "Reject"
 @transaction.atomic
 def approve_listing(modeladmin, request, queryset: QuerySet[PackageListing]):
     for listing in queryset:
-        listing.review_status = PackageListingReviewStatus.approved
-        listing.save(update_fields=("review_status",))
+        listing.approve(agent=request.user, is_system=False)
 
 
 approve_listing.short_description = "Approve"
