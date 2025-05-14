@@ -52,6 +52,28 @@ class PackageListingAdmin(admin.ModelAdmin):
         approve_listing,
         reject_listing,
     )
+
+    fields = (
+        "categories",
+        "is_review_requested",
+        "review_status",
+        "rejection_reason",
+        "notes",
+        "has_nsfw_content",
+        "is_auto_imported",
+        "package_link",
+        "community",
+        "datetime_created",
+        "datetime_updated",
+        "visibility",
+    )
+    readonly_fields = (
+        "package_link",
+        "community",
+        "datetime_created",
+        "datetime_updated",
+        "visibility",
+    )
     filter_horizontal = ("categories",)
     raw_id_fields = ("package", "community")
     list_filter = (
@@ -84,12 +106,6 @@ class PackageListingAdmin(admin.ModelAdmin):
         "package__owner",
         "package__namespace",
         "community",
-    )
-    readonly_fields = (
-        "package_link",
-        "community",
-        "datetime_created",
-        "datetime_updated",
     )
     exclude = ("package",)
 
