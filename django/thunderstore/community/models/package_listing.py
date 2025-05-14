@@ -389,6 +389,9 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
 
     def is_visible_to_user(self, user: Optional[UserType]) -> bool:
+        if not self.visibility:
+            return False
+
         if self.visibility.public_detail:
             return True
 
