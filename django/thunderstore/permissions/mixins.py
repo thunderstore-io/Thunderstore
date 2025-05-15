@@ -47,7 +47,7 @@ class VisibilityMixin(models.Model):
 
     @abstractmethod
     @transaction.atomic
-    def update_visibility(self):
+    def update_visibility(self):  # pragma: no cover
         pass
 
     def set_default_visibility(self):
@@ -59,6 +59,16 @@ class VisibilityMixin(models.Model):
         self.visibility.moderator_list = True
         self.visibility.admin_detail = True
         self.visibility.admin_list = True
+
+    def set_zero_visibility(self):
+        self.visibility.public_detail = False
+        self.visibility.public_list = False
+        self.visibility.owner_detail = False
+        self.visibility.owner_list = False
+        self.visibility.moderator_detail = False
+        self.visibility.moderator_list = False
+        self.visibility.admin_detail = False
+        self.visibility.admin_list = False
 
     @transaction.atomic
     def save(self, *args, **kwargs):
@@ -73,5 +83,5 @@ class VisibilityMixin(models.Model):
         abstract = True
 
     @abstractmethod
-    def is_visible_to_user(self, user: Optional[UserType]) -> bool:
+    def is_visible_to_user(self, user: Optional[UserType]) -> bool:  # pragma: no cover
         return False
