@@ -402,6 +402,7 @@ class Package(VisibilityMixin, AdminLinkMixin):
         self.set_visibility_from_versions()
 
         if self.visibility.as_tuple() != original:
+            self.visibility.save()
             for listing in self.community_listings.all():
                 listing.update_visibility()
 
