@@ -47,6 +47,24 @@ def test_service_account_create(user, team):
 
 
 @pytest.mark.django_db
+def test_service_account_create_error_on_save(user, team):
+    TeamMember.objects.create(
+        user=user,
+        team=team,
+        role=TeamMemberRole.owner,
+    )
+
+    form = CreateServiceAccountForm(
+        user,
+        data={"team": team, "nickname": "x" * 1000},
+    )
+
+    assert form.is_valid() is False
+    with pytest.raises(ValueError):
+        form.save()
+
+
+@pytest.mark.django_db
 def test_service_account_create_nickname_too_long(user, team):
     TeamMember.objects.create(
         user=user,
@@ -91,9 +109,10 @@ def test_service_account_create_not_owner(user, team):
         user,
         data={"team": team, "nickname": "Nickname"},
     )
+    form.save()
     assert form.is_valid() is False
-    assert len(form.errors["team"]) == 1
-    assert form.errors["team"][0] == "Must be an owner to create a service account"
+    assert len(form.errors["__all__"]) == 1
+    assert form.errors["__all__"][0] == "Must be an owner to create a service account"
 
 
 @pytest.mark.django_db
@@ -130,6 +149,20 @@ def test_service_account_delete_not_member(service_account):
 
 
 @pytest.mark.django_db
+def test_service_account_delete_error_on_save(service_account):
+    user = UserFactory.create()
+
+    form = DeleteServiceAccountForm(
+        user,
+        data={"service_account": service_account},
+    )
+
+    assert form.is_valid() is False
+    with pytest.raises(ValueError):
+        form.save()
+
+
+@pytest.mark.django_db
 def test_service_account_delete_not_owner(service_account):
     user = UserFactory.create()
     TeamMember.objects.create(
@@ -141,12 +174,10 @@ def test_service_account_delete_not_owner(service_account):
         user,
         data={"service_account": service_account},
     )
+    form.save()
     assert form.is_valid() is False
-    assert len(form.errors["service_account"]) == 1
-    assert (
-        form.errors["service_account"][0]
-        == "Must be an owner to delete a service account"
-    )
+    assert len(form.errors["__all__"]) == 1
+    assert form.errors["__all__"][0] == "Must be an owner to delete a service account"
 
 
 @pytest.mark.django_db
