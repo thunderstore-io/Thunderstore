@@ -19,6 +19,12 @@ from thunderstore.community.models import (
     PackageListing,
 )
 from thunderstore.core.factories import UserFactory
+from thunderstore.permissions.models.tests._utils import (
+    assert_default_visibility,
+    assert_visibility_is_not_public,
+    assert_visibility_is_not_visible,
+    assert_visibility_is_public,
+)
 from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
@@ -429,58 +435,11 @@ def test_package_listing_has_mod_manager_support(mod_manager_support: bool) -> N
     assert package_listing.has_mod_manager_support == mod_manager_support
 
 
-# TODO: visibility tests will need to be rewritten once the default visibility is no longer public
-
-
-def assert_listing_is_public(listing: PackageListing) -> None:
-    assert listing.visibility.public_list is True
-    assert listing.visibility.public_detail is True
-    assert listing.visibility.owner_list is True
-    assert listing.visibility.owner_detail is True
-    assert listing.visibility.moderator_list is True
-    assert listing.visibility.moderator_detail is True
-
-
-def assert_listing_is_not_public(listing: PackageListing) -> None:
-    assert listing.visibility.public_list is False
-    assert listing.visibility.public_detail is False
-    assert listing.visibility.owner_list is True
-    assert listing.visibility.owner_detail is True
-    assert listing.visibility.moderator_list is True
-    assert listing.visibility.moderator_detail is True
-
-
-def assert_listing_is_not_visible(listing: PackageListing) -> None:
-    assert listing.visibility.public_list is False
-    assert listing.visibility.public_detail is False
-    assert listing.visibility.owner_list is False
-    assert listing.visibility.owner_detail is False
-    assert listing.visibility.moderator_list is False
-    assert listing.visibility.moderator_detail is False
-
-
 @pytest.mark.django_db
-def test_package_listing_visibility_updates_with_review_status(
+def test_package_listing_visibility_inherits_package_is_active(
     active_package_listing: PackageListing,
 ) -> None:
-    assert_listing_is_public(active_package_listing)
-
-    active_package_listing.review_status = PackageListingReviewStatus.rejected
-    active_package_listing.save()
-
-    assert_listing_is_not_public(active_package_listing)
-
-    active_package_listing.review_status = PackageListingReviewStatus.approved
-    active_package_listing.save()
-
-    assert_listing_is_public(active_package_listing)
-
-
-@pytest.mark.django_db
-def test_package_listing_visibility_updates_with_package_is_active(
-    active_package_listing: PackageListing,
-) -> None:
-    assert_listing_is_public(active_package_listing)
+    assert_visibility_is_public(active_package_listing.visibility)
 
     package = active_package_listing.package
 
@@ -488,20 +447,20 @@ def test_package_listing_visibility_updates_with_package_is_active(
     package.save()
 
     active_package_listing.refresh_from_db()
-    assert_listing_is_not_visible(active_package_listing)
+    assert_visibility_is_not_visible(active_package_listing.visibility)
 
     package.is_active = True
     package.save()
 
     active_package_listing.refresh_from_db()
-    assert_listing_is_public(active_package_listing)
+    assert_visibility_is_public(active_package_listing.visibility)
 
 
 @pytest.mark.django_db
-def test_package_listing_visibility_updates_when_all_versions_not_visible(
+def test_package_listing_visibility_inherits_union_of_package_versions_visibility(
     active_package_listing: PackageListing,
 ) -> None:
-    assert_listing_is_public(active_package_listing)
+    assert_visibility_is_public(active_package_listing.visibility)
 
     package = active_package_listing.package
 
@@ -510,14 +469,14 @@ def test_package_listing_visibility_updates_when_all_versions_not_visible(
         version.save()
 
     active_package_listing.refresh_from_db()
-    assert_listing_is_not_public(active_package_listing)
+    assert_visibility_is_not_public(active_package_listing.visibility)
 
     for version in package.versions.all():
         version.is_active = False
         version.save()
 
     active_package_listing.refresh_from_db()
-    assert_listing_is_not_visible(active_package_listing)
+    assert_visibility_is_not_visible(active_package_listing.visibility)
 
     for version in package.versions.all():
         version.review_status = PackageVersionReviewStatus.approved
@@ -525,39 +484,41 @@ def test_package_listing_visibility_updates_when_all_versions_not_visible(
         version.save()
 
     active_package_listing.refresh_from_db()
-    assert_listing_is_public(active_package_listing)
+    assert_visibility_is_public(active_package_listing.visibility)
 
 
 @pytest.mark.django_db
-def test_is_visible_to_user_true_if_public_detail():
+def test_set_visibility_from_review_status():
     listing = PackageListingFactory()
-    listing.visibility.public_detail = True
+
+    listing.review_status = PackageListingReviewStatus.rejected
+    listing.set_visibility_from_review_status()
     listing.visibility.save()
+
+    assert_visibility_is_not_public(listing.visibility)
+
+    listing.visibility.copy_from(listing.package.visibility)
+
+    listing.review_status = PackageListingReviewStatus.unreviewed
+    listing.set_visibility_from_review_status()
+    listing.visibility.save()
+
+    assert_default_visibility(listing.visibility)
+
+    listing.visibility.copy_from(listing.package.visibility)
+
+    listing.community.require_package_listing_approval = True
+    listing.set_visibility_from_review_status()
+    listing.visibility.save()
+
+    assert_visibility_is_not_public(listing.visibility)
+
+
+@pytest.mark.django_db
+def test_is_visible_to_user():
+    listing = PackageListingFactory()
 
     user = UserFactory.create()
-
-    assert listing.is_visible_to_user(None)
-    assert listing.is_visible_to_user(user)
-
-
-@pytest.mark.django_db
-def test_is_visible_to_user_false_if_no_user_and_not_public():
-    listing = PackageListingFactory()
-    listing.visibility.public_detail = False
-    listing.visibility.save()
-
-    assert not listing.is_visible_to_user(None)
-
-
-@pytest.mark.django_db
-def test_is_visible_to_users_with_sufficient_permissions():
-    listing = PackageListingFactory()
-    listing.visibility.public_detail = False
-    listing.visibility.save()
-
-    user = UserFactory.create()
-
-    assert not listing.is_visible_to_user(user)
 
     owner = UserFactory.create()
     TeamMember.objects.create(
@@ -573,42 +534,71 @@ def test_is_visible_to_users_with_sufficient_permissions():
         role=CommunityMemberRole.moderator,
     )
 
-    superuser = UserFactory.create(is_superuser=True)
+    admin = UserFactory.create(is_superuser=True)
 
-    assert listing.is_visible_to_user(owner)
-    assert listing.is_visible_to_user(moderator)
-    assert listing.is_visible_to_user(superuser)
+    agents = {
+        "anonymous": None,
+        "user": user,
+        "owner": owner,
+        "moderator": moderator,
+        "admin": admin,
+    }
 
+    flags = [
+        "public_detail",
+        "owner_detail",
+        "moderator_detail",
+        "admin_detail",
+    ]
 
-@pytest.mark.django_db
-def test_is_visible_to_user_false_if_visible_detail_false():
-    listing = PackageListingFactory()
-    listing.visibility.public_detail = False
-    listing.visibility.owner_detail = False
-    listing.visibility.moderator_detail = False
-    listing.visibility.admin_detail = False
-    listing.visibility.save()
+    # Admins are also moderators but not owners
+    expected = {
+        "public_detail": {
+            "anonymous": True,
+            "user": True,
+            "owner": True,
+            "moderator": True,
+            "admin": True,
+        },
+        "owner_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": True,
+            "moderator": False,
+            "admin": False,
+        },
+        "moderator_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": False,
+            "moderator": True,
+            "admin": True,
+        },
+        "admin_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": False,
+            "moderator": False,
+            "admin": True,
+        },
+    }
 
-    user = UserFactory.create()
+    for flag in flags:
+        listing.visibility.public_detail = False
+        listing.visibility.owner_detail = False
+        listing.visibility.moderator_detail = False
+        listing.visibility.admin_detail = False
 
-    assert not listing.is_visible_to_user(user)
+        setattr(listing.visibility, flag, True)
+        listing.visibility.save()
 
-    TeamMember.objects.create(
-        user=user,
-        team=listing.package.owner,
-        role=TeamMemberRole.owner,
-    )
+        for role, subject in agents.items():
+            result = listing.is_visible_to_user(subject)
+            assert result == expected[flag][role], (
+                f"Expected {flag} visibility for {role} to be "
+                f"{expected[flag][role]}, got {result}"
+            )
 
-    assert not listing.is_visible_to_user(user)
+    listing.visibility = None
 
-    CommunityMembership.objects.create(
-        user=user,
-        community=listing.community,
-        role=CommunityMemberRole.moderator,
-    )
-
-    assert not listing.is_visible_to_user(user)
-
-    user.is_superuser = True
-
-    assert not listing.is_visible_to_user(user)
+    assert not listing.is_visible_to_user(admin)

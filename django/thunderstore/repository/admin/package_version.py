@@ -23,7 +23,7 @@ extract_file_list.short_description = "Queue file list extraction"
 def reject_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
     for version in queryset:
         version.reject(
-            agent=request.user, rejection_reason="Invalid submission", is_system=False
+            agent=request.user, message="Invalid submission", is_system=False
         )
 
 
