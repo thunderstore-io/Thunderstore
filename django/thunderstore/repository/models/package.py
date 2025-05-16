@@ -20,6 +20,7 @@ from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.permissions.mixins import VisibilityMixin
+from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     from thunderstore.repository.models import PackageWiki
 
 
-class PackageQueryset(models.QuerySet):
+class PackageQueryset(VisibilityFlagsQuerySet):
     def active(self):
         return self.exclude(is_active=False).exclude(~Q(versions__is_active=True))
 
