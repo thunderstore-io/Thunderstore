@@ -407,6 +407,10 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         for listing in self.package.community_listings.all():
             if listing.can_user_manage_approval_status(user):
                 return True
+
+        if user and (user.is_superuser or user.is_staff):
+            return True
+
         return False
 
     def is_visible_to_user(self, user: Optional[UserType]) -> bool:
