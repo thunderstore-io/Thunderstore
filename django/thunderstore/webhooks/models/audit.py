@@ -40,11 +40,11 @@ class AuditWebhook(TimestampMixin):
 
     @staticmethod
     def get_event_color(action: AuditAction) -> int:
-        if action == AuditAction.PACKAGE_APPROVED:
+        if action == AuditAction.APPROVED:
             return 5763719
-        if action == AuditAction.PACKAGE_REJECTED:
+        if action == AuditAction.REJECTED:
             return 15548997
-        if action == AuditAction.PACKAGE_WARNING:
+        if action == AuditAction.WARNING:
             return 16705372
         return 9807270
 
@@ -63,7 +63,7 @@ class AuditWebhook(TimestampMixin):
         return DiscordPayload(
             embeds=[
                 DiscordEmbed(
-                    title=event.action,
+                    title=event.target + "_" + event.action,
                     description=event.message,
                     url=event.related_url,
                     color=AuditWebhook.get_event_color(event.action),

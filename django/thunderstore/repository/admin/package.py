@@ -97,6 +97,19 @@ class PackageAdmin(admin.ModelAdmin):
         activate,
     )
 
+    fields = (
+        "is_active",
+        "is_deprecated",
+        "is_pinned",
+        "show_decompilation_results",
+        "date_created",
+        "downloads",
+        "name",
+        "namespace",
+        "owner",
+        "latest",
+        "visibility",
+    )
     readonly_fields = (
         "date_created",
         "downloads",
@@ -104,6 +117,7 @@ class PackageAdmin(admin.ModelAdmin):
         "namespace",
         "owner",
         "latest",
+        "visibility",
     )
     list_display = (
         "name",

@@ -1,9 +1,17 @@
 import pytest
 from django.conf import settings
-from django.test import Client
+from django.test import Client, RequestFactory
 
-from thunderstore.repository.admin.package_version import extract_file_list
-from thunderstore.repository.models import PackageVersion
+from thunderstore.core.factories import UserFactory
+from thunderstore.repository.admin.package_version import (
+    PackageVersionAdmin,
+    approve_version,
+    extract_file_list,
+    reject_version,
+)
+from thunderstore.repository.consts import PackageVersionReviewStatus
+from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.models import PackageVersion, Team
 
 
 @pytest.mark.django_db
@@ -49,3 +57,35 @@ def test_admin_package_version_extract_file_list(
     extract_file_list(None, None, PackageVersion.objects.all())
 
     mocked_task.assert_called_once_with(package_version.pk)
+
+
+@pytest.mark.django_db
+def test_admin_package_version_approve_version(team: Team) -> None:
+    versions = [PackageVersionFactory() for _ in range(5)]
+
+    request = RequestFactory().get("/")
+    request.user = UserFactory()
+    request.user.is_staff = True
+
+    modeladmin = PackageVersionAdmin(PackageVersion, None)
+    approve_version(modeladmin, request, PackageVersion.objects.all())
+
+    for entry in versions:
+        entry.refresh_from_db()
+        assert entry.review_status == PackageVersionReviewStatus.approved
+
+
+@pytest.mark.django_db
+def test_admin_package_version_reject_version(team: Team) -> None:
+    versions = [PackageVersionFactory() for _ in range(5)]
+
+    request = RequestFactory().get("/")
+    request.user = UserFactory()
+    request.user.is_staff = True
+
+    modeladmin = PackageVersionAdmin(PackageVersion, None)
+    reject_version(modeladmin, request, PackageVersion.objects.all())
+
+    for entry in versions:
+        entry.refresh_from_db()
+        assert entry.review_status == PackageVersionReviewStatus.rejected

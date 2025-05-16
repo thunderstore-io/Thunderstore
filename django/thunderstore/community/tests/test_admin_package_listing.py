@@ -1,4 +1,5 @@
 import pytest
+from django.test import RequestFactory
 
 from thunderstore.community.admin.package_listing import (
     PackageListingAdmin,
@@ -7,6 +8,7 @@ from thunderstore.community.admin.package_listing import (
 )
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import Community, PackageListing
+from thunderstore.core.factories import UserFactory
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, Team
 
@@ -28,8 +30,12 @@ def test_admin_package_listing_approve_listing(
         for i in range(5)
     ]
 
+    request = RequestFactory().get("/")
+    request.user = UserFactory()
+    request.user.is_staff = True
+
     modeladmin = PackageListingAdmin(PackageListing, None)
-    approve_listing(modeladmin, None, PackageListing.objects.all())
+    approve_listing(modeladmin, request, PackageListing.objects.all())
 
     for entry in listings:
         entry.refresh_from_db()
@@ -51,8 +57,12 @@ def test_admin_package_listing_reject_listing(team: Team, community: Community) 
         for i in range(5)
     ]
 
+    request = RequestFactory().get("/")
+    request.user = UserFactory()
+    request.user.is_staff = True
+
     modeladmin = PackageListingAdmin(PackageListing, None)
-    reject_listing(modeladmin, None, PackageListing.objects.all())
+    reject_listing(modeladmin, request, PackageListing.objects.all())
 
     for entry in listings:
         entry.refresh_from_db()

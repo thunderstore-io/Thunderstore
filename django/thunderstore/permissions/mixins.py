@@ -1,6 +1,10 @@
+from abc import abstractmethod
+from typing import Optional
+
 from django.db import models, transaction
 from django.db.models import Q
 
+from thunderstore.core.types import UserType
 from thunderstore.permissions.models import VisibilityFlags
 
 
@@ -41,11 +45,43 @@ class VisibilityMixin(models.Model):
         on_delete=models.PROTECT,
     )
 
+    @abstractmethod
+    @transaction.atomic
+    def update_visibility(self):  # pragma: no cover
+        pass
+
+    def set_default_visibility(self):
+        self.visibility.public_detail = True
+        self.visibility.public_list = True
+        self.visibility.owner_detail = True
+        self.visibility.owner_list = True
+        self.visibility.moderator_detail = True
+        self.visibility.moderator_list = True
+        self.visibility.admin_detail = True
+        self.visibility.admin_list = True
+
+    def set_zero_visibility(self):
+        self.visibility.public_detail = False
+        self.visibility.public_list = False
+        self.visibility.owner_detail = False
+        self.visibility.owner_list = False
+        self.visibility.moderator_detail = False
+        self.visibility.moderator_list = False
+        self.visibility.admin_detail = False
+        self.visibility.admin_list = False
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         if not self.pk and not self.visibility:
             self.visibility = VisibilityFlags.objects.create_public()
+
+        self.update_visibility()
+
         super().save()
 
     class Meta:
         abstract = True
+
+    @abstractmethod
+    def is_visible_to_user(self, user: Optional[UserType]) -> bool:  # pragma: no cover
+        return False
