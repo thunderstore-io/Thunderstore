@@ -39,6 +39,7 @@ def test_form_create_team_valid_data(user_type: str) -> None:
         data={"name": "TeamName"},
     )
     if expected_error:
+        form.save()
         assert form.is_valid() is False
         assert expected_error in str(repr(form.errors))
     else:
@@ -53,61 +54,38 @@ def test_form_create_team_valid_data(user_type: str) -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    ("name1", "name2", "should_fail"),
+    ("name", "is_valid"),
     (
-        ("Team", "team", True),
-        ("Team", "t_eam", False),
-        ("team", "teaM", True),
-        ("team", "team", True),
-    ),
-)
-def test_form_create_team_team_name_conflict(
-    user: UserType, name1: str, name2: str, should_fail: True
-) -> None:
-    Team.create(name=name1)
-    form = CreateTeamForm(
-        user=user,
-        data={"name": name2},
-    )
-    if should_fail:
-        assert form.is_valid() is False
-        assert "A team with the provided name already exists" in str(repr(form.errors))
-    else:
-        assert form.is_valid() is True
-        team = form.save()
-        assert team.name == name2
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    ("name", "should_fail"),
-    (
-        ("Team", False),
-        ("Team_Name", False),
-        ("Team-Name", True),
-        ("Team.Name", True),
-        ("_Team", True),
-        ("Team_", True),
+        ("Team", True),
+        ("Team Name", False),
+        ("Team_Name", True),
+        ("Team-Name", False),
+        ("Team.Name", False),
+        ("_Team", False),
+        ("Team_", False),
     ),
 )
 def test_form_create_team_team_name_validation(
-    user: UserType, name: str, should_fail: True
+    user: UserType,
+    name: str,
+    is_valid: bool,
 ) -> None:
     error = (
         "Author name can only contain a-z A-Z 0-9 _ "
         "characters and must not start or end with _"
     )
+
     form = CreateTeamForm(
         user=user,
         data={"name": name},
     )
-    if should_fail:
-        assert form.is_valid() is False
-        assert error in str(repr(form.errors))
-    else:
-        assert form.is_valid() is True
-        team = form.save()
-        assert team.name == name
+
+    assert form.is_valid() == is_valid
+    assert form.errors == {} if is_valid else {name: [error]}
+
+    if not is_valid:
+        with pytest.raises(ValueError, match="Form has errors"):
+            form.save()
 
 
 @pytest.mark.django_db
@@ -452,6 +430,7 @@ def test_form_disband_team_form(
         assert form.save() is None
         assert Team.objects.filter(pk=team.pk).exists() is False
     else:
+        form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -473,6 +452,9 @@ def test_form_disband_team_form_invalid_verification(
     assert form.is_valid() is False
     assert "Invalid verification" in str(repr(form.errors))
 
+    with pytest.raises(ValueError, match="Form has errors"):
+        form.save()
+
 
 @pytest.mark.django_db
 def test_form_disband_team_form_packages_exist(
@@ -488,6 +470,7 @@ def test_form_disband_team_form_packages_exist(
         instance=team,
         data={"verification": team.name},
     )
+    form.save()
     assert form.is_valid() is False
     assert "Unable to disband teams with packages" in str(repr(form.errors))
 

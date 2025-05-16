@@ -4,15 +4,9 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
-from thunderstore.core.exceptions import PermissionValidationError
+from thunderstore.api.cyberstorm.services.team import create_team, disband_team
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import (
-    Namespace,
-    Team,
-    TeamMember,
-    TeamMemberRole,
-    transaction,
-)
+from thunderstore.repository.models import Team, TeamMember, TeamMemberRole, transaction
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
 User = get_user_model()
@@ -31,26 +25,18 @@ class CreateTeamForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
 
-    def clean_name(self):
-        name = self.cleaned_data["name"]
-        if Team.objects.filter(name__iexact=name.lower()).exists():
-            raise ValidationError(f"A team with the provided name already exists")
-        if Namespace.objects.filter(name__iexact=name.lower()).exists():
-            raise ValidationError("A namespace with the provided name already exists")
-        return name
-
-    def clean(self):
-        if not self.user or not self.user.is_authenticated or not self.user.is_active:
-            raise PermissionValidationError("Must be authenticated to create teams")
-        if getattr(self.user, "service_account", None) is not None:
-            raise PermissionValidationError("Service accounts cannot create teams")
-        return super().clean()
-
     @transaction.atomic
     def save(self, *args, **kwargs) -> Team:
-        instance = super().save()
-        instance.add_member(user=self.user, role=TeamMemberRole.owner)
-        return instance
+        if self.errors:
+            raise ValueError("Form has errors")
+
+        try:
+            team_name = self.cleaned_data["name"]
+            self.instance = create_team(agent=self.user, team_name=team_name)
+        except ValidationError as e:
+            self.add_error(None, e)
+
+        return self.instance
 
 
 class AddTeamMemberForm(forms.ModelForm):
@@ -152,21 +138,24 @@ class DisbandTeamForm(forms.ModelForm):
         self.user = user
 
     def clean_verification(self):
-        data = self.cleaned_data["verification"]
-        if data != self.instance.name:
+        verification = self.cleaned_data["verification"]
+        if verification != self.instance.name:
             raise forms.ValidationError("Invalid verification")
-        return data
+        return verification
 
     def clean(self):
         if not self.instance.pk:
             raise ValidationError("Missing team instance")
-        self.instance.ensure_user_can_disband(self.user)
         return super().clean()
 
-    @transaction.atomic
     def save(self, **kwargs):
-        self.instance.ensure_user_can_disband(self.user)
-        self.instance.delete()
+        if self.errors:
+            raise ValueError("Form has errors")
+
+        try:
+            disband_team(agent=self.user, team=self.instance)
+        except ValidationError as e:
+            self.add_error(None, e)
 
 
 class DonationLinkTeamForm(forms.ModelForm):
