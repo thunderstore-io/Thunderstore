@@ -111,3 +111,23 @@ def test_create_team_user_not_active(user):
     error_msg = "Must be authenticated to create teams"
     with pytest.raises(ValidationError, match=error_msg):
         team_services.create_team(agent=user, team_name="new_team")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("name1", "name2", "should_fail"),
+    (
+        ("Team", "team", True),
+        ("Team", "t_eam", False),
+        ("team", "teaM", True),
+        ("team", "team", True),
+    ),
+)
+def test_create_team_name_conflict(user, name1: str, name2: str, should_fail: bool):
+    Team.create(name=name1)
+    if should_fail:
+        with pytest.raises(ValidationError):
+            team_services.create_team(agent=user, team_name=name2)
+    else:
+        team = team_services.create_team(agent=user, team_name=name2)
+        assert team.name == name2

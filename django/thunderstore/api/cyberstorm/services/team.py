@@ -20,9 +20,9 @@ def create_team(agent: UserType, team_name: str) -> Team:
         raise PermissionValidationError("Must be authenticated to create teams")
     if getattr(agent, "service_account", None) is not None:
         raise PermissionValidationError("Service accounts cannot create teams")
-    if Team.objects.filter(name=team_name).exists():
+    if Team.objects.filter(name__iexact=team_name).exists():
         raise ValidationError("A team with the provided name already exists")
-    if Namespace.objects.filter(name=team_name).exists():
+    if Namespace.objects.filter(name__iexact=team_name).exists():
         raise ValidationError("A namespace with the provided name already exists")
 
     team = Team.objects.create(name=team_name)
