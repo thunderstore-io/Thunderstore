@@ -14,8 +14,11 @@ from thunderstore.repository.serializer_fields import (
     PackageVersionField,
     StrictCharField,
 )
-from thunderstore.repository.utils import does_contain_package, has_duplicate_packages
-from thunderstore.social.utils import package_exists_in_any_case
+from thunderstore.repository.utils import (
+    does_contain_package,
+    has_duplicate_packages,
+    package_exists_in_any_case,
+)
 
 
 class PackageInstallerSerializer(serializers.Serializer):

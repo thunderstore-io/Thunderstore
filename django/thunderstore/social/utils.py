@@ -43,7 +43,3 @@ def get_user_avatar_url(user: UserType) -> Optional[str]:
             return avatar_url
 
     return None
-
-
-def package_exists_in_any_case(namespace: str, name: str) -> bool:
-    return Package.objects.filter(owner__name=namespace, name__iexact=name).exists()
