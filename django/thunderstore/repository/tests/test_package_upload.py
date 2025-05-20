@@ -1,7 +1,9 @@
+import importlib
 import io
 import json
+import os
 from typing import List, Tuple
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -149,3 +151,168 @@ def test_package_upload_with_installers(
     assert version.file_tree.entries.count() == 3
     assert version.installers.count() == 1
     assert version.installers.first() == package_installer
+
+
+@pytest.mark.django_db
+def test_package_upload_exceeds_max_package_size(
+    user, manifest_v1_data, package_icon_bytes: bytes, community, settings
+):
+    # Reduce max size to a very small number to force failure
+    from thunderstore.repository import package_upload
+
+    settings.REPOSITORY_MAX_PACKAGE_SIZE_MB = 0.000001  # 1 KB
+    importlib.reload(
+        package_upload
+    )  # reload package_upload.py so the setting gets calculated again
+
+    readme = "# Test readme"
+    manifest = json.dumps(manifest_v1_data).encode("utf-8")
+
+    excessively_large_data = os.urandom(1024 * 1024)  # 1 MB
+
+    files = [
+        ("README.md", readme.encode("utf-8")),
+        ("icon.png", package_icon_bytes),
+        ("manifest.json", manifest),
+        ("large_file.dat", excessively_large_data),
+    ]
+
+    team = Team.get_or_create_for_user(user)
+    form = PackageUploadForm(
+        user=user,
+        files={"file": _build_package(files)},
+        community=community,
+        data={
+            "team": team.name,
+            "communities": [community.identifier],
+        },
+    )
+    assert not form.is_valid()
+    assert "Too large package" in form.errors["__all__"][0]
+
+
+@pytest.mark.django_db
+def test_package_upload_exceeds_total_package_size(
+    user, manifest_v1_data, package_icon_bytes: bytes, community, settings
+):
+    # Reduce max size to a very small number to force failure
+    from thunderstore.repository import package_upload
+
+    settings.REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB = 0.000001  # 1 KB
+    importlib.reload(
+        package_upload
+    )  # reload package_upload.py so the setting gets calculated again
+
+    readme = "# Test readme"
+    manifest = json.dumps(manifest_v1_data).encode("utf-8")
+
+    excessively_large_data = os.urandom(1024 * 1024)  # 1 MB
+
+    files = [
+        ("README.md", readme.encode("utf-8")),
+        ("icon.png", package_icon_bytes),
+        ("manifest.json", manifest),
+        ("large_file.dat", excessively_large_data),
+    ]
+
+    team = Team.get_or_create_for_user(user)
+    form = PackageUploadForm(
+        user=user,
+        files={"file": _build_package(files)},
+        community=community,
+        data={
+            "team": team.name,
+            "communities": [community.identifier],
+        },
+    )
+    assert not form.is_valid()
+    assert (
+        "The server has reached maximum total storage used" in form.errors["__all__"][0]
+    )
+
+
+@pytest.mark.django_db
+def test_package_upload_exceeds_max_file_count(
+    user, manifest_v1_data, package_icon_bytes: bytes, community, settings
+):
+    # Reduce max count to a very small number to force failure
+    from thunderstore.repository.validation import zip as zip_validation
+
+    settings.REPOSITORY_MAX_FILE_COUNT_PER_ZIP = 5
+    importlib.reload(
+        zip_validation
+    )  # reload zip.py so the setting gets calculated again
+
+    readme = "# Test readme"
+    manifest = json.dumps(manifest_v1_data).encode("utf-8")
+
+    files = [
+        ("README.md", readme.encode("utf-8")),
+        ("icon.png", package_icon_bytes),
+        ("manifest.json", manifest),
+        ("file1.dat", b"x"),
+        ("file2.dat", b"x"),
+        ("file3.dat", b"x"),
+        ("file4.dat", b"x"),
+    ]
+
+    team = Team.get_or_create_for_user(user)
+    form = PackageUploadForm(
+        user=user,
+        files={"file": _build_package(files)},
+        community=community,
+        data={
+            "team": team.name,
+            "communities": [community.identifier],
+        },
+    )
+    assert not form.is_valid()
+    assert "There are too many files in the zip." in form.errors["__all__"][0]
+
+    team.max_file_count_per_zip = 10
+    team.save()
+
+    form = PackageUploadForm(
+        user=user,
+        files={"file": _build_package(files)},
+        community=community,
+        data={
+            "team": team.name,
+            "communities": [community.identifier],
+        },
+    )
+    assert form.is_valid()
+
+
+@pytest.mark.django_db
+def test_check_exceeds_max_file_count_per_zip(user, settings):
+    from thunderstore.repository.validation import zip as zip_validation
+
+    importlib.reload(zip_validation)
+
+    files = [ZipInfo(filename=f"file{i}.txt") for i in range(5)]
+    team = Team.get_or_create_for_user(user)
+
+    assert not zip_validation.check_exceeds_max_file_count_per_zip(files, team)
+
+    settings.REPOSITORY_MAX_FILE_COUNT_PER_ZIP = 1
+    importlib.reload(zip_validation)
+
+    assert zip_validation.check_exceeds_max_file_count_per_zip(files, team)
+
+
+@pytest.mark.django_db
+def test_check_exceeds_max_file_count_per_zip_with_team_limit_set(user, settings):
+    from thunderstore.repository.validation import zip as zip_validation
+
+    importlib.reload(zip_validation)
+
+    files = [ZipInfo(filename=f"file{i}.txt") for i in range(5)]
+    team = Team.get_or_create_for_user(user)
+
+    assert not zip_validation.check_exceeds_max_file_count_per_zip(files, team)
+
+    team.max_file_count_per_zip = 1
+    team.save()
+
+    assert zip_validation.check_exceeds_max_file_count_per_zip(files, team)
