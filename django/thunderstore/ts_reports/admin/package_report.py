@@ -7,11 +7,11 @@ from django.utils.safestring import mark_safe
 from thunderstore.ts_reports.models import PackageReport
 
 
-def set_active(self, request, queryset):
+def set_active(modeladmin, request, queryset):
     queryset.update(is_active=True)
 
 
-def set_inactive(self, request, queryset):
+def set_inactive(modeladmin, request, queryset):
     queryset.update(is_active=False)
 
 
