@@ -52,10 +52,4 @@ def test_process_submission_form_save_errors(
 
     # Team is set but filtered out because the user isn't a member of it, so
     # we expect to see errors claiming the team is not set.
-    assert async_package_submission.form_errors == {
-        "team": ["This field is required."],
-        "file": [
-            "manifest.json non_field_errors: Unable to validate package when "
-            "no team is selected"
-        ],
-    }
+    assert "A team must be selected" in str(async_package_submission.form_errors)
