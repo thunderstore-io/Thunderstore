@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
+from thunderstore.repository.models import Package
+
 if TYPE_CHECKING:
     from thunderstore.repository.package_reference import PackageReference
 
@@ -68,3 +70,7 @@ def has_expired(
     if timestamp is None:
         return True
     return (now - timestamp).total_seconds() > ttl_seconds
+
+
+def package_exists_in_any_case(namespace: str, name: str) -> bool:
+    return Package.objects.filter(owner__name=namespace, name__iexact=name).exists()
