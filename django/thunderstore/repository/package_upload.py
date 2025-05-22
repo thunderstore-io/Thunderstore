@@ -9,6 +9,7 @@ from django.db import transaction
 
 from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.types import UserType
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.filetree import create_file_tree_from_zip_data
 from thunderstore.repository.models import Package, PackageVersion, Team
 from thunderstore.repository.package_formats import PackageFormats
@@ -199,6 +200,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.file_size = self.file_size
         self.instance.format_spec = self.format_spec
         self.instance.uploaded_by = self.user
+        self.instance.review_status = PackageVersionReviewStatus.skipped
 
         team = self.cleaned_data["team"]
         team.ensure_can_upload_package(self.user)
