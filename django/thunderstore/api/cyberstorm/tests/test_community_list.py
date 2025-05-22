@@ -200,3 +200,20 @@ def test_api_cyberstorm_community_search_with_keywords(
     else:
         assert data["count"] == 0
         assert data["results"] == []
+
+
+@pytest.mark.django_db
+def test_api_cyberstorm_community_list_get_include_unlisted(
+    api_client: APIClient,
+) -> None:
+    unlisted_community = CommunityFactory(is_listed=False)
+
+    data = __query_api(api_client, "include_unlisted=true")
+    assert data["count"] == 2
+    assert unlisted_community.identifier in [c["identifier"] for c in data["results"]]
+
+    data = __query_api(api_client)
+    assert data["count"] == 1
+    assert unlisted_community.identifier not in [
+        c["identifier"] for c in data["results"]
+    ]
