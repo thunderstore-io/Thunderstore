@@ -16,8 +16,9 @@ from ..models.package_listing import PackageListing
 @transaction.atomic
 def reject_listing(modeladmin, request, queryset: QuerySet[PackageListing]):
     for listing in queryset:
-        listing.review_status = PackageListingReviewStatus.rejected
-        listing.save(update_fields=("review_status",))
+        listing.reject(
+            agent=request.user, rejection_reason="Invalid submission", is_system=False
+        )
 
 
 reject_listing.short_description = "Reject"
@@ -26,8 +27,7 @@ reject_listing.short_description = "Reject"
 @transaction.atomic
 def approve_listing(modeladmin, request, queryset: QuerySet[PackageListing]):
     for listing in queryset:
-        listing.review_status = PackageListingReviewStatus.approved
-        listing.save(update_fields=("review_status",))
+        listing.approve(agent=request.user, is_system=False)
 
 
 approve_listing.short_description = "Approve"
@@ -51,6 +51,28 @@ class PackageListingAdmin(admin.ModelAdmin):
     actions = (
         approve_listing,
         reject_listing,
+    )
+
+    fields = (
+        "categories",
+        "is_review_requested",
+        "review_status",
+        "rejection_reason",
+        "notes",
+        "has_nsfw_content",
+        "is_auto_imported",
+        "package_link",
+        "community",
+        "datetime_created",
+        "datetime_updated",
+        "visibility",
+    )
+    readonly_fields = (
+        "package_link",
+        "community",
+        "datetime_created",
+        "datetime_updated",
+        "visibility",
     )
     filter_horizontal = ("categories",)
     raw_id_fields = ("package", "community")
@@ -84,12 +106,6 @@ class PackageListingAdmin(admin.ModelAdmin):
         "package__owner",
         "package__namespace",
         "community",
-    )
-    readonly_fields = (
-        "package_link",
-        "community",
-        "datetime_created",
-        "datetime_updated",
     )
     exclude = ("package",)
 

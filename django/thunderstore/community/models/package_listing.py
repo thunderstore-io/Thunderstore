@@ -16,11 +16,14 @@ from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
+from thunderstore.permissions.mixins import VisibilityMixin
+from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
 from thunderstore.webhooks.audit import (
     AuditAction,
     AuditEvent,
     AuditEventField,
+    AuditTarget,
     fire_audit_event,
 )
 
@@ -28,7 +31,7 @@ if TYPE_CHECKING:
     from thunderstore.community.models import PackageCategory
 
 
-class PackageListingQueryset(models.QuerySet):
+class PackageListingQueryset(VisibilityFlagsQuerySet):
     def active(self):
         return self.exclude(package__is_active=False).exclude(
             ~Q(package__versions__is_active=True)
@@ -56,7 +59,7 @@ class PackageListingQueryset(models.QuerySet):
 # TODO: Add a db constraint that ensures a package listing and it's categories
 #       belong to the same community. This might require actually specifying
 #       the intermediate model in code rather than letting Django handle it
-class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
+class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     """
     Represents a package's relation to how it's displayed on the site and APIs
     """
@@ -167,6 +170,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
     def build_audit_event(
         self,
         *,
+        target: AuditTarget,
         action: AuditAction,
         user_id: Optional[int],
         message: Optional[str] = None,
@@ -175,6 +179,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             timestamp=timezone.now(),
             user_id=user_id,
             community_id=self.community.pk,
+            target=target,
             action=action,
             message=message,
             related_url=self.get_full_url(),
@@ -222,7 +227,8 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             message = "\n\n".join(filter(bool, (rejection_reason, internal_notes)))
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_REJECTED,
+                    target=AuditTarget.LISTING,
+                    action=AuditAction.REJECTED,
                     user_id=agent.pk if agent else None,
                     message=message,
                 )
@@ -248,7 +254,8 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
             )
             fire_audit_event(
                 self.build_audit_event(
-                    action=AuditAction.PACKAGE_APPROVED,
+                    target=AuditTarget.LISTING,
+                    action=AuditAction.APPROVED,
                     user_id=agent.pk if agent else None,
                     message=internal_notes,
                 )
@@ -380,6 +387,51 @@ class PackageListing(TimestampMixin, AdminLinkMixin, models.Model):
 
     def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
+
+    def is_visible_to_user(self, user: Optional[UserType]) -> bool:
+        if not self.visibility:
+            return False
+
+        if self.visibility.public_detail:
+            return True
+
+        if user is None:
+            return False
+
+        if self.visibility.owner_detail:
+            if self.package.owner.can_user_access(user):
+                return True
+
+        if self.visibility.moderator_detail:
+            for listing in self.package.community_listings.all():
+                if listing.community.can_user_manage_packages(user):
+                    return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False
+
+    def set_visibility_from_review_status(self):
+        if self.review_status == PackageListingReviewStatus.rejected:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+        if (
+            self.community.require_package_listing_approval
+            and self.review_status == PackageListingReviewStatus.unreviewed
+        ):
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+
+    @transaction.atomic
+    def update_visibility(self):
+        self.visibility.copy_from(self.package.visibility)
+
+        self.set_visibility_from_review_status()
+
+        self.visibility.save()
 
 
 signals.post_save.connect(PackageListing.post_save, sender=PackageListing)

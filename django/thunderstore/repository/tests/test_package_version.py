@@ -4,10 +4,18 @@ import pytest
 from django.db import IntegrityError
 
 from thunderstore.community.factories import PackageListingFactory
+from thunderstore.community.models import CommunityMemberRole, CommunityMembership
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.core.factories import UserFactory
+from thunderstore.permissions.models.tests._utils import (
+    assert_visibility_is_not_public,
+    assert_visibility_is_not_visible,
+)
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
-from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.models import PackageVersion, TeamMember, TeamMemberRole
 from thunderstore.repository.package_formats import PackageFormats
+from thunderstore.webhooks.audit import AuditAction, AuditTarget
 
 
 @pytest.mark.django_db
@@ -150,3 +158,253 @@ def test_package_version_is_removed(
     version = PackageVersionFactory(package=package, is_active=version_is_active)
 
     assert version.is_removed == expected_is_removed
+
+
+@pytest.mark.django_db
+def test_package_version_build_audit_event():
+    version = PackageVersionFactory()
+
+    target = AuditTarget.PACKAGE
+    action = AuditAction.REJECTED
+    user_id = UserFactory().pk
+    message = "Rejected a version"
+
+    audit_event = version.build_audit_event(
+        target=target,
+        action=action,
+        user_id=user_id,
+        message=message,
+    )
+
+    assert audit_event.target == target
+    assert audit_event.action == action
+    assert audit_event.user_id == user_id
+    assert audit_event.message == message
+    assert audit_event.related_url == version.package.get_view_on_site_url()
+    assert audit_event.fields[0].name == "Package"
+    assert audit_event.fields[0].value == version.package.full_package_name
+
+
+@pytest.mark.django_db
+def test_reject_or_approve_errors_for_immune_versions():
+    version = PackageVersionFactory()
+    version.review_status = PackageVersionReviewStatus.immune
+
+    with pytest.raises(PermissionError):
+        version.reject(agent=None, message="Invalid submission", is_system=True)
+
+    with pytest.raises(PermissionError):
+        version.approve(agent=None, message="Invalid submission", is_system=True)
+
+
+@pytest.mark.django_db
+def test_reject_or_approve_requires_permissions():
+    version = PackageVersionFactory()
+    user = UserFactory()
+
+    with pytest.raises(PermissionError):
+        version.reject(agent=user, is_system=False)
+
+    with pytest.raises(PermissionError):
+        version.approve(agent=user, is_system=False)
+
+    user.is_staff = True
+
+    version.reject(agent=user, is_system=False)
+
+    assert version.review_status == PackageVersionReviewStatus.rejected
+
+    version.approve(agent=user, is_system=False)
+
+    assert version.review_status == PackageVersionReviewStatus.approved
+
+
+@pytest.mark.django_db
+def test_reject_or_approve_requires_is_system_overrides_permissions():
+    version = PackageVersionFactory()
+
+    with pytest.raises(PermissionError):
+        version.reject(agent=None, is_system=False)
+
+    with pytest.raises(PermissionError):
+        version.approve(agent=None, is_system=False)
+
+    version.reject(agent=None, is_system=True)
+
+    assert version.review_status == PackageVersionReviewStatus.rejected
+
+    version.approve(agent=None, is_system=True)
+
+    assert version.review_status == PackageVersionReviewStatus.approved
+
+
+@pytest.mark.django_db
+def test_set_visibility_from_active_status_inactive_version():
+    version = PackageVersionFactory()
+    version.is_active = False
+    version.set_visibility_from_active_status()
+    version.visibility.save()
+    assert_visibility_is_not_visible(version.visibility)
+
+
+@pytest.mark.django_db
+def test_set_visibility_from_active_status_inactive_package():
+    version = PackageVersionFactory()
+    version.package.is_active = False
+    version.set_visibility_from_active_status()
+    version.visibility.save()
+    assert_visibility_is_not_visible(version.visibility)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status", [PackageVersionReviewStatus.rejected, PackageVersionReviewStatus.pending]
+)
+def test_set_visibility_from_review_status(status):
+    version = PackageVersionFactory()
+
+    version.review_status = status
+    version.set_visibility_from_review_status()
+    version.visibility.save()
+    assert_visibility_is_not_public(version.visibility)
+
+
+@pytest.mark.django_db
+def test_can_user_manage_approval_status_false_if_immune():
+    user = UserFactory.create()
+
+    listing = PackageListingFactory(
+        package_version_kwargs={"review_status": PackageVersionReviewStatus.immune}
+    )
+
+    CommunityMembership.objects.create(
+        user=user,
+        community=listing.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    version = listing.package.latest
+
+    assert version.review_status == PackageVersionReviewStatus.immune
+    assert not version.can_user_manage_approval_status(user)
+
+
+@pytest.mark.django_db
+def test_can_user_manage_approval_status_true_if_one_listing_allows():
+    user = UserFactory.create()
+
+    listing1 = PackageListingFactory()
+    listing2 = PackageListingFactory(package=listing1.package)
+
+    CommunityMembership.objects.create(
+        user=user,
+        community=listing2.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    version = listing1.package.latest
+
+    assert version.can_user_manage_approval_status(user)
+
+
+@pytest.mark.django_db
+def test_can_user_manage_approval_status_false_if_none_allow():
+    user = UserFactory.create()
+
+    listing1 = PackageListingFactory()
+    listing2 = PackageListingFactory(package=listing1.package)
+
+    version = listing1.package.latest
+
+    assert not version.can_user_manage_approval_status(user)
+
+
+@pytest.mark.django_db
+def test_is_visible_to_user():
+    version = PackageVersionFactory()
+    listing = PackageListingFactory(package=version.package)
+
+    user = UserFactory.create()
+
+    owner = UserFactory.create()
+    TeamMember.objects.create(
+        user=owner,
+        team=version.package.owner,
+        role=TeamMemberRole.owner,
+    )
+
+    moderator = UserFactory.create()
+    CommunityMembership.objects.create(
+        user=moderator,
+        community=listing.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    admin = UserFactory.create(is_superuser=True)
+
+    agents = {
+        "anonymous": None,
+        "user": user,
+        "owner": owner,
+        "moderator": moderator,
+        "admin": admin,
+    }
+
+    flags = [
+        "public_detail",
+        "owner_detail",
+        "moderator_detail",
+        "admin_detail",
+    ]
+
+    # Admins are also moderators but not owners
+    expected = {
+        "public_detail": {
+            "anonymous": True,
+            "user": True,
+            "owner": True,
+            "moderator": True,
+            "admin": True,
+        },
+        "owner_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": True,
+            "moderator": False,
+            "admin": False,
+        },
+        "moderator_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": False,
+            "moderator": True,
+            "admin": True,
+        },
+        "admin_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": False,
+            "moderator": False,
+            "admin": True,
+        },
+    }
+
+    for flag in flags:
+        version.visibility.public_detail = False
+        version.visibility.owner_detail = False
+        version.visibility.moderator_detail = False
+        version.visibility.admin_detail = False
+
+        setattr(version.visibility, flag, True)
+        version.visibility.save()
+
+        for role, subject in agents.items():
+            result = version.is_visible_to_user(subject)
+            assert result == expected[flag][role], (
+                f"Expected {flag} visibility for {role} to be "
+                f"{expected[flag][role]}, got {result}"
+            )
+
+    version.visibility = None
+
+    assert not version.is_visible_to_user(admin)

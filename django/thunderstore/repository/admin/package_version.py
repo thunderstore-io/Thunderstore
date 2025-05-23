@@ -1,10 +1,12 @@
 from django.contrib import admin
+from django.db import transaction
 from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from thunderstore.community.models import PackageListing
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.tasks.files import extract_package_version_file_tree
 
@@ -17,11 +19,33 @@ def extract_file_list(modeladmin, request, queryset: QuerySet):
 extract_file_list.short_description = "Queue file list extraction"
 
 
+@transaction.atomic
+def reject_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
+    for version in queryset:
+        version.reject(
+            agent=request.user, message="Invalid submission", is_system=False
+        )
+
+
+reject_version.short_description = "Reject"
+
+
+@transaction.atomic
+def approve_version(modeladmin, request, queryset: QuerySet[PackageVersion]):
+    for version in queryset:
+        version.approve(agent=request.user, is_system=False)
+
+
+approve_version.short_description = "Approve"
+
+
 @admin.register(PackageVersion)
 class PackageVersionAdmin(admin.ModelAdmin):
     model = PackageVersion
     actions = [
         extract_file_list,
+        reject_version,
+        approve_version,
     ]
     list_select_related = (
         "package",
@@ -33,6 +57,7 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "package",
         "version_number",
         "is_active",
+        "review_status",
         "file_size",
         "downloads",
         "date_created",
