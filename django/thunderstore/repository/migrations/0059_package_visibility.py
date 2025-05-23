@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("permissions", "0001_initial"),
-        ("repository", "0057_packageversion_review_status"),
+        ("repository", "0058_packageversion_review_status"),
     ]
 
     operations = [

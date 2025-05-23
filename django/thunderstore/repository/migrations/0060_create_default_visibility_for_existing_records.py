@@ -114,7 +114,7 @@ def update_package_visibility(package):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("repository", "0058_package_visibility"),
+        ("repository", "0059_package_visibility"),
     ]
 
     operations = [

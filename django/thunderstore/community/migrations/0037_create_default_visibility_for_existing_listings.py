@@ -52,8 +52,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("community", "0036_packagelisting_visibility"),
-        ("repository", "0058_package_visibility"),
-        ("repository", "0059_create_default_visibility_for_existing_records"),
+        ("repository", "0059_package_visibility"),
+        ("repository", "0060_create_default_visibility_for_existing_records"),
     ]
 
     operations = [

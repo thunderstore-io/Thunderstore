@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("repository", "0056_packageversion_uploaded_by"),
+        ("repository", "0057_team_max_file_count_per_zip"),
     ]
 
     operations = [
