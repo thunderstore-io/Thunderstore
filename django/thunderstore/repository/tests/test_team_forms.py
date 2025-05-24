@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
 from thunderstore.core.factories import UserFactory
@@ -253,8 +254,14 @@ def test_form_remove_team_member(
         assert form.save() is None
         assert TeamMember.objects.filter(pk=membership).exists() is False
     else:
-        assert form.is_valid() is False
-        assert form.errors
+        if form.errors:
+            assert form.is_valid() is False
+            with pytest.raises(ValidationError):
+                form.save()
+        else:
+            form.save()
+            assert form.is_valid() is False
+            assert form.errors
 
 
 @pytest.mark.django_db
@@ -294,6 +301,7 @@ def test_form_remove_team_member_last_owner() -> None:
         user=user,
         data={"membership": last_owner.pk},
     )
+    form.save()
     assert form.is_valid() is False
     assert "Cannot remove last owner from team" in str(repr(form.errors))
 
