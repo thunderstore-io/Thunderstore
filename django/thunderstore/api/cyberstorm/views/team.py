@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q, QuerySet
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -17,7 +16,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
 )
-from thunderstore.api.cyberstorm.services import team as team_services
+from thunderstore.api.cyberstorm.services.team import create_team, disband_team
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
@@ -65,8 +64,10 @@ class TeamCreateAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = CyberstormCreateTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         team_name = serializer.validated_data["name"]
-        team = team_services.create_team(user=request.user, team_name=team_name)
+        team = create_team(agent=request.user, team_name=team_name)
+
         return_data = CyberstormTeamSerializer(team).data
         return Response(return_data, status=status.HTTP_201_CREATED)
 
@@ -134,6 +135,6 @@ class DisbandTeamAPIView(APIView):
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        team_name = kwargs["team_name"]
-        team_services.disband_team(user=request.user, team_name=team_name)
+        team = get_object_or_404(Team, name=kwargs["team_name"])
+        disband_team(agent=request.user, team=team)
         return Response(status=status.HTTP_204_NO_CONTENT)
