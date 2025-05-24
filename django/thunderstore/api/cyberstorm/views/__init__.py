@@ -24,6 +24,7 @@ from .team import (
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
     TeamServiceAccountListAPIView,
+    UpdateTeamMemberAPIView,
 )
 
 __all__ = [
@@ -49,4 +50,5 @@ __all__ = [
     "UpdatePackageListingCategoriesAPIView",
     "RejectPackageListingAPIView",
     "ApprovePackageListingAPIView",
+    "UpdateTeamMemberAPIView",
 ]
