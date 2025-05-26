@@ -309,6 +309,23 @@ class Package(AdminLinkMixin, models.Model):
             or user.has_perm("repository.deprecate_package")
         ):
             return
+
+        from thunderstore.repository.views.package._utils import (
+            get_moderatable_communities,
+        )
+
+        moderatable_community_ids = get_moderatable_communities(user)
+
+        community_ids = [
+            listing.community.id
+            for listing in self.community_listings.select_related("community")
+        ]
+
+        if community_ids and all(
+            str(cid) in moderatable_community_ids for cid in community_ids
+        ):
+            return
+
         self.owner.ensure_user_can_manage_packages(user)
 
     def can_user_manage_deprecation(self, user: Optional[UserType]) -> bool:
