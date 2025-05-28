@@ -5,6 +5,7 @@ from django.http import Http404
 from rest_framework.test import APIClient
 
 from thunderstore.api.cyberstorm.views.markdown import get_package_version
+from thunderstore.cache.utils import get_cache
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import Package
 
@@ -61,14 +62,21 @@ def test_get_package_version__raises_for_inactive_package_version(
 
 @pytest.mark.django_db
 def test_readme_api_view__prerenders_markup(api_client: APIClient) -> None:
+    cache = get_cache("markdown_render")
     v = PackageVersionFactory(readme="# Very **strong** header")
+
+    assert cache.get(f"rendered_html:readme:{v.id}") is None
 
     response = api_client.get(
         f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/readme/",
     )
     actual = response.json()
+    expected_html = "<h1>Very <strong>strong</strong> header</h1>\n"
 
-    assert actual["html"] == "<h1>Very <strong>strong</strong> header</h1>\n"
+    assert cache.get(f"rendered_html:readme:{v.id}") == expected_html
+    assert cache.get(f"rendering_status:readme:{v.id}") is None
+    assert cache.get(f"lock.rendered_html:readme:{v.id}") is None
+    assert actual["html"] == expected_html
 
 
 @pytest.mark.django_db
@@ -76,6 +84,7 @@ def test_readme_api_view__prerenders_markup(api_client: APIClient) -> None:
     ("markdown", "markup"),
     (
         ("", ""),
+        ("   ", ""),
         ("Oh hai!", "<p>Oh hai!</p>\n"),
     ),
 )
@@ -84,13 +93,23 @@ def test_changelog_api_view__prerenders_markup(
     markdown: Optional[str],
     markup: str,
 ) -> None:
+    cache = get_cache("markdown_render")
     v = PackageVersionFactory(changelog=markdown)
+
+    assert cache.get(f"rendered_html:changelog:{v.id}") is None
 
     response = api_client.get(
         f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/changelog/",
     )
     actual = response.json()
 
+    if markup == "":
+        # We ignore empty strings and dont render them so no need for cache
+        assert cache.get(f"rendered_html:changelog:{v.id}") == None
+    else:
+        assert cache.get(f"rendered_html:changelog:{v.id}") == markup
+    assert cache.get(f"rendering_status:changelog:{v.id}") is None
+    assert cache.get(f"lock.rendered_html:changelog:{v.id}") is None
     assert actual["html"] == markup
 
 
