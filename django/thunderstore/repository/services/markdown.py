@@ -1,4 +1,4 @@
-import time
+from celery.result import AsyncResult
 
 from thunderstore.cache.utils import get_cache
 from thunderstore.repository.tasks.markdown import render_markdown_to_html
@@ -13,22 +13,22 @@ def render_markdown_service(markdown: str, key: str, object_id: int) -> dict:
     cache_key = f"rendered_html:{key}:{object_id}"
     status_key = f"rendering_status:{key}:{object_id}"
 
-    html = cache.get(cache_key)
-    if html is not None:
+    if (html := cache.get(cache_key)) is not None:
         return {"html": html}
 
-    if cache.get(status_key) is None:
-        cache.set(status_key, "in_progress", timeout=300)
-        render_markdown_to_html.delay(
-            markdown=markdown,
-            cache_key=cache_key,
-            status_key=status_key,
-        )
+    if task_id := cache.get(status_key):
+        task = AsyncResult(id=task_id)
+    else:
+        task = render_markdown_to_html.delay(markdown=markdown, cache_key=cache_key)
+        cache.set(status_key, task.id, timeout=300)
 
-    for _ in range(5):  # wait up to 5s total
-        html = cache.get(cache_key)
-        if html is not None:
-            return {"html": html}
-        time.sleep(1)
-
-    return {"html": "<em>Loading...</em>"}
+    try:
+        result = task.get(timeout=5)
+        cache.delete(status_key)
+        return {"html": result}
+    except TimeoutError:
+        cache.delete(status_key)
+        raise TimeoutError("Markdown rendering task timed out.")
+    except Exception as error:
+        cache.delete(status_key)
+        raise error

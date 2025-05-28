@@ -14,7 +14,6 @@ cache = get_cache("markdown_render")
 def render_markdown_to_html(
     markdown: str,
     cache_key: str,
-    status_key: str,
 ) -> str:
     cached_html = cache.get(cache_key)
     if cached_html is not None:
@@ -23,10 +22,7 @@ def render_markdown_to_html(
     try:
         html = render_markdown(markdown)
     except Exception as error:
-        cache.delete(status_key)
         raise error
 
     cache.set(cache_key, html)
-    cache.delete(status_key)
-
     return html

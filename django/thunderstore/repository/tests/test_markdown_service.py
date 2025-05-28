@@ -7,12 +7,10 @@ from thunderstore.repository.services.markdown import render_markdown_service
 
 
 @pytest.mark.django_db
-def test_render_markdown_empty_input():
-    result = render_markdown_service("", "changelog", 1)
-    assert result == {"html": ""}
-
-    result = render_markdown_service("    ", "changelog", 1)
-    assert result == {"html": ""}
+@pytest.mark.parametrize("markdown, expected_html", [("", ""), ("   ", "")])
+def test_render_markdown_empty_input(markdown, expected_html):
+    result = render_markdown_service(markdown, "changelog", 1)
+    assert result == {"html": expected_html}
 
 
 @pytest.mark.django_db
@@ -40,48 +38,32 @@ def test_render_markdown_no_cached_html(package_version):
 
 
 @pytest.mark.django_db
-def test_render_markdown_in_progress(package_version):
+def test_render_markdown_timeout(package_version):
     cache = get_cache("markdown_render")
     status_key = f"rendering_status:changelog:{package_version.id}"
-    cache.set(status_key, "in_progress")
+    task_id = "mock-task-id"
+    cache.set(status_key, task_id)
 
-    with patch("time.sleep") as sleep_mock:
-        result = render_markdown_service(
-            package_version.changelog, "changelog", package_version.id
-        )
-        assert result == {"html": "<em>Loading...</em>"}
-        sleep_mock.assert_called()
+    get_path = "celery.result.AsyncResult.get"
+    id_path = "celery.result.AsyncResult.id"
+    with patch(get_path, side_effect=TimeoutError), patch(
+        id_path, return_value=task_id
+    ):
+        with pytest.raises(TimeoutError, match="Markdown rendering task timed out."):
+            render_markdown_service(
+                package_version.changelog, "changelog", package_version.id
+            )
 
 
 @pytest.mark.django_db
-def test_render_markdown_html_available_after_wait(package_version):
+def test_render_markdown_error(package_version):
     cache = get_cache("markdown_render")
     status_key = f"rendering_status:changelog:{package_version.id}"
-    cache_key = f"rendered_html:changelog:{package_version.id}"
+    task_id = "mock-task-id"
+    cache.set(status_key, task_id)
 
-    cache.set(status_key, "in_progress")
-
-    def mock_cache_get(key):
-        if key == cache_key:
-            return "<p>Rendered HTML</p>"
-        return None
-
-    with patch("time.sleep"), patch.object(cache, "get", side_effect=mock_cache_get):
-        result = render_markdown_service(
-            package_version.changelog, "changelog", package_version.id
-        )
-        assert result == {"html": "<p>Rendered HTML</p>"}
-
-
-@pytest.mark.django_db
-def test_render_markdown_html_unavailable_after_wait(package_version):
-    cache = get_cache("markdown_render")
-    status_key = f"rendering_status:changelog:{package_version.id}"
-
-    cache.set(status_key, "in_progress")
-
-    with patch("time.sleep"), patch.object(cache, "get", return_value=None):
-        result = render_markdown_service(
-            package_version.changelog, "changelog", package_version.id
-        )
-        assert result == {"html": "<em>Loading...</em>"}
+    get_path = "celery.result.AsyncResult.get"
+    id_path = "celery.result.AsyncResult.id"
+    with patch(get_path, side_effect=Exception), patch(id_path, return_value=task_id):
+        with pytest.raises(Exception) as e:
+            render_markdown_service(None, "changelog", package_version.id)
