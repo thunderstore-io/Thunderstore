@@ -40,6 +40,7 @@ KNOWN_CELERY_IDS = (
     "thunderstore.repository.tasks.process_package_submission",
     "thunderstore.repository.tasks.cleanup_package_submissions",
     "thunderstore.repository.tasks.log_version_download",
+    "thunderstore.repository.tasks.render_markdown",
     "thunderstore.webhooks.tasks.process_audit_event",
 )
 
