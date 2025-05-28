@@ -29,12 +29,8 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
             version_number=self.kwargs.get("version_number"),
         )
 
-        readme = package_version.readme
-        if readme is None:
-            raise Http404("README not found for this package version.")
-
         return render_markdown_service(
-            markdown=readme,
+            markdown=package_version.readme,
             key="readme",
             object_id=package_version.id,
         )
