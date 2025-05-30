@@ -7,7 +7,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
-from thunderstore.community.factories import PackageCategoryFactory, SiteFactory
+from thunderstore.community.factories import (
+    PackageCategoryFactory,
+    PackageListingFactory,
+    SiteFactory,
+)
+from thunderstore.community.models import CommunityMemberRole, CommunityMembership
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
@@ -87,14 +92,22 @@ def test_package_deactivate() -> None:
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
 def test_package_ensure_user_can_manage_deprecation(
-    namespace: Namespace, user_type: str, role: str
+    namespace: Namespace, user_type: str, role: str, community_role: CommunityMemberRole
 ) -> None:
     user = TestUserTypes.get_user_by_type(user_type)
     team = namespace.team
     package = PackageFactory(owner=team, namespace=namespace)
     if role is not None and user_type not in TestUserTypes.fake_users():
         TeamMember.objects.create(user=user, team=team, role=role)
+    if community_role is not None and user_type not in TestUserTypes.fake_users():
+        listing = PackageListingFactory(package=package)
+        CommunityMembership.objects.create(
+            user=user,
+            role=community_role,
+            community=listing.community,
+        )
 
     if user_type in TestUserTypes.fake_users():
         expected_error = "Must be authenticated"
@@ -105,6 +118,8 @@ def test_package_ensure_user_can_manage_deprecation(
     elif user_type == TestUserTypes.service_account:
         expected_error = "Service accounts are unable to perform this action"
     elif role in (TeamMemberRole.owner, TeamMemberRole.member):
+        expected_error = None
+    elif community_role in (CommunityMemberRole.moderator, CommunityMemberRole.owner):
         expected_error = None
     else:
         expected_error = "Must be a member of team to manage packages"
