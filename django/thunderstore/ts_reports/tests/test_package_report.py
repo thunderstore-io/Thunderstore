@@ -4,10 +4,12 @@ import pytest
 from django.core.exceptions import ValidationError
 from rest_framework.test import APIClient
 
+from thunderstore.api.cyberstorm.services.package_listing import report_package_listing
 from thunderstore.community.api.experimental.serializers import (
     PackageListingReportRequestSerializer,
 )
 from thunderstore.community.factories import PackageListingFactory
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
@@ -21,11 +23,13 @@ def test_api_package_listing_report_requires_login(
     api_client: APIClient,
 ):
     listing = PackageListingFactory()
+    version = listing.package.latest
+
     response = api_client.post(
         f"/api/experimental/package-listing/{listing.pk}/report/",
         json.dumps(
             {
-                "version": listing.package.latest.pk,
+                "version": version.pk,
                 "reason": "Spam",
                 "description": "",
             }
@@ -118,6 +122,42 @@ def test_package_listing_report_serializer():
     assert deserialized["version"] == version
     assert deserialized["reason"] == "Spam"
     assert deserialized["description"] == "This is spam."
+
+
+@pytest.mark.django_db
+def test_report_package_listing(user: UserType):
+    version = PackageVersionFactory()
+    package = version.package
+    listing = PackageListingFactory(package=package)
+
+    with pytest.raises(PermissionValidationError) as exc:
+        report_package_listing(
+            agent=None,
+            reason="Spam",
+            package=package,
+            package_listing=listing,
+            package_version=version,
+            description="",
+        )
+    assert "Must be authenticated" in str(exc.value)
+
+    report_package_listing(
+        agent=user,
+        reason="Spam",
+        package=package,
+        package_listing=listing,
+        package_version=version,
+        description="This is spam.",
+    )
+
+    assert PackageReport.objects.count() == 1
+    report = PackageReport.objects.first()
+    assert report.submitted_by == user
+    assert report.package == package
+    assert report.package_listing == listing
+    assert report.package_version == version
+    assert report.reason == "Spam"
+    assert report.description == "This is spam."
 
 
 @pytest.mark.django_db
