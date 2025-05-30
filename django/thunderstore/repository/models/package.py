@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, Q, Sum, When, signals
 from django.urls import reverse
 from django.utils import timezone
@@ -19,6 +19,8 @@ from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
+from thunderstore.permissions.mixins import VisibilityMixin
+from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
 
@@ -26,7 +28,7 @@ if TYPE_CHECKING:
     from thunderstore.repository.models import PackageWiki
 
 
-class PackageQueryset(models.QuerySet):
+class PackageQueryset(VisibilityFlagsQuerySet):
     def active(self):
         return self.exclude(is_active=False).exclude(~Q(versions__is_active=True))
 
@@ -44,7 +46,7 @@ def get_package_dependants_list(package_pk: int):
     return list(get_package_dependants(package_pk))
 
 
-class Package(AdminLinkMixin, models.Model):
+class Package(VisibilityMixin, AdminLinkMixin):
     objects = PackageQueryset.as_manager()
     wiki: Optional["PackageWiki"]
 
@@ -339,6 +341,91 @@ class Package(AdminLinkMixin, models.Model):
 
     def __str__(self):
         return self.full_package_name
+
+    def is_visible_to_user(self, user: Optional[UserType]) -> bool:
+        if not self.visibility:
+            return False
+
+        if self.visibility.public_detail:
+            return True
+
+        if user is None:
+            return False
+
+        if self.visibility.owner_detail:
+            if self.owner.can_user_access(user):
+                return True
+
+        if self.visibility.moderator_detail:
+            for listing in self.community_listings.all():
+                if listing.community.can_user_manage_packages(user):
+                    return True
+
+        if self.visibility.admin_detail:
+            if user.is_superuser:
+                return True
+
+        return False
+
+    def set_visibility_from_active_status(self):
+        if not self.is_active:
+            self.visibility.public_detail = False
+            self.visibility.public_list = False
+            self.visibility.owner_detail = False
+            self.visibility.owner_list = False
+            self.visibility.moderator_detail = False
+            self.visibility.moderator_list = False
+
+    def set_visibility_from_versions(self):
+        visibility_fields = [
+            "public_detail",
+            "public_list",
+            "owner_detail",
+            "owner_list",
+            "moderator_detail",
+            "moderator_list",
+        ]
+
+        versions = list(
+            self.versions.filter(is_active=True).values(
+                *[f"visibility__{field}" for field in visibility_fields]
+            )
+        )
+
+        any_version_visible = {field: False for field in visibility_fields}
+
+        for field in visibility_fields:
+            for version in versions:
+                if version[f"visibility__{field}"]:
+                    any_version_visible[field] = True
+                    break
+
+        for field, exists in any_version_visible.items():
+            if not exists:
+                setattr(self.visibility, field, False)
+
+    @transaction.atomic
+    def update_visibility(self):
+        original = self.visibility.as_tuple()
+
+        self.set_default_visibility()
+
+        self.set_visibility_from_active_status()
+
+        if self.visibility.as_tuple() != original:
+            for version in self.versions.all():
+                version.update_visibility()
+
+        # package visibility levels can't be higher than the union of version visibility levels
+        self.set_visibility_from_versions()
+
+        if self.visibility.as_tuple() != original:
+            self.visibility.save()
+            for listing in self.community_listings.all():
+                listing.update_visibility()
+
+            self.recache_latest()  # latest available version could potentially change if visibility changes
+            # TODO: Available versions should be affected by visibility
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):

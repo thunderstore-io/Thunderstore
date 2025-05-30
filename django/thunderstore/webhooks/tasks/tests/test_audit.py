@@ -1,27 +1,30 @@
+import itertools
 from typing import Optional
 
 import pytest
 
 from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
-from thunderstore.webhooks.audit import AuditAction
+from thunderstore.webhooks.audit import AuditAction, AuditTarget
 from thunderstore.webhooks.models import AuditWebhook
 from thunderstore.webhooks.tasks import process_audit_event
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "action",
-    (
-        AuditAction.PACKAGE_APPROVED,
-        AuditAction.PACKAGE_REJECTED,
-        AuditAction.PACKAGE_WARNING,
+    ("target", "action"),
+    list(
+        itertools.product(
+            [AuditTarget.PACKAGE, AuditTarget.LISTING, AuditTarget.VERSION],
+            [AuditAction.APPROVED, AuditAction.REJECTED, AuditAction.WARNING],
+        )
     ),
 )
 @pytest.mark.parametrize("message", (None, "Test message"))
 def test_process_audit_event(
     active_package_listing: PackageListing,
     user: UserType,
+    target: AuditTarget,
     action: AuditAction,
     message: Optional[str],
     mocker,
@@ -35,6 +38,7 @@ def test_process_audit_event(
     )
     webhook.match_communities.set([active_package_listing.community])
     event = active_package_listing.build_audit_event(
+        target=target,
         action=action,
         user_id=user.pk,
         message=message,

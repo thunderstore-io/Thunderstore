@@ -14,7 +14,13 @@ from thunderstore.community.factories import (
 )
 from thunderstore.community.models import CommunityMemberRole, CommunityMembership
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.core.factories import UserFactory
 from thunderstore.core.types import UserType
+from thunderstore.permissions.models.tests._utils import (
+    assert_default_visibility,
+    assert_visibility_is_not_visible,
+    assert_visibility_is_public,
+)
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import (
     Namespace,
@@ -260,3 +266,153 @@ def test_package_is_removed(
     PackageVersionFactory(package=package, is_active=version_is_active)
 
     assert package.is_removed == expected_is_removed
+
+
+@pytest.mark.django_db
+def test_set_default_visibility():
+    package = PackageFactory()
+    package.set_default_visibility()
+    package.visibility.save()
+
+    assert_visibility_is_public(
+        package.visibility
+    )  # this will change when default visibility changes
+
+
+@pytest.mark.django_db
+def test_set_visibility_from_active_status_inactive_package():
+    package = PackageFactory()
+    package.is_active = False
+    package.set_visibility_from_active_status()
+    package.visibility.save()
+
+    assert_visibility_is_not_visible(package.visibility)
+
+
+@pytest.mark.django_db
+def test_set_visibility_from_versions():
+    version = PackageVersionFactory()
+    package = version.package
+
+    assert_default_visibility(package.visibility)
+
+    version.set_zero_visibility()
+    version.visibility.save()
+
+    package.set_visibility_from_versions()
+    package.visibility.save()
+
+    assert_visibility_is_not_visible(package.visibility)
+
+
+@pytest.mark.django_db
+def test_visibility_changes_update_version_and_listing_visibility():
+    listing = PackageListingFactory()
+    package = listing.package
+    version = package.latest
+
+    assert_default_visibility(listing.visibility)
+    assert_default_visibility(package.visibility)
+    assert_default_visibility(version.visibility)
+
+    package.is_active = False
+    package.save()
+
+    listing.refresh_from_db()
+    package.refresh_from_db()
+    version.refresh_from_db()
+    assert_visibility_is_not_visible(listing.visibility)
+    assert_visibility_is_not_visible(package.visibility)
+    assert_visibility_is_not_visible(version.visibility)
+
+
+@pytest.mark.django_db
+def test_is_visible_to_user():
+    version = PackageVersionFactory()
+    package = version.package
+    listing = PackageListingFactory(package=package)
+
+    user = UserFactory.create()
+
+    owner = UserFactory.create()
+    TeamMember.objects.create(
+        user=owner,
+        team=version.package.owner,
+        role=TeamMemberRole.owner,
+    )
+
+    moderator = UserFactory.create()
+    CommunityMembership.objects.create(
+        user=moderator,
+        community=listing.community,
+        role=CommunityMemberRole.moderator,
+    )
+
+    admin = UserFactory.create(is_superuser=True)
+
+    agents = {
+        "anonymous": None,
+        "user": user,
+        "owner": owner,
+        "moderator": moderator,
+        "admin": admin,
+    }
+
+    flags = [
+        "public_detail",
+        "owner_detail",
+        "moderator_detail",
+        "admin_detail",
+    ]
+
+    # Admins are also moderators but not owners
+    expected = {
+        "public_detail": {
+            "anonymous": True,
+            "user": True,
+            "owner": True,
+            "moderator": True,
+            "admin": True,
+        },
+        "owner_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": True,
+            "moderator": False,
+            "admin": False,
+        },
+        "moderator_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": False,
+            "moderator": True,
+            "admin": True,
+        },
+        "admin_detail": {
+            "anonymous": False,
+            "user": False,
+            "owner": False,
+            "moderator": False,
+            "admin": True,
+        },
+    }
+
+    for flag in flags:
+        package.visibility.public_detail = False
+        package.visibility.owner_detail = False
+        package.visibility.moderator_detail = False
+        package.visibility.admin_detail = False
+
+        setattr(package.visibility, flag, True)
+        package.visibility.save()
+
+        for role, subject in agents.items():
+            result = package.is_visible_to_user(subject)
+            assert result == expected[flag][role], (
+                f"Expected {flag} visibility for {role} to be "
+                f"{expected[flag][role]}, got {result}"
+            )
+
+    package.visibility = None
+
+    assert not package.is_visible_to_user(admin)

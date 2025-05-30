@@ -16,6 +16,44 @@ def assert_all_visible(visibility: VisibilityFlags):
         assert getattr(visibility, field) is True
 
 
+def assert_default_visibility(visibility: VisibilityFlags):
+    assert visibility.public_detail is True
+    assert visibility.public_list is True
+    assert visibility.owner_detail is True
+    assert visibility.owner_list is True
+    assert visibility.moderator_detail is True
+    assert visibility.moderator_list is True
+    assert visibility.admin_detail is True
+    assert visibility.admin_list is True
+
+
+def assert_visibility_is_public(visibility: VisibilityFlags) -> None:
+    assert visibility.public_list is True
+    assert visibility.public_detail is True
+    assert visibility.owner_list is True
+    assert visibility.owner_detail is True
+    assert visibility.moderator_list is True
+    assert visibility.moderator_detail is True
+
+
+def assert_visibility_is_not_public(visibility: VisibilityFlags) -> None:
+    assert visibility.public_list is False
+    assert visibility.public_detail is False
+    assert visibility.owner_list is True
+    assert visibility.owner_detail is True
+    assert visibility.moderator_list is True
+    assert visibility.moderator_detail is True
+
+
+def assert_visibility_is_not_visible(visibility: VisibilityFlags) -> None:
+    assert visibility.public_list is False
+    assert visibility.public_detail is False
+    assert visibility.owner_list is False
+    assert visibility.owner_detail is False
+    assert visibility.moderator_list is False
+    assert visibility.moderator_detail is False
+
+
 def get_flags_cartesian_product():
     """
     Returns all possible combinations for visibility flag field values to be
