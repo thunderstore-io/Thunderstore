@@ -6,7 +6,7 @@ import { Control, FieldError } from "react-hook-form/dist/types";
 
 type Status = undefined | "SUBMITTING" | "SUCCESS" | "ERROR";
 export type ReportFormValues = {
-    reason?: { label: string; value: string };
+    reason: { label: string; value: string };
     description?: string;
 };
 

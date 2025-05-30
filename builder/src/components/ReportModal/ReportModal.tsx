@@ -43,7 +43,7 @@ function getFormErrorMessage(errorMessage: string): string {
     return errorMessage;
 }
 
-const FieldError: React.FC<{ error?: FieldError }> = ({ error }) => {
+const FormFieldError: React.FC<{ error?: FieldError }> = ({ error }) => {
     if (!error) return null;
     return <span className={"mt-1 text-danger"}>{getErrorMessage(error)}</span>;
 };
@@ -67,18 +67,21 @@ const Body: React.FC<BodyProps> = ({ form }) => {
                     getOption={(x) => x}
                     required={true}
                 />
-                <FieldError error={form.fieldErrors?.reason} />
+                <FormFieldError error={form.fieldErrors?.reason} />
             </div>
             <div className={"d-flex flex-column gap-1"}>
-                <label className={"mb-0"}>Description (optional)</label>
+                <label htmlFor="report-description" className={"mb-0"}>
+                    Description (optional)
+                </label>
                 <textarea
+                    id="report-description"
                     {...form.control.register("description", {
                         maxLength: context.descriptionMaxLength,
                     })}
                     className={"code-input"}
                     style={{ minHeight: "100px", fontFamily: "inherit" }}
                 />
-                <FieldError error={form.fieldErrors?.description} />
+                <FormFieldError error={form.fieldErrors?.description} />
             </div>
 
             {form.error && (
