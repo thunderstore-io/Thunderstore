@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from rest_framework.test import APIClient
 
-from thunderstore.community.api.experimental.views.listing import (
+from thunderstore.community.api.experimental.serializers import (
     PackageListingReportRequestSerializer,
 )
 from thunderstore.community.factories import PackageListingFactory

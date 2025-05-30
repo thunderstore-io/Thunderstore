@@ -2,7 +2,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.response import Response
 
 from thunderstore.api.cyberstorm.services.package_listing import (
@@ -12,11 +11,11 @@ from thunderstore.api.cyberstorm.services.package_listing import (
     update_categories,
 )
 from thunderstore.community.api.experimental.serializers import (
+    PackageListingReportRequestSerializer,
     PackageListingUpdateRequestSerializer,
     PackageListingUpdateResponseSerializer,
 )
 from thunderstore.community.models import PackageListing
-from thunderstore.repository.models import PackageVersion
 
 
 class PackageListingUpdateApiView(GenericAPIView):
@@ -113,24 +112,6 @@ class PackageListingApproveApiView(GenericAPIView):
         )
 
         return Response(status=status.HTTP_200_OK)
-
-
-class PackageListingReportRequestSerializer(serializers.Serializer):
-    version = PrimaryKeyRelatedField(
-        required=False,
-        allow_null=True,
-        queryset=PackageVersion.objects.all(),
-    )
-    reason = serializers.CharField(
-        required=True,
-        allow_blank=False,
-        allow_null=False,
-    )
-    description = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        allow_null=True,
-    )
 
 
 class PackageListingReportApiView(GenericAPIView):
