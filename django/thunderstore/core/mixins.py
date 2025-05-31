@@ -118,3 +118,12 @@ class AdminLinkMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+# AllowAllCORSMixin must be inherited before APIView / GenericAPIView
+class AllowAllCORSMixin:
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "GET"
+        return response
