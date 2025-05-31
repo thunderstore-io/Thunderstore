@@ -5,8 +5,8 @@ from rest_framework import serializers
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
-from thunderstore.markdown.templatetags.markdownify import render_markdown
 from thunderstore.repository.models import Package, PackageVersion
+from thunderstore.repository.services.markdown import render_markdown_service
 
 
 class CyberstormMarkdownResponseSerializer(serializers.Serializer):
@@ -29,7 +29,11 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
             version_number=self.kwargs.get("version_number"),
         )
 
-        return {"html": render_markdown(package_version.readme)}
+        return render_markdown_service(
+            markdown=package_version.readme,
+            key="readme",
+            object_id=package_version.id,
+        )
 
 
 class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
@@ -48,10 +52,15 @@ class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView)
             version_number=self.kwargs.get("version_number"),
         )
 
-        if package_version.changelog is None:
-            raise Http404
+        changelog = package_version.changelog
+        if changelog is None:
+            raise Http404("CHANGELOG not found for this package version.")
 
-        return {"html": render_markdown(package_version.changelog)}
+        return render_markdown_service(
+            markdown=changelog,
+            key="changelog",
+            object_id=package_version.id,
+        )
 
 
 def get_package_version(
