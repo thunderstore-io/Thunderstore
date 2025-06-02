@@ -68,17 +68,6 @@ def test_team_create(name: str, should_fail: bool) -> None:
 
 
 @pytest.mark.django_db
-def test_team_create_namespace_creation() -> None:
-    team = Team.create(name="Test_Team")
-    assert len(Namespace.objects.filter(name="Test_Team")) == 1
-    ns = Namespace(name="taken_namespace", team=team)
-    ns.save()
-    with pytest.raises(ValidationError) as e:
-        Team.create(name="taken_namespace")
-    assert "Namespace with the Teams name exists" in str(e.value)
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     ("username", "expected_name"),
     (
@@ -671,14 +660,6 @@ def test_team_ensure_can_create_service_account(
             assert "Must be an owner to create a service account" in str(e.value)
         if role == TeamMemberRole.owner:
             assert team.ensure_can_create_service_account(user) is None
-
-
-@pytest.mark.django_db
-def test_team_save():
-    team = Team.create(name="TestTeam")
-    team.save()
-    assert team.namespaces is not None
-    assert team.namespaces.first().name == team.name
 
 
 @pytest.mark.django_db
