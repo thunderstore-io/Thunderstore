@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from drf_yasg.openapi import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.response import Response as DRFResponse
 from rest_framework.serializers import as_serializer_error
 from rest_framework.views import exception_handler as drf_exception_handler
 
@@ -34,4 +35,5 @@ def exception_handler(exc: Exception, context: Any) -> Optional[Response]:
     response = drf_exception_handler(exc, context)
     if response:
         return response
-    return None
+
+    return DRFResponse(data={"detail": "Internal server error"}, status=500)
