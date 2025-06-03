@@ -23,6 +23,8 @@ export class ApiUrls {
         apiUrl("submission", "validate", "manifest-v1");
     static updatePackageListing = (packageListingId: string) =>
         apiUrl("package-listing", packageListingId, "update");
+    static reportPackageListing = (packageListingId: string) =>
+        apiUrl("package-listing", packageListingId, "report");
     static approvePackageListing = (packageListingId: string) =>
         apiUrl("package-listing", packageListingId, "approve");
     static rejectPackageListing = (packageListingId: string) =>
