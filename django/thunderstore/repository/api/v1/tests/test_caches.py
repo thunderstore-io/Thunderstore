@@ -15,7 +15,7 @@ from thunderstore.community.factories import (
 from thunderstore.community.models import Community, CommunitySite, PackageListing
 from thunderstore.repository.api.v1.tasks import (
     update_api_v1_caches,
-    update_api_v1_chunked_package_caches,
+    update_api_v1_chunked_package_cache_for_community,
 )
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
 from thunderstore.repository.models.cache import get_package_listing_chunk
@@ -155,7 +155,7 @@ def test_api_v1_chunked_package_cache__builds_index_and_chunks(
     PackageListingFactory(community_=community)
     assert APIV1ChunkedPackageCache.get_latest_for_community(community) is None
 
-    update_api_v1_chunked_package_caches()
+    update_api_v1_chunked_package_cache_for_community(community)
     cache = APIV1ChunkedPackageCache.get_latest_for_community(community)
     assert cache is not None
     assert cache.index.data_url.startswith(settings.AWS_S3_ENDPOINT_URL)
@@ -171,10 +171,12 @@ def test_api_v1_chunked_package_cache__drops_stale_caches() -> None:
     """
     Caches are currently only soft deleted.
     """
-    PackageListingFactory()
+    listing = PackageListingFactory()
+    community = listing.community
+
     assert not APIV1ChunkedPackageCache.objects.exists()
 
-    update_api_v1_chunked_package_caches()
+    update_api_v1_chunked_package_cache_for_community(community)
     first_cache = APIV1ChunkedPackageCache.objects.get()
     assert not first_cache.is_deleted
 
@@ -183,7 +185,7 @@ def test_api_v1_chunked_package_cache__drops_stale_caches() -> None:
     assert not first_cache.is_deleted
 
     # Two caches exists, but neither is beyond the cutoff period.
-    update_api_v1_chunked_package_caches()
+    update_api_v1_chunked_package_cache_for_community(community)
     APIV1ChunkedPackageCache.drop_stale_cache()
     second_cache = APIV1ChunkedPackageCache.get_latest_for_community(
         first_cache.community,
