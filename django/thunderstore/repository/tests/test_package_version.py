@@ -4,7 +4,7 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError
 
-from thunderstore.community.factories import PackageListingFactory
+from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models import CommunityMemberRole, CommunityMembership
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.factories import UserFactory
@@ -354,3 +354,26 @@ def test_can_user_manage_approval_status_false_if_unauthenticated():
 #     version.visibility = None
 #
 #     assert not version.is_visible_to_user(admin)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("package_is_unavailable", "version_is_active", "expected_is_unavailable"),
+    [
+        (True, True, True),
+        (True, False, True),
+        (False, True, False),
+        (False, False, True),
+    ],
+)
+def test_package_version_is_unavailable(
+    package_is_unavailable: bool,
+    version_is_active: bool,
+    expected_is_unavailable: bool,
+) -> None:
+    community = CommunityFactory()
+    package = PackageFactory()
+    package.is_unavailable = lambda _: package_is_unavailable
+    version = PackageVersionFactory(package=package, is_active=version_is_active)
+
+    assert version.is_unavailable(community) == expected_is_unavailable
