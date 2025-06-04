@@ -28,6 +28,6 @@ def create_team(user: UserType, team_name: str) -> Team:
     if Namespace.objects.filter(name=team_name).exists():
         raise ValidationError("A namespace with the provided name already exists")
 
-    team = Team.objects.create(name=team_name)
+    team = Team.create(name=team_name)
     team.add_member(user=user, role=TeamMemberRole.owner)
     return team
