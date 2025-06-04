@@ -109,6 +109,7 @@ env = environ.Env(
     REDIS_URL_LEGACY=(str, None),
     REDIS_URL_PROFILES=(str, None),
     REDIS_URL_DOWNLOADS=(str, None),
+    REDIS_MARKDOWN_RENDER=(str, None),
     DB_CERT_DIR=(str, ""),
     DB_CLIENT_CERT=(str, ""),
     DB_CLIENT_KEY=(str, ""),
@@ -391,6 +392,7 @@ class CeleryQueues:
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
+    BackgroundMarkdownRender = "background.markdown_render"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
@@ -508,6 +510,10 @@ CACHES = {
     },
     "downloads": {
         **get_redis_cache("REDIS_URL_DOWNLOADS", "REDIS_URL"),
+        "TIMEOUT": None,
+    },
+    "markdown_render": {
+        **get_redis_cache("REDIS_MARKDOWN_RENDER", "REDIS_URL"),
         "TIMEOUT": None,
     },
 }
