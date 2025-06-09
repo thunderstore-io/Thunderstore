@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
+from thunderstore.community.models import Community
 from thunderstore.community.utils import get_community_site_for_request
 from thunderstore.core.urls import AUTH_ROOT
 
@@ -62,3 +63,13 @@ class CommunitySiteMiddleware:
             except Http404:
                 return self.get_404(request)
         return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        community_identifier = view_kwargs.get("community_identifier")
+        if community_identifier:
+            try:
+                community = Community.objects.get(identifier=community_identifier)
+                request.community = community
+            except Community.DoesNotExist:
+                return self.get_404(request)
+        return None
