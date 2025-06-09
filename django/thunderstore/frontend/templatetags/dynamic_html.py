@@ -26,9 +26,10 @@ def get_dynamic_html_content(
 
 @register.simple_tag(takes_context=True)
 def dynamic_html(context, placement):
-    community = context.get("community", None)
     request = context["request"]
-    if not community and hasattr(request, "community"):
-        community = request.community
-    flags = get_request_user_flags(request)
-    return mark_safe(get_dynamic_html_content(community, placement, flags))
+
+    if hasattr(request, "get_dynamic_html"):
+        html = request.get_dynamic_html().get(placement, "")
+        return mark_safe(html)
+    else:
+        return ""

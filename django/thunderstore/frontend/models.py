@@ -91,7 +91,7 @@ class DynamicHTML(models.Model):
     def get_for_community(
         cls,
         community: Optional[Community],
-        placement: str,
+        placement: Optional[str],
         user_flags: List[str],
     ):
         if community:
@@ -109,10 +109,11 @@ class DynamicHTML(models.Model):
                 | Q(require_user_flags=None)
             )
         )
-        full_query = Q(
-            Q(is_active=True) & Q(placement=placement) & community_filter & user_filter
-        )
-        return cls.objects.filter(full_query).order_by("-ordering", "-pk")
+        query = Q(is_active=True) & community_filter & user_filter
+        if placement:
+            query = query & Q(placement=placement)
+
+        return cls.objects.filter(query).order_by("-ordering", "-pk")
 
 
 class LinkTargetChoices(TextChoices):
