@@ -61,7 +61,7 @@ def get_resolver(schema: dict) -> RefResolver:
     return RefResolver.from_schema({"definitions": definitions})
 
 
-def get_schema(api_client) -> tuple:
+def get_schema(api_client) -> dict:
     response = api_client.get("/api/docs/?format=openapi")
     schema = response.json()
     return schema
