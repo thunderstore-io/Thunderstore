@@ -49,3 +49,41 @@ def test_dynamic_html_user_flag_filtering(
         assert matches.first() == dhtml
     else:
         assert matches.count() == 0
+
+
+@pytest.mark.django_db
+def test_dynamic_html_get_for_community_placement():
+    beginning = DynamicHTML.objects.create(
+        name="DHTML Beginning",
+        content="Beginning content",
+        placement=DynamicPlacement.content_beginning,
+    )
+    end = DynamicHTML.objects.create(
+        name="DHTML End",
+        content="End content",
+        placement=DynamicPlacement.content_end,
+    )
+
+    dhtml = DynamicHTML.get_for_community(None, DynamicPlacement.content_beginning, [])
+
+    assert beginning in dhtml
+    assert end not in dhtml
+
+
+@pytest.mark.django_db
+def test_dynamic_html_get_for_community_no_placement():
+    beginning = DynamicHTML.objects.create(
+        name="DHTML Beginning",
+        content="Beginning content",
+        placement=DynamicPlacement.content_beginning,
+    )
+    end = DynamicHTML.objects.create(
+        name="DHTML End",
+        content="End content",
+        placement=DynamicPlacement.content_end,
+    )
+
+    dhtml = DynamicHTML.get_for_community(None, None, [])
+
+    assert beginning in dhtml
+    assert end in dhtml
