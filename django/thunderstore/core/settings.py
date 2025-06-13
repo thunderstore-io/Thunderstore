@@ -298,6 +298,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "thunderstore.community.middleware.CommunitySiteMiddleware",
     "thunderstore.account.middleware.UserFlagsMiddleware",
+    "thunderstore.account.middleware.UserMetaMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "thunderstore.abyss.middleware.TracingMiddleware",

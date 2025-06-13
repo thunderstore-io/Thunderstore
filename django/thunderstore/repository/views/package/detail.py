@@ -1,4 +1,7 @@
+from typing import List
+
 from django.core.exceptions import PermissionDenied
+from django.http import HttpRequest
 from django.middleware import csrf
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -17,9 +20,15 @@ from thunderstore.repository.views.package._utils import (
 
 
 class PermissionsChecker:
-    def __init__(self, package_listing: PackageListing, user: UserType) -> None:
+    def __init__(self, package_listing: PackageListing, request: HttpRequest) -> None:
         self.listing = package_listing
-        self.user = user
+        self.user = request.user
+        self.user_can_moderate_any_community = getattr(
+            request, "user_can_moderate_any_community", False
+        )
+        self.user_moderated_communities = getattr(
+            request, "user_moderated_communities", []
+        )
 
     @cached_property
     def can_manage(self) -> bool:
@@ -33,7 +42,9 @@ class PermissionsChecker:
 
     @cached_property
     def can_manage_deprecation(self) -> bool:
-        return self.listing.package.can_user_manage_deprecation(self.user)
+        return self.listing.package.can_user_manage_deprecation(
+            self.user, self.user_moderated_communities
+        )
 
     @cached_property
     def can_manage_categories(self) -> bool:
@@ -87,7 +98,7 @@ class PackageDetailView(PackageListingDetailView):
 
     @cached_property
     def permissions_checker(self):
-        return PermissionsChecker(self.object, self.request.user)
+        return PermissionsChecker(self.object, self.request)
 
     @cached_property
     def csrf_token(self) -> str:

@@ -21,7 +21,6 @@ from thunderstore.community.models import (
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Team, get_package_dependants
-from thunderstore.repository.views.package._utils import get_moderatable_communities
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -453,7 +452,7 @@ class PackageReviewListView(PackageListSearchView):
         return f"review-queue"
 
     def dispatch(self, *args, **kwargs):
-        self.community_ids = get_moderatable_communities(self.request.user)
+        self.community_ids = getattr(self.request, "user_moderated_communities", [])
         if not self.community_ids:
             raise PermissionDenied()
         return super().dispatch(*args, **kwargs)

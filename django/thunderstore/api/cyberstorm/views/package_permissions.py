@@ -22,7 +22,7 @@ class PackagePermissionsAPIView(APIView):
     def permissions_checker(self, listing) -> PermissionsChecker:
         if not listing or not self.request.user:
             return None
-        return PermissionsChecker(listing, self.request.user)
+        return PermissionsChecker(listing, self.request)
 
     def get_listing(
         self, namespace_id: str, package_name: str, community: Community

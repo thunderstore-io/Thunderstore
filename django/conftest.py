@@ -12,6 +12,7 @@ from django.contrib.auth.models import AnonymousUser, Permission
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.files.base import File
+from django.test import RequestFactory
 from PIL import Image
 from rest_framework.test import APIClient
 
@@ -532,7 +533,9 @@ def package_installer() -> PackageInstaller:
 
 @pytest.fixture(scope="function")
 def permissions_checker(active_package_listing, user) -> PermissionsChecker:
-    return PermissionsChecker(active_package_listing, user)
+    request = RequestFactory().get("/")
+    request.user = user
+    return PermissionsChecker(active_package_listing, request)
 
 
 def create_test_service_account_user():

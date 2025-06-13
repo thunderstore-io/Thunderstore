@@ -1,7 +1,7 @@
 import re
 import uuid
 from distutils.version import StrictVersion
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -304,7 +304,11 @@ class Package(VisibilityMixin, AdminLinkMixin):
         self.is_active = False
         self.save(update_fields=("is_active",))
 
-    def ensure_user_can_manage_deprecation(self, user: Optional[UserType]) -> None:
+    def ensure_user_can_manage_deprecation(
+        self,
+        user: Optional[UserType],
+        user_moderated_communities: Optional[List[str]] = None,
+    ) -> None:
         user = validate_user(user)
         if user.is_staff and (
             user.has_perm("repository.change_package")
@@ -312,11 +316,12 @@ class Package(VisibilityMixin, AdminLinkMixin):
         ):
             return
 
-        from thunderstore.repository.views.package._utils import (
-            get_moderatable_communities,
-        )
+        if not user_moderated_communities:
+            from thunderstore.repository.views.package._utils import (
+                get_moderated_communities,
+            )
 
-        moderatable_community_ids = get_moderatable_communities(user)
+            user_moderated_communities = get_moderated_communities(user)
 
         community_ids = [
             listing.community.id
@@ -324,14 +329,22 @@ class Package(VisibilityMixin, AdminLinkMixin):
         ]
 
         if community_ids and all(
-            str(cid) in moderatable_community_ids for cid in community_ids
+            str(cid) in user_moderated_communities for cid in community_ids
         ):
             return
 
         self.owner.ensure_user_can_manage_packages(user)
 
-    def can_user_manage_deprecation(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_manage_deprecation(user))
+    def can_user_manage_deprecation(
+        self,
+        user: Optional[UserType],
+        user_moderated_communities: Optional[List[str]] = None,
+    ) -> bool:
+        return check_validity(
+            lambda: self.ensure_user_can_manage_deprecation(
+                user, user_moderated_communities
+            )
+        )
 
     def ensure_user_can_manage_wiki(self, user: Optional[UserType]) -> None:
         return self.owner.ensure_user_can_manage_packages(user)
