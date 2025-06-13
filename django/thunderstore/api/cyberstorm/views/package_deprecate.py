@@ -16,6 +16,10 @@ class DeprecatePackageSerializer(serializers.Serializer):
     deprecate = serializers.BooleanField(required=True)
 
 
+class SimpleSuccessResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default="Success")
+
+
 class DeprecatePackageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -23,6 +27,7 @@ class DeprecatePackageAPIView(APIView):
         operation_id="cyberstorm.package.deprecate",
         request_body=DeprecatePackageSerializer,
         tags=["cyberstorm"],
+        responses={status.HTTP_200_OK: SimpleSuccessResponseSerializer},
     )
     def post(self, request, namespace_id: str, package_name: str) -> Response:
         serializer = DeprecatePackageSerializer(data=request.data)
