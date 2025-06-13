@@ -113,6 +113,9 @@ def validate_response_against_schema(
         errors.append(f"Unexpected status {response.status_code} for {path}: {data}")
         return errors
 
+    if response.status_code == 204:
+        return []
+
     res_schema = get_response_schema(schema, path, method)
 
     try:

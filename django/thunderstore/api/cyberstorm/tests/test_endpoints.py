@@ -127,6 +127,9 @@ def test_cyberstorm_endpoint_schemas(
 
             failures.extend(errors)
 
+        if "disband" in path:  # requires special handling in setup
+            user.teams.first().team.owned_packages.all().delete()
+
         response = make_request(
             method=http_verb, url=url, api_client=api_client, data=request_body
         )
