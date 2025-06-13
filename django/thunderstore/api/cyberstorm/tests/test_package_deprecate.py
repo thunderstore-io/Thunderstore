@@ -56,6 +56,7 @@ def test_deprecate_package_user_roles(
     assert response.status_code == expected_status_code[user_type]
 
     if response.status_code == status.HTTP_200_OK:
+        assert response.json() == {"message": "Success"}
         active_package.refresh_from_db()
         assert active_package.is_deprecated == deprecate_value
 
