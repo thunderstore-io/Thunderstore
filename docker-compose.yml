@@ -1,6 +1,8 @@
 version: "3.8"
 
 x-django-service: &django-service
+  image: thunderstore/thunderstore:latest
+  pull_policy: build
   build:
     context: .
     dockerfile: ./Dockerfile
