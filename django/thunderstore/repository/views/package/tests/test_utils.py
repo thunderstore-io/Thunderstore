@@ -8,37 +8,37 @@ from thunderstore.community.models import (
     CommunityMembership,
 )
 from thunderstore.core.types import UserType
-from thunderstore.repository.views.package._utils import get_moderatable_communities
+from thunderstore.repository.views.package._utils import get_moderated_communities
 
 User = get_user_model()
 
 
 @pytest.mark.django_db
-def test_utils_get_moderatable_communities_no_user(
+def test_utils_get_moderated_communities_no_user(
     community: Community,
 ):
-    assert get_moderatable_communities(None) == []
-    assert get_moderatable_communities(AnonymousUser()) == []
+    assert get_moderated_communities(None) == []
+    assert get_moderated_communities(AnonymousUser()) == []
 
 
 @pytest.mark.django_db
-def test_utils_get_moderatable_communities_superuser(
+def test_utils_get_moderated_communities_superuser(
     community: Community,
     user: UserType,
 ):
     user.is_superuser = True
     user.save()
-    assert get_moderatable_communities(user) == [str(community.pk)]
+    assert get_moderated_communities(user) == [str(community.pk)]
 
 
 @pytest.mark.django_db
-def test_utils_get_moderatable_communities_staff(
+def test_utils_get_moderated_communities_staff(
     community: Community,
     user: UserType,
 ):
     user.is_staff = True
     user.save()
-    assert get_moderatable_communities(user) == []
+    assert get_moderated_communities(user) == []
 
     perm = Permission.objects.get(
         content_type__app_label="community",
@@ -46,17 +46,17 @@ def test_utils_get_moderatable_communities_staff(
     )
     user.user_permissions.add(perm)
     user = User.objects.get(pk=user.pk)
-    assert get_moderatable_communities(user) == [str(community.pk)]
+    assert get_moderated_communities(user) == [str(community.pk)]
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("role", CommunityMemberRole.options())
-def test_utils_get_moderatable_communities_community_member(
+def test_utils_get_moderated_communities_community_member(
     community: Community,
     user: UserType,
     role: str,
 ):
-    assert get_moderatable_communities(user) == []
+    assert get_moderated_communities(user) == []
 
     membership = CommunityMembership.objects.create(
         user=user,
@@ -70,4 +70,4 @@ def test_utils_get_moderatable_communities_community_member(
         else []
     )
 
-    assert get_moderatable_communities(user) == expected
+    assert get_moderated_communities(user) == expected

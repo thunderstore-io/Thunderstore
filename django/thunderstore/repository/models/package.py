@@ -313,10 +313,10 @@ class Package(VisibilityMixin, AdminLinkMixin):
             return
 
         from thunderstore.repository.views.package._utils import (
-            get_moderatable_communities,
+            get_moderated_communities,
         )
 
-        moderatable_community_ids = get_moderatable_communities(user)
+        moderatable_community_ids = get_moderated_communities(user)
 
         community_ids = [
             listing.community.id
