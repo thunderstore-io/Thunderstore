@@ -4,12 +4,18 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
+from thunderstore.account.models import UserMeta
+from thunderstore.community.factories import CommunityFactory
+from thunderstore.community.models import CommunityMemberRole, CommunityMembership
+from thunderstore.core.types import UserType
+
 User = get_user_model()
 
 
 @pytest.mark.django_db
 def test_user_moderated_communities_only_called_once():
     user = User.objects.create_user(username="tester", password="pass")
+    UserMeta.objects.create(user=user, can_moderate_any_community=True)
 
     with patch(
         "thunderstore.repository.views.package._utils.get_moderated_communities",
@@ -26,14 +32,32 @@ def test_user_moderated_communities_only_called_once():
 
 
 @pytest.mark.django_db
-def test_user_has_moderated_communities_property():
+def test_user_has_moderated_communities_is_empty_list_by_default():
     user = User()
     assert hasattr(user, "moderated_communities")
-    assert callable(getattr(User, "moderated_communities").fget)
+    assert user.moderated_communities == []
 
 
 @pytest.mark.django_db
 def test_anonymous_user_moderated_communities_is_empty_list():
     anon = AnonymousUser()
+    assert anon.is_authenticated == False
     assert hasattr(anon, "moderated_communities")
     assert anon.moderated_communities == []
+
+
+@pytest.mark.django_db
+def test_user_meta_updates_with_community_membership(user: UserType):
+    community = CommunityFactory()
+    community_membership = CommunityMembership.objects.create(
+        user=user,
+        role=CommunityMemberRole.member,
+        community=community,
+    )
+
+    assert UserMeta.objects.get(user=user).can_moderate_any_community == False
+
+    community_membership.role = CommunityMemberRole.moderator
+    community_membership.save()
+
+    assert UserMeta.objects.get(user=user).can_moderate_any_community == True
