@@ -453,7 +453,7 @@ class PackageReviewListView(PackageListSearchView):
         return f"review-queue"
 
     def dispatch(self, *args, **kwargs):
-        self.community_ids = get_moderated_communities(self.request.user)
+        self.community_ids = self.request.user.moderated_communities
         if not self.community_ids:
             raise PermissionDenied()
         return super().dispatch(*args, **kwargs)
