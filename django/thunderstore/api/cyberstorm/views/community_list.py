@@ -29,7 +29,7 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     ordering = ["identifier"]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.request.query_params.get("include_unlisted", "false").lower() == "true":
-            queryset = Community.objects.all()
-        return queryset
+        include_unlisted = self.request.query_params.get("include_unlisted", "false")
+        if include_unlisted.lower() == "true":
+            return Community.objects.all()
+        return self.queryset
