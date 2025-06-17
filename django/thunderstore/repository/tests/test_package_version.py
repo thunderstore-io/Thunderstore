@@ -1,6 +1,7 @@
 from typing import Any, Literal, Union
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError
 
 from thunderstore.community.factories import PackageListingFactory
@@ -164,7 +165,7 @@ def test_package_version_is_removed(
 def test_package_version_build_audit_event():
     version = PackageVersionFactory()
 
-    target = AuditTarget.PACKAGE
+    target = AuditTarget.VERSION
     action = AuditAction.REJECTED
     user_id = UserFactory().pk
     message = "Rejected a version"
@@ -207,7 +208,7 @@ def test_reject_or_approve_requires_permissions():
     with pytest.raises(PermissionError):
         version.approve(agent=user, is_system=False)
 
-    user.is_staff = True
+    user.is_superuser = True
 
     version.reject(agent=user, is_system=False)
 
@@ -289,33 +290,13 @@ def test_can_user_manage_approval_status_false_if_immune():
 
 
 @pytest.mark.django_db
-def test_can_user_manage_approval_status_true_if_one_listing_allows():
-    user = UserFactory.create()
+def test_can_user_manage_approval_status_false_if_unauthenticated():
+    unauthenticated_user = AnonymousUser()
 
-    listing1 = PackageListingFactory()
-    listing2 = PackageListingFactory(package=listing1.package)
+    version = PackageVersionFactory()
 
-    CommunityMembership.objects.create(
-        user=user,
-        community=listing2.community,
-        role=CommunityMemberRole.moderator,
-    )
-
-    version = listing1.package.latest
-
-    assert version.can_user_manage_approval_status(user)
-
-
-@pytest.mark.django_db
-def test_can_user_manage_approval_status_false_if_none_allow():
-    user = UserFactory.create()
-
-    listing1 = PackageListingFactory()
-    listing2 = PackageListingFactory(package=listing1.package)
-
-    version = listing1.package.latest
-
-    assert not version.can_user_manage_approval_status(user)
+    assert not version.can_user_manage_approval_status(unauthenticated_user)
+    assert not version.can_user_manage_approval_status(None)
 
 
 @pytest.mark.django_db

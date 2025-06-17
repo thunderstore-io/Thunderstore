@@ -401,12 +401,31 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         if self.review_status == PackageVersionReviewStatus.immune:
             return False
 
-        for listing in self.package.community_listings.all():
-            if listing.can_user_manage_approval_status(user):
-                return True
+        if not user:
+            return False
 
-        if user and (user.is_superuser or user.is_staff):
+        if not user.is_authenticated:
+            return False
+
+        if user.is_superuser:
             return True
+
+        # TODO: Replace this with get_moderated_comunnities or whatever the cached equivalent ends up being
+        # from thunderstore.repository.views.package._utils import (
+        #     get_moderatable_communities,
+        # )
+        #
+        # moderatable_community_ids = get_moderatable_communities(user)
+        #
+        # community_ids = [
+        #     listing.community.id
+        #     for listing in self.community_listings.select_related("community")
+        # ]
+        #
+        # if community_ids and all(
+        #     str(cid) in moderatable_community_ids for cid in community_ids
+        # ):
+        #     return
 
         return False
 
@@ -462,9 +481,8 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
         self.set_visibility_from_review_status()
 
-        self.visibility.save()
-
         if self.visibility.as_tuple() != original:
+            self.visibility.save()
             self.package.update_visibility()  # package's visibility may change because of its versions
 
 
