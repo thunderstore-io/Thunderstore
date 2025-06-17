@@ -170,7 +170,6 @@ def test_package_version_build_audit_event():
     message = "Rejected a version"
 
     audit_event = version.build_audit_event(
-        target=target,
         action=action,
         user_id=user_id,
         message=message,

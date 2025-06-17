@@ -330,7 +330,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     def build_audit_event(
         self,
         *,
-        target: AuditTarget,
         action: AuditAction,
         user_id: Optional[int],
         message: Optional[str] = None,
@@ -338,7 +337,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         return AuditEvent(
             timestamp=timezone.now(),
             user_id=user_id,
-            target=target,
+            target=AuditTarget.VERSION,
             action=action,
             message=message,
             related_url=self.package.get_view_on_site_url(),
@@ -366,7 +365,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
             fire_audit_event(
                 self.build_audit_event(
-                    target=AuditTarget.VERSION,
                     action=AuditAction.REJECTED,
                     user_id=agent.pk if agent else None,
                     message=message,
@@ -391,7 +389,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
             fire_audit_event(
                 self.build_audit_event(
-                    target=AuditTarget.VERSION,
                     action=AuditAction.APPROVED,
                     user_id=agent.pk if agent else None,
                     message=message,

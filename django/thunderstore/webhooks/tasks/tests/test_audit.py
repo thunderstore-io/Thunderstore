@@ -38,7 +38,6 @@ def test_process_audit_event(
     )
     webhook.match_communities.set([active_package_listing.community])
     event = active_package_listing.build_audit_event(
-        target=target,
         action=action,
         user_id=user.pk,
         message=message,
