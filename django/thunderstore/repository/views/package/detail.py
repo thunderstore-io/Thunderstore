@@ -14,6 +14,7 @@ from thunderstore.repository.views.package._utils import (
     can_view_package_admin,
     get_package_listing_or_404,
 )
+from thunderstore.ts_reports.consts import REPORT_REASON_CHOICES
 
 
 class PermissionsChecker:
@@ -104,24 +105,14 @@ class PackageDetailView(PackageListingDetailView):
         }
 
     def get_report_panel(self):
+        from thunderstore.ts_reports.consts import REPORT_DESCRIPTION_MAX_LENGTH
+
         return {
             "packageListingId": self.object.pk,
             "packageVersionId": self.object.package.latest.pk,
             "csrfToken": self.csrf_token,
-            "reasonChoices": [
-                {"value": "Spam", "label": "Spam"},
-                {"value": "Malware", "label": "Suspected malware"},
-                {"value": "Reupload", "label": "Unauthorized reupload"},
-                {
-                    "value": "CopyrightOrLicense",
-                    "label": "Copyright / License issue",
-                },
-                {"value": "Harassment", "label": "Harassment"},
-                {"value": "WrongCommunity", "label": "Wrong community"},
-                {"value": "WrongCategories", "label": "Wrong categories"},
-                {"value": "Other", "label": "Other"},
-            ],
-            "descriptionMaxLength": 2048,
+            "reasonChoices": REPORT_REASON_CHOICES,
+            "descriptionMaxLength": REPORT_DESCRIPTION_MAX_LENGTH,
         }
 
     def get_context_data(self, *args, **kwargs):
