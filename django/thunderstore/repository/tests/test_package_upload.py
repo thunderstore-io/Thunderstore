@@ -312,6 +312,14 @@ def test_check_exceeds_max_file_count_per_zip_with_team_limit_set(user, settings
 
     assert not zip_validation.check_exceeds_max_file_count_per_zip(files, team)
 
+    settings.REPOSITORY_MAX_FILE_COUNT_PER_ZIP = 1
+    assert zip_validation.check_exceeds_max_file_count_per_zip(files, team)
+
+    team.max_file_count_per_zip = 5
+    team.save()
+
+    assert not zip_validation.check_exceeds_max_file_count_per_zip(files, team)
+
     team.max_file_count_per_zip = 1
     team.save()
 
