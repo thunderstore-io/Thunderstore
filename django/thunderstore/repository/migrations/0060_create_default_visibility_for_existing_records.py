@@ -55,10 +55,7 @@ def update_version_visibility(version):
         version.visibility.moderator_detail = False
         version.visibility.moderator_list = False
 
-    if (
-        version.review_status == PackageVersionReviewStatus.rejected
-        or version.review_status == PackageVersionReviewStatus.pending
-    ):
+    if version.review_status == PackageVersionReviewStatus.rejected:
         version.visibility.public_detail = False
         version.visibility.public_list = False
 

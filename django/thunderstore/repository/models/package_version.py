@@ -138,9 +138,8 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     readme = models.TextField()
     changelog = models.TextField(blank=True, null=True)
 
-    # TODO: Default should be pending once all versions require automated scanning before appearing to users
     review_status = models.TextField(
-        default=PackageVersionReviewStatus.skipped,
+        default=PackageVersionReviewStatus.unreviewed,
         choices=PackageVersionReviewStatus.as_choices(),
     )
 
@@ -356,9 +355,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         is_system: bool = False,
         message: Optional[str] = None,
     ):
-        if self.review_status == PackageVersionReviewStatus.immune:
-            raise PermissionError()
-
         if is_system or self.can_user_manage_approval_status(agent):
             self.review_status = PackageVersionReviewStatus.rejected
             self.save(update_fields=("review_status",))
@@ -380,9 +376,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         is_system: bool = False,
         message: Optional[str] = None,
     ):
-        if self.review_status == PackageVersionReviewStatus.immune:
-            raise PermissionError()
-
         if is_system or self.can_user_manage_approval_status(agent):
             self.review_status = PackageVersionReviewStatus.approved
             self.save(update_fields=("review_status",))
@@ -398,9 +391,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             raise PermissionError()
 
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
-        if self.review_status == PackageVersionReviewStatus.immune:
-            return False
-
         if not user:
             return False
 
@@ -464,10 +454,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             self.visibility.moderator_list = False
 
     def set_visibility_from_review_status(self):
-        if (
-            self.review_status == PackageVersionReviewStatus.rejected
-            or self.review_status == PackageVersionReviewStatus.pending
-        ):
+        if self.review_status == PackageVersionReviewStatus.rejected:
             self.visibility.public_detail = False
             self.visibility.public_list = False
 

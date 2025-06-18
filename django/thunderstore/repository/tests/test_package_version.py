@@ -186,18 +186,6 @@ def test_package_version_build_audit_event():
 
 
 @pytest.mark.django_db
-def test_reject_or_approve_errors_for_immune_versions():
-    version = PackageVersionFactory()
-    version.review_status = PackageVersionReviewStatus.immune
-
-    with pytest.raises(PermissionError):
-        version.reject(agent=None, message="Invalid submission", is_system=True)
-
-    with pytest.raises(PermissionError):
-        version.approve(agent=None, message="Invalid submission", is_system=True)
-
-
-@pytest.mark.django_db
 def test_reject_or_approve_requires_permissions():
     version = PackageVersionFactory()
     user = UserFactory()
@@ -257,36 +245,13 @@ def test_set_visibility_from_active_status_inactive_package():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "status", [PackageVersionReviewStatus.rejected, PackageVersionReviewStatus.pending]
-)
-def test_set_visibility_from_review_status(status):
+def test_set_visibility_from_review_status():
     version = PackageVersionFactory()
 
-    version.review_status = status
+    version.review_status = PackageVersionReviewStatus.rejected
     version.set_visibility_from_review_status()
     version.visibility.save()
     assert_visibility_is_not_public(version.visibility)
-
-
-@pytest.mark.django_db
-def test_can_user_manage_approval_status_false_if_immune():
-    user = UserFactory.create()
-
-    listing = PackageListingFactory(
-        package_version_kwargs={"review_status": PackageVersionReviewStatus.immune}
-    )
-
-    CommunityMembership.objects.create(
-        user=user,
-        community=listing.community,
-        role=CommunityMemberRole.moderator,
-    )
-
-    version = listing.package.latest
-
-    assert version.review_status == PackageVersionReviewStatus.immune
-    assert not version.can_user_manage_approval_status(user)
 
 
 @pytest.mark.django_db

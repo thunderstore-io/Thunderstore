@@ -200,7 +200,7 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.file_size = self.file_size
         self.instance.format_spec = self.format_spec
         self.instance.uploaded_by = self.user
-        self.instance.review_status = PackageVersionReviewStatus.skipped
+        self.instance.review_status = PackageVersionReviewStatus.unreviewed
 
         team = self.cleaned_data["team"]
         team.ensure_can_upload_package(self.user)
