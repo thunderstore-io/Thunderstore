@@ -1,10 +1,14 @@
+from rest_framework import serializers
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
 from thunderstore.api.ordering import StrictOrderingFilter
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import (
+    CyberstormAutoSchemaMixin,
+    conditional_swagger_auto_schema,
+)
 from thunderstore.community.models import Community
 
 
@@ -12,11 +16,14 @@ class CommunityPaginator(PageNumberPagination):
     page_size = 300
 
 
+class CommunityListAPIQueryParams(serializers.Serializer):
+    include_unlisted = serializers.BooleanField(default=False)
+
+
 class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     permission_classes = []
     serializer_class = CyberstormCommunitySerializer
     pagination_class = CommunityPaginator
-    queryset = Community.objects.listed()
     filter_backends = [SearchFilter, StrictOrderingFilter]
     search_fields = ["name", "search_keywords"]
     ordering_fields = [
@@ -29,7 +36,17 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     ordering = ["identifier"]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.request.query_params.get("include_unlisted", "false").lower() == "true":
-            queryset = Community.objects.all()
-        return queryset
+        query_params = CommunityListAPIQueryParams(data=self.request.query_params)
+        query_params.is_valid(raise_exception=True)
+
+        if query_params.validated_data["include_unlisted"]:
+            return Community.objects.all()
+        else:
+            return Community.objects.listed()
+
+    @conditional_swagger_auto_schema(
+        tags=["cyberstorm"],
+        query_serializer=CommunityListAPIQueryParams(),
+    )
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
