@@ -192,6 +192,67 @@ def test_handle_user_report():
         )
     assert "Package mismatch!" in str(exc.value)
 
+    PackageReport.handle_user_report(
+        reason="Spam",
+        submitted_by=None,
+        package=package1,
+        package_listing=listing1,
+        package_version=version1,
+        description="",
+    )
+
+    assert PackageReport.objects.all().count() == 1
+    report = PackageReport.objects.first()
+    assert report.reason == "Spam"
+    assert report.submitted_by is None
+    assert report.package == package1
+    assert report.package_listing == listing1
+    assert report.package_version == version1
+    assert report.description == ""
+
+
+@pytest.mark.django_db
+def test_package_report_validation():
+    version1 = PackageVersionFactory()
+    version2 = PackageVersionFactory()
+    package1 = version1.package
+    package2 = version2.package
+
+    listing1 = PackageListingFactory(package=package1)
+    listing2 = PackageListingFactory(package=package2)
+
+    report = PackageReport(
+        reason="Spam",
+        submitted_by=None,
+        package=package1,
+        package_listing=listing2,
+        package_version=version1,
+        description="",
+    )
+    with pytest.raises(ValidationError, match="Package mismatch!"):
+        report.validate()
+
+    report = PackageReport(
+        reason="Spam",
+        submitted_by=None,
+        package=package1,
+        package_listing=listing1,
+        package_version=version2,
+        description="",
+    )
+    with pytest.raises(ValidationError, match="Package mismatch!"):
+        report.validate()
+
+    report = PackageReport(
+        reason="Spam",
+        submitted_by=None,
+        package=package1,
+        package_listing=listing1,
+        package_version=version1,
+        description="",
+    )
+    report.validate()
+
 
 @pytest.mark.django_db
 def test_package_report_str():

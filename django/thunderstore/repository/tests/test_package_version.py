@@ -1,6 +1,7 @@
 from typing import Any, Literal, Union
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError
 
 from thunderstore.community.factories import PackageListingFactory
@@ -164,13 +165,12 @@ def test_package_version_is_removed(
 def test_package_version_build_audit_event():
     version = PackageVersionFactory()
 
-    target = AuditTarget.PACKAGE
+    target = AuditTarget.VERSION
     action = AuditAction.REJECTED
     user_id = UserFactory().pk
     message = "Rejected a version"
 
     audit_event = version.build_audit_event(
-        target=target,
         action=action,
         user_id=user_id,
         message=message,
@@ -186,18 +186,6 @@ def test_package_version_build_audit_event():
 
 
 @pytest.mark.django_db
-def test_reject_or_approve_errors_for_immune_versions():
-    version = PackageVersionFactory()
-    version.review_status = PackageVersionReviewStatus.immune
-
-    with pytest.raises(PermissionError):
-        version.reject(agent=None, message="Invalid submission", is_system=True)
-
-    with pytest.raises(PermissionError):
-        version.approve(agent=None, message="Invalid submission", is_system=True)
-
-
-@pytest.mark.django_db
 def test_reject_or_approve_requires_permissions():
     version = PackageVersionFactory()
     user = UserFactory()
@@ -208,7 +196,7 @@ def test_reject_or_approve_requires_permissions():
     with pytest.raises(PermissionError):
         version.approve(agent=user, is_system=False)
 
-    user.is_staff = True
+    user.is_superuser = True
 
     version.reject(agent=user, is_system=False)
 
@@ -257,66 +245,23 @@ def test_set_visibility_from_active_status_inactive_package():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "status", [PackageVersionReviewStatus.rejected, PackageVersionReviewStatus.pending]
-)
-def test_set_visibility_from_review_status(status):
+def test_set_visibility_from_review_status():
     version = PackageVersionFactory()
 
-    version.review_status = status
+    version.review_status = PackageVersionReviewStatus.rejected
     version.set_visibility_from_review_status()
     version.visibility.save()
     assert_visibility_is_not_public(version.visibility)
 
 
 @pytest.mark.django_db
-def test_can_user_manage_approval_status_false_if_immune():
-    user = UserFactory.create()
+def test_can_user_manage_approval_status_false_if_unauthenticated():
+    unauthenticated_user = AnonymousUser()
 
-    listing = PackageListingFactory(
-        package_version_kwargs={"review_status": PackageVersionReviewStatus.immune}
-    )
+    version = PackageVersionFactory()
 
-    CommunityMembership.objects.create(
-        user=user,
-        community=listing.community,
-        role=CommunityMemberRole.moderator,
-    )
-
-    version = listing.package.latest
-
-    assert version.review_status == PackageVersionReviewStatus.immune
-    assert not version.can_user_manage_approval_status(user)
-
-
-@pytest.mark.django_db
-def test_can_user_manage_approval_status_true_if_one_listing_allows():
-    user = UserFactory.create()
-
-    listing1 = PackageListingFactory()
-    listing2 = PackageListingFactory(package=listing1.package)
-
-    CommunityMembership.objects.create(
-        user=user,
-        community=listing2.community,
-        role=CommunityMemberRole.moderator,
-    )
-
-    version = listing1.package.latest
-
-    assert version.can_user_manage_approval_status(user)
-
-
-@pytest.mark.django_db
-def test_can_user_manage_approval_status_false_if_none_allow():
-    user = UserFactory.create()
-
-    listing1 = PackageListingFactory()
-    listing2 = PackageListingFactory(package=listing1.package)
-
-    version = listing1.package.latest
-
-    assert not version.can_user_manage_approval_status(user)
+    assert not version.can_user_manage_approval_status(unauthenticated_user)
+    assert not version.can_user_manage_approval_status(None)
 
 
 @pytest.mark.django_db

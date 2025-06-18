@@ -138,9 +138,8 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     readme = models.TextField()
     changelog = models.TextField(blank=True, null=True)
 
-    # TODO: Default should be pending once all versions require automated scanning before appearing to users
     review_status = models.TextField(
-        default=PackageVersionReviewStatus.skipped,
+        default=PackageVersionReviewStatus.unreviewed,
         choices=PackageVersionReviewStatus.as_choices(),
     )
 
@@ -330,7 +329,6 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     def build_audit_event(
         self,
         *,
-        target: AuditTarget,
         action: AuditAction,
         user_id: Optional[int],
         message: Optional[str] = None,
@@ -338,7 +336,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         return AuditEvent(
             timestamp=timezone.now(),
             user_id=user_id,
-            target=target,
+            target=AuditTarget.VERSION,
             action=action,
             message=message,
             related_url=self.package.get_view_on_site_url(),
@@ -357,16 +355,12 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         is_system: bool = False,
         message: Optional[str] = None,
     ):
-        if self.review_status == PackageVersionReviewStatus.immune:
-            raise PermissionError()
-
         if is_system or self.can_user_manage_approval_status(agent):
             self.review_status = PackageVersionReviewStatus.rejected
             self.save(update_fields=("review_status",))
 
             fire_audit_event(
                 self.build_audit_event(
-                    target=AuditTarget.VERSION,
                     action=AuditAction.REJECTED,
                     user_id=agent.pk if agent else None,
                     message=message,
@@ -382,16 +376,12 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         is_system: bool = False,
         message: Optional[str] = None,
     ):
-        if self.review_status == PackageVersionReviewStatus.immune:
-            raise PermissionError()
-
         if is_system or self.can_user_manage_approval_status(agent):
             self.review_status = PackageVersionReviewStatus.approved
             self.save(update_fields=("review_status",))
 
             fire_audit_event(
                 self.build_audit_event(
-                    target=AuditTarget.VERSION,
                     action=AuditAction.APPROVED,
                     user_id=agent.pk if agent else None,
                     message=message,
@@ -401,15 +391,31 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             raise PermissionError()
 
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
-        if self.review_status == PackageVersionReviewStatus.immune:
+        if not user:
             return False
 
-        for listing in self.package.community_listings.all():
-            if listing.can_user_manage_approval_status(user):
-                return True
+        if not user.is_authenticated:
+            return False
 
-        if user and (user.is_superuser or user.is_staff):
+        if user.is_superuser:
             return True
+
+        # TODO: Replace this with get_moderated_comunnities or whatever the cached equivalent ends up being
+        # from thunderstore.repository.views.package._utils import (
+        #     get_moderatable_communities,
+        # )
+        #
+        # moderatable_community_ids = get_moderatable_communities(user)
+        #
+        # community_ids = [
+        #     listing.community.id
+        #     for listing in self.community_listings.select_related("community")
+        # ]
+        #
+        # if community_ids and all(
+        #     str(cid) in moderatable_community_ids for cid in community_ids
+        # ):
+        #     return
 
         return False
 
@@ -448,10 +454,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
             self.visibility.moderator_list = False
 
     def set_visibility_from_review_status(self):
-        if (
-            self.review_status == PackageVersionReviewStatus.rejected
-            or self.review_status == PackageVersionReviewStatus.pending
-        ):
+        if self.review_status == PackageVersionReviewStatus.rejected:
             self.visibility.public_detail = False
             self.visibility.public_list = False
 
@@ -465,9 +468,8 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
         self.set_visibility_from_review_status()
 
-        self.visibility.save()
-
         if self.visibility.as_tuple() != original:
+            self.visibility.save()
             self.package.update_visibility()  # package's visibility may change because of its versions
 
 

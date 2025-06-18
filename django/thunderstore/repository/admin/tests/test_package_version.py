@@ -65,7 +65,7 @@ def test_admin_package_version_approve_version(team: Team) -> None:
 
     request = RequestFactory().get("/")
     request.user = UserFactory()
-    request.user.is_staff = True
+    request.user.is_superuser = True
 
     modeladmin = PackageVersionAdmin(PackageVersion, None)
     approve_version(modeladmin, request, PackageVersion.objects.all())
@@ -81,7 +81,7 @@ def test_admin_package_version_reject_version(team: Team) -> None:
 
     request = RequestFactory().get("/")
     request.user = UserFactory()
-    request.user.is_staff = True
+    request.user.is_superuser = True
 
     modeladmin = PackageVersionAdmin(PackageVersion, None)
     reject_version(modeladmin, request, PackageVersion.objects.all())

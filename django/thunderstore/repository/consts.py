@@ -12,8 +12,6 @@ PACKAGE_REFERENCE_COMPONENT_REGEX = re.compile(
 
 
 class PackageVersionReviewStatus(ChoiceEnum):
-    pending = "pending"
+    unreviewed = "unreviewed"
     approved = "approved"
     rejected = "rejected"
-    skipped = "skipped"
-    immune = "immune"
