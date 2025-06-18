@@ -1,3 +1,5 @@
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import serializers
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -12,11 +14,14 @@ class CommunityPaginator(PageNumberPagination):
     page_size = 300
 
 
+class CommunityListAPIQueryParams(serializers.Serializer):
+    include_unlisted = serializers.BooleanField(default=False)
+
+
 class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     permission_classes = []
     serializer_class = CyberstormCommunitySerializer
     pagination_class = CommunityPaginator
-    queryset = Community.objects.listed()
     filter_backends = [SearchFilter, StrictOrderingFilter]
     search_fields = ["name", "search_keywords"]
     ordering_fields = [
@@ -28,8 +33,12 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     ]
     ordering = ["identifier"]
 
+    @swagger_auto_schema(query_serializer=CommunityListAPIQueryParams())
     def get_queryset(self):
-        include_unlisted = self.request.query_params.get("include_unlisted", "false")
-        if include_unlisted.lower() == "true":
+        query_params = CommunityListAPIQueryParams(data=self.request.query_params)
+        query_params.is_valid(raise_exception=True)
+
+        if query_params.validated_data["include_unlisted"]:
             return Community.objects.all()
-        return self.queryset
+        else:
+            return Community.objects.listed()
