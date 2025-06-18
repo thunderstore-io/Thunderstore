@@ -94,7 +94,7 @@ def test_api_package_listing_report_denied(
     )
 
     assert response.status_code == 400
-    assert response.data["reason"][0] == "This field may not be blank."
+    assert response.data["reason"][0] == '"" is not a valid choice.'
 
     assert PackageReport.objects.count() == 0
 

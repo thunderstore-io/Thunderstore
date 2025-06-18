@@ -5,8 +5,6 @@ from django.conf import settings
 
 from thunderstore.repository.models import Team
 
-MAX_FILE_COUNT_PER_ZIP = settings.REPOSITORY_MAX_FILE_COUNT_PER_ZIP
-
 
 def check_unsafe_paths(infolist: List[ZipInfo]) -> bool:
     for entry in infolist:
@@ -44,9 +42,10 @@ def check_duplicate_filenames(infolist: List[ZipInfo]) -> bool:
 
 
 def check_exceeds_max_file_count_per_zip(infolist: List[ZipInfo], team: Team) -> bool:
-    if team.max_file_count_per_zip:
-        if len(infolist) > team.max_file_count_per_zip:
-            return True
-    elif len(infolist) > MAX_FILE_COUNT_PER_ZIP:
-        return True
-    return False
+    # We assume team-specific limits aren't going to be used for downgrades,
+    # only upgrades, meaning if the global limit is increased later on it can
+    # trump team-specific limits.
+    effective_maximum = max(
+        team.max_file_count_per_zip or 0, settings.REPOSITORY_MAX_FILE_COUNT_PER_ZIP
+    )
+    return len(infolist) > effective_maximum

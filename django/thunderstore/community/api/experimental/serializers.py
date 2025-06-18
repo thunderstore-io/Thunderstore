@@ -6,6 +6,10 @@ from thunderstore.repository.api.experimental.serializers import (
     CommunityFilteredModelChoiceField,
 )
 from thunderstore.repository.models import PackageVersion
+from thunderstore.ts_reports.consts import (
+    REPORT_DESCRIPTION_MAX_LENGTH,
+    REPORT_REASON_CHOICES_TUPLES,
+)
 
 
 class PackageListingUpdateRequestSerializer(serializers.Serializer):
@@ -35,13 +39,15 @@ class PackageListingReportRequestSerializer(serializers.Serializer):
         allow_null=True,
         queryset=PackageVersion.objects.all(),
     )
-    reason = serializers.CharField(
+    reason = serializers.ChoiceField(
         required=True,
         allow_blank=False,
         allow_null=False,
+        choices=REPORT_REASON_CHOICES_TUPLES,
     )
     description = serializers.CharField(
         required=False,
         allow_blank=True,
         allow_null=True,
+        max_length=REPORT_DESCRIPTION_MAX_LENGTH,
     )

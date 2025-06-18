@@ -116,7 +116,9 @@ class Team(models.Model):
     max_file_count_per_zip = models.IntegerField(
         null=True,
         blank=True,
-        help_text="Optional limit on the max number of files in a zip uploaded by this team, replacing the default limit",
+        help_text=(
+            "Optional limit on the max number of files in a zip uploaded by this team, replacing the default limit"
+        ),
     )
 
     class Meta:
