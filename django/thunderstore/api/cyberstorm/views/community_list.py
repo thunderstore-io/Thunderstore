@@ -1,4 +1,3 @@
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
@@ -6,7 +5,10 @@ from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
 from thunderstore.api.ordering import StrictOrderingFilter
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import (
+    CyberstormAutoSchemaMixin,
+    conditional_swagger_auto_schema,
+)
 from thunderstore.community.models import Community
 
 
@@ -33,7 +35,6 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     ]
     ordering = ["identifier"]
 
-    @swagger_auto_schema(query_serializer=CommunityListAPIQueryParams())
     def get_queryset(self):
         query_params = CommunityListAPIQueryParams(data=self.request.query_params)
         query_params.is_valid(raise_exception=True)
@@ -42,3 +43,10 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
             return Community.objects.all()
         else:
             return Community.objects.listed()
+
+    @conditional_swagger_auto_schema(
+        tags=["cyberstorm"],
+        query_serializer=CommunityListAPIQueryParams(),
+    )
+    def get(self, *args, **kwargs):
+        return super().get(*args, **kwargs)
