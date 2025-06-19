@@ -1,4 +1,4 @@
-{% load thumbnail %}
+{% load cached_thumbnail %}
 {% load community_url %}
 
 <div class="card">
@@ -10,7 +10,7 @@
             {% for dependency in object.package.dependencies.all %}
                 <div class="list-group-item flex-column align-items-start media">
                     <div class="media">
-                        <img class="align-self-center mr-3" src="{% thumbnail dependency.icon 64x64 %}" alt="{{ dependency }} icon">
+                        <img class="align-self-center mr-3" src="{% thumbnail_url dependency.icon 64 64 %}" alt="{{ dependency }} icon">
                         <div class="media-body">
                             <h5 class="mt-0">
                                 <a href="{% community_url "packages.detail" owner=dependency.package.namespace.name name=dependency.package.name %}">

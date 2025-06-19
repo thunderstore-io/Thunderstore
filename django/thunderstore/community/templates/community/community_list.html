@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load cache %}
-{% load thumbnail %}
+{% load cached_thumbnail %}
 
 {% block title %}All communities{% endblock %}
 
@@ -18,7 +18,7 @@
                 <div class="p-0 bg-light">
                     <a href="{{ object.full_url }}">
                         {% if object.cover_image %}
-                        <img class="w-100" src="{% thumbnail object.cover_image 360x480 crop %}" alt="{{ object.name }} icon">
+                        <img class="w-100" src="{% thumbnail_url object.cover_image 360 480 %}" alt="{{ object.name }} icon">
                         {% else %}
                         <img class="w-100" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAAHgAQMAAACyyGUjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAADUExURSMfNp+RXmQAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAtSURBVHja7cExAQAAAMKg9U9tDQ8gAAAAAAAAAAAAAAAAAAAAAAAAAAAADtUAVkAAAQ2c1aEAAAAASUVORK5CYII=" alt="{{ object.name }} icon">
                         {% endif %}

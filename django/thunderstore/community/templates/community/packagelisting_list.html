@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load thumbnail %}
+{% load cached_thumbnail %}
 {% load arrow %}
 {% load cache_until %}
 {% load qurl %}
@@ -160,7 +160,7 @@
                 </div>
                 {% endif %}
                 <a href="{{ object.get_full_url }}">
-                    <img class="w-100" src="{% thumbnail object.package.icon 256x256 crop %}" alt="{{ object.package }} icon">
+                    <img class="w-100" src="{% thumbnail_url object.package.icon 256 256 %}" alt="{{ object.package }} icon">
                 </a>
             </div>
             <div class="bg-light p-2">
