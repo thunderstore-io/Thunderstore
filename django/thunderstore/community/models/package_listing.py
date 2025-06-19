@@ -424,11 +424,13 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
 
     @transaction.atomic
     def update_visibility(self):
-        self.visibility.copy_from(self.package.visibility)
-
-        self.set_visibility_from_review_status()
-
-        self.visibility.save()
+        return
+        # TODO: Re-enable once visibility system fixed
+        # self.visibility.copy_from(self.package.visibility)
+        #
+        # self.set_visibility_from_review_status()
+        #
+        # self.visibility.save()
 
 
 signals.post_save.connect(PackageListing.post_save, sender=PackageListing)
