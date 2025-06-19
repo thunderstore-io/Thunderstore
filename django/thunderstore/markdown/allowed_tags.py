@@ -86,4 +86,5 @@ ALLOWED_ATTRIBUTES = {
     "h5": ["align"],
     "h6": ["align"],
     "p": ["align"],
+    "details": ["open"],
 }
