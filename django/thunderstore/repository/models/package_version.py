@@ -460,17 +460,19 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
     @transaction.atomic
     def update_visibility(self):
-        original = self.visibility.as_tuple()
-
-        self.set_default_visibility()
-
-        self.set_visibility_from_active_status()
-
-        self.set_visibility_from_review_status()
-
-        if self.visibility.as_tuple() != original:
-            self.visibility.save()
-            self.package.update_visibility()  # package's visibility may change because of its versions
+        return
+        # TODO: Re-enable once visibility system fixed
+        # original = self.visibility.as_tuple()
+        #
+        # self.set_default_visibility()
+        #
+        # self.set_visibility_from_active_status()
+        #
+        # self.set_visibility_from_review_status()
+        #
+        # if self.visibility.as_tuple() != original:
+        #     self.visibility.save()
+        #     self.package.update_visibility()  # package's visibility may change because of its versions
 
 
 signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)

@@ -406,26 +406,28 @@ class Package(VisibilityMixin, AdminLinkMixin):
 
     @transaction.atomic
     def update_visibility(self):
-        original = self.visibility.as_tuple()
-
-        self.set_default_visibility()
-
-        self.set_visibility_from_active_status()
-
-        if self.visibility.as_tuple() != original:
-            for version in self.versions.all():
-                version.update_visibility()
-
-        # package visibility levels can't be higher than the union of version visibility levels
-        self.set_visibility_from_versions()
-
-        if self.visibility.as_tuple() != original:
-            self.visibility.save()
-            for listing in self.community_listings.all():
-                listing.update_visibility()
-
-            self.recache_latest()  # latest available version could potentially change if visibility changes
-            # TODO: Available versions should be affected by visibility
+        return
+        # TODO: Re-enable once visibility system fixed
+        # original = self.visibility.as_tuple()
+        #
+        # self.set_default_visibility()
+        #
+        # self.set_visibility_from_active_status()
+        #
+        # if self.visibility.as_tuple() != original:
+        #     for version in self.versions.all():
+        #         version.update_visibility()
+        #
+        # # package visibility levels can't be higher than the union of version visibility levels
+        # self.set_visibility_from_versions()
+        #
+        # if self.visibility.as_tuple() != original:
+        #     self.visibility.save()
+        #     for listing in self.community_listings.all():
+        #         listing.update_visibility()
+        #
+        #     self.recache_latest()  # latest available version could potentially change if visibility changes
+        #     # TODO: Available versions should be affected by visibility
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
