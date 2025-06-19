@@ -20,7 +20,7 @@ def update_pending_to_unreviewed(apps, schema_editor):
     PackageVersion = apps.get_model("repository", "PackageVersion")
 
     version_ids = (
-        PackageVersion.objects.filter(review_status="pending")
+        PackageVersion.objects.filter(review_status="skipped")
         .values_list("id", flat=True)
         .iterator()
     )
