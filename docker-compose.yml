@@ -113,7 +113,7 @@ services:
 
   django:
     <<: *django-service
-    command: gunicorn
+    command: ${DJANGO_RUNMODE:-gunicorn}
     volumes:
       - django-data:/app/var
       - ./django:/app
