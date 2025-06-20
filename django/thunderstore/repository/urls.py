@@ -1,4 +1,5 @@
 from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 
 from thunderstore.plugins.registry import plugin_registry
 from thunderstore.repository.api.v1.urls import community_urls as v1_community_urls
@@ -6,7 +7,6 @@ from thunderstore.repository.views import (
     PackageCreateOldView,
     PackageCreateView,
     PackageDetailView,
-    PackageDocsView,
     PackageDownloadView,
     PackageListByDependencyView,
     PackageListByOwnerView,
@@ -41,7 +41,14 @@ legacy_package_urls = (
             PackageCreateOldView.as_view(),
             name="packages.create.old",
         ),
-        path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
+        path(
+            "create/docs/",
+            RedirectView.as_view(
+                url="https://wiki.thunderstore.io/mods/creating-a-package",
+                permanent=True,
+            ),
+            name="packages.create.docs",
+        ),
         path(
             "download/<str:owner>/<str:name>/<str:version>/",
             PackageDownloadView.as_view(),
@@ -110,7 +117,13 @@ package_urls = [
     path("api/v1/", include((v1_community_urls, "api"), namespace="api")),
     path("create/", PackageCreateView.as_view(), name="packages.create"),
     path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
-    path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
+    path(
+        "create/docs/",
+        RedirectView.as_view(
+            url="https://wiki.thunderstore.io/mods/creating-a-package", permanent=True
+        ),
+        name="packages.create.docs",
+    ),
     path(
         "p/<str:owner>/<str:name>/",
         PackageDetailView.as_view(),
