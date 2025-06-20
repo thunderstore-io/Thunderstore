@@ -54,7 +54,7 @@ def can_view_package_admin(user: UserType, obj: Package):
     return user.is_staff and user.has_perm("repository.view_package")
 
 
-def get_moderatable_communities(user: Optional[UserType]) -> List[str]:
+def get_moderated_communities(user: Optional[UserType]) -> List[str]:
     if not user or not user.is_authenticated:
         return []
 
