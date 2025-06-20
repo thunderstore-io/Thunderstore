@@ -6,13 +6,13 @@ from thunderstore.repository.api.experimental.serializers import (
 )
 
 
-class PackageCategorySerializer(serializers.Serializer):
+class PackageListingCategorySerializer(serializers.Serializer):
     name = serializers.CharField()
     slug = serializers.SlugField()
 
 
 class PackageListingCategoriesSerializer(serializers.Serializer):
-    categories = PackageCategorySerializer(many=True)
+    categories = PackageListingCategorySerializer(many=True)
 
 
 class PackageListingUpdateSerializer(serializers.Serializer):
