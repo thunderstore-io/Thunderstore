@@ -165,7 +165,7 @@ def test_thumbnail_redirect_exception(dummy_cover_image, community_site, client)
         mock_get_thumbnail.return_value = None
         response = client.get(url, params, HTTP_HOST=community_site.site.domain)
 
-    assert response.status_code == 410
+    assert response.status_code == 404
     assert "Cache-Control" in response
     assert "max-age=86400" in response["Cache-Control"]
 
@@ -192,6 +192,6 @@ def test_thumbnail_redirect_invalid_params_returns_fallback(
     url = reverse("cdn_thumb_redirect", kwargs={"path": community.cover_image.name})
     response = client.get(url, params, HTTP_HOST=community_site.site.domain)
 
-    assert response.status_code == 410
+    assert response.status_code == 404
     assert "Cache-Control" in response
     assert "max-age=86400" in response["Cache-Control"]
