@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from django.conf import settings
+from django.http import HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.cache import patch_cache_control
 from django.utils.decorators import method_decorator
@@ -54,9 +55,7 @@ class SettingsViewMixin:
 
 
 class ThumbnailRedirectView(RedirectView):
-    fallback_url = ""
-
-    def get_redirect_url(self, *args, **kwargs):
+    def get_redirect_url(self, *args, **kwargs) -> str:
         asset_path = self.kwargs.get("path")
 
         try:
@@ -70,9 +69,13 @@ class ThumbnailRedirectView(RedirectView):
             if url:
                 return url
 
-        return self.fallback_url
+        return ""
 
     def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
+        url = self.get_redirect_url(*args, **kwargs)
+        if url:
+            response = HttpResponseRedirect(url)
+        else:
+            response = HttpResponseNotFound("Thumbnail not found")
         patch_cache_control(response, max_age=86400, public=True)  # 24 hours
         return response
