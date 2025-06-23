@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.core.paginator import Page
-from django.db.models import Count, Q, QuerySet, Sum
+from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from rest_framework import serializers
@@ -175,9 +175,19 @@ class BasePackageListAPIView(ListAPIView):
         """
         Add annotations required to serialize the results.
         """
+        listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
+
         return queryset.annotate(
-            download_count=Sum("package__versions__downloads"),
-            rating_count=Count("package__package_ratings"),
+            download_count=Subquery(
+                listing_ref.annotate(
+                    downloads=Sum("package__versions__downloads")
+                ).values("downloads")
+            ),
+            rating_count=Subquery(
+                listing_ref.annotate(ratings=Count("package__package_ratings")).values(
+                    "ratings"
+                )
+            ),
         )
 
     def _select_and_prefetch(

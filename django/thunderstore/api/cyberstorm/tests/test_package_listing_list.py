@@ -840,3 +840,23 @@ def test_annotate_queryset__adds_annotation_fields() -> None:
 
     assert "download_count" in annotated_qs.query.annotations
     assert "rating_count" in annotated_qs.query.annotations
+
+
+@pytest.mark.django_db
+def test_annotate_queryset__returns_correct_values() -> None:
+    listing = PackageListingFactory()
+    package = listing.package
+    package.latest.downloads = 10
+    package.latest.save()
+
+    PackageVersionFactory(package=package, downloads=20, version_number="1.0.1")
+
+    PackageRatingFactory(package=package)
+    PackageRatingFactory(package=package)
+
+    view = BasePackageListAPIView()
+    annotated_qs = view._annotate_queryset(PackageListing.objects.filter(id=listing.id))
+    annotated = annotated_qs.first()
+
+    assert annotated.download_count == 30
+    assert annotated.rating_count == 2
