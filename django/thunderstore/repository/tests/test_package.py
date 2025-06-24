@@ -7,7 +7,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 from conftest import TestUserTypes
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import (
+    CommunityFactory,
     PackageCategoryFactory,
     PackageListingFactory,
     SiteFactory,
@@ -417,3 +419,67 @@ def test_package_is_removed(
 #     package.visibility = None
 #
 #     assert not package.is_visible_to_user(admin)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    (
+        "review_status",
+        "package_is_active",
+        "require_package_listing_approval",
+        "expected_is_unavailable_result",
+    ),
+    [
+        (PackageListingReviewStatus.approved, True, False, False),
+        (PackageListingReviewStatus.approved, False, False, True),
+        (PackageListingReviewStatus.rejected, True, False, True),
+        (PackageListingReviewStatus.rejected, False, False, True),
+        (PackageListingReviewStatus.unreviewed, True, True, True),
+        (PackageListingReviewStatus.unreviewed, True, False, False),
+        (PackageListingReviewStatus.unreviewed, False, True, True),
+        (PackageListingReviewStatus.unreviewed, False, False, True),
+    ],
+)
+def test_package_is_unavailable(
+    review_status: PackageListingReviewStatus,
+    package_is_active: bool,
+    require_package_listing_approval: bool,
+    expected_is_unavailable_result: bool,
+) -> None:
+    community = CommunityFactory(
+        require_package_listing_approval=require_package_listing_approval
+    )
+
+    package = PackageFactory(is_active=package_is_active)
+    if package_is_active:
+        PackageVersionFactory(package=package, version_number="1.0.0")
+
+    PackageListingFactory(
+        package_=package,
+        community_=community,
+        review_status=review_status,
+    )
+
+    assert package.is_unavailable(community) == expected_is_unavailable_result
+
+
+@pytest.mark.django_db
+def test_package_is_unavailable_no_listing() -> None:
+    community = CommunityFactory()
+    package = PackageFactory(is_active=True)
+    PackageVersionFactory(package=package, version_number="1.0.0")
+
+    assert package.is_unavailable(community) is True
+
+
+@pytest.mark.django_db
+def test_package_is_unavailable_no_version() -> None:
+    community = CommunityFactory()
+    package = PackageFactory(is_active=True)
+    PackageListingFactory(
+        package_=package,
+        community_=community,
+        review_status=PackageListingReviewStatus.approved,
+    )
+
+    assert package.is_unavailable(community) is True

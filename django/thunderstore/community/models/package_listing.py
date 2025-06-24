@@ -329,6 +329,10 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
                 )
         self.categories.set(categories)
 
+    @property
+    def is_unavailable(self):
+        return self.is_rejected or self.is_waiting_for_approval
+
     def can_be_moderated_by_user(self, user: Optional[UserType]) -> bool:
         return self.community.can_user_manage_packages(user)
 

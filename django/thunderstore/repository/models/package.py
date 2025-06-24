@@ -137,6 +137,13 @@ class Package(VisibilityMixin, AdminLinkMixin):
             listing.categories.add(*categories)
         listing.save(update_fields=("has_nsfw_content",))
 
+    def is_unavailable(self, community) -> bool:
+        if not self.is_effectively_active:
+            return True
+
+        listing = self.get_package_listing(community)
+        return listing is None or listing.is_unavailable
+
     @cached_property
     def has_wiki(self) -> bool:
         try:

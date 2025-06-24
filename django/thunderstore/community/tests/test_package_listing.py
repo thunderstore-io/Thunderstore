@@ -1,3 +1,5 @@
+from unittest.mock import PropertyMock, patch
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -603,3 +605,27 @@ def test_package_listing_has_mod_manager_support(mod_manager_support: bool) -> N
 #     listing.visibility = None
 #
 #     assert not listing.is_visible_to_user(admin)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("is_rejected", "is_waiting_for_approval", "expected"),
+    [(True, False, True), (False, True, True), (False, False, False)],
+)
+def test_package_listing_is_unavailable(
+    is_rejected: bool,
+    is_waiting_for_approval: bool,
+    expected: bool,
+) -> None:
+    with patch(
+        "thunderstore.community.models.PackageListing.is_rejected",
+        new_callable=PropertyMock,
+        return_value=is_rejected,
+    ), patch(
+        "thunderstore.community.models.PackageListing.is_waiting_for_approval",
+        new_callable=PropertyMock,
+        return_value=is_waiting_for_approval,
+    ):
+
+        listing = PackageListingFactory()
+        assert listing.is_unavailable == expected
