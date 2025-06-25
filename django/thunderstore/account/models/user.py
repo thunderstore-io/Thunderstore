@@ -16,10 +16,6 @@ if not hasattr(User, "moderated_communities"):
         if hasattr(self, "_moderated_communities"):
             return self._moderated_communities
 
-        if not self.is_authenticated:
-            self._moderated_communities = []
-            return self._moderated_communities
-
         if self.is_staff or self.is_superuser:
             self._moderated_communities = _get_moderated_communities(self)
             return self._moderated_communities
