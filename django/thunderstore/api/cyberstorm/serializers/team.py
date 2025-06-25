@@ -53,3 +53,9 @@ class CyberstormCreateTeamSerializer(serializers.Serializer):
     name = serializers.CharField(
         max_length=64, validators=[PackageReferenceComponentValidator("Author name")]
     )
+
+
+class CyberstormCreateServiceAccountSerializer(serializers.Serializer):
+    nickname = serializers.CharField(max_length=32)
+    team_name = serializers.CharField(read_only=True)
+    api_token = serializers.CharField(read_only=True)

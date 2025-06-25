@@ -26,7 +26,6 @@ from thunderstore.repository.forms import (
     DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
-    TeamMemberRole,
 )
 from thunderstore.repository.models import Team, TeamMember, reverse
 
@@ -240,6 +239,8 @@ class SettingsTeamServiceAccountView(TeamDetailView, UserFormKwargs, FormView):
 
     def form_valid(self, form):
         form.save()
+        if form.errors:
+            return self.form_invalid(form)
         messages.success(self.request, "Action performed successfully")
         return redirect(self.object.service_accounts_url)
 
@@ -255,10 +256,14 @@ class SettingsTeamAddServiceAccountView(TeamDetailView, UserFormKwargs, FormView
 
     def form_valid(self, form):
         form.save()
+        if form.errors:
+            return self.form_invalid(form)
+
         messages.success(self.request, "Service account added successfully")
         context = super().get_context_data()
         context["api_token"] = form.api_token
         context["nickname"] = form.cleaned_data["nickname"]
+
         return render(self.request, self.template_name, context)
 
 
