@@ -14,6 +14,12 @@ export async function validateZip(
         return { errors, blockUpload };
     }
 
+    if (file.name.toLowerCase().includes("test")) {
+        errors.fileErrors.push(
+            "If you need to test your mod, you can import it locally through the 'Import local mod' option in your mod manager's settings."
+        );
+    }
+
     try {
         const blobReader = new BlobReader(file);
         const zipReader = new ZipReader(blobReader);
