@@ -2,7 +2,6 @@ import pytest
 from django.test import Client
 from django.urls import reverse
 
-from thunderstore.account.models import UserMeta
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache
 from thunderstore.community.consts import PackageListingReviewStatus

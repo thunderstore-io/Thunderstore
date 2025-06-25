@@ -13,6 +13,13 @@ class CommunityMemberRole(ChoiceEnum):
     member = "member"
 
 
+MODERATION_ROLES = {
+    CommunityMemberRole.moderator,
+    CommunityMemberRole.janitor,
+    CommunityMemberRole.owner,
+}
+
+
 class CommunityMembership(TimestampMixin, models.Model):
     objects: "Manager[CommunityMembership]"
 
@@ -46,25 +53,13 @@ class CommunityMembership(TimestampMixin, models.Model):
         verbose_name_plural = "community members"
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        old_role = None
-
-        if not is_new:
-            old = CommunityMembership.objects.filter(pk=self.pk).only("role").first()
-            if old:
-                old_role = old.role
-
         super().save(*args, **kwargs)
+        from thunderstore.account.models import UserMeta
 
-        if is_new or (old_role != self.role):
-            from thunderstore.account.models import UserMeta
+        UserMeta.create_or_update(user=self.user)
 
-            meta, created = UserMeta.objects.get_or_create(user=self.user)
-            if not meta.can_moderate_any_community:
-                if self.role in {
-                    CommunityMemberRole.moderator,
-                    CommunityMemberRole.janitor,
-                    CommunityMemberRole.owner,
-                }:
-                    meta.can_moderate_any_community = True
-                    meta.save(update_fields=["can_moderate_any_community"])
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        from thunderstore.account.models import UserMeta
+
+        UserMeta.create_or_update(user=self.user)

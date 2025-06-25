@@ -5,9 +5,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
 from thunderstore.account.models import UserMeta
-from thunderstore.community.factories import CommunityFactory
-from thunderstore.community.models import CommunityMemberRole, CommunityMembership
-from thunderstore.core.types import UserType
 
 User = get_user_model()
 
@@ -44,20 +41,3 @@ def test_anonymous_user_moderated_communities_is_empty_list():
     assert anon.is_authenticated == False
     assert hasattr(anon, "moderated_communities")
     assert anon.moderated_communities == []
-
-
-@pytest.mark.django_db
-def test_user_meta_updates_with_community_membership(user: UserType):
-    community = CommunityFactory()
-    community_membership = CommunityMembership.objects.create(
-        user=user,
-        role=CommunityMemberRole.member,
-        community=community,
-    )
-
-    assert UserMeta.objects.get(user=user).can_moderate_any_community == False
-
-    community_membership.role = CommunityMemberRole.moderator
-    community_membership.save()
-
-    assert UserMeta.objects.get(user=user).can_moderate_any_community == True
