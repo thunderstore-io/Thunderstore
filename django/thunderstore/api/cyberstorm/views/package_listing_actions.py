@@ -45,7 +45,7 @@ class UpdatePackageListingCategoriesAPIView(APIView):
     @swagger_auto_schema(
         operation_id="cyberstorm.package_listing.update",
         request_body=serializer_class,
-        responses={200: serializer_class},
+        responses={200: PackageListingCategoriesSerializer},
         tags=["cyberstorm"],
     )
     def post(self, request, *args, **kwargs) -> Response:

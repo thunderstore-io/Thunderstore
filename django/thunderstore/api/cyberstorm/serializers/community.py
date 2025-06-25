@@ -4,16 +4,30 @@ from rest_framework import serializers
 class CyberstormCommunitySerializer(serializers.Serializer):
     name = serializers.CharField()
     identifier = serializers.CharField()
-    short_description = serializers.CharField(required=False)
-    description = serializers.CharField(required=False)
-    discord_url = serializers.CharField(required=False)
-    wiki_url = serializers.CharField(required=False)
+    short_description = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    description = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    discord_url = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    wiki_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     datetime_created = serializers.DateTimeField()
-    background_image_url = serializers.CharField(required=False)
-    hero_image_url = serializers.CharField(required=False)
-    cover_image_url = serializers.CharField(required=False)
-    icon_url = serializers.CharField(required=False)
-    community_icon_url = serializers.CharField(required=False)
+    background_image_url = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    hero_image_url = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    cover_image_url = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    icon_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    community_icon_url = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
     total_download_count = serializers.SerializerMethodField()
     total_package_count = serializers.SerializerMethodField()
     has_mod_manager_support = serializers.BooleanField()

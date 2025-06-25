@@ -1,10 +1,8 @@
 from typing import Optional
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from thunderstore.repository.forms import AddTeamMemberForm
-from thunderstore.repository.models import Namespace, Team
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 from thunderstore.social.utils import get_user_avatar_url
 
@@ -17,13 +15,15 @@ class CyberstormTeamSerializer(serializers.Serializer):
 
     identifier = serializers.IntegerField(source="id")
     name = serializers.CharField()
-    donation_link = serializers.CharField(required=False)
+    donation_link = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
 
 
 class CyberstormTeamMemberSerializer(serializers.Serializer):
     identifier = serializers.IntegerField(source="user.id")
     username = serializers.CharField(source="user.username")
-    avatar = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField(allow_null=True)
     role = serializers.CharField()
 
     def get_avatar(self, obj) -> Optional[str]:
