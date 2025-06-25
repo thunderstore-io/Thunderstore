@@ -319,21 +319,18 @@ class Package(VisibilityMixin, AdminLinkMixin):
         ):
             return
 
-        from thunderstore.repository.views.package._utils import (
-            get_moderatable_communities,
-        )
+        moderated_community_ids = user.moderated_communities
 
-        moderatable_community_ids = get_moderatable_communities(user)
+        if moderated_community_ids:
+            community_ids = [
+                listing.community.id
+                for listing in self.community_listings.select_related("community")
+            ]
 
-        community_ids = [
-            listing.community.id
-            for listing in self.community_listings.select_related("community")
-        ]
-
-        if community_ids and all(
-            str(cid) in moderatable_community_ids for cid in community_ids
-        ):
-            return
+            if community_ids and all(
+                str(cid) in moderated_community_ids for cid in community_ids
+            ):
+                return
 
         self.owner.ensure_user_can_manage_packages(user)
 
