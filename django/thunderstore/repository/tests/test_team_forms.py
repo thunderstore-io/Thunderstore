@@ -39,6 +39,7 @@ def test_form_create_team_valid_data(user_type: str) -> None:
         data={"name": "TeamName"},
     )
     if expected_error:
+        form.save()
         assert form.is_valid() is False
         assert expected_error in str(repr(form.errors))
     else:
@@ -70,6 +71,7 @@ def test_form_create_team_team_name_conflict(
         data={"name": name2},
     )
     if should_fail:
+        form.save()
         assert form.is_valid() is False
         assert "A team with the provided name already exists" in str(repr(form.errors))
     else:
@@ -102,6 +104,8 @@ def test_form_create_team_team_name_validation(
         data={"name": name},
     )
     if should_fail:
+        with pytest.raises(ValueError):
+            form.save()
         assert form.is_valid() is False
         assert error in str(repr(form.errors))
     else:
@@ -452,6 +456,7 @@ def test_form_disband_team_form(
         assert form.save() is None
         assert Team.objects.filter(pk=team.pk).exists() is False
     else:
+        form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -470,6 +475,8 @@ def test_form_disband_team_form_invalid_verification(
         instance=team,
         data={"verification": f"invalid-{team.name}"},
     )
+    with pytest.raises(ValueError):
+        form.save()
     assert form.is_valid() is False
     assert "Invalid verification" in str(repr(form.errors))
 
@@ -488,6 +495,7 @@ def test_form_disband_team_form_packages_exist(
         instance=team,
         data={"verification": team.name},
     )
+    form.save()
     assert form.is_valid() is False
     assert "Unable to disband teams with packages" in str(repr(form.errors))
 
