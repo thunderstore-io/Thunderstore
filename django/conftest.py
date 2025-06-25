@@ -14,6 +14,7 @@ from django.core.cache import cache
 from django.core.files.base import File
 from PIL import Image
 from rest_framework.test import APIClient
+from social_django.models import UserSocialAuth
 
 from django_contracts.models import LegalContract, LegalContractVersion
 from thunderstore.account.factories import UserFlagFactory
@@ -118,6 +119,21 @@ def user(django_user_model):
         email="test@example.org",
         password="hunter2",
     )
+
+
+@pytest.fixture()
+def user_with_social_auths(user):
+    UserSocialAuth.objects.create(
+        user=user,
+        provider="discord",
+        uid="1234567890",
+    )
+    UserSocialAuth.objects.create(
+        user=user,
+        provider="github",
+        uid="0987654321",
+    )
+    return user
 
 
 @pytest.fixture()
