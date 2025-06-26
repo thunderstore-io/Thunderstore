@@ -1,11 +1,17 @@
+import mimetypes
 from typing import Any, Dict
+from urllib.parse import urlparse
 
 from django.conf import settings
+from django.core.files.storage import default_storage
+from django.http import FileResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render
+from django.utils.cache import patch_cache_control
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView, View
 
+from thunderstore.frontend.services.thumbnail import get_or_create_thumbnail
 from thunderstore.plugins.registry import plugin_registry
 
 
@@ -49,3 +55,60 @@ class SettingsViewMixin:
         context = super().get_context_data(**kwargs)
         context["setting_links"] = plugin_registry.get_settings_links()
         return context
+
+
+class ThumbnailRedirectView(RedirectView):
+    def get_redirect_url(self, *args, **kwargs) -> str:
+        asset_path = self.kwargs.get("path")
+
+        try:
+            width = int(self.request.GET.get("width", 0))
+            height = int(self.request.GET.get("height", 0))
+        except (ValueError, TypeError):
+            width, height = 0, 0
+
+        if asset_path and width > 0 and height > 0:
+            url = get_or_create_thumbnail(asset_path, width, height)
+            if url:
+                return url
+
+        return ""
+
+    def get(self, request, *args, **kwargs):
+        url = self.get_redirect_url(*args, **kwargs)
+        if url:
+            response = HttpResponseRedirect(url)
+        else:
+            response = HttpResponseNotFound("Thumbnail not found")
+        patch_cache_control(response, max_age=86400, public=True)  # 24 hours
+        return response
+
+
+class ThumbnailServeView(View):
+    def get(self, request, *args, **kwargs):
+        asset_path = self.kwargs.get("path")
+
+        try:
+            width = int(request.GET.get("width", 0))
+            height = int(request.GET.get("height", 0))
+        except (ValueError, TypeError):
+            width, height = 0, 0
+
+        if not asset_path or width <= 0 or height <= 0:
+            return HttpResponseNotFound("Invalid request parameters.")
+
+        # TODO: The path here is a URL path, not a relative file path to storage.
+        thumbnail_path = get_or_create_thumbnail(asset_path, width, height)
+        if thumbnail_path:
+            mime_type, _ = mimetypes.guess_type(thumbnail_path)
+            try:
+                mime_type, _ = mimetypes.guess_type(thumbnail_path)
+                file = default_storage.open(thumbnail_path, "rb")
+                response = FileResponse(file, content_type=mime_type)
+                patch_cache_control(response, max_age=86400, public=True)
+                return response
+            except FileNotFoundError as e:
+                print(f"File not found: {e}")
+                return HttpResponseNotFound("Thumbnail not found.")
+
+        return HttpResponseNotFound("Invalid request.")
