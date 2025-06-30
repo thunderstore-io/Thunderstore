@@ -13,6 +13,7 @@ from thunderstore.frontend.views import (
     ManifestV1ValidatorView,
     MarkdownPreviewView,
     ThumbnailRedirectView,
+    ThumbnailServeView,
     ads_txt_view,
     robots_txt_view,
 )
@@ -61,6 +62,11 @@ urlpatterns = [
         "thumbnail-redirect/<path:path>/",
         ThumbnailRedirectView.as_view(),
         name="cdn_thumb_redirect",
+    ),
+    path(
+        "thumbnail-serve/<path:path>/",
+        ThumbnailServeView.as_view(),
+        name="cdn_thumb_serve",
     ),
 ]
 

@@ -13,7 +13,8 @@ def test_get_or_create_thumbnail_success(community, dummy_cover_image):
 
     asset_path = community.cover_image.name
     width, height = 100, 100
-    thumbnail_url = get_or_create_thumbnail(asset_path, width, height)
+    thumbnail = get_or_create_thumbnail(asset_path, width, height)
+    thumbnail_url = thumbnail.url
 
     assert thumbnail_url is not None
     assert f"q{settings.THUMBNAIL_QUALITY}_crop" in thumbnail_url

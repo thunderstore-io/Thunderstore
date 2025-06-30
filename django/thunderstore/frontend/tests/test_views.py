@@ -195,3 +195,19 @@ def test_thumbnail_redirect_invalid_params_returns_fallback(
     assert response.status_code == 404
     assert "Cache-Control" in response
     assert "max-age=86400" in response["Cache-Control"]
+
+
+@pytest.mark.django_db
+def test_thumbnail_serve_success(dummy_cover_image, client, community_site):
+    community = community_site.community
+    community.cover_image = dummy_cover_image
+    community.save()
+
+    url = reverse("cdn_thumb_serve", kwargs={"path": community.cover_image.name})
+    params = {"width": 100, "height": 100}
+
+    response = client.get(url, params, HTTP_HOST=community_site.site.domain)
+    assert response.status_code == 200
+    assert response.get("Content-Type") == "image/jpeg"
+    assert response.get("Cache-Control") == "max-age=86400, public"
+    assert response.get("Content-Disposition").startswith("inline; filename=")
