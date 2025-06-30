@@ -1,13 +1,19 @@
-import React, { CSSProperties, useEffect, useRef, useState } from "react";
+import React, {
+    CSSProperties,
+    MutableRefObject,
+    useEffect,
+    useState,
+} from "react";
 
 interface DragDropFileInputProps {
     title: string;
     onChange?: (files: FileList) => void;
     readonly?: boolean;
+    fileInputRef: MutableRefObject<HTMLInputElement | null>;
 }
 
 export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInput = props.fileInputRef.current;
     const [fileDropStyle, setFileDropStyle] = useState<CSSProperties>({});
     const [lastTarget, setLastTarget] = useState<EventTarget | null>(null);
     const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -39,8 +45,7 @@ export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
     };
     const fileChange = () => {
         if (!props.readonly) {
-            const inp = fileInputRef.current;
-            const files = inp?.files;
+            const files = fileInput?.files;
             if (props.onChange && files) {
                 props.onChange(files);
             }
@@ -49,9 +54,8 @@ export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
     };
     const onDrop = (e: React.DragEvent) => {
         if (!props.readonly) {
-            const inp = fileInputRef.current;
-            if (inp) {
-                inp.files = e.dataTransfer.files;
+            if (fileInput) {
+                fileInput.files = e.dataTransfer.files;
             }
             if (props.onChange) {
                 props.onChange(e.dataTransfer.files);
@@ -92,7 +96,7 @@ export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
                 type="file"
                 name="newfile"
                 style={{ display: "none" }}
-                ref={fileInputRef}
+                ref={props.fileInputRef}
                 onChange={fileChange}
                 disabled={props.readonly}
             />

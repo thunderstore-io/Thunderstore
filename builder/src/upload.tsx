@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/browser";
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
     Community,
     ExperimentalApi,
@@ -19,6 +19,7 @@ import { FormSelectField } from "./components/FormSelectField";
 import { CommunityCategorySelector } from "./components/CommunitySelector";
 import { FormRow } from "./components/FormRow";
 import { SubmitPackage } from "./api/packageSubmit";
+import { validateZip } from "./uploadZipValidation";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
     if (uploadStatus == FileUploadStatus.CANCELED) {
@@ -42,17 +43,16 @@ function getSubmissionProgressBarcolor(
     return "bg-warning";
 }
 
-class FormErrors {
-    fileError: string | null = null;
+export class FormErrors {
     teamError: string | null = null;
     communitiesError: string | null = null;
     categoriesError: string | null = null;
     nsfwError: string | null = null;
     generalErrors: string[] = [];
+    fileErrors: string[] = [];
 
     get hasErrors(): boolean {
         return !(
-            this.fileError == null &&
             this.teamError == null &&
             this.communitiesError == null &&
             this.categoriesError == null &&
@@ -81,6 +81,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     const [formErrors, setFormErrors] = useState<FormErrors>(new FormErrors());
     const [file, setFile] = useState<File | null>(null);
     const [fileUpload, setFileUpload] = useState<FileUpload | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [
         submissionStatus,
         setSubmissionStatus,
@@ -115,6 +116,12 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         if (fileUpload) {
             await fileUpload.cancelUpload();
         }
+
+        const input = fileInputRef.current;
+        if (input) {
+            input.value = "";
+        }
+
         setFileUpload(null);
         setSubmissionStatus(null);
         setFormErrors(new FormErrors());
@@ -130,12 +137,31 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     const onFileChange = (files: FileList) => {
         const file = files.item(0);
         setFile(file);
+
+        if (file) {
+            validateZip(file).then((result) => {
+                if (result.errors.fileErrors.length > 0) {
+                    setFormErrors(result.errors);
+
+                    if (result.blockUpload) {
+                        result.errors.generalErrors.push(
+                            "An error with your selected file is preventing submission."
+                        );
+                        setSubmissionStatus(SubmissionStatus.ERROR);
+                    }
+                }
+            });
+        }
     };
 
     const onSubmit = async (data: any) => {
         // TODO: Convert to react-hook-form validation
+
+        let fileErrors = formErrors.fileErrors;
         setFormErrors(new FormErrors());
         const errors = new FormErrors();
+
+        errors.fileErrors = fileErrors;
 
         const uploadTeam = data.team ? data.team.value : null;
         const uploadCommunities = data.communities
@@ -245,6 +271,8 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         (fileUpload?.uploadErrors ?? []).length > 0 ||
         formErrors.generalErrors.length > 0;
 
+    const hasFileErrors = formErrors.fileErrors.length > 0;
+
     const hasEtagError =
         fileUpload &&
         fileUpload.uploadErrors.some(
@@ -297,9 +325,18 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                     title={file ? file.name : "Choose or drag file here"}
                     onChange={onFileChange}
                     readonly={!!file}
+                    fileInputRef={fileInputRef}
                 />
             </div>
-
+            {hasFileErrors && (
+                <div className="mb-0 px-3 py-3 alert alert-info field-errors mt-2">
+                    <ul className="mx-0 my-0 pl-3">
+                        {formErrors.fileErrors.map((e, idx) => (
+                            <li key={`general-${idx}`}>{e}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {currentCommunity != null &&
             teams != null &&
             communities != null ? (
@@ -372,7 +409,11 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
 
                     <button
                         type={"submit"}
-                        disabled={!file || !!fileUpload}
+                        disabled={
+                            !file ||
+                            !!fileUpload ||
+                            submissionStatus == SubmissionStatus.ERROR
+                        }
                         className="btn btn-primary btn-block"
                     >
                         Submit
