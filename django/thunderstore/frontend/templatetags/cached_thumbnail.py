@@ -10,7 +10,7 @@ def thumbnail_url(image_field, width: int, height: int) -> str:
         return ""
 
     url = (
-        reverse("cdn_thumb_redirect", kwargs={"path": image_field.name})
+        reverse("cdn_thumb_serve", kwargs={"path": image_field.name})
         + f"?width={width}&height={height}"
     )
 
