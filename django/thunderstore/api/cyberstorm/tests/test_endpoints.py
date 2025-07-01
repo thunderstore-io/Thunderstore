@@ -42,7 +42,11 @@ post_payload_map = {
 put_payload_map = {}
 
 
-patch_payload_map = {}
+patch_payload_map = {
+    "/api/cyberstorm/team/{team_name}/update/": {
+        "donation_link": "https://example.com/donate",
+    }
+}
 
 
 payload_mapping = {
@@ -162,7 +166,7 @@ def test_validate_extracted_paths_with_urlpatterns(api_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("http_verb", ["put", "patch", "post"])
-def test_find_missing_post_endpoints(api_client, http_verb):
+def test_find_missing_endpoints(api_client, http_verb):
     schema = get_schema(api_client)
     api_paths = extract_paths(schema, "cyberstorm", http_verb)
     failures = []
