@@ -16,6 +16,7 @@ from thunderstore.account.forms import (
     CreateServiceAccountForm,
     DeleteServiceAccountForm,
 )
+from thunderstore.api.cyberstorm.services.team import update_team
 from thunderstore.core.mixins import RequireAuthenticationMixin
 from thunderstore.core.utils import capture_exception
 from thunderstore.frontend.views import SettingsViewMixin
@@ -26,7 +27,6 @@ from thunderstore.repository.forms import (
     DonationLinkTeamForm,
     EditTeamMemberForm,
     RemoveTeamMemberForm,
-    TeamMemberRole,
 )
 from thunderstore.repository.models import Team, TeamMember, reverse
 
@@ -276,5 +276,8 @@ class SettingsTeamDonationLinkView(TeamDetailView, UserFormKwargs, UpdateView):
         return self.object.donation_link_url
 
     def form_valid(self, form: DonationLinkTeamForm):
+        self.object = form.save()
+        if form.errors:  # Check if service layer raised an error
+            return super().form_invalid(form)
         messages.success(self.request, "Donation link saved")
-        return super().form_valid(form)
+        return redirect(self.get_success_url())

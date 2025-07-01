@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q, QuerySet
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -16,8 +15,13 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
     CyberstormTeamSerializer,
+    CyberstormTeamUpdateSerializer,
 )
-from thunderstore.api.cyberstorm.services import team as team_services
+from thunderstore.api.cyberstorm.services.team import (
+    create_team,
+    disband_team,
+    update_team,
+)
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
@@ -66,7 +70,7 @@ class TeamCreateAPIView(APIView):
         serializer = CyberstormCreateTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         team_name = serializer.validated_data["name"]
-        team = team_services.create_team(user=request.user, team_name=team_name)
+        team = create_team(user=request.user, team_name=team_name)
         return_data = CyberstormTeamSerializer(team).data
         return Response(return_data, status=status.HTTP_201_CREATED)
 
@@ -135,5 +139,32 @@ class DisbandTeamAPIView(APIView):
     )
     def delete(self, request, *args, **kwargs):
         team_name = kwargs["team_name"]
-        team_services.disband_team(user=request.user, team_name=team_name)
+        disband_team(user=request.user, team_name=team_name)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UpdateTeamAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CyberstormTeamUpdateSerializer
+    http_method_names = ["patch"]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.update",
+        tags=["cyberstorm"],
+        request_body=CyberstormTeamUpdateSerializer,
+        responses={status.HTTP_200_OK: serializer_class},
+    )
+    def patch(self, request, team_name, *args, **kwargs):
+        team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_name)
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        updated_team = update_team(
+            agent=request.user,
+            team=team,
+            donation_link=serializer.validated_data["donation_link"],
+        )
+
+        return_data = self.serializer_class(instance=updated_team).data
+        return Response(return_data, status=status.HTTP_200_OK)

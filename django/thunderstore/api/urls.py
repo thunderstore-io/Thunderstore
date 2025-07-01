@@ -23,6 +23,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamMemberListAPIView,
     TeamServiceAccountListAPIView,
     UpdatePackageListingCategoriesAPIView,
+    UpdateTeamAPIView,
 )
 
 cyberstorm_urls = [
@@ -125,6 +126,11 @@ cyberstorm_urls = [
         "team/<str:team_id>/",
         TeamAPIView.as_view(),
         name="cyberstorm.team",
+    ),
+    path(
+        "team/<str:team_name>/update/",
+        UpdateTeamAPIView.as_view(),
+        name="cyberstorm.team.update",
     ),
     path(
         "team/<str:team_name>/disband/",
