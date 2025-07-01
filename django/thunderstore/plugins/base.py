@@ -23,6 +23,10 @@ class BasePlugin(ABC):
         return []
 
     @classmethod
+    def get_moderation_urls(cls) -> List[URLPattern]:
+        return []
+
+    @classmethod
     def get_legacy_package_urls(cls) -> List[URLPattern]:
         return []
 
