@@ -109,7 +109,10 @@ def validate_response_against_schema(
         try:
             data = response.json()
         except Exception:
-            data = response.text
+            if hasattr(response, "text"):
+                data = response.text
+            else:
+                data = "No response body. Check content-type."
         errors.append(f"Unexpected status {response.status_code} for {path}: {data}")
         return errors
 
