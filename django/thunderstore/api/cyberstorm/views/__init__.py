@@ -26,11 +26,14 @@ from .team import (
     TeamServiceAccountListAPIView,
     UpdateTeamAPIView,
 )
+from .user import DeleteUserAPIView, DisconnectUserLinkedAccountAPIView
 
 __all__ = [
     "CommunityAPIView",
     "CommunityFiltersAPIView",
     "CommunityListAPIView",
+    "DeleteUserAPIView",
+    "DisconnectUserLinkedAccountAPIView",
     "DeprecatePackageAPIView",
     "DisbandTeamAPIView",
     "PackageListingAPIView",
