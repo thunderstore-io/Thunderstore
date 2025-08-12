@@ -45,18 +45,16 @@ def test_can_manage_deprecation(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("return_val", (True, False))
+@pytest.mark.parametrize("return_val", ([], ["Some error"]))
 @patch(
-    "thunderstore.community.models.PackageListing.ensure_update_categories_permission"
+    "thunderstore.community.models.PackageListing.validate_update_categories_permissions"
 )
 def test_can_manage_categories(
     mock_ensure_update_categories_permission, return_val, permissions_checker
 ):
-    if return_val is True:
-        mock_ensure_update_categories_permission.return_value = return_val
-    else:
-        mock_ensure_update_categories_permission.side_effect = ValidationError("Failed")
-    assert permissions_checker.can_manage_categories == return_val
+    expected_response = len(return_val) == 0
+    mock_ensure_update_categories_permission.return_value = return_val
+    assert permissions_checker.can_manage_categories == expected_response
 
 
 @pytest.mark.django_db

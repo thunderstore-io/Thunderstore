@@ -38,9 +38,7 @@ class PermissionsChecker:
 
     @cached_property
     def can_manage_categories(self) -> bool:
-        return check_validity(
-            lambda: self.listing.ensure_update_categories_permission(self.user)
-        )
+        return self.listing.check_update_categories_permission(self.user)
 
     @cached_property
     def can_deprecate(self) -> bool:
