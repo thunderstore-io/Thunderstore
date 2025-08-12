@@ -283,11 +283,7 @@ def test_package_listing_ensure_update_categories_permission(
         )
 
     result = listing.check_update_categories_permission(user)
-    errors = []
-    try:
-        listing.ensure_update_categories_permission(user)
-    except ValidationError as e:
-        errors = e.messages
+    errors = listing.validate_update_categories_permissions(user)
 
     has_perms = any(
         (
@@ -326,20 +322,11 @@ def test_package_listing_update_categories(
     active_package_listing: PackageListing,
     package_category: PackageCategory,
     team_owner: TeamMember,
-    mocker,
 ):
     assert package_category.community == active_package_listing.community
     assert active_package_listing.package.owner == team_owner.team
     assert active_package_listing.categories.count() == 0
-    mocked_permission_check = mocker.patch.object(
-        active_package_listing,
-        "ensure_update_categories_permission",
-    )
-    active_package_listing.update_categories(
-        agent=team_owner.user,
-        categories=[package_category],
-    )
-    mocked_permission_check.assert_called_with(team_owner.user)
+    active_package_listing.update_categories(categories=[package_category])
     assert package_category in active_package_listing.categories.all()
 
     invalid_category = PackageCategory.objects.create(
@@ -352,10 +339,7 @@ def test_package_listing_update_categories(
         ValidationError,
         match="Community mismatch between package listing and category",
     ):
-        active_package_listing.update_categories(
-            agent=team_owner.user,
-            categories=[invalid_category],
-        )
+        active_package_listing.update_categories(categories=[invalid_category])
 
 
 @pytest.mark.django_db

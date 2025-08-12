@@ -18,7 +18,7 @@ from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.permissions.mixins import VisibilityMixin
 from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
-from thunderstore.permissions.utils import validate_user
+from thunderstore.permissions.utils import check_user_permissions, validate_user
 from thunderstore.webhooks.audit import (
     AuditAction,
     AuditEvent,
@@ -320,8 +320,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     def is_rejected(self):
         return self.review_status == PackageListingReviewStatus.rejected
 
-    def update_categories(self, agent: UserType, categories: List["PackageCategory"]):
-        self.ensure_update_categories_permission(agent)
+    def update_categories(self, categories: List["PackageCategory"]):
         for category in categories:
             if category.community_id != self.community_id:
                 raise ValidationError(
@@ -344,20 +343,26 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         if not is_allowed:
             raise PermissionValidationError("Must have listing management permission")
 
-    def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
-        is_allowed = (
+    def validate_update_categories_permissions(
+        self, user: Optional[UserType]
+    ) -> List[str]:
+        errors = []
+
+        errors = check_user_permissions(user)
+        if errors:
+            return errors
+
+        if not (
             self.can_be_moderated_by_user(user)
             or self.package.owner.can_user_manage_packages(user)
             or self.community.can_user_manage_categories(user)
-        )
-        if not is_allowed:
-            raise PermissionValidationError(
-                "User is missing necessary roles or permissions"
-            )
+        ):
+            errors.append("User is missing necessary roles or permissions")
+
+        return errors
 
     def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_update_categories_permission(user))
+        return len(self.validate_update_categories_permissions(user)) == 0
 
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
         return self.can_be_moderated_by_user(user)
