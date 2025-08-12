@@ -1,5 +1,6 @@
 from django.db import transaction
 
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.models import Package, PackageListing, PackageVersion
@@ -11,8 +12,11 @@ from thunderstore.ts_reports.models import PackageReport
 def update_categories(
     agent: UserType, categories: list, listing: PackageListing
 ) -> None:
-    listing.ensure_update_categories_permission(agent)
-    listing.update_categories(agent=agent, categories=categories)
+    errors = listing.validate_update_categories_permissions(agent)
+    if errors:
+        raise PermissionValidationError(errors, is_public=agent.is_active)
+
+    listing.update_categories(categories=categories)
 
     get_package_listing_or_404.clear_cache_with_args(
         namespace=listing.package.namespace.name,
