@@ -6,7 +6,7 @@ RUN yarn install --frozen-lockfile
 COPY ./builder /app
 RUN yarn run build
 
-FROM python:3.8-slim-buster@sha256:2516c4bc037b8144b6104e73e6bdd0c861725d9ed7bd05095dded22842991508
+FROM python:3.8-slim-bullseye@sha256:e191a71397fd61fbddb6712cd43ef9a2c17df0b5e7ba67607128554cd6bff267
 
 LABEL org.opencontainers.image.source="https://github.com/thunderstore-io/Thunderstore"
 
