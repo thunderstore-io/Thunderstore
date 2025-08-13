@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -345,12 +345,12 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
 
     def validate_update_categories_permissions(
         self, user: Optional[UserType]
-    ) -> List[str]:
+    ) -> Tuple[List[str], bool]:
         errors = []
 
-        errors = check_user_permissions(user)
+        errors, is_public = check_user_permissions(user)
         if errors:
-            return errors
+            return errors, is_public
 
         if not (
             self.can_be_moderated_by_user(user)
@@ -359,10 +359,11 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         ):
             errors.append("User is missing necessary roles or permissions")
 
-        return errors
+        return errors, is_public
 
     def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
-        return len(self.validate_update_categories_permissions(user)) == 0
+        errors, _ = self.validate_update_categories_permissions(user)
+        return len(errors) == 0
 
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
         return self.can_be_moderated_by_user(user)

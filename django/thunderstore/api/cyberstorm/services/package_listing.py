@@ -12,9 +12,10 @@ from thunderstore.ts_reports.models import PackageReport
 def update_categories(
     agent: UserType, categories: list, listing: PackageListing
 ) -> None:
-    errors = listing.validate_update_categories_permissions(agent)
+    errors, is_public = listing.validate_update_categories_permissions(agent)
+
     if errors:
-        raise PermissionValidationError(errors, is_public=agent.is_active)
+        raise PermissionValidationError(errors, is_public=is_public)
 
     listing.update_categories(categories=categories)
 

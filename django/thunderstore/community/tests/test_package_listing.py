@@ -283,7 +283,7 @@ def test_package_listing_ensure_update_categories_permission(
         )
 
     result = listing.check_update_categories_permission(user)
-    errors = listing.validate_update_categories_permissions(user)
+    errors, _ = listing.validate_update_categories_permissions(user)
 
     has_perms = any(
         (
