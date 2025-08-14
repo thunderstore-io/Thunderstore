@@ -7,6 +7,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
+from conftest import TestUserTypes
 from thunderstore.api.cyberstorm.views.package_listing import (
     DependencySerializer,
     get_custom_package_listing,
@@ -420,3 +421,29 @@ def test_package_listing_query_count(
 
     assert response.status_code == 200
     assert len(ctx.captured_queries) < 20
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_package_listing_validate_user_can_manage_listing(
+    user_type,
+    active_package_listing,
+) -> None:
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    valid_user_type_map = {
+        TestUserTypes.no_user: (["Must be authenticated"], True),
+        TestUserTypes.unauthenticated: (["Must be authenticated"], True),
+        TestUserTypes.regular_user: (["Must have listing management permission"], True),
+        TestUserTypes.deactivated_user: (["User has been deactivated"], False),
+        TestUserTypes.service_account: (
+            ["Service accounts are unable to perform this action"],
+            True,
+        ),
+        TestUserTypes.site_admin: ([], True),
+        TestUserTypes.superuser: ([], True),
+    }
+
+    errors, is_public = active_package_listing.validate_user_can_manage_listing(user)
+    assert errors == valid_user_type_map[user_type][0]
+    assert is_public == valid_user_type_map[user_type][1]

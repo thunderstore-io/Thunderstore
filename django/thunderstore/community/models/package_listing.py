@@ -335,13 +335,23 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     def can_be_moderated_by_user(self, user: Optional[UserType]) -> bool:
         return self.community.can_user_manage_packages(user)
 
-    def ensure_user_can_manage_listing(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+    def validate_user_can_manage_listing(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors = []
+
+        errors, is_public = check_user_permissions(user)
+        if errors:
+            return errors, is_public
+
         is_allowed = self.can_be_moderated_by_user(
             user
         ) or self.package.owner.can_user_manage_packages(user)
+
         if not is_allowed:
-            raise PermissionValidationError("Must have listing management permission")
+            errors.append("Must have listing management permission")
+
+        return errors, is_public
 
     def validate_update_categories_permissions(
         self, user: Optional[UserType]
