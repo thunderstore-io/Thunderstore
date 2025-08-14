@@ -378,7 +378,12 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
         return self.can_be_moderated_by_user(user)
 
-    def ensure_can_be_viewed_by_user(self, user: Optional[UserType]) -> None:
+    def validate_can_be_viewed_by_user(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors = []
+        is_public = True
+
         def get_has_perms() -> bool:
             return (
                 user is not None
@@ -394,16 +399,19 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
                 self.review_status != PackageListingReviewStatus.approved
                 and not get_has_perms()
             ):
-                raise PermissionValidationError("Insufficient permissions to view")
+                errors.append("Insufficient permissions to view")
         else:
             if (
                 self.review_status == PackageListingReviewStatus.rejected
                 and not get_has_perms()
             ):
-                raise PermissionValidationError("Insufficient permissions to view")
+                errors.append("Insufficient permissions to view")
+
+        return errors, is_public
 
     def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
+        errors, _ = self.validate_can_be_viewed_by_user(user)
+        return len(errors) == 0
 
     def is_visible_to_user(self, user: Optional[UserType]) -> bool:
         if not self.visibility:

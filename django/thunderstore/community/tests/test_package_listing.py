@@ -184,7 +184,7 @@ def test_package_listing_is_rejected(
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
 @pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
-def test_package_listing_ensure_can_be_viewed_by_user(
+def test_package_listing_validate_can_be_viewed_by_user(
     active_package_listing: PackageListing,
     require_approval: bool,
     review_status: str,
@@ -214,12 +214,8 @@ def test_package_listing_ensure_can_be_viewed_by_user(
         )
 
     result = listing.can_be_viewed_by_user(user)
-    errors = []
     expected_error = "Insufficient permissions to view"
-    try:
-        listing.ensure_can_be_viewed_by_user(user)
-    except ValidationError as e:
-        errors = e.messages
+    errors, _ = listing.validate_can_be_viewed_by_user(user)
 
     if require_approval:
         if review_status == PackageListingReviewStatus.approved:
