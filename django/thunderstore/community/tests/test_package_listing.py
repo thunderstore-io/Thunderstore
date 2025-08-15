@@ -184,7 +184,7 @@ def test_package_listing_is_rejected(
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
 @pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
-def test_package_listing_ensure_can_be_viewed_by_user(
+def test_package_listing_validate_can_be_viewed_by_user(
     active_package_listing: PackageListing,
     require_approval: bool,
     review_status: str,
@@ -214,12 +214,8 @@ def test_package_listing_ensure_can_be_viewed_by_user(
         )
 
     result = listing.can_be_viewed_by_user(user)
-    errors = []
     expected_error = "Insufficient permissions to view"
-    try:
-        listing.ensure_can_be_viewed_by_user(user)
-    except ValidationError as e:
-        errors = e.messages
+    errors, _ = listing.validate_can_be_viewed_by_user(user)
 
     if require_approval:
         if review_status == PackageListingReviewStatus.approved:
@@ -282,12 +278,8 @@ def test_package_listing_ensure_update_categories_permission(
             role=team_role,
         )
 
-    result = listing.check_update_categories_permission(user)
-    errors = []
-    try:
-        listing.ensure_update_categories_permission(user)
-    except ValidationError as e:
-        errors = e.messages
+    result = listing.can_update_categories_permission(user)
+    errors, _ = listing.validate_update_categories_permissions(user)
 
     has_perms = any(
         (
@@ -326,20 +318,11 @@ def test_package_listing_update_categories(
     active_package_listing: PackageListing,
     package_category: PackageCategory,
     team_owner: TeamMember,
-    mocker,
 ):
     assert package_category.community == active_package_listing.community
     assert active_package_listing.package.owner == team_owner.team
     assert active_package_listing.categories.count() == 0
-    mocked_permission_check = mocker.patch.object(
-        active_package_listing,
-        "ensure_update_categories_permission",
-    )
-    active_package_listing.update_categories(
-        agent=team_owner.user,
-        categories=[package_category],
-    )
-    mocked_permission_check.assert_called_with(team_owner.user)
+    active_package_listing.update_categories(categories=[package_category])
     assert package_category in active_package_listing.categories.all()
 
     invalid_category = PackageCategory.objects.create(
@@ -352,10 +335,7 @@ def test_package_listing_update_categories(
         ValidationError,
         match="Community mismatch between package listing and category",
     ):
-        active_package_listing.update_categories(
-            agent=team_owner.user,
-            categories=[invalid_category],
-        )
+        active_package_listing.update_categories(categories=[invalid_category])
 
 
 @pytest.mark.django_db
