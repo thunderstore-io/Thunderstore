@@ -39,9 +39,9 @@ class CreateServiceAccountForm(forms.Form):
                 nickname=nickname,
             )
             self.api_token = token
-            service_account = service_account
         except ValidationError as e:
             self.add_error(None, e)
+            raise ValidationError(self.errors)
 
         return service_account
 
@@ -64,6 +64,7 @@ class DeleteServiceAccountForm(forms.Form):
             delete_service_account(self.user, service_account)
         except ValidationError as e:
             self.add_error(None, e)
+            raise ValidationError(self.errors)
 
 
 class EditServiceAccountForm(forms.Form):

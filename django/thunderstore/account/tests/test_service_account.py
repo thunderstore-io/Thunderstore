@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 from rest_framework.authtoken.models import Token
 
 from thunderstore.account.forms import (
@@ -109,7 +110,8 @@ def test_service_account_create_not_owner(user, team):
         user,
         data={"team": team, "nickname": "Nickname"},
     )
-    form.save()
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert len(form.errors["__all__"]) == 1
     assert form.errors["__all__"][0] == "Must be an owner to create a service account"
@@ -174,7 +176,8 @@ def test_service_account_delete_not_owner(service_account):
         user,
         data={"service_account": service_account},
     )
-    form.save()
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert len(form.errors["__all__"]) == 1
     assert form.errors["__all__"][0] == "Must be an owner to delete a service account"
