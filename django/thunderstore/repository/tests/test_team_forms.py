@@ -553,7 +553,8 @@ def test_form_donation_link_team_form_permissions(
         team.refresh_from_db()
         assert team.donation_link == link
     else:
-        form.save()
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert form.errors
         team.refresh_from_db()
