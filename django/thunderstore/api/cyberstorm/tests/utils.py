@@ -1,6 +1,10 @@
 import re
+from typing import Optional
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from jsonschema import RefResolver, ValidationError, validate
+from rest_framework.test import APIClient
 
 
 def convert_x_nullable(schema: dict) -> dict:
@@ -155,3 +159,28 @@ def validate_request_body_against_schema(
         errors.append(error_message)
 
     return errors
+
+
+def assert_max_queries(
+    client: APIClient,
+    method: str,
+    path: str,
+    max_queries: int,
+    data: Optional[dict] = None,
+    **kwargs,
+):
+    request_func = getattr(client, method.lower())
+
+    with CaptureQueriesContext(connection) as ctx:
+        response = request_func(path, data=data or {}, **kwargs)
+
+    num_queries = len(ctx.captured_queries)
+    if num_queries > max_queries:
+        queries_str = "\n".join(q["sql"] for q in ctx.captured_queries)
+        raise AssertionError(
+            f"{method} {path} executed {num_queries} queries "
+            f"(allowed {max_queries}).\n"
+            f"Queries:\n{queries_str}"
+        )
+
+    return response
