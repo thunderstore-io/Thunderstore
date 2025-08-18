@@ -255,7 +255,7 @@ def test_package_listing_validate_can_be_viewed_by_user(
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
 @pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
-def test_package_listing_ensure_update_categories_permission(
+def test_package_listing_validate_update_categories_permission(
     active_package_listing: PackageListing,
     user_type: str,
     community_role: str,

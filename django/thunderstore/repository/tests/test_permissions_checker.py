@@ -50,10 +50,10 @@ def test_can_manage_deprecation(
     "thunderstore.community.models.PackageListing.validate_update_categories_permissions"
 )
 def test_can_manage_categories(
-    mock_ensure_update_categories_permission, return_val, permissions_checker
+    mock_validate_update_categories_permission, return_val, permissions_checker
 ):
     expected_response = len(return_val) == 0
-    mock_ensure_update_categories_permission.return_value = return_val, True
+    mock_validate_update_categories_permission.return_value = return_val, True
     assert permissions_checker.can_manage_categories == expected_response
 
 
