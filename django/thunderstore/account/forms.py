@@ -45,7 +45,11 @@ class DeleteServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        service_account.owner.ensure_can_delete_service_account(self.user)
+        errors, is_public = service_account.owner.validate_can_delete_service_account(
+            self.user
+        )
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
         return service_account
 
     def save(self) -> None:

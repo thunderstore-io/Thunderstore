@@ -706,6 +706,43 @@ def test_team_validate_can_edit_service_account(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
+def test_team_validate_can_delete_service_account(
+    team: Team, user_type: str, role: str
+) -> None:
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    user_type_errors = {
+        **{type_: ["Must be authenticated"] for type_ in TestUserTypes.fake_users()},
+        TestUserTypes.deactivated_user: ["User has been deactivated"],
+        TestUserTypes.service_account: [
+            "Service accounts are unable to perform this action"
+        ],
+    }
+
+    if user_type in user_type_errors:
+        expected_errors = user_type_errors[user_type]
+    elif role is None:
+        expected_errors = ["Must be a member to delete a service account"]
+    else:
+        TeamMember.objects.create(user=user, team=team, role=role)
+        if role == TeamMemberRole.member:
+            expected_errors = ["Must be an owner to delete a service account"]
+        else:  # owner
+            expected_errors = []
+
+    errors, _ = team.validate_can_delete_service_account(user)
+
+    if errors == []:
+        assert team.can_user_delete_service_accounts(user) is True
+    else:
+        assert team.can_user_delete_service_accounts(user) is False
+
+    assert errors == expected_errors
+
+
+@pytest.mark.django_db
 def test_team_save():
     team = Team.create(name="TestTeam")
     team.save()

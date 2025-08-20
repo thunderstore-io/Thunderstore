@@ -277,17 +277,20 @@ class Team(models.Model):
 
         return errors, public_error
 
-    def ensure_can_delete_service_account(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+    def validate_can_delete_service_account(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member to delete a service account"
-            )
-        if membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError(
-                "Must be an owner to delete a service account"
-            )
+            errors.append("Must be a member to delete a service account")
+        if membership and membership.role != TeamMemberRole.owner:
+            errors.append("Must be an owner to delete a service account")
+
+        return errors, public_error
 
     def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
@@ -369,7 +372,8 @@ class Team(models.Model):
         return len(errors) == 0
 
     def can_user_delete_service_accounts(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_delete_service_account(user))
+        errors, _ = self.validate_can_delete_service_account(user)
+        return len(errors) == 0
 
     def can_user_access(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_access(user))
