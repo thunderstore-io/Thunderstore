@@ -638,27 +638,26 @@ def test_team_settings_url(team: Team):
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
-def test_team_ensure_can_create_service_account(
+def test_team_validate_can_create_service_account(
     team: Team, user_type: str, role: str
 ) -> None:
     user = TestUserTypes.get_user_by_type(user_type)
     if user_type in TestUserTypes.fake_users():
-        with pytest.raises(ValidationError) as e:
-            team.ensure_can_create_service_account(user)
-        assert "Must be authenticated" in str(e.value)
+        errors, _ = team.validate_can_create_service_account(user)
+        assert team.can_user_create_service_accounts(user) is False
+        assert errors == ["Must be authenticated"]
     elif user_type == TestUserTypes.deactivated_user:
-        with pytest.raises(ValidationError) as e:
-            team.ensure_can_create_service_account(user)
-        assert "User has been deactivated" in str(e.value)
+        errors, _ = team.validate_can_create_service_account(user)
+        assert team.can_user_create_service_accounts(user) is False
+        assert errors == ["User has been deactivated"]
     elif user_type == TestUserTypes.service_account:
-        with pytest.raises(
-            ValidationError, match="Service accounts are unable to perform this action"
-        ):
-            team.ensure_can_create_service_account(user)
+        errors, _ = team.validate_can_create_service_account(user)
+        assert team.can_user_create_service_accounts(user) is False
+        assert errors == ["Service accounts are unable to perform this action"]
     elif role is None:
-        with pytest.raises(ValidationError) as e:
-            team.ensure_can_create_service_account(user)
-        assert "Must be a member to create a service account" in str(e.value)
+        errors, _ = team.validate_can_create_service_account(user)
+        assert team.can_user_create_service_accounts(user) is False
+        assert errors == ["Must be a member to create a service account"]
     else:
         TeamMember.objects.create(
             user=user,
@@ -666,11 +665,13 @@ def test_team_ensure_can_create_service_account(
             role=role,
         )
         if role == TeamMemberRole.member:
-            with pytest.raises(ValidationError) as e:
-                team.ensure_can_create_service_account(user)
-            assert "Must be an owner to create a service account" in str(e.value)
+            errors, _ = team.validate_can_create_service_account(user)
+            assert team.can_user_create_service_accounts(user) is False
+            assert errors == ["Must be an owner to create a service account"]
         if role == TeamMemberRole.owner:
-            assert team.ensure_can_create_service_account(user) is None
+            errors, _ = team.validate_can_create_service_account(user)
+            assert team.can_user_create_service_accounts(user) is True
+            assert errors == []
 
 
 @pytest.mark.django_db

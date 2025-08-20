@@ -18,7 +18,9 @@ class CreateServiceAccountForm(forms.Form):
 
     def clean_team(self) -> Team:
         team = self.cleaned_data["team"]
-        team.ensure_can_create_service_account(self.user)
+        errors, _ = team.validate_can_create_service_account(self.user)
+        if errors:
+            raise forms.ValidationError(errors)
         return team
 
     @transaction.atomic
