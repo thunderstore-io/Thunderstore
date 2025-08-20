@@ -276,8 +276,10 @@ class SettingsTeamDonationLinkView(TeamDetailView, UserFormKwargs, UpdateView):
         return self.object.donation_link_url
 
     def form_valid(self, form: DonationLinkTeamForm):
-        self.object = form.save()
-        if form.errors:  # Check if service layer raised an error
+        try:
+            self.object = form.save()
+        except ValidationError:
             return super().form_invalid(form)
+
         messages.success(self.request, "Donation link saved")
-        return redirect(self.get_success_url())
+        return super().form_valid(form)

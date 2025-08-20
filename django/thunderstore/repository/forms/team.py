@@ -199,5 +199,6 @@ class DonationLinkTeamForm(forms.ModelForm):
             )
         except ValidationError as e:
             self.add_error(None, e)
+            raise ValidationError(self.errors)
 
         return self.instance
