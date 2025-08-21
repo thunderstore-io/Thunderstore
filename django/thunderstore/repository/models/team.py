@@ -292,11 +292,18 @@ class Team(models.Model):
 
         return errors, public_error
 
-    def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+    def validate_can_manage_members(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError("Must be an owner to manage team members")
+            errors.append("Must be an owner to manage team members")
+
+        return errors, public_error
 
     def ensure_user_can_access(self, user: Optional[UserType]) -> None:
         user = validate_user(user, allow_serviceaccount=True)
@@ -365,7 +372,8 @@ class Team(models.Model):
         return check_validity(lambda: self.ensure_user_can_manage_packages(user))
 
     def can_user_manage_members(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_manage_members(user))
+        errors, _ = self.validate_can_manage_members(user)
+        return len(errors) == 0
 
     def can_user_create_service_accounts(self, user: Optional[UserType]) -> bool:
         errors, _ = self.validate_can_create_service_account(user)

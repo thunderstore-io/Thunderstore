@@ -80,10 +80,13 @@ class AddTeamMemberForm(forms.ModelForm):
     def clean(self):
         result = super().clean()
         team = self.cleaned_data.get("team")
-        if team:
-            team.ensure_user_can_manage_members(self.user)
-        else:
-            raise ValidationError("Invalid team")
+        if not team:
+            raise ValidationError("Team is required")
+
+        errors, is_public = team.validate_can_manage_members(self.user)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
+
         return result
 
 
@@ -97,7 +100,10 @@ class RemoveTeamMemberForm(forms.Form):
     def clean_membership(self):
         membership = self.cleaned_data["membership"]
         if membership.user != self.user:
-            membership.team.ensure_user_can_manage_members(self.user)
+            errors, is_public = membership.team.validate_can_manage_members(self.user)
+            if errors:
+                raise PermissionValidationError(errors, is_public=is_public)
+
         membership.team.ensure_member_can_be_removed(membership)
         return membership
 
@@ -133,10 +139,14 @@ class EditTeamMemberForm(forms.ModelForm):
             team = self.instance.team
         except ObjectDoesNotExist:
             team = None
-        if team:
-            team.ensure_user_can_manage_members(self.user)
-        else:
+
+        if not team:
             raise ValidationError("Team is missing")
+
+        errors, is_public = team.validate_can_manage_members(self.user)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
+
         return super().clean()
 
 

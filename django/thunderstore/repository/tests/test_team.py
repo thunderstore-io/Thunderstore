@@ -316,14 +316,14 @@ def test_team_ensure_user_can_manage_members(
     user = TestUserTypes.get_user_by_type(user_type)
     if user_type in TestUserTypes.fake_users():
         assert team.can_user_manage_members(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_user_can_manage_members(user)
-        assert "Must be authenticated" in str(e.value)
+        errors, is_public = team.validate_can_manage_members(user)
+        assert errors == ["Must be authenticated"]
+        assert is_public is True
     elif user_type == TestUserTypes.deactivated_user:
         assert team.can_user_manage_members(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_user_can_manage_members(user)
-        assert "User has been deactivated" in str(e.value)
+        errors, is_public = team.validate_can_manage_members(user)
+        assert errors == ["User has been deactivated"]
+        assert is_public is False
     else:
         if role is not None:
             TeamMember.objects.create(
@@ -333,18 +333,20 @@ def test_team_ensure_user_can_manage_members(
             )
         if user_type == TestUserTypes.service_account:
             assert team.can_user_manage_members(user) is False
-            with pytest.raises(ValidationError) as e:
-                team.ensure_user_can_manage_members(user)
-            assert "Service accounts are unable to perform this action" in str(e.value)
+
+            errors, is_public = team.validate_can_manage_members(user)
+            assert errors == ["Service accounts are unable to perform this action"]
+            assert is_public is True
         else:
             if role == TeamMemberRole.owner:
                 assert team.can_user_manage_members(user) is True
-                assert team.ensure_user_can_manage_members(user) is None
+                errors, is_public = team.validate_can_manage_members(user)
+                assert errors == []
             else:
                 assert team.can_user_manage_members(user) is False
-                with pytest.raises(ValidationError) as e:
-                    team.ensure_user_can_manage_members(user)
-                assert "Must be an owner to manage team members" in str(e.value)
+                errors, is_public = team.validate_can_manage_members(user)
+                errors = ["Must be an owner to manage team members"]
+                is_public is True
 
 
 @pytest.mark.django_db
