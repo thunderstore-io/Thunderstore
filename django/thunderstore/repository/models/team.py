@@ -305,10 +305,18 @@ class Team(models.Model):
 
         return errors, public_error
 
-    def ensure_user_can_access(self, user: Optional[UserType]) -> None:
-        user = validate_user(user, allow_serviceaccount=True)
-        if not self.get_membership_for_user(user):
-            raise PermissionValidationError("Must be a member to access team")
+    def validate_user_can_access(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user, allow_serviceaccount=True)
+        if errors:
+            return errors, public_error
+
+        membership = self.get_membership_for_user(user)
+        if not membership:
+            errors.append("Must be a member to access team")
+
+        return errors, public_error
 
     def ensure_can_upload_package(self, user: Optional[UserType]) -> None:
         user = validate_user(user, allow_serviceaccount=True)
@@ -384,7 +392,8 @@ class Team(models.Model):
         return len(errors) == 0
 
     def can_user_access(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_access(user))
+        errors, _ = self.validate_user_can_access(user)
+        return len(errors) == 0
 
     def can_member_be_removed(self, member: Optional[TeamMember]) -> bool:
         return check_validity(lambda: self.ensure_member_can_be_removed(member))

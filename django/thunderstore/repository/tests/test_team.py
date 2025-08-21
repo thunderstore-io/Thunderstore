@@ -352,18 +352,18 @@ def test_team_ensure_user_can_manage_members(
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
-def test_team_ensure_user_can_access(team: Team, user_type: str, role: str) -> None:
+def test_team_validate_user_can_access(team: Team, user_type: str, role: str) -> None:
     user = TestUserTypes.get_user_by_type(user_type)
     if user_type in TestUserTypes.fake_users():
+        errors, is_public = team.validate_user_can_access(user)
         assert team.can_user_access(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_user_can_access(user)
-        assert "Must be authenticated" in str(e.value)
+        assert errors == ["Must be authenticated"]
+        assert is_public is True
     elif user_type == TestUserTypes.deactivated_user:
+        errors, is_public = team.validate_user_can_access(user)
         assert team.can_user_access(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_user_can_access(user)
-        assert "User has been deactivated" in str(e.value)
+        assert errors == ["User has been deactivated"]
+        assert is_public is False
     else:
         if role is not None:
             TeamMember.objects.create(
@@ -373,12 +373,13 @@ def test_team_ensure_user_can_access(team: Team, user_type: str, role: str) -> N
             )
         if role is not None:
             assert team.can_user_access(user) is True
-            assert team.ensure_user_can_access(user) is None
+            errors, is_public = team.validate_user_can_access(user)
+            assert errors == []
         else:
             assert team.can_user_access(user) is False
-            with pytest.raises(ValidationError) as e:
-                team.ensure_user_can_access(user)
-            assert "Must be a member to access team" in str(e.value)
+            errors, is_public = team.validate_user_can_access(user)
+            assert errors == ["Must be a member to access team"]
+            assert is_public is True
 
 
 @pytest.mark.django_db
@@ -415,7 +416,7 @@ def test_team_ensure_can_upload_package(
             else:
                 if team_active:
                     assert team.can_user_upload(user) is True
-                    assert team.ensure_user_can_access(user) is None
+                    assert team.validate_user_can_access(user) == ([], True)
                 else:
                     assert team.can_user_upload(user) is False
                     with pytest.raises(ValidationError) as e:

@@ -12,7 +12,9 @@ from thunderstore.repository.models.team import TeamMemberRole
 def disband_team(user: UserType, team_name: str) -> None:
     teams = Team.objects.exclude(is_active=False)
     team = get_object_or_404(teams, name=team_name)
-    team.ensure_user_can_access(user)
+    errors, is_public = team.validate_user_can_access(user)
+    if errors:
+        raise PermissionValidationError(errors, is_public=is_public)
     team.ensure_user_can_disband(user)
     team.delete()
 
