@@ -171,12 +171,16 @@ class DisbandTeamForm(forms.ModelForm):
     def clean(self):
         if not self.instance.pk:
             raise ValidationError("Missing team instance")
-        self.instance.ensure_user_can_disband(self.user)
+        error, is_public = self.instance.validate_user_can_access(self.user)
+        if error:
+            raise PermissionValidationError(error, is_public=is_public)
         return super().clean()
 
     @transaction.atomic
     def save(self, **kwargs):
-        self.instance.ensure_user_can_disband(self.user)
+        error, is_public = self.instance.validate_user_can_access(self.user)
+        if error:
+            raise PermissionValidationError(error, is_public=is_public)
         self.instance.delete()
 
 

@@ -555,24 +555,24 @@ def test_team_ensure_member_role_can_be_changed(
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
-def test_team_ensure_user_can_disband(team: Team, user_type: str, role: str) -> None:
+def test_team_validate_user_can_disband(team: Team, user_type: str, role: str) -> None:
     user = TestUserTypes.get_user_by_type(user_type)
 
     if not user or not user.is_authenticated:
         assert team.can_user_disband(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_user_can_disband(user)
-        assert "Must be authenticated" in str(e.value)
+        errors, is_public = team.validate_user_can_disband(user)
+        assert errors == ["Must be authenticated"]
+        assert is_public is True
     elif user_type == TestUserTypes.deactivated_user:
         assert team.can_user_disband(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_user_can_disband(user)
-        assert "User has been deactivated" in str(e.value)
+        errors, is_public = team.validate_user_can_disband(user)
+        assert errors == ["User has been deactivated"]
+        assert is_public is False
     elif user_type == TestUserTypes.service_account:
         assert team.can_user_disband(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_user_can_disband(user)
-        assert "Service accounts are unable to perform this action" in str(e.value)
+        errors, is_public = team.validate_user_can_disband(user)
+        assert errors == ["Service accounts are unable to perform this action"]
+        assert is_public is True
     else:
         if role is not None:
             TeamMember.objects.create(
@@ -582,23 +582,24 @@ def test_team_ensure_user_can_disband(team: Team, user_type: str, role: str) -> 
             )
         if role != TeamMemberRole.owner:
             assert team.can_user_disband(user) is False
-            with pytest.raises(ValidationError) as e:
-                team.ensure_user_can_disband(user)
-            assert "Must be an owner to disband team" in str(e.value)
+            errors, is_public = team.validate_user_can_disband(user)
+            assert errors == ["Must be an owner to disband team"]
+            assert is_public is True
         else:
             assert team.can_user_disband(user) is True
-            team.ensure_user_can_disband(user)
+            errors, is_public = team.validate_user_can_disband(user)
+            assert errors == []
 
 
 @pytest.mark.django_db
-def test_team_ensure_user_can_disband_has_packages(
+def test_team_validate_user_can_disband_has_packages(
     team: Team, package: Package
 ) -> None:
     member = TeamMemberFactory(team=team, role=TeamMemberRole.owner)
     assert team.can_user_disband(member.user) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_user_can_disband(member.user)
-    assert "Unable to disband teams with packages" in str(e.value)
+    errors, is_public = team.validate_user_can_disband(member.user)
+    assert errors == ["Unable to disband teams with packages"]
+    assert is_public is True
 
 
 @pytest.mark.django_db

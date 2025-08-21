@@ -364,13 +364,18 @@ class Team(models.Model):
             if self.is_last_owner(member):
                 raise ValidationError("Cannot remove last owner from team")
 
-    def ensure_user_can_disband(self, user: Optional[UserType]):
-        user = validate_user(user)
+    def validate_user_can_disband(self, user: Optional[UserType]) -> Tuple[str, bool]:
+        error, public_error = check_user_permissions(user)
+        if error:
+            return error, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError("Must be an owner to disband team")
+            return ["Must be an owner to disband team"], public_error
         if self.owned_packages.exists():
-            raise ValidationError("Unable to disband teams with packages")
+            return ["Unable to disband teams with packages"], public_error
+
+        return [], True
 
     def ensure_user_can_edit_info(self, user: Optional[UserType]):
         user = validate_user(user)
@@ -412,7 +417,8 @@ class Team(models.Model):
         )
 
     def can_user_disband(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_disband(user))
+        error, _ = self.validate_user_can_disband(user)
+        return len(error) == 0
 
     def can_user_edit_info(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_edit_info(user))
