@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 
 from thunderstore.community.models import Community, PackageCategory
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.filetree import create_file_tree_from_zip_data
@@ -110,7 +111,9 @@ class PackageUploadForm(forms.ModelForm):
 
     def clean_team(self):
         team = self.cleaned_data["team"]
-        team.ensure_can_upload_package(self.user)
+        errors, is_public = team.validate_can_upload_package(self.user)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
         return team
 
     def clean_community_categories(self):
@@ -203,7 +206,11 @@ class PackageUploadForm(forms.ModelForm):
         self.instance.review_status = PackageVersionReviewStatus.unreviewed
 
         team = self.cleaned_data["team"]
-        team.ensure_can_upload_package(self.user)
+
+        errors, is_public = team.validate_can_upload_package(self.user)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
+
         # We just take the namespace with team name for now
         namespace = team.get_namespace()
         self.instance.package = Package.objects.get_or_create(

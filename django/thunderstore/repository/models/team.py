@@ -318,17 +318,22 @@ class Team(models.Model):
 
         return errors, public_error
 
-    def ensure_can_upload_package(self, user: Optional[UserType]) -> None:
-        user = validate_user(user, allow_serviceaccount=True)
+    def validate_can_upload_package(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user, allow_serviceaccount=True)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member of team to upload package"
-            )
-        if not self.is_active:
-            raise ValidationError(
+            errors.append("Must be a member of team to upload package")
+        elif not self.is_active:
+            errors.append(
                 "The team has been deactivated and as such cannot receive new packages"
             )
+
+        return errors, public_error
 
     def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
@@ -374,7 +379,8 @@ class Team(models.Model):
             raise PermissionValidationError("Must be an owner to edit team info")
 
     def can_user_upload(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_upload_package(user))
+        errors, _ = self.validate_can_upload_package(user)
+        return len(errors) == 0
 
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_packages(user))

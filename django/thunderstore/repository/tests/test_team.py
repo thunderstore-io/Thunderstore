@@ -386,7 +386,7 @@ def test_team_validate_user_can_access(team: Team, user_type: str, role: str) ->
 @pytest.mark.parametrize("team_active", (False, True))
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
-def test_team_ensure_can_upload_package(
+def test_team_validate_can_upload_package(
     team: Team,
     team_active: bool,
     user_type: str,
@@ -397,9 +397,9 @@ def test_team_ensure_can_upload_package(
     user = TestUserTypes.get_user_by_type(user_type)
     if user_type in TestUserTypes.fake_users():
         assert team.can_user_upload(user) is False
-        with pytest.raises(ValidationError) as e:
-            team.ensure_can_upload_package(user)
-        assert "Must be authenticated" in str(e.value)
+        errors, is_public = team.validate_can_upload_package(user)
+        assert errors == ["Must be authenticated"]
+        assert is_public is True
     else:
         if role is not None:
             TeamMember.objects.create(
@@ -410,29 +410,31 @@ def test_team_ensure_can_upload_package(
         if role is not None:
             if user_type == TestUserTypes.deactivated_user:
                 assert team.can_user_upload(user) is False
-                with pytest.raises(ValidationError) as e:
-                    team.ensure_can_upload_package(user)
-                assert "User has been deactivated" in str(e.value)
+                errors, is_public = team.validate_can_upload_package(user)
+                assert errors == ["User has been deactivated"]
+                assert is_public is False
             else:
                 if team_active:
                     assert team.can_user_upload(user) is True
-                    assert team.validate_user_can_access(user) == ([], True)
+                    errors, is_public = team.validate_can_upload_package(user)
+                    assert errors == []
                 else:
                     assert team.can_user_upload(user) is False
-                    with pytest.raises(ValidationError) as e:
-                        team.ensure_can_upload_package(user)
-                    assert (
+                    errors, is_public = team.validate_can_upload_package(user)
+                    assert errors == [
                         "The team has been deactivated and as such cannot receive new packages"
-                        in str(e.value)
-                    )
+                    ]
+                    assert is_public is True
         else:
             assert team.can_user_upload(user) is False
-            with pytest.raises(ValidationError) as e:
-                team.ensure_can_upload_package(user)
+            errors, is_public = team.validate_can_upload_package(user)
+            assert errors, is_public == ["Must be a member of team to upload package"]
             if user_type == TestUserTypes.deactivated_user:
-                assert "User has been deactivated" in str(e.value)
+                assert is_public is False
+                assert errors == ["User has been deactivated"]
             else:
-                assert "Must be a member of team to upload package" in str(e.value)
+                assert is_public is True
+                assert errors == ["Must be a member of team to upload package"]
 
 
 @pytest.mark.django_db
