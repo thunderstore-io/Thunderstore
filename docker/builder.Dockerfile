@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:14-alpine
 
 RUN mkdir -p /home/node/app/node_modules && mkdir /home/node/app/build && chown -R node:node /home/node/app
 VOLUME /home/node/app/build
