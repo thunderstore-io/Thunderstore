@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -11,7 +11,7 @@ from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
-from thunderstore.permissions.utils import validate_user
+from thunderstore.permissions.utils import check_user_permissions, validate_user
 from thunderstore.repository.models import Namespace, Package
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
@@ -247,138 +247,202 @@ class Team(models.Model):
             self.__membership_cache[user.pk] = self.members.filter(user=user).first()
         return self.__membership_cache[user.pk]
 
-    def ensure_can_create_service_account(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+    def validate_can_create_service_account(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member to create a service account"
-            )
-        if membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError(
-                "Must be an owner to create a service account"
-            )
+            errors.append("Must be a member to create a service account")
+        if membership and membership.role != TeamMemberRole.owner:
+            errors.append("Must be an owner to create a service account")
 
-    def ensure_can_edit_service_account(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+        return errors, public_error
+
+    def validate_can_edit_service_account(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member to edit a service account"
-            )
-        if membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError(
-                "Must be an owner to edit a service account"
-            )
+            errors.append("Must be a member to edit a service account")
+        if membership and membership.role != TeamMemberRole.owner:
+            errors.append("Must be an owner to edit a service account")
 
-    def ensure_can_delete_service_account(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+        return errors, public_error
+
+    def validate_can_delete_service_account(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member to delete a service account"
-            )
-        if membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError(
-                "Must be an owner to delete a service account"
-            )
+            errors.append("Must be a member to delete a service account")
+        if membership and membership.role != TeamMemberRole.owner:
+            errors.append("Must be an owner to delete a service account")
 
-    def ensure_user_can_manage_members(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+        return errors, public_error
+
+    def validate_can_manage_members(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError("Must be an owner to manage team members")
+            errors.append("Must be an owner to manage team members")
 
-    def ensure_user_can_access(self, user: Optional[UserType]) -> None:
-        user = validate_user(user, allow_serviceaccount=True)
-        if not self.get_membership_for_user(user):
-            raise PermissionValidationError("Must be a member to access team")
+        return errors, public_error
 
-    def ensure_can_upload_package(self, user: Optional[UserType]) -> None:
-        user = validate_user(user, allow_serviceaccount=True)
+    def validate_user_can_access(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user, allow_serviceaccount=True)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member of team to upload package"
-            )
-        if not self.is_active:
-            raise ValidationError(
+            errors.append("Must be a member to access team")
+
+        return errors, public_error
+
+    def validate_can_upload_package(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user, allow_serviceaccount=True)
+        if errors:
+            return errors, public_error
+
+        membership = self.get_membership_for_user(user)
+        if not membership:
+            errors.append("Must be a member of team to upload package")
+        elif not self.is_active:
+            errors.append(
                 "The team has been deactivated and as such cannot receive new packages"
             )
 
-    def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+        return errors, public_error
+
+    def validate_user_can_manage_packages(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member of team to manage packages"
-            )
+            return ["Must be a member of team to manage packages"], True
 
-    def ensure_member_can_be_removed(self, member: Optional[TeamMember]) -> None:
+        return [], True
+
+    def validate_member_can_be_removed(
+        self, member: Optional[TeamMember]
+    ) -> Tuple[List[str], bool]:
+        public_error = True
+
         if not member:
-            raise ValidationError("Invalid member")
+            return ["Invalid member"], public_error
         if member.team != self:
-            raise ValidationError("Member is not a part of this team")
+            return ["Member is not a part of this team"], public_error
         if self.is_last_owner(member):
-            raise ValidationError("Cannot remove last owner from team")
+            return ["Cannot remove last owner from team"], public_error
 
-    def ensure_member_role_can_be_changed(
+        return [], True
+
+    def validate_member_role_can_be_changed(
         self, member: Optional[TeamMember], new_role: Optional[str]
-    ) -> None:
+    ) -> Tuple[List[str], bool]:
+        public_error = True
+
         if not member:
-            raise ValidationError("Invalid member")
+            return ["Invalid member"], public_error
         if member.team != self:
-            raise ValidationError("Member is not a part of this team")
+            return ["Member is not a part of this team"], public_error
         if not new_role or new_role not in TeamMemberRole.options():
-            raise ValidationError("New role is invalid")
+            return ["New role is invalid"], public_error
         if new_role != TeamMemberRole.owner:
             if self.is_last_owner(member):
-                raise ValidationError("Cannot remove last owner from team")
+                return ["Cannot remove last owner from team"], public_error
 
-    def ensure_user_can_disband(self, user: Optional[UserType]):
-        user = validate_user(user)
+        return [], public_error
+
+    def validate_user_can_disband(self, user: Optional[UserType]) -> Tuple[str, bool]:
+        error, public_error = check_user_permissions(user)
+        if error:
+            return error, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError("Must be an owner to disband team")
+            return ["Must be an owner to disband team"], public_error
         if self.owned_packages.exists():
-            raise ValidationError("Unable to disband teams with packages")
+            return ["Unable to disband teams with packages"], public_error
 
-    def ensure_user_can_edit_info(self, user: Optional[UserType]):
-        user = validate_user(user)
+        return [], True
+
+    def validate_user_can_edit_info(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError("Must be an owner to edit team info")
+            return ["Must be an owner to edit team info"], public_error
+
+        return [], True
 
     def can_user_upload(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_upload_package(user))
+        errors, _ = self.validate_can_upload_package(user)
+        return len(errors) == 0
 
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_manage_packages(user))
+        errors, _ = self.validate_user_can_manage_packages(user)
+        return len(errors) == 0
 
     def can_user_manage_members(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_manage_members(user))
+        errors, _ = self.validate_can_manage_members(user)
+        return len(errors) == 0
 
     def can_user_create_service_accounts(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_create_service_account(user))
+        errors, _ = self.validate_can_create_service_account(user)
+        return len(errors) == 0
 
     def can_user_delete_service_accounts(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_delete_service_account(user))
+        errors, _ = self.validate_can_delete_service_account(user)
+        return len(errors) == 0
 
     def can_user_access(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_access(user))
+        errors, _ = self.validate_user_can_access(user)
+        return len(errors) == 0
 
     def can_member_be_removed(self, member: Optional[TeamMember]) -> bool:
-        return check_validity(lambda: self.ensure_member_can_be_removed(member))
+        error, _ = self.validate_member_can_be_removed(member)
+        return len(error) == 0
 
     def can_member_role_be_changed(
         self, member: Optional[TeamMember], new_role: Optional[str]
     ) -> bool:
-        return check_validity(
-            lambda: self.ensure_member_role_can_be_changed(member, new_role)
-        )
+        error, _ = self.validate_member_role_can_be_changed(member, new_role)
+        return len(error) == 0
 
     def can_user_disband(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_disband(user))
+        error, _ = self.validate_user_can_disband(user)
+        return len(error) == 0
 
     def can_user_edit_info(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_edit_info(user))
+        error, _ = self.validate_user_can_edit_info(user)
+        return len(error) == 0

@@ -2,6 +2,7 @@ from django import forms
 from django.db import transaction
 
 from thunderstore.account.models import ServiceAccount
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Team
 
@@ -18,7 +19,9 @@ class CreateServiceAccountForm(forms.Form):
 
     def clean_team(self) -> Team:
         team = self.cleaned_data["team"]
-        team.ensure_can_create_service_account(self.user)
+        errors, _ = team.validate_can_create_service_account(self.user)
+        if errors:
+            raise forms.ValidationError(errors)
         return team
 
     @transaction.atomic
@@ -42,7 +45,11 @@ class DeleteServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        service_account.owner.ensure_can_delete_service_account(self.user)
+        errors, is_public = service_account.owner.validate_can_delete_service_account(
+            self.user
+        )
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
         return service_account
 
     def save(self) -> None:
@@ -61,7 +68,11 @@ class EditServiceAccountForm(forms.Form):
 
     def clean_service_account(self) -> ServiceAccount:
         service_account = self.cleaned_data["service_account"]
-        service_account.owner.ensure_can_edit_service_account(self.user)
+        errors, is_public = service_account.owner.validate_can_edit_service_account(
+            self.user
+        )
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
         return service_account
 
     def save(self) -> ServiceAccount:
