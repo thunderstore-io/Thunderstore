@@ -362,18 +362,22 @@ class Team(models.Model):
 
         return [], True
 
-    def ensure_member_role_can_be_changed(
+    def validate_member_role_can_be_changed(
         self, member: Optional[TeamMember], new_role: Optional[str]
-    ) -> None:
+    ) -> Tuple[List[str], bool]:
+        public_error = True
+
         if not member:
-            raise ValidationError("Invalid member")
+            return ["Invalid member"], public_error
         if member.team != self:
-            raise ValidationError("Member is not a part of this team")
+            return ["Member is not a part of this team"], public_error
         if not new_role or new_role not in TeamMemberRole.options():
-            raise ValidationError("New role is invalid")
+            return ["New role is invalid"], public_error
         if new_role != TeamMemberRole.owner:
             if self.is_last_owner(member):
-                raise ValidationError("Cannot remove last owner from team")
+                return ["Cannot remove last owner from team"], public_error
+
+        return [], public_error
 
     def validate_user_can_disband(self, user: Optional[UserType]) -> Tuple[str, bool]:
         error, public_error = check_user_permissions(user)
@@ -425,9 +429,8 @@ class Team(models.Model):
     def can_member_role_be_changed(
         self, member: Optional[TeamMember], new_role: Optional[str]
     ) -> bool:
-        return check_validity(
-            lambda: self.ensure_member_role_can_be_changed(member, new_role)
-        )
+        error, _ = self.validate_member_role_can_be_changed(member, new_role)
+        return len(error) == 0
 
     def can_user_disband(self, user: Optional[UserType]) -> bool:
         error, _ = self.validate_user_can_disband(user)

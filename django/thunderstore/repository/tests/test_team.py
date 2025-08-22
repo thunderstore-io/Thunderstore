@@ -493,55 +493,55 @@ def test_team_validate_member_can_be_removed_last_owner(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("new_role", TeamMemberRole.options())
-def test_team_ensure_member_role_can_be_changed_wrong_team(
+def test_team_validate_member_role_can_be_changed_wrong_team(
     team: Team, new_role: str
 ) -> None:
     member = TeamMemberFactory(role=TeamMemberRole.member)
     assert team.can_member_role_be_changed(member, new_role) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_member_role_can_be_changed(member, new_role)
-    assert "Member is not a part of this team" in str(e.value)
+    error, is_public = team.validate_member_role_can_be_changed(member, new_role)
+    assert error == ["Member is not a part of this team"]
+    assert is_public is True
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("new_role", TeamMemberRole.options())
-def test_team_ensure_member_role_can_be_changed_no_member(
+def test_team_validate_member_role_can_be_changed_no_member(
     team: Team, new_role: str
 ) -> None:
     assert team.can_member_role_be_changed(None, new_role) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_member_role_can_be_changed(None, new_role)
-    assert "Invalid member" in str(e.value)
+    error, is_public = team.validate_member_role_can_be_changed(None, new_role)
+    assert error == ["Invalid member"]
+    assert is_public is True
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("role", ("invalid", None))
-def test_team_ensure_member_role_can_be_changed_invalid_role(
+def test_team_validate_member_role_can_be_changed_invalid_role(
     team: Team, role: Optional[str]
 ) -> None:
     member = TeamMemberFactory(team=team, role=TeamMemberRole.member)
     assert team.can_member_role_be_changed(member, role) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_member_role_can_be_changed(member, role)
-    assert "New role is invalid" in str(e.value)
+    error, is_public = team.validate_member_role_can_be_changed(member, role)
+    assert error == ["New role is invalid"]
+    assert is_public is True
 
 
 @pytest.mark.django_db
-def test_team_ensure_member_role_can_be_changed_last_owner(
+def test_team_validate_member_role_can_be_changed_last_owner(
     team: Team,
 ) -> None:
     new_role = TeamMemberRole.member
     member = TeamMemberFactory(team=team, role=TeamMemberRole.owner)
     assert team.can_member_role_be_changed(member, new_role) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_member_role_can_be_changed(member, new_role)
-    assert "Cannot remove last owner from team" in str(e.value)
+    error, is_public = team.validate_member_role_can_be_changed(member, new_role)
+    assert error == ["Cannot remove last owner from team"]
+    assert is_public is True
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("old_role", TeamMemberRole.options())
 @pytest.mark.parametrize("new_role", TeamMemberRole.options())
-def test_team_ensure_member_role_can_be_changed(
+def test_team_validate_member_role_can_be_changed(
     team: Team, old_role: str, new_role: str
 ) -> None:
     member = TeamMemberFactory(team=team, role=old_role)
@@ -551,7 +551,9 @@ def test_team_ensure_member_role_can_be_changed(
     if is_last_owner:
         TeamMemberFactory(team=team, role=TeamMemberRole.owner)
     assert team.can_member_role_be_changed(member, new_role) is True
-    team.ensure_member_role_can_be_changed(member, new_role)
+    error, is_public = team.validate_member_role_can_be_changed(member, new_role)
+    assert error == []
+    assert is_public is True
 
 
 @pytest.mark.django_db

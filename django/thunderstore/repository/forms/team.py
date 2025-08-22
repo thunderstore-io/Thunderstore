@@ -129,12 +129,14 @@ class EditTeamMemberForm(forms.ModelForm):
             team = self.instance.team
         except ObjectDoesNotExist:
             team = None
-        if team:
-            team.ensure_member_role_can_be_changed(
-                member=self.instance, new_role=new_role
-            )
-        else:
+
+        if not team:
             raise ValidationError("Team is missing")
+
+        error, is_public = team.validate_member_role_be_changed(self.instance, new_role)
+        if error:
+            raise PermissionValidationError(error, is_public=is_public)
+
         return new_role
 
     def clean(self):
