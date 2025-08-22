@@ -795,7 +795,9 @@ def test_team_donation_link_validation(
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
-def test_team_ensure_user_can_edit_info(team: Team, user_type: str, role: str) -> None:
+def test_team_validate_user_can_edit_info(
+    team: Team, user_type: str, role: str
+) -> None:
     user = TestUserTypes.get_user_by_type(user_type)
     if role is not None and user_type not in TestUserTypes.fake_users():
         TeamMember.objects.create(user=user, team=team, role=role)
@@ -813,11 +815,12 @@ def test_team_ensure_user_can_edit_info(team: Team, user_type: str, role: str) -
 
     if expected_error is not None:
         assert team.can_user_edit_info(user) is False
-        with pytest.raises(ValidationError, match=expected_error):
-            team.ensure_user_can_edit_info(user)
+        errors, _ = team.validate_user_can_edit_info(user)
+        assert errors == [expected_error]
     else:
         assert team.can_user_edit_info(user) is True
-        assert team.ensure_user_can_edit_info(user) is None
+        errors, _ = team.validate_user_can_edit_info(user)
+        assert errors == []
 
 
 @pytest.mark.django_db

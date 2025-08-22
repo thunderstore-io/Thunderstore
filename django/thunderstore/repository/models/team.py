@@ -392,11 +392,18 @@ class Team(models.Model):
 
         return [], True
 
-    def ensure_user_can_edit_info(self, user: Optional[UserType]):
-        user = validate_user(user)
+    def validate_user_can_edit_info(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership or membership.role != TeamMemberRole.owner:
-            raise PermissionValidationError("Must be an owner to edit team info")
+            return ["Must be an owner to edit team info"], public_error
+
+        return [], True
 
     def can_user_upload(self, user: Optional[UserType]) -> bool:
         errors, _ = self.validate_can_upload_package(user)
@@ -437,4 +444,5 @@ class Team(models.Model):
         return len(error) == 0
 
     def can_user_edit_info(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_edit_info(user))
+        error, _ = self.validate_user_can_edit_info(user)
+        return len(error) == 0

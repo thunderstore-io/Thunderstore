@@ -40,8 +40,15 @@ def create_team(user: UserType, team_name: str) -> Team:
 
 @transaction.atomic
 def update_team(agent: UserType, team: Team, donation_link: str) -> Team:
-    team.ensure_user_can_access(agent)
-    team.ensure_user_can_edit_info(agent)
+    validators = [
+        team.validate_user_can_access,
+        team.validate_user_can_edit_info,
+    ]
+
+    for validator in validators:
+        errors, is_public = validator(agent)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
 
     team.donation_link = donation_link
     team.save()
