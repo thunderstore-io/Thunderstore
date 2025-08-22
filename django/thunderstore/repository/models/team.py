@@ -348,13 +348,19 @@ class Team(models.Model):
 
         return [], True
 
-    def ensure_member_can_be_removed(self, member: Optional[TeamMember]) -> None:
+    def validate_member_can_be_removed(
+        self, member: Optional[TeamMember]
+    ) -> Tuple[List[str], bool]:
+        public_error = True
+
         if not member:
-            raise ValidationError("Invalid member")
+            return ["Invalid member"], public_error
         if member.team != self:
-            raise ValidationError("Member is not a part of this team")
+            return ["Member is not a part of this team"], public_error
         if self.is_last_owner(member):
-            raise ValidationError("Cannot remove last owner from team")
+            return ["Cannot remove last owner from team"], public_error
+
+        return [], True
 
     def ensure_member_role_can_be_changed(
         self, member: Optional[TeamMember], new_role: Optional[str]
@@ -413,7 +419,8 @@ class Team(models.Model):
         return len(errors) == 0
 
     def can_member_be_removed(self, member: Optional[TeamMember]) -> bool:
-        return check_validity(lambda: self.ensure_member_can_be_removed(member))
+        error, _ = self.validate_member_can_be_removed(member)
+        return len(error) == 0
 
     def can_member_role_be_changed(
         self, member: Optional[TeamMember], new_role: Optional[str]

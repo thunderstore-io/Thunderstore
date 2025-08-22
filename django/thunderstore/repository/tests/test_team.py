@@ -439,7 +439,7 @@ def test_team_validate_can_upload_package(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("role", TeamMemberRole.options())
-def test_team_ensure_member_can_be_removed(team: Team, role: str) -> None:
+def test_team_validate_member_can_be_removed(team: Team, role: str) -> None:
     member = TeamMemberFactory(
         role=role,
         team=team,
@@ -450,32 +450,34 @@ def test_team_ensure_member_can_be_removed(team: Team, role: str) -> None:
             role=TeamMemberRole.owner,
         )
     assert team.can_member_be_removed(member) is True
-    team.ensure_member_can_be_removed(member)
+    errors, is_public = team.validate_member_can_be_removed(member)
+    assert errors == []
+    assert is_public is True
 
 
 @pytest.mark.django_db
-def test_team_ensure_member_can_be_removed_wrong_team(
+def test_team_validate_member_can_be_removed_wrong_team(
     team: Team,
 ) -> None:
     member = TeamMemberFactory(role=TeamMemberRole.member)
     assert team.can_member_be_removed(member) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_member_can_be_removed(member)
-    assert "Member is not a part of this team" in str(e.value)
+    errors, is_public = team.validate_member_can_be_removed(member)
+    assert errors == ["Member is not a part of this team"]
+    assert is_public is True
 
 
 @pytest.mark.django_db
-def test_team_ensure_member_can_be_removed_no_member(
+def test_team_validate_member_can_be_removed_no_member(
     team: Team,
 ) -> None:
     assert team.can_member_be_removed(None) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_member_can_be_removed(None)
-    assert "Invalid member" in str(e.value)
+    errors, is_public = team.validate_member_can_be_removed(None)
+    assert errors == ["Invalid member"]
+    assert is_public is True
 
 
 @pytest.mark.django_db
-def test_team_ensure_member_can_be_removed_last_owner(
+def test_team_validate_member_can_be_removed_last_owner(
     team: Team,
 ) -> None:
     owner = TeamMemberFactory(
@@ -484,9 +486,9 @@ def test_team_ensure_member_can_be_removed_last_owner(
     )
     assert team.members.count() == 1
     assert team.can_member_be_removed(owner) is False
-    with pytest.raises(ValidationError) as e:
-        team.ensure_member_can_be_removed(owner)
-    assert "Cannot remove last owner from team" in str(e.value)
+    errors, is_public = team.validate_member_can_be_removed(owner)
+    assert errors == ["Cannot remove last owner from team"]
+    assert is_public is True
 
 
 @pytest.mark.django_db

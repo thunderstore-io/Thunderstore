@@ -104,7 +104,10 @@ class RemoveTeamMemberForm(forms.Form):
             if errors:
                 raise PermissionValidationError(errors, is_public=is_public)
 
-        membership.team.ensure_member_can_be_removed(membership)
+        error, is_public = membership.team.validate_member_can_be_removed(membership)
+        if error:
+            raise PermissionValidationError(error, is_public=is_public)
+
         return membership
 
     def save(self):
