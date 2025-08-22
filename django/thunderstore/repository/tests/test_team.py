@@ -819,7 +819,7 @@ def test_team_ensure_user_can_edit_info(team: Team, user_type: str, role: str) -
 @pytest.mark.django_db
 @pytest.mark.parametrize("user_type", TestUserTypes.options())
 @pytest.mark.parametrize("role", TeamMemberRole.options() + [None])
-def test_team_ensure_user_can_manage_packages(
+def test_team_validate_user_can_manage_packages(
     team: Team, user_type: str, role: str
 ) -> None:
     user = TestUserTypes.get_user_by_type(user_type)
@@ -839,8 +839,9 @@ def test_team_ensure_user_can_manage_packages(
 
     if expected_error is not None:
         assert team.can_user_manage_packages(user) is False
-        with pytest.raises(ValidationError, match=expected_error):
-            team.ensure_user_can_manage_packages(user)
+        error, _ = team.validate_user_can_manage_packages(user)
+        assert error == [expected_error]
     else:
         assert team.can_user_manage_packages(user) is True
-        assert team.ensure_user_can_manage_packages(user) is None
+        error, _ = team.validate_user_can_manage_packages(user)
+        assert error == []

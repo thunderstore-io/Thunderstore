@@ -335,13 +335,18 @@ class Team(models.Model):
 
         return errors, public_error
 
-    def ensure_user_can_manage_packages(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+    def validate_user_can_manage_packages(
+        self, user: Optional[UserType]
+    ) -> Tuple[List[str], bool]:
+        errors, public_error = check_user_permissions(user)
+        if errors:
+            return errors, public_error
+
         membership = self.get_membership_for_user(user)
         if not membership:
-            raise PermissionValidationError(
-                "Must be a member of team to manage packages"
-            )
+            return ["Must be a member of team to manage packages"], True
+
+        return [], True
 
     def ensure_member_can_be_removed(self, member: Optional[TeamMember]) -> None:
         if not member:
@@ -388,7 +393,8 @@ class Team(models.Model):
         return len(errors) == 0
 
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_user_can_manage_packages(user))
+        errors, _ = self.validate_user_can_manage_packages(user)
+        return len(errors) == 0
 
     def can_user_manage_members(self, user: Optional[UserType]) -> bool:
         errors, _ = self.validate_can_manage_members(user)
