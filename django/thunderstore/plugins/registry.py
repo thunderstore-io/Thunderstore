@@ -36,6 +36,9 @@ class PluginRegistry:
     def get_settings_urls(self) -> List[URLPattern]:
         return list(itertools.chain(*(x.get_settings_urls() for x in self.plugins)))
 
+    def get_moderation_urls(self) -> List[URLPattern]:
+        return list(itertools.chain(*(x.get_moderation_urls() for x in self.plugins)))
+
     def get_legacy_package_urls(self) -> List[URLPattern]:
         return list(
             itertools.chain(*(x.get_legacy_package_urls() for x in self.plugins))
