@@ -60,3 +60,9 @@ class CyberstormTeamUpdateSerializer(serializers.Serializer):
     donation_link = serializers.CharField(
         max_length=1024, validators=[URLValidator(["https"])]
     )
+
+
+class CyberstormCreateServiceAccountSerializer(serializers.Serializer):
+    nickname = serializers.CharField(max_length=32)
+    team_name = serializers.CharField(read_only=True)
+    api_token = serializers.CharField(read_only=True)
