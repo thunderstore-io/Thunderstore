@@ -32,6 +32,7 @@ django-cors-headers = "^3.7.0"
 boto3 = "^1.17.47"
 bleach = "^3.3.0"
 markdown-it-py = {version = "2.1.0", extras = ["linkify"]}
+mdit-py-plugins = "0.4.2"
 abyss = {git = "https://github.com/akx/abyss.git", rev = "4352e557f25a303f718ec1bf82ea0ca545ebc077"}
 lxml = "^4.9.1"
 pygments = "^2.16.1"
