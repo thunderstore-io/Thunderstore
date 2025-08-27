@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.exceptions import PermissionValidationError
+from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import ChoiceEnum, capture_exception, check_validity
 from thunderstore.permissions.utils import validate_user
@@ -382,3 +383,41 @@ class Team(models.Model):
 
     def can_user_edit_info(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_edit_info(user))
+
+
+class TeamLog(TimestampMixin):
+    class TeamEvent(models.TextChoices):
+        CREATED = "created"
+        ADDED = "added"
+        LEFT = "left"
+        REMOVED = "removed"
+        DISBANDED = "disbanded"
+        UPDATED_DONATION_LINK = "updated donation link for"
+        CREATED_SERVICE_ACCOUNT = "created service account for"
+
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="logs")
+    event = models.CharField(max_length=128, choices=TeamEvent.choices)
+
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="teamlogs_performed",
+    )
+    target = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="teamlogs_targeted",
+    )
+
+    class Meta:
+        ordering = ("datetime_created",)
+
+    def __str__(self):
+        if self.target:
+            return f"[{self.team}] {self.performed_by} {self.event} {self.target}"
+        else:
+            return f"[{self.team}] {self.performed_by} {self.event} {self.team}"
