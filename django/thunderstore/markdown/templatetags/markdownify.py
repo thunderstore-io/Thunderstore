@@ -3,6 +3,7 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from markdown_it import MarkdownIt
+from mdit_py_plugins.anchors import anchors_plugin
 
 from thunderstore.markdown.allowed_tags import (
     ALLOWED_ATTRIBUTES,
@@ -11,7 +12,7 @@ from thunderstore.markdown.allowed_tags import (
 )
 
 register = template.Library()
-md = MarkdownIt("gfm-like")
+md = MarkdownIt("gfm-like").use(anchors_plugin, max_level=6)
 
 
 def render_markdown(value: str):

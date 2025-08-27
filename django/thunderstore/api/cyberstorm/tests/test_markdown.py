@@ -67,8 +67,10 @@ def test_readme_api_view__prerenders_markup(api_client: APIClient) -> None:
         f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/readme/",
     )
     actual = response.json()
-
-    assert actual["html"] == "<h1>Very <strong>strong</strong> header</h1>\n"
+    expected_html = (
+        '<h1 id="very-strong-header">Very <strong>strong</strong> header</h1>\n'
+    )
+    assert actual["html"] == expected_html
 
 
 @pytest.mark.django_db
