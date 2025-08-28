@@ -1,6 +1,41 @@
 import re
+from typing import Optional
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from jsonschema import RefResolver, ValidationError, validate
+from rest_framework.test import APIClient
+
+from thunderstore.core.factories import UserFactory
+from thunderstore.repository.models import TeamMemberRole
+
+
+def setup_superuser():
+    user = UserFactory()
+    user.is_superuser = True
+    user.save()
+    return user
+
+
+def setup_superuser_with_package(package_listing, package_category=None):
+    user = setup_superuser()
+
+    UserFactory.create(username="TestUser", email="test@user.dev", is_active=True)
+
+    package_listing.package.owner.add_member(
+        user=user,
+        role=TeamMemberRole.owner,
+    )
+
+    if package_category:
+        package_category.community = package_listing.community
+        package_category.save()
+
+    package_listing.package.latest.changelog = "# This is an example changelog"
+    package_listing.package.latest.readme = "# This is an example readme"
+    package_listing.package.latest.save()
+
+    return user
 
 
 def convert_x_nullable(schema: dict) -> dict:
@@ -109,7 +144,10 @@ def validate_response_against_schema(
         try:
             data = response.json()
         except Exception:
-            data = response.text
+            if hasattr(response, "text"):
+                data = response.text
+            else:
+                data = "No response body. Check content-type."
         errors.append(f"Unexpected status {response.status_code} for {path}: {data}")
         return errors
 
@@ -155,3 +193,28 @@ def validate_request_body_against_schema(
         errors.append(error_message)
 
     return errors
+
+
+def validate_max_queries(
+    client: APIClient,
+    method: str,
+    path: str,
+    max_queries: int,
+    data: Optional[dict] = None,
+    **kwargs,
+):
+    request_func = getattr(client, method.lower())
+
+    with CaptureQueriesContext(connection) as ctx:
+        response = request_func(path, data=data or {}, **kwargs)
+
+    num_queries = len(ctx.captured_queries)
+    if num_queries > max_queries:
+        queries_str = "\n".join(q["sql"] for q in ctx.captured_queries)
+        raise AssertionError(
+            f"{method} {path} executed {num_queries} queries "
+            f"(allowed {max_queries}).\n"
+            f"Queries:\n{queries_str}"
+        )
+
+    return response
