@@ -56,14 +56,12 @@ GET_TEST_CASES = [{"path": path} for path in ENDPOINTS["GET"]]
 
 
 POST_TEST_CASES = [
-    {"path": path, "payload": payload}
-    for path, payload in ENDPOINTS["POST"].items()
+    {"path": path, "payload": payload} for path, payload in ENDPOINTS["POST"].items()
 ]
 
 
 PATCH_TEST_CASES = [
-    {"path": path, "payload": payload}
-    for path, payload in ENDPOINTS["PATCH"].items()
+    {"path": path, "payload": payload} for path, payload in ENDPOINTS["PATCH"].items()
 ]
 
 
