@@ -42,8 +42,13 @@
                 if (!hash) return;
 
                 const targetId = hash.slice(1);
-                const normalizedTarget = targetId.startsWith('user-content-') ? targetId : slugger(targetId);
-                const target = document.getElementById(normalizedTarget);
+
+                let target = document.getElementById(targetId);
+                if(!target)
+                {
+                    const normalizedTarget = targetId.startsWith('user-content-') ? targetId : slugger(targetId);
+                    target = document.getElementById(normalizedTarget);
+                }
 
                 if (!target) return;
 
@@ -54,9 +59,9 @@
                 const link = e.target.closest('a[href^="#"]');
                 if (!link) return;
 
-                e.preventDefault();
                 const hash = link.getAttribute('href');
                 if (hash) {
+                    e.preventDefault();
                     scrollToHash(hash);
                     if (location.hash !== hash)
                     {
