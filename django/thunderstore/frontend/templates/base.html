@@ -34,7 +34,7 @@
         <script>
             function slugger(text) {
                 let slug = text.replace(/\s+/g, "-");
-                slug = slug.replace(/[^\p{L}\p{N}-]+/gu, "");
+                slug = slug.replace(/[^\p{L}\p{N}_-]+/gu, "");
                 return "user-content-" + slug.toLowerCase();
             }
 
