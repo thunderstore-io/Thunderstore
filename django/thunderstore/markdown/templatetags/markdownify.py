@@ -11,8 +11,17 @@ from thunderstore.markdown.allowed_tags import (
     ALLOWED_TAGS,
 )
 
+
+def slugger(text: str) -> str:
+    import re
+
+    slug = re.sub(r"\s+", "-", text)
+    slug = re.sub(r"[^\w\-]", "", slug)
+    return f"user-content-{slug.lower()}"
+
+
 register = template.Library()
-md = MarkdownIt("gfm-like").use(anchors_plugin, max_level=6)
+md = MarkdownIt("gfm-like").use(anchors_plugin, slug_func=slugger, max_level=6)
 
 
 def render_markdown(value: str):
