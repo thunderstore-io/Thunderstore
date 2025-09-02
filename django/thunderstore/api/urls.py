@@ -11,6 +11,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
+    PackageListingStatusAPIView,
     PackagePermissionsAPIView,
     PackageVersionChangelogAPIView,
     PackageVersionDependenciesListAPIView,
@@ -58,6 +59,11 @@ cyberstorm_urls = [
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/",
         PackageListingAPIView.as_view(),
         name="cyberstorm.listing",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/status/",
+        PackageListingStatusAPIView.as_view(),
+        name="cyberstorm.listing.status",
     ),
     path(
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/dependants/",

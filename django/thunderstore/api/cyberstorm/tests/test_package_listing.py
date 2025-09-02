@@ -7,6 +7,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
+from conftest import TestUserTypes
 from thunderstore.api.cyberstorm.views.package_listing import (
     DependencySerializer,
     get_custom_package_listing,
@@ -139,7 +140,9 @@ def test_get_custom_package_listing__augments_listing_with_dependency_count() ->
 
 
 @pytest.mark.django_db
-def test_get_custom_package_listing__augments_listing_with_dependencies_from_same_community() -> None:
+def test_get_custom_package_listing__augments_listing_with_dependencies_from_same_community() -> (
+    None
+):
     dependant = PackageListingFactory()
     dependency1 = PackageListingFactory(community=dependant.community)
     dependency2 = PackageListingFactory()
@@ -165,7 +168,9 @@ def test_get_custom_package_listing__augments_listing_with_dependencies_from_sam
 
 
 @pytest.mark.django_db
-def test_get_custom_package_listing__when_many_dependencies__returns_only_four() -> None:
+def test_get_custom_package_listing__when_many_dependencies__returns_only_four() -> (
+    None
+):
     listing = PackageListingFactory()
     dependency_count = 6
     dependencies = PackageListingFactory.create_batch(
@@ -295,7 +300,9 @@ def test_dependency_serializer__reads_is_active_from_correct_field(
 
 
 @pytest.mark.django_db
-def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_description() -> None:
+def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_description() -> (
+    None
+):
     dependency = PackageVersionFactory()
     dependency.community_identifier = "greendale"
     dependency.version_is_unavailable = False
@@ -420,3 +427,106 @@ def test_package_listing_query_count(
 
     assert response.status_code == 200
     assert len(ctx.captured_queries) < 20
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_get_package_listing_status(
+    active_package_listing, api_client, user_type
+) -> None:
+    base_url = "/api/cyberstorm/listing"
+    community_id = active_package_listing.community.identifier
+    namespace_id = active_package_listing.package.namespace.name
+    package_name = active_package_listing.package.name
+    url = f"{base_url}/{community_id}/{namespace_id}/{package_name}/status/"
+
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    is_fake_user = user_type in TestUserTypes.fake_users()
+    is_unauthenticated = user_type == TestUserTypes.unauthenticated
+
+    if not is_fake_user and not is_unauthenticated:
+        api_client.force_authenticate(user=user)
+
+    response = api_client.get(url)
+
+    expected_status_code = {
+        TestUserTypes.no_user: 401,
+        TestUserTypes.unauthenticated: 401,
+        TestUserTypes.regular_user: 403,
+        TestUserTypes.deactivated_user: 403,
+        TestUserTypes.service_account: 403,
+        TestUserTypes.site_admin: 200,
+        TestUserTypes.superuser: 200,
+    }
+
+    assert response.status_code == expected_status_code[user_type]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "can_manage_return_val,can_moderate_return_val,status_code",
+    [
+        (True, True, 200),
+        (True, False, 200),
+        (False, True, 200),
+        (False, False, 403),
+    ],
+)
+@patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_moderate",
+    new_callable=PropertyMock,
+)
+@patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_manage",
+    new_callable=PropertyMock,
+)
+def test_get_package_listing_status_permissions(
+    mock_can_manage,
+    mock_can_moderate,
+    can_manage_return_val,
+    can_moderate_return_val,
+    status_code,
+    api_client,
+    active_package_listing,
+):
+    mock_can_manage.return_value = can_manage_return_val
+    mock_can_moderate.return_value = can_moderate_return_val
+
+    base_url = "/api/cyberstorm/listing"
+    community_id = active_package_listing.community.identifier
+    namespace_id = active_package_listing.package.namespace.name
+    package_name = active_package_listing.package.name
+    url = f"{base_url}/{community_id}/{namespace_id}/{package_name}/status/"
+
+    active_package_listing.rejection_reason = "Inappropriate content"
+    active_package_listing.notes = "This package contains inappropriate content."
+    active_package_listing.review_status = "rejected"
+    active_package_listing.save()
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
+    api_client.force_authenticate(user=user)
+    response = api_client.get(url)
+
+    assert response.status_code == status_code
+    data = response.json()
+
+    expected = {
+        "review_status": None,
+        "rejection_reason": None,
+        "internal_notes": None,
+        "listing_admin_url": None,
+    }
+
+    if can_manage_return_val:
+        expected["review_status"] = active_package_listing.review_status
+        expected["rejection_reason"] = active_package_listing.rejection_reason
+        expected["listing_admin_url"] = active_package_listing.get_admin_url()
+
+    if can_moderate_return_val:
+        expected["internal_notes"] = active_package_listing.notes
+
+    if not can_manage_return_val and not can_moderate_return_val:
+        expected = {"detail": "You do not have permission to view review information."}
+
+    assert data == expected
