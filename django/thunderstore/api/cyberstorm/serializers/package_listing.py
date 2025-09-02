@@ -35,3 +35,10 @@ class PackageListingApproveSerializer(serializers.Serializer):
     internal_notes = serializers.CharField(
         allow_blank=True, allow_null=True, required=False
     )
+
+
+class PackageListingStatusResponseSerializer(serializers.Serializer):
+    review_status = serializers.CharField(required=False, allow_null=True)
+    rejection_reason = serializers.CharField(required=False, allow_null=True)
+    internal_notes = serializers.CharField(required=False, allow_null=True)
+    listing_admin_url = serializers.CharField(required=False, allow_null=True)
