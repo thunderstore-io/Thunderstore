@@ -75,12 +75,16 @@ class ThumbnailRedirectView(RedirectView):
         return url
 
     def get(self, request, *args, **kwargs):
+        max_age = 86400  # 24 hours
+
         url = self.get_redirect_url(*args, **kwargs)
         if url:
             response = HttpResponseRedirect(url)
         else:
             response = HttpResponseNotFound("Thumbnail not found")
-        patch_cache_control(response, max_age=86400, public=True)  # 24 hours
+            max_age = 300  # 5 minutes
+
+        patch_cache_control(response, max_age=max_age, public=True)  # 5 minutes
         return response
 
 
@@ -94,20 +98,24 @@ class ThumbnailServeView(View):
         except (ValueError, TypeError):
             width, height = 0, 0
 
+        max_age = 300  # 5 minutes
+
         if not asset_path or width <= 0 or height <= 0:
-            return HttpResponseNotFound("Invalid request parameters.")
+            response = HttpResponseNotFound("Invalid request parameters.")
+        else:
+            thumbnail = get_or_create_thumbnail(asset_path, width, height)
+            thumbnail_path = thumbnail.storage_path if thumbnail else None
 
-        thumbnail = get_or_create_thumbnail(asset_path, width, height)
-        thumbnail_path = thumbnail.storage_path if thumbnail else None
-        if thumbnail_path:
-            mime_type, _ = mimetypes.guess_type(thumbnail_path)
-            try:
-                mime_type, _ = mimetypes.guess_type(thumbnail_path)
-                file = default_storage.open(thumbnail_path, "rb")
-                response = FileResponse(file, content_type=mime_type)
-                patch_cache_control(response, max_age=86400, public=True)
-                return response
-            except FileNotFoundError:
-                return HttpResponseNotFound("Thumbnail not found.")
+            if thumbnail_path:
+                try:
+                    mime_type, _ = mimetypes.guess_type(thumbnail_path)
+                    file = default_storage.open(thumbnail_path, "rb")
+                    response = FileResponse(file, content_type=mime_type)
+                    max_age = 86400  # 24h
+                except FileNotFoundError:
+                    response = HttpResponseNotFound("Thumbnail not found.")
+            else:
+                response = HttpResponseNotFound("Invalid request.")
 
-        return HttpResponseNotFound("Invalid request.")
+        patch_cache_control(response, max_age=max_age, public=True)
+        return response

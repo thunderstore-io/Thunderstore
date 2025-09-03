@@ -167,7 +167,7 @@ def test_thumbnail_redirect_exception(dummy_cover_image, community_site, client)
 
     assert response.status_code == 404
     assert "Cache-Control" in response
-    assert "max-age=86400" in response["Cache-Control"]
+    assert "max-age=300" in response["Cache-Control"]
 
 
 @pytest.mark.django_db
@@ -194,7 +194,7 @@ def test_thumbnail_redirect_invalid_params_returns_fallback(
 
     assert response.status_code == 404
     assert "Cache-Control" in response
-    assert "max-age=86400" in response["Cache-Control"]
+    assert "max-age=300" in response["Cache-Control"]
 
 
 @pytest.mark.django_db
@@ -211,3 +211,43 @@ def test_thumbnail_serve_success(dummy_cover_image, client, community_site):
     assert response.get("Content-Type") == "image/jpeg"
     assert response.get("Cache-Control") == "max-age=86400, public"
     assert response.get("Content-Disposition").startswith("inline; filename=")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"width": "abc", "height": "100"},
+        {"width": "100", "height": "abc"},
+        {"width": "0", "height": "100"},
+        {"width": "100", "height": "0"},
+        {"width": "-1", "height": "100"},
+        {"width": "0", "height": "0"},
+        {},
+    ],
+)
+@pytest.mark.django_db
+def test_thumbnail_serve_exception(params, dummy_cover_image, client, community_site):
+    community = community_site.community
+    community.cover_image = dummy_cover_image
+    community.save()
+
+    url = reverse("cdn_thumb_serve", kwargs={"path": community.cover_image.name})
+
+    response = client.get(url, params, HTTP_HOST=community_site.site.domain)
+    assert response.status_code == 404
+    assert response.get("Cache-Control") == "max-age=300, public"
+
+
+@pytest.mark.django_db
+def test_thumbnail_serve_invalid(client, community_site):
+    community = community_site.community
+    community.cover_image = None
+    community.save()
+
+    url = reverse("cdn_thumb_serve", kwargs={"path": community.cover_image.name})
+    params = {"width": 100, "height": 100}
+
+    response = client.get(url, params, HTTP_HOST=community_site.site.domain)
+    assert response.status_code == 404
+    assert response.get("Cache-Control") == "max-age=300, public"
