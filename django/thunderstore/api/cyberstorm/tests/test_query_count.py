@@ -15,26 +15,12 @@ from thunderstore.repository.models import (
 
 from .utils import (
     fill_path_params,
-    setup_superuser,
+    get_parameter_values,
     setup_superuser_with_package,
     validate_max_queries,
 )
 
 MAX_QUERIES = 15
-
-
-def get_parameter_values(package_listing: PackageListing) -> dict:
-    service_account = package_listing.package.owner.service_accounts.first()
-
-    return {
-        "community_id": package_listing.community.identifier,
-        "namespace_id": package_listing.package.owner.get_namespace().name,
-        "package_name": package_listing.package.name,
-        "version_number": package_listing.package.latest.version_number,
-        "team_id": package_listing.package.owner.name,
-        "team_name": package_listing.package.owner.name,
-        "uuid": service_account.uuid if service_account else "",
-    }
 
 
 @pytest.mark.django_db
@@ -57,7 +43,7 @@ def test_cyberstorm_api_GET_query_count(
 
 
 @pytest.mark.django_db
-def test_cybserstorm_community_list_query_count(api_client):
+def test_cyberstorm_community_list_query_count(api_client):
     path = "/api/cyberstorm/community/"
 
     communities = []
@@ -92,7 +78,7 @@ def test_cyberstorm_package_versions_list_query_count(api_client, active_package
         changelog="# This is an example changelog",
     )
 
-    user = setup_superuser()
+    user = UserFactory.create(is_superuser=True)
     api_client.force_authenticate(user)
     path_params = {
         "namespace_id": active_package.owner.get_namespace().name,
@@ -145,7 +131,7 @@ def test_cyberstorm_package_listing_list_query_count(test_case, api_client):
     )
 
     api_path = test_case["path"]
-    user = setup_superuser()
+    user = UserFactory.create(is_superuser=True)
     api_client.force_authenticate(user)
     path_params = {
         "community_id": community.identifier,
@@ -164,7 +150,7 @@ def test_cyberstorm_package_listing_list_query_count(test_case, api_client):
 @pytest.mark.django_db
 def test_cyberstorm_team_member_list_query_count(api_client):
     url = "/api/cyberstorm/team/{team_id}/member/"
-    user = setup_superuser()
+    super_user = UserFactory.create(is_superuser=True)
     team = Team.create(name="Test_Team")
 
     users = UserFactory.create_batch(20)
@@ -175,7 +161,7 @@ def test_cyberstorm_team_member_list_query_count(api_client):
         ]
     )
 
-    api_client.force_authenticate(user)
+    api_client.force_authenticate(super_user)
     url = fill_path_params(url, {"team_id": team.name})
 
     validate_max_queries(
@@ -189,7 +175,7 @@ def test_cyberstorm_team_member_list_query_count(api_client):
 @pytest.mark.django_db
 def test_cyberstorm_team_service_accounts_list_query_count(api_client):
     url = "/api/cyberstorm/team/{team_id}/service-account/"
-    user = setup_superuser()
+    user = UserFactory.create(is_superuser=True)
 
     team = Team.create(name="Test_Team")
     team.add_member(user=user, role=TeamMemberRole.owner)

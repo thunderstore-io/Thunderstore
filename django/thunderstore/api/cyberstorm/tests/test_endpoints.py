@@ -10,6 +10,7 @@ from thunderstore.api.cyberstorm.tests.utils import (
     convert_path_to_schema_style,
     extract_paths,
     fill_path_params,
+    get_parameter_values,
     get_resolver,
     get_schema,
     setup_superuser_with_package,
@@ -17,21 +18,6 @@ from thunderstore.api.cyberstorm.tests.utils import (
     validate_response_against_schema,
 )
 from thunderstore.api.urls import cyberstorm_urls
-from thunderstore.repository.models import PackageListing
-
-
-def get_parameter_values(package_listing: PackageListing) -> dict:
-    service_account = package_listing.package.owner.service_accounts.first()
-
-    return {
-        "community_id": package_listing.community.identifier,
-        "namespace_id": package_listing.package.owner.get_namespace().name,
-        "package_name": package_listing.package.name,
-        "version_number": package_listing.package.latest.version_number,
-        "team_id": package_listing.package.owner.name,
-        "team_name": package_listing.package.owner.name,
-        "uuid": service_account.uuid if service_account else "",
-    }
 
 
 @pytest.mark.django_db

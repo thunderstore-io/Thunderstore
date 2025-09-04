@@ -7,18 +7,25 @@ from jsonschema import RefResolver, ValidationError, validate
 from rest_framework.test import APIClient
 
 from thunderstore.core.factories import UserFactory
-from thunderstore.repository.models import TeamMemberRole
+from thunderstore.repository.models import PackageListing, TeamMemberRole
 
 
-def setup_superuser():
-    user = UserFactory()
-    user.is_superuser = True
-    user.save()
-    return user
+def get_parameter_values(package_listing: PackageListing) -> dict:
+    service_account = package_listing.package.owner.service_accounts.first()
+
+    return {
+        "community_id": package_listing.community.identifier,
+        "namespace_id": package_listing.package.owner.get_namespace().name,
+        "package_name": package_listing.package.name,
+        "version_number": package_listing.package.latest.version_number,
+        "team_id": package_listing.package.owner.name,
+        "team_name": package_listing.package.owner.name,
+        "uuid": service_account.uuid if service_account else "",
+    }
 
 
 def setup_superuser_with_package(package_listing, package_category=None):
-    user = setup_superuser()
+    user = UserFactory.create(is_superuser=True)
 
     UserFactory.create(username="TestUser", email="test@user.dev", is_active=True)
 
