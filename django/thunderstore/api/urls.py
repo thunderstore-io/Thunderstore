@@ -22,6 +22,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
     TeamServiceAccountListAPIView,
+    UnlistPackageListingAPIView,
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
 )
@@ -76,6 +77,11 @@ cyberstorm_urls = [
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/reject/",
         RejectPackageListingAPIView.as_view(),
         name="cyberstorm.listing.reject",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/unlist/",
+        UnlistPackageListingAPIView.as_view(),
+        name="cyberstorm.listing.unlist",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/latest/changelog/",
