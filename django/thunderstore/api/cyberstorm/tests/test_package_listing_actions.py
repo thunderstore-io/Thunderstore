@@ -27,6 +27,10 @@ def get_reject_url(package_listing):
     return f"{get_base_url(package_listing)}/reject/"
 
 
+def get_unlist_url(package_listing):
+    return f"{get_base_url(package_listing)}/unlist/"
+
+
 def perform_404_test(
     api_client: APIClient,
     active_package_listing: PackageListing,
@@ -54,6 +58,7 @@ def perform_package_listing_action_test(
     user_type: str,
     url: str,
     data: dict,
+    expected_status_code: dict = None,
 ):
     user = TestUserTypes.get_user_by_type(user_type)
 
@@ -68,15 +73,16 @@ def perform_package_listing_action_test(
 
     package_listing.refresh_from_db()
 
-    expected_status_code = {
-        TestUserTypes.no_user: 401,
-        TestUserTypes.unauthenticated: 401,
-        TestUserTypes.regular_user: 403,
-        TestUserTypes.deactivated_user: 403,
-        TestUserTypes.service_account: 403,
-        TestUserTypes.site_admin: 200,
-        TestUserTypes.superuser: 200,
-    }
+    if expected_status_code is None:
+        expected_status_code = {
+            TestUserTypes.no_user: 401,
+            TestUserTypes.unauthenticated: 401,
+            TestUserTypes.regular_user: 403,
+            TestUserTypes.deactivated_user: 403,
+            TestUserTypes.service_account: 403,
+            TestUserTypes.site_admin: 200,
+            TestUserTypes.superuser: 200,
+        }
 
     assert response.status_code == expected_status_code[user_type]
 
@@ -150,7 +156,7 @@ def test_approve_package_listing(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("url_action", ["update", "approve", "reject"])
+@pytest.mark.parametrize("url_action", ["update", "approve", "reject", "unlist"])
 def test_get_community_404(
     url_action: str,
     api_client: APIClient,
@@ -172,7 +178,7 @@ def test_get_community_404(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("url_action", ["update", "approve", "reject"])
+@pytest.mark.parametrize("url_action", ["update", "approve", "reject", "unlist"])
 def test_get_package_404(
     url_action: str,
     api_client: APIClient,
@@ -219,3 +225,31 @@ def test_reject_package_listing_permission_error(
 
     response = api_client.post(url, data=data, content_type="application/json")
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_unlist_package_listing(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    user_type: str,
+):
+
+    expected_status_code = {
+        TestUserTypes.no_user: 401,
+        TestUserTypes.unauthenticated: 401,
+        TestUserTypes.regular_user: 403,
+        TestUserTypes.deactivated_user: 403,
+        TestUserTypes.service_account: 403,
+        TestUserTypes.site_admin: 403,
+        TestUserTypes.superuser: 200,
+    }
+
+    perform_package_listing_action_test(
+        api_client=api_client,
+        package_listing=active_package_listing,
+        user_type=user_type,
+        url=get_unlist_url(active_package_listing),
+        data={},
+        expected_status_code=expected_status_code,
+    )
