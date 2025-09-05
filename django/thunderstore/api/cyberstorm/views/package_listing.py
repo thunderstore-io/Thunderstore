@@ -262,6 +262,8 @@ class PackageListingStatusAPIView(APIView):
         if checker.can_manage:
             response_data["review_status"] = package_listing.review_status
             response_data["rejection_reason"] = package_listing.rejection_reason
+
+        if checker.can_view_listing_admin_page:
             response_data["listing_admin_url"] = package_listing.get_admin_url()
 
         if checker.can_moderate:
