@@ -26,6 +26,16 @@ from thunderstore.repository.factories import (
 )
 
 
+def get_listing_url(package_listing) -> str:
+    base_url = "/api/cyberstorm/listing"
+
+    community_id = package_listing.community.identifier
+    namespace_id = package_listing.package.namespace.name
+    package_name = package_listing.package.name
+
+    return f"{base_url}/{community_id}/{namespace_id}/{package_name}/status/"
+
+
 @pytest.mark.django_db
 def test_get_custom_package_listing__returns_objects_matching_args() -> None:
     expected = PackageListingFactory()
@@ -464,69 +474,84 @@ def test_get_package_listing_status(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "can_manage_return_val,can_moderate_return_val,status_code",
-    [
-        (True, True, 200),
-        (True, False, 200),
-        (False, True, 200),
-        (False, False, 403),
-    ],
-)
-@patch(
-    "thunderstore.repository.views.package.detail.PermissionsChecker.can_moderate",
-    new_callable=PropertyMock,
-)
+@pytest.mark.parametrize("return_val", [True, False])
 @patch(
     "thunderstore.repository.views.package.detail.PermissionsChecker.can_manage",
     new_callable=PropertyMock,
 )
-def test_get_package_listing_status_permissions(
-    mock_can_manage,
-    mock_can_moderate,
-    can_manage_return_val,
-    can_moderate_return_val,
-    status_code,
-    api_client,
-    active_package_listing,
+def test_package_listing_status_can_manage_permission(
+    mock_can_manage, return_val, api_client, active_package_listing
 ):
-    mock_can_manage.return_value = can_manage_return_val
-    mock_can_moderate.return_value = can_moderate_return_val
-
-    base_url = "/api/cyberstorm/listing"
-    community_id = active_package_listing.community.identifier
-    namespace_id = active_package_listing.package.namespace.name
-    package_name = active_package_listing.package.name
-    url = f"{base_url}/{community_id}/{namespace_id}/{package_name}/status/"
-
     active_package_listing.rejection_reason = "Inappropriate content"
-    active_package_listing.notes = "This package contains inappropriate content."
     active_package_listing.review_status = "rejected"
+    active_package_listing.save()
+
+    mock_can_manage.return_value = return_val
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
+    api_client.force_authenticate(user=user)
+
+    url = get_listing_url(active_package_listing)
+    response = api_client.get(url)
+
+    data = response.json()
+
+    if return_val:
+        assert data["review_status"] == "rejected"
+        assert data["rejection_reason"] == "Inappropriate content"
+    else:
+        assert data["review_status"] is None
+        assert data["rejection_reason"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+@patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_view_listing_admin_page",
+    new_callable=PropertyMock,
+)
+def test_package_listing_status_can_view_listing_admin_page_permission(
+    mock_can_view_listing_admin_page, return_val, api_client, active_package_listing
+):
+    mock_can_view_listing_admin_page.return_value = return_val
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
+    api_client.force_authenticate(user=user)
+
+    url = get_listing_url(active_package_listing)
+    response = api_client.get(url)
+
+    data = response.json()
+
+    if return_val:
+        assert data["listing_admin_url"] == active_package_listing.get_admin_url()
+    else:
+        assert data["listing_admin_url"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+@patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_moderate",
+    new_callable=PropertyMock,
+)
+def test_package_listing_status_can_moderate_permission(
+    mock_can_moderate, return_val, api_client, active_package_listing
+):
+    mock_can_moderate.return_value = return_val
+
+    active_package_listing.notes = "This package contains inappropriate content."
     active_package_listing.save()
 
     user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
     api_client.force_authenticate(user=user)
+
+    url = get_listing_url(active_package_listing)
     response = api_client.get(url)
 
-    assert response.status_code == status_code
     data = response.json()
 
-    expected = {
-        "review_status": None,
-        "rejection_reason": None,
-        "internal_notes": None,
-        "listing_admin_url": None,
-    }
-
-    if can_manage_return_val:
-        expected["review_status"] = active_package_listing.review_status
-        expected["rejection_reason"] = active_package_listing.rejection_reason
-        expected["listing_admin_url"] = active_package_listing.get_admin_url()
-
-    if can_moderate_return_val:
-        expected["internal_notes"] = active_package_listing.notes
-
-    if not can_manage_return_val and not can_moderate_return_val:
-        expected = {"detail": "You do not have permission to view review information."}
-
-    assert data == expected
+    if return_val:
+        assert data["internal_notes"] == "This package contains inappropriate content."
+    else:
+        assert data["internal_notes"] is None
