@@ -86,6 +86,18 @@ GUNICORN_MAX_REQUESTS_JITTER = register_variable(
 )
 GUNICORN_PIDFILE = register_variable(str, "GUNICORN_PIDFILE", "/var/run/gunicorn.pid")
 
+# uWSGI configuration variables
+UWSGI_WORKER_COUNT = register_variable(int, "UWSGI_WORKER_COUNT", 3)
+UWSGI_THREADS_PER_WORKER = register_variable(int, "UWSGI_THREADS_PER_WORKER", 2)
+UWSGI_WORKER_CONNECTIONS = register_variable(int, "UWSGI_WORKER_CONNECTIONS", 1000)
+UWSGI_WORKER_TIMEOUT = register_variable(int, "UWSGI_WORKER_TIMEOUT", 30)
+UWSGI_MAX_REQUESTS = register_variable(int, "UWSGI_MAX_REQUESTS", 10000)
+UWSGI_MAX_REQUESTS_JITTER = register_variable(int, "UWSGI_MAX_REQUESTS_JITTER", 1000)
+UWSGI_SOCKET_TIMEOUT = register_variable(int, "UWSGI_SOCKET_TIMEOUT", 4)
+UWSGI_PIDFILE = register_variable(str, "UWSGI_PIDFILE", "/var/run/uwsgi.pid")
+UWSGI_STATS_SOCKET = register_variable(str, "UWSGI_STATS_SOCKET", "/tmp/uwsgi-stats.sock")
+UWSGI_AUTORELOAD = register_variable(int, "UWSGI_AUTORELOAD", 0)
+
 CELERY_PIDFILE = register_variable(str, "CELERY_PIDFILE", "/var/run/celery.pid")
 CELERY_LOG_LEVEL = register_variable(str, "CELERY_LOG_LEVEL", "INFO")
 CELERY_CONCURRENCY = register_variable(None, "CELERY_CONCURRENCY", None)
@@ -139,6 +151,20 @@ def run_gunicorn() -> None:
     ]
     if AUTORELOAD:
         command += ["--reload"]
+    run_command(command)
+
+
+def run_uwsgi() -> None:
+    print("Launching uWSGI production server")
+    
+    # Set autoreload based on AUTORELOAD variable
+    if AUTORELOAD:
+        UWSGI_AUTORELOAD.value = 1
+    
+    command = [
+        "uwsgi",
+        "--ini", "uwsgi.ini",
+    ]
     run_command(command)
 
 
@@ -201,6 +227,8 @@ def run_server(mode: str) -> None:
         run_django()
     elif mode == "gunicorn":
         run_gunicorn()
+    elif mode == "uwsgi":
+        run_uwsgi()
     elif mode == "celeryworker":
         run_celery_worker()
     elif mode == "celerybeat":
@@ -221,7 +249,7 @@ def dump_env() -> None:
 
 
 mode = (" ".join(sys.argv[1:])).strip()
-if mode in {"django", "gunicorn", "celeryworker", "celerybeat"}:
+if mode in {"django", "gunicorn", "uwsgi", "celeryworker", "celerybeat"}:
     RUN_MODE.value = mode
     dump_env()
     run_server(mode)
