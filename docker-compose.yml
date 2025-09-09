@@ -113,7 +113,7 @@ services:
 
   django:
     <<: *django-service
-    command: gunicorn
+    command: uwsgi
     volumes:
       - django-data:/app/var
       - ./django:/app
