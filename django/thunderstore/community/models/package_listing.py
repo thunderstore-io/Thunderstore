@@ -318,7 +318,10 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     def is_rejected(self):
         return self.review_status == PackageListingReviewStatus.rejected
 
-    def update_categories(self, categories: List["PackageCategory"]):
+    def update_categories(self, agent: UserType, categories: List["PackageCategory"]):
+        if not self.can_update_categories_permission(agent):
+            raise PermissionError()
+
         for category in categories:
             if category.community_id != self.community_id:
                 raise ValidationError(

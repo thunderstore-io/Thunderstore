@@ -239,10 +239,10 @@ def test_package_listing_validate_can_be_viewed_by_user(
             assert not validation_result.error
         elif user is None:
             assert result is False
-            assert expected_error in validation_result.error
+            assert expected_error == validation_result.error
         elif not user.is_authenticated:
             assert result is False
-            assert expected_error in validation_result.error
+            assert expected_error == validation_result.error
         elif community.can_user_manage_packages(user):
             assert result is True
             assert not validation_result.error
@@ -318,10 +318,12 @@ def test_package_listing_update_categories(
     package_category: PackageCategory,
     team_owner: TeamMember,
 ):
+    user = team_owner.user
+
     assert package_category.community == active_package_listing.community
     assert active_package_listing.package.owner == team_owner.team
     assert active_package_listing.categories.count() == 0
-    active_package_listing.update_categories(categories=[package_category])
+    active_package_listing.update_categories(agent=user, categories=[package_category])
     assert package_category in active_package_listing.categories.all()
 
     invalid_category = PackageCategory.objects.create(
@@ -334,7 +336,9 @@ def test_package_listing_update_categories(
         ValidationError,
         match="Community mismatch between package listing and category",
     ):
-        active_package_listing.update_categories(categories=[invalid_category])
+        active_package_listing.update_categories(
+            agent=user, categories=[invalid_category]
+        )
 
 
 @pytest.mark.django_db

@@ -14,7 +14,7 @@ def update_categories(
     validation_result = listing.validate_update_categories_permissions(agent)
     validation_result.raise_if_invalid()
 
-    listing.update_categories(categories=categories)
+    listing.update_categories(agent=agent, categories=categories)
 
     get_package_listing_or_404.clear_cache_with_args(
         namespace=listing.package.namespace.name,
