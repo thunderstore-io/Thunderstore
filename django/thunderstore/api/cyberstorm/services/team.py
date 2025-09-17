@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from thunderstore.account.models import ServiceAccount
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import Namespace, Team
+from thunderstore.repository.models import Namespace, Team, TeamMember
 from thunderstore.repository.models.team import TeamMemberRole
 
 
@@ -65,3 +65,19 @@ def delete_service_account(agent: UserType, service_account: ServiceAccount):
     team.ensure_user_can_access(agent)
     team.ensure_can_delete_service_account(agent)
     return service_account.delete()
+
+def update_team_member(
+    agent: UserType,
+    team_member: TeamMember,
+    role: str,
+) -> TeamMember:
+    team = team_member.team
+
+    team.ensure_user_can_access(agent)
+    team.ensure_user_can_manage_members(agent)
+    team.ensure_member_role_can_be_changed(team_member, role)
+
+    team_member.role = role
+    team_member.save()
+
+    return team_member

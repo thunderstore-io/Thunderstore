@@ -119,6 +119,8 @@ class SettingsTeamDetailView(TeamDetailView, UserFormKwargs, FormView):
 
     def form_valid(self, form):
         form.save()
+        if form.errors:  # Check for post-validation errors raised in form.save()
+            return self.form_invalid(form)
         messages.success(self.request, "Action performed successfully")
         return redirect(self.object.settings_url)
 

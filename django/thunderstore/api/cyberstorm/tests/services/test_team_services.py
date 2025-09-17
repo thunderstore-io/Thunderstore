@@ -186,3 +186,80 @@ def test_delete_service_account_not_owner(service_account):
     error_msg = "Must be an owner to delete a service account"
     with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.delete_service_account(user, service_account)
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_update_team_member_user_roles(user_type, team_member):
+    user = TestUserTypes.get_user_by_type(user_type)
+    team = team_member.team
+
+    if user_type not in TestUserTypes.fake_users():
+        team.add_member(user=user, role=TeamMemberRole.owner)
+
+    expected_result_mapping = {
+        TestUserTypes.no_user: (False, PermissionValidationError),
+        TestUserTypes.unauthenticated: (False, PermissionValidationError),
+        TestUserTypes.regular_user: (True, None),
+        TestUserTypes.deactivated_user: (False, PermissionValidationError),
+        TestUserTypes.service_account: (False, PermissionValidationError),
+        TestUserTypes.site_admin: (True, None),
+        TestUserTypes.superuser: (True, None),
+    }
+
+    should_raise = expected_result_mapping[user_type][0] is False
+
+    if should_raise:
+        with pytest.raises(expected_result_mapping[user_type][1]):
+            team_services.update_team_member(user, team_member, TeamMemberRole.owner)
+    else:
+        update_user = team_services.update_team_member(
+            user, team_member, TeamMemberRole.owner
+        )
+        assert update_user.role == TeamMemberRole.owner
+
+
+@pytest.mark.django_db
+def test_update_team_member_user_cannot_access_team(user, team_member):
+    error_msg = "Must be a member to access team"
+    with pytest.raises(PermissionValidationError, match=error_msg):
+        team_services.update_team_member(user, team_member, TeamMemberRole.owner)
+
+
+@pytest.mark.django_db
+def test_update_team_member_user_cannot_manage_members(team_member, user):
+    team = team_member.team
+    team.add_member(user=user, role=TeamMemberRole.member)
+
+    error_msg = "Must be an owner to manage team members"
+    with pytest.raises(PermissionValidationError, match=error_msg):
+        team_services.update_team_member(user, team_member, TeamMemberRole.owner)
+
+
+@pytest.mark.django_db
+def test_update_team_member_invalid_role(team_member, user):
+    team = team_member.team
+    team.add_member(user=user, role=TeamMemberRole.owner)
+
+    with pytest.raises(ValidationError, match="New role is invalid"):
+        team_services.update_team_member(user, team_member, "invalid_role")
+
+
+@pytest.mark.django_db
+def test_update_team_member_success(team_member, user):
+    team = team_member.team
+    team.add_member(user=user, role=TeamMemberRole.owner)
+
+    assert team_member.role == TeamMemberRole.member
+
+    updated_member = team_services.update_team_member(
+        user, team_member, TeamMemberRole.owner
+    )
+
+    assert updated_member.role == TeamMemberRole.owner
+
+
+@pytest.mark.django_db
+def test_update_team_member_cannot_remove_last_owner(team_owner):
+    error_msg = "Cannot remove last owner from team"
+    with pytest.raises(ValidationError, match=error_msg):
+        team_services.update_team_member(
+            team_owner.user, team_owner, TeamMemberRole.member
+        )
