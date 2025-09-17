@@ -111,15 +111,14 @@ class SettingsTeamDetailView(TeamDetailView, UserFormKwargs, FormView):
         return context
 
     def form_invalid(self, form):
-        messages.error(
-            self.request, "There was a problem performing the requested action"
-        )
+        error_message = "There was a problem performing the requested action"
+        messages.error(self.request, error_message)
         capture_exception(ValidationError(form.errors))
         return super().form_invalid(form)
 
     def form_valid(self, form):
         form.save()
-        if form.errors:  # Check for post-validation errors raised in form.save()
+        if form.errors:  # Check if there are any errors in the form post-validation
             return self.form_invalid(form)
         messages.success(self.request, "Action performed successfully")
         return redirect(self.object.settings_url)
@@ -202,6 +201,8 @@ class SettingsTeamLeaveView(TeamDetailView, UserFormKwargs, FormView):
     @transaction.atomic
     def form_valid(self, form):
         form.save()
+        if form.errors:
+            return self.form_invalid(form)
         return redirect(reverse("settings.teams"))
 
 

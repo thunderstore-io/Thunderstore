@@ -31,6 +31,11 @@ from thunderstore.api.cyberstorm.services.team import (
     disband_team,
     update_team_member,
 )
+from thunderstore.api.cyberstorm.services.team import (
+    create_team,
+    disband_team,
+    remove_team_member,
+)
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
@@ -38,6 +43,14 @@ from thunderstore.api.utils import (
 )
 from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
+
+
+def get_team_member_object_or_404(team_name: str, team_member: str) -> TeamMember:
+    return get_object_or_404(
+        TeamMember.objects.real_users(),
+        team__name=team_name,
+        user__username=team_member,
+    )
 
 
 class TeamPermissionsMixin:
@@ -149,6 +162,23 @@ class DisbandTeamAPIView(APIView):
     def delete(self, request, *args, **kwargs):
         team_name = kwargs["team_name"]
         disband_team(user=request.user, team_name=team_name)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RemoveTeamMemberAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.member.remove",
+        tags=["cyberstorm"],
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        team_member = get_team_member_object_or_404(
+            team_name=kwargs["team_name"],
+            team_member=kwargs["team_member"],
+        )
+        remove_team_member(agent=request.user, team_member=team_member)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

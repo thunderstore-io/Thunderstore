@@ -81,3 +81,13 @@ def update_team_member(
     team_member.save()
 
     return team_member
+
+@transaction.atomic
+def remove_team_member(agent: UserType, team_member: TeamMember) -> None:
+    team_member.team.ensure_user_can_access(agent)
+
+    if team_member.user != agent:
+        team_member.team.ensure_user_can_manage_members(agent)
+    team_member.team.ensure_member_can_be_removed(team_member)
+
+    team_member.delete()
