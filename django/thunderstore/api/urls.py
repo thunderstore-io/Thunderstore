@@ -27,6 +27,7 @@ from thunderstore.api.cyberstorm.views import (
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
 )
+from thunderstore.plugins.registry import plugin_registry
 
 cyberstorm_urls = [
     path(
@@ -164,4 +165,4 @@ cyberstorm_urls = [
         TeamServiceAccountListAPIView.as_view(),
         name="cyberstorm.team.service-account",
     ),
-]
+] + plugin_registry.get_cyberstorm_api_urls()
