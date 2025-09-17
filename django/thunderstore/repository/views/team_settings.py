@@ -239,7 +239,10 @@ class SettingsTeamServiceAccountView(TeamDetailView, UserFormKwargs, FormView):
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        form.save()
+        try:
+            form.save()
+        except ValidationError:
+            return self.form_invalid(form)
         messages.success(self.request, "Action performed successfully")
         return redirect(self.object.service_accounts_url)
 
@@ -254,11 +257,16 @@ class SettingsTeamAddServiceAccountView(TeamDetailView, UserFormKwargs, FormView
         return context
 
     def form_valid(self, form):
-        form.save()
+        try:
+            form.save()
+        except ValidationError:
+            return self.form_invalid(form)
+
         messages.success(self.request, "Service account added successfully")
         context = super().get_context_data()
         context["api_token"] = form.api_token
         context["nickname"] = form.cleaned_data["nickname"]
+
         return render(self.request, self.template_name, context)
 
 
