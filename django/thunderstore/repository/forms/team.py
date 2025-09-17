@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
-from thunderstore.api.cyberstorm.services.team import update_team
+from thunderstore.api.cyberstorm.services.team import remove_team_member, update_team
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import (
@@ -94,15 +94,17 @@ class RemoveTeamMemberForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.user = user
 
-    def clean_membership(self):
-        membership = self.cleaned_data["membership"]
-        if membership.user != self.user:
-            membership.team.ensure_user_can_manage_members(self.user)
-        membership.team.ensure_member_can_be_removed(membership)
-        return membership
-
     def save(self):
-        self.cleaned_data["membership"].delete()
+        if self.errors:
+            raise ValidationError(self.errors)
+
+        member = self.cleaned_data["membership"]
+
+        try:
+            remove_team_member(agent=self.user, member=member)
+        except ValidationError as e:
+            self.add_error(None, e)
+            raise ValidationError(self.errors)
 
 
 class EditTeamMemberForm(forms.ModelForm):
