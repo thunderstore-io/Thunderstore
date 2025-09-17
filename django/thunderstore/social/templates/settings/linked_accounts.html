@@ -4,6 +4,9 @@
 {% block title %}Linked Accounts{% endblock %}
 
 {% block settings_content %}
+<div class="text-danger mb-2">
+    {{ form.non_field_errors }}
+</div>
 {% for entry in backends.associated|dictsort:"provider" %}
     <div class="row text-large mb-2">
         <div class="col-5">
