@@ -21,6 +21,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamCreateAPIView,
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
+    TeamMemberRemoveAPIView,
     TeamServiceAccountListAPIView,
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
@@ -146,6 +147,11 @@ cyberstorm_urls = [
         "team/<str:team_name>/member/add/",
         TeamMemberAddAPIView.as_view(),
         name="cyberstorm.team.member.add",
+    ),
+    path(
+        "team/<str:team_name>/member/<str:username>/remove/",
+        TeamMemberRemoveAPIView.as_view(),
+        name="cyberstorm.team.member.remove",
     ),
     path(
         "team/<str:team_id>/service-account/",
