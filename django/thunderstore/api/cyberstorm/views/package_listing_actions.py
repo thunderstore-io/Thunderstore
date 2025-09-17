@@ -14,6 +14,7 @@ from thunderstore.api.cyberstorm.serializers.package_listing import (
 from thunderstore.api.cyberstorm.services.package_listing import (
     approve_package_listing,
     reject_package_listing,
+    unlist_package_listing,
     update_categories,
 )
 from thunderstore.repository.models import PackageListing
@@ -122,4 +123,23 @@ class ApprovePackageListingAPIView(APIView):
             listing=listing,
         )
 
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+
+
+class UnlistPackageListingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_id="cyberstorm.package_listing.unlist",
+        request_body=None,
+        responses={200: "Success"},
+        tags=["cyberstorm"],
+    )
+    def post(self, request, *args, **kwargs) -> Response:
+        listing = get_package_listing(
+            namespace_id=kwargs["namespace_id"],
+            package_name=kwargs["package_name"],
+            community_id=kwargs["community_id"],
+        )
+        unlist_package_listing(agent=request.user, listing=listing)
         return Response({"message": "Success"}, status=status.HTTP_200_OK)
