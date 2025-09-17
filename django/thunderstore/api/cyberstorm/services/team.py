@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Namespace, Team
-from thunderstore.repository.models.team import TeamMemberRole
+from thunderstore.repository.models.team import TeamMember, TeamMemberRole
 
 
 @transaction.atomic
@@ -42,3 +42,11 @@ def update_team(agent: UserType, team: Team, donation_link: str) -> Team:
     team.save()
 
     return team
+
+
+@transaction.atomic
+def remove_team_member(agent: UserType, member: TeamMember) -> None:
+    if member.user != agent:
+        member.team.ensure_user_can_manage_members(agent)
+    member.team.ensure_member_can_be_removed(member)
+    member.delete()
