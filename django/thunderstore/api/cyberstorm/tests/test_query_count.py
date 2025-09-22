@@ -162,14 +162,11 @@ def test_cyberstorm_team_member_list_query_count(api_client: APIClient):
     url = "/api/cyberstorm/team/{team_id}/member/"
     super_user = UserFactory.create(is_superuser=True)
     team = Team.create(name="Test_Team")
+    team.add_member(user=super_user, role=TeamMemberRole.owner)
 
     users = UserFactory.create_batch(20)
-    TeamMember.objects.bulk_create(
-        [
-            TeamMember(team=team, user=member_user, role=TeamMemberRole.member)
-            for member_user in users
-        ]
-    )
+    for user in users:
+        team.add_member(user=user, role=TeamMemberRole.member)
 
     api_client.force_authenticate(super_user)
     url = fill_path_params(url, {"team_id": team.name})
