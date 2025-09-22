@@ -48,6 +48,7 @@ ENDPOINTS = {
     },
     "DELETE": [
         "/api/cyberstorm/team/{team_name}/disband/",
+        "/api/cyberstorm/team/{team_name}/member/{username}/remove/",
     ],
 }
 

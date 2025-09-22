@@ -10,10 +10,12 @@ from thunderstore.core.factories import UserFactory
 from thunderstore.repository.models import PackageListing, TeamMemberRole
 
 
-def get_parameter_values(package_listing: PackageListing) -> dict:
+def get_parameter_values(
+    package_listing: PackageListing, username: Optional[str] = None
+) -> dict:
     service_account = package_listing.package.owner.service_accounts.first()
 
-    return {
+    parameters = {
         "community_id": package_listing.community.identifier,
         "namespace_id": package_listing.package.owner.get_namespace().name,
         "package_name": package_listing.package.name,
@@ -22,6 +24,11 @@ def get_parameter_values(package_listing: PackageListing) -> dict:
         "team_name": package_listing.package.owner.name,
         "uuid": service_account.uuid if service_account else "",
     }
+
+    if username:
+        parameters["username"] = username
+
+    return parameters
 
 
 def setup_superuser_with_package(package_listing, package_category=None):
