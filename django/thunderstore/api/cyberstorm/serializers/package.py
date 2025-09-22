@@ -1,3 +1,5 @@
+from typing import Optional
+
 from rest_framework import serializers
 
 from thunderstore.api.cyberstorm.serializers.community import (
@@ -55,3 +57,23 @@ class CyberstormPackagePreviewSerializer(serializers.Serializer):
     rating_count = serializers.IntegerField(min_value=0)
     size = serializers.IntegerField(min_value=0)
     datetime_created = serializers.DateTimeField()
+
+
+class CyberstormPackageDependencySerializer(serializers.Serializer):
+    description = serializers.SerializerMethodField()
+    icon_url = serializers.SerializerMethodField()
+    is_active = serializers.BooleanField(source="is_effectively_active")
+    name = serializers.CharField()
+    namespace = serializers.CharField(source="package.namespace.name")
+    version_number = serializers.CharField()
+    is_removed = serializers.BooleanField()
+
+    def get_description(self, obj: PackageVersion) -> str:
+        return (
+            obj.description
+            if obj.is_effectively_active
+            else "This package has been removed."
+        )
+
+    def get_icon_url(self, obj: PackageVersion) -> Optional[str]:
+        return obj.icon.url if obj.is_effectively_active else None
