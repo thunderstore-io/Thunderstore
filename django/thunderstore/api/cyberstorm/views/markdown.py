@@ -60,7 +60,7 @@ def get_package_version(
     version_number: Optional[str],
 ) -> PackageVersion:
     package = get_object_or_404(
-        Package.objects.active(),
+        Package.objects.active().select_related("latest"),
         namespace__name=namespace_id,
         name=package_name,
     )
