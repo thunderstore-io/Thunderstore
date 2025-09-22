@@ -16,7 +16,10 @@ from .package_listing_list import (
 )
 from .package_permissions import PackagePermissionsAPIView
 from .package_rating import RatePackageAPIView
-from .package_version_list import PackageVersionListAPIView
+from .package_version_list import (
+    PackageVersionDependenciesListAPIView,
+    PackageVersionListAPIView,
+)
 from .team import (
     DisbandTeamAPIView,
     TeamAPIView,
@@ -39,6 +42,7 @@ __all__ = [
     "PackageListingByNamespaceListAPIView",
     "PackagePermissionsAPIView",
     "PackageVersionChangelogAPIView",
+    "PackageVersionDependenciesListAPIView",
     "PackageVersionListAPIView",
     "PackageVersionReadmeAPIView",
     "TeamAPIView",
