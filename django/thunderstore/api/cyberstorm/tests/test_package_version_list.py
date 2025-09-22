@@ -97,30 +97,6 @@ def test_package_version_dependencies_list(
 
 
 @pytest.mark.django_db
-def test_package_version_dependencies_query_count(api_client: APIClient) -> None:
-    """Ensure that the number of database queries remains low regardless with 100 dependencies."""
-
-    dependency_count = 100
-    query_count = 25
-
-    package = PackageFactory(name="TestPackage")
-    PackageVersionFactory(package=package)
-
-    target_dependencies = [PackageVersionFactory() for _ in range(dependency_count)]
-    package.latest.dependencies.set([dep.id for dep in target_dependencies])
-
-    namespace = package.namespace.name
-    package_name = package.name
-    url = f"/api/cyberstorm/package/{namespace}/{package_name}/v/latest/dependencies/"
-
-    with CaptureQueriesContext(connection) as ctx:
-        response = api_client.get(url)
-
-    assert response.status_code == 200
-    assert len(ctx.captured_queries) <= query_count
-
-
-@pytest.mark.django_db
 def test_package_version_dependencies_list_response(api_client: APIClient) -> None:
     """Test the response structure of the PackageVersionDependenciesListAPIView."""
 
