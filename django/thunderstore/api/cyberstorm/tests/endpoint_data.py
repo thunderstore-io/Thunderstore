@@ -33,6 +33,7 @@ ENDPOINTS = {
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/report/": {
             "reason": "Spam",
         },
+        "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/unlist/": {},
         "/api/cyberstorm/package/{namespace_id}/{package_name}/deprecate/": {
             "deprecate": True,
         },

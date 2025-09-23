@@ -206,9 +206,6 @@ def validate_request_body_against_schema(
     errors = []
 
     req_schema = get_request_body_schema(schema, path, method)
-    if not req_schema:
-        errors.append(f"No request body schema found for {path}")
-        return errors
 
     try:
         validate(instance=request_body, schema=req_schema, resolver=resolver)
