@@ -6,6 +6,7 @@ ENDPOINTS = {
         "/api/cyberstorm/listing/{community_id}/",
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/",
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/",
+        "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/status/",
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/dependants/",
         "/api/cyberstorm/package/{community_id}/{namespace_id}/{package_name}/permissions/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/latest/changelog/",
