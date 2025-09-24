@@ -4,7 +4,11 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
-from thunderstore.api.cyberstorm.services.team import remove_team_member, update_team
+from thunderstore.api.cyberstorm.services.team import (
+    remove_team_member,
+    update_team,
+    update_team_member,
+)
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import (
@@ -116,30 +120,32 @@ class EditTeamMemberForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
 
-    def clean_role(self):
-        new_role = self.cleaned_data.get("role", None)
-        try:
-            team = self.instance.team
-        except ObjectDoesNotExist:
-            team = None
-        if team:
-            team.ensure_member_role_can_be_changed(
-                member=self.instance, new_role=new_role
-            )
-        else:
-            raise ValidationError("Team is missing")
-        return new_role
-
     def clean(self):
+        if not self.instance.pk:
+            raise ValidationError("Missing team member instance")
+
         try:
-            team = self.instance.team
+            self.instance.team
         except ObjectDoesNotExist:
-            team = None
-        if team:
-            team.ensure_user_can_manage_members(self.user)
-        else:
             raise ValidationError("Team is missing")
+
         return super().clean()
+
+    def save(self, *args, **kwargs):
+        if self.errors:
+            raise ValidationError(self.errors)
+
+        try:
+            update_team_member(
+                agent=self.user,
+                team_member=self.instance,
+                role=self.cleaned_data["role"],
+            )
+        except ValidationError as e:
+            self.add_error(None, e)
+            raise ValidationError(self.errors)
+
+        return self.instance
 
 
 class DisbandTeamForm(forms.ModelForm):

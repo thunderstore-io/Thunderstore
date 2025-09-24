@@ -110,14 +110,16 @@ class SettingsTeamDetailView(TeamDetailView, UserFormKwargs, FormView):
         return context
 
     def form_invalid(self, form):
-        messages.error(
-            self.request, "There was a problem performing the requested action"
-        )
+        error_msg = "There was a problem performing the requested action"
+        messages.error(self.request, error_msg)
         capture_exception(ValidationError(form.errors))
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        form.save()
+        try:
+            form.save()
+        except ValidationError:
+            return self.form_invalid(form)
         messages.success(self.request, "Action performed successfully")
         return redirect(self.object.settings_url)
 

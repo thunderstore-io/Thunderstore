@@ -385,6 +385,8 @@ def test_form_edit_team_member(
         membership.refresh_from_db()
         assert membership.role == new_role
     else:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -403,6 +405,8 @@ def test_form_edit_team_member_remove_last_owner() -> None:
         instance=last_owner,
         data={"role": TeamMemberRole.member},
     )
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert "Cannot remove last owner from team" in str(repr(form.errors))
 
