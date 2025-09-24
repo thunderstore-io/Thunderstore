@@ -142,7 +142,13 @@ def test_cyberstorm_PATCH_endpoint_schemas(
     user = setup_superuser_with_package(active_package_listing, package_category)
     api_client.force_authenticate(user)
 
-    param_values = get_parameter_values(active_package_listing)
+    team = user.teams.first().team
+    team_member = UserFactory(username="TestTeamMember")
+    team.add_member(user=team_member, role="member")
+
+    param_values = get_parameter_values(
+        active_package_listing, username=team_member.username
+    )
     schema = get_schema(api_client)
     resolver = get_resolver(schema)
     failures = []
