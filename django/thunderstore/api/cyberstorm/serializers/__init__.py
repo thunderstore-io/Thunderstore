@@ -18,6 +18,7 @@ from .team import (
     CyberstormTeamAddMemberRequestSerializer,
     CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
+    CyberstormTeamMemberUpdateSerializer,
     CyberstormTeamSerializer,
     CyberstormTeamUpdateSerializer,
 )
@@ -36,6 +37,7 @@ __all__ = [
     "CyberstormPackageTeamSerializer",
     "CyberstormServiceAccountSerializer",
     "CyberstormTeamMemberSerializer",
+    "CyberstormTeamMemberUpdateSerializer",
     "CyberstormTeamSerializer",
     "PackagePermissionsSerializer",
     "CyberstormTeamUpdateSerializer",
