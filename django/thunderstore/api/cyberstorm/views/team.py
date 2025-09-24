@@ -251,6 +251,7 @@ class UpdateTeamMemberAPIView(APIView):
     @conditional_swagger_auto_schema(
         operation_id="cyberstorm.team.member.update",
         tags=["cyberstorm"],
+        request_body=CyberstormTeamMemberUpdateSerializer,
         responses={status.HTTP_200_OK: serializer_class},
     )
     def patch(self, request, *args, **kwargs):
