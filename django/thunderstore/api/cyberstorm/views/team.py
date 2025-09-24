@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
+    CyberstormCreateServiceAccountSerializer,
     CyberstormCreateTeamSerializer,
     CyberstormServiceAccountSerializer,
     CyberstormTeamAddMemberRequestSerializer,
@@ -18,7 +19,9 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamUpdateSerializer,
 )
 from thunderstore.api.cyberstorm.services.team import (
+    create_service_account,
     create_team,
+    delete_service_account,
     disband_team,
     remove_team_member,
     update_team,
@@ -163,6 +166,50 @@ class DisbandTeamAPIView(APIView):
     def delete(self, request, *args, **kwargs):
         team_name = kwargs["team_name"]
         disband_team(user=request.user, team_name=team_name)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CreateServiceAccountAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormCreateServiceAccountSerializer,
+        operation_id="cyberstorm.team.service-account.create",
+        tags=["cyberstorm"],
+        responses={status.HTTP_201_CREATED: CyberstormCreateServiceAccountSerializer},
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = CyberstormCreateServiceAccountSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team = get_object_or_404(Team, name=kwargs["team_name"])
+
+        service_account, token = create_service_account(
+            agent=request.user,
+            team=team,
+            nickname=serializer.validated_data["nickname"],
+        )
+
+        response_data = {
+            "nickname": service_account.nickname,
+            "team_name": service_account.owner.name,
+            "api_token": token,
+        }
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class DeleteServiceAccountAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.service-account.delete",
+        tags=["cyberstorm"],
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        service_account = get_object_or_404(ServiceAccount, uuid=kwargs["uuid"])
+        delete_service_account(agent=request.user, service_account=service_account)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
