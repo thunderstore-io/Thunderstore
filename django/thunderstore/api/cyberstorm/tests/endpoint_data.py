@@ -42,6 +42,9 @@ ENDPOINTS = {
             "username": "TestUser",
             "role": "member",
         },
+        "/api/cyberstorm/team/{team_name}/service-account/create/": {
+            "nickname": "TestServiceAccount",
+        },
     },
     "PATCH": {
         "/api/cyberstorm/team/{team_name}/update/": {
@@ -51,6 +54,7 @@ ENDPOINTS = {
     "DELETE": [
         "/api/cyberstorm/team/{team_name}/disband/",
         "/api/cyberstorm/team/{team_name}/member/{username}/remove/",
+        "/api/cyberstorm/team/{team_name}/service-account/delete/{uuid}/",
     ],
 }
 

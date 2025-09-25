@@ -203,6 +203,7 @@ class DeleteServiceAccountAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @conditional_swagger_auto_schema(
+        request_body=None,
         operation_id="cyberstorm.team.service-account.delete",
         tags=["cyberstorm"],
         responses={status.HTTP_204_NO_CONTENT: ""},
