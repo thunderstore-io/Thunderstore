@@ -7,8 +7,10 @@ from thunderstore.api.cyberstorm.views import (
     CommunityListAPIView,
     CreateServiceAccountAPIView,
     DeleteServiceAccountAPIView,
+    DeleteUserAPIView,
     DeprecatePackageAPIView,
     DisbandTeamAPIView,
+    DisconnectUserLinkedAccountAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -181,5 +183,15 @@ cyberstorm_urls = [
         "team/<str:team_name>/service-account/delete/<uuid:uuid>/",
         DeleteServiceAccountAPIView.as_view(),
         name="cyberstorm.team.service-account.delete",
+    ),
+    path(
+        "user/delete/",
+        DeleteUserAPIView.as_view(),
+        name="cyberstorm.user.delete",
+    ),
+    path(
+        "user/linked-account/<str:provider>/disconnect/",
+        DisconnectUserLinkedAccountAPIView.as_view(),
+        name="cyberstorm.user.linked-account.disconnect",
     ),
 ]
