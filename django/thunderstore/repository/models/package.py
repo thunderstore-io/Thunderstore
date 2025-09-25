@@ -16,6 +16,7 @@ from thunderstore.cache.cache import cache_function_result
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.core.enums import OptionalBoolChoice
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
@@ -335,13 +336,17 @@ class Package(VisibilityMixin, AdminLinkMixin):
         ):
             return
 
-        self.owner.ensure_user_can_manage_packages(user)
+        errors, is_public = self.owner.validate_user_can_manage_packages(user)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
 
     def can_user_manage_deprecation(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_deprecation(user))
 
     def ensure_user_can_manage_wiki(self, user: Optional[UserType]) -> None:
-        return self.owner.ensure_user_can_manage_packages(user)
+        errors, is_public = self.owner.validate_user_can_manage_packages(user)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
 
     def can_user_manage_wiki(self, user: Optional[UserType]) -> bool:
         return self.owner.can_user_manage_packages(user)

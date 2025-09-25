@@ -12,8 +12,13 @@ from thunderstore.repository.models.team import TeamMemberRole
 def disband_team(user: UserType, team_name: str) -> None:
     teams = Team.objects.exclude(is_active=False)
     team = get_object_or_404(teams, name=team_name)
-    team.ensure_user_can_access(user)
-    team.ensure_user_can_disband(user)
+    validators = [team.validate_user_can_access, team.validate_user_can_disband]
+
+    for validator in validators:
+        errors, is_public = validator(user)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
+
     team.delete()
 
 
@@ -35,8 +40,15 @@ def create_team(user: UserType, team_name: str) -> Team:
 
 @transaction.atomic
 def update_team(agent: UserType, team: Team, donation_link: str) -> Team:
-    team.ensure_user_can_access(agent)
-    team.ensure_user_can_edit_info(agent)
+    validators = [
+        team.validate_user_can_access,
+        team.validate_user_can_edit_info,
+    ]
+
+    for validator in validators:
+        errors, is_public = validator(agent)
+        if errors:
+            raise PermissionValidationError(errors, is_public=is_public)
 
     team.donation_link = donation_link
     team.save()
