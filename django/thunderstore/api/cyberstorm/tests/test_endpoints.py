@@ -18,6 +18,7 @@ from thunderstore.api.cyberstorm.tests.utils import (
     validate_response_against_schema,
 )
 from thunderstore.api.urls import cyberstorm_urls
+from thunderstore.core.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -60,14 +61,18 @@ def test_cyberstorm_DELETE_endpoint_schemas(
     service_account.owner = active_package_listing.package.owner
     service_account.save(update_fields=("owner",))
 
-    param_values = get_parameter_values(active_package_listing)
+    team = user.teams.first().team
+    team_member = UserFactory.create()
+    team.add_member(team_member, role="member")
+
+    param_values = get_parameter_values(active_package_listing, team_member.username)
     schema = get_schema(api_client)
     resolver = get_resolver(schema)
 
     url = fill_path_params(api_path, param_values)
 
     if "disband" in api_path:
-        user.teams.first().team.owned_packages.all().delete()
+        team.owned_packages.all().delete()  # Cannot disband a team with packages
 
     response = api_client.delete(url, format="json")
 

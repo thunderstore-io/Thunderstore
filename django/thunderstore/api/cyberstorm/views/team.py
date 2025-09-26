@@ -20,6 +20,7 @@ from thunderstore.api.cyberstorm.serializers import (
 from thunderstore.api.cyberstorm.services.team import (
     create_team,
     disband_team,
+    remove_team_member,
     update_team,
 )
 from thunderstore.api.ordering import StrictOrderingFilter
@@ -116,6 +117,28 @@ class TeamMemberAddAPIView(APIView):
             return Response(CyberstormTeamAddMemberResponseSerializer(team_member).data)
         else:
             raise ValidationError(form.errors)
+
+
+class TeamMemberRemoveAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=None,
+        responses={204: ""},
+        operation_id="cyberstorm.team.member.remove",
+        tags=["cyberstorm"],
+    )
+    def delete(self, request, team_name, username):
+        team = get_object_or_404(Team, name=team_name)
+        member = get_object_or_404(
+            TeamMember.objects.real_users().select_related("user"),
+            team=team,
+            user__username=username,
+        )
+
+        remove_team_member(agent=request.user, member=member)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):

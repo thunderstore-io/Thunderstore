@@ -254,6 +254,8 @@ def test_form_remove_team_member(
         assert form.save() is None
         assert TeamMember.objects.filter(pk=membership).exists() is False
     else:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -295,6 +297,8 @@ def test_form_remove_team_member_last_owner() -> None:
         user=user,
         data={"membership": last_owner.pk},
     )
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert "Cannot remove last owner from team" in str(repr(form.errors))
 
