@@ -12,18 +12,27 @@ from django.db.models import (
     Sum,
     Value,
 )
-from rest_framework import serializers
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import serializers, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
     CyberstormTeamMemberSerializer,
+    PackageListingStatusResponseSerializer,
+)
+from thunderstore.api.cyberstorm.views.package_listing_actions import (
+    get_package_listing,
 )
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
-from thunderstore.community.models.community import Community
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
+from thunderstore.repository.views.package.detail import PermissionsChecker
 
 
 class DependencySerializer(serializers.Serializer):
@@ -218,3 +227,47 @@ def get_custom_package_listing(
     listing.dependant_count = get_package_dependants(listing.package.pk).count()
 
     return listing
+
+
+class PackageListingStatusAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PackageListingStatusResponseSerializer
+
+    @swagger_auto_schema(
+        operation_id="cyberstorm.package_listing.status",
+        responses={200: serializer_class},
+        tags=["cyberstorm"],
+    )
+    def get(
+        self, request, namespace_id: str, package_name: str, community_id: str
+    ) -> Response:
+        package_listing = get_package_listing(
+            namespace_id=namespace_id,
+            package_name=package_name,
+            community_id=community_id,
+        )
+        checker = PermissionsChecker(package_listing, request.user)
+
+        if not (checker.can_manage or checker.can_moderate):
+            error_msg = "You do not have permission to view review information."
+            raise PermissionDenied(error_msg)
+
+        response_data = {
+            "review_status": None,
+            "rejection_reason": None,
+            "internal_notes": None,
+            "listing_admin_url": None,
+        }
+
+        if checker.can_manage:
+            response_data["review_status"] = package_listing.review_status
+            response_data["rejection_reason"] = package_listing.rejection_reason
+
+        if checker.can_view_listing_admin_page:
+            response_data["listing_admin_url"] = package_listing.get_admin_url()
+
+        if checker.can_moderate:
+            response_data["internal_notes"] = package_listing.notes
+
+        serializer = self.serializer_class(response_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
