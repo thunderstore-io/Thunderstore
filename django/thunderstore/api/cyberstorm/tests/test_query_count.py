@@ -1,12 +1,14 @@
 import factory
 import pytest
+from rest_framework.test import APIClient
 
 from thunderstore.account.forms import CreateServiceAccountForm
 from thunderstore.api.cyberstorm.tests.endpoint_data import GET_TEST_CASES
-from thunderstore.community.models import Community
+from thunderstore.community.models import Community, PackageCategory
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import (
+    Package,
     PackageListing,
     Team,
     TeamMember,
@@ -26,7 +28,10 @@ MAX_QUERIES = 15
 @pytest.mark.django_db
 @pytest.mark.parametrize("test_case", GET_TEST_CASES)
 def test_cyberstorm_api_GET_query_count(
-    test_case, api_client, active_package_listing, package_category
+    test_case: str,
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    package_category: PackageCategory,
 ):
     api_path = test_case["path"]
     user = setup_superuser_with_package(active_package_listing, package_category)
@@ -43,7 +48,7 @@ def test_cyberstorm_api_GET_query_count(
 
 
 @pytest.mark.django_db
-def test_cyberstorm_community_list_query_count(api_client):
+def test_cyberstorm_community_list_query_count(api_client: APIClient):
     path = "/api/cyberstorm/community/"
 
     communities = []
@@ -64,7 +69,10 @@ def test_cyberstorm_community_list_query_count(api_client):
 
 
 @pytest.mark.django_db
-def test_cyberstorm_package_versions_list_query_count(api_client, active_package):
+def test_cyberstorm_package_versions_list_query_count(
+    api_client: APIClient,
+    active_package: Package,
+):
     url = "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/"
 
     PackageVersionFactory.create_batch(
@@ -102,7 +110,9 @@ def test_cyberstorm_package_versions_list_query_count(api_client, active_package
         {"path": "/api/cyberstorm/listing/{community_id}/{namespace_id}/"},
     ],
 )
-def test_cyberstorm_package_listing_list_query_count(test_case, api_client):
+def test_cyberstorm_package_listing_list_query_count(
+    test_case: str, api_client: APIClient
+):
     amount = 20
     community = Community.objects.create(
         name="Test_Community", identifier="test_community"
@@ -148,18 +158,15 @@ def test_cyberstorm_package_listing_list_query_count(test_case, api_client):
 
 
 @pytest.mark.django_db
-def test_cyberstorm_team_member_list_query_count(api_client):
+def test_cyberstorm_team_member_list_query_count(api_client: APIClient):
     url = "/api/cyberstorm/team/{team_id}/member/"
     super_user = UserFactory.create(is_superuser=True)
     team = Team.create(name="Test_Team")
+    team.add_member(user=super_user, role=TeamMemberRole.owner)
 
     users = UserFactory.create_batch(20)
-    TeamMember.objects.bulk_create(
-        [
-            TeamMember(team=team, user=member_user, role=TeamMemberRole.member)
-            for member_user in users
-        ]
-    )
+    for user in users:
+        team.add_member(user=user, role=TeamMemberRole.member)
 
     api_client.force_authenticate(super_user)
     url = fill_path_params(url, {"team_id": team.name})
@@ -173,7 +180,7 @@ def test_cyberstorm_team_member_list_query_count(api_client):
 
 
 @pytest.mark.django_db
-def test_cyberstorm_team_service_accounts_list_query_count(api_client):
+def test_cyberstorm_team_service_accounts_list_query_count(api_client: APIClient):
     url = "/api/cyberstorm/team/{team_id}/service-account/"
     user = UserFactory.create(is_superuser=True)
 
@@ -199,4 +206,32 @@ def test_cyberstorm_team_service_accounts_list_query_count(api_client):
         method="get",
         path=url,
         max_queries=MAX_QUERIES,
+    )
+
+
+@pytest.mark.django_db
+def test_package_version_dependencies_query_count(api_client: APIClient) -> None:
+    dependency_count = 20  # One page of dependencies
+
+    package = PackageFactory(name="TestPackage")
+    PackageVersionFactory(package=package)
+
+    target_dependencies = [PackageVersionFactory() for _ in range(dependency_count)]
+    package.latest.dependencies.set([dep.id for dep in target_dependencies])
+
+    url = "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version}/dependencies/"
+
+    path_params = {
+        "namespace_id": package.namespace.name,
+        "package_name": package.name,
+        "version": "latest",
+    }
+
+    path = fill_path_params(url, path_params)
+
+    validate_max_queries(
+        client=api_client,
+        method="get",
+        path=path,
+        max_queries=25,  # TODO: this could be optimized further
     )

@@ -215,6 +215,13 @@ def validate_max_queries(
     with CaptureQueriesContext(connection) as ctx:
         response = request_func(path, data=data or {}, **kwargs)
 
+    allowed_statuses = [200, 201, 202, 204]
+    if response.status_code not in allowed_statuses:
+        raise AssertionError(
+            f"{method} {path} returned status {response.status_code}, "
+            f"expected one of {allowed_statuses}."
+        )
+
     num_queries = len(ctx.captured_queries)
     if num_queries > max_queries:
         queries_str = "\n".join(q["sql"] for q in ctx.captured_queries)

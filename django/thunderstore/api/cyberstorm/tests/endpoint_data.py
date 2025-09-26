@@ -12,6 +12,7 @@ ENDPOINTS = {
         "/api/cyberstorm/package/{namespace_id}/{package_name}/latest/readme/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/changelog/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/readme/",
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/",
         "/api/cyberstorm/team/{team_id}/",
         "/api/cyberstorm/team/{team_id}/member/",
