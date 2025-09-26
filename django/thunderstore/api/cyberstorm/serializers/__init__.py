@@ -10,6 +10,7 @@ from .package import (
     PackagePermissionsSerializer,
 )
 from .package_listing import PackageListingStatusResponseSerializer
+from .package_version import PackageVersionResponseSerializer
 from .team import (
     CyberstormCreateServiceAccountSerializer,
     CyberstormCreateTeamSerializer,
@@ -40,4 +41,5 @@ __all__ = [
     "CyberstormTeamUpdateSerializer",
     "CyberstormPackageDependencySerializer",
     "PackageListingStatusResponseSerializer",
+    "PackageVersionResponseSerializer",
 ]
