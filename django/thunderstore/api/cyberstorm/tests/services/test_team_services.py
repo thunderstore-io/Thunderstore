@@ -3,9 +3,9 @@ from django.core.exceptions import ValidationError
 from django.http import Http404
 
 from conftest import TestUserTypes
-from thunderstore.account.factories import UserFactory
 from thunderstore.api.cyberstorm.services import team as team_services
 from thunderstore.core.exceptions import PermissionValidationError
+from thunderstore.core.factories import UserFactory
 from thunderstore.repository.models import Namespace, Team, TeamMemberRole
 from thunderstore.repository.models.team import TeamMember
 
