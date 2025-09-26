@@ -22,7 +22,8 @@ from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
-    CyberstormTeamMemberSerializer,
+    CyberstormPackageTeamSerializer,
+    EmptyStringAsNoneField,
     PackageListingStatusResponseSerializer,
 )
 from thunderstore.api.cyberstorm.views.package_listing_actions import (
@@ -73,32 +74,6 @@ class DependencySerializer(serializers.Serializer):
         return obj.version_is_unavailable
 
 
-class TeamSerializer(serializers.Serializer):
-    """
-    Minimal information to present the team on package detail view.
-    """
-
-    name = serializers.CharField()
-    members = CyberstormTeamMemberSerializer(many=True, source="public_members")
-
-
-class EmptyStringAsNoneField(serializers.Field):
-    """
-    Serialize empty string to None and deserialize vice versa.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.allow_null = True
-        self.allow_blank = True
-
-    def to_representation(self, value):
-        return None if value == "" else value
-
-    def to_internal_value(self, data):
-        return "" if data is None else data
-
-
 class ResponseSerializer(serializers.Serializer):
     """
     Data shown on package detail view.
@@ -132,7 +107,7 @@ class ResponseSerializer(serializers.Serializer):
     namespace = serializers.CharField(source="package.namespace.name")
     rating_count = serializers.IntegerField(min_value=0)
     size = serializers.IntegerField(min_value=0, source="package.latest.file_size")
-    team = TeamSerializer(source="package.owner")
+    team = CyberstormPackageTeamSerializer(source="package.owner")
     website_url = EmptyStringAsNoneField(source="package.latest.website_url")
 
 

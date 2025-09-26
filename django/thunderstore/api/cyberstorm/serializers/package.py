@@ -5,6 +5,7 @@ from rest_framework import serializers
 from thunderstore.api.cyberstorm.serializers.community import (
     CyberstormPackageCategorySerializer,
 )
+from thunderstore.api.cyberstorm.serializers.team import CyberstormTeamMemberSerializer
 from thunderstore.community.models import Community
 from thunderstore.repository.models import Namespace, Package, PackageVersion
 
@@ -77,3 +78,12 @@ class CyberstormPackageDependencySerializer(serializers.Serializer):
 
     def get_icon_url(self, obj: PackageVersion) -> Optional[str]:
         return obj.icon.url if obj.is_effectively_active else None
+
+
+class CyberstormPackageTeamSerializer(serializers.Serializer):
+    """
+    Minimal information to present the team on package detail view.
+    """
+
+    name = serializers.CharField()
+    members = CyberstormTeamMemberSerializer(many=True, source="public_members")
