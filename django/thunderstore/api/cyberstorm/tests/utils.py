@@ -5,6 +5,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from jsonschema import RefResolver, ValidationError, validate
 from rest_framework.test import APIClient
+from social_django.models import UserSocialAuth
 
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.models import PackageListing, TeamMemberRole
@@ -23,6 +24,7 @@ def get_parameter_values(
         "team_id": package_listing.package.owner.name,
         "team_name": package_listing.package.owner.name,
         "uuid": service_account.uuid if service_account else "",
+        "provider": "discord",
     }
 
     if username:
@@ -31,8 +33,19 @@ def get_parameter_values(
     return parameters
 
 
+def _add_social_auth_to_user(user):
+    providers = ["discord", "github"]
+    for provider in providers:
+        UserSocialAuth.objects.create(
+            user=user,
+            provider=provider,
+            uid=f"1234567890-{provider}",
+        )
+
+
 def setup_superuser_with_package(package_listing, package_category=None):
     user = UserFactory.create(is_superuser=True)
+    _add_social_auth_to_user(user)
 
     UserFactory.create(username="TestUser", email="test@user.dev", is_active=True)
 
