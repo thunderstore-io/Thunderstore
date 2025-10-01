@@ -32,6 +32,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamServiceAccountListAPIView,
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
+    UpdateTeamMemberAPIView,
 )
 
 cyberstorm_urls = [
@@ -199,5 +200,10 @@ cyberstorm_urls = [
         "user/linked-account/<str:provider>/disconnect/",
         DisconnectUserLinkedAccountAPIView.as_view(),
         name="cyberstorm.user.linked-account.disconnect",
+    ),
+    path(
+        "team/<str:team_name>/member/<str:team_member>/update/",
+        UpdateTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.member.update",
     ),
 ]

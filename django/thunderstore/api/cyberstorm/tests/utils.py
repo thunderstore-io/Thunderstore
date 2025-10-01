@@ -29,6 +29,7 @@ def get_parameter_values(
 
     if username:
         parameters["username"] = username
+        parameters["team_member"] = username
 
     return parameters
 

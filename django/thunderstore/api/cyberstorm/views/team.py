@@ -15,6 +15,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamAddMemberRequestSerializer,
     CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
+    CyberstormTeamMemberUpdateSerializer,
     CyberstormTeamSerializer,
     CyberstormTeamUpdateSerializer,
 )
@@ -25,6 +26,7 @@ from thunderstore.api.cyberstorm.services.team import (
     disband_team,
     remove_team_member,
     update_team,
+    update_team_member,
 )
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
@@ -239,3 +241,34 @@ class UpdateTeamAPIView(APIView):
 
         return_data = self.serializer_class(instance=updated_team).data
         return Response(return_data, status=status.HTTP_200_OK)
+
+
+class UpdateTeamMemberAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CyberstormTeamMemberUpdateSerializer
+    http_method_names = ["patch"]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.member.update",
+        tags=["cyberstorm"],
+        request_body=CyberstormTeamMemberUpdateSerializer,
+        responses={status.HTTP_200_OK: serializer_class},
+    )
+    def patch(self, request, *args, **kwargs):
+        team_member = get_object_or_404(
+            TeamMember.objects.real_users(),
+            team__name=self.kwargs["team_name"],
+            user__username=self.kwargs["team_member"],
+        )
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team_member = update_team_member(
+            agent=request.user,
+            team_member=team_member,
+            role=serializer.validated_data["role"],
+        )
+
+        serializer = self.serializer_class(instance=team_member)
+        return Response(serializer.data, status=status.HTTP_200_OK)
