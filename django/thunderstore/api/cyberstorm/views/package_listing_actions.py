@@ -164,7 +164,7 @@ class ReportPackageListingAPIView(APIView):
 class UnlistPackageListingAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
+    @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package_listing.unlist",
         request_body=None,
         responses={200: "Success"},
