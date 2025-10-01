@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -49,7 +50,7 @@ def perform_package_listing_action_test(
     user_type: str,
     url: str,
     data: dict,
-    expected_status_code_map: dict = None,
+    expected_status_code: Optional[dict] = None,
 ):
     user = TestUserTypes.get_user_by_type(user_type)
 
