@@ -13,9 +13,13 @@ from thunderstore.api.cyberstorm.serializers.package_listing import (
 from thunderstore.api.cyberstorm.services.package_listing import (
     approve_package_listing,
     reject_package_listing,
+    report_package_listing,
     update_categories,
 )
 from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.community.api.experimental.serializers import (
+    PackageListingReportRequestSerializer,
+)
 from thunderstore.repository.models import PackageListing
 
 
@@ -120,6 +124,37 @@ class ApprovePackageListingAPIView(APIView):
             agent=request.user,
             notes=serializer.validated_data.get("internal_notes"),
             listing=listing,
+        )
+
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+
+
+class ReportPackageListingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.package_listing.report",
+        tags=["cyberstorm"],
+        request_body=PackageListingReportRequestSerializer,
+        responses={200: "Success"},
+    )
+    def post(self, request, *args, **kwargs) -> Response:
+        listing: PackageListing = get_package_listing(
+            namespace_id=kwargs["namespace_id"],
+            package_name=kwargs["package_name"],
+            community_id=kwargs["community_id"],
+        )
+
+        request_serializer = PackageListingReportRequestSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+
+        report_package_listing(
+            agent=request.user,
+            reason=request_serializer.validated_data.get("reason"),
+            package=listing.package,
+            package_listing=listing,
+            package_version=request_serializer.validated_data.get("version"),
+            description=request_serializer.validated_data.get("description"),
         )
 
         return Response({"message": "Success"}, status=status.HTTP_200_OK)
