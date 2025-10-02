@@ -30,6 +30,8 @@ def get_reject_url(package_listing):
 
 def get_report_url(package_listing):
     return f"{get_base_url(package_listing)}/report/"
+
+
 def get_unlist_url(package_listing):
     return f"{get_base_url(package_listing)}/unlist/"
 
@@ -50,7 +52,7 @@ def perform_package_listing_action_test(
     user_type: str,
     url: str,
     data: dict,
-    expected_status_code: Optional[dict] = None,
+    expected_status_code_map: Optional[dict] = None,
 ):
     user = TestUserTypes.get_user_by_type(user_type)
 
@@ -65,8 +67,8 @@ def perform_package_listing_action_test(
 
     package_listing.refresh_from_db()
 
-    if expected_status_code is None:
-        expected_status_code = {
+    if expected_status_code_map is None:
+        expected_status_code_map = {
             TestUserTypes.no_user: 401,
             TestUserTypes.unauthenticated: 401,
             TestUserTypes.regular_user: 403,
@@ -259,7 +261,7 @@ def test_unlist_package_listing(
     user_type: str,
 ):
 
-    expected_status_code = {
+    expected_status_code_map = {
         TestUserTypes.no_user: 401,
         TestUserTypes.unauthenticated: 401,
         TestUserTypes.regular_user: 403,
@@ -275,5 +277,5 @@ def test_unlist_package_listing(
         user_type=user_type,
         url=get_unlist_url(active_package_listing),
         data={},
-        expected_status_code=expected_status_code,
+        expected_status_code_map=expected_status_code_map,
     )
