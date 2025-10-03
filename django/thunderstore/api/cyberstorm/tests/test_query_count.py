@@ -233,5 +233,5 @@ def test_package_version_dependencies_query_count(api_client: APIClient) -> None
         client=api_client,
         method="get",
         path=path,
-        max_queries=25,  # TODO: this could be optimized further
+        max_queries=MAX_QUERIES,
     )

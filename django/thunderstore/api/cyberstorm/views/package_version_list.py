@@ -1,4 +1,4 @@
-from django.db.models import QuerySet
+from django.db.models import Exists, OuterRef, QuerySet
 from rest_framework import serializers
 from rest_framework.generics import ListAPIView, get_object_or_404
 
@@ -54,6 +54,13 @@ class PackageVersionDependenciesListAPIView(CyberstormAutoSchemaMixin, ListAPIVi
         qs = (
             package_version.dependencies.all()
             .select_related("package", "package__namespace")
+            .annotate(
+                package_has_active_versions=Exists(
+                    PackageVersion.objects.filter(
+                        package_id=OuterRef("package__pk"), is_active=True
+                    )
+                )
+            )
             .order_by("package__namespace__name", "package__name")
         )
 
