@@ -1,8 +1,6 @@
 from typing import Optional
 
 import pytest
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
@@ -134,3 +132,35 @@ def test_package_version_dependencies_list_response(api_client: APIClient) -> No
 
     assert response.status_code == 200
     assert response.json() == expected_data
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "is_active, is_removed",
+    [
+        (False, True),
+        (True, False),
+    ],
+)
+def test_package_version_dependencies_list_version_is_active(
+    api_client: APIClient,
+    is_active: bool,
+    is_removed: bool,
+) -> None:
+    """Test the is_removed field in the PackageVersionDependenciesListAPIView."""
+
+    package = PackageFactory(name="TestPackage")
+    package_version = PackageVersionFactory(package=package)
+
+    dependency = PackageVersionFactory(is_active=is_active)
+    package_version.dependencies.set([dependency.id])
+
+    namespace = package.namespace.name
+    package_name = package.name
+
+    url = f"/api/cyberstorm/package/{namespace}/{package_name}/v/latest/dependencies/"
+    response = api_client.get(url)
+
+    assert response.status_code == 200
+    assert response.json()["results"][0]["is_removed"] == is_removed
+    assert response.json()["results"][0]["is_active"] == is_active
