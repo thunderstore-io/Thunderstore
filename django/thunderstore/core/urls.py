@@ -12,6 +12,8 @@ from thunderstore.community.views import CommunityListView
 from thunderstore.frontend.views import (
     ManifestV1ValidatorView,
     MarkdownPreviewView,
+    ThumbnailRedirectView,
+    ThumbnailServeView,
     ads_txt_view,
     robots_txt_view,
 )
@@ -56,6 +58,16 @@ urlpatterns = [
         name="tools.manifest-v1-validator",
     ),
     path("legal/", include((legal_urls, "contracts"), namespace="contracts")),
+    path(
+        "thumbnail-redirect/<path:path>/",
+        ThumbnailRedirectView.as_view(),
+        name="cdn_thumb_redirect",
+    ),
+    path(
+        "thumbnail-serve/<path:path>/",
+        ThumbnailServeView.as_view(),
+        name="cdn_thumb_serve",
+    ),
 ]
 
 schema_view = get_schema_view(
