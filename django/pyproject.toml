@@ -45,6 +45,7 @@ paypal-api = { path = "../python-packages/paypal-api", develop = true }
 ts-subsys = { path = "../python-packages/ts-subsys", develop = true }
 ts-scanners = { path = "../python-packages/ts-scanners", develop = true }
 ts-moderation = { path = "../python-packages/ts-moderation", develop = true }
+ts-kafka = { path = "../python-packages/ts-kafka", develop = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"

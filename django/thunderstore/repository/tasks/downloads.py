@@ -8,6 +8,8 @@ from thunderstore.core.settings import CeleryQueues
 from thunderstore.metrics.models import PackageVersionDownloadEvent
 from thunderstore.repository.models import PackageVersion
 
+from ts_kafka import publish_event
+
 TASK_LOG_VERSION_DOWNLOAD = "thunderstore.repository.tasks.log_version_download"
 
 
@@ -20,4 +22,13 @@ def log_version_download(version_id: int, timestamp: str):
         )
         PackageVersion.objects.filter(id=version_id).update(
             downloads=F("downloads") + 1
+        )
+
+        # Only publish metrics event if the DB transaction actually succeeds
+        transaction.on_commit(
+            lambda: publish_event(
+                "downloads",
+                value=str(version_id).encode("utf-8"),
+                headers=[("timestamp", timestamp.encode("utf-8"))],
+            )
         )

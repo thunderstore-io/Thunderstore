@@ -19,10 +19,13 @@ from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
 from thunderstore.core.utils import check_validity
+from thunderstore.core.kafka import KafkaTopics, PackageEvents
 from thunderstore.permissions.mixins import VisibilityMixin
 from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.consts import PACKAGE_NAME_REGEX
+
+from ts_kafka.producer import publish_event
 
 if TYPE_CHECKING:
     from thunderstore.repository.models import PackageWiki
@@ -299,13 +302,35 @@ class Package(VisibilityMixin, AdminLinkMixin):
     def handle_deleted_version(self, version):
         self.recache_latest()
 
+    @transaction.atomic
     def deprecate(self):
         self.is_deprecated = True
         self.save(update_fields=("is_deprecated",))
+        transaction.on_commit(
+            lambda: publish_event(
+                KafkaTopics.METRICS_PACKAGES,
+                key=PackageEvents.PACKAGE_DEPRECATED,
+                value={
+                    "package_id": str(self.id),
+                    "package_name": self.full_package_name,
+                },
+            )
+        )
 
+    @transaction.atomic
     def undeprecate(self):
         self.is_deprecated = False
         self.save(update_fields=("is_deprecated",))
+        transaction.on_commit(
+            lambda: publish_event(
+                KafkaTopics.METRICS_PACKAGES,
+                key=PackageEvents.PACKAGE_UNDEPRECATED,
+                value={
+                    "package_id": str(self.id),
+                    "package_name": self.full_package_name,
+                },
+            )
+        )
 
     def deactivate(self):
         self.is_active = False

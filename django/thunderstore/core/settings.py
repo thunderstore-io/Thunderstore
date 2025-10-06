@@ -136,6 +136,10 @@ env = environ.Env(
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
     CACHALOT_ENABLED=(bool, True),
     DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
+    KAFKA_BOOTSTRAP_SERVERS=(str, ""),
+    KAFKA_CA_PEM=(str, ""),
+    KAFKA_CERT_PEM=(str, ""),
+    KAFKA_KEY_PEM=(str, ""),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -391,6 +395,7 @@ class CeleryQueues:
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
+    KafkaEvents = "kafka.events"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
@@ -583,6 +588,28 @@ REST_FRAMEWORK = {
 # Thumbnails
 
 THUMBNAIL_QUALITY = 95
+
+# Kafka configuration
+
+KAFKA_CONFIG = {
+    "bootstrap.servers": env.str("KAFKA_BOOTSTRAP_SERVERS"),
+    "batch.size": env.int("KAFKA_BATCH_SIZE", 200000),
+    "linger.ms": env.int("KAFKA_LINGER_MS", 100),
+    "compression.type": env.str("KAFKA_COMPRESSION_TYPE", "lz4"),
+    "acks": env.int("KAFKA_ACKS", 1),
+    "max.in.flight.requests.per.connection": env.int("KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION", 5),
+    "retries": env.int("KAFKA_RETRIES", 0),
+    "enable.idempotence": env.bool("KAFKA_ENABLE_IDEMPOTENCE", False),
+    "request.timeout.ms": env.int("KAFKA_REQUEST_TIMEOUT_MS", 30000),
+    "delivery.timeout.ms": env.int("KAFKA_DELIVERY_TIMEOUT_MS", 120000),
+
+    # Auth
+    "security.protocol": "SSL",
+    "ssl.ca.pem": env.str("KAFKA_CA_PEM"),
+    "ssl.certificate.pem": env.str("KAFKA_CERT_PEM"),
+    "ssl.key.pem": env.str("KAFKA_KEY_PEM"),
+}
+
 
 #######################################
 #               STORAGE               #
