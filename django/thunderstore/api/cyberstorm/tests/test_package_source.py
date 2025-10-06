@@ -1,8 +1,13 @@
 import pytest
 from rest_framework.test import APIClient
 
+from thunderstore.api.urls import cyberstorm_urls
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
 from thunderstore.repository.models import Package
+
+HAS_CYBERSTORM_SOURCE = "packages.api.detail.source" in [
+    x.name for x in cyberstorm_urls
+]
 
 
 def get_package_source_endpoint_url(package: Package, version: str = "") -> str:
@@ -18,6 +23,9 @@ def get_package_source_endpoint_url(package: Package, version: str = "") -> str:
 
 @pytest.mark.django_db
 def test_package_source_endpoint(api_client: APIClient):
+    if not HAS_CYBERSTORM_SOURCE:
+        pytest.skip("Cyberstorm source endpoint is not enabled")
+
     package = PackageFactory(is_active=True)
     PackageVersionFactory(package=package)
     url = get_package_source_endpoint_url(package)
@@ -27,6 +35,9 @@ def test_package_source_endpoint(api_client: APIClient):
 
 @pytest.mark.django_db
 def test_package_not_found(api_client: APIClient):
+    if not HAS_CYBERSTORM_SOURCE:
+        pytest.skip("Cyberstorm source endpoint is not enabled")
+
     package = PackageFactory(is_active=False)
     PackageVersionFactory(package=package)
 
@@ -39,6 +50,9 @@ def test_package_not_found(api_client: APIClient):
 
 @pytest.mark.django_db
 def test_package_version_not_found(api_client: APIClient):
+    if not HAS_CYBERSTORM_SOURCE:
+        pytest.skip("Cyberstorm source endpoint is not enabled")
+
     package = PackageFactory(is_active=True)
     PackageVersionFactory(package=package)
     version = package.available_versions.first()
@@ -54,6 +68,9 @@ def test_package_version_not_found(api_client: APIClient):
 
 @pytest.mark.django_db
 def test_package_source_response_format(api_client: APIClient):
+    if not HAS_CYBERSTORM_SOURCE:
+        pytest.skip("Cyberstorm source endpoint is not enabled")
+
     package = PackageFactory(is_active=True)
     PackageVersionFactory(package=package)
     url = get_package_source_endpoint_url(package)
