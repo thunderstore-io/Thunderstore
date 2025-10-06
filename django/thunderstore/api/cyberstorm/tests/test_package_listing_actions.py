@@ -36,16 +36,6 @@ def get_unlist_url(package_listing):
     return f"{get_base_url(package_listing)}/unlist/"
 
 
-def perform_404_test(
-    api_client: APIClient,
-    active_package_listing: PackageListing,
-    user: UserType,
-    url: str,
-):
-    active_package_listing.package.owner.add_member(user, role="owner")
-    api_client.force_authenticate(user=user)
-
-
 def perform_package_listing_action_test(
     api_client: APIClient,
     package_listing: PackageListing,
