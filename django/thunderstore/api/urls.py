@@ -35,6 +35,7 @@ from thunderstore.api.cyberstorm.views import (
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
 )
+from thunderstore.plugins.registry import plugin_registry
 
 cyberstorm_urls = [
     path(
@@ -213,3 +214,5 @@ cyberstorm_urls = [
         name="cyberstorm.user.linked-account.disconnect",
     ),
 ]
+
+cyberstorm_urls += plugin_registry.get_cyberstorm_api_urls()
