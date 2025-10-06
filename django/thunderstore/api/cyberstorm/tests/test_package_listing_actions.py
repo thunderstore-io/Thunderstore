@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -6,6 +7,8 @@ from rest_framework.test import APIClient
 
 from conftest import TestUserTypes, UserType
 from thunderstore.community.models import PackageCategory, PackageListing
+
+PACKAGE_LISTING_ACTIONS = ["update", "approve", "reject", "report", "unlist"]
 
 
 def get_base_url(package_listing):
@@ -31,13 +34,17 @@ def get_report_url(package_listing):
     return f"{get_base_url(package_listing)}/report/"
 
 
+def get_unlist_url(package_listing):
+    return f"{get_base_url(package_listing)}/unlist/"
+
+
 def perform_package_listing_action_test(
     api_client: APIClient,
     package_listing: PackageListing,
     user_type: str,
     url: str,
     data: dict,
-    expected_status_code_map: dict = None,
+    expected_status_code_map: Optional[dict] = None,
 ):
     user = TestUserTypes.get_user_by_type(user_type)
 
@@ -52,7 +59,7 @@ def perform_package_listing_action_test(
 
     package_listing.refresh_from_db()
 
-    if not expected_status_code_map:
+    if expected_status_code_map is None:
         expected_status_code_map = {
             TestUserTypes.no_user: 401,
             TestUserTypes.unauthenticated: 401,
@@ -67,7 +74,7 @@ def perform_package_listing_action_test(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("url_action", ["update", "approve", "reject", "report"])
+@pytest.mark.parametrize("url_action", PACKAGE_LISTING_ACTIONS)
 @pytest.mark.parametrize(
     "invalid_field", ["community_id", "namespace_id", "package_name"]
 )
@@ -236,3 +243,31 @@ def test_report_package_listing_required_fields(
 
     assert response.status_code == 400
     assert response.json() == {"reason": ["This field is required."]}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_unlist_package_listing(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    user_type: str,
+):
+
+    expected_status_code_map = {
+        TestUserTypes.no_user: 401,
+        TestUserTypes.unauthenticated: 401,
+        TestUserTypes.regular_user: 403,
+        TestUserTypes.deactivated_user: 403,
+        TestUserTypes.service_account: 403,
+        TestUserTypes.site_admin: 403,
+        TestUserTypes.superuser: 200,
+    }
+
+    perform_package_listing_action_test(
+        api_client=api_client,
+        package_listing=active_package_listing,
+        user_type=user_type,
+        url=get_unlist_url(active_package_listing),
+        data={},
+        expected_status_code_map=expected_status_code_map,
+    )

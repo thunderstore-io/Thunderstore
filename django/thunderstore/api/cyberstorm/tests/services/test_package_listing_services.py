@@ -4,6 +4,7 @@ from conftest import TestUserTypes
 from thunderstore.api.cyberstorm.services.package_listing import (
     approve_package_listing,
     reject_package_listing,
+    unlist_package_listing,
     update_categories,
 )
 from thunderstore.community.consts import PackageListingReviewStatus
@@ -145,3 +146,29 @@ def test_reject_package_listing_no_community_membership(active_package_listing, 
             notes="This package contains inappropriate content.",
             listing=active_package_listing,
         )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_role, can_unlist",
+    [
+        (TestUserTypes.no_user, False),
+        (TestUserTypes.unauthenticated, False),
+        (TestUserTypes.regular_user, False),
+        (TestUserTypes.deactivated_user, False),
+        (TestUserTypes.service_account, False),
+        (TestUserTypes.site_admin, False),
+        (TestUserTypes.superuser, True),
+    ],
+)
+def test_unlist_package_listing(active_package_listing, user_role, can_unlist):
+    agent = TestUserTypes.get_user_by_type(user_role)
+
+    if can_unlist:
+        unlist_package_listing(agent=agent, listing=active_package_listing)
+        active_package_listing.refresh_from_db()
+        assert active_package_listing.package.is_active is False
+    else:
+        with pytest.raises(PermissionValidationError):
+            unlist_package_listing(agent=agent, listing=active_package_listing)
+        assert active_package_listing.package.is_active is True
