@@ -8,6 +8,8 @@ from rest_framework.test import APIClient
 from conftest import TestUserTypes, UserType
 from thunderstore.community.models import PackageCategory, PackageListing
 
+PACKAGE_LISTING_ACTIONS = ["update", "approve", "reject", "report", "unlist"]
+
 
 def get_base_url(package_listing):
     namespace_id = package_listing.package.namespace.name
@@ -72,7 +74,7 @@ def perform_package_listing_action_test(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("url_action", ["update", "approve", "reject", "report"])
+@pytest.mark.parametrize("url_action", PACKAGE_LISTING_ACTIONS)
 @pytest.mark.parametrize(
     "invalid_field", ["community_id", "namespace_id", "package_name"]
 )
