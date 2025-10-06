@@ -34,6 +34,7 @@ from .team import (
     TeamMemberRemoveAPIView,
     TeamServiceAccountListAPIView,
     UpdateTeamAPIView,
+    UpdateTeamMemberAPIView,
 )
 from .user import DeleteUserAPIView, DisconnectUserLinkedAccountAPIView
 
@@ -71,4 +72,5 @@ __all__ = [
     "UpdateTeamAPIView",
     "ReportPackageListingAPIView",
     "UnlistPackageListingAPIView",
+    "UpdateTeamMemberAPIView",
 ]

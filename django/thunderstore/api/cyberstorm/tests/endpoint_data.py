@@ -53,6 +53,9 @@ ENDPOINTS = {
         "/api/cyberstorm/team/{team_name}/update/": {
             "donation_link": "https://example.com/donate"
         },
+        "/api/cyberstorm/team/{team_name}/member/{team_member}/update/": {
+            "role": "owner",
+        },
     },
     "DELETE": [
         "/api/cyberstorm/team/{team_name}/disband/",
