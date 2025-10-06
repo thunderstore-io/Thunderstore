@@ -67,7 +67,15 @@ class CyberstormPackageDependencySerializer(serializers.Serializer):
     name = serializers.CharField()
     namespace = serializers.CharField(source="package.namespace.name")
     version_number = serializers.CharField()
-    is_removed = serializers.BooleanField()
+    is_removed = serializers.SerializerMethodField()
+
+    def get_is_removed(self, obj: PackageVersion) -> bool:
+        package_is_removed = not (
+            obj.package.is_active and obj.package_has_active_versions
+        )
+        if package_is_removed:
+            return True
+        return not obj.is_active
 
     def get_description(self, obj: PackageVersion) -> str:
         return (
