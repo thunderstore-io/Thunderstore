@@ -36,6 +36,7 @@ from thunderstore.api.cyberstorm.views import (
     UpdateTeamAPIView,
     UpdateTeamMemberAPIView,
 )
+from thunderstore.plugins.registry import plugin_registry
 
 cyberstorm_urls = [
     path(
@@ -219,3 +220,5 @@ cyberstorm_urls = [
         name="cyberstorm.team.member.update",
     ),
 ]
+
+cyberstorm_urls += plugin_registry.get_cyberstorm_api_urls()
