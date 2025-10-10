@@ -7,8 +7,6 @@ from django.db.models import Q, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from ts_kafka.producer import publish_event
-from thunderstore.core.kafka import KafkaTopics, ModerationEvents
 
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
@@ -257,18 +255,6 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
                     action=AuditAction.APPROVED,
                     user_id=agent.pk if agent else None,
                     message=internal_notes,
-                )
-            )
-            transaction.on_commit(
-                lambda: publish_event(
-                    KafkaTopics.METRICS_MODERATION,
-                    key=ModerationEvents.LISTING_APPROVED,
-                    value={
-                        "listing_id": self.id,
-                        "package_id": self.package.id,
-                        "community_id": self.community.id,
-                        "user_id": agent.id if agent else None,
-                    },
                 )
             )
         else:

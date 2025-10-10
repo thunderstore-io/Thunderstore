@@ -4,6 +4,7 @@ from celery import shared_task
 from django.db import transaction
 from django.db.models import F
 
+from thunderstore.core.kafka import KafkaTopics, PackageEvents
 from thunderstore.core.settings import CeleryQueues
 from thunderstore.metrics.models import PackageVersionDownloadEvent
 from thunderstore.repository.models import PackageVersion
@@ -24,11 +25,14 @@ def log_version_download(version_id: int, timestamp: str):
             downloads=F("downloads") + 1
         )
 
-        # Only publish metrics event if the DB transaction actually succeeds
         transaction.on_commit(
             lambda: publish_event(
-                "downloads",
-                value=str(version_id).encode("utf-8"),
-                headers=[("timestamp", timestamp.encode("utf-8"))],
+                KafkaTopics.METRICS_PACKAGES,
+                key=PackageEvents.PACKAGE_DOWNLOADED,
+                value={
+                    "version_id": version_id,
+                    "timestamp": timestamp,
+                    "event_type": PackageEvents.PACKAGE_DOWNLOADED.value,
+                },
             )
         )

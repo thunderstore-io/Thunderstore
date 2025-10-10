@@ -1,13 +1,10 @@
 from django.db import transaction
 
 from thunderstore.core.types import UserType
-from thunderstore.core.kafka import KafkaTopics, ModerationEvents
 from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.models import Package, PackageListing, PackageVersion
 from thunderstore.repository.views.package._utils import get_package_listing_or_404
 from thunderstore.ts_reports.models import PackageReport
-
-from ts_kafka.producer import publish_event
 
 
 @transaction.atomic
@@ -77,18 +74,4 @@ def report_package_listing(
         package_listing=package_listing,
         package_version=package_version,
         description=description,
-    )
-
-    transaction.on_commit(
-        lambda: publish_event(
-            KafkaTopics.METRICS_MODERATION,
-            key=ModerationEvents.LISTING_REPORTED,
-            value={
-                "package_id": str(package.id),
-                "listing_id": str(package_listing.id),
-                "version_id": str(package_version.id),
-                "reported_by_user_id": str(user.id),
-                "reason": reason,
-            },
-        )
     )
