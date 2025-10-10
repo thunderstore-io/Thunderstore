@@ -21,6 +21,7 @@ class ModerationEvents(str, Enum):
 class PackageEvents(str, Enum):
     PACKAGE_DEPRECATED = "package.deprecated"
     PACKAGE_UNDEPRECATED = "package.undeprecated"
+    PACKAGE_DOWNLOADED = "package.downloaded"
 
 
 class SubmissionEvents(str, Enum):

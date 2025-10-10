@@ -1,9 +1,6 @@
 import traceback
 from datetime import timedelta
 
-from thunderstore.core.kafka import KafkaTopics, SubmissionEvents
-from ts_kafka.producer import publish_event
-
 from celery import shared_task
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -97,19 +94,6 @@ def _process_submission(submission: AsyncPackageSubmission):
     if form.is_valid():
         try:
             submission.created_version = form.save()
-
-            transaction.on_commit(
-                lambda: publish_event(
-                    KafkaTopics.METRICS_SUBMISSIONS,
-                    key=SubmissionEvents.SUBMISSION_SUCCESS,
-                    value={
-                        "submission_id": submission.id,
-                        "user_id": submission.owner.id,
-                        "package_id": submission.created_version.package.uuid,
-                        "version_number": submission.created_version.version_number,
-                    }
-                )
-            )
         except ValidationError as e:
             submission.form_errors = serialize_validation_error(e)
     else:

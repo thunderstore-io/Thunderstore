@@ -7,7 +7,6 @@ from django.db import models, transaction
 from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
 
-from thunderstore.core.events import KafkaTopics, TeamEvents
 from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
@@ -16,7 +15,6 @@ from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.models import Namespace, Package
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
-from ts_kafka.producer import publish_event
 
 class TeamMemberRole(ChoiceEnum):
     owner = "owner"
@@ -195,17 +193,6 @@ class Team(models.Model):
         else:
             team = cls.objects.create(name=name, **kwargs)
             Namespace.objects.create(name=name, team=team)
-            transaction.on_commit(
-                lambda: publish_event(
-                    KafkaTopics.METRICS_TEAMS,
-                    key=TeamEvents.TEAM_CREATED,
-                    value={
-                        "team_id": str(team.id),
-                        "team_name": team.name,
-                    },
-                )
-            )
-
             return team
 
     @classmethod
