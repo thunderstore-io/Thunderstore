@@ -40,6 +40,8 @@ def test_form_create_team_valid_data(user_type: str) -> None:
         data={"name": "TeamName"},
     )
     if expected_error:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert expected_error in str(repr(form.errors))
     else:
@@ -71,8 +73,10 @@ def test_form_create_team_team_name_conflict(
         data={"name": name2},
     )
     if should_fail:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
-        assert "A team with the provided name already exists" in str(repr(form.errors))
+        assert "Team with this name already exists" in str(repr(form.errors))
     else:
         assert form.is_valid() is True
         team = form.save()
@@ -461,6 +465,8 @@ def test_form_disband_team_form(
         assert form.save() is None
         assert Team.objects.filter(pk=team.pk).exists() is False
     else:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -497,6 +503,8 @@ def test_form_disband_team_form_packages_exist(
         instance=team,
         data={"verification": team.name},
     )
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert "Unable to disband teams with packages" in str(repr(form.errors))
 

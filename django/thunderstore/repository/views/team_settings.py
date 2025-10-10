@@ -153,7 +153,10 @@ class SettingsTeamCreateView(
 
     @transaction.atomic
     def form_valid(self, form):
-        instance = form.save()
+        try:
+            instance = form.save()
+        except ValidationError:
+            return super().form_invalid(form)
         return redirect(instance.settings_url)
 
 
@@ -175,7 +178,10 @@ class SettingsTeamDisbandView(TeamDetailView, UserFormKwargs, FormView):
 
     @transaction.atomic
     def form_valid(self, form):
-        form.save()
+        try:
+            form.save()
+        except ValidationError:
+            return self.form_invalid(form)
         return redirect(reverse("settings.teams"))
 
 

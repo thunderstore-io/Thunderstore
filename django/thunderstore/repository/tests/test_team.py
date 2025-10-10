@@ -75,7 +75,7 @@ def test_team_create_namespace_creation() -> None:
     ns.save()
     with pytest.raises(ValidationError) as e:
         Team.create(name="taken_namespace")
-    assert "Namespace with the Teams name exists" in str(e.value)
+    assert "Namespace with this name already exists" in str(e.value)
 
 
 @pytest.mark.django_db
@@ -769,3 +769,39 @@ def test_team_ensure_user_can_manage_packages(
     else:
         assert team.can_user_manage_packages(user) is True
         assert team.ensure_user_can_manage_packages(user) is None
+
+
+@pytest.mark.django_db
+def test_team_create__success():
+    Team.create(name="TestTeam")
+    assert Team.objects.filter(name="TestTeam").count() == 1
+    assert Namespace.objects.filter(name="TestTeam").count() == 1
+
+
+@pytest.mark.django_db
+def test_team_create__team_exists_fail(team):
+    with pytest.raises(ValidationError) as e:
+        Team.create(name=team.name)
+    assert "Team with this name already exists" in str(e.value)
+    assert Team.objects.filter(name=team.name).count() == 1
+    assert Namespace.objects.filter(name=team.name).count() == 1
+
+
+@pytest.mark.django_db
+def test_team_create__namespace_exists_fail():
+    NamespaceFactory.create(name="TestTeam")
+    with pytest.raises(ValidationError) as e:
+        Team.create(name="TestTeam")
+    assert "Namespace with this name already exists" in str(e.value)
+    assert Team.objects.filter(name="TestTeam").count() == 0
+    assert Namespace.objects.filter(name="TestTeam").count() == 1
+
+
+@pytest.mark.django_db
+def test_team_create__team_name_read_only_fail(team):
+    with pytest.raises(ValidationError) as e:
+        team.name = "NewName"
+        team.save()
+    assert "Team name is read only" in str(e.value)
+    team.refresh_from_db()
+    assert team.name != "NewName"
