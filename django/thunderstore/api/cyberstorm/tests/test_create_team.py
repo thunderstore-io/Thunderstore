@@ -53,9 +53,7 @@ def test_create_team__fail_because_team_with_provided_name_exists(
 ):
     api_client.force_authenticate(user)
     response = make_request(api_client, team.name)
-    expected_response = {
-        "non_field_errors": ["A team with the provided name already exists"]
-    }
+    expected_response = {"non_field_errors": ["Team with this name already exists"]}
 
     assert response.status_code == 400
     assert response.json() == expected_response
@@ -70,7 +68,7 @@ def test_create_team__fail_because_team_with_provided_namespace_exists(
     NamespaceFactory(name="CoolestTeamNameEver")
     response = make_request(api_client, "CoolestTeamNameEver")
     expected_response = {
-        "non_field_errors": ["A namespace with the provided name already exists"]
+        "non_field_errors": ["Namespace with this name already exists"]
     }
 
     assert response.status_code == 400
