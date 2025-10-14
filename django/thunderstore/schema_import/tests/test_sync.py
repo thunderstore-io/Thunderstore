@@ -93,3 +93,31 @@ def test_import_autolisted_packages(active_package: Package):
     assert PackageListing.objects.filter(is_auto_imported=True).count() == 0
     import_schema_communities(schema)
     assert PackageListing.objects.filter(is_auto_imported=True).count() == 1
+
+
+@pytest.mark.django_db
+def test_import_categories_hidden_flag():
+    schema = Schema(
+        schemaVersion="0.0.1",
+        games=dict(),
+        communities={
+            "test": SchemaCommunity(
+                displayName="Test community",
+                categories={
+                    "visible": {"label": "Visible", "hidden": False},
+                    "hidden": {"label": "Hidden Cat", "hidden": True},
+                },
+                sections=dict(),
+                shortDescription=None,
+                discordUrl=None,
+                wikiUrl=None,
+                autolistPackageIds=None,
+            ),
+        },
+        packageInstallers=dict(),
+    )
+    import_schema_communities(schema)
+    community = Community.objects.get(identifier="test")
+    cats = {c.slug: c for c in community.package_categories.all()}
+    assert cats["visible"].hidden is False
+    assert cats["hidden"].hidden is True

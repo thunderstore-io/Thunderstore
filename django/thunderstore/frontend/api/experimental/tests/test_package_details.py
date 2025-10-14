@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import PackageListingFactory
-from thunderstore.community.models import PackageListing
+from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,
@@ -208,6 +208,31 @@ def test_inactive_versions_are_excluded(api_client: APIClient) -> None:
     assert len(data["versions"]) == 2
     assert data["versions"][0]["version_number"] == active.version_number
     assert data["versions"][1]["version_number"] == original.version_number
+
+
+@pytest.mark.django_db
+def test_hidden_categories_are_excluded_in_package_detail(
+    api_client: APIClient,
+) -> None:
+    listing = PackageListingFactory()
+    # Create visible and hidden categories in the same community and attach to listing
+    visible = PackageCategory.objects.create(
+        name="visible",
+        slug="visible",
+        community=listing.community,
+        hidden=False,
+    )
+    hidden = PackageCategory.objects.create(
+        name="hidden",
+        slug="hidden",
+        community=listing.community,
+        hidden=True,
+    )
+    listing.categories.set([visible, hidden])
+
+    data = __query_api(api_client, listing)
+
+    assert {c["slug"] for c in data["categories"]} == {"visible"}
 
 
 def __query_api(client: APIClient, listing: PackageListing) -> Dict:

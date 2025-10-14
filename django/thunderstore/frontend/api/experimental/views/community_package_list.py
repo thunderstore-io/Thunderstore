@@ -245,7 +245,7 @@ class CommunityPackageListApiView(APIView):
             {
                 "categories": [
                     PackageCategorySerializer(c).data
-                    for c in p.community_listings.all()[0].categories.all()
+                    for c in p.community_listings.all()[0].categories.visible()
                 ],
                 "community_identifier": community.identifier,
                 "community_name": community.name,
@@ -270,7 +270,7 @@ class CommunityPackageListApiView(APIView):
                 "cover_image_src": community.cover_image_url,
                 "categories": [
                     PackageCategorySerializer(c).data
-                    for c in community.package_categories.all()
+                    for c in community.package_categories.visible()
                 ],
                 "community_name": community.name,
                 "packages": packages,

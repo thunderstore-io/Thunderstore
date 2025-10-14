@@ -69,6 +69,7 @@ def import_community(identifier: str, schema: SchemaCommunity):
         ):
             category = PackageCategory(slug=k, community=community)
         category.name = v.label
+        category.hidden = getattr(v, "hidden", False)
         category.save()
 
     for index, (k, v) in enumerate(schema.sections.items()):
