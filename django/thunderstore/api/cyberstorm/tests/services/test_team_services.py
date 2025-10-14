@@ -19,13 +19,15 @@ def test_disband_team_success(team_owner):
 @pytest.mark.django_db
 def test_disband_team_user_cannot_access_team(user):
     team = Team.objects.create(name="TestTeam")
-    with pytest.raises(ValidationError, match="Must be a member to access team"):
+    error_msg = "Must be a member to access team"
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.disband_team(agent=user, team=team)
 
 
 @pytest.mark.django_db
 def test_disband_team_user_cannot_disband(team_member):
-    with pytest.raises(ValidationError, match="Must be an owner to disband team"):
+    error_msg = "Must be an owner to disband team"
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.disband_team(agent=team_member.user, team=team_member.team)
 
 
@@ -42,15 +44,15 @@ def test_disband_team_with_packages(package, team_owner):
 @pytest.mark.django_db
 def test_disband_team_user_is_service_account(service_account, team):
     service_account_user = service_account.user
-    with pytest.raises(
-        ValidationError, match="Service accounts are unable to perform this action"
-    ):
+    error_msg = "Service accounts are unable to perform this action"
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.disband_team(agent=service_account_user, team=team)
 
 
 @pytest.mark.django_db
 def test_disband_team_user_not_authenticated(team):
-    with pytest.raises(ValidationError, match="Must be authenticated"):
+    error_msg = "Must be authenticated"
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.disband_team(agent=None, team=team)
 
 
@@ -59,7 +61,8 @@ def test_disband_team_user_not_active(user, team):
     user.is_active = False
     user.save()
 
-    with pytest.raises(ValidationError, match="User has been deactivated"):
+    error_msg = "User has been deactivated"
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.disband_team(agent=user, team=team)
 
 
@@ -86,7 +89,7 @@ def test_create_team_user_is_service_account(service_account):
     service_account_user = service_account.user
 
     error_msg = "Service accounts cannot create teams"
-    with pytest.raises(ValidationError, match=error_msg):
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.create_team(agent=service_account_user, team_name="new_team")
 
 
@@ -362,7 +365,7 @@ def test_update_team_member_cannot_remove_last_owner(team_owner):
 @pytest.mark.django_db
 def test_create_team_user_not_authenticated():
     error_msg = "Must be authenticated to create teams"
-    with pytest.raises(ValidationError, match=error_msg):
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.create_team(agent=None, team_name="new_team")
 
 
@@ -372,7 +375,7 @@ def test_create_team_user_not_active(user):
     user.save()
 
     error_msg = "Must be authenticated to create teams"
-    with pytest.raises(ValidationError, match=error_msg):
+    with pytest.raises(PermissionValidationError, match=error_msg):
         team_services.create_team(agent=user, team_name="new_team")
 
 
