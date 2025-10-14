@@ -187,13 +187,9 @@ class Team(models.Model):
     @classmethod
     @transaction.atomic
     def create(cls, name, **kwargs):
-        existing_ns = Namespace.objects.filter(name__iexact=name).first()
-        if existing_ns:
-            raise ValidationError("Namespace with the Teams name exists")
-        else:
-            team = cls.objects.create(name=name, **kwargs)
-            Namespace.objects.create(name=name, team=team)
-            return team
+        team = cls.objects.create(name=name, **kwargs)
+        Namespace.objects.create(name=name, team=team)
+        return team
 
     @classmethod
     @transaction.atomic
