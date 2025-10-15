@@ -57,7 +57,7 @@ def test_package_version_list_api_view__returns_versions(
     "version, should_raise_404",
     [
         ("1.0.0", False),
-        ("latest", False),
+        ("latest", True),
         ("hello", True),
         ("world", True),
         (None, True),
@@ -108,8 +108,9 @@ def test_package_version_dependencies_list_response(api_client: APIClient) -> No
 
     namespace = package.namespace.name
     package_name = package.name
+    version_number = package.latest.version_number
 
-    url = f"/api/cyberstorm/package/{namespace}/{package_name}/v/latest/dependencies/"
+    url = f"/api/cyberstorm/package/{namespace}/{package_name}/v/{version_number}/dependencies/"
     response = api_client.get(url)
 
     target_version = target_dependencies[0]
@@ -157,8 +158,9 @@ def test_package_version_dependencies_list_version_is_active(
 
     namespace = package.namespace.name
     package_name = package.name
+    version_number = package.latest.version_number
 
-    url = f"/api/cyberstorm/package/{namespace}/{package_name}/v/latest/dependencies/"
+    url = f"/api/cyberstorm/package/{namespace}/{package_name}/v/{version_number}/dependencies/"
     response = api_client.get(url)
 
     assert response.status_code == 200

@@ -41,14 +41,10 @@ class PackageVersionDependenciesListAPIView(CyberstormAutoSchemaMixin, ListAPIVi
     pagination_class = PackageDependenciesPaginator
 
     def get_queryset(self) -> QuerySet[PackageVersion]:
-        version_number = self.kwargs.get("version_number")
-        if version_number == "latest":
-            version_number = None  # get_package_version understands None as latest
-
         package_version = get_package_version(
             namespace_id=self.kwargs["namespace_id"],
             package_name=self.kwargs["package_name"],
-            version_number=version_number,
+            version_number=self.kwargs["version_number"],
         )
 
         qs = (
