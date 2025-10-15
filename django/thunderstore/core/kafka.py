@@ -11,7 +11,9 @@ class KafkaTopic(str, Enum):
     METRICS_DOWNLOADS = "ts.metrics.package.downloads"
 
 
-def send_kafka_message(topic: KafkaTopic, payload: dict, key: Optional[str] = None):
+def send_kafka_message(
+    topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
+):
     client = get_kafka_client()
     client.send(topic=topic, payload=payload, key=key)
 
@@ -22,7 +24,7 @@ class KafkaClient:
 
     def send(
         self,
-        topic: KafkaTopic,
+        topic: Union[KafkaTopic, str],
         payload: dict,
         key: Optional[str] = None,
     ):
@@ -34,8 +36,9 @@ class KafkaClient:
             return
 
         try:
+            topic_str = topic.value if isinstance(topic, KafkaTopic) else topic
             self._producer.produce(
-                topic=topic.value,
+                topic=topic_str,
                 value=value_bytes,
                 key=key_bytes,
             )
@@ -48,7 +51,9 @@ class KafkaClient:
 class DummyKafkaClient:
     """A dummy Kafka client that does nothing when Kafka is disabled."""
 
-    def send(self, topic: KafkaTopic, payload: dict, key: Optional[str] = None):
+    def send(
+        self, topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
+    ):
         pass
 
 
