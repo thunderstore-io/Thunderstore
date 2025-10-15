@@ -3,8 +3,11 @@ from enum import Enum
 from functools import lru_cache
 from typing import Any, Dict, Optional, Union
 
+from celery import shared_task
 from confluent_kafka import Producer
 from django.conf import settings
+
+from thunderstore.core.settings import CeleryQueues
 
 
 class KafkaTopic(str, Enum):
@@ -16,6 +19,18 @@ def send_kafka_message(
 ):
     client = get_kafka_client()
     client.send(topic=topic, payload=payload, key=key)
+
+
+@shared_task(
+    queue=CeleryQueues.Kafka, name="thunderstore.core.kafka.send_kafka_message_async"
+)
+def send_kafka_message_async(
+    topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
+):
+    try:
+        send_kafka_message(topic=topic, payload=payload, key=key)
+    except Exception as e:
+        print(f"Error sending Kafka message to topic {topic}: {e}")
 
 
 class KafkaClient:

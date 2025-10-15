@@ -396,6 +396,7 @@ class CeleryQueues:
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
+    Kafka = "kafka"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
