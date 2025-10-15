@@ -46,7 +46,7 @@ class KafkaClient:
         try:
             value_bytes = json.dumps(payload).encode("utf-8")
             key_bytes = key.encode("utf-8") if key else None
-        except TypeError as e:
+        except (TypeError, ValueError) as e:
             print(f"Failed to serialize payload to JSON for topic {topic}: {e}")
             return
 
@@ -75,7 +75,7 @@ class DummyKafkaClient:
 @lru_cache(maxsize=1)
 def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
     # Return dummy client if Kafka is disabled
-    if not getattr(settings, "KAFKA_ENABLED", True):
+    if not getattr(settings, "KAFKA_ENABLED", False):
         return DummyKafkaClient()
 
     config = getattr(settings, "KAFKA_CONFIG", None)
