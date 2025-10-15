@@ -136,6 +136,11 @@ env = environ.Env(
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
     CACHALOT_ENABLED=(bool, True),
     DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
+    KAFKA_BOOTSTRAP_SERVERS=(str, ""),
+    KAFKA_USERNAME=(str, ""),
+    KAFKA_PASSWORD=(str, ""),
+    KAFKA_CA_CERT=(str, ""),
+    KAFKA_ENABLED=(bool, False),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -391,6 +396,7 @@ class CeleryQueues:
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
+    Kafka = "kafka"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
@@ -583,6 +589,21 @@ REST_FRAMEWORK = {
 # Thumbnails
 
 THUMBNAIL_QUALITY = 95
+
+# Kafka configuration
+
+# Whether Kafka is enabled
+KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
+
+KAFKA_CONFIG = {
+    "bootstrap.servers": env.str("KAFKA_BOOTSTRAP_SERVERS"),
+    "security.protocol": "SASL_SSL",
+    "sasl.mechanism": "SCRAM-SHA-256",
+    "sasl.username": env.str("KAFKA_USERNAME"),
+    "sasl.password": env.str("KAFKA_PASSWORD"),
+    "ssl.ca.pem": env.str("KAFKA_CA_CERT"),
+    "client.id": "thunderstore-kafka",
+}
 
 #######################################
 #               STORAGE               #
