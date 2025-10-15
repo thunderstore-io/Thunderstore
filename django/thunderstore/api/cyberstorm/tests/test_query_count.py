@@ -224,7 +224,7 @@ def test_package_version_dependencies_query_count(api_client: APIClient) -> None
     path_params = {
         "namespace_id": package.namespace.name,
         "package_name": package.name,
-        "version": "latest",
+        "version": package.latest.version_number,
     }
 
     path = fill_path_params(url, path_params)
