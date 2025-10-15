@@ -140,7 +140,7 @@ env = environ.Env(
     KAFKA_USERNAME=(str, ""),
     KAFKA_PASSWORD=(str, ""),
     KAFKA_CA_CERT=(str, ""),
-    KAFKA_ENABLED=(bool, True),
+    KAFKA_ENABLED=(bool, False),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
