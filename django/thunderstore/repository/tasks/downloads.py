@@ -4,7 +4,7 @@ from celery import shared_task
 from django.db import transaction
 from django.db.models import F
 
-from thunderstore.core.kafka import KafkaTopics, send_kafka_message
+from thunderstore.core.kafka import KafkaTopic, send_kafka_message
 from thunderstore.core.settings import CeleryQueues
 from thunderstore.metrics.models import PackageVersionDownloadEvent
 from thunderstore.repository.models import PackageVersion
@@ -25,7 +25,7 @@ def log_version_download(version_id: int, timestamp: str):
 
         transaction.on_commit(
             lambda: send_kafka_message(
-                topic=KafkaTopics.METRICS_DOWNLOADS,
+                topic=KafkaTopic.METRICS_DOWNLOADS,
                 payload={
                     "version_id": version_id,
                     "timestamp": timestamp,

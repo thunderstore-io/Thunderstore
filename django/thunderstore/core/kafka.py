@@ -7,11 +7,11 @@ from confluent_kafka import Producer
 from django.conf import settings
 
 
-class KafkaTopics(str, Enum):
+class KafkaTopic(str, Enum):
     METRICS_DOWNLOADS = "ts.metrics.package.downloads"
 
 
-def send_kafka_message(topic: KafkaTopics, payload: dict, key: Optional[str] = None):
+def send_kafka_message(topic: KafkaTopic, payload: dict, key: Optional[str] = None):
     client = get_kafka_client()
     client.send(topic=topic, payload=payload, key=key)
 
@@ -22,7 +22,7 @@ class KafkaClient:
 
     def send(
         self,
-        topic: KafkaTopics,
+        topic: KafkaTopic,
         payload: dict,
         key: Optional[str] = None,
     ):
@@ -48,7 +48,7 @@ class KafkaClient:
 class DummyKafkaClient:
     """A dummy Kafka client that does nothing when Kafka is disabled."""
 
-    def send(self, topic: KafkaTopics, payload: dict, key: Optional[str] = None):
+    def send(self, topic: KafkaTopic, payload: dict, key: Optional[str] = None):
         pass
 
 
