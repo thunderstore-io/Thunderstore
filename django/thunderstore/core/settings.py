@@ -140,6 +140,7 @@ env = environ.Env(
     KAFKA_USERNAME=(str, ""),
     KAFKA_PASSWORD=(str, ""),
     KAFKA_CA_CERT=(str, ""),
+    KAFKA_ENABLED=(bool, True),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -589,6 +590,9 @@ REST_FRAMEWORK = {
 THUMBNAIL_QUALITY = 95
 
 # Kafka configuration
+
+# Whether Kafka is enabled
+KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
 
 KAFKA_CONFIG = {
     "bootstrap.servers": env.str("KAFKA_BOOTSTRAP_SERVERS"),

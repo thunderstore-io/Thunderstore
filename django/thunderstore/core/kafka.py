@@ -45,8 +45,19 @@ class KafkaClient:
             print("Error producing message in kafka: " + e.__str__())
 
 
+class DummyKafkaClient:
+    """A dummy Kafka client that does nothing when Kafka is disabled."""
+
+    def send(self, topic: KafkaTopics, payload: dict, key: Optional[str] = None):
+        pass
+
+
 @lru_cache(maxsize=1)
-def get_kafka_client() -> KafkaClient:
+def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+    # Return dummy client if Kafka is disabled
+    if not getattr(settings, "KAFKA_ENABLED", True):
+        return DummyKafkaClient()
+
     config = getattr(settings, "KAFKA_CONFIG", None)
     if not config:
         raise RuntimeError("KAFKA_CONFIG is not configured.")
