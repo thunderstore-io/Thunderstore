@@ -1,9 +1,11 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from thunderstore.account.models import ServiceAccount
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Team, TeamMember
+from thunderstore.repository.models.namespace import Namespace
 from thunderstore.repository.models.team import TeamMemberRole
 
 
@@ -20,6 +22,10 @@ def create_team(agent: UserType, team_name: str) -> Team:
         raise PermissionValidationError("Must be authenticated to create teams")
     if getattr(agent, "service_account", None) is not None:
         raise PermissionValidationError("Service accounts cannot create teams")
+    if Team.objects.filter(name__iexact=team_name).exists():
+        raise ValidationError("Team with this name already exists")
+    if Namespace.objects.filter(name__iexact=team_name).exists():
+        raise ValidationError("Namespace with this name already exists")
 
     team = Team.create(name=team_name)
     team.add_member(user=agent, role=TeamMemberRole.owner)
