@@ -38,11 +38,13 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     def get_queryset(self):
         query_params = CommunityListAPIQueryParams(data=self.request.query_params)
         query_params.is_valid(raise_exception=True)
+        include_unlisted = query_params.validated_data["include_unlisted"]
 
-        if query_params.validated_data["include_unlisted"]:
+        user = self.request.user
+        if user.is_authenticated and user.is_superuser and include_unlisted:
             return Community.objects.all()
-        else:
-            return Community.objects.listed()
+
+        return Community.objects.listed()
 
     @conditional_swagger_auto_schema(
         tags=["cyberstorm"],

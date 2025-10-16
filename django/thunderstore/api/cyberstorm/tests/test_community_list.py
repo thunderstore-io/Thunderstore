@@ -10,6 +10,7 @@ from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models.community import Community, CommunityAggregatedFields
 from thunderstore.community.models.community_site import CommunitySite
+from thunderstore.core.types import UserType
 
 
 @pytest.mark.django_db
@@ -203,16 +204,60 @@ def test_api_cyberstorm_community_search_with_keywords(
 
 
 @pytest.mark.django_db
-def test_api_cyberstorm_community_list_get_include_unlisted(
+@pytest.mark.parametrize(
+    "is_superuser, include_unlisted, expected_count",
+    [(True, True, 2), (True, False, 1), (False, True, 1), (False, False, 1)],
+)
+def test_api_cyberstorm_community_list_get_include_unlisted_superuser(
     api_client: APIClient,
+    user: UserType,
+    is_superuser: bool,
+    include_unlisted: bool,
+    expected_count: int,
+) -> None:
+    unlisted_community = CommunityFactory(is_listed=False)
+    user.is_superuser = is_superuser
+    user.save()
+
+    api_client.force_authenticate(user=user)
+
+    include_unlisted_str = "true" if include_unlisted else "false"
+    data = __query_api(api_client, f"include_unlisted={include_unlisted_str}")
+
+    unlisted_in_results = unlisted_community.identifier in [
+        c["identifier"] for c in data["results"]
+    ]
+
+    assert data["count"] == expected_count
+
+    if include_unlisted and is_superuser:
+        assert unlisted_in_results is True
+    else:
+        assert unlisted_in_results is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("include_unlisted", [True, False])
+def test_api_cyberstorm_community_list_get_include_unlisted_unauthenticated(
+    api_client: APIClient,
+    include_unlisted: bool,
 ) -> None:
     unlisted_community = CommunityFactory(is_listed=False)
 
-    data = __query_api(api_client, "include_unlisted=true")
-    assert data["count"] == 2
-    assert unlisted_community.identifier in [c["identifier"] for c in data["results"]]
+    include_unlisted_str = "true" if include_unlisted else "false"
+    data = __query_api(api_client, f"include_unlisted={include_unlisted_str}")
 
+    assert data["count"] == 1
+    assert unlisted_community.identifier not in [
+        c["identifier"] for c in data["results"]
+    ]
+
+
+@pytest.mark.django_db
+def test_api_cyberstorm_community_list_no_query_params(api_client: APIClient) -> None:
+    unlisted_community = CommunityFactory(is_listed=False)
     data = __query_api(api_client)
+
     assert data["count"] == 1
     assert unlisted_community.identifier not in [
         c["identifier"] for c in data["results"]
