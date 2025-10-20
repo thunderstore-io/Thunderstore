@@ -11,7 +11,11 @@ from thunderstore.core.settings import CeleryQueues
 
 
 class KafkaTopic(str, Enum):
-    METRICS_DOWNLOADS = "ts.metrics.package.downloads"
+    PACKAGE_DOWNLOADED = "ts.package.downloaded"
+    PACKAGE_UPDATED = "ts.package.updated"
+    PACKAGE_VERSION_UPDATED = "ts.package.version.updated"
+    PACKAGE_LISTING_UPDATED = "ts.package.listing.updated"
+    COMMUNITY_UPDATED = "ts.community.updated"
 
 
 def send_kafka_message(
@@ -23,15 +27,12 @@ def send_kafka_message(
 
 @shared_task(
     queue=CeleryQueues.Analytics,
-    name="thunderstore.core.analytics.send_kafka_message_async",
+    name="thunderstore.analytics.send_kafka_message_async",
 )
 def send_kafka_message_async(
     topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
 ):
-    try:
-        send_kafka_message(topic=topic, payload=payload, key=key)
-    except Exception as e:
-        print(f"Error sending Kafka message to topic {topic}: {e}")
+    send_kafka_message(topic=topic, payload=payload, key=key)
 
 
 class KafkaClient:
@@ -44,24 +45,17 @@ class KafkaClient:
         payload: dict,
         key: Optional[str] = None,
     ):
-        try:
-            value_bytes = json.dumps(payload).encode("utf-8")
-            key_bytes = key.encode("utf-8") if key else None
-        except (TypeError, ValueError) as e:
-            print(f"Failed to serialize payload to JSON for topic {topic}: {e}")
-            return
+        value_bytes = json.dumps(payload).encode("utf-8")
+        key_bytes = key.encode("utf-8") if key else None
 
-        try:
-            topic_str = topic.value if isinstance(topic, KafkaTopic) else topic
-            self._producer.produce(
-                topic=topic_str,
-                value=value_bytes,
-                key=key_bytes,
-            )
+        topic_str = topic.value if isinstance(topic, KafkaTopic) else topic
+        self._producer.produce(
+            topic=topic_str,
+            value=value_bytes,
+            key=key_bytes,
+        )
 
-            self._producer.poll(0)
-        except Exception as e:
-            print("Error producing message in analytics: " + e.__str__())
+        self._producer.poll(0)
 
 
 class DummyKafkaClient:

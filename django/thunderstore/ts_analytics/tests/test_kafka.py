@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.test import override_settings
 
-from thunderstore.core.analytics.kafka import (
+from thunderstore.ts_analytics.kafka import (
     DummyKafkaClient,
     KafkaClient,
     KafkaTopic,
@@ -17,14 +17,14 @@ from thunderstore.core.analytics.kafka import (
 class TestKafkaTopic:
     def test_kafka_topic_enum(self):
         """Test that KafkaTopic enum has the expected values."""
-        assert KafkaTopic.METRICS_DOWNLOADS == "ts.metrics.package.downloads"
-        assert KafkaTopic.METRICS_DOWNLOADS.value == "ts.metrics.package.downloads"
+        assert KafkaTopic.PACKAGE_DOWNLOADED == "ts.package.downloaded"
+        assert KafkaTopic.PACKAGE_DOWNLOADED.value == "ts.package.downloaded"
 
 
 class TestKafkaClient:
     @pytest.fixture
     def mock_producer(self):
-        with patch("thunderstore.core.analytics.kafka.Producer") as mock_producer:
+        with patch("thunderstore.ts_analytics.kafka.Producer") as mock_producer:
             producer_instance = MagicMock()
             mock_producer.return_value = producer_instance
             yield producer_instance
@@ -88,7 +88,11 @@ class TestKafkaClient:
         mock_producer.poll.assert_called_once_with(0)
 
     def test_send_with_invalid_payload(self, mock_producer):
-        """Test sending a message with an invalid payload that can't be JSON serialized."""
+        """
+        Test that KafkaClient.send raises a ValueError when the payload can't be JSON serialized.
+
+        Expected Behavior (since try/catch was removed): The ValueError should propagate.
+        """
         config = {"bootstrap.servers": "localhost:9092"}
         client = KafkaClient(config)
 
@@ -97,14 +101,20 @@ class TestKafkaClient:
         payload = {}
         payload["self"] = payload
 
-        client.send(topic=topic, payload=payload)
+        # Now we expect the exception to be raised
+        with pytest.raises(ValueError, match="Circular reference detected"):
+            client.send(topic=topic, payload=payload)
 
         # Verify produce was not called due to serialization error
         mock_producer.produce.assert_not_called()
         mock_producer.poll.assert_not_called()
 
     def test_send_with_producer_exception(self, mock_producer):
-        """Test handling of exceptions from the producer."""
+        """
+        Test that exceptions from the producer are propagated.
+
+        Expected Behavior (since try/catch was removed): The Exception should propagate.
+        """
         config = {"bootstrap.servers": "localhost:9092"}
         client = KafkaClient(config)
 
@@ -112,10 +122,11 @@ class TestKafkaClient:
         payload = {"test": "data"}
 
         # Make the producer raise an exception
-        mock_producer.produce.side_effect = Exception("Test exception")
+        mock_producer.produce.side_effect = Exception("Test producer exception")
 
-        # This should not raise an exception
-        client.send(topic=topic, payload=payload)
+        # Now we expect the exception to be raised
+        with pytest.raises(Exception, match="Test producer exception"):
+            client.send(topic=topic, payload=payload)
 
         mock_producer.produce.assert_called_once()
         mock_producer.poll.assert_not_called()
@@ -167,9 +178,7 @@ class TestGetKafkaClient:
     )
     def test_get_kafka_client_enabled(self):
         """Test that get_kafka_client returns KafkaClient when Kafka is enabled."""
-        with patch(
-            "thunderstore.core.analytics.kafka.KafkaClient"
-        ) as mock_kafka_client:
+        with patch("thunderstore.ts_analytics.kafka.KafkaClient") as mock_kafka_client:
             mock_instance = MagicMock()
             mock_kafka_client.return_value = mock_instance
 
@@ -187,7 +196,7 @@ class TestSendKafkaMessage:
         mock_client = MagicMock()
 
         with patch(
-            "thunderstore.core.analytics.kafka.get_kafka_client",
+            "thunderstore.ts_analytics.kafka.get_kafka_client",
             return_value=mock_client,
         ):
             topic = KafkaTopic.PACKAGE_DOWNLOADED
@@ -203,7 +212,7 @@ class TestSendKafkaMessage:
 
 @pytest.mark.django_db
 class TestSendKafkaMessageAsync:
-    @patch("thunderstore.core.analytics.kafka.send_kafka_message")
+    @patch("thunderstore.ts_analytics.kafka.send_kafka_message")
     def test_send_kafka_message_async(self, mock_send_kafka_message):
         """Test that send_kafka_message_async calls send_kafka_message with the correct arguments."""
         topic = KafkaTopic.PACKAGE_DOWNLOADED
@@ -216,16 +225,23 @@ class TestSendKafkaMessageAsync:
             topic=topic, payload=payload, key=key
         )
 
-    @patch("thunderstore.core.analytics.kafka.send_kafka_message")
+    @patch("thunderstore.ts_analytics.kafka.send_kafka_message")
     def test_send_kafka_message_async_exception_handling(self, mock_send_kafka_message):
-        """Test that send_kafka_message_async handles exceptions from send_kafka_message."""
-        mock_send_kafka_message.side_effect = Exception("Test exception")
+        """
+        Test that send_kafka_message_async now propagates exceptions from send_kafka_message.
+
+        Expected Behavior (since try/catch was removed): The Exception should propagate.
+        """
+        mock_send_kafka_message.side_effect = Exception(
+            "Test async propagation exception"
+        )
 
         topic = KafkaTopic.PACKAGE_DOWNLOADED
         payload = {"test": "data"}
 
-        # This should not raise an exception
-        send_kafka_message_async(topic=topic, payload=payload)
+        # Now we expect the exception to be raised
+        with pytest.raises(Exception, match="Test async propagation exception"):
+            send_kafka_message_async(topic=topic, payload=payload)
 
         mock_send_kafka_message.assert_called_once_with(
             topic=topic, payload=payload, key=None
