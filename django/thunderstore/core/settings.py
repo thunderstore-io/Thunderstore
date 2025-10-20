@@ -396,7 +396,7 @@ class CeleryQueues:
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
-    Kafka = "kafka"
+    Analytics = "analytics"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
@@ -602,7 +602,7 @@ KAFKA_CONFIG = {
     "sasl.username": env.str("KAFKA_USERNAME"),
     "sasl.password": env.str("KAFKA_PASSWORD"),
     "ssl.ca.pem": env.str("KAFKA_CA_CERT"),
-    "client.id": "thunderstore-kafka",
+    "client.id": "thunderstore-analytics",
 }
 
 #######################################

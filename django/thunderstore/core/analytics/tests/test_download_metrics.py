@@ -1,23 +1,19 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from unittest.mock import patch
 
 import pytest
-from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 from django.test import TransactionTestCase
 from django.utils import timezone
 
-from thunderstore.core.kafka import KafkaTopic
+from thunderstore.core.analytics.kafka import KafkaTopic
 from thunderstore.metrics.models import (
     PackageVersionDownloadEvent as TimeseriesDownloadEvent,
 )
 from thunderstore.repository.models import PackageVersion
-from thunderstore.repository.models import (
-    PackageVersionDownloadEvent as LegacyDownloadEvent,
-)
 from thunderstore.repository.tasks.downloads import log_version_download
 
 
@@ -137,7 +133,7 @@ class TestLogVersionDownloadTask(TransactionTestCase):
     the transaction.on_commit behavior.
     """
 
-    @patch("thunderstore.core.kafka.send_kafka_message")
+    @patch("thunderstore.core.analytics.send_kafka_message")
     @patch("thunderstore.repository.models.PackageVersion")
     @patch("thunderstore.metrics.models.PackageVersionDownloadEvent")
     def test_log_version_download_sends_kafka_message_on_commit(

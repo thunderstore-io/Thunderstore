@@ -4,7 +4,7 @@ from celery import shared_task
 from django.db import transaction
 from django.db.models import F
 
-from thunderstore.core.kafka import KafkaTopic, send_kafka_message
+from thunderstore.core.analytics.kafka import KafkaTopic, send_kafka_message
 from thunderstore.core.settings import CeleryQueues
 from thunderstore.metrics.models import PackageVersionDownloadEvent
 from thunderstore.repository.models import PackageVersion

@@ -22,7 +22,8 @@ def send_kafka_message(
 
 
 @shared_task(
-    queue=CeleryQueues.Kafka, name="thunderstore.core.kafka.send_kafka_message_async"
+    queue=CeleryQueues.Analytics,
+    name="thunderstore.core.analytics.send_kafka_message_async",
 )
 def send_kafka_message_async(
     topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
@@ -60,7 +61,7 @@ class KafkaClient:
 
             self._producer.poll(0)
         except Exception as e:
-            print("Error producing message in kafka: " + e.__str__())
+            print("Error producing message in analytics: " + e.__str__())
 
 
 class DummyKafkaClient:

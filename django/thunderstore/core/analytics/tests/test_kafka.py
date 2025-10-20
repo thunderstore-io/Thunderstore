@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.test import override_settings
 
-from thunderstore.core.kafka import (
+from thunderstore.core.analytics.kafka import (
     DummyKafkaClient,
     KafkaClient,
     KafkaTopic,
@@ -24,7 +24,7 @@ class TestKafkaTopic:
 class TestKafkaClient:
     @pytest.fixture
     def mock_producer(self):
-        with patch("thunderstore.core.kafka.Producer") as mock_producer:
+        with patch("thunderstore.core.analytics.kafka.Producer") as mock_producer:
             producer_instance = MagicMock()
             mock_producer.return_value = producer_instance
             yield producer_instance
@@ -40,7 +40,7 @@ class TestKafkaClient:
         config = {"bootstrap.servers": "localhost:9092"}
         client = KafkaClient(config)
 
-        topic = KafkaTopic.METRICS_DOWNLOADS
+        topic = KafkaTopic.PACKAGE_DOWNLOADED
         payload = {"test": "data"}
         key = "test-key"
 
@@ -58,7 +58,7 @@ class TestKafkaClient:
         config = {"bootstrap.servers": "localhost:9092"}
         client = KafkaClient(config)
 
-        topic = KafkaTopic.METRICS_DOWNLOADS
+        topic = KafkaTopic.PACKAGE_DOWNLOADED
         payload = {"test": "data"}
 
         client.send(topic=topic, payload=payload)
@@ -92,7 +92,7 @@ class TestKafkaClient:
         config = {"bootstrap.servers": "localhost:9092"}
         client = KafkaClient(config)
 
-        topic = KafkaTopic.METRICS_DOWNLOADS
+        topic = KafkaTopic.PACKAGE_DOWNLOADED
         # Create a circular reference that can't be JSON serialized
         payload = {}
         payload["self"] = payload
@@ -108,7 +108,7 @@ class TestKafkaClient:
         config = {"bootstrap.servers": "localhost:9092"}
         client = KafkaClient(config)
 
-        topic = KafkaTopic.METRICS_DOWNLOADS
+        topic = KafkaTopic.PACKAGE_DOWNLOADED
         payload = {"test": "data"}
 
         # Make the producer raise an exception
@@ -127,7 +127,9 @@ class TestDummyKafkaClient:
         client = DummyKafkaClient()
         # This should not raise any exceptions
         client.send(
-            topic=KafkaTopic.METRICS_DOWNLOADS, payload={"test": "data"}, key="test-key"
+            topic=KafkaTopic.PACKAGE_DOWNLOADED,
+            payload={"test": "data"},
+            key="test-key",
         )
 
 
@@ -165,7 +167,9 @@ class TestGetKafkaClient:
     )
     def test_get_kafka_client_enabled(self):
         """Test that get_kafka_client returns KafkaClient when Kafka is enabled."""
-        with patch("thunderstore.core.kafka.KafkaClient") as mock_kafka_client:
+        with patch(
+            "thunderstore.core.analytics.kafka.KafkaClient"
+        ) as mock_kafka_client:
             mock_instance = MagicMock()
             mock_kafka_client.return_value = mock_instance
 
@@ -183,9 +187,10 @@ class TestSendKafkaMessage:
         mock_client = MagicMock()
 
         with patch(
-            "thunderstore.core.kafka.get_kafka_client", return_value=mock_client
+            "thunderstore.core.analytics.kafka.get_kafka_client",
+            return_value=mock_client,
         ):
-            topic = KafkaTopic.METRICS_DOWNLOADS
+            topic = KafkaTopic.PACKAGE_DOWNLOADED
             payload = {"test": "data"}
             key = "test-key"
 
@@ -198,10 +203,10 @@ class TestSendKafkaMessage:
 
 @pytest.mark.django_db
 class TestSendKafkaMessageAsync:
-    @patch("thunderstore.core.kafka.send_kafka_message")
+    @patch("thunderstore.core.analytics.kafka.send_kafka_message")
     def test_send_kafka_message_async(self, mock_send_kafka_message):
         """Test that send_kafka_message_async calls send_kafka_message with the correct arguments."""
-        topic = KafkaTopic.METRICS_DOWNLOADS
+        topic = KafkaTopic.PACKAGE_DOWNLOADED
         payload = {"test": "data"}
         key = "test-key"
 
@@ -211,12 +216,12 @@ class TestSendKafkaMessageAsync:
             topic=topic, payload=payload, key=key
         )
 
-    @patch("thunderstore.core.kafka.send_kafka_message")
+    @patch("thunderstore.core.analytics.kafka.send_kafka_message")
     def test_send_kafka_message_async_exception_handling(self, mock_send_kafka_message):
         """Test that send_kafka_message_async handles exceptions from send_kafka_message."""
         mock_send_kafka_message.side_effect = Exception("Test exception")
 
-        topic = KafkaTopic.METRICS_DOWNLOADS
+        topic = KafkaTopic.PACKAGE_DOWNLOADED
         payload = {"test": "data"}
 
         # This should not raise an exception
