@@ -20,9 +20,27 @@ class AnalyticsAppConfig(AppConfig):
         )
 
         post_save.connect(
-            package_version_download_event_post_save, sender=PackageVersionDownloadEvent
+            receiver=package_version_download_event_post_save,
+            sender=PackageVersionDownloadEvent,
+            dispatch_uid="analytics_package_version_download_event_post_save",
         )
-        post_save.connect(package_post_save, sender=Package)
-        post_save.connect(package_version_post_save, sender=PackageVersion)
-        post_save.connect(package_listing_post_save, sender=PackageListing)
-        post_save.connect(community_post_save, sender=Community)
+        post_save.connect(
+            receiver=package_post_save,
+            sender=Package,
+            dispatch_uid="analytics_package_post_save",
+        )
+        post_save.connect(
+            receiver=package_version_post_save,
+            sender=PackageVersion,
+            dispatch_uid="analytics_package_version_post_save",
+        )
+        post_save.connect(
+            receiver=package_listing_post_save,
+            sender=PackageListing,
+            dispatch_uid="analytics_package_listing_post_save",
+        )
+        post_save.connect(
+            receiver=community_post_save,
+            sender=Community,
+            dispatch_uid="analytics_community_post_save",
+        )
