@@ -28,6 +28,7 @@ def send_kafka_message(
 @shared_task(
     queue=CeleryQueues.Analytics,
     name="thunderstore.analytics.send_kafka_message_async",
+    ignore_result=True,
 )
 def send_kafka_message_async(
     topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
