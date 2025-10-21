@@ -18,9 +18,7 @@ class KafkaTopic(str, Enum):
     COMMUNITY_UPDATED = "ts.community.updated"
 
 
-def send_kafka_message(
-    topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
-):
+def send_kafka_message(topic: str, payload: dict, key: Optional[str] = None):
     client = get_kafka_client()
     client.send(topic=topic, payload=payload, key=key)
 
@@ -30,9 +28,7 @@ def send_kafka_message(
     name="thunderstore.analytics.send_kafka_message_async",
     ignore_result=True,
 )
-def send_kafka_message_async(
-    topic: Union[KafkaTopic, str], payload: dict, key: Optional[str] = None
-):
+def send_kafka_message_async(topic: str, payload: dict, key: Optional[str] = None):
     send_kafka_message(topic=topic, payload=payload, key=key)
 
 
