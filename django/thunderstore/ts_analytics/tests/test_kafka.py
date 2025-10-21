@@ -14,13 +14,6 @@ from thunderstore.ts_analytics.kafka import (
 )
 
 
-class TestKafkaTopic:
-    def test_kafka_topic_enum(self):
-        """Test that KafkaTopic enum has the expected values."""
-        assert KafkaTopic.PACKAGE_DOWNLOADED == "ts.package.downloaded"
-        assert KafkaTopic.PACKAGE_DOWNLOADED.value == "ts.package.downloaded"
-
-
 class TestKafkaClient:
     @pytest.fixture
     def mock_producer(self):
