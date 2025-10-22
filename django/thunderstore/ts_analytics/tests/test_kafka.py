@@ -1,4 +1,5 @@
 import json
+from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,6 +15,7 @@ from thunderstore.ts_analytics.kafka import (
     send_kafka_message,
     send_kafka_message_task,
 )
+from thunderstore.ts_analytics.signals import format_datetime
 
 # ======================================================================
 # CORE FIXTURES AND MOCKS
@@ -259,3 +261,35 @@ def test_send_kafka_message_task_sends_message(
             payload_string=payload_string,
             key=key,
         )
+
+
+class FormatDateTimeTest(TestCase):
+    def test_string_and_none_inputs(self):
+        """Tests cases where input should be returned unchanged or as None."""
+        # 1. None input
+        self.assertIsNone(format_datetime(None))
+
+        # 2. String input
+        test_string = "2023-10-25T10:00:00+00:00"
+        self.assertEqual(format_datetime(test_string), test_string)
+
+    def test_valid_datetime_and_date_inputs(self):
+        """Tests standard datetime and date objects which support isoformat()."""
+
+        # 1. Timezone-naive datetime object
+        dt_obj = datetime(2023, 10, 25, 10, 30, 0, 123456)
+        expected_dt_format = "2023-10-25T10:30:00.123456"
+        self.assertEqual(format_datetime(dt_obj), expected_dt_format)
+
+        # 2. Date object
+        date_obj = date(2024, 1, 15)
+        expected_date_format = "2024-01-15"
+        self.assertEqual(format_datetime(date_obj), expected_date_format)
+
+    def test_invalid_inputs(self):
+        """Tests objects that should result in None."""
+
+        # 1. Invalid object inputs (should raise AttributeError, resulting in None)
+        self.assertIsNone(format_datetime(12345))
+        self.assertIsNone(format_datetime({"key": "value"}))
+        self.assertIsNone(format_datetime([1, 2, 3]))
