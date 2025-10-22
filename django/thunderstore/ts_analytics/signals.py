@@ -1,6 +1,13 @@
-from django.db import transaction
-
 from thunderstore.ts_analytics.kafka import KafkaTopic, send_kafka_message
+
+
+def format_datetime(date_or_string):
+    if isinstance(date_or_string, str):
+        return date_or_string
+    try:
+        return date_or_string.isoformat()
+    except AttributeError:
+        return str(date_or_string)
 
 
 def package_version_download_event_post_save(sender, instance, created, **kwargs):
@@ -14,7 +21,7 @@ def package_version_download_event_post_save(sender, instance, created, **kwargs
             payload={
                 "id": instance.id,
                 "version_id": instance.version_id,
-                "timestamp": instance.timestamp.isoformat(),
+                "timestamp": format_datetime(instance.timestamp),
             },
         )
 
@@ -31,8 +38,8 @@ def package_post_save(sender, instance, created, **kwargs):
             "is_active": instance.is_active,
             "owner": instance.owner.name,
             "name": instance.name,
-            "date_created": instance.date_created.isoformat(),
-            "date_updated": instance.date_updated.isoformat(),
+            "date_created": format_datetime(instance.date_created),
+            "date_updated": format_datetime(instance.date_updated),
             "is_deprecated": instance.is_deprecated,
             "is_pinned": instance.is_pinned,
         },
@@ -54,7 +61,7 @@ def package_version_post_save(sender, instance, created, **kwargs):
             "version_number": instance.version_number,
             "package_id": instance.package_id,
             "downloads": instance.downloads,
-            "date_created": instance.date_created.isoformat(),
+            "date_created": format_datetime(instance.date_created),
             "file_size": instance.file_size,
         },
     )
@@ -71,8 +78,8 @@ def package_listing_post_save(sender, instance, created, **kwargs):
             "id": instance.id,
             "has_nsfw_content": instance.has_nsfw_content,
             "package_id": instance.package_id,
-            "datetime_created": instance.datetime_created.isoformat(),
-            "datetime_updated": instance.datetime_updated.isoformat(),
+            "datetime_created": format_datetime(instance.datetime_created),
+            "datetime_updated": format_datetime(instance.datetime_updated),
             "review_status": instance.review_status,
         },
     )
@@ -89,7 +96,7 @@ def community_post_save(sender, instance, created, **kwargs):
             "id": instance.id,
             "identifier": instance.identifier,
             "name": instance.name,
-            "datetime_created": instance.datetime_created.isoformat(),
-            "datetime_updated": instance.datetime_updated.isoformat(),
+            "datetime_created": format_datetime(instance.datetime_created),
+            "datetime_updated": format_datetime(instance.datetime_updated),
         },
     )
