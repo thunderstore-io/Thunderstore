@@ -604,6 +604,9 @@ KAFKA_CONFIG = {
     "sasl.password": env.str("KAFKA_PASSWORD"),
     "ssl.ca.pem": env.str("KAFKA_CA_CERT"),
     "client.id": "thunderstore-analytics",
+    "socket.nagle.disable": True,
+    "linger.ms": 100,
+    "batch.num.messages": 500,
 }
 
 #######################################
