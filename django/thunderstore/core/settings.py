@@ -141,6 +141,7 @@ env = environ.Env(
     KAFKA_PASSWORD=(str, ""),
     KAFKA_CA_CERT=(str, ""),
     KAFKA_ENABLED=(bool, False),
+    KAFKA_DEV=(bool, False),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -595,6 +596,8 @@ THUMBNAIL_QUALITY = 95
 
 # Whether Kafka is enabled
 KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
+# Whether Kafka topics should have dev prepended rather than prod
+KAFKA_DEV = env.bool("KAFKA_DEV")
 
 KAFKA_CONFIG = {
     "bootstrap.servers": env.str("KAFKA_BOOTSTRAP_SERVERS"),

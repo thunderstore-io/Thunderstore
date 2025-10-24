@@ -66,6 +66,46 @@ class KafkaClient:
         )
 
 
+class ProdKafkaClient(KafkaClient):
+    """
+    A Kafka client for production environments that prepends 'prod.'
+    to all topics before sending.
+    """
+
+    def send(
+        self,
+        topic: str,
+        payload_string: str,
+        key: Optional[str] = None,
+    ):
+        prod_topic = f"prod.{topic}"
+        super().send(
+            topic=prod_topic,
+            payload_string=payload_string,
+            key=key,
+        )
+
+
+class DevKafkaClient(KafkaClient):
+    """
+    A Kafka client for development environments that prepends 'dev.'
+    to all topics before sending.
+    """
+
+    def send(
+        self,
+        topic: str,
+        payload_string: str,
+        key: Optional[str] = None,
+    ):
+        dev_topic = f"dev.{topic}"
+        super().send(
+            topic=dev_topic,
+            payload_string=payload_string,
+            key=key,
+        )
+
+
 class DummyKafkaClient:
     """A dummy Kafka client that does nothing when Kafka is disabled."""
 
@@ -76,7 +116,7 @@ class DummyKafkaClient:
 _KAFKA_CLIENT_INSTANCE = None
 
 
-def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+def get_kafka_client() -> Union[KafkaClient, DevKafkaClient, DummyKafkaClient]:
     global _KAFKA_CLIENT_INSTANCE
 
     if _KAFKA_CLIENT_INSTANCE is not None:
@@ -93,7 +133,10 @@ def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
         if not config.get("bootstrap.servers"):
             raise RuntimeError("Kafka bootstrap servers are not configured.")
 
-        client = KafkaClient(config)
+        if getattr(settings, "KAFKA_DEV", False):
+            client = DevKafkaClient(config)
+        else:
+            client = ProdKafkaClient(config)
 
     _KAFKA_CLIENT_INSTANCE = client
     return client
