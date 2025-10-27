@@ -29,7 +29,10 @@ from thunderstore.api.cyberstorm.serializers import (
 from thunderstore.api.cyberstorm.views.package_listing_actions import (
     get_package_listing,
 )
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import (
+    CyberstormAutoSchemaMixin,
+    conditional_swagger_auto_schema,
+)
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
@@ -208,7 +211,7 @@ class PackageListingStatusAPIView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PackageListingStatusResponseSerializer
 
-    @swagger_auto_schema(
+    @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package_listing.status",
         responses={200: serializer_class},
         tags=["cyberstorm"],
