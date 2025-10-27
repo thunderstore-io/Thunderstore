@@ -44,14 +44,17 @@ class KafkaClient:
         payload_string: str,
         key: Optional[str] = None,
     ):
-        value_bytes = payload_string.encode("utf-8")
-        key_bytes = key.encode("utf-8") if key else None
+        try:
+            value_bytes = payload_string.encode("utf-8")
+            key_bytes = key.encode("utf-8") if key else None
 
-        self._producer.produce(
-            topic=topic,
-            value=value_bytes,
-            key=key_bytes,
-        )
+            self._producer.produce(
+                topic=topic,
+                value=value_bytes,
+                key=key_bytes,
+            )
+        except Exception as e:
+            print(f"Error sending Kafka message: {e}")
 
 
 class ProdKafkaClient(KafkaClient):
