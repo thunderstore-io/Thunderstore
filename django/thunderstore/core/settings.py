@@ -142,6 +142,11 @@ env = environ.Env(
     KAFKA_CA_CERT=(str, ""),
     KAFKA_ENABLED=(bool, False),
     KAFKA_DEV=(bool, False),
+    KAFKA_ACKS=(str, "1"),
+    KAFKA_LINGER_MS=(int, 100),
+    KAFKA_MAX_BATCH_SIZE=(int, 500),
+    KAFKA_RETRY_BACKOFF_MS=(int, 1000),
+    KAFKA_DELIVERY_TIMEOUT_MS=(int, 120000),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -608,8 +613,11 @@ KAFKA_CONFIG = {
     "ssl.ca.pem": env.str("KAFKA_CA_CERT"),
     "client.id": "thunderstore-analytics",
     "socket.nagle.disable": True,
-    "linger.ms": 100,
-    "batch.num.messages": 500,
+    "acks": env.str("KAFKA_ACKS", default="1"),
+    "linger.ms": env.int("KAFKA_LINGER_MS", 100),
+    "batch.num.messages": env.int("KAFKA_MAX_BATCH_SIZE", 500),
+    "retry.backoff.ms": env.int("KAFKA_RETRY_BACKOFF_MS", default=1000),
+    "delivery.timeout.ms": env.int("KAFKA_DELIVERY_TIMEOUT_MS", default=120000),
 }
 
 #######################################
