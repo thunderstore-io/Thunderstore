@@ -279,11 +279,9 @@ class Community(TimestampMixin, models.Model):
                 "Must be a janitor or higher to manage categories"
             )
 
-    @lru_cache
     def can_user_manage_packages(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_moderate_packages(user))
 
-    @lru_cache
     def can_user_manage_categories(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_user_can_manage_categories(user))
 
