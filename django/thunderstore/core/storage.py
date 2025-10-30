@@ -43,14 +43,30 @@ class MirroredS3Storage(S3Boto3Storage):
         """
         Upload file to main S3 storage and all mirrors.
 
-        Calling .save() closes the file, so use temporary copies for
-        mirrors and call the main bucket with the actual file last.
-        """
-        for storage_mirror in self.mirrors:
-            with TemporarySpooledCopy(content) as tmp_content:
-                storage_mirror.save(name, tmp_content, max_length)
+        Save file to main storage, use temporary file since .save() closes the file.
 
-        return super().save(name, content, max_length)
+        Save file to all mirrors, use file name from main storage since we need
+        to store the same file name in all mirrors in case of duplicate or alternate
+        file names.
+
+        Lock the process to avoid race conditions.
+        """
+
+        from thunderstore.cache.utils import get_cache
+
+        CACHE_LOCK_TIMEOUT = 30
+        cache = get_cache("default")
+        lock_key = f"mirror_storage_cache_{name}"
+
+        with cache.lock(lock_key, timeout=CACHE_LOCK_TIMEOUT, blocking_timeout=None):
+            with TemporarySpooledCopy(content) as tmp_content:
+                final_name = super().save(name, tmp_content, max_length)
+
+            for storage_mirror in self.mirrors:
+                with TemporarySpooledCopy(content) as tmp_content:
+                    storage_mirror.save(final_name, tmp_content, max_length)
+
+            return final_name
 
     def delete(self, name: str) -> None:
         """
