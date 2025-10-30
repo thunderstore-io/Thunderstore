@@ -1,31 +1,31 @@
-from thunderstore.ts_analytics.kafka import KafkaTopic, send_kafka_message
+import json
 
+from django.db import transaction
 
-def format_datetime(date_or_string):
-    if date_or_string is None:
-        return None
-    if isinstance(date_or_string, str):
-        return date_or_string
-    try:
-        return date_or_string.isoformat()
-    except AttributeError:
-        return None
+from thunderstore.ts_analytics.kafka import (
+    KafkaTopic,
+    send_kafka_message,
+    send_kafka_message_task,
+)
+from thunderstore.ts_analytics.utils import format_datetime
 
-
-def package_version_download_event_post_save(sender, instance, created, **kwargs):
-    """
-    Signal handler for PackageVersionDownloadEvent post_save events.
-    Sends download event information through Kafka as a Celery task.
-    """
-    if created:
-        send_kafka_message(
-            topic=KafkaTopic.PACKAGE_DOWNLOADED,
-            payload={
-                "id": instance.id,
-                "version_id": instance.version_id,
-                "timestamp": format_datetime(instance.timestamp),
-            },
-        )
+# This is now in downloads.py so we don't have double the number of tasks for download logging
+# def package_version_download_event_post_save(sender, instance, created, **kwargs):
+#     """
+#     Signal handler for PackageVersionDownloadEvent post_save events.
+#     Sends download event information through Kafka as a Celery task.
+#     """
+#     payload_string=json.dumps({
+#         "id": instance.id,
+#         "version_id": instance.version_id,
+#         "timestamp": format_datetime(instance.timestamp),
+#     })
+#     transaction.on_commit(
+#         lambda: send_kafka_message_task.delay(
+#             topic=KafkaTopic.PACKAGE_DOWNLOADED,
+#             payload_string=payload_string,
+#         )
+#     )
 
 
 def package_post_save(sender, instance, created, **kwargs):
@@ -33,9 +33,8 @@ def package_post_save(sender, instance, created, **kwargs):
     Signal handler for Package post_save events.
     Sends package information through Kafka as a Celery task.
     """
-    send_kafka_message(
-        topic=KafkaTopic.PACKAGE_UPDATED,
-        payload={
+    payload_string = json.dumps(
+        {
             "package_id": instance.id,
             "is_active": instance.is_active,
             "owner": instance.owner.name,
@@ -44,7 +43,13 @@ def package_post_save(sender, instance, created, **kwargs):
             "date_updated": format_datetime(instance.date_updated),
             "is_deprecated": instance.is_deprecated,
             "is_pinned": instance.is_pinned,
-        },
+        }
+    )
+    transaction.on_commit(
+        lambda: send_kafka_message_task.delay(
+            topic=KafkaTopic.PACKAGE_UPDATED,
+            payload_string=payload_string,
+        )
     )
 
 
@@ -53,9 +58,8 @@ def package_version_post_save(sender, instance, created, **kwargs):
     Signal handler for PackageVersion post_save events.
     Sends package version information through Kafka as a Celery task.
     """
-    send_kafka_message(
-        topic=KafkaTopic.PACKAGE_VERSION_UPDATED,
-        payload={
+    payload_string = json.dumps(
+        {
             "id": instance.id,
             "is_active": instance.is_active,
             "owner": instance.package.owner.name,
@@ -65,7 +69,13 @@ def package_version_post_save(sender, instance, created, **kwargs):
             "downloads": instance.downloads,
             "date_created": format_datetime(instance.date_created),
             "file_size": instance.file_size,
-        },
+        }
+    )
+    transaction.on_commit(
+        lambda: send_kafka_message_task.delay(
+            topic=KafkaTopic.PACKAGE_VERSION_UPDATED,
+            payload_string=payload_string,
+        )
     )
 
 
@@ -74,16 +84,21 @@ def package_listing_post_save(sender, instance, created, **kwargs):
     Signal handler for PackageListing post_save events.
     Sends package listing information through Kafka as a Celery task.
     """
-    send_kafka_message(
-        topic=KafkaTopic.PACKAGE_LISTING_UPDATED,
-        payload={
+    payload_string = json.dumps(
+        {
             "id": instance.id,
             "has_nsfw_content": instance.has_nsfw_content,
             "package_id": instance.package_id,
             "datetime_created": format_datetime(instance.datetime_created),
             "datetime_updated": format_datetime(instance.datetime_updated),
             "review_status": instance.review_status,
-        },
+        }
+    )
+    transaction.on_commit(
+        lambda: send_kafka_message_task.delay(
+            topic=KafkaTopic.PACKAGE_LISTING_UPDATED,
+            payload_string=payload_string,
+        )
     )
 
 
@@ -92,13 +107,17 @@ def community_post_save(sender, instance, created, **kwargs):
     Signal handler for Community post_save events.
     Sends community information through Kafka as a Celery task.
     """
-    send_kafka_message(
-        topic=KafkaTopic.COMMUNITY_UPDATED,
-        payload={
+    payload_string = json.dumps(
+        {
             "id": instance.id,
             "identifier": instance.identifier,
             "name": instance.name,
             "datetime_created": format_datetime(instance.datetime_created),
             "datetime_updated": format_datetime(instance.datetime_updated),
-        },
+        }
+    )
+    transaction.on_commit(
+        lambda: send_kafka_message_task.delay(
+            topic=KafkaTopic.COMMUNITY_UPDATED, payload_string=payload_string
+        )
     )

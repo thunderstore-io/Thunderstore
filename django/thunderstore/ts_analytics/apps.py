@@ -9,21 +9,21 @@ class AnalyticsAppConfig(AppConfig):
     def ready(self):
         # Connect the signal handlers
         from thunderstore.community.models import Community, PackageListing
-        from thunderstore.metrics.models import PackageVersionDownloadEvent
+
+        # from thunderstore.metrics.models import PackageVersionDownloadEvent
         from thunderstore.repository.models import Package, PackageVersion
-        from thunderstore.ts_analytics.signals import (
+        from thunderstore.ts_analytics.signals import (  # package_version_download_event_post_save,
             community_post_save,
             package_listing_post_save,
             package_post_save,
-            package_version_download_event_post_save,
             package_version_post_save,
         )
 
-        post_save.connect(
-            receiver=package_version_download_event_post_save,
-            sender=PackageVersionDownloadEvent,
-            dispatch_uid="analytics_package_version_download_event_post_save",
-        )
+        # post_save.connect(
+        #     receiver=package_version_download_event_post_save,
+        #     sender=PackageVersionDownloadEvent,
+        #     dispatch_uid="analytics_package_version_download_event_post_save",
+        # )
         post_save.connect(
             receiver=package_post_save,
             sender=Package,

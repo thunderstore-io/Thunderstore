@@ -3,14 +3,13 @@ from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from django.db.transaction import TransactionManagementError
 from django.test import TestCase
 
 from thunderstore.ts_analytics.kafka import (
     DummyKafkaClient,
     KafkaClient,
     get_kafka_client,
-    send_kafka_message,
+    send_kafka_message_task,
 )
 from thunderstore.ts_analytics.signals import format_datetime
 
@@ -35,93 +34,67 @@ def clear_kafka_client_instance():
 
 
 @pytest.fixture
-def mock_kafka_client_instance():
-    """Mocks the get_kafka_client function to return a mock client."""
-    mock_client = MagicMock()
-    with patch(
-        "thunderstore.ts_analytics.kafka.get_kafka_client", return_value=mock_client
-    ):
-        yield mock_client
-
-
-@pytest.fixture
-def fake_commit_executor():
-    """
-    Mocks transaction.on_commit to capture callbacks for execution after the test.
-    Used for testing send_kafka_message, which is deferred on commit.
-    """
-    callbacks = []
-
-    def fake_on_commit(func, *args, **kwargs):
-        callbacks.append(func)
-
-    # Patch the function where it is defined
-    with patch("django.db.transaction.on_commit", side_effect=fake_on_commit):
-        yield callbacks  # Yield the list of captured callbacks
-
-    # After the test, manually run the captured callbacks to simulate transaction commit
-    for callback in callbacks:
-        callback()
+def mock_kafka_client():
+    """Mocks the entire Kafka client retrieval process."""
+    with patch("thunderstore.ts_analytics.kafka.get_kafka_client") as mock_get_client:
+        mock_client_instance = MagicMock()
+        mock_get_client.return_value = mock_client_instance
+        yield mock_client_instance
 
 
 # ======================================================================
-# KAFKA MESSAGE SENDING TESTS (DEFERRED EXECUTION)
+# KAFKA MESSAGE SENDING TESTS (CELERY TASK EXECUTION)
 # ======================================================================
 
 
 @pytest.mark.django_db
-def test_send_kafka_message_executes_on_commit(
-    mock_kafka_client_instance, fake_commit_executor
+def test_send_kafka_message_task_sends_to_client(
+    mock_kafka_client,
 ):
     """
-    Tests that send_kafka_message defers execution until the transaction commits,
-    then executes the Kafka client send call with the correct arguments.
+    Tests that the send_kafka_message_task (which is executed in the Celery worker)
+    correctly retrieves the Kafka client and calls its send method.
     """
     test_topic = "test-topic"
-    test_payload = {"user_id": 456, "action": "updated"}
+    test_payload_string = '{"user_id": 456, "action": "updated"}'
     test_key = "user_456"
-    expected_payload_string = json.dumps(test_payload)
 
-    send_kafka_message(topic=test_topic, payload=test_payload, key=test_key)
+    # Call the task function directly to simulate execution in the Celery worker
+    send_kafka_message_task(
+        topic=test_topic, payload_string=test_payload_string, key=test_key
+    )
 
-    mock_kafka_client_instance.send.assert_not_called()
-    assert len(fake_commit_executor) == 1
-
-    # Manually run the captured callback to simulate the transaction commit and trigger the send
-    for callback in fake_commit_executor:
-        callback()
-
-    mock_kafka_client_instance.send.assert_called_once_with(
+    # Assert that the client was retrieved and its send method was called correctly
+    mock_kafka_client.send.assert_called_once_with(
         topic=test_topic,
-        payload_string=expected_payload_string,
+        payload_string=test_payload_string,
         key=test_key,
     )
 
 
-@pytest.mark.django_db
-def test_send_kafka_message_executes_immediately_without_transaction(
-    mock_kafka_client_instance,
+def test_send_kafka_message_task_handles_none_key(
+    mock_kafka_client,
 ):
-    """
-    Tests that if no transaction is active, the message is sent immediately.
-    """
-    # Patch on_commit to raise TransactionManagementError to simulate the "no active transaction" state.
-    with patch(
-        "django.db.transaction.on_commit", side_effect=TransactionManagementError
-    ):
-        test_topic = "test-topic-immediate"
-        test_payload = {"data": "no_txn"}
-        expected_payload_string = json.dumps(test_payload)
+    """Tests that the task handles a None key correctly."""
+    test_topic = "test-topic-no-key"
+    test_payload_string = '{"data": "no_key"}'
 
-        # The function executes immediately because the patched on_commit raises the error
-        send_kafka_message(topic=test_topic, payload=test_payload)
+    # Call the task function directly to simulate execution in the Celery worker
+    send_kafka_message_task(
+        topic=test_topic, payload_string=test_payload_string, key=None
+    )
 
-    # Assert that the client.send was called immediately
-    mock_kafka_client_instance.send.assert_called_once_with(
+    # Assert that the client was retrieved and its send method was called correctly
+    mock_kafka_client.send.assert_called_once_with(
         topic=test_topic,
-        payload_string=expected_payload_string,
+        payload_string=test_payload_string,
         key=None,
     )
+
+
+# ======================================================================
+# KAFKA CLIENT TESTS
+# ======================================================================
 
 
 def test_base_kafka_client_send_no_prefix(mock_producer):
@@ -197,7 +170,6 @@ def test_get_kafka_client_enabled_prod(settings, clear_kafka_client_instance):
         client = get_kafka_client()
         assert isinstance(client, ProdKafkaClient)
 
-    # Assert on the mock class object
     mock_producer_cls.assert_called_once_with(settings.KAFKA_CONFIG)
 
 
@@ -213,7 +185,6 @@ def test_get_kafka_client_enabled_dev(settings, clear_kafka_client_instance):
         client = get_kafka_client()
         assert isinstance(client, DevKafkaClient)
 
-    # Assert on the mock class object
     mock_producer_cls.assert_called_once_with(settings.KAFKA_CONFIG)
 
 
@@ -231,7 +202,6 @@ def test_get_kafka_client_singleton(settings, clear_kafka_client_instance):
 
     assert client1 is client2
     assert isinstance(client1, ProdKafkaClient)
-    # Assert on the mock class object
     assert mock_producer_cls.call_count == 1
 
 
@@ -270,26 +240,21 @@ def test_kafka_client_close_handles_flush(mock_producer, capfd):
     mock_producer.flush.return_value = 0
 
     client.close()
-
-    # Assert flush was called correctly
     mock_producer.flush.assert_called_once_with(timeout=10)
 
-    # Assert nothing was printed
     captured = capfd.readouterr()
     assert captured.out == ""
     assert captured.err == ""
 
-    mock_producer.flush.reset_mock()  # Reset mock call count for the next scenario
+    mock_producer.flush.reset_mock()
 
     # --- Scenario 2: Unsuccessful flush (5 remaining messages) ---
     mock_producer.flush.return_value = 5
 
     client.close()
 
-    # Assert flush was called correctly again
     mock_producer.flush.assert_called_once_with(timeout=10)
 
-    # Assert warning was printed
     captured = capfd.readouterr()
     expected_warning = "WARNING: 5 messages still in queue after flush."
     assert expected_warning in captured.out
@@ -298,30 +263,23 @@ def test_kafka_client_close_handles_flush(mock_producer, capfd):
 class FormatDateTimeTest(TestCase):
     def test_string_and_none_inputs(self):
         """Tests cases where input should be returned unchanged or as None."""
-        # 1. None input
         self.assertIsNone(format_datetime(None))
 
-        # 2. String input
         test_string = "2023-10-25T10:00:00+00:00"
         self.assertEqual(format_datetime(test_string), test_string)
 
     def test_valid_datetime_and_date_inputs(self):
         """Tests standard datetime and date objects which support isoformat()."""
-
-        # 1. Timezone-naive datetime object
         dt_obj = datetime(2023, 10, 25, 10, 30, 0, 123456)
         expected_dt_format = "2023-10-25T10:30:00.123456"
         self.assertEqual(format_datetime(dt_obj), expected_dt_format)
 
-        # 2. Date object
         date_obj = date(2024, 1, 15)
         expected_date_format = "2024-01-15"
         self.assertEqual(format_datetime(date_obj), expected_date_format)
 
     def test_invalid_inputs(self):
         """Tests objects that should result in None."""
-
-        # 1. Invalid object inputs (should raise AttributeError, resulting in None)
         self.assertIsNone(format_datetime(12345))
         self.assertIsNone(format_datetime({"key": "value"}))
         self.assertIsNone(format_datetime([1, 2, 3]))
