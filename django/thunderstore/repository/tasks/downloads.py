@@ -14,7 +14,11 @@ from thunderstore.ts_analytics.utils import format_datetime
 TASK_LOG_VERSION_DOWNLOAD = "thunderstore.repository.tasks.log_version_download"
 
 
-@shared_task(queue=CeleryQueues.LogDownloads, name=TASK_LOG_VERSION_DOWNLOAD)
+@shared_task(
+    queue=CeleryQueues.LogDownloads,
+    name=TASK_LOG_VERSION_DOWNLOAD,
+    ignore_result=True,
+)
 def log_version_download(version_id: int, timestamp: str):
     with transaction.atomic():
         event = PackageVersionDownloadEvent.objects.create(
