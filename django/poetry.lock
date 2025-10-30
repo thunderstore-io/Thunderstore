@@ -1715,6 +1715,26 @@ files = [
 ]
 
 [[package]]
+name = "mdit-py-plugins"
+version = "0.4.2"
+description = "Collection of plugins for markdown-it-py"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "mdit_py_plugins-0.4.2-py3-none-any.whl", hash = "sha256:0c673c3f889399a33b95e88d2f0d111b4447bdfea7f237dab2d488f459835636"},
+    {file = "mdit_py_plugins-0.4.2.tar.gz", hash = "sha256:5f2cd1fdb606ddf152d37ec30e46101a60512bc0e5fa1a7002c36647b09e26b5"},
+]
+
+[package.dependencies]
+markdown-it-py = ">=1.0.0,<4.0.0"
+
+[package.extras]
+code-style = ["pre-commit"]
+rtd = ["myst-parser", "sphinx-book-theme"]
+testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+
+[[package]]
 name = "mdurl"
 version = "0.1.1"
 description = "Markdown URL utilities"
@@ -3217,4 +3237,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "37aed7fc870cc58107f5ad71a680d4d2e2172fbb1dd4fd8c4470f21f505efe3e"
+content-hash = "654b8166f7ad5d3559fd4cc65422d2238c7132fc1eef8a8e0616e1fe1381935d"
