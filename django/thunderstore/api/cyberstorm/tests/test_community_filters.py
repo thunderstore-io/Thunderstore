@@ -10,8 +10,8 @@ def test_community_filters_api_view__returns_package_categories(
     api_client: APIClient,
     community: Community,
 ):
-    c1 = PackageCategoryFactory(community=community)
-    c2 = PackageCategoryFactory(community=community)
+    c1 = PackageCategoryFactory(community=community, hidden=False)
+    c2 = PackageCategoryFactory(community=community, hidden=True)
 
     response = api_client.get(
         f"/api/cyberstorm/community/{community.identifier}/filters/",
@@ -19,11 +19,10 @@ def test_community_filters_api_view__returns_package_categories(
     result = response.json()
 
     assert len(result["package_categories"]) == 2
-    category_ids = [c["id"] for c in result["package_categories"]]
-    assert isinstance(category_ids[0], str)
-    assert isinstance(category_ids[1], str)
-    assert str(c1.id) in category_ids
-    assert str(c2.id) in category_ids
+    # Hidden categories should be included in API response
+    by_id = {c["id"]: c for c in result["package_categories"]}
+    assert by_id[str(c1.id)]["hidden"] is False
+    assert by_id[str(c2.id)]["hidden"] is True
 
 
 @pytest.mark.django_db
