@@ -35,6 +35,7 @@ markdown-it-py = {version = "2.1.0", extras = ["linkify"]}
 abyss = {git = "https://github.com/akx/abyss.git", rev = "4352e557f25a303f718ec1bf82ea0ca545ebc077"}
 lxml = "^4.9.1"
 pygments = "^2.16.1"
+confluent-kafka = "2.11.1"
 
 [tool.poetry.group.plugins]
 optional = true

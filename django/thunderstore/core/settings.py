@@ -136,6 +136,17 @@ env = environ.Env(
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
     CACHALOT_ENABLED=(bool, True),
     DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
+    KAFKA_BOOTSTRAP_SERVERS=(str, ""),
+    KAFKA_USERNAME=(str, ""),
+    KAFKA_PASSWORD=(str, ""),
+    KAFKA_CA_CERT=(str, ""),
+    KAFKA_ENABLED=(bool, False),
+    KAFKA_DEV=(bool, False),
+    KAFKA_ACKS=(str, "1"),
+    KAFKA_LINGER_MS=(int, 100),
+    KAFKA_MAX_BATCH_SIZE=(int, 500),
+    KAFKA_RETRY_BACKOFF_MS=(int, 1000),
+    KAFKA_DELIVERY_TIMEOUT_MS=(int, 120000),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -283,6 +294,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.moderation",
         "thunderstore.permissions",
         "thunderstore.ts_reports",
+        "thunderstore.ts_analytics",
     ]
 )
 
@@ -391,6 +403,7 @@ class CeleryQueues:
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
+    Analytics = "analytics"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
@@ -583,6 +596,29 @@ REST_FRAMEWORK = {
 # Thumbnails
 
 THUMBNAIL_QUALITY = 95
+
+# Kafka configuration
+
+# Whether Kafka is enabled
+KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
+# Whether Kafka topics should have dev prepended rather than prod
+KAFKA_DEV = env.bool("KAFKA_DEV")
+
+KAFKA_CONFIG = {
+    "bootstrap.servers": env.str("KAFKA_BOOTSTRAP_SERVERS"),
+    "security.protocol": "SASL_SSL",
+    "sasl.mechanism": "SCRAM-SHA-256",
+    "sasl.username": env.str("KAFKA_USERNAME"),
+    "sasl.password": env.str("KAFKA_PASSWORD"),
+    "ssl.ca.pem": env.str("KAFKA_CA_CERT"),
+    "client.id": "thunderstore-analytics",
+    "socket.nagle.disable": True,
+    "acks": env.str("KAFKA_ACKS", default="1"),
+    "linger.ms": env.int("KAFKA_LINGER_MS", 100),
+    "batch.num.messages": env.int("KAFKA_MAX_BATCH_SIZE", 500),
+    "retry.backoff.ms": env.int("KAFKA_RETRY_BACKOFF_MS", default=1000),
+    "delivery.timeout.ms": env.int("KAFKA_DELIVERY_TIMEOUT_MS", default=120000),
+}
 
 #######################################
 #               STORAGE               #

@@ -10,7 +10,7 @@ x-django-service: &django-service
       BUILD_INSTALL_EXTRAS: ${BUILD_INSTALL_EXTRAS}
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
-    CELERY_QUEUES: "celery,background.cache,background.task,background.long_running,log.downloads"
+    CELERY_QUEUES: "celery,background.cache,background.task,background.long_running,log.downloads,analytics"
     DATABASE_URL: "psql://django:django@dbpool/django"
     REDIS_URL: "redis://redis:6379/0"
     REDIS_URL_LEGACY: "redis://redis:6379/1"
