@@ -60,7 +60,7 @@ ENDPOINTS = {
     "DELETE": [
         "/api/cyberstorm/team/{team_name}/disband/",
         "/api/cyberstorm/team/{team_name}/member/{username}/remove/",
-        "/api/cyberstorm/team/{team_name}/service-account/delete/{uuid}/",
+        "/api/cyberstorm/service-account/{uuid}/delete/",
         "/api/cyberstorm/user/delete/",
         "/api/cyberstorm/user/linked-account/{provider}/disconnect/",
     ],

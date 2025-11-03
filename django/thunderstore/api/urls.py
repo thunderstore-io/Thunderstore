@@ -200,9 +200,9 @@ cyberstorm_urls = [
         name="cyberstorm.team.service-account.create",
     ),
     path(
-        "team/<str:team_name>/service-account/delete/<uuid:uuid>/",
+        "service-account/<uuid:uuid>/delete/",
         DeleteServiceAccountAPIView.as_view(),
-        name="cyberstorm.team.service-account.delete",
+        name="cyberstorm.service-account.delete",
     ),
     path(
         "user/delete/",

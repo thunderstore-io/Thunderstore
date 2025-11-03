@@ -208,7 +208,7 @@ class DeleteServiceAccountAPIView(APIView):
 
     @conditional_swagger_auto_schema(
         request_body=None,
-        operation_id="cyberstorm.team.service-account.delete",
+        operation_id="cyberstorm.service-account.delete",
         tags=["cyberstorm"],
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
