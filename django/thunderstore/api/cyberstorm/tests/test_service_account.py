@@ -14,8 +14,8 @@ def get_create_service_account_url(team_name: str) -> str:
     return f"/api/cyberstorm/team/{team_name}/service-account/create/"
 
 
-def get_delete_service_account_url(team_name: str, uuid: str) -> str:
-    return f"/api/cyberstorm/team/{team_name}/service-account/delete/{uuid}/"
+def get_delete_service_account_url(uuid: str) -> str:
+    return f"/api/cyberstorm/service-account/{uuid}/delete/"
 
 
 @pytest.mark.django_db
@@ -140,7 +140,7 @@ def test_delete_service_account_success(
     assert ServiceAccount.objects.filter(uuid=service_account.uuid).count() == 1
 
     api_client.force_authenticate(team_owner.user)
-    url = get_delete_service_account_url(team_owner.team.name, service_account.uuid)
+    url = get_delete_service_account_url(service_account.uuid)
     response = api_client.delete(path=url, content_type="application/json")
 
     assert response.status_code == 204
@@ -155,7 +155,7 @@ def test_delete_service_account_fail_user_is_not_authenticated(
 ):
     assert ServiceAccount.objects.filter(uuid=service_account.uuid).count() == 1
 
-    url = get_delete_service_account_url(team.name, service_account.uuid)
+    url = get_delete_service_account_url(service_account.uuid)
     response = api_client.delete(path=url, content_type="application/json")
     expected_response = {"detail": "Authentication credentials were not provided."}
 
@@ -175,7 +175,7 @@ def test_delete_service_account_fails_because_user_is_not_team_member(
     non_team_user = User.objects.create()
     api_client.force_authenticate(non_team_user)
 
-    url = get_delete_service_account_url(team.name, service_account.uuid)
+    url = get_delete_service_account_url(service_account.uuid)
     response = api_client.delete(path=url, content_type="application/json")
     expected_response = {"non_field_errors": ["Must be a member to access team"]}
 
@@ -194,7 +194,7 @@ def test_delete_service_account_fail_because_user_is_not_team_owner(
     assert ServiceAccount.objects.filter(uuid=service_account.uuid).count() == 1
 
     api_client.force_authenticate(team_member.user)
-    url = get_delete_service_account_url(team.name, service_account.uuid)
+    url = get_delete_service_account_url(service_account.uuid)
     response = api_client.delete(path=url, content_type="application/json")
     expected_response = {
         "non_field_errors": ["Must be an owner to delete a service account"]
