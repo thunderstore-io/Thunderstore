@@ -277,7 +277,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         if created:
             instance.package.handle_created_version(instance)
             instance.announce_release()
-        instance.package.handle_updated_version(instance)
+        transaction.on_commit(lambda: instance.package.handle_updated_version(instance))
 
     @staticmethod
     def post_delete(sender, instance, **kwargs):
