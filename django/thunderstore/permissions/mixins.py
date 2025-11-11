@@ -77,7 +77,7 @@ class VisibilityMixin(models.Model):
 
         self.update_visibility()
 
-        super().save()
+        super().save(*args, **kwargs)
 
     class Meta:
         abstract = True
