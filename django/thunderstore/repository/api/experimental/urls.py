@@ -25,8 +25,8 @@ from thunderstore.repository.api.experimental.views.wiki import (
     PackageWikiApiView,
     PackageWikiListAPIView,
 )
-from thunderstore.social.api.experimental.views import CurrentUserExperimentalApiView
-from thunderstore.social.api.experimental.views.current_user import (
+from thunderstore.social.api.experimental.views import (
+    CurrentUserExperimentalApiView,
     CurrentUserRatedPackagesExperimentalApiView,
 )
 
