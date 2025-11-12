@@ -12,7 +12,7 @@ MARKDOWN_UNRENDERED = """
 this is a description
 """.strip()
 
-MARKDOWN_RENDERED = """<h1>Test markdown</h1>
+MARKDOWN_RENDERED = """<h1 id="user-content-test-markdown">Test markdown</h1>
 <p>this is a description</p>
 """
 

@@ -29,6 +29,50 @@
         {# CSS and JS #}
         <link rel="stylesheet" href="{% static 'css/all.css' %}">
         <script src="{% static 'js/all.js' %}"></script>
+
+        {# Anchor navigation JS #}
+        <script>
+            function slugger(text) {
+                let slug = text.replace(/\s+/g, "-");
+                slug = slug.replace(/[^\p{L}\p{N}_-]+/gu, "");
+                return "user-content-" + slug.toLowerCase();
+            }
+
+            function scrollToHash(hash) {
+                if (!hash) return;
+
+                const targetId = hash.slice(1);
+
+                let target = document.getElementById(targetId);
+                if(!target)
+                {
+                    const normalizedTarget = targetId.startsWith('user-content-') ? targetId : slugger(targetId);
+                    target = document.getElementById(normalizedTarget);
+                }
+
+                if (!target) return;
+
+                target.scrollIntoView({ behavior: "auto", block: "start" });
+            }
+
+            document.addEventListener('click', (e) => {
+                const link = e.target.closest('a[href^="#"]');
+                if (!link) return;
+
+                const hash = link.getAttribute('href');
+                if (hash) {
+                    e.preventDefault();
+                    scrollToHash(hash);
+                    if (location.hash !== hash)
+                    {
+                        history.pushState(null, "", hash);
+                    }
+                }
+            });
+
+            document.addEventListener("DOMContentLoaded", () => scrollToHash(location.hash));
+            window.addEventListener("hashchange", () => scrollToHash(location.hash));
+        </script>
     </head>
     <body>
         {% if community.background_image %}
