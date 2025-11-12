@@ -7,6 +7,7 @@ from django.test import RequestFactory, override_settings
 from thunderstore.core.utils import (
     capture_exception,
     check_validity,
+    extend_update_fields_if_present,
     make_full_url,
     replace_cdn,
     sanitize_filename,
@@ -187,3 +188,41 @@ def test_replace_cdn__raises_for_relative_urls(url: str) -> None:
         match="Absolute URL including protocol required",
     ):
         replace_cdn(url, "irrelevant")
+
+
+def test_extend_update_fields_if_present__no_update_fields_key() -> None:
+    original = {"some": "value"}
+    result = extend_update_fields_if_present(original, "new_field")
+    assert result is not original
+    # Should not add update_fields key when it's not present in original
+    assert "update_fields" not in result
+    # Original dict remains unchanged
+    assert original == {"some": "value"}
+
+
+def test_extend_update_fields_if_present__update_fields_none() -> None:
+    original = {"update_fields": None, "other": 1}
+    result = extend_update_fields_if_present(original, "x")
+    # Copy returned
+    assert result is not original
+    # When update_fields is None, it should be left as-is
+    assert result["update_fields"] is None
+    assert result["other"] == 1
+    # Original remains unmodified
+    assert original["update_fields"] is None
+
+
+def test_extend_update_fields_if_present__extends_and_deduplicates() -> None:
+    original = {"update_fields": ["a", "b"]}
+    result = extend_update_fields_if_present(original, "b", "c")
+    # Should return a set with union of existing and new fields
+    assert isinstance(result["update_fields"], set)
+    assert result["update_fields"] == {"a", "b", "c"}
+    # Original should not be mutated
+    assert original["update_fields"] == ["a", "b"]
+
+
+def test_extend_update_fields_if_present__accepts_tuple_and_empty_new_fields() -> None:
+    original = {"update_fields": ("x",)}
+    result = extend_update_fields_if_present(original)
+    assert result["update_fields"] == {"x"}

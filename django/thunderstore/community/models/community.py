@@ -19,7 +19,7 @@ from thunderstore.core.enums import OptionalBoolChoice
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.mixins import TimestampMixin
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import check_validity
+from thunderstore.core.utils import check_validity, extend_update_fields_if_present
 from thunderstore.permissions.utils import validate_user
 
 if TYPE_CHECKING:
@@ -134,7 +134,7 @@ class Community(TimestampMixin, models.Model):
             else CommunityAggregatedFields.get_empty()
         )
 
-    def save(self, *args, **kwargs):
+    def save(self, **kwargs):
         if self.pk:
             in_db = type(self).objects.get(pk=self.pk)
             if in_db.identifier != self.identifier:
@@ -142,59 +142,44 @@ class Community(TimestampMixin, models.Model):
         if not self.icon:
             self.icon_width = 0
             self.icon_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "icon_width",
-                        "icon_height",
-                    ),
-                )
+            kwargs = extend_update_fields_if_present(
+                kwargs,
+                "icon_width",
+                "icon_height",
+            )
         if not self.background_image:
             self.background_image_width = 0
             self.background_image_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "background_image_width",
-                        "background_image_height",
-                    ),
-                )
+            kwargs = extend_update_fields_if_present(
+                kwargs,
+                "background_image_width",
+                "background_image_height",
+            )
         if not self.hero_image:
             self.hero_image_width = 0
             self.hero_image_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "hero_image_width",
-                        "hero_image_height",
-                    ),
-                )
+            kwargs = extend_update_fields_if_present(
+                kwargs,
+                "hero_image_width",
+                "hero_image_height",
+            )
         if not self.cover_image:
             self.cover_image_width = 0
             self.cover_image_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "cover_image_width",
-                        "cover_image_height",
-                    ),
-                )
+            kwargs = extend_update_fields_if_present(
+                kwargs,
+                "cover_image_width",
+                "cover_image_height",
+            )
         if not self.community_icon:
             self.community_icon_width = 0
             self.community_icon_height = 0
-            if "update_fields" in kwargs:
-                kwargs["update_fields"] = set(
-                    kwargs["update_fields"]
-                    + (
-                        "community_icon_width",
-                        "community_icon_height",
-                    ),
-                )
-        return super().save(*args, **kwargs)
+            kwargs = extend_update_fields_if_present(
+                kwargs,
+                "community_icon_width",
+                "community_icon_height",
+            )
+        return super().save(**kwargs)
 
     def __str__(self):
         return self.name
