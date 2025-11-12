@@ -5,6 +5,7 @@ from django.db import models, transaction
 from django.db.models import Q
 
 from thunderstore.core.types import UserType
+from thunderstore.core.utils import extend_update_fields_if_present
 from thunderstore.permissions.models import VisibilityFlags
 
 
@@ -71,13 +72,14 @@ class VisibilityMixin(models.Model):
         self.visibility.admin_list = False
 
     @transaction.atomic
-    def save(self, *args, **kwargs):
+    def save(self, **kwargs):
         if not self.pk and not self.visibility:
             self.visibility = VisibilityFlags.objects.create_public()
+            kwargs = extend_update_fields_if_present(kwargs, "visibility")
 
         self.update_visibility()
 
-        super().save(*args, **kwargs)
+        super().save(**kwargs)
 
     class Meta:
         abstract = True
