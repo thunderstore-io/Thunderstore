@@ -12,6 +12,8 @@ from django.contrib.auth.models import AnonymousUser, Permission
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.files.base import File
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 from PIL import Image
 from rest_framework.test import APIClient
 from social_django.models import UserSocialAuth
@@ -110,6 +112,16 @@ def prime_testing_database(django_db_setup, django_db_blocker):
         [x.delete() for x in Community.objects.all()]
         [x.delete() for x in CommunityAggregatedFields.objects.all()]
         [x.delete() for x in Site.objects.all()]
+
+
+@pytest.fixture
+def migrate_db_state():
+    def _run_migration(app_name: str, migration: str):
+        executor = MigrationExecutor(connection)
+        executor.migrate([(app_name, migration)])
+        executor.loader.build_graph()
+
+    return _run_migration
 
 
 @pytest.fixture()
