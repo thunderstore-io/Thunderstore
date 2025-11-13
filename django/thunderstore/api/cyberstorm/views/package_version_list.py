@@ -1,8 +1,14 @@
+from django.db.models import Exists, OuterRef, QuerySet
 from rest_framework import serializers
 from rest_framework.generics import ListAPIView, get_object_or_404
 
+from thunderstore.api.cyberstorm.serializers import (
+    CyberstormPackageDependencySerializer,
+)
+from thunderstore.api.cyberstorm.views.markdown import get_package_version
+from thunderstore.api.pagination import PackageDependenciesPaginator
 from thunderstore.api.utils import CyberstormAutoSchemaMixin
-from thunderstore.repository.models import Package
+from thunderstore.repository.models import Package, PackageVersion
 
 
 class CyberstormPackageVersionSerializer(serializers.Serializer):
@@ -28,3 +34,34 @@ class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
         )
 
         return package.versions.active()
+
+
+class PackageVersionDependenciesListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
+    serializer_class = CyberstormPackageDependencySerializer
+    pagination_class = PackageDependenciesPaginator
+
+    def get_queryset(self) -> QuerySet[PackageVersion]:
+        version_number = self.kwargs.get("version_number")
+        if version_number == "latest":
+            version_number = None  # get_package_version understands None as latest
+
+        package_version = get_package_version(
+            namespace_id=self.kwargs["namespace_id"],
+            package_name=self.kwargs["package_name"],
+            version_number=version_number,
+        )
+
+        qs = (
+            package_version.dependencies.all()
+            .select_related("package", "package__namespace")
+            .annotate(
+                package_has_active_versions=Exists(
+                    PackageVersion.objects.filter(
+                        package_id=OuterRef("package__pk"), is_active=True
+                    )
+                )
+            )
+            .order_by("package__namespace__name", "package__name")
+        )
+
+        return qs

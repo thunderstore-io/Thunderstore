@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,7 +13,13 @@ from thunderstore.api.cyberstorm.serializers.package_listing import (
 from thunderstore.api.cyberstorm.services.package_listing import (
     approve_package_listing,
     reject_package_listing,
+    report_package_listing,
+    unlist_package_listing,
     update_categories,
+)
+from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.community.api.experimental.serializers import (
+    PackageListingReportRequestSerializer,
 )
 from thunderstore.repository.models import PackageListing
 
@@ -42,7 +47,7 @@ class UpdatePackageListingCategoriesAPIView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PackageListingUpdateSerializer
 
-    @swagger_auto_schema(
+    @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package_listing.update",
         request_body=serializer_class,
         responses={200: PackageListingCategoriesSerializer},
@@ -70,7 +75,7 @@ class RejectPackageListingAPIView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PackageListingRejectSerializer
 
-    @swagger_auto_schema(
+    @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package_listing.reject",
         request_body=serializer_class,
         responses={200: "Success"},
@@ -100,7 +105,7 @@ class ApprovePackageListingAPIView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PackageListingApproveSerializer
 
-    @swagger_auto_schema(
+    @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package_listing.approve",
         request_body=serializer_class,
         responses={200: "Success"},
@@ -122,4 +127,54 @@ class ApprovePackageListingAPIView(APIView):
             listing=listing,
         )
 
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+
+
+class ReportPackageListingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.package_listing.report",
+        tags=["cyberstorm"],
+        request_body=PackageListingReportRequestSerializer,
+        responses={200: "Success"},
+    )
+    def post(self, request, *args, **kwargs) -> Response:
+        listing: PackageListing = get_package_listing(
+            namespace_id=kwargs["namespace_id"],
+            package_name=kwargs["package_name"],
+            community_id=kwargs["community_id"],
+        )
+
+        request_serializer = PackageListingReportRequestSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+
+        report_package_listing(
+            agent=request.user,
+            reason=request_serializer.validated_data.get("reason"),
+            package=listing.package,
+            package_listing=listing,
+            package_version=request_serializer.validated_data.get("version"),
+            description=request_serializer.validated_data.get("description"),
+        )
+
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+
+
+class UnlistPackageListingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.package_listing.unlist",
+        request_body=None,
+        responses={200: "Success"},
+        tags=["cyberstorm"],
+    )
+    def post(self, request, *args, **kwargs) -> Response:
+        listing = get_package_listing(
+            namespace_id=kwargs["namespace_id"],
+            package_name=kwargs["package_name"],
+            community_id=kwargs["community_id"],
+        )
+        unlist_package_listing(agent=request.user, listing=listing)
         return Response({"message": "Success"}, status=status.HTTP_200_OK)
