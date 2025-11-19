@@ -95,7 +95,7 @@ def package_listing_post_save(sender, instance: PackageListing, created, **kwarg
         package__id=instance.package.pk,
         community__id=instance.community.id,
         community__identifier=instance.community.identifier,
-        categories__slug=instance.categories.values_list("slug", flat=True),
+        categories__slug=list(instance.categories.values_list("slug", flat=True)),
         datetime_created=instance.datetime_created,
         datetime_updated=instance.datetime_updated,
         review_status=instance.review_status,
