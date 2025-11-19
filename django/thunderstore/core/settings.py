@@ -3,7 +3,8 @@ import json
 import os
 import sys
 import warnings
-from typing import Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
 import environ
 from django.http import HttpRequest
@@ -136,6 +137,9 @@ env = environ.Env(
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
     CACHALOT_ENABLED=(bool, True),
     DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
+    KAFKA_ENABLED=(bool, False),
+    KAFKA_TOPIC_PREFIX=(str, "dev"),
+    KAFKA_CONFIG_PATH=(str, "config/kafka.json"),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -283,6 +287,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.moderation",
         "thunderstore.permissions",
         "thunderstore.ts_reports",
+        "thunderstore.ts_analytics",
     ]
 )
 
@@ -391,6 +396,7 @@ class CeleryQueues:
     BackgroundCache = "background.cache"
     BackgroundTask = "background.task"
     BackgroundLongRunning = "background.long_running"
+    Analytics = "analytics"
 
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
@@ -583,6 +589,65 @@ REST_FRAMEWORK = {
 # Thumbnails
 
 THUMBNAIL_QUALITY = 95
+
+# Kafka configuration
+
+# Setting this to False will lead to kafka messages not being sent to anywhere,
+# instead a no-op function gets called.
+KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
+
+# All kafka messages get this prefix in the topic they're being sent to if set,
+# including a dot (.) for joining the original topic + the prefix.
+# e.g. KAFKA_TOPIC_PREFIX  of 'dev' turns 'foo.bar' topic to 'dev.foo.bar'.
+# An empty string will lead to no prefix of any kind
+KAFKA_TOPIC_PREFIX = env.str("KAFKA_TOPIC_PREFIX")
+
+
+class ConfigValidationError(RuntimeError):
+    pass
+
+
+def load_json_config(
+    filepath: Optional[str],
+) -> Optional[Dict[str, Any]]:  # pragma: no cover
+    if not filepath:
+        return None
+    confpath = Path(filepath)
+    if not confpath.is_absolute():
+        confpath = Path(BASE_DIR).joinpath(confpath).resolve()
+    print(f"Attempting to load json configuration from {confpath}")
+    if not confpath.exists():
+        print("No config file found, skipping load")
+        return None
+    result = json.loads(confpath.read_text(encoding="utf-8"))
+    if not isinstance(result, dict):
+        raise ConfigValidationError("Invalid configuration format")
+    return result
+
+
+KAFKA_CONFIG = load_json_config(env.str("KAFKA_CONFIG_PATH"))
+
+
+class KafkaConfigValidationError(ConfigValidationError):
+    pass
+
+
+def validate_kafka_config(is_enabled: bool, config: Optional[Dict[str, Any]]):
+    # TODO: Make this validation more robust, the config is well specced at
+    #       https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
+    if not is_enabled:
+        return
+    if config is None:
+        raise KafkaConfigValidationError("Kafka producer configuration is missing")
+
+    if not config.get("bootstrap.servers"):
+        raise KafkaConfigValidationError(
+            "Kafka bootstrap servers are missing from config"
+        )
+
+
+validate_kafka_config(KAFKA_ENABLED, KAFKA_CONFIG)
+
 
 #######################################
 #               STORAGE               #

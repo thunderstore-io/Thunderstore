@@ -1,0 +1,112 @@
+from enum import Enum
+from typing import Any, Dict, Optional, Union
+
+from confluent_kafka import Producer
+from django.conf import settings
+from pydantic import BaseModel
+
+from thunderstore.core.utils import capture_exception
+
+
+class KafkaTopic(str, Enum):
+    # Topics are versioned in case the data schema receives drastic changes.
+    # The constants' naming convention is a bit verbose, but it's only internal
+    # to this project and easy to refactor later if need be. Topic string IDs
+    # are harder to change later so forward-thinking consistency is ideal.
+
+    # 'analytics' prefixed events are events that aren't necessarily bound to
+    # any specific data structure
+    A_PACKAGE_DOWNLOAD_V1 = "analytics.package_download.v1"
+
+    # 'model' prefixed events are generally events that are explicitly bound to
+    # models. Use Django's db table naming convention.
+    M_PACKAGE_UPDATE_V1 = "model.package.update.v1"
+    M_PACKAGE_VERSION_UPDATE_V1 = "model.package_version.update.v1"
+    M_PACKAGE_LISTING_UPDATE_V1 = "model.package_listing.update.v1"
+    M_COMMUNITY_UPDATE_V1 = "model.community.update.v1"
+
+
+def build_full_topic_name(*, topic_prefix: Optional[str], topic_name: str) -> str:
+    return ".".join((x for x in (topic_prefix, topic_name) if x))
+
+
+class KafkaClient:
+    topic_prefix: Optional[str]
+    _producer: Producer
+
+    def __init__(self, *, topic_prefix: Optional[str], producer_config: Dict[str, Any]):
+        self.topic_prefix = topic_prefix
+        self._producer = Producer(producer_config)
+
+    def send(
+        self,
+        topic: str,
+        payload: BaseModel,
+        key: Optional[str] = None,
+    ):
+        self._send_string(
+            topic=topic,
+            payload_string=payload.json(),
+            key=key,
+        )
+
+    def _send_string(
+        self,
+        topic: str,
+        payload_string: str,
+        key: Optional[str] = None,
+    ):
+        full_topic_name = build_full_topic_name(
+            topic_prefix=self.topic_prefix,
+            topic_name=topic,
+        )
+        try:
+            value_bytes = payload_string.encode("utf-8")
+            key_bytes = key.encode("utf-8") if key else None
+
+            self._producer.produce(
+                topic=full_topic_name,
+                value=value_bytes,
+                key=key_bytes,
+            )
+        except Exception as e:  # pragma: no cover
+            capture_exception(e)
+
+
+class DummyKafkaClient:
+    """A dummy Kafka client that does nothing when Kafka is disabled."""
+
+    def send(
+        self, topic: str, payload: BaseModel, key: Optional[str] = None
+    ):  # pragma: no cover
+        pass
+
+    def _send_string(self, topic: str, payload_string: str, key: Optional[str] = None):
+        pass
+
+
+_KAFKA_CLIENT_INSTANCE = None
+
+
+def instantiate_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+    if settings.KAFKA_ENABLED is False:
+        return DummyKafkaClient()
+    else:
+        return KafkaClient(
+            topic_prefix=settings.KAFKA_TOPIC_PREFIX,
+            producer_config=settings.KAFKA_CONFIG,
+        )
+
+
+def _get_instance() -> Union[KafkaClient, DummyKafkaClient]:
+    """This is a private proxy method to make mocking in tests easier"""
+    global _KAFKA_CLIENT_INSTANCE
+
+    if _KAFKA_CLIENT_INSTANCE is None:
+        _KAFKA_CLIENT_INSTANCE = instantiate_kafka_client()
+
+    return _KAFKA_CLIENT_INSTANCE
+
+
+def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+    return _get_instance()
