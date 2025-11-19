@@ -141,7 +141,7 @@ env = environ.Env(
     KAFKA_PASSWORD=(str, ""),
     KAFKA_CA_CERT=(str, ""),
     KAFKA_ENABLED=(bool, False),
-    KAFKA_DEV=(bool, False),
+    KAFKA_TOPIC_PREFIX=(str, "dev"),
     KAFKA_ACKS=(str, "1"),
     KAFKA_LINGER_MS=(int, 100),
     KAFKA_MAX_BATCH_SIZE=(int, 500),
@@ -601,8 +601,8 @@ THUMBNAIL_QUALITY = 95
 
 # Whether Kafka is enabled
 KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
-# Whether Kafka topics should have dev prepended rather than prod
-KAFKA_DEV = env.bool("KAFKA_DEV")
+
+KAFKA_TOPIC_PREFIX = env.str("KAFKA_TOPIC_PREFIX")
 
 KAFKA_CONFIG = {
     "bootstrap.servers": env.str("KAFKA_BOOTSTRAP_SERVERS"),

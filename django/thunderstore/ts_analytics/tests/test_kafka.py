@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -47,9 +48,7 @@ def mock_kafka_client():
 
 
 @pytest.mark.django_db
-def test_send_kafka_message_task_sends_to_client(
-    mock_kafka_client,
-):
+def test_send_kafka_message_task_sends_to_client(mock_kafka_client):
     """
     Tests that the send_kafka_message_task (which is executed in the Celery worker)
     correctly retrieves the Kafka client and calls its send method.
@@ -71,9 +70,7 @@ def test_send_kafka_message_task_sends_to_client(
     )
 
 
-def test_send_kafka_message_task_handles_none_key(
-    mock_kafka_client,
-):
+def test_send_kafka_message_task_handles_none_key(mock_kafka_client):
     """Tests that the task handles a None key correctly."""
     test_topic = "test-topic-no-key"
     test_payload_string = '{"data": "no_key"}'
@@ -94,55 +91,34 @@ def test_send_kafka_message_task_handles_none_key(
 # ======================================================================
 
 
-def test_base_kafka_client_send_no_prefix(mock_producer):
-    """Test base KafkaClient's send method sends without a prefix (used internally by Dev/Prod)."""
-    client = KafkaClient({"bootstrap.servers": "test:9092"})
-    topic = "test.topic"
-    payload_string = '{"message": "hello"}'
-    key = "test_key"
+@pytest.mark.parametrize(
+    "prefix, topic, expected",
+    (
+        (None, "test.topic", "test.topic"),
+        ("prod", "test.topic", "prod.test.topic"),
+        ("dev", "test.topic", "dev.test.topic"),
+        ("foobar", "prod.test", "foobar.prod.test"),
+    ),
+)
+def test_kafka_client_prefixes_topic(
+    mock_producer,
+    prefix: Optional[str],
+    topic: str,
+    expected: str,
+):
+    """Test KafkaClient applies topic prefix"""
+    from thunderstore.ts_analytics.kafka import KafkaClient
+
+    client = KafkaClient(
+        topic_prefix=prefix, producer_config={"bootstrap.servers": "test:9092"}
+    )
+    payload_string = '{"message": "dev_test"}'
+    key = "dev_key"
 
     client.send(topic=topic, payload_string=payload_string, key=key)
 
     mock_producer.produce.assert_called_once_with(
-        topic=topic,
-        value=payload_string.encode("utf-8"),
-        key=key.encode("utf-8"),
-    )
-
-
-def test_dev_kafka_client_send_prefixes_topic(mock_producer):
-    """Test DevKafkaClient prefixes the topic with 'dev.'."""
-    from thunderstore.ts_analytics.kafka import DevKafkaClient
-
-    client = DevKafkaClient({"bootstrap.servers": "test:9092"})
-    original_topic = "test.topic"
-    expected_topic = "dev.test.topic"
-    payload_string = '{"message": "dev_test"}'
-    key = "dev_key"
-
-    client.send(topic=original_topic, payload_string=payload_string, key=key)
-
-    mock_producer.produce.assert_called_once_with(
-        topic=expected_topic,
-        value=payload_string.encode("utf-8"),
-        key=key.encode("utf-8"),
-    )
-
-
-def test_prod_kafka_client_send_prefixes_topic(mock_producer):
-    """Test ProdKafkaClient prefixes the topic with 'prod.'."""
-    from thunderstore.ts_analytics.kafka import ProdKafkaClient
-
-    client = ProdKafkaClient({"bootstrap.servers": "test:9092"})
-    original_topic = "test.topic"
-    expected_topic = "prod.test.topic"
-    payload_string = '{"message": "prod_test"}'
-    key = "prod_key"
-
-    client.send(topic=original_topic, payload_string=payload_string, key=key)
-
-    mock_producer.produce.assert_called_once_with(
-        topic=expected_topic,
+        topic=expected,
         value=payload_string.encode("utf-8"),
         key=key.encode("utf-8"),
     )
@@ -155,42 +131,12 @@ def test_get_kafka_client_disabled(settings, clear_kafka_client_instance):
     assert isinstance(client, DummyKafkaClient)
 
 
-def test_get_kafka_client_enabled_prod(settings, clear_kafka_client_instance):
-    """Test get_kafka_client returns ProdKafkaClient when enabled and KAFKA_DEV is False (default)."""
-    from thunderstore.ts_analytics.kafka import ProdKafkaClient
-
-    settings.KAFKA_ENABLED = True
-    settings.KAFKA_DEV = False
-    settings.KAFKA_CONFIG = {"bootstrap.servers": "test:9092"}
-
-    with patch("thunderstore.ts_analytics.kafka.Producer") as mock_producer_cls:
-        client = get_kafka_client()
-        assert isinstance(client, ProdKafkaClient)
-
-    mock_producer_cls.assert_called_once_with(settings.KAFKA_CONFIG)
-
-
-def test_get_kafka_client_enabled_dev(settings, clear_kafka_client_instance):
-    """Test get_kafka_client returns DevKafkaClient when enabled and KAFKA_DEV is True."""
-    from thunderstore.ts_analytics.kafka import DevKafkaClient
-
-    settings.KAFKA_ENABLED = True
-    settings.KAFKA_DEV = True
-    settings.KAFKA_CONFIG = {"bootstrap.servers": "test:9092"}
-
-    with patch("thunderstore.ts_analytics.kafka.Producer") as mock_producer_cls:
-        client = get_kafka_client()
-        assert isinstance(client, DevKafkaClient)
-
-    mock_producer_cls.assert_called_once_with(settings.KAFKA_CONFIG)
-
-
 def test_get_kafka_client_singleton(settings, clear_kafka_client_instance):
     """Test that the client is a singleton, regardless of client type."""
-    from thunderstore.ts_analytics.kafka import ProdKafkaClient
+    from thunderstore.ts_analytics.kafka import KafkaClient
 
     settings.KAFKA_ENABLED = True
-    settings.KAFKA_DEV = False
+    settings.KAFKA_TOPIC_PREFIX = "prod"
     settings.KAFKA_CONFIG = {"bootstrap.servers": "test:9092"}
 
     with patch("thunderstore.ts_analytics.kafka.Producer") as mock_producer_cls:
@@ -198,7 +144,7 @@ def test_get_kafka_client_singleton(settings, clear_kafka_client_instance):
         client2 = get_kafka_client()
 
     assert client1 is client2
-    assert isinstance(client1, ProdKafkaClient)
+    assert isinstance(client1, KafkaClient)
     assert mock_producer_cls.call_count == 1
 
 
@@ -231,7 +177,10 @@ def test_kafka_client_close_handles_flush(mock_producer, capfd):
     Tests that KafkaClient.close() calls producer.flush with the correct timeout
     and prints a warning if messages remain in the queue.
     """
-    client = KafkaClient({"bootstrap.servers": "test:9092"})
+    client = KafkaClient(
+        topic_prefix=None,
+        producer_config={"bootstrap.servers": "test:9092"},
+    )
 
     # --- Scenario 1: Successful flush (0 remaining messages) ---
     mock_producer.flush.return_value = 0

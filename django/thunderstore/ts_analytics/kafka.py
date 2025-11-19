@@ -13,9 +13,17 @@ class KafkaTopic(str, Enum):
     COMMUNITY_UPDATED = "ts.community.updated"
 
 
+def build_full_topic_name(*, topic_prefix: Optional[str], topic_name: str) -> str:
+    return ".".join((x for x in (topic_prefix, topic_name) if x))
+
+
 class KafkaClient:
-    def __init__(self, config: Dict[str, Any]):
-        self._producer = Producer(config)
+    topic_prefix: Optional[str]
+    _producer: Producer
+
+    def __init__(self, *, topic_prefix: Optional[str], producer_config: Dict[str, Any]):
+        self.topic_prefix = topic_prefix
+        self._producer = Producer(producer_config)
 
     def close(self):
         """Flushes any remaining messages and closes the producer."""
@@ -30,57 +38,21 @@ class KafkaClient:
         payload_string: str,
         key: Optional[str] = None,
     ):
+        full_topic_name = build_full_topic_name(
+            topic_prefix=self.topic_prefix,
+            topic_name=topic,
+        )
         try:
             value_bytes = payload_string.encode("utf-8")
             key_bytes = key.encode("utf-8") if key else None
 
             self._producer.produce(
-                topic=topic,
+                topic=full_topic_name,
                 value=value_bytes,
                 key=key_bytes,
             )
         except Exception as e:
             print(f"Error sending Kafka message: {e}")
-
-
-class ProdKafkaClient(KafkaClient):
-    """
-    A Kafka client for production environments that prepends 'prod.'
-    to all topics before sending.
-    """
-
-    def send(
-        self,
-        topic: str,
-        payload_string: str,
-        key: Optional[str] = None,
-    ):
-        prod_topic = f"prod.{topic}"
-        super().send(
-            topic=prod_topic,
-            payload_string=payload_string,
-            key=key,
-        )
-
-
-class DevKafkaClient(KafkaClient):
-    """
-    A Kafka client for development environments that prepends 'dev.'
-    to all topics before sending.
-    """
-
-    def send(
-        self,
-        topic: str,
-        payload_string: str,
-        key: Optional[str] = None,
-    ):
-        dev_topic = f"dev.{topic}"
-        super().send(
-            topic=dev_topic,
-            payload_string=payload_string,
-            key=key,
-        )
 
 
 class DummyKafkaClient:
@@ -93,15 +65,9 @@ class DummyKafkaClient:
 _KAFKA_CLIENT_INSTANCE = None
 
 
-def get_kafka_client() -> Union[KafkaClient, DevKafkaClient, DummyKafkaClient]:
-    global _KAFKA_CLIENT_INSTANCE
-
-    if _KAFKA_CLIENT_INSTANCE is not None:
-        return _KAFKA_CLIENT_INSTANCE
-
-    # Return dummy client if Kafka is disabled
-    if not getattr(settings, "KAFKA_ENABLED", False):
-        client = DummyKafkaClient()
+def instantiate_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+    if settings.KAFKA_ENABLED is False:
+        return DummyKafkaClient()
     else:
         config = getattr(settings, "KAFKA_CONFIG", None)
         if not config:
@@ -110,10 +76,15 @@ def get_kafka_client() -> Union[KafkaClient, DevKafkaClient, DummyKafkaClient]:
         if not config.get("bootstrap.servers"):
             raise RuntimeError("Kafka bootstrap servers are not configured.")
 
-        if getattr(settings, "KAFKA_DEV", False):
-            client = DevKafkaClient(config)
-        else:
-            client = ProdKafkaClient(config)
+        return KafkaClient(
+            topic_prefix=settings.KAFKA_TOPIC_PREFIX, producer_config=config
+        )
 
-    _KAFKA_CLIENT_INSTANCE = client
-    return client
+
+def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+    global _KAFKA_CLIENT_INSTANCE
+
+    if _KAFKA_CLIENT_INSTANCE is None:
+        _KAFKA_CLIENT_INSTANCE = instantiate_kafka_client()
+
+    return _KAFKA_CLIENT_INSTANCE
