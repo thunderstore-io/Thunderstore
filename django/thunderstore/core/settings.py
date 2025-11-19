@@ -603,6 +603,10 @@ KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
 KAFKA_TOPIC_PREFIX = env.str("KAFKA_TOPIC_PREFIX")
 
 
+class ConfigValidationError(RuntimeError):
+    pass
+
+
 def load_json_config(
     filepath: Optional[str],
 ) -> Optional[Dict[str, Any]]:  # pragma: no cover
@@ -617,14 +621,14 @@ def load_json_config(
         return None
     result = json.loads(confpath.read_text(encoding="utf-8"))
     if not isinstance(result, dict):
-        raise KafkaConfigValidationError("Invalid configuration format")
+        raise ConfigValidationError("Invalid configuration format")
     return result
 
 
 KAFKA_CONFIG = load_json_config(env.str("KAFKA_CONFIG_PATH"))
 
 
-class KafkaConfigValidationError(RuntimeError):
+class KafkaConfigValidationError(ConfigValidationError):
     pass
 
 
