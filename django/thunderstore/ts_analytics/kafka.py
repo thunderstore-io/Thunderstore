@@ -44,7 +44,7 @@ class KafkaClient:
         self,
         topic: str,
         payload_string: str,
-        key: Optional[str],
+        key: Optional[str] = None,
     ):
         full_topic_name = build_full_topic_name(
             topic_prefix=self.topic_prefix,
@@ -67,6 +67,9 @@ class DummyKafkaClient:
     """A dummy Kafka client that does nothing when Kafka is disabled."""
 
     def send(self, topic: str, payload: BaseModel, key: Optional[str] = None):
+        pass
+
+    def _send_string(self, topic: str, payload_string: str, key: Optional[str] = None):
         pass
 
 
