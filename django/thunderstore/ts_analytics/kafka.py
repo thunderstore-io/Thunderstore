@@ -1,12 +1,8 @@
-import json
 from enum import Enum
 from typing import Any, Dict, Optional, Union
 
-from celery import shared_task
 from confluent_kafka import Producer
 from django.conf import settings
-
-from thunderstore.core.settings import CeleryQueues
 
 
 class KafkaTopic(str, Enum):
@@ -15,20 +11,6 @@ class KafkaTopic(str, Enum):
     PACKAGE_VERSION_UPDATED = "ts.package.version.updated"
     PACKAGE_LISTING_UPDATED = "ts.package.listing.updated"
     COMMUNITY_UPDATED = "ts.community.updated"
-
-
-@shared_task(
-    queue=CeleryQueues.Analytics,
-    name="thunderstore.analytics.send_kafka_message_task",
-    ignore_result=True,
-)
-def send_kafka_message_task(topic: str, payload_string: str, key: Optional[str] = None):
-    send_kafka_message(topic=topic, payload_string=payload_string, key=key)
-
-
-def send_kafka_message(topic: str, payload_string: str, key: Optional[str] = None):
-    client = get_kafka_client()
-    client.send(topic=topic, payload_string=payload_string, key=key)
 
 
 class KafkaClient:

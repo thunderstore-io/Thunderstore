@@ -2,30 +2,9 @@ import json
 
 from django.db import transaction
 
-from thunderstore.ts_analytics.kafka import (
-    KafkaTopic,
-    send_kafka_message,
-    send_kafka_message_task,
-)
+from thunderstore.ts_analytics.kafka import KafkaTopic
+from thunderstore.ts_analytics.tasks import send_kafka_message
 from thunderstore.ts_analytics.utils import format_datetime
-
-# This is now in downloads.py so we don't have double the number of tasks for download logging
-# def package_version_download_event_post_save(sender, instance, created, **kwargs):
-#     """
-#     Signal handler for PackageVersionDownloadEvent post_save events.
-#     Sends download event information through Kafka as a Celery task.
-#     """
-#     payload_string=json.dumps({
-#         "id": instance.id,
-#         "version_id": instance.version_id,
-#         "timestamp": format_datetime(instance.timestamp),
-#     })
-#     transaction.on_commit(
-#         lambda: send_kafka_message_task.delay(
-#             topic=KafkaTopic.PACKAGE_DOWNLOADED,
-#             payload_string=payload_string,
-#         )
-#     )
 
 
 def package_post_save(sender, instance, created, **kwargs):
@@ -46,7 +25,7 @@ def package_post_save(sender, instance, created, **kwargs):
         }
     )
     transaction.on_commit(
-        lambda: send_kafka_message_task.delay(
+        lambda: send_kafka_message.delay(
             topic=KafkaTopic.PACKAGE_UPDATED,
             payload_string=payload_string,
         )
@@ -72,7 +51,7 @@ def package_version_post_save(sender, instance, created, **kwargs):
         }
     )
     transaction.on_commit(
-        lambda: send_kafka_message_task.delay(
+        lambda: send_kafka_message.delay(
             topic=KafkaTopic.PACKAGE_VERSION_UPDATED,
             payload_string=payload_string,
         )
@@ -95,7 +74,7 @@ def package_listing_post_save(sender, instance, created, **kwargs):
         }
     )
     transaction.on_commit(
-        lambda: send_kafka_message_task.delay(
+        lambda: send_kafka_message.delay(
             topic=KafkaTopic.PACKAGE_LISTING_UPDATED,
             payload_string=payload_string,
         )
@@ -117,7 +96,7 @@ def community_post_save(sender, instance, created, **kwargs):
         }
     )
     transaction.on_commit(
-        lambda: send_kafka_message_task.delay(
+        lambda: send_kafka_message.delay(
             topic=KafkaTopic.COMMUNITY_UPDATED, payload_string=payload_string
         )
     )

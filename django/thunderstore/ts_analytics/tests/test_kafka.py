@@ -1,4 +1,3 @@
-import json
 from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
@@ -9,9 +8,9 @@ from thunderstore.ts_analytics.kafka import (
     DummyKafkaClient,
     KafkaClient,
     get_kafka_client,
-    send_kafka_message_task,
 )
 from thunderstore.ts_analytics.signals import format_datetime
+from thunderstore.ts_analytics.tasks import send_kafka_message
 
 # ======================================================================
 # CORE FIXTURES AND MOCKS
@@ -60,7 +59,7 @@ def test_send_kafka_message_task_sends_to_client(
     test_key = "user_456"
 
     # Call the task function directly to simulate execution in the Celery worker
-    send_kafka_message_task(
+    send_kafka_message(
         topic=test_topic, payload_string=test_payload_string, key=test_key
     )
 
@@ -80,9 +79,7 @@ def test_send_kafka_message_task_handles_none_key(
     test_payload_string = '{"data": "no_key"}'
 
     # Call the task function directly to simulate execution in the Celery worker
-    send_kafka_message_task(
-        topic=test_topic, payload_string=test_payload_string, key=None
-    )
+    send_kafka_message(topic=test_topic, payload_string=test_payload_string, key=None)
 
     # Assert that the client was retrieved and its send method was called correctly
     mock_kafka_client.send.assert_called_once_with(

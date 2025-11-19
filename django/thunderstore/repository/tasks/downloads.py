@@ -8,7 +8,8 @@ from django.db.models import F
 from thunderstore.core.settings import CeleryQueues
 from thunderstore.metrics.models import PackageVersionDownloadEvent
 from thunderstore.repository.models import PackageVersion
-from thunderstore.ts_analytics.kafka import KafkaTopic, send_kafka_message
+from thunderstore.ts_analytics.kafka import KafkaTopic
+from thunderstore.ts_analytics.tasks import send_kafka_message
 from thunderstore.ts_analytics.utils import format_datetime
 
 TASK_LOG_VERSION_DOWNLOAD = "thunderstore.repository.tasks.log_version_download"
