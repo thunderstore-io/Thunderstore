@@ -168,40 +168,6 @@ def test_kafka_config_validation_no_bootstrap_servers():
         validate_kafka_config(True, config)
 
 
-def test_kafka_client_close_handles_flush(mock_producer, capfd):
-    """
-    Tests that KafkaClient.close() calls producer.flush with the correct timeout
-    and prints a warning if messages remain in the queue.
-    """
-    client = KafkaClient(
-        topic_prefix=None,
-        producer_config={"bootstrap.servers": "test:9092"},
-    )
-
-    # --- Scenario 1: Successful flush (0 remaining messages) ---
-    mock_producer.flush.return_value = 0
-
-    client.close()
-    mock_producer.flush.assert_called_once_with(timeout=10)
-
-    captured = capfd.readouterr()
-    assert captured.out == ""
-    assert captured.err == ""
-
-    mock_producer.flush.reset_mock()
-
-    # --- Scenario 2: Unsuccessful flush (5 remaining messages) ---
-    mock_producer.flush.return_value = 5
-
-    client.close()
-
-    mock_producer.flush.assert_called_once_with(timeout=10)
-
-    captured = capfd.readouterr()
-    expected_warning = "WARNING: 5 messages still in queue after flush."
-    assert expected_warning in captured.out
-
-
 class FormatDateTimeTest(TestCase):
     def test_string_and_none_inputs(self):
         """Tests cases where input should be returned unchanged or as None."""

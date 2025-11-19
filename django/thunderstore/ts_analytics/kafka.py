@@ -25,13 +25,6 @@ class KafkaClient:
         self.topic_prefix = topic_prefix
         self._producer = Producer(producer_config)
 
-    def close(self):
-        """Flushes any remaining messages and closes the producer."""
-        # The timeout (e.g., 10 seconds) is the maximum time to wait.
-        remaining_messages = self._producer.flush(timeout=10)
-        if remaining_messages > 0:
-            print(f"WARNING: {remaining_messages} messages still in queue after flush.")
-
     def send(
         self,
         topic: str,
