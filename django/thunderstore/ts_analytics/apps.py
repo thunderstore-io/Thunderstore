@@ -7,7 +7,6 @@ class AnalyticsAppConfig(AppConfig):
     label = "ts_analytics"
 
     def ready(self):
-        # Connect the signal handlers
         from thunderstore.community.models import Community, PackageListing
         from thunderstore.repository.models import Package, PackageVersion
         from thunderstore.ts_analytics.signals import (

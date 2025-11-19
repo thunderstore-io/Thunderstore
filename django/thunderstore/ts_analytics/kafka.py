@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Union
 
 from confluent_kafka import Producer
 from django.conf import settings
+from pydantic import BaseModel
 
 
 class KafkaTopic(str, Enum):
@@ -28,8 +29,20 @@ class KafkaClient:
     def send(
         self,
         topic: str,
-        payload_string: str,
+        payload: BaseModel,
         key: Optional[str] = None,
+    ):
+        self._send_string(
+            topic=topic,
+            payload_string=payload.json(),
+            key=key,
+        )
+
+    def _send_string(
+        self,
+        topic: str,
+        payload_string: str,
+        key: Optional[str],
     ):
         full_topic_name = build_full_topic_name(
             topic_prefix=self.topic_prefix,
@@ -51,7 +64,7 @@ class KafkaClient:
 class DummyKafkaClient:
     """A dummy Kafka client that does nothing when Kafka is disabled."""
 
-    def send(self, topic: str, payload_string: str, key: Optional[str] = None):
+    def send(self, topic: str, payload: BaseModel, key: Optional[str] = None):
         pass
 
 

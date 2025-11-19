@@ -15,4 +15,4 @@ TASK_SEND_KAFKA_MESSAGE = "thunderstore.ts_analytics.tasks.send_kafka_message"
 )
 def send_kafka_message(topic: str, payload_string: str, key: Optional[str] = None):
     client = get_kafka_client()
-    client.send(topic=topic, payload_string=payload_string, key=key)
+    client._send_string(topic=topic, payload_string=payload_string, key=key)
