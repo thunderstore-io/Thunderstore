@@ -40,7 +40,7 @@ def log_version_download(version_id: int, timestamp: str):
         # in a celery task context.
         transaction.on_commit(  # pragma: no cover
             lambda: send_kafka_message(
-                topic=KafkaTopic.PACKAGE_DOWNLOADED,
+                topic=KafkaTopic.A_PACKAGE_DOWNLOAD_V1,
                 payload_string=AnalyticsEventPackageDownload(
                     id=event.id,
                     version_id=version_id,

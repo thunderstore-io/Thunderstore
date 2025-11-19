@@ -9,11 +9,21 @@ from thunderstore.core.utils import capture_exception
 
 
 class KafkaTopic(str, Enum):
-    PACKAGE_DOWNLOADED = "ts.package.downloaded"
-    PACKAGE_UPDATED = "ts.package.updated"
-    PACKAGE_VERSION_UPDATED = "ts.package.version.updated"
-    PACKAGE_LISTING_UPDATED = "ts.package.listing.updated"
-    COMMUNITY_UPDATED = "ts.community.updated"
+    # Topics are versioned in case the data schema receives drastic changes.
+    # The constants' naming convention is a bit verbose, but it's only internal
+    # to this project and easy to refactor later if need be. Topic string IDs
+    # are harder to change later so forward-thinking consistency is ideal.
+
+    # 'analytics' prefixed events are events that aren't necessarily bound to
+    # any specific data structure
+    A_PACKAGE_DOWNLOAD_V1 = "analytics.package_download.v1"
+
+    # 'model' prefixed events are generally events that are explicitly bound to
+    # models. Use Django's db table naming convention.
+    M_PACKAGE_UPDATE_V1 = "model.package.update.v1"
+    M_PACKAGE_VERSION_UPDATE_V1 = "model.package_version.update.v1"
+    M_PACKAGE_LISTING_UPDATE_V1 = "model.package_listing.update.v1"
+    M_COMMUNITY_UPDATE_V1 = "model.community.update.v1"
 
 
 def build_full_topic_name(*, topic_prefix: Optional[str], topic_name: str) -> str:

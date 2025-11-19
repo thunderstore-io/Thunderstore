@@ -42,7 +42,7 @@ def package_post_save(sender, instance: Package, created, **kwargs):
         date_updated=instance.date_updated,
         is_deprecated=instance.is_deprecated,
     )
-    _send_kafka_message_on_commit(KafkaTopic.PACKAGE_UPDATED, payload)
+    _send_kafka_message_on_commit(KafkaTopic.M_PACKAGE_UPDATE_V1, payload)
 
 
 class AnalyticsEventPackageVersionUpdate(BaseModel):
@@ -73,7 +73,7 @@ def package_version_post_save(sender, instance: PackageVersion, created, **kwarg
         date_created=instance.date_created,
         file_size=instance.file_size,
     )
-    _send_kafka_message_on_commit(KafkaTopic.PACKAGE_VERSION_UPDATED, payload)
+    _send_kafka_message_on_commit(KafkaTopic.M_PACKAGE_VERSION_UPDATE_V1, payload)
 
 
 class AnalyticsEventPackageListingUpdate(BaseModel):
@@ -100,7 +100,7 @@ def package_listing_post_save(sender, instance: PackageListing, created, **kwarg
         datetime_updated=instance.datetime_updated,
         review_status=instance.review_status,
     )
-    _send_kafka_message_on_commit(KafkaTopic.PACKAGE_LISTING_UPDATED, payload)
+    _send_kafka_message_on_commit(KafkaTopic.M_PACKAGE_LISTING_UPDATE_V1, payload)
 
 
 class AnalyticsEventCommunityUpdate(BaseModel):
@@ -119,4 +119,4 @@ def community_post_save(sender, instance: Community, created, **kwargs):
         datetime_created=instance.datetime_created,
         datetime_updated=instance.datetime_updated,
     )
-    _send_kafka_message_on_commit(KafkaTopic.COMMUNITY_UPDATED, payload)
+    _send_kafka_message_on_commit(KafkaTopic.M_COMMUNITY_UPDATE_V1, payload)
