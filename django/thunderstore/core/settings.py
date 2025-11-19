@@ -1,7 +1,9 @@
 import base64
+import json
 import os
 import sys
 import warnings
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import environ
@@ -135,17 +137,9 @@ env = environ.Env(
     CACHALOT_TIMEOUT_SECONDS=(int, 60 * 15),  # 15 minutes by default
     CACHALOT_ENABLED=(bool, True),
     DOWNLOAD_METRICS_TTL_SECONDS=(int, 60 * 10),
-    KAFKA_BOOTSTRAP_SERVERS=(str, ""),
-    KAFKA_USERNAME=(str, ""),
-    KAFKA_PASSWORD=(str, ""),
-    KAFKA_CA_CERT=(str, ""),
     KAFKA_ENABLED=(bool, False),
     KAFKA_TOPIC_PREFIX=(str, "dev"),
-    KAFKA_ACKS=(str, "1"),
-    KAFKA_LINGER_MS=(int, 100),
-    KAFKA_MAX_BATCH_SIZE=(int, 500),
-    KAFKA_RETRY_BACKOFF_MS=(int, 1000),
-    KAFKA_DELIVERY_TIMEOUT_MS=(int, 120000),
+    KAFKA_CONFIG_PATH=(str, "config/kafka.json"),
     # FEATURE FLAGS UNDER HERE
     IS_CYBERSTORM_ENABLED=(bool, False),
     SHOW_CYBERSTORM_API_DOCS=(bool, False),
@@ -608,21 +602,26 @@ KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
 # An empty string will lead to no prefix of any kind
 KAFKA_TOPIC_PREFIX = env.str("KAFKA_TOPIC_PREFIX")
 
-KAFKA_CONFIG = {
-    "bootstrap.servers": env.str("KAFKA_BOOTSTRAP_SERVERS"),
-    "security.protocol": "SASL_SSL",
-    "sasl.mechanism": "SCRAM-SHA-256",
-    "sasl.username": env.str("KAFKA_USERNAME"),
-    "sasl.password": env.str("KAFKA_PASSWORD"),
-    "ssl.ca.pem": env.str("KAFKA_CA_CERT"),
-    "client.id": "thunderstore-analytics",
-    "socket.nagle.disable": True,
-    "acks": env.str("KAFKA_ACKS", default="1"),
-    "linger.ms": env.int("KAFKA_LINGER_MS", 100),
-    "batch.num.messages": env.int("KAFKA_MAX_BATCH_SIZE", 500),
-    "retry.backoff.ms": env.int("KAFKA_RETRY_BACKOFF_MS", default=1000),
-    "delivery.timeout.ms": env.int("KAFKA_DELIVERY_TIMEOUT_MS", default=120000),
-}
+
+def load_json_config(
+    filepath: Optional[str],
+) -> Optional[Dict[str, Any]]:  # pragma: no cover
+    if not filepath:
+        return None
+    confpath = Path(filepath)
+    if not confpath.is_absolute():
+        confpath = Path(BASE_DIR).joinpath(confpath).resolve()
+    print(f"Attempting to load json configuration from {confpath}")
+    if not confpath.exists():
+        print("No config file found, skipping load")
+        return None
+    result = json.loads(confpath.read_text(encoding="utf-8"))
+    if not isinstance(result, dict):
+        raise KafkaConfigValidationError("Invalid configuration format")
+    return result
+
+
+KAFKA_CONFIG = load_json_config(env.str("KAFKA_CONFIG_PATH"))
 
 
 class KafkaConfigValidationError(RuntimeError):
@@ -630,6 +629,8 @@ class KafkaConfigValidationError(RuntimeError):
 
 
 def validate_kafka_config(is_enabled: bool, config: Optional[Dict[str, Any]]):
+    # TODO: Make this validation more robust, the config is well specced at
+    #       https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
     if not is_enabled:
         return
     if config is None:
