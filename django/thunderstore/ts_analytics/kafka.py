@@ -86,10 +86,15 @@ def instantiate_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
         )
 
 
-def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+def _get_instance() -> Union[KafkaClient, DummyKafkaClient]:
+    """This is a private proxy method to make mocking in tests easier"""
     global _KAFKA_CLIENT_INSTANCE
 
     if _KAFKA_CLIENT_INSTANCE is None:
         _KAFKA_CLIENT_INSTANCE = instantiate_kafka_client()
 
     return _KAFKA_CLIENT_INSTANCE
+
+
+def get_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
+    return _get_instance()

@@ -31,7 +31,7 @@ def clear_kafka_client_instance():
 @pytest.fixture
 def mock_kafka_client():
     """Mocks the entire Kafka client retrieval process."""
-    with patch("thunderstore.ts_analytics.kafka.get_kafka_client") as mock_get_client:
+    with patch("thunderstore.ts_analytics.kafka._get_instance") as mock_get_client:
         mock_client_instance = MagicMock()
         mock_get_client.return_value = mock_client_instance
         yield mock_client_instance
@@ -58,7 +58,7 @@ def test_send_kafka_message_task_sends_to_client(mock_kafka_client):
     )
 
     # Assert that the client was retrieved and its send method was called correctly
-    mock_kafka_client.send.assert_called_once_with(
+    mock_kafka_client._send_string.assert_called_once_with(
         topic=test_topic,
         payload_string=test_payload_string,
         key=test_key,
@@ -74,7 +74,7 @@ def test_send_kafka_message_task_handles_none_key(mock_kafka_client):
     send_kafka_message(topic=test_topic, payload_string=test_payload_string, key=None)
 
     # Assert that the client was retrieved and its send method was called correctly
-    mock_kafka_client.send.assert_called_once_with(
+    mock_kafka_client._send_string.assert_called_once_with(
         topic=test_topic,
         payload_string=test_payload_string,
         key=None,
