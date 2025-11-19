@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.test import TestCase
 
+from thunderstore.core.settings import KafkaConfigValidationError, validate_kafka_config
 from thunderstore.ts_analytics.kafka import (
     DummyKafkaClient,
     KafkaClient,
@@ -148,28 +149,23 @@ def test_get_kafka_client_singleton(settings, clear_kafka_client_instance):
     assert mock_producer_cls.call_count == 1
 
 
-def test_get_kafka_client_runtime_error_no_config(
-    settings, clear_kafka_client_instance
-):
-    """Test for RuntimeError when KAFKA_ENABLED is True but KAFKA_CONFIG is None."""
-    settings.KAFKA_ENABLED = True
-    settings.KAFKA_CONFIG = None
-
-    with pytest.raises(RuntimeError, match="KAFKA_CONFIG is not configured."):
-        get_kafka_client()
-
-
-def test_get_kafka_client_runtime_error_no_bootstrap_servers(
-    settings, clear_kafka_client_instance
-):
-    """Test for RuntimeError when KAFKA_ENABLED is True but no bootstrap.servers are set."""
-    settings.KAFKA_ENABLED = True
-    settings.KAFKA_CONFIG = {"linger.ms": 100}
-
+def test_kafka_config_validation_no_config():
+    validate_kafka_config(False, None)
     with pytest.raises(
-        RuntimeError, match="Kafka bootstrap servers are not configured."
+        KafkaConfigValidationError, match="Kafka producer configuration is missing"
     ):
-        get_kafka_client()
+        validate_kafka_config(True, None)
+
+
+def test_kafka_config_validation_no_bootstrap_servers():
+    config = {"linger.ms": 100}
+
+    validate_kafka_config(False, config)
+    with pytest.raises(
+        KafkaConfigValidationError,
+        match="Kafka bootstrap servers are missing from config",
+    ):
+        validate_kafka_config(True, config)
 
 
 def test_kafka_client_close_handles_flush(mock_producer, capfd):

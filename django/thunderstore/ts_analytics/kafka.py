@@ -69,15 +69,9 @@ def instantiate_kafka_client() -> Union[KafkaClient, DummyKafkaClient]:
     if settings.KAFKA_ENABLED is False:
         return DummyKafkaClient()
     else:
-        config = getattr(settings, "KAFKA_CONFIG", None)
-        if not config:
-            raise RuntimeError("KAFKA_CONFIG is not configured.")
-
-        if not config.get("bootstrap.servers"):
-            raise RuntimeError("Kafka bootstrap servers are not configured.")
-
         return KafkaClient(
-            topic_prefix=settings.KAFKA_TOPIC_PREFIX, producer_config=config
+            topic_prefix=settings.KAFKA_TOPIC_PREFIX,
+            producer_config=settings.KAFKA_CONFIG,
         )
 
 

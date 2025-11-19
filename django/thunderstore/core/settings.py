@@ -1,9 +1,8 @@
 import base64
-import json
 import os
 import sys
 import warnings
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import environ
 from django.http import HttpRequest
@@ -599,9 +598,14 @@ THUMBNAIL_QUALITY = 95
 
 # Kafka configuration
 
-# Whether Kafka is enabled
+# Setting this to False will lead to kafka messages not being sent to anywhere,
+# instead a no-op function gets called.
 KAFKA_ENABLED = env.bool("KAFKA_ENABLED")
 
+# All kafka messages get this prefix in the topic they're being sent to if set,
+# including a dot (.) for joining the original topic + the prefix.
+# e.g. KAFKA_TOPIC_PREFIX  of 'dev' turns 'foo.bar' topic to 'dev.foo.bar'.
+# An empty string will lead to no prefix of any kind
 KAFKA_TOPIC_PREFIX = env.str("KAFKA_TOPIC_PREFIX")
 
 KAFKA_CONFIG = {
@@ -619,6 +623,26 @@ KAFKA_CONFIG = {
     "retry.backoff.ms": env.int("KAFKA_RETRY_BACKOFF_MS", default=1000),
     "delivery.timeout.ms": env.int("KAFKA_DELIVERY_TIMEOUT_MS", default=120000),
 }
+
+
+class KafkaConfigValidationError(RuntimeError):
+    pass
+
+
+def validate_kafka_config(is_enabled: bool, config: Optional[Dict[str, Any]]):
+    if not is_enabled:
+        return
+    if config is None:
+        raise KafkaConfigValidationError("Kafka producer configuration is missing")
+
+    if not config.get("bootstrap.servers"):
+        raise KafkaConfigValidationError(
+            "Kafka bootstrap servers are missing from config"
+        )
+
+
+validate_kafka_config(KAFKA_ENABLED, KAFKA_CONFIG)
+
 
 #######################################
 #               STORAGE               #
