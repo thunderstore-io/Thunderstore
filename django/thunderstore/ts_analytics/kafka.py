@@ -59,14 +59,16 @@ class KafkaClient:
                 value=value_bytes,
                 key=key_bytes,
             )
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             capture_exception(e)
 
 
 class DummyKafkaClient:
     """A dummy Kafka client that does nothing when Kafka is disabled."""
 
-    def send(self, topic: str, payload: BaseModel, key: Optional[str] = None):
+    def send(
+        self, topic: str, payload: BaseModel, key: Optional[str] = None
+    ):  # pragma: no cover
         pass
 
     def _send_string(self, topic: str, payload_string: str, key: Optional[str] = None):

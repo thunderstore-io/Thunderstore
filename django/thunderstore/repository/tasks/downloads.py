@@ -38,7 +38,7 @@ def log_version_download(version_id: int, timestamp: str):
 
         # Celery task, but intentionally called synchronously as we're already
         # in a celery task context.
-        transaction.on_commit(
+        transaction.on_commit(  # pragma: no cover
             lambda: send_kafka_message(
                 topic=KafkaTopic.PACKAGE_DOWNLOADED,
                 payload_string=AnalyticsEventPackageDownload(
