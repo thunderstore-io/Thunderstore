@@ -30,6 +30,8 @@ def log_version_download(version_id: int, timestamp: str):
             downloads=F("downloads") + 1
         )
 
+        # Celery task, but intentionally called synchronously as we're already
+        # in a celery task context.
         send_kafka_message(
             topic=KafkaTopic.PACKAGE_DOWNLOADED,
             payload_string=json.dumps(
