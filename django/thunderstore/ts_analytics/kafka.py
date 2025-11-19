@@ -5,6 +5,8 @@ from confluent_kafka import Producer
 from django.conf import settings
 from pydantic import BaseModel
 
+from thunderstore.core.utils import capture_exception
+
 
 class KafkaTopic(str, Enum):
     PACKAGE_DOWNLOADED = "ts.package.downloaded"
@@ -58,7 +60,7 @@ class KafkaClient:
                 key=key_bytes,
             )
         except Exception as e:
-            print(f"Error sending Kafka message: {e}")
+            capture_exception(e)
 
 
 class DummyKafkaClient:
