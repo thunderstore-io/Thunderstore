@@ -49,4 +49,6 @@ class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
         query_serializer=CommunityListAPIQueryParams(),
     )
     def get(self, *args, **kwargs):
-        return super().get(*args, **kwargs)
+        response = super().get(*args, **kwargs)
+        response["Cache-Control"] = "public, max-age=60"
+        return response
