@@ -124,6 +124,11 @@ class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
             package_name=self.kwargs["package_name"],
         )
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        response["Cache-Control"] = "public, max-age=60"
+        return response
+
 
 class CustomListing(PackageListing):
     class Meta:
