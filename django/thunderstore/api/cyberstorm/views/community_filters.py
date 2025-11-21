@@ -39,4 +39,6 @@ class CommunityFiltersAPIView(APIView):
             ),
         }
 
-        return Response(self.serializer_class(filters).data)
+        response = Response(self.serializer_class(filters).data)
+        response["Cache-Control"] = "public, max-age=60"
+        return response
