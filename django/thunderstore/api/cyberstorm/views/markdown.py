@@ -31,6 +31,12 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
 
         return {"html": render_markdown(package_version.readme)}
 
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        if self.kwargs.get("version_number") is not None:
+            response["Cache-Control"] = "public, max-age=600"
+        return response
+
 
 class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     """
@@ -52,6 +58,12 @@ class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView)
             raise Http404
 
         return {"html": render_markdown(package_version.changelog)}
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        if self.kwargs.get("version_number") is not None:
+            response["Cache-Control"] = "public, max-age=600"
+        return response
 
 
 def get_package_version(

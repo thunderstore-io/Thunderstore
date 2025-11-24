@@ -48,4 +48,6 @@ class PackageVersionAPIView(CyberstormAutoSchemaMixin, APIView):
         )
 
         response_serializer = PackageVersionResponseSerializer(instance=instance)
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
+        response = Response(response_serializer.data, status=status.HTTP_200_OK)
+        response["Cache-Control"] = "public, max-age=600"
+        return response
