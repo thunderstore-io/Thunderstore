@@ -49,6 +49,7 @@ x-django-service: &django-service
     SOURCE_VIEW_ENABLE_HIGHLIGHTING: "True"
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW: "True"
     USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS: "True"
+    GUNICORN_CMD_ARGS: "--bind=0.0.0.0:8000"
   env_file:
     - .env
   depends_on:
@@ -119,10 +120,18 @@ services:
       - ./django:/app
       - ./python-packages:/python-packages
       - built-static:/app/static_built:ro
-    ports:
-      - "127.0.0.1:80:8000"
     depends_on:
       - builder
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ./nginx/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - django
 
   django-worker:
     <<: [*django-service, *django-volumes]
