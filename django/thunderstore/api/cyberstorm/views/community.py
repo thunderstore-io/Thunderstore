@@ -14,7 +14,7 @@ class CommunityAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     queryset = Community.objects.all()
     serializer_class = CyberstormCommunitySerializer
 
-    def finalize_response(self, request, response, *args, **kwargs):
-        response = super().finalize_response(request, response, *args, **kwargs)
+    def get(self, *args, **kwargs):
+        response = super().get(self, *args, **kwargs)
         response["Cache-Control"] = "public, max-age=60"
         return response
