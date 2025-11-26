@@ -58,8 +58,8 @@ class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     lookup_field = "name"
     lookup_url_kwarg = "team_id"
 
-    def retrieve(self, request, *args, **kwargs):
-        response = super().retrieve(request, *args, **kwargs)
+    def retrieve(self, *args, **kwargs):
+        response = super().retrieve(*args, **kwargs)
         response["Cache-Control"] = "public, max-age=60"
         return response
 
