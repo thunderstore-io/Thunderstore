@@ -13,3 +13,8 @@ class CommunityAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     # Unlisted communities are included, as direct links to them should work.
     queryset = Community.objects.all()
     serializer_class = CyberstormCommunitySerializer
+
+    def get(self, *args, **kwargs):
+        response = super().get(*args, **kwargs)
+        response["Cache-Control"] = "public, max-age=60"
+        return response
