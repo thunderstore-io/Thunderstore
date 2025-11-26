@@ -58,7 +58,7 @@ class CurrentUserTeamPermissionsExperimentalApiView(TeamPermissionsMixin, APIVie
     def get(self, request, team_name: str):
         team_member = TeamMember.objects.real_users().get(
             team__name=team_name,
-            user__username=request.user.username,
+            user=request.user,
         )
 
         serializer = self.serializer_class(
