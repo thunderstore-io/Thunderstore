@@ -188,7 +188,6 @@ class Team(models.Model):
     @transaction.atomic
     def create(cls, name, **kwargs):
         team = cls.objects.create(name=name, **kwargs)
-        Namespace.objects.create(name=name, team=team)
         return team
 
     @classmethod
