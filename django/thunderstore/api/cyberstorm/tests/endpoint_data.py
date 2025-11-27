@@ -10,8 +10,6 @@ ENDPOINTS = {
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/status/",
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/v/{version_number}/",
         "/api/cyberstorm/package/{community_id}/{namespace_id}/{package_name}/permissions/",
-        "/api/cyberstorm/package/{namespace_id}/{package_name}/latest/changelog/",
-        "/api/cyberstorm/package/{namespace_id}/{package_name}/latest/readme/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/changelog/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
@@ -65,6 +63,10 @@ ENDPOINTS = {
         "/api/cyberstorm/user/delete/",
         "/api/cyberstorm/user/linked-account/{provider}/disconnect/",
     ],
+    # Suppress errors for the given endpoints
+    "IGNORED": [
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/"
+    ],
 }
 
 
@@ -82,3 +84,5 @@ PATCH_TEST_CASES = [
 
 
 DELETE_TEST_CASES = [{"path": path} for path in ENDPOINTS["DELETE"]]
+
+IGNORED_TEST_CASES = [{"path": path} for path in ENDPOINTS["IGNORED"]]

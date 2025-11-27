@@ -44,6 +44,7 @@ def test_cyberstorm_api_GET_query_count(
         method="get",
         path=url,
         max_queries=MAX_QUERIES,
+        follow=True,
     )
 
 
@@ -154,6 +155,7 @@ def test_cyberstorm_package_listing_list_query_count(
         method="get",
         path=url,
         max_queries=MAX_QUERIES,
+        follow=True,
     )
 
 

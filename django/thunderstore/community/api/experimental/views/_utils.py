@@ -1,5 +1,9 @@
 from collections import OrderedDict
+from datetime import datetime, timezone
+from urllib.parse import urlencode
 
+from django.shortcuts import redirect
+from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
@@ -29,11 +33,47 @@ class CustomCursorPagination(CursorPagination):
         )
 
 
+class CustomCursorPaginationWithCount(CustomCursorPagination):
+    count = 0
+    full_queryset = None
+
+    def paginate_queryset(self, queryset, request, view=None):
+        self.full_queryset = queryset
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_paginated_response(self, data) -> Response:
+        return Response(
+            OrderedDict(
+                [
+                    (
+                        "pagination",
+                        OrderedDict(
+                            [
+                                ("next_link", self.get_next_link()),
+                                ("previous_link", self.get_previous_link()),
+                                ("count", self.full_queryset.count()),
+                            ],
+                        ),
+                    ),
+                    (self.results_name, data),
+                ],
+            ),
+        )
+
+
 class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
+    window_duration_in_seconds = 0
+    default_query_params = ["window", "cursor", "page"]
+    permitted_query_params = []
 
     def list(self, request, *args, **kwargs):
+        if self.window_duration_in_seconds > 0:
+            redirection = self.get_window_redirection()
+            if redirection is not None:
+                return redirection
+
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
@@ -42,3 +82,38 @@ class CustomListAPIView(ListAPIView):
 
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+    def get_window_redirection(self):
+        try:
+            requested_window = float(
+                self.request.GET.get(
+                    "window", f"{datetime.now(timezone.utc).timestamp()}"
+                )
+            )
+        except ValueError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        is_valid_window = requested_window % self.window_duration_in_seconds
+        if is_valid_window >= 1:
+            requested_window = (
+                round(requested_window / self.window_duration_in_seconds)
+                * self.window_duration_in_seconds
+            )
+
+        all_permitted_query_params = (
+            self.default_query_params + self.permitted_query_params
+        )
+        query_items = {
+            key: value
+            for key, value in self.request.GET.items()
+            if key in all_permitted_query_params
+        }
+        query_items["window"] = str(requested_window)
+
+        sorted_params = sorted(query_items.items(), key=lambda x: x[0])
+        query_string = urlencode(sorted_params)
+        expected_url = f"{self.request.path}?{query_string}"
+
+        if self.request.get_full_path() != expected_url:
+            return redirect(expected_url)
+        return None

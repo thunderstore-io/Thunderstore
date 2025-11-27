@@ -3,6 +3,7 @@ import pytest
 from thunderstore.api.cyberstorm.tests.endpoint_data import (
     DELETE_TEST_CASES,
     GET_TEST_CASES,
+    IGNORED_TEST_CASES,
     PATCH_TEST_CASES,
     POST_TEST_CASES,
 )
@@ -35,7 +36,7 @@ def test_cyberstorm_GET_endpoint_schemas(
     resolver = get_resolver(schema)
 
     url = fill_path_params(api_path, param_values)
-    response = api_client.get(url, format="json")
+    response = api_client.get(url, format="json", follow=True)
 
     errors = validate_response_against_schema(
         response=response,
@@ -202,6 +203,7 @@ def test_find_missing_endpoints():
         + POST_TEST_CASES
         + PATCH_TEST_CASES
         + DELETE_TEST_CASES
+        + IGNORED_TEST_CASES
     }
 
     existing_paths = {

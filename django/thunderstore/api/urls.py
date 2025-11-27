@@ -110,16 +110,6 @@ cyberstorm_urls = [
         name="cyberstorm.listing.unlist",
     ),
     path(
-        "package/<str:namespace_id>/<str:package_name>/latest/changelog/",
-        PackageVersionChangelogAPIView.as_view(),
-        name="cyberstorm.package.latest.changelog",
-    ),
-    path(
-        "package/<str:namespace_id>/<str:package_name>/latest/readme/",
-        PackageVersionReadmeAPIView.as_view(),
-        name="cyberstorm.package.latest.readme",
-    ),
-    path(
         "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/",
         PackageVersionAPIView.as_view(),
         name="cyberstorm.package.version",

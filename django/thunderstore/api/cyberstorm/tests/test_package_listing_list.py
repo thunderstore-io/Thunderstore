@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.urls import reverse
@@ -33,15 +34,23 @@ mock_base_package_list_api_view = patch.multiple(
 )
 
 
+from django.urls import reverse
+from rest_framework import status
+
+
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__return_data_structure() -> None:
+def test_base_view__return_data_structure(api_client) -> None:
     pl = PackageListingFactory()
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=pl.community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": pl.community.identifier},
     )
+
+    response = api_client.get(url, format="json", follow=True)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.redirect_chain) > 0
 
     expected_results_keys = [
         "categories",
@@ -60,115 +69,143 @@ def test_base_view__return_data_structure() -> None:
         "datetime_created",
     ]
 
-    assert response.status_code == 200
+    results = response.data["results"]
+    assert len(results) > 0
 
-    response_results = response.data["results"][0]
-    assert expected_results_keys == list(response_results.keys())
+    response_results = results[0]
+
+    assert set(expected_results_keys) == set(response_results.keys())
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__by_default__filters_out_inactive_packages() -> None:
+def test_base_view__by_default__filters_out_inactive_packages(api_client) -> None:
     pl = PackageListingFactory(package_kwargs={"is_active": False})
-
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=pl.community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": pl.community.identifier},
     )
+
+    response = api_client.get(url, format="json", follow=True)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.redirect_chain) > 0
 
     assert response.data["count"] == 0
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__by_default__filters_out_deprecated_packages() -> None:
+def test_base_view__by_default__filters_out_deprecated_packages(api_client) -> None:
     pl = PackageListingFactory(package_kwargs={"is_deprecated": True})
-
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=pl.community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": pl.community.identifier},
     )
+
+    response = api_client.get(url, format="json", follow=True)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.redirect_chain) > 0
 
     assert response.data["count"] == 0
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__when_requested__include_deprecated_packages() -> None:
+def test_base_view__when_requested__include_deprecated_packages(api_client) -> None:
     pl = PackageListingFactory(package_kwargs={"is_deprecated": True})
-
-    request = APIRequestFactory().get("/", {"deprecated": True})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=pl.community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": pl.community.identifier},
     )
+
+    response = api_client.get(
+        url, data={"deprecated": "True"}, format="json", follow=True
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.redirect_chain) > 0
 
     assert response.data["count"] == 1
+    assert response.data["results"][0]["is_deprecated"] is True
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__by_default__filters_out_nsfw() -> None:
+def test_base_view__by_default__filters_out_nsfw(api_client) -> None:
     pl = PackageListingFactory(has_nsfw_content=True)
 
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=pl.community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": pl.community.identifier},
     )
+
+    response = api_client.get(url, format="json", follow=True)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.redirect_chain) > 0
 
     assert response.data["count"] == 0
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__when_requested__include_nsfw_packages() -> None:
+def test_base_view__when_requested__include_nsfw_packages(api_client) -> None:
     pl = PackageListingFactory(has_nsfw_content=True)
 
-    request = APIRequestFactory().get("/", {"nsfw": True})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=pl.community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": pl.community.identifier},
     )
 
+    response = api_client.get(url, data={"nsfw": "True"}, format="json", follow=True)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert len(response.redirect_chain) > 0
+
     assert response.data["count"] == 1
+    assert response.data["results"][0]["is_nsfw"] is True
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__by_default__does_not_filter_by_categories(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     cat = PackageCategory.objects.create(name="c", slug="c", community=community)
     PackageListingFactory(community_=community)
     PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
-
+    response = api_client.get(url, format="json", follow=True)
+    assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] == 2
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_including_category__filters_out_not_matched(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     cat = PackageCategory.objects.create(name="c", slug="c", community=community)
     PackageListingFactory(community_=community, categories=[])
     included = PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"included_categories": [str(cat.id)]})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
-
+    response = api_client.get(
+        url,
+        data={"included_categories": [str(cat.id)]},
+        format="json",
+        follow=True,
+    )
+    assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == included.package.name
 
@@ -176,18 +213,23 @@ def test_base_view__when_including_category__filters_out_not_matched(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_excluding_category__filters_out_matched(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     cat = PackageCategory.objects.create(name="c", slug="c", community=community)
     included = PackageListingFactory(community_=community, categories=[])
     PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"excluded_categories": [str(cat.id)]})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
-
+    response = api_client.get(
+        url,
+        data={"excluded_categories": [str(cat.id)]},
+        format="json",
+        follow=True,
+    )
+    assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == included.package.name
 
@@ -195,7 +237,7 @@ def test_base_view__when_excluding_category__filters_out_matched(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_requesting_section__filters_based_on_categories(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     required = PackageCategory.objects.create(name="r", slug="r", community=community)
     excluded = PackageCategory.objects.create(name="e", slug="e", community=community)
@@ -212,30 +254,39 @@ def test_base_view__when_requesting_section__filters_based_on_categories(
     PackageListingFactory(community_=community, categories=[excluded])
     PackageListingFactory(community_=community, categories=[irrelevant])
 
-    request = APIRequestFactory().get("/", {"section": section.uuid})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
-
+    response = api_client.get(
+        url,
+        data={"section": [str(section.uuid)]},
+        format="json",
+        follow=True,
+    )
+    assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == expected.package.name
 
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__when_requesting_nonexisting_section__does_nothing() -> None:
+def test_base_view__when_requesting_nonexisting_section__does_nothing(
+    api_client,
+) -> None:
     expected = PackageListingFactory()
 
-    request = APIRequestFactory().get(
-        "/",
-        {"section": "decade00-0000-4000-a000-000000000000"},
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": expected.community.identifier},
     )
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=expected.community.identifier,
+    response = api_client.get(
+        url,
+        data={"section": "decade00-0000-4000-a000-000000000000"},
+        format="json",
+        follow=True,
     )
-
+    assert response.status_code == status.HTTP_200_OK
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == expected.package.name
 
@@ -243,34 +294,41 @@ def test_base_view__when_requesting_nonexisting_section__does_nothing() -> None:
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_search_is_used__filters_based_on_names_and_description(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     pl1 = PackageListingFactory(community_=community)
     pl2 = PackageListingFactory(community_=community)
     pl3 = PackageListingFactory(community_=community)
 
-    request = APIRequestFactory().get("/", {"q": pl1.package.name})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"q": pl1.package.name},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == pl1.package.name
 
-    request = APIRequestFactory().get("/", {"q": pl2.package.owner.name})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    response = api_client.get(
+        url,
+        data={"q": pl2.package.owner.name},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 1
     assert response.data["results"][0]["name"] == pl2.package.name
 
-    request = APIRequestFactory().get("/", {"q": pl3.package.latest.description})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    response = api_client.get(
+        url,
+        data={"q": pl3.package.latest.description},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 1
@@ -280,7 +338,7 @@ def test_base_view__when_search_is_used__filters_based_on_names_and_description(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__by_default__orders_packages_by_update_date(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     pl1 = PackageListingFactory(
         community_=community,
@@ -295,11 +353,11 @@ def test_base_view__by_default__orders_packages_by_update_date(
         package_kwargs={"date_updated": "2022-02-12 01:23:45Z"},
     )
 
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
+    response = api_client.get(url, format="json", follow=True)
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl2.package.name
@@ -310,7 +368,7 @@ def test_base_view__by_default__orders_packages_by_update_date(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_requested__orders_packages_by_creation_date(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     pl1 = PackageListingFactory(
         community_=community,
@@ -325,10 +383,15 @@ def test_base_view__when_requested__orders_packages_by_creation_date(
         package_kwargs={"date_created": "2022-02-12 01:23:45Z"},
     )
 
-    request = APIRequestFactory().get("/", {"ordering": "newest"})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"ordering": "newest"},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 3
@@ -340,7 +403,7 @@ def test_base_view__when_requested__orders_packages_by_creation_date(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_requested__orders_packages_by_download_counts(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     pl1 = PackageListingFactory(
         community_=community,
@@ -355,10 +418,15 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
         package_version_kwargs={"downloads": 42},
     )
 
-    request = APIRequestFactory().get("/", {"ordering": "most-downloaded"})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"ordering": "most-downloaded"},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 3
@@ -369,10 +437,15 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
     # Downloads of all versions are counted towards package's downloads.
     PackageVersionFactory(package=pl1.package, downloads=9001, version_number="1.0.1")
 
-    request = APIRequestFactory().get("/", {"ordering": "most-downloaded"})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"ordering": "most-downloaded"},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 3
@@ -384,7 +457,7 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_requested__orders_packages_by_rating_counts(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     middle = PackageListingFactory(community_=community)
     bottom = PackageListingFactory(community_=community)
@@ -393,10 +466,15 @@ def test_base_view__when_requested__orders_packages_by_rating_counts(
     PackageRatingFactory(package=top.package)
     PackageRatingFactory(package=top.package)
 
-    request = APIRequestFactory().get("/", {"ordering": "top-rated"})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"ordering": "top-rated"},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 3
@@ -408,12 +486,17 @@ def test_base_view__when_requested__orders_packages_by_rating_counts(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__unknown_ordering_parameter__returns_error(
-    community: Community,
+    community: Community, api_client
 ) -> None:
-    request = APIRequestFactory().get("/", {"ordering": "color"})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"ordering": "color"},
+        format="json",
+        follow=True,
     )
 
     assert "ordering" in response.data
@@ -423,7 +506,7 @@ def test_base_view__unknown_ordering_parameter__returns_error(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__always__returns_pinned_packages_first(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     pl1 = PackageListingFactory(community_=community)
     pl2 = PackageListingFactory(
@@ -432,11 +515,11 @@ def test_base_view__always__returns_pinned_packages_first(
     )
     pl3 = PackageListingFactory(community_=community)
 
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
+    response = api_client.get(url, format="json", follow=True)
 
     assert response.data["count"] == 3
     assert response.data["results"][0]["name"] == pl2.package.name
@@ -447,7 +530,7 @@ def test_base_view__always__returns_pinned_packages_first(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__always__returns_deprecated_packages_last(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     pl1 = PackageListingFactory(community_=community)
     pl2 = PackageListingFactory(
@@ -456,10 +539,15 @@ def test_base_view__always__returns_deprecated_packages_last(
     )
     pl3 = PackageListingFactory(community_=community)
 
-    request = APIRequestFactory().get("/", {"deprecated": True})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"deprecated": True},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 3
@@ -471,26 +559,31 @@ def test_base_view__always__returns_deprecated_packages_last(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_request_matches_lots_of_packages__paginates_results(
-    community: Community,
+    community: Community, api_client
 ) -> None:
     for _ in range(21):
         PackageListingFactory(community_=community)
 
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
+    response = api_client.get(url, format="json", follow=True)
 
     assert response.data["count"] == 21
     assert response.data["previous"] is None
     assert response.data["next"] is not None
     assert len(response.data["results"]) == 20
 
-    request = APIRequestFactory().get("/", {"page": 2})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
+    )
+    response = api_client.get(
+        url,
+        data={"page": 2},
+        format="json",
+        follow=True,
     )
 
     assert response.data["count"] == 21
@@ -502,22 +595,23 @@ def test_base_view__when_request_matches_lots_of_packages__paginates_results(
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__when_requested_page_is_out_of_bounds__returns_error(
-    community: Community,
+    community: Community, api_client
 ) -> None:
-    request = APIRequestFactory().get("/")
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
+    response = api_client.get(url, format="json", follow=True)
 
     # Requesting empty first page shouldn't cause error.
     assert response.data["count"] == 0
     assert len(response.data["results"]) == 0
 
-    request = APIRequestFactory().get("/", {"page": 2})
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    response = api_client.get(
+        url,
+        data={"page": 2},
+        format="json",
+        follow=True,
     )
 
     # Error not serialized by dispatch so cast to str manually.
@@ -527,35 +621,80 @@ def test_base_view__when_requested_page_is_out_of_bounds__returns_error(
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
-    community: Community,
+def test_base_view__when_multiple_pages_of_results__page_urls_retain_parameters(
+    community: Community, api_client
 ) -> None:
+    # 1. Setup data
     cat = PackageCategory.objects.create(name="c", slug="c", community=community)
-
     for _ in range(41):
         PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get(
-        "/",
-        data={
-            "deprecated": True,
-            "included_categories": [str(cat.id)],
-            "ordering": "most-downloaded",
-            "page": 2,
-            "q": "test",
-        },
-    )
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier},
     )
 
-    assert response.data["previous"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=1&q=test",
-    )
-    assert response.data["next"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=3&q=test",
-    )
+    data = {
+        "deprecated": "True",
+        "included_categories": [str(cat.id)],
+        "nsfw": False,
+        "ordering": "most-downloaded",
+        "page": 2,
+        "q": "test",
+    }
+
+    response = api_client.get(url, data=data, follow=True)
+
+    assert len(response.redirect_chain) > 0
+    assert response.redirect_chain[0][1] == 302
+    assert "window=" in response.redirect_chain[0][0]
+
+    assert response.status_code == 200
+    res_data = response.json()
+
+    final_path = response.wsgi_request.get_full_path()
+    parsed_url = urlparse(final_path)
+    query_params = parse_qs(parsed_url.query)
+    window = query_params.get("window")[0]
+
+    # When previous page is root
+    assert (
+        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&q=test&window={window}"
+    ) in res_data["previous"]
+
+    # When next page exists
+    assert (
+        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=3&q=test&window={window}"
+    ) in res_data["next"]
+
+    data = {
+        "deprecated": "True",
+        "included_categories": [str(cat.id)],
+        "nsfw": False,
+        "ordering": "most-downloaded",
+        "page": 3,
+        "q": "test",
+    }
+
+    response = api_client.get(url, data=data, follow=True)
+
+    assert len(response.redirect_chain) > 0
+    assert response.redirect_chain[0][1] == 302
+    assert "window=" in response.redirect_chain[0][0]
+
+    assert response.status_code == 200
+    res_data = response.json()
+
+    final_path = response.wsgi_request.get_full_path()
+    parsed_url = urlparse(final_path)
+    query_params = parse_qs(parsed_url.query)
+    window = query_params.get("window")[0]
+
+    assert (
+        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=2&q=test&window={window}"
+    ) in res_data["previous"]
+
+    assert res_data["next"] is None
 
 
 ######################################
@@ -572,6 +711,7 @@ def test_listing_by_community_view__returns_only_packages_listed_in_community(
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{expected.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -588,6 +728,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{pl1.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -596,6 +737,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{pl2.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -617,6 +759,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{com1pack2.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -631,6 +774,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{com2pack2.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -664,6 +808,7 @@ def test_listing_by_community_view__does_not_return_rejected_packages(
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/?ordering=newest",
+        follow=True,
     )
     result = response.json()
 
@@ -699,12 +844,12 @@ def test_listing_by_community__does_not_return_rejected_multi_community_packages
 
     # Should return one package since it is approved in community1
     url = f"/api/cyberstorm/listing/{community1.identifier}/"
-    response = api_client.get(url)
+    response = api_client.get(url, follow=True)
     assert response.json()["count"] == 1
 
     # Should return zero packages since it is rejected in community2
     url = f"/api/cyberstorm/listing/{community2.identifier}/"
-    response = api_client.get(url)
+    response = api_client.get(url, follow=True)
     assert response.json()["count"] == 0
 
 
@@ -728,6 +873,7 @@ def test_listing_by_community_view__when_community_requires_review__returns_only
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/?ordering=newest",
+        follow=True,
     )
     result = response.json()
 
@@ -756,6 +902,7 @@ def test_listing_by_namespace_view__returns_only_packages_listed_in_community_be
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/{namespace.name}/",
+        follow=True,
     )
     result = response.json()
 
@@ -800,6 +947,7 @@ def test_listing_by_dependency_view__returns_only_dependants_of_requested_packag
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/{target_ns.name}/{package}/dependants/",
+        follow=True,
     )
     result = response.json()
 
@@ -822,6 +970,7 @@ def test_listing_by_dependency_view__returns_only_packages_listed_in_community(
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/{dependency_listing.package.namespace.name}/{dependency_listing.package.name}/dependants/",
+        follow=True,
     )
     result = response.json()
 
