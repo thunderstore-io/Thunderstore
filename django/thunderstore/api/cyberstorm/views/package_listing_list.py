@@ -20,6 +20,8 @@ from thunderstore.community.models import (
     PackageListingSection,
 )
 from thunderstore.repository.models import Namespace, Package, get_package_dependants
+from thunderstore.community.api.experimental.views._utils import CustomListAPIView
+from thunderstore.community.api.experimental.views._utils import CustomCursorPagination
 
 # Keys are values expected in requests, values are args for .order_by().
 ORDER_ARGS = {
@@ -81,7 +83,7 @@ class PackageListPaginator(PageNumberPagination):
         return []
 
 
-class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
+class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
     """
     Base class for community-scoped, paginated, filterable package listings.
 
@@ -92,29 +94,10 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
     methods, whereas the rest are overwritten methods from ListAPIView.
     """
 
-    pagination_class = PackageListPaginator
+    pagination_class = CustomCursorPagination
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
-
-    def list(self, request, *args, **kwargs):  # noqa: A003
-        assert self.paginator is not None
-
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page, many=True)
-        response = self.paginator.get_paginated_response(serializer.data)
-
-        # Paginator's default implementation uses the Request object to
-        # construct previous/next links, which can open attack vectors
-        # via cache. Ideally this would have been overridden in the
-        # paginator itself, but that would require passing extra args,
-        # which would change the methods signatures, which is icky and
-        # not liked by MyPy either.
-        (previous_url, next_url) = self._get_sibling_pages()
-        response.data["previous"] = previous_url
-        response.data["next"] = next_url
-
-        return response
+    window_duration_in_seconds = 60
 
     def get_serializer(self, package_page: Page, **kwargs):
         """
