@@ -21,7 +21,7 @@ from thunderstore.community.models import (
 )
 from thunderstore.repository.models import Namespace, Package, get_package_dependants
 from thunderstore.community.api.experimental.views._utils import CustomListAPIView
-from thunderstore.community.api.experimental.views._utils import CustomCursorPagination
+from thunderstore.community.api.experimental.views._utils import CustomCursorPaginationWithCount
 
 # Keys are values expected in requests, values are args for .order_by().
 ORDER_ARGS = {
@@ -94,7 +94,7 @@ class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
     methods, whereas the rest are overwritten methods from ListAPIView.
     """
 
-    pagination_class = CustomCursorPagination
+    pagination_class = CustomCursorPaginationWithCount
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
     window_duration_in_seconds = 60

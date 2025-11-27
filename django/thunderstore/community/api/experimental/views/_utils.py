@@ -32,6 +32,33 @@ class CustomCursorPagination(CursorPagination):
         )
 
 
+class CustomCursorPaginationWithCount(CustomCursorPagination):
+    count = 0
+    full_queryset = None
+
+    def paginate_queryset(self, queryset, request, view=None):
+        self.full_queryset = queryset
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_paginated_response(self, data) -> Response:
+        return Response(
+            OrderedDict(
+                [
+                    (
+                        "pagination",
+                        OrderedDict(
+                            [
+                                ("next_link", self.get_next_link()),
+                                ("previous_link", self.get_previous_link()),
+                                ("count", self.full_queryset.count()),
+                            ],
+                        ),
+                    ),
+                    (self.results_name, data),
+                ],
+            ),
+        )
+
 class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
