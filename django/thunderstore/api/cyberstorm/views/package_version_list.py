@@ -35,6 +35,11 @@ class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
 
         return package.versions.active()
 
+    def list(self, *args, **kwargs):
+        response = super().list(*args, **kwargs)
+        response["Cache-Control"] = "public, max-age=60"
+        return response
+
 
 class PackageVersionDependenciesListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     serializer_class = CyberstormPackageDependencySerializer
