@@ -98,6 +98,7 @@ class BasePackageListAPIView(CustomListAPIView):
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
     window_duration_in_seconds = 60
+    permitted_query_params = ["deprecated", "excluded_categories", "included_categories", "nsfw", "ordering", "page", "q", "section", "window"]
 
     def list(self, *args, **kwargs):  # noqa: A003
         response = super().list(*args, **kwargs)
