@@ -746,7 +746,7 @@ def test_listing_by_namespace_view__returns_only_packages_listed_in_community_be
     community: Community,
     team: Team,
 ) -> None:
-    namespace = team.get_namespace()
+    namespace = team.namespaces.get()
     expected = PackageListingFactory(
         community_=community,
         package_kwargs={"namespace": namespace},

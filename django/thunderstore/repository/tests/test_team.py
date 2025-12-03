@@ -68,11 +68,14 @@ def test_team_create(name: str, should_fail: bool) -> None:
 
 
 @pytest.mark.django_db
-def test_team_create_does_not_create_namespace() -> None:
+def test_team_create_namespace_creation() -> None:
     team = Team.create(name="Test_Team")
-    assert len(Namespace.objects.filter(name="Test_Team")) == 0
+    assert len(Namespace.objects.filter(name="Test_Team")) == 1
     ns = Namespace(name="taken_namespace", team=team)
     ns.save()
+    with pytest.raises(ValidationError) as e:
+        Team.create(name="taken_namespace")
+    assert "Namespace with this name already exists" in str(e.value)
 
 
 @pytest.mark.django_db
@@ -674,6 +677,8 @@ def test_team_ensure_can_create_service_account(
 def test_team_save():
     team = Team.create(name="TestTeam")
     team.save()
+    assert team.namespaces is not None
+    assert team.namespaces.first().name == team.name
 
 
 @pytest.mark.django_db
@@ -770,6 +775,7 @@ def test_team_ensure_user_can_manage_packages(
 def test_team_create__success():
     Team.create(name="TestTeam")
     assert Team.objects.filter(name="TestTeam").count() == 1
+    assert Namespace.objects.filter(name="TestTeam").count() == 1
 
 
 @pytest.mark.django_db
@@ -778,6 +784,7 @@ def test_team_create__team_exists_fail(team):
         Team.create(name=team.name)
     assert "Team with this name already exists" in str(e.value)
     assert Team.objects.filter(name=team.name).count() == 1
+    assert Namespace.objects.filter(name=team.name).count() == 1
 
 
 @pytest.mark.django_db
