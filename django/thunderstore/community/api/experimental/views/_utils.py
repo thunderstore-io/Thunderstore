@@ -80,11 +80,14 @@ class CustomListAPIView(ListAPIView):
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    def permitted_query_params(self):
+        return []
+
     def get_window_redirection(self):
         requested_window = float(self.request.GET.get("window", f"{datetime.now(timezone.utc).timestamp()}"))
         is_valid_window = requested_window % self.window_duration_in_seconds
 
-        if is_valid_window > 0:
+        if is_valid_window >= 1:
             # Redirect back to a valid window
             params = self.request.GET.copy()
             params["window"] = round(requested_window / self.window_duration_in_seconds) * self.window_duration_in_seconds
@@ -92,7 +95,8 @@ class CustomListAPIView(ListAPIView):
             query_string = urlencode(sorted_params)
             return redirect(f"{self.request.path}?{query_string}")
 
-        sorted_params = sorted(self.request.GET.items(), key=lambda x: x[0])
+        query_items = {key: value for key, value in self.request.GET.items() if key in self.permitted_query_params()}
+        sorted_params = sorted(query_items.items(), key=lambda x: x[0])
         query_string = urlencode(sorted_params)
         expected_url = f"{self.request.path}?{query_string}"
 
