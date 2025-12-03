@@ -18,7 +18,7 @@ class Namespace(models.Model):
     )
     team = models.ForeignKey(
         "repository.Team",
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         blank=True,
         null=True,
         related_name="namespaces",
