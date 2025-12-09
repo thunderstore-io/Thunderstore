@@ -1,5 +1,6 @@
 from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema, unset  # type: ignore
+from rest_framework.views import APIView
 
 
 def conditional_swagger_auto_schema(*args, **kwargs):
@@ -22,3 +23,11 @@ class CyberstormAutoSchemaMixin:  # pragma: no cover
     @conditional_swagger_auto_schema(tags=["cyberstorm"])
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
+
+class CyberstormTimedCacheMixin(APIView):
+
+    cache_max_age_in_seconds = 60
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response["Cache-Control"] = f"public, max-age={self.cache_max_age_in_seconds}"
+        return super().finalize_response(request, response, *args, **kwargs)
