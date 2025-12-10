@@ -1,6 +1,5 @@
 from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema, unset  # type: ignore
-from rest_framework.views import APIView
 
 
 def conditional_swagger_auto_schema(*args, **kwargs):
