@@ -25,7 +25,7 @@ class CyberstormAutoSchemaMixin:  # pragma: no cover
         return super().get(*args, **kwargs)
 
 
-class CyberstormTimedCacheMixin(APIView):
+class CyberstormTimedCacheMixin:
 
     cache_max_age_in_seconds = 60
 
