@@ -21,7 +21,7 @@ class CommunityListAPIQueryParams(serializers.Serializer):
     include_unlisted = serializers.BooleanField(default=False)
 
 
-class CommunityListAPIView(CyberstormAutoSchemaMixin, ListAPIView, CyberstormTimedCacheMixin):
+class CommunityListAPIView(CyberstormTimedCacheMixin, CyberstormAutoSchemaMixin, ListAPIView):
     permission_classes = []
     serializer_class = CyberstormCommunitySerializer
     pagination_class = CommunityPaginator
