@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
@@ -16,7 +17,7 @@ class CommunityFiltersAPIViewSerializer(serializers.Serializer):
     sections = CyberstormPackageListingSectionSerializer(many=True)
 
 
-class CommunityFiltersAPIView(CyberstormTimedCacheMixin):
+class CommunityFiltersAPIView(CyberstormTimedCacheMixin, APIView):
     """
     Return info about PackageCategories and PackageListingSections so
     they can be used as filters.
