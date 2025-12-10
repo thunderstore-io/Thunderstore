@@ -11,22 +11,13 @@ Thunderstore is a mod database and API for downloading mods.
     rebuilding the environment (e.g. with `docker compose build`) for it to take effect.
 -   Run `docker compose up`
 -   Run `docker compose exec django python manage.py migrate` in another terminal
--   Run `docker compose exec django python manage.py shell` and enter the
-    following code:
+-   Run `docker compose exec django python manage.py setup_dev_env` to seed data
+    and create the default `localhost`/`new.localhost` sites
 
-```python
-from django.contrib.sites.models import Site
-Site.objects.create(domain="thunderstore.localhost", name="Thunderstore")
-```
-
-**Make sure to substitute `localhost` with what you use to connect to the site!**
-In general, you should use `thunderstore.localhost` as the main domain to handle
-auth-scoping correctly (see `SESSION_COOKIE_DOMAIN` later on)
-
-You will also need to navigate to the admin panel (`/djangoadmin`)
-and configure a mapping from a site to a community. You can create a superuser
-account with the `createsuperuser` Django management command (akin to how
-migrate was run) to gain access to the admin panel.
+You can still navigate to the admin panel (`/djangoadmin`) to tweak or inspect
+site/community mappings. Create a superuser account with the `createsuperuser`
+Django management command (akin to how migrate was run) to gain access to the
+admin panel.
 
 To connect a site to a community, you will need to:
 
@@ -36,6 +27,16 @@ To connect a site to a community, you will need to:
 3. Make the site object's `domain name` attribute match what you use for
    connecting to your development environment
 4. Create a new Community Site object, linking the two together
+
+### Full-stack frontend workflow
+
+If you also work on `thunderstore-ui`, clone it next to this repository (for example `C:\projects\Thunderstore` and `C:\projects\thunderstore-ui`). The combined workflow is:
+
+1. From this repo run `docker compose up -d`.
+2. Seed the database and create the default `localhost`, `new.localhost`, and `auth.localhost` Site objects with `docker compose exec django python manage.py setup_dev_env`.
+3. From the `thunderstore-ui` repo run `docker compose -f apps/cyberstorm-remix/docker-compose.dev.yml up -d`.
+
+Step 3 spins up the Remix dev server, which automatically copies the Nginx configuration files from `thunderstore-ui/tools/nginx` into the shared `thunderstore_nginx_conf` volume on startup. The backend nginx container automatically reloads when that volume changes, so visiting `http://localhost` (Django) or `http://new.localhost` (Remix) works without editing your hosts file. The Remix container connects to Django via the internal hostname `nginx`, so server-rendered API calls never leave Docker.
 
 ### Test data population
 
@@ -103,10 +104,10 @@ running that command.
 
 For local testing, recommended values are:
 
--   `SESSION_COOKIE_DOMAIN`: `thunderstore.localhost`
+-   `SESSION_COOKIE_DOMAIN`: `.localhost`
 
-Make sure also to have the Site objects point to `thunderstore.localhost` or some
-of its subdomains, such as `test.thunderstore.localhost`.
+Make sure also to have the Site objects point to `localhost` or some
+of its subdomains, such as `test.localhost`.
 
 ### Social Auth
 
@@ -123,8 +124,8 @@ of its subdomains, such as `test.thunderstore.localhost`.
 
 For local testing, recommended values are:
 
--   `AUTH_EXCLUSIVE_HOST`: `auth.thunderstore.localhost`
--   `SOCIAL_AUTH_SANITIZE_REDIRECTS`: `auth.thunderstore.localhost,thunderstore.localhost`
+-   `AUTH_EXCLUSIVE_HOST`: `auth.localhost`
+-   `SOCIAL_AUTH_SANITIZE_REDIRECTS`: `auth.localhost,localhost`
 
 ### GitHub OAuth
 
