@@ -69,6 +69,7 @@ class KafkaClient:
                 value=value_bytes,
                 key=key_bytes,
             )
+            self._producer.poll()
         except Exception as e:  # pragma: no cover
             capture_exception(e)
 
