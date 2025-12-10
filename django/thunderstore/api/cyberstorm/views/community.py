@@ -5,7 +5,7 @@ from thunderstore.api.utils import CyberstormAutoSchemaMixin, CyberstormTimedCac
 from thunderstore.community.models import Community
 
 
-class CommunityAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView, CyberstormTimedCacheMixin):
+class CommunityAPIView(CyberstormTimedCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     lookup_url_kwarg = "community_id"
     lookup_field = "identifier"
     permission_classes = []
