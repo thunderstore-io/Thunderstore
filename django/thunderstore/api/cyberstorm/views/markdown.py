@@ -4,7 +4,7 @@ from django.http import Http404
 from rest_framework import serializers
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import CyberstormAutoSchemaMixin, CyberstormTimedCacheMixin
 from thunderstore.markdown.templatetags.markdownify import render_markdown
 from thunderstore.repository.models import Package, PackageVersion
 
@@ -13,7 +13,7 @@ class CyberstormMarkdownResponseSerializer(serializers.Serializer):
     html = serializers.CharField()
 
 
-class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class PackageVersionReadmeAPIView(CyberstormTimedCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     """
     Return README.md prerendered as HTML.
 
@@ -21,6 +21,8 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     """
 
     serializer_class = CyberstormMarkdownResponseSerializer
+    # Cache for a month
+    cache_max_age_in_seconds = 60 * 60 * 24 * 30
 
     def get_object(self):
         package_version = get_package_version(
@@ -28,11 +30,10 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
             package_name=self.kwargs["package_name"],
             version_number=self.kwargs.get("version_number"),
         )
-
         return {"html": render_markdown(package_version.readme)}
 
 
-class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class PackageVersionChangelogAPIView(CyberstormTimedCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     """
     Return CHANGELOG.md prerendered as HTML.
 
@@ -40,6 +41,8 @@ class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView)
     """
 
     serializer_class = CyberstormMarkdownResponseSerializer
+    # Cache for a month
+    cache_max_age_in_seconds = 60 * 60 * 24 * 30
 
     def get_object(self):
         package_version = get_package_version(

@@ -10,12 +10,16 @@ from thunderstore.api.cyberstorm.serializers.package_version import (
 )
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
-    conditional_swagger_auto_schema,
+    conditional_swagger_auto_schema, CyberstormTimedCacheMixin,
 )
 from thunderstore.repository.models.package_version import PackageVersion
 
 
-class PackageVersionAPIView(CyberstormAutoSchemaMixin, APIView):
+class PackageVersionAPIView(CyberstormTimedCacheMixin, CyberstormAutoSchemaMixin, APIView):
+
+    # Cache for a month
+    cache_max_age_in_seconds = 60 * 60 * 24 * 30
+
     @conditional_swagger_auto_schema(
         responses={200: PackageVersionResponseSerializer},
         operation_id="cyberstorm.package_version",
