@@ -350,6 +350,28 @@ def test_team_update_succeeds(
 
 
 @pytest.mark.django_db
+def test_team_update_succeeds_unset_donation_link(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    team.donation_link = "https://example.com"
+    team.save()
+    api_client.force_authenticate(user)
+
+    response = api_client.patch(
+        f"/api/cyberstorm/team/{team.name}/update/",
+        json.dumps({"donation_link": None}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"donation_link": None}
+    assert Team.objects.get(pk=team.pk).donation_link is None
+
+
+@pytest.mark.django_db
 def test_team_update_fails_user_not_authenticated(
     api_client: APIClient,
     team: Team,

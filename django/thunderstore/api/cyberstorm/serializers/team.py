@@ -59,7 +59,7 @@ class CyberstormCreateTeamSerializer(serializers.Serializer):
 
 class CyberstormTeamUpdateSerializer(serializers.Serializer):
     donation_link = serializers.CharField(
-        max_length=1024, validators=[URLValidator(["https"])]
+        allow_null=True, max_length=1024, validators=[URLValidator(schemes=["https"])]
     )
 
 
