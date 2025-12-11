@@ -24,7 +24,9 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
             : ExperimentalApi.listCategories({ communityIdentifier });
 
         promise.then((result) => {
-            const next = current.concat(result.results);
+            // Filter out hidden categories for UI dropdown
+            const visible = result.results.filter((c) => !c.hidden);
+            const next = current.concat(visible);
             setCategories(next);
             if (result.pagination.next_link) {
                 enumerateCategories(
