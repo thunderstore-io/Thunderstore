@@ -31,7 +31,7 @@ from thunderstore.api.cyberstorm.views.package_listing_actions import (
 )
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
-    conditional_swagger_auto_schema,
+    conditional_swagger_auto_schema, CyberstormTimedCacheMixin,
 )
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.repository.models.package import get_package_dependants
@@ -114,7 +114,7 @@ class ResponseSerializer(serializers.Serializer):
     website_url = EmptyStringAsNoneField(source="package.latest.website_url")
 
 
-class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class PackageListingAPIView(CyberstormTimedCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = ResponseSerializer
 
     def get_object(self):
