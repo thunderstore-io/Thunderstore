@@ -4,6 +4,7 @@ from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 from django.db import connection
+from django.http import Http404
 from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
@@ -34,6 +35,47 @@ def get_listing_url(package_listing) -> str:
     package_name = package_listing.package.name
 
     return f"{base_url}/{community_id}/{namespace_id}/{package_name}/status/"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_get_custom_package_listing__rejected_package_visibility_user_types(
+    user_type,
+) -> None:
+    listing = PackageListingFactory(review_status="rejected")
+
+    community_id = listing.community.identifier
+    namespace = listing.package.namespace.name
+    package_name = listing.package.name
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    expected_visibility = {
+        TestUserTypes.no_user: False,
+        TestUserTypes.unauthenticated: False,
+        TestUserTypes.regular_user: False,
+        TestUserTypes.deactivated_user: False,
+        TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
+        TestUserTypes.superuser: True,
+    }
+
+    is_visible = expected_visibility[user_type]
+
+    if is_visible:
+        listing = get_custom_package_listing(
+            community_id,
+            namespace,
+            package_name,
+            user=user,
+        )
+    else:
+        with pytest.raises(Http404):
+            listing = get_custom_package_listing(
+                community_id,
+                namespace,
+                package_name,
+                user=user,
+            )
 
 
 @pytest.mark.django_db
