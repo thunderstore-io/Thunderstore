@@ -12,6 +12,7 @@ from django.db.models import (
     Sum,
     Value,
 )
+from django.http import Http404
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import PermissionDenied
@@ -34,6 +35,7 @@ from thunderstore.api.utils import (
     conditional_swagger_auto_schema,
 )
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.core.types import UserType
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
 from thunderstore.repository.views.package.detail import PermissionsChecker
@@ -122,6 +124,7 @@ class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
             community_id=self.kwargs["community_id"],
             namespace_id=self.kwargs["namespace_id"],
             package_name=self.kwargs["package_name"],
+            user=self.request.user,
         )
 
 
@@ -141,12 +144,12 @@ def get_custom_package_listing(
     community_id: str,
     namespace_id: str,
     package_name: str,
+    user: UserType = None,
 ) -> CustomListing:
     listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
 
     qs = (
         PackageListing.objects.active()
-        .filter_by_community_approval_rule()
         .select_related(
             "community",
             "package__latest",
@@ -184,6 +187,9 @@ def get_custom_package_listing(
         package__namespace__name=namespace_id,
         package__name=package_name,
     )
+
+    if not listing.can_be_viewed_by_user(user):
+        raise Http404()
 
     dependencies = (
         listing.package.latest.dependencies.listed_in(community_id)
