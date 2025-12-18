@@ -89,17 +89,17 @@ class ResponseSerializer(serializers.Serializer):
     categories = CyberstormPackageCategorySerializer(many=True)
     community_identifier = serializers.CharField(source="community.identifier")
     community_name = serializers.CharField(source="community.name")
-    datetime_created = serializers.DateTimeField(source="package.latest.date_created")
+    datetime_created = serializers.DateTimeField(source="version.date_created")
     dependant_count = serializers.IntegerField(min_value=0)
     dependencies = DependencySerializer(many=True)
     dependency_count = serializers.IntegerField(min_value=0)
-    description = serializers.CharField(source="package.latest.description")
+    description = serializers.CharField(source="version.description")
     download_count = serializers.IntegerField(min_value=0)
-    download_url = serializers.CharField(source="package.latest.full_download_url")
-    full_version_name = serializers.CharField(source="package.latest.full_version_name")
+    download_url = serializers.CharField(source="version.full_download_url")
+    full_version_name = serializers.CharField(source="version.full_version_name")
     has_changelog = serializers.BooleanField()
-    icon_url = serializers.CharField(source="package.latest.icon.url")
-    install_url = serializers.CharField(source="package.latest.install_url")
+    icon_url = serializers.CharField(source="version.icon.url")
+    install_url = serializers.CharField(source="version.install_url")
     is_deprecated = serializers.BooleanField(source="package.is_deprecated")
     is_nsfw = serializers.BooleanField(source="has_nsfw_content")
     is_pinned = serializers.BooleanField(source="package.is_pinned")
@@ -107,13 +107,13 @@ class ResponseSerializer(serializers.Serializer):
     latest_version_number = serializers.CharField(
         source="package.latest.version_number",
     )
-    version_count = serializers.IntegerField()
     name = serializers.CharField(source="package.name")
     namespace = serializers.CharField(source="package.namespace.name")
     rating_count = serializers.IntegerField(min_value=0)
-    size = serializers.IntegerField(min_value=0, source="package.latest.file_size")
+    size = serializers.IntegerField(min_value=0, source="version.file_size")
     team = CyberstormPackageTeamSerializer(source="package.owner")
-    website_url = EmptyStringAsNoneField(source="package.latest.website_url")
+    version_count = serializers.IntegerField()
+    website_url = EmptyStringAsNoneField(source="version.website_url")
 
 
 class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
@@ -124,6 +124,7 @@ class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
             community_id=self.kwargs["community_id"],
             namespace_id=self.kwargs["namespace_id"],
             package_name=self.kwargs["package_name"],
+            version=self.kwargs.get("version_number"),
             user=self.request.user,
         )
 
@@ -138,12 +139,14 @@ class CustomListing(PackageListing):
     download_count: int
     has_changelog: bool
     rating_count: int
+    version: PackageVersion
 
 
 def get_custom_package_listing(
     community_id: str,
     namespace_id: str,
     package_name: str,
+    version: Optional[str] = None,
     user: UserType = None,
 ) -> CustomListing:
     listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
@@ -171,15 +174,19 @@ def get_custom_package_listing(
                     ratings=Count("package__package_ratings"),
                 ).values("ratings"),
             ),
-            has_changelog=ExpressionWrapper(
-                Q(package__latest__changelog__isnull=False),
-                output_field=BooleanField(),
-            ),
             version_count=Count(
                 "package__versions", filter=Q(package__versions__is_active=True)
             ),
         )
     )
+
+    if version is None:
+        qs = qs.annotate(
+            has_changelog=ExpressionWrapper(
+                Q(package__latest__changelog__isnull=False),
+                output_field=BooleanField(),
+            )
+        )
 
     listing = get_object_or_404(
         qs,
@@ -191,8 +198,18 @@ def get_custom_package_listing(
     if not listing.can_be_viewed_by_user(user):
         raise Http404()
 
+    if version:
+        listing.version = get_object_or_404(
+            listing.package.versions.active(),
+            version_number=version,
+        )
+
+        listing.has_changelog = listing.version.changelog is not None
+    else:
+        listing.version = listing.package.latest
+
     dependencies = (
-        listing.package.latest.dependencies.listed_in(community_id)
+        listing.version.dependencies.listed_in(community_id)
         .annotate(community_identifier=Value(community_id, CharField()))
         .select_related("package", "package__namespace")
         .order_by("package__namespace__name", "package__name")
