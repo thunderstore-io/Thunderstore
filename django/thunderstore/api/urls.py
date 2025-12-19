@@ -70,6 +70,11 @@ cyberstorm_urls = [
         name="cyberstorm.listing",
     ),
     path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/v/<str:version_number>/",
+        PackageListingAPIView.as_view(),
+        name="cyberstorm.listing",
+    ),
+    path(
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/status/",
         PackageListingStatusAPIView.as_view(),
         name="cyberstorm.listing.status",

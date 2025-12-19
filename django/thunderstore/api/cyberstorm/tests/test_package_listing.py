@@ -155,6 +155,53 @@ def test_get_custom_package_listing__annotates_has_changelog(
 
 
 @pytest.mark.django_db
+def test_get_custom_package_listing__when_version_provided__uses_that_version() -> None:
+    listing = PackageListingFactory(
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "description": "Initial upload",
+            "changelog": None,
+        }
+    )
+    expected = PackageVersionFactory(
+        package=listing.package,
+        version_number="1.2.0",
+        description="We want this package version",
+        changelog="We want this changelog",
+    )
+    PackageVersionFactory(
+        package=listing.package,
+        version_number="1.2.3",
+        description="Latest upload",
+        changelog=None,
+    )
+
+    actual = get_custom_package_listing(
+        listing.community.identifier,
+        listing.package.namespace.name,
+        listing.package.name,
+        version="1.2.0",
+    )
+
+    assert actual.version.id == expected.id
+    assert actual.version.version_number == "1.2.0"
+    assert actual.has_changelog is True
+
+
+@pytest.mark.django_db
+def test_get_custom_package_listing__when_version_provided_but_missing__raises_404() -> None:
+    listing = PackageListingFactory()
+
+    with pytest.raises(Http404):
+        get_custom_package_listing(
+            listing.community.identifier,
+            listing.package.namespace.name,
+            listing.package.name,
+            version="6.6.6",
+        )
+
+
+@pytest.mark.django_db
 def test_get_custom_package_listing__augments_listing_with_dependant_count() -> None:
     listing = PackageListingFactory()
     dependant_count = 5
@@ -298,6 +345,68 @@ def test_package_listing_view__returns_info(api_client: APIClient) -> None:
     assert len(actual["team"]["members"]) == 0
     assert actual["website_url"] == latest.website_url
     assert actual["version_count"] == 1
+
+
+@pytest.mark.django_db
+def test_package_listing_view__when_version_provided__uses_that_version(
+    api_client: APIClient,
+) -> None:
+    community = CommunityFactory()
+    listing = PackageListingFactory(
+        community=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "description": "Initial upload",
+            "changelog": None,
+        },
+    )
+    expected = PackageVersionFactory(
+        package=listing.package,
+        version_number="1.0.1",
+        description="Expected version",
+        changelog="Expected changelog",
+    )
+    latest = PackageVersionFactory(
+        package=listing.package,
+        version_number="1.0.2",
+        description="Latest upload",
+        changelog=None,
+    )
+
+    url = (
+        f"/api/cyberstorm/listing/{community.identifier}/{listing.package.namespace}/{listing.package.name}/"
+        f"v/{expected.version_number}/"
+    )
+    response = api_client.get(url)
+    actual = response.json()
+
+    assert response.status_code == 200
+    assert actual["description"] == expected.description
+    assert actual["latest_version_number"] == latest.version_number
+    assert actual["has_changelog"] is True
+
+
+@pytest.mark.django_db
+def test_package_listing_view__when_incorrect_version_provided__returns_404(
+    api_client: APIClient,
+) -> None:
+    community = CommunityFactory()
+    listing = PackageListingFactory(
+        community=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "description": "Initial upload",
+            "changelog": None,
+        },
+    )
+
+    url = (
+        f"/api/cyberstorm/listing/{community.identifier}/{listing.package.namespace}/{listing.package.name}/"
+        f"v/0.0.0/"
+    )
+    response = api_client.get(url)
+
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
