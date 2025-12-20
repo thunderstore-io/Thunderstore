@@ -11,31 +11,22 @@ Thunderstore is a mod database and API for downloading mods.
     rebuilding the environment (e.g. with `docker compose build`) for it to take effect.
 -   Run `docker compose up`
 -   Run `docker compose exec django python manage.py migrate` in another terminal
--   Run `docker compose exec django python manage.py shell` and enter the
-    following code:
+-   Run `docker compose exec django python manage.py setup_dev_env` to seed data
+    and create the default `thunderstore.localhost` site
 
-```python
-from django.contrib.sites.models import Site
-Site.objects.create(domain="thunderstore.localhost", name="Thunderstore")
-```
+You can navigate to the admin panel (`/djangoadmin`) to tweak or inspect
+site/community mappings. By default, running `setup_dev_env` creates a superuser account with username `admin` and password `admin`, which you can use to access the admin panel.
+If you want to create additional superuser accounts, use the `createsuperuser` Django management command (akin to how migrate was run).
 
-**Make sure to substitute `localhost` with what you use to connect to the site!**
-In general, you should use `thunderstore.localhost` as the main domain to handle
-auth-scoping correctly (see `SESSION_COOKIE_DOMAIN` later on)
+### Full-stack frontend workflow
 
-You will also need to navigate to the admin panel (`/djangoadmin`)
-and configure a mapping from a site to a community. You can create a superuser
-account with the `createsuperuser` Django management command (akin to how
-migrate was run) to gain access to the admin panel.
+If you also work on `thunderstore-ui`, clone it next to this repository (for example `C:\projects\Thunderstore` and `C:\projects\thunderstore-ui`). The combined workflow is:
 
-To connect a site to a community, you will need to:
+1. From this repo run `docker compose up -d`.
+2. Seed the database and create the default `thunderstore.localhost` and `auth.thunderstore.localhost` Site objects with `docker compose exec django python manage.py setup_dev_env`.
+3. From the `thunderstore-ui` repo run `docker compose -f docker-compose.remix.development.yml up -d`.
 
-1. Make sure at least one Community object exists or create one
-   (`Risk of Rain 2` should be created automatically)
-2. Make sure at least one Site object exists or create one
-3. Make the site object's `domain name` attribute match what you use for
-   connecting to your development environment
-4. Create a new Community Site object, linking the two together
+Step 3 spins up the React Router dev server, which automatically copies the Nginx configuration files from `thunderstore-ui/tools/nginx` into the shared `thunderstore_nginx_conf` volume on startup. The backend nginx container automatically reloads when that volume changes, so visiting `http://thunderstore.localhost` (Django) or `http://new.thunderstore.localhost` (React Router) works without editing your hosts file. The React Router container connects to Django via the internal hostname `nginx`, so server-rendered API calls never leave Docker.
 
 ### Test data population
 
@@ -49,7 +40,7 @@ docker compose exec django python manage.py create_test_data
 ## Minio
 
 In local development, [minio](https://github.com/minio/minio) is used for S3
-compatible file storage. You can access it via http://localhost:9000/ with
+compatible file storage. You can access it via http://thunderstore.localhost:9000/ with
 `thunderstore:thunderstore` credentials
 
 ## REST API docs
@@ -103,10 +94,9 @@ running that command.
 
 For local testing, recommended values are:
 
--   `SESSION_COOKIE_DOMAIN`: `thunderstore.localhost`
+-   `SESSION_COOKIE_DOMAIN`: `.thunderstore.localhost`
 
-Make sure also to have the Site objects point to `thunderstore.localhost` or some
-of its subdomains, such as `test.thunderstore.localhost`.
+Make sure also to have the Site objects point to `thunderstore.localhost`
 
 ### Social Auth
 
@@ -135,7 +125,7 @@ Create a new OAuth Application, and use
 `{AUTH_EXCLUSIVE_HOST}/auth/complete/github/` as the Authorization callback
 URL, where `{AUTH_EXCLUSIVE_HOST}` is replaced with the value that was used for
 the `AUTH_EXCLUSIVE_HOST` setting. For example for local you could use
-`http://auth.localhost/auth/complete/github/`, whereas for a live environment
+`http://auth.thunderstore.localhost/auth/complete/github/`, whereas for a live environment
 `https://auth.thunderstore.dev/auth/complete/github/`
 
 After creating the OAuth application, you must also provide the following
@@ -151,7 +141,7 @@ OAuth application. Add a callback URL to
 `{AUTH_EXCLUSIVE_HOST}/auth/complete/discord/`, where `{AUTH_EXCLUSIVE_HOST}`
 is replaced with the value that was used for the `AUTH_EXCLUSIVE_HOST` setting.
 For example for local you could use
-`http://auth.localhost/auth/complete/discord/`, whereas for a live environment
+`http://auth.thunderstore.localhost/auth/complete/discord/`, whereas for a live environment
 `https://auth.thunderstore.dev/auth/complete/discord/`
 
 -   `SOCIAL_AUTH_DISCORD_KEY`: The `Client ID` value of the OAuth application
@@ -215,7 +205,7 @@ supported.
 The default local database configured in `docker-compose.yml` can be accessed:
 
 -   From shell: `docker compose exec db psql -U django`
--   From browser: navigate to `localhost:8080/?pgsql=db&username=django`
+-   From browser: navigate to `thunderstore.localhost:8080/?pgsql=db&username=django`
     and use password `django`
 
 ### Redis caching

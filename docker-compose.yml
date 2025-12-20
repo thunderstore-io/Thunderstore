@@ -22,7 +22,7 @@ x-django-service: &django-service
     AWS_SECRET_ACCESS_KEY: "thunderstore"
     AWS_S3_REGION_NAME: ""
     AWS_S3_ENDPOINT_URL: "http://minio:9000/"
-    AWS_S3_CUSTOM_DOMAIN: "localhost:9000/thunderstore"
+    AWS_S3_CUSTOM_DOMAIN: "thunderstore.localhost:9000/thunderstore"
     AWS_STORAGE_BUCKET_NAME: "thunderstore"
     AWS_LOCATION: "development"
     AWS_S3_SECURE_URLS: "False"
@@ -42,7 +42,7 @@ x-django-service: &django-service
     CACHE_S3_STORAGE_BUCKET_NAME: "thunderstore"
     CACHE_S3_LOCATION: "development/cache"
     CACHE_S3_FILE_OVERWRITE: "True"
-    CACHE_S3_CUSTOM_DOMAIN: "localhost:9000/thunderstore"
+    CACHE_S3_CUSTOM_DOMAIN: "thunderstore.localhost:9000/thunderstore"
     CACHE_S3_SECURE_URLS: "False"
     CACHE_S3_DEFAULT_ACL: "private"
 
@@ -126,10 +126,13 @@ services:
   nginx:
     image: nginx:alpine
     container_name: nginx
+    command: /bin/sh /usr/local/bin/dev-entrypoint.sh
     ports:
       - "127.0.0.1:80:80"
     volumes:
       - ./nginx/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/dev-entrypoint.sh:/usr/local/bin/dev-entrypoint.sh:ro
+      - nginx-conf:/etc/nginx/user-conf
     depends_on:
       - django
 
@@ -156,3 +159,5 @@ volumes:
   django-data:
   minio-data:
   built-static:
+  nginx-conf:
+    name: thunderstore_nginx_conf
