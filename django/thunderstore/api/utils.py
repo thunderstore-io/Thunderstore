@@ -22,3 +22,13 @@ class CyberstormAutoSchemaMixin:  # pragma: no cover
     @conditional_swagger_auto_schema(tags=["cyberstorm"])
     def get(self, *args, **kwargs):
         return super().get(*args, **kwargs)
+
+
+class CyberstormTimedCacheMixin:
+
+    cache_max_age_in_seconds = 60
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        if response.status_code == 200:
+            response["Cache-Control"] = f"public, max-age={self.cache_max_age_in_seconds}"
+        return super().finalize_response(request, response, *args, **kwargs)
