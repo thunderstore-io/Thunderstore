@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -11,14 +11,12 @@ from django.utils.functional import cached_property
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.tasks import invalidate_cache_on_commit_async
 from thunderstore.community.consts import PackageListingReviewStatus
-from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.mixins import AdminLinkMixin, TimestampMixin
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import check_validity
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.permissions.mixins import VisibilityMixin
 from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
-from thunderstore.permissions.utils import validate_user
+from thunderstore.permissions.utils import PermissionResult, check_user_permissions
 from thunderstore.webhooks.audit import (
     AuditAction,
     AuditEvent,
@@ -321,7 +319,9 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         return self.review_status == PackageListingReviewStatus.rejected
 
     def update_categories(self, agent: UserType, categories: List["PackageCategory"]):
-        self.ensure_update_categories_permission(agent)
+        if not self.can_update_categories_permission(agent):
+            raise PermissionError()
+
         for category in categories:
             if category.community_id != self.community_id:
                 raise ValidationError(
@@ -336,33 +336,51 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     def can_be_moderated_by_user(self, user: Optional[UserType]) -> bool:
         return self.community.can_user_manage_packages(user)
 
-    def ensure_user_can_manage_listing(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
+    def validate_user_can_manage_listing(
+        self, user: Optional[UserType]
+    ) -> PermissionResult:
+
+        result = check_user_permissions(user)
+        if not result.is_valid:
+            return result
+
         is_allowed = self.can_be_moderated_by_user(
             user
         ) or self.package.owner.can_user_manage_packages(user)
-        if not is_allowed:
-            raise PermissionValidationError("Must have listing management permission")
 
-    def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
-        user = validate_user(user)
-        is_allowed = (
+        if not is_allowed:
+            return PermissionResult(error="Must have listing management permission")
+
+        return PermissionResult()
+
+    def validate_update_categories_permissions(
+        self, user: Optional[UserType]
+    ) -> PermissionResult:
+
+        result: PermissionResult = check_user_permissions(user)
+
+        if not result.is_valid:
+            return result
+
+        if not (
             self.can_be_moderated_by_user(user)
             or self.package.owner.can_user_manage_packages(user)
             or self.community.can_user_manage_categories(user)
-        )
-        if not is_allowed:
-            raise PermissionValidationError(
-                "User is missing necessary roles or permissions"
-            )
+        ):
+            error = "User is missing necessary roles or permissions"
+            return PermissionResult(error=error)
 
-    def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_update_categories_permission(user))
+        return PermissionResult()
+
+    def can_update_categories_permission(self, user: Optional[UserType]) -> bool:
+        return self.validate_update_categories_permissions(user).is_valid
 
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
         return self.can_be_moderated_by_user(user)
 
-    def ensure_can_be_viewed_by_user(self, user: Optional[UserType]) -> None:
+    def validate_can_be_viewed_by_user(
+        self, user: Optional[UserType]
+    ) -> PermissionResult:
         def get_has_perms() -> bool:
             return (
                 user is not None
@@ -378,16 +396,18 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
                 self.review_status != PackageListingReviewStatus.approved
                 and not get_has_perms()
             ):
-                raise PermissionValidationError("Insufficient permissions to view")
+                return PermissionResult(error="Insufficient permissions to view")
         else:
             if (
                 self.review_status == PackageListingReviewStatus.rejected
                 and not get_has_perms()
             ):
-                raise PermissionValidationError("Insufficient permissions to view")
+                return PermissionResult(error="Insufficient permissions to view")
+
+        return PermissionResult()
 
     def can_be_viewed_by_user(self, user: Optional[UserType]) -> bool:
-        return check_validity(lambda: self.ensure_can_be_viewed_by_user(user))
+        return self.validate_can_be_viewed_by_user(user).is_valid
 
     def is_visible_to_user(self, user: Optional[UserType]) -> bool:
         if not self.visibility:
