@@ -2,6 +2,10 @@ from .community import CommunityAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
 from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
+from .metrics import (
+    PackageDownloadMetricsAPIView,
+    PackageVersionDownloadMetricsAPIView,
+)
 from .package_deprecate import DeprecatePackageAPIView
 from .package_listing import PackageListingAPIView, PackageListingStatusAPIView
 from .package_listing_actions import (
@@ -48,6 +52,7 @@ __all__ = [
     "DisconnectUserLinkedAccountAPIView",
     "DeprecatePackageAPIView",
     "DisbandTeamAPIView",
+    "PackageDownloadMetricsAPIView",
     "PackageListingAPIView",
     "PackageListingStatusAPIView",
     "PackageListingByCommunityListAPIView",
@@ -57,6 +62,7 @@ __all__ = [
     "PackageVersionAPIView",
     "PackageVersionChangelogAPIView",
     "PackageVersionDependenciesListAPIView",
+    "PackageVersionDownloadMetricsAPIView",
     "PackageVersionListAPIView",
     "PackageVersionReadmeAPIView",
     "TeamAPIView",
