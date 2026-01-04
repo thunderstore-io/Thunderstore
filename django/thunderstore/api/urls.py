@@ -11,6 +11,7 @@ from thunderstore.api.cyberstorm.views import (
     DeprecatePackageAPIView,
     DisbandTeamAPIView,
     DisconnectUserLinkedAccountAPIView,
+    PackageDownloadMetricsAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -20,6 +21,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionAPIView,
     PackageVersionChangelogAPIView,
     PackageVersionDependenciesListAPIView,
+    PackageVersionDownloadMetricsAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
     RatePackageAPIView,
@@ -140,9 +142,19 @@ cyberstorm_urls = [
         name="cyberstorm.package.version.dependencies-list",
     ),
     path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/metrics/downloads/",
+        PackageVersionDownloadMetricsAPIView.as_view(),
+        name="cyberstorm.package.version.metrics.downloads",
+    ),
+    path(
         "package/<str:namespace_id>/<str:package_name>/versions/",
         PackageVersionListAPIView.as_view(),
         name="cyberstorm.package.versions",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/metrics/downloads/",
+        PackageDownloadMetricsAPIView.as_view(),
+        name="cyberstorm.package.metrics.downloads",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/rate/",
