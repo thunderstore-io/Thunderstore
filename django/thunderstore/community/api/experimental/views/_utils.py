@@ -63,6 +63,8 @@ class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
     window_duration_in_seconds = 0
+    default_query_params = ["window"]
+    permitted_query_params = []
 
     def list(self, request, *args, **kwargs):
 
@@ -80,9 +82,6 @@ class CustomListAPIView(ListAPIView):
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    def permitted_query_params(self):
-        return []
-
     def get_window_redirection(self):
         requested_window = float(self.request.GET.get("window", f"{datetime.now(timezone.utc).timestamp()}"))
         is_valid_window = requested_window % self.window_duration_in_seconds
@@ -95,12 +94,16 @@ class CustomListAPIView(ListAPIView):
             query_string = urlencode(sorted_params)
             return redirect(f"{self.request.path}?{query_string}")
 
-        query_items = {key: value for key, value in self.request.GET.items() if key in self.permitted_query_params()}
+        query_items = {key: value for key, value in self.request.GET.items() if key in self.permitted_query_params}
         sorted_params = sorted(query_items.items(), key=lambda x: x[0])
         query_string = urlencode(sorted_params)
         expected_url = f"{self.request.path}?{query_string}"
 
         if self.request.get_full_path() != expected_url:
-            # Sort query params and redirect to a potentially cached version
+            print(sorted_params)
+        #     # Sort query params and redirect to a potentially cached version
             return redirect(expected_url)
         return None
+
+    def set_custom_query_params(self, query_params):
+        self.permitted_query_params = self.default_query_params + query_params
