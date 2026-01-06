@@ -100,8 +100,6 @@ class CustomListAPIView(ListAPIView):
         expected_url = f"{self.request.path}?{query_string}"
 
         if self.request.get_full_path() != expected_url:
-            print(sorted_params)
-        #     # Sort query params and redirect to a potentially cached version
             return redirect(expected_url)
         return None
 
