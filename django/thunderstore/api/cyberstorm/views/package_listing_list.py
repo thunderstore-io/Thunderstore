@@ -8,11 +8,15 @@ from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from rest_framework import serializers
-from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
 from thunderstore.api.utils import PublicCacheMixin, conditional_swagger_auto_schema
+from thunderstore.community.api.experimental.views._utils import (
+    CustomCursorPaginationWithCount,
+    CustomListAPIView,
+)
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
@@ -20,8 +24,6 @@ from thunderstore.community.models import (
     PackageListingSection,
 )
 from thunderstore.repository.models import Namespace, Package, get_package_dependants
-from thunderstore.community.api.experimental.views._utils import CustomListAPIView
-from thunderstore.community.api.experimental.views._utils import CustomCursorPaginationWithCount
 
 # Keys are values expected in requests, values are args for .order_by().
 ORDER_ARGS = {
@@ -98,7 +100,16 @@ class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
     window_duration_in_seconds = 60
-    permitted_query_params = ["deprecated", "excluded_categories", "included_categories", "nsfw", "ordering", "page", "q", "section"]
+    permitted_query_params = [
+        "deprecated",
+        "excluded_categories",
+        "included_categories",
+        "nsfw",
+        "ordering",
+        "page",
+        "q",
+        "section",
+    ]
 
     def __init__(self):
         super().__init__()

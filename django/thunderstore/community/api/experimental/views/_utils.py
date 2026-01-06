@@ -1,6 +1,6 @@
-from urllib.parse import urlencode
-from datetime import datetime, timezone
 from collections import OrderedDict
+from datetime import datetime, timezone
+from urllib.parse import urlencode
 
 from django.shortcuts import redirect
 from rest_framework.generics import ListAPIView
@@ -59,6 +59,7 @@ class CustomCursorPaginationWithCount(CustomCursorPagination):
             ),
         )
 
+
 class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
@@ -83,18 +84,27 @@ class CustomListAPIView(ListAPIView):
         return self.get_paginated_response(serializer.data)
 
     def get_window_redirection(self):
-        requested_window = float(self.request.GET.get("window", f"{datetime.now(timezone.utc).timestamp()}"))
+        requested_window = float(
+            self.request.GET.get("window", f"{datetime.now(timezone.utc).timestamp()}")
+        )
         is_valid_window = requested_window % self.window_duration_in_seconds
 
         if is_valid_window >= 1:
             # Redirect back to a valid window
             params = self.request.GET.copy()
-            params["window"] = round(requested_window / self.window_duration_in_seconds) * self.window_duration_in_seconds
+            params["window"] = (
+                round(requested_window / self.window_duration_in_seconds)
+                * self.window_duration_in_seconds
+            )
             sorted_params = sorted(params.items(), key=lambda x: x[0])
             query_string = urlencode(sorted_params)
             return redirect(f"{self.request.path}?{query_string}")
 
-        query_items = {key: value for key, value in self.request.GET.items() if key in self.permitted_query_params}
+        query_items = {
+            key: value
+            for key, value in self.request.GET.items()
+            if key in self.permitted_query_params
+        }
         sorted_params = sorted(query_items.items(), key=lambda x: x[0])
         query_string = urlencode(sorted_params)
         expected_url = f"{self.request.path}?{query_string}"
