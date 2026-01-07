@@ -103,7 +103,7 @@ class CustomListAPIView(ListAPIView):
             )
             sorted_params = sorted(params.items(), key=lambda x: x[0])
             query_string = urlencode(sorted_params)
-            return redirect(self.request.path, query_string=query_string)
+            return redirect(f"{self.request.path}?{query_string}")
 
         all_permitted_query_params = (
             self.default_query_params + self.permitted_query_params
@@ -118,5 +118,5 @@ class CustomListAPIView(ListAPIView):
         expected_url = f"{self.request.path}?{query_string}"
 
         if self.request.get_full_path() != expected_url:
-            return redirect(self.request.path, query_string=query_string)
+            return redirect(expected_url)
         return None
