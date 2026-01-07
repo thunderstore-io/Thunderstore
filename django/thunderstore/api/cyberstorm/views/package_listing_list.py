@@ -111,10 +111,6 @@ class BasePackageListAPIView(CustomListAPIView):
         "section",
     ]
 
-    def __init__(self):
-        super().__init__()
-        super().set_custom_query_params(self.permitted_query_params)
-
     def list(self, *args, **kwargs):  # noqa: A003
         response = super().list(*args, **kwargs)
         response["Cache-Control"] = f"public, max-age={self.window_duration_in_seconds}"
