@@ -106,7 +106,6 @@ class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
         "included_categories",
         "nsfw",
         "ordering",
-        "page",
         "q",
         "section",
     ]
