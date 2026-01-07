@@ -96,7 +96,7 @@ class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
     methods, whereas the rest are overwritten methods from ListAPIView.
     """
 
-    pagination_class = CustomCursorPaginationWithCount
+    pagination_class = PackageListPaginator
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
     window_duration_in_seconds = 60
