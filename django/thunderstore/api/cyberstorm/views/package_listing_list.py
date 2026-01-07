@@ -13,10 +13,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
 from thunderstore.api.utils import conditional_swagger_auto_schema
-from thunderstore.community.api.experimental.views._utils import (
-    CustomCursorPaginationWithCount,
-    CustomListAPIView,
-)
+from thunderstore.community.api.experimental.views._utils import CustomListAPIView
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,

@@ -86,7 +86,9 @@ class CustomListAPIView(ListAPIView):
     def get_window_redirection(self):
         try:
             requested_window = float(
-                self.request.GET.get("window", f"{datetime.now(timezone.utc).timestamp()}")
+                self.request.GET.get(
+                    "window", f"{datetime.now(timezone.utc).timestamp()}"
+                )
             )
         except ValueError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -103,7 +105,9 @@ class CustomListAPIView(ListAPIView):
             query_string = urlencode(sorted_params)
             return redirect(f"{self.request.path}?{query_string}")
 
-        all_permitted_query_params = self.default_query_params + self.permitted_query_params
+        all_permitted_query_params = (
+            self.default_query_params + self.permitted_query_params
+        )
         query_items = {
             key: value
             for key, value in self.request.GET.items()
