@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 from django.shortcuts import redirect
+from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import CursorPagination
 from rest_framework.response import Response
@@ -64,7 +65,7 @@ class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
     window_duration_in_seconds = 0
-    default_query_params = ["window"]
+    default_query_params = ["window", "cursor"]
     permitted_query_params = []
 
     def list(self, request, *args, **kwargs):
@@ -84,15 +85,18 @@ class CustomListAPIView(ListAPIView):
         return self.get_paginated_response(serializer.data)
 
     def get_window_redirection(self):
-        requested_window = float(
-            self.request.GET.get("window", f"{datetime.now(timezone.utc).timestamp()}")
-        )
+        try:
+            requested_window = float(
+                self.request.GET.get("window", f"{datetime.now(timezone.utc).timestamp()}")
+            )
+        except ValueError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         is_valid_window = requested_window % self.window_duration_in_seconds
 
         if is_valid_window >= 1:
             # Redirect back to a valid window
             params = self.request.GET.copy()
-            params["window"] = (
+            params["window"] = str(
                 round(requested_window / self.window_duration_in_seconds)
                 * self.window_duration_in_seconds
             )
