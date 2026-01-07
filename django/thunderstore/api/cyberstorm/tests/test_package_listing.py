@@ -683,6 +683,31 @@ def test_package_listing_status_can_view_listing_admin_page_permission(
 @pytest.mark.django_db
 @pytest.mark.parametrize("return_val", [True, False])
 @patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_view_package_admin_page",
+    new_callable=PropertyMock,
+)
+def test_package_listing_status_can_view_package_admin_page_permission(
+    mock_can_view_package_admin_page, return_val, api_client, active_package_listing
+):
+    mock_can_view_package_admin_page.return_value = return_val
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
+    api_client.force_authenticate(user=user)
+
+    url = get_listing_url(active_package_listing)
+    response = api_client.get(url)
+
+    data = response.json()
+
+    if return_val:
+        assert data["package_admin_url"] == active_package_listing.package.get_admin_url()
+    else:
+        assert data["package_admin_url"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+@patch(
     "thunderstore.repository.views.package.detail.PermissionsChecker.can_moderate",
     new_callable=PropertyMock,
 )
