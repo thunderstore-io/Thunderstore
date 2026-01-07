@@ -69,7 +69,6 @@ class CustomListAPIView(ListAPIView):
     permitted_query_params = []
 
     def list(self, request, *args, **kwargs):
-
         if self.window_duration_in_seconds > 0:
             redirection = self.get_window_redirection()
             if redirection is not None:
@@ -104,10 +103,11 @@ class CustomListAPIView(ListAPIView):
             query_string = urlencode(sorted_params)
             return redirect(f"{self.request.path}?{query_string}")
 
+        all_permitted_query_params = self.default_query_params + self.permitted_query_params
         query_items = {
             key: value
             for key, value in self.request.GET.items()
-            if key in self.permitted_query_params
+            if key in all_permitted_query_params
         }
         sorted_params = sorted(query_items.items(), key=lambda x: x[0])
         query_string = urlencode(sorted_params)
@@ -116,6 +116,3 @@ class CustomListAPIView(ListAPIView):
         if self.request.get_full_path() != expected_url:
             return redirect(expected_url)
         return None
-
-    def set_custom_query_params(self, query_params):
-        self.permitted_query_params = self.default_query_params + query_params
