@@ -258,6 +258,7 @@ class PackageListingStatusAPIView(APIView):
             "rejection_reason": None,
             "internal_notes": None,
             "listing_admin_url": None,
+            "package_admin_url": None,
         }
 
         if checker.can_manage:
@@ -266,6 +267,9 @@ class PackageListingStatusAPIView(APIView):
 
         if checker.can_view_listing_admin_page:
             response_data["listing_admin_url"] = package_listing.get_admin_url()
+
+        if checker.can_view_package_admin_page:
+            response_data["package_admin_url"] = package_listing.package.get_admin_url()
 
         if checker.can_moderate:
             response_data["internal_notes"] = package_listing.notes
