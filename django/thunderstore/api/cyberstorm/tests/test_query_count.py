@@ -44,6 +44,7 @@ def test_cyberstorm_api_GET_query_count(
         method="get",
         path=url,
         max_queries=MAX_QUERIES,
+        follow=True,
     )
 
 
