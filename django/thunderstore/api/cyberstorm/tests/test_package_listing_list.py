@@ -527,35 +527,40 @@ def test_base_view__when_requested_page_is_out_of_bounds__returns_error(
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
+def test_base_view__when_multiple_pages_of_results__page_urls_retain_parameters(
     community: Community,
+    api_client
 ) -> None:
+    # 1. Setup data
     cat = PackageCategory.objects.create(name="c", slug="c", community=community)
-
     for _ in range(41):
         PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get(
-        "/",
-        data={
-            "deprecated": True,
-            "included_categories": [str(cat.id)],
-            "ordering": "most-downloaded",
-            "page": 2,
-            "q": "test",
-        },
-    )
-    response = BasePackageListAPIView().dispatch(
-        request,
-        community_id=community.identifier,
+    url = reverse(
+        "api:cyberstorm:cyberstorm.listing.by-community-list",
+        kwargs={"community_id": community.identifier}
     )
 
-    assert response.data["previous"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=1&q=test",
-    )
-    assert response.data["next"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=3&q=test",
-    )
+    data = {
+        "deprecated": "True",
+        "included_categories": [str(cat.id)],
+        "ordering": "most-downloaded",
+        "page": 2,
+        "q": "test",
+    }
+
+    response = api_client.get(url, data=data, follow=True)
+
+    assert len(response.redirect_chain) > 0
+    assert response.redirect_chain[0][1] == 302
+    assert "window=" in response.redirect_chain[0][0]
+
+    assert response.status_code == 200
+    res_data = response.json()
+
+    assert "ordering=most-downloaded" in res_data["next"]
+    assert "window=" in res_data["next"]
+    assert "q=test" in res_data["previous"]
 
 
 ######################################
@@ -572,6 +577,7 @@ def test_listing_by_community_view__returns_only_packages_listed_in_community(
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{expected.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -588,6 +594,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{pl1.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -617,6 +624,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{com1pack2.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -664,6 +672,7 @@ def test_listing_by_community_view__does_not_return_rejected_packages(
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/?ordering=newest",
+        follow=True,
     )
     result = response.json()
 
@@ -699,12 +708,12 @@ def test_listing_by_community__does_not_return_rejected_multi_community_packages
 
     # Should return one package since it is approved in community1
     url = f"/api/cyberstorm/listing/{community1.identifier}/"
-    response = api_client.get(url)
+    response = api_client.get(url, follow=True)
     assert response.json()["count"] == 1
 
     # Should return zero packages since it is rejected in community2
     url = f"/api/cyberstorm/listing/{community2.identifier}/"
-    response = api_client.get(url)
+    response = api_client.get(url, follow=True)
     assert response.json()["count"] == 0
 
 
@@ -728,6 +737,7 @@ def test_listing_by_community_view__when_community_requires_review__returns_only
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/?ordering=newest",
+        follow=True,
     )
     result = response.json()
 
@@ -756,6 +766,7 @@ def test_listing_by_namespace_view__returns_only_packages_listed_in_community_be
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/{namespace.name}/",
+        follow=True,
     )
     result = response.json()
 
@@ -800,6 +811,7 @@ def test_listing_by_dependency_view__returns_only_dependants_of_requested_packag
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/{target_ns.name}/{package}/dependants/",
+        follow=True,
     )
     result = response.json()
 
@@ -822,6 +834,7 @@ def test_listing_by_dependency_view__returns_only_packages_listed_in_community(
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/{dependency_listing.package.namespace.name}/{dependency_listing.package.name}/dependants/",
+        follow=True,
     )
     result = response.json()
 
