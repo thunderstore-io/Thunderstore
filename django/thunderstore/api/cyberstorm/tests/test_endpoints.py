@@ -35,7 +35,7 @@ def test_cyberstorm_GET_endpoint_schemas(
     resolver = get_resolver(schema)
 
     url = fill_path_params(api_path, param_values)
-    response = api_client.get(url, format="json")
+    response = api_client.get(url, format="json", follow=True)
 
     errors = validate_response_against_schema(
         response=response,
