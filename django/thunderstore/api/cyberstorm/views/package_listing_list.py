@@ -8,11 +8,12 @@ from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from rest_framework import serializers
-from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
 from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.community.api.experimental.views._utils import CustomListAPIView
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
@@ -81,7 +82,7 @@ class PackageListPaginator(PageNumberPagination):
         return []
 
 
-class BasePackageListAPIView(ListAPIView):
+class BasePackageListAPIView(CustomListAPIView):
     """
     Base class for community-scoped, paginated, filterable package listings.
 
@@ -95,25 +96,20 @@ class BasePackageListAPIView(ListAPIView):
     pagination_class = PackageListPaginator
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
+    window_duration_in_seconds = 60
+    permitted_query_params = [
+        "deprecated",
+        "excluded_categories",
+        "included_categories",
+        "nsfw",
+        "ordering",
+        "q",
+        "section",
+    ]
 
-    def list(self, request, *args, **kwargs):  # noqa: A003
-        assert self.paginator is not None
-
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page, many=True)
-        response = self.paginator.get_paginated_response(serializer.data)
-
-        # Paginator's default implementation uses the Request object to
-        # construct previous/next links, which can open attack vectors
-        # via cache. Ideally this would have been overridden in the
-        # paginator itself, but that would require passing extra args,
-        # which would change the methods signatures, which is icky and
-        # not liked by MyPy either.
-        (previous_url, next_url) = self._get_sibling_pages()
-        response.data["previous"] = previous_url
-        response.data["next"] = next_url
-
+    def list(self, *args, **kwargs):  # noqa: A003
+        response = super().list(*args, **kwargs)
+        response["Cache-Control"] = f"public, max-age={self.window_duration_in_seconds}"
         return response
 
     def get_serializer(self, package_page: Page, **kwargs):
