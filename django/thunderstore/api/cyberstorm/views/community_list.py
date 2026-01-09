@@ -7,7 +7,7 @@ from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerialize
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
-    CyberstormTimedCacheMixin,
+    PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
 from thunderstore.community.models import Community
@@ -21,7 +21,7 @@ class CommunityListAPIQueryParams(serializers.Serializer):
     include_unlisted = serializers.BooleanField(default=False)
 
 
-class CommunityListAPIView(CyberstormTimedCacheMixin, CyberstormAutoSchemaMixin, ListAPIView):
+class CommunityListAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, ListAPIView):
     permission_classes = []
     serializer_class = CyberstormCommunitySerializer
     pagination_class = CommunityPaginator

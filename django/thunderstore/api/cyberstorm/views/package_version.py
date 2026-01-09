@@ -10,12 +10,13 @@ from thunderstore.api.cyberstorm.serializers.package_version import (
 )
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
+    PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
 from thunderstore.repository.models.package_version import PackageVersion
 
 
-class PackageVersionAPIView(CyberstormAutoSchemaMixin, APIView):
+class PackageVersionAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, APIView):
     @conditional_swagger_auto_schema(
         responses={200: PackageVersionResponseSerializer},
         operation_id="cyberstorm.package_version",

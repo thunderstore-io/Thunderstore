@@ -32,6 +32,7 @@ from thunderstore.api.cyberstorm.views.package_listing_actions import (
 )
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
+    PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
 from thunderstore.community.models.package_listing import PackageListing
@@ -116,7 +117,9 @@ class ResponseSerializer(serializers.Serializer):
     website_url = EmptyStringAsNoneField(source="version.website_url")
 
 
-class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class PackageListingAPIView(
+    PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView
+):
     serializer_class = ResponseSerializer
 
     def get_object(self):

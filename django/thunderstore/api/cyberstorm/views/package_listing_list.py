@@ -12,7 +12,7 @@ from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
-from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.api.utils import PublicCacheMixin, conditional_swagger_auto_schema
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     Community,
@@ -81,7 +81,7 @@ class PackageListPaginator(PageNumberPagination):
         return []
 
 
-class BasePackageListAPIView(ListAPIView):
+class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
     """
     Base class for community-scoped, paginated, filterable package listings.
 
