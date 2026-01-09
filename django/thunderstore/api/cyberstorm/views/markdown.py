@@ -4,7 +4,7 @@ from django.http import Http404
 from rest_framework import serializers
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
 
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import CyberstormAutoSchemaMixin, PublicCacheMixin
 from thunderstore.markdown.templatetags.markdownify import render_markdown
 from thunderstore.repository.models import Package, PackageVersion
 
@@ -13,7 +13,9 @@ class CyberstormMarkdownResponseSerializer(serializers.Serializer):
     html = serializers.CharField()
 
 
-class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class PackageVersionReadmeAPIView(
+    PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView
+):
     """
     Return README.md prerendered as HTML.
 
@@ -32,7 +34,9 @@ class PackageVersionReadmeAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
         return {"html": render_markdown(package_version.readme)}
 
 
-class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class PackageVersionChangelogAPIView(
+    PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView
+):
     """
     Return CHANGELOG.md prerendered as HTML.
 
@@ -40,6 +44,8 @@ class PackageVersionChangelogAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView)
     """
 
     serializer_class = CyberstormMarkdownResponseSerializer
+
+    cache_404s = True
 
     def get_object(self):
         package_version = get_package_version(
