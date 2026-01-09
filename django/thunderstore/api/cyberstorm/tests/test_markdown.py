@@ -65,6 +65,7 @@ def test_readme_api_view__prerenders_markup(api_client: APIClient) -> None:
 
     response = api_client.get(
         f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/readme/",
+        follow=True,
     )
     actual = response.json()
 
@@ -88,6 +89,7 @@ def test_changelog_api_view__prerenders_markup(
 
     response = api_client.get(
         f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/changelog/",
+        follow=True,
     )
     actual = response.json()
 
@@ -102,6 +104,7 @@ def test_changelog_api_view__when_package_has_no_changelog__returns_404(
 
     response = api_client.get(
         f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/changelog/",
+        follow=True,
     )
     actual = response.json()
 
