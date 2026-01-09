@@ -65,7 +65,7 @@ class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
     window_duration_in_seconds = 0
-    default_query_params = ["window", "cursor"]
+    default_query_params = ["window", "cursor", "page"]
     permitted_query_params = []
 
     def list(self, request, *args, **kwargs):

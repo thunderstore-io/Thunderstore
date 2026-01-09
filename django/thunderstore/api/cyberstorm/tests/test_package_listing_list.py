@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from urllib.parse import urlparse, parse_qs
 
 import pytest
 from django.urls import reverse
@@ -558,9 +559,17 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_parameters(
     assert response.status_code == 200
     res_data = response.json()
 
-    assert "ordering=most-downloaded" in res_data["next"]
-    assert "window=" in res_data["next"]
-    assert "q=test" in res_data["previous"]
+    parsed_url = urlparse(response.url)
+    query_params = parse_qs(parsed_url.query)
+    window = query_params.get("window")[0]
+
+    assert (
+       f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=1&q=test&window={window}"
+    ) in res_data["previous"]
+
+    assert (
+        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=3&q=test&window={window}"
+    ) in res_data["next"]
 
 
 ######################################
