@@ -7,7 +7,7 @@ from thunderstore.api.cyberstorm.serializers import (
 )
 from thunderstore.api.cyberstorm.views.markdown import get_package_version
 from thunderstore.api.pagination import PackageDependenciesPaginator
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import CyberstormAutoSchemaMixin, PublicCacheMixin
 from thunderstore.repository.models import Package, PackageVersion
 
 
@@ -19,7 +19,9 @@ class CyberstormPackageVersionSerializer(serializers.Serializer):
     install_url = serializers.CharField()
 
 
-class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
+class PackageVersionListAPIView(
+    PublicCacheMixin, CyberstormAutoSchemaMixin, ListAPIView
+):
     """
     Return a list of available versions of the package.
     """
@@ -36,7 +38,9 @@ class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
         return package.versions.active()
 
 
-class PackageVersionDependenciesListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
+class PackageVersionDependenciesListAPIView(
+    PublicCacheMixin, CyberstormAutoSchemaMixin, ListAPIView
+):
     serializer_class = CyberstormPackageDependencySerializer
     pagination_class = PackageDependenciesPaginator
 
