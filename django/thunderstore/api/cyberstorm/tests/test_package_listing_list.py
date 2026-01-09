@@ -612,6 +612,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{pl2.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
@@ -648,6 +649,7 @@ def test_listing_by_community_view__when_package_listed_in_multiple_communities_
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{com2pack2.community.identifier}/",
+        follow=True,
     )
     result = response.json()
 
