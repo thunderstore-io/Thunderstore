@@ -28,8 +28,12 @@ class CyberstormAutoSchemaMixin:  # pragma: no cover
 class PublicCacheMixin:
     """
     A mixin for caching public API endpoints.
-    1. Caching: Automatically applies public cache headers.
-    2. Security: Disables DRF authentication/permissions, preventing accidental use of request.user
+
+    1. Caching: Applies 'public' Cache-Control headers to the response.
+    2. Security: Explicitly clears 'authentication_classes' and 'permission_classes'
+       to override global DRF settings in settings.py. This ensures the endpoint is strictly
+       anonymous and prevents 'request.user' from being populated, which
+       mitigates the risk of caching user-specific data.
     """
 
     authentication_classes = []
