@@ -602,10 +602,6 @@ def test_base_view__when_requested_page_is_out_of_bounds__returns_error(
     assert response.data["count"] == 0
     assert len(response.data["results"]) == 0
 
-    url = reverse(
-        "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
-    )
     response = api_client.get(
         url,
         data={"page": 2},
