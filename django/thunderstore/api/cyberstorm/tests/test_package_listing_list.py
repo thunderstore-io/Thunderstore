@@ -967,7 +967,6 @@ def test_listing_by_dependency_view__returns_only_packages_listed_in_community(
 
     response = api_client.get(
         f"/api/cyberstorm/listing/{community.identifier}/{dependency_listing.package.namespace.name}/{dependency_listing.package.name}/dependants/",
-        follow=True,
     )
     result = response.json()
 
