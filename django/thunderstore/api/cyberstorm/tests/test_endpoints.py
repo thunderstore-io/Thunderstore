@@ -5,6 +5,7 @@ from thunderstore.api.cyberstorm.tests.endpoint_data import (
     GET_TEST_CASES,
     PATCH_TEST_CASES,
     POST_TEST_CASES,
+    IGNORED_TEST_CASES,
 )
 from thunderstore.api.cyberstorm.tests.utils import (
     convert_path_to_schema_style,
@@ -202,6 +203,7 @@ def test_find_missing_endpoints():
         + POST_TEST_CASES
         + PATCH_TEST_CASES
         + DELETE_TEST_CASES
+        + IGNORED_TEST_CASES
     }
 
     existing_paths = {

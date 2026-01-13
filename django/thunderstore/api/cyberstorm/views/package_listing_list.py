@@ -110,10 +110,6 @@ class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
         "section",
     ]
 
-    def __init__(self):
-        super().__init__()
-        super().set_custom_query_params(self.permitted_query_params)
-
     def get_serializer(self, package_page: Page, **kwargs):
         """
         Augment the objects with information required by serializer.

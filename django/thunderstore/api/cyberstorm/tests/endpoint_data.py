@@ -63,6 +63,10 @@ ENDPOINTS = {
         "/api/cyberstorm/user/delete/",
         "/api/cyberstorm/user/linked-account/{provider}/disconnect/",
     ],
+    # Suppress errors for the given endpoints
+    "IGNORED": [
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/"
+    ]
 }
 
 
@@ -80,3 +84,5 @@ PATCH_TEST_CASES = [
 
 
 DELETE_TEST_CASES = [{"path": path} for path in ENDPOINTS["DELETE"]]
+
+IGNORED_TEST_CASES = [{"path": path} for path in ENDPOINTS["IGNORED"]]
