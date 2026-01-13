@@ -43,7 +43,7 @@ def test_base_view__return_data_structure(api_client) -> None:
     pl = PackageListingFactory()
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": pl.community.identifier}
+        kwargs={"community_id": pl.community.identifier},
     )
 
     response = api_client.get(url, format="json", follow=True)
@@ -82,7 +82,7 @@ def test_base_view__by_default__filters_out_inactive_packages(api_client) -> Non
     pl = PackageListingFactory(package_kwargs={"is_active": False})
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": pl.community.identifier}
+        kwargs={"community_id": pl.community.identifier},
     )
 
     response = api_client.get(url, format="json", follow=True)
@@ -99,7 +99,7 @@ def test_base_view__by_default__filters_out_deprecated_packages(api_client) -> N
     pl = PackageListingFactory(package_kwargs={"is_deprecated": True})
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": pl.community.identifier}
+        kwargs={"community_id": pl.community.identifier},
     )
 
     response = api_client.get(url, format="json", follow=True)
@@ -116,10 +116,12 @@ def test_base_view__when_requested__include_deprecated_packages(api_client) -> N
     pl = PackageListingFactory(package_kwargs={"is_deprecated": True})
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": pl.community.identifier}
+        kwargs={"community_id": pl.community.identifier},
     )
 
-    response = api_client.get(url, data={"deprecated": "True"}, format="json", follow=True)
+    response = api_client.get(
+        url, data={"deprecated": "True"}, format="json", follow=True
+    )
 
     assert response.status_code == status.HTTP_200_OK
     assert len(response.redirect_chain) > 0
@@ -135,7 +137,7 @@ def test_base_view__by_default__filters_out_nsfw(api_client) -> None:
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": pl.community.identifier}
+        kwargs={"community_id": pl.community.identifier},
     )
 
     response = api_client.get(url, format="json", follow=True)
@@ -153,7 +155,7 @@ def test_base_view__when_requested__include_nsfw_packages(api_client) -> None:
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": pl.community.identifier}
+        kwargs={"community_id": pl.community.identifier},
     )
 
     response = api_client.get(url, data={"nsfw": "True"}, format="json", follow=True)
@@ -176,7 +178,7 @@ def test_base_view__by_default__does_not_filter_by_categories(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(url, format="json", follow=True)
     assert response.status_code == status.HTTP_200_OK
@@ -194,7 +196,7 @@ def test_base_view__when_including_category__filters_out_not_matched(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -218,7 +220,7 @@ def test_base_view__when_excluding_category__filters_out_matched(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -253,7 +255,7 @@ def test_base_view__when_requesting_section__filters_based_on_categories(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -273,7 +275,7 @@ def test_base_view__when_requesting_nonexisting_section__does_nothing(api_client
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": expected.community.identifier}
+        kwargs={"community_id": expected.community.identifier},
     )
     response = api_client.get(
         url,
@@ -297,7 +299,7 @@ def test_base_view__when_search_is_used__filters_based_on_names_and_description(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -350,7 +352,7 @@ def test_base_view__by_default__orders_packages_by_update_date(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(url, format="json", follow=True)
 
@@ -380,7 +382,7 @@ def test_base_view__when_requested__orders_packages_by_creation_date(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -415,7 +417,7 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -434,7 +436,7 @@ def test_base_view__when_requested__orders_packages_by_download_counts(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -463,7 +465,7 @@ def test_base_view__when_requested__orders_packages_by_rating_counts(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -485,7 +487,7 @@ def test_base_view__unknown_ordering_parameter__returns_error(
 ) -> None:
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -512,7 +514,7 @@ def test_base_view__always__returns_pinned_packages_first(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(url, format="json", follow=True)
 
@@ -536,7 +538,7 @@ def test_base_view__always__returns_deprecated_packages_last(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -561,7 +563,7 @@ def test_base_view__when_request_matches_lots_of_packages__paginates_results(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(url, format="json", follow=True)
 
@@ -572,7 +574,7 @@ def test_base_view__when_request_matches_lots_of_packages__paginates_results(
 
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(
         url,
@@ -594,7 +596,7 @@ def test_base_view__when_requested_page_is_out_of_bounds__returns_error(
 ) -> None:
     url = reverse(
         "api:cyberstorm:cyberstorm.listing.by-community-list",
-        kwargs={"community_id": community.identifier}
+        kwargs={"community_id": community.identifier},
     )
     response = api_client.get(url, format="json", follow=True)
 
@@ -690,8 +692,6 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_parameters(
     ) in res_data["previous"]
 
     assert res_data["next"] is None
-
-
 
 
 ######################################

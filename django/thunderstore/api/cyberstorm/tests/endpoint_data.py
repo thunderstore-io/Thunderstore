@@ -66,7 +66,7 @@ ENDPOINTS = {
     # Suppress errors for the given endpoints
     "IGNORED": [
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/"
-    ]
+    ],
 }
 
 
