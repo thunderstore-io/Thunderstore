@@ -37,6 +37,7 @@ mock_base_package_list_api_view = patch.multiple(
 from django.urls import reverse
 from rest_framework import status
 
+
 @mock_base_package_list_api_view
 @pytest.mark.django_db
 def test_base_view__return_data_structure(api_client) -> None:
