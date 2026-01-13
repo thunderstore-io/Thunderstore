@@ -92,18 +92,13 @@ class CustomListAPIView(ListAPIView):
             )
         except ValueError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        is_valid_window = requested_window % self.window_duration_in_seconds
 
+        is_valid_window = requested_window % self.window_duration_in_seconds
         if is_valid_window >= 1:
-            # Redirect back to a valid window
-            params = self.request.GET.copy()
-            params["window"] = str(
+            requested_window = (
                 round(requested_window / self.window_duration_in_seconds)
                 * self.window_duration_in_seconds
             )
-            sorted_params = sorted(params.items(), key=lambda x: x[0])
-            query_string = urlencode(sorted_params)
-            return redirect(f"{self.request.path}?{query_string}")
 
         all_permitted_query_params = (
             self.default_query_params + self.permitted_query_params
@@ -113,6 +108,8 @@ class CustomListAPIView(ListAPIView):
             for key, value in self.request.GET.items()
             if key in all_permitted_query_params
         }
+        query_items["window"] = str(requested_window)
+
         sorted_params = sorted(query_items.items(), key=lambda x: x[0])
         query_string = urlencode(sorted_params)
         expected_url = f"{self.request.path}?{query_string}"
