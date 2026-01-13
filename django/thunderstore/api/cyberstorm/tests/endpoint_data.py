@@ -15,7 +15,6 @@ ENDPOINTS = {
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/readme/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/",
-        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/",
         "/api/cyberstorm/team/{team_id}/",
         "/api/cyberstorm/team/{team_id}/member/",
         "/api/cyberstorm/team/{team_id}/service-account/",
