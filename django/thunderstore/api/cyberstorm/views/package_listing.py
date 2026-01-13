@@ -117,9 +117,7 @@ class ResponseSerializer(serializers.Serializer):
     website_url = EmptyStringAsNoneField(source="version.website_url")
 
 
-class PackageListingAPIView(
-    PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView
-):
+class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = ResponseSerializer
 
     def get_object(self):
