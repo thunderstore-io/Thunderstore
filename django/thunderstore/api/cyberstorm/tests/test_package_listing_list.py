@@ -270,7 +270,9 @@ def test_base_view__when_requesting_section__filters_based_on_categories(
 
 @mock_base_package_list_api_view
 @pytest.mark.django_db
-def test_base_view__when_requesting_nonexisting_section__does_nothing(api_client) -> None:
+def test_base_view__when_requesting_nonexisting_section__does_nothing(
+    api_client,
+) -> None:
     expected = PackageListingFactory()
 
     url = reverse(
