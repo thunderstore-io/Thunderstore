@@ -29,6 +29,11 @@ class PublicCacheMixin:
     """
     A mixin for caching public API endpoints.
 
+    IMPORTANT: Must be before generic DRF view base classes in the inheritance list.
+
+    Example:
+        class ProductListView(PublicCacheMixin, ListAPIView):
+
     1. Caching: Applies 'public' Cache-Control headers to the response.
     2. Security: Explicitly clears 'authentication_classes' and 'permission_classes'
        to override global DRF settings in settings.py. This ensures the endpoint is strictly
