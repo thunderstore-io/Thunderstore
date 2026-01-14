@@ -90,11 +90,12 @@ class CustomListAPIView(ListAPIView):
                     "window", f"{datetime.now(timezone.utc).timestamp()}"
                 )
             )
+            requested_window = round(requested_window)
         except ValueError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         is_valid_window = requested_window % self.window_duration_in_seconds
-        if is_valid_window >= 1:
+        if is_valid_window > 0:
             requested_window = (
                 round(requested_window / self.window_duration_in_seconds)
                 * self.window_duration_in_seconds
