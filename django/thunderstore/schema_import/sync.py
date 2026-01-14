@@ -1,6 +1,7 @@
 import requests
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Count
 
 from thunderstore.community.models import (
     Community,
@@ -26,7 +27,6 @@ def get_slogan_from_display_name(name: str) -> str:
     return f"The {slogan_name} Mod Database"
 
 
-# TODO: Add support for deleting or at least disabling unnecessary content
 @transaction.atomic
 def import_community(identifier: str, schema: SchemaCommunity):
     if not (community := Community.objects.filter(identifier=identifier).first()):
@@ -71,6 +71,16 @@ def import_community(identifier: str, schema: SchemaCommunity):
         category.name = v.label
         category.save()
 
+    PackageCategory.objects.filter(
+        community=community,
+    ).exclude(
+        slug__in=schema.categories.keys(),
+    ).annotate(
+        package_count=Count("packages"),
+    ).filter(
+        package_count=0,
+    ).delete()
+
     for index, (k, v) in enumerate(schema.sections.items()):
         if not (
             section := PackageListingSection.objects.filter(
@@ -94,6 +104,12 @@ def import_community(identifier: str, schema: SchemaCommunity):
                 community=community,
             )
         )
+
+    PackageListingSection.objects.filter(
+        community=community,
+    ).exclude(
+        slug__in=schema.sections.keys(),
+    ).delete()
 
 
 def import_schema_communities(schema: Schema):
