@@ -10,6 +10,8 @@ ENDPOINTS = {
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/status/",
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/v/{version_number}/",
         "/api/cyberstorm/package/{community_id}/{namespace_id}/{package_name}/permissions/",
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/latest/changelog/",
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/latest/readme/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/changelog/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
