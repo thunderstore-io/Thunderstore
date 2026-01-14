@@ -32,7 +32,6 @@ class PackageListSearchView(CommunityMixin, ListView):
     model = PackageListing
     paginate_by = MODS_PER_PAGE
     paginator_class = CachedPaginator
-    window_duration_in_seconds = 60
 
     def filter_community(
         self, queryset: QuerySet[PackageListing]

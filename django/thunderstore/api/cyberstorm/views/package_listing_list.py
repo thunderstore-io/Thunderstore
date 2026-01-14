@@ -334,6 +334,7 @@ class PackageListingByDependencyListAPIView(BasePackageListAPIView):
     """
 
     viewname = "api:cyberstorm:cyberstorm.listing.by-dependency-list"
+    window_duration_in_seconds = 60
 
     def get_queryset(self) -> QuerySet[PackageListing]:
         community_id = self.kwargs["community_id"]
