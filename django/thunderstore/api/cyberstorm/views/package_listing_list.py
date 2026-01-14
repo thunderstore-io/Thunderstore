@@ -14,8 +14,7 @@ from rest_framework.pagination import PageNumberPagination
 from thunderstore.api.cyberstorm.serializers import CyberstormPackagePreviewSerializer
 from thunderstore.api.utils import PublicCacheMixin, conditional_swagger_auto_schema
 from thunderstore.community.api.experimental.views._utils import (
-    CustomCursorPaginationWithCount,
-    CustomListAPIView,
+    CustomListAPIView, CustomCursorPaginationWithCount,
 )
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
@@ -96,7 +95,7 @@ class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
     methods, whereas the rest are overwritten methods from ListAPIView.
     """
 
-    pagination_class = PackageListPaginator
+    pagination_class = CustomCursorPaginationWithCount
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
     window_duration_in_seconds = 60
