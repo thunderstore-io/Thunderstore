@@ -65,8 +65,6 @@ class CustomListAPIView(ListAPIView):
     pagination_class = CustomCursorPagination
     paginator: CustomCursorPagination
     window_duration_in_seconds = 0
-    default_query_params = ["window", "cursor", "page"]
-    permitted_query_params = []
 
     def list(self, request, *args, **kwargs):
         if self.window_duration_in_seconds > 0:
@@ -101,18 +99,12 @@ class CustomListAPIView(ListAPIView):
                 * self.window_duration_in_seconds
             )
 
-        all_permitted_query_params = (
-            self.default_query_params + self.permitted_query_params
-        )
         query_items = {
             key: value
             for key, value in self.request.GET.items()
-            if key in all_permitted_query_params
         }
         query_items["window"] = str(requested_window)
-
-        sorted_params = sorted(query_items.items(), key=lambda x: x[0])
-        query_string = urlencode(sorted_params)
+        query_string = urlencode(query_items)
         expected_url = f"{self.request.path}?{query_string}"
 
         if self.request.get_full_path() != expected_url:

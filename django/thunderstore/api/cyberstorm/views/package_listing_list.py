@@ -100,15 +100,6 @@ class BasePackageListAPIView(PublicCacheMixin, CustomListAPIView):
     serializer_class = CyberstormPackagePreviewSerializer
     viewname: str = ""  # Define in subclass
     window_duration_in_seconds = 60
-    permitted_query_params = [
-        "deprecated",
-        "excluded_categories",
-        "included_categories",
-        "nsfw",
-        "ordering",
-        "q",
-        "section",
-    ]
 
     def get_serializer(self, package_page: Page, **kwargs):
         """
