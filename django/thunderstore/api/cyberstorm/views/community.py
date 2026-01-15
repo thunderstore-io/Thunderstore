@@ -1,11 +1,11 @@
 from rest_framework.generics import RetrieveAPIView
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
+from thunderstore.api.utils import CyberstormAutoSchemaMixin, PublicCacheMixin
 from thunderstore.community.models import Community
 
 
-class CommunityAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class CommunityAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     lookup_url_kwarg = "community_id"
     lookup_field = "identifier"
     permission_classes = []
@@ -16,5 +16,4 @@ class CommunityAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
 
     def get(self, *args, **kwargs):
         response = super().get(*args, **kwargs)
-        response["Cache-Control"] = "public, max-age=60"
         return response

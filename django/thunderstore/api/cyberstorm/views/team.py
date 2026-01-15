@@ -31,6 +31,7 @@ from thunderstore.api.cyberstorm.services.team import (
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
+    PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
 from thunderstore.repository.forms import AddTeamMemberForm
@@ -52,7 +53,7 @@ class TeamPermissionsMixin:
             raise PermissionDenied("You do not have permission to access this team.")
 
 
-class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class TeamAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
     lookup_field = "name"

@@ -32,6 +32,7 @@ from thunderstore.api.cyberstorm.views.package_listing_actions import (
 )
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
+    PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
 from thunderstore.community.models.package_listing import PackageListing
