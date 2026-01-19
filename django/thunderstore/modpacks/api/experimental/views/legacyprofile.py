@@ -44,22 +44,6 @@ class AnalyticsEventLegacyProfileExport(BaseModel):
     file_size_bytes: int
 
 
-def push_export_creation_to_kafka(key: str, file_size_bytes: int):
-    try:
-        send_kafka_message(
-            topic=KafkaTopic.A_LEGACY_PROFILE_EXPORT_V1,
-            payload_string=AnalyticsEventLegacyProfileExport(
-                id=key,
-                timestamp=timezone.now(),
-                file_size_bytes=file_size_bytes,
-            ).json(),
-        )
-    except Exception:
-        logger.warning(
-            "Failed to send legacy profile export event to Kafka", exc_info=True
-        )
-
-
 class LegacyProfileCreateApiView(APIView):
     permission_classes = []
     parser_classes = [LegacyProfileFileUploadParser]
@@ -74,15 +58,24 @@ class LegacyProfileCreateApiView(APIView):
     def post(self, request, *args, **kwargs):
         if "file" not in self.request.data or not self.request.data["file"]:
             raise ValidationError(detail="Request body was empty")
-        key = LegacyProfile.objects.get_or_create_from_upload(
-            content=self.request.data["file"]
-        )
-        serializer = LegacyProfileCreateResponseSerializer({"key": key})
+
+        file_obj = self.request.data["file"]
+        file_size = file_obj.size
+
+        key = LegacyProfile.objects.get_or_create_from_upload(content=file_obj)
+
         transaction.on_commit(
-            lambda: push_export_creation_to_kafka(
-                key=str(key), file_size_bytes=self.request.data["file"].size
+            lambda: send_kafka_message.delay(
+                topic=KafkaTopic.A_LEGACY_PROFILE_EXPORT_V1,
+                payload_string=AnalyticsEventLegacyProfileExport(
+                    id=str(key),
+                    timestamp=timezone.now(),
+                    file_size_bytes=file_size,
+                ).json(),
             )
         )
+
+        serializer = LegacyProfileCreateResponseSerializer({"key": key})
         return Response(
             serializer.data,
             status=status.HTTP_200_OK,

@@ -137,8 +137,8 @@ def test_experimental_api_legacyprofile_create_sends_kafka_event(
         result = response.json()
         profile_key = result["key"]
 
-        mock_send_kafka_message.assert_called_once()
-        call_args = mock_send_kafka_message.call_args
+        mock_send_kafka_message.delay.assert_called_once()
+        call_args = mock_send_kafka_message.delay.call_args
 
         assert call_args.kwargs["topic"] == KafkaTopic.A_LEGACY_PROFILE_EXPORT_V1
 
