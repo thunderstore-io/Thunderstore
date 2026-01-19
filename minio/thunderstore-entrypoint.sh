@@ -11,4 +11,3 @@ mc anonymous set download thunderstore/test;
 kill $MINIO_PID
 wait $MINIO_PID
 source /usr/bin/docker-entrypoint.sh "$@"
-
