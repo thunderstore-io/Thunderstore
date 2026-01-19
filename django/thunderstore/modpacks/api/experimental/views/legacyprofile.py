@@ -21,6 +21,7 @@ from thunderstore.ts_analytics.tasks import send_kafka_message
 
 logger = logging.getLogger(__name__)
 
+
 class LegacyProfileCreateResponseSerializer(serializers.Serializer):
     key = serializers.CharField(required=True)
 
