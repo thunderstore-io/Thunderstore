@@ -68,6 +68,17 @@ def report_package_listing(
 ) -> None:
     user = validate_user(agent)
 
+    existing_reports = PackageReport.objects.filter(
+        submitted_by=user,
+        package_listing=package_listing,
+        is_automated=False,
+        is_active=True,
+    )
+
+    if existing_reports.exists() and not user.is_superuser:
+        error_msg = "You have already reported this package listing"
+        raise PermissionValidationError(error_msg)
+
     PackageReport.handle_user_report(
         reason=reason,
         submitted_by=user,
