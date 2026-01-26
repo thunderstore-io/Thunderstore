@@ -17,6 +17,7 @@ class KafkaTopic(str, Enum):
     # 'analytics' prefixed events are events that aren't necessarily bound to
     # any specific data structure
     A_PACKAGE_DOWNLOAD_V1 = "analytics.package_download.v1"
+    A_LEGACY_PROFILE_EXPORT_V1 = "analytics.legacy_profile_export.v1"
 
     # 'model' prefixed events are generally events that are explicitly bound to
     # models. Use Django's db table naming convention.
