@@ -1,8 +1,8 @@
-{% load thumbnail %}
+{% load cached_thumbnail %}
 
 <div class="card-header">
     <div class="media">
-        <img class="align-self-center mr-3" src="{% thumbnail object.package.icon 128x128 %}" alt="{{ object.package }} icon">
+        <img class="align-self-center mr-3" src="{% thumbnail_url object.package.icon 128 128 %}" alt="{{ object.package }} icon">
         <div class="media-body">
             <h1 class="mt-0">{{ object.package.display_name }}</h1>
             <p>{{ object.package.description }}</p>
