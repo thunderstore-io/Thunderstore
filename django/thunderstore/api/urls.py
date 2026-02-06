@@ -223,7 +223,7 @@ cyberstorm_urls = [
         name="cyberstorm.user.linked-account.disconnect",
     ),
     path(
-        "/user/rejected-package-listings/",
+        "user/rejected-package-listings/",
         UserRejectedPackageListingsListAPIView.as_view(),
         name="cyberstorm.user.rejected-package-listings",
     ),
