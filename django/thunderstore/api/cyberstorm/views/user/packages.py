@@ -45,7 +45,11 @@ class UserRejectedPackageListingsListAPIView(
                 "pk", flat=True
             )
         )
-        return PackageListingReviewStatusSerializer.get_queryset().filter(
-            review_status=PackageListingReviewStatus.rejected,
-            package__owner__in=teams,
+        return (
+            PackageListingReviewStatusSerializer.get_queryset()
+            .filter(
+                review_status=PackageListingReviewStatus.rejected,
+                package__owner__in=teams,
+            )
+            .order_by("-datetime_created")
         )
