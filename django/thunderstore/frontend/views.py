@@ -1,16 +1,15 @@
 import mimetypes
 from typing import Any, Dict
-from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
-from django.http import FileResponse, HttpResponseNotFound, HttpResponseRedirect
+from django.http import FileResponse, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.cache import patch_cache_control
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.generic import RedirectView, TemplateView, View
+from django.views.generic import TemplateView, View
 
 from thunderstore.core.utils import capture_exception
 from thunderstore.frontend.services.thumbnail import get_or_create_thumbnail
