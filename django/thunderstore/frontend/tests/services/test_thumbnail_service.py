@@ -22,7 +22,8 @@ def test_get_or_create_thumbnail_success(community, dummy_cover_image):
 
 
 @pytest.mark.django_db
-def test_get_or_create_thumbnail_exception(community, dummy_cover_image):
+def test_get_or_create_thumbnail_exception(community, dummy_cover_image, settings):
+    settings.ALWAYS_RAISE_EXCEPTIONS = False
     community.cover_image = dummy_cover_image
     community.save()
 
