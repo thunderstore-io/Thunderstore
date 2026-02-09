@@ -4,7 +4,7 @@ from typing import Any, Dict
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
-from django.http import FileResponse, HttpResponseNotFound
+from django.http import FileResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.cache import patch_cache_control
 from django.utils.decorators import method_decorator
@@ -71,12 +71,14 @@ class ThumbnailServeView(View):
         except (ValueError, TypeError):
             width, height = 0, 0
 
+        max_age = 300  # 5 minutes
+
         # This is a check to prevent potential malicious enumeration of
         # thumbnail sizes to flood the storage / server.
         if width not in ALLOWED_DIMENSIONS or height not in ALLOWED_DIMENSIONS:
-            raise PermissionDenied()
-
-        max_age = 300  # 5 minutes
+            response = HttpResponseForbidden("Invalid thumbnail settings.")
+            patch_cache_control(response, max_age=max_age, public=True)
+            return response
 
         if not asset_path:
             response = HttpResponseNotFound("Thumbnail not found.")

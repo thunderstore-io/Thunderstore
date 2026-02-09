@@ -177,7 +177,8 @@ def test_thumbnail_serve_exception(params, dummy_cover_image, client, community_
 
 
 @pytest.mark.django_db
-def test_thumbnail_serve_invalid(client, community_site):
+def test_thumbnail_serve_invalid(client, community_site, settings):
+    settings.ALWAYS_RAISE_EXCEPTIONS = False
     community = community_site.community
     community.cover_image = None
     community.save()
