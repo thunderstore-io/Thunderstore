@@ -1,7 +1,12 @@
+import logging
+from datetime import datetime
+
+from django.db import transaction
 from django.shortcuts import redirect
 from django.utils import timezone
 from drf_yasg.openapi import TYPE_FILE, Schema
 from drf_yasg.utils import swagger_auto_schema
+from pydantic import BaseModel
 from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import FileUploadParser
@@ -11,6 +16,10 @@ from rest_framework.views import APIView
 
 from thunderstore.core.utils import replace_cdn
 from thunderstore.modpacks.models import LegacyProfile
+from thunderstore.ts_analytics.kafka import KafkaTopic
+from thunderstore.ts_analytics.tasks import send_kafka_message
+
+logger = logging.getLogger(__name__)
 
 
 class LegacyProfileCreateResponseSerializer(serializers.Serializer):
@@ -29,6 +38,12 @@ class LegacyProfileCreateThrottle(UserRateThrottle):
         return "6/m"
 
 
+class AnalyticsEventLegacyProfileExport(BaseModel):
+    id: str
+    timestamp: datetime
+    file_size_bytes: int
+
+
 class LegacyProfileCreateApiView(APIView):
     permission_classes = []
     parser_classes = [LegacyProfileFileUploadParser]
@@ -43,9 +58,23 @@ class LegacyProfileCreateApiView(APIView):
     def post(self, request, *args, **kwargs):
         if "file" not in self.request.data or not self.request.data["file"]:
             raise ValidationError(detail="Request body was empty")
-        key = LegacyProfile.objects.get_or_create_from_upload(
-            content=self.request.data["file"]
+
+        file_obj = self.request.data["file"]
+        file_size = file_obj.size
+
+        key = LegacyProfile.objects.get_or_create_from_upload(content=file_obj)
+
+        transaction.on_commit(
+            lambda: send_kafka_message.delay(
+                topic=KafkaTopic.A_LEGACY_PROFILE_EXPORT_V1,
+                payload_string=AnalyticsEventLegacyProfileExport(
+                    id=str(key),
+                    timestamp=timezone.now(),
+                    file_size_bytes=file_size,
+                ).json(),
+            )
         )
+
         serializer = LegacyProfileCreateResponseSerializer({"key": key})
         return Response(
             serializer.data,

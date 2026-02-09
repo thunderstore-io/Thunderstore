@@ -4,6 +4,7 @@ from django.core.validators import URLValidator
 from rest_framework import serializers
 
 from thunderstore.repository.forms import AddTeamMemberForm
+from thunderstore.repository.models.team import TeamMemberRole
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 from thunderstore.social.utils import get_user_avatar_url
 
@@ -58,5 +59,17 @@ class CyberstormCreateTeamSerializer(serializers.Serializer):
 
 class CyberstormTeamUpdateSerializer(serializers.Serializer):
     donation_link = serializers.CharField(
-        max_length=1024, validators=[URLValidator(["https"])]
+        allow_null=True, max_length=1024, validators=[URLValidator(schemes=["https"])]
     )
+
+
+class CyberstormCreateServiceAccountSerializer(serializers.Serializer):
+    nickname = serializers.CharField(max_length=32)
+    team_name = serializers.CharField(read_only=True)
+    api_token = serializers.CharField(read_only=True)
+
+
+class CyberstormTeamMemberUpdateSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=TeamMemberRole.as_choices())
+    team_name = serializers.CharField(source="team.name", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)

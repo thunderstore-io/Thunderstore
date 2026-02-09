@@ -1,6 +1,6 @@
 import re
 import urllib.parse
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -109,6 +109,16 @@ def sanitize_filepath(filepath: Optional[str]) -> Optional[str]:
             if sanitize_filename(x.replace(".", ""))
         ]
     )
+
+
+def extend_update_fields_if_present(
+    original_kwargs: Dict[str, Any], *new_fields: str
+) -> Dict[str, Any]:
+    """Returns a copy of original_kwargs with the update_fields field updated"""
+    result = {**original_kwargs}
+    if (upfields := original_kwargs.get("update_fields")) is not None:
+        result["update_fields"] = {*upfields, *new_fields}
+    return result
 
 
 def validate_filepath_prefix(filepath: Optional[str]) -> Optional[str]:

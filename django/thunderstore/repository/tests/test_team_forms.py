@@ -40,6 +40,8 @@ def test_form_create_team_valid_data(user_type: str) -> None:
         data={"name": "TeamName"},
     )
     if expected_error:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert expected_error in str(repr(form.errors))
     else:
@@ -71,8 +73,10 @@ def test_form_create_team_team_name_conflict(
         data={"name": name2},
     )
     if should_fail:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
-        assert "A team with the provided name already exists" in str(repr(form.errors))
+        assert "Team with this name already exists" in str(repr(form.errors))
     else:
         assert form.is_valid() is True
         team = form.save()
@@ -254,6 +258,8 @@ def test_form_remove_team_member(
         assert form.save() is None
         assert TeamMember.objects.filter(pk=membership).exists() is False
     else:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -295,6 +301,8 @@ def test_form_remove_team_member_last_owner() -> None:
         user=user,
         data={"membership": last_owner.pk},
     )
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert "Cannot remove last owner from team" in str(repr(form.errors))
 
@@ -381,6 +389,8 @@ def test_form_edit_team_member(
         membership.refresh_from_db()
         assert membership.role == new_role
     else:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -399,6 +409,8 @@ def test_form_edit_team_member_remove_last_owner() -> None:
         instance=last_owner,
         data={"role": TeamMemberRole.member},
     )
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert "Cannot remove last owner from team" in str(repr(form.errors))
 
@@ -453,6 +465,8 @@ def test_form_disband_team_form(
         assert form.save() is None
         assert Team.objects.filter(pk=team.pk).exists() is False
     else:
+        with pytest.raises(ValidationError):
+            form.save()
         assert form.is_valid() is False
         assert form.errors
 
@@ -489,6 +503,8 @@ def test_form_disband_team_form_packages_exist(
         instance=team,
         data={"verification": team.name},
     )
+    with pytest.raises(ValidationError):
+        form.save()
     assert form.is_valid() is False
     assert "Unable to disband teams with packages" in str(repr(form.errors))
 

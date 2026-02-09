@@ -3,17 +3,17 @@ from typing import Optional
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 
-from thunderstore.api.cyberstorm.services.team import update_team
-from thunderstore.core.exceptions import PermissionValidationError
-from thunderstore.core.types import UserType
-from thunderstore.repository.models import (
-    Namespace,
-    Team,
-    TeamMember,
-    TeamMemberRole,
-    transaction,
+from thunderstore.api.cyberstorm.services.team import (
+    create_team,
+    disband_team,
+    remove_team_member,
+    update_team,
+    update_team_member,
 )
+from thunderstore.core.types import UserType
+from thunderstore.repository.models import Team, TeamMember, TeamMemberRole
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
 User = get_user_model()
@@ -34,23 +34,22 @@ class CreateTeamForm(forms.ModelForm):
 
     def clean_name(self):
         name = self.cleaned_data["name"]
-        if Team.objects.filter(name__iexact=name.lower()).exists():
-            raise ValidationError(f"A team with the provided name already exists")
-        if Namespace.objects.filter(name__iexact=name.lower()).exists():
-            raise ValidationError("A namespace with the provided name already exists")
+        if Team.objects.filter(name__iexact=name).exists():
+            raise ValidationError("Team with this name already exists")
         return name
-
-    def clean(self):
-        if not self.user or not self.user.is_authenticated or not self.user.is_active:
-            raise PermissionValidationError("Must be authenticated to create teams")
-        if getattr(self.user, "service_account", None) is not None:
-            raise PermissionValidationError("Service accounts cannot create teams")
-        return super().clean()
 
     @transaction.atomic
     def save(self, *args, **kwargs) -> Team:
-        instance = super().save()
-        instance.add_member(user=self.user, role=TeamMemberRole.owner)
+        if self.errors:
+            raise ValidationError(self.errors)
+
+        try:
+            team_name = self.cleaned_data["name"]
+            instance = create_team(agent=self.user, team_name=team_name)
+        except ValidationError as e:
+            self.add_error(None, e)
+            raise ValidationError(self.errors)
+
         return instance
 
 
@@ -94,15 +93,17 @@ class RemoveTeamMemberForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.user = user
 
-    def clean_membership(self):
-        membership = self.cleaned_data["membership"]
-        if membership.user != self.user:
-            membership.team.ensure_user_can_manage_members(self.user)
-        membership.team.ensure_member_can_be_removed(membership)
-        return membership
-
     def save(self):
-        self.cleaned_data["membership"].delete()
+        if self.errors:
+            raise ValidationError(self.errors)
+
+        member = self.cleaned_data["membership"]
+
+        try:
+            remove_team_member(agent=self.user, member=member)
+        except ValidationError as e:
+            self.add_error(None, e)
+            raise ValidationError(self.errors)
 
 
 class EditTeamMemberForm(forms.ModelForm):
@@ -114,30 +115,32 @@ class EditTeamMemberForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
 
-    def clean_role(self):
-        new_role = self.cleaned_data.get("role", None)
-        try:
-            team = self.instance.team
-        except ObjectDoesNotExist:
-            team = None
-        if team:
-            team.ensure_member_role_can_be_changed(
-                member=self.instance, new_role=new_role
-            )
-        else:
-            raise ValidationError("Team is missing")
-        return new_role
-
     def clean(self):
+        if not self.instance.pk:
+            raise ValidationError("Missing team member instance")
+
         try:
-            team = self.instance.team
+            self.instance.team
         except ObjectDoesNotExist:
-            team = None
-        if team:
-            team.ensure_user_can_manage_members(self.user)
-        else:
             raise ValidationError("Team is missing")
+
         return super().clean()
+
+    def save(self, *args, **kwargs):
+        if self.errors:
+            raise ValidationError(self.errors)
+
+        try:
+            update_team_member(
+                agent=self.user,
+                team_member=self.instance,
+                role=self.cleaned_data["role"],
+            )
+        except ValidationError as e:
+            self.add_error(None, e)
+            raise ValidationError(self.errors)
+
+        return self.instance
 
 
 class DisbandTeamForm(forms.ModelForm):
@@ -161,13 +164,17 @@ class DisbandTeamForm(forms.ModelForm):
     def clean(self):
         if not self.instance.pk:
             raise ValidationError("Missing team instance")
-        self.instance.ensure_user_can_disband(self.user)
         return super().clean()
 
     @transaction.atomic
     def save(self, **kwargs):
-        self.instance.ensure_user_can_disband(self.user)
-        self.instance.delete()
+        if self.errors:
+            raise ValidationError(self.errors)
+        try:
+            disband_team(agent=self.user, team=self.instance)
+        except ValidationError as e:
+            self.add_error(None, e)
+            raise ValidationError(self.errors)
 
 
 class DonationLinkTeamForm(forms.ModelForm):

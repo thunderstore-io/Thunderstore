@@ -187,13 +187,9 @@ class Team(models.Model):
     @classmethod
     @transaction.atomic
     def create(cls, name, **kwargs):
-        existing_ns = Namespace.objects.filter(name__iexact=name).first()
-        if existing_ns:
-            raise ValidationError("Namespace with the Teams name exists")
-        else:
-            team = cls.objects.create(name=name, **kwargs)
-            Namespace.objects.create(name=name, team=team)
-            return team
+        team = cls.objects.create(name=name, **kwargs)
+        Namespace.objects.create(name=name, team=team)
+        return team
 
     @classmethod
     @transaction.atomic
@@ -318,9 +314,9 @@ class Team(models.Model):
         if not member:
             raise ValidationError("Invalid member")
         if member.team != self:
-            raise ValidationError("Member is not a part of this team")
+            raise PermissionValidationError("Member is not a part of this team")
         if self.is_last_owner(member):
-            raise ValidationError("Cannot remove last owner from team")
+            raise PermissionValidationError("Cannot remove last owner from team")
 
     def ensure_member_role_can_be_changed(
         self, member: Optional[TeamMember], new_role: Optional[str]

@@ -231,6 +231,10 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         return self.package.owner
 
     @cached_property
+    def namespace(self):
+        return self.package.namespace
+
+    @cached_property
     def is_deprecated(self):
         return self.package.is_deprecated
 

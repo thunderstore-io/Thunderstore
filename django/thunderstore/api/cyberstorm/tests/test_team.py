@@ -2,6 +2,7 @@ import json
 
 import pytest
 from django.contrib.auth import get_user_model
+from rest_framework import status
 from rest_framework.test import APIClient
 
 from thunderstore.account.factories import ServiceAccountFactory
@@ -349,6 +350,28 @@ def test_team_update_succeeds(
 
 
 @pytest.mark.django_db
+def test_team_update_succeeds_unset_donation_link(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+):
+    TeamMemberFactory(team=team, user=user, role="owner")
+    team.donation_link = "https://example.com"
+    team.save()
+    api_client.force_authenticate(user)
+
+    response = api_client.patch(
+        f"/api/cyberstorm/team/{team.name}/update/",
+        json.dumps({"donation_link": None}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"donation_link": None}
+    assert Team.objects.get(pk=team.pk).donation_link is None
+
+
+@pytest.mark.django_db
 def test_team_update_fails_user_not_authenticated(
     api_client: APIClient,
     team: Team,
@@ -456,3 +479,107 @@ def test_team_update_fail_user_not_team_member(
 
     assert response.status_code == 403
     assert response.json() == expected_response
+
+
+@pytest.mark.django_db
+def test_remove_team_member_succeeds(
+    api_client: APIClient,
+    team_owner: UserType,
+    user: UserType,
+):
+    """An owner removes another member successfully."""
+
+    team = team_owner.team
+    team.add_member(user=user, role="member")
+    api_client.force_authenticate(team_owner.user)
+
+    url = f"/api/cyberstorm/team/{team.name}/member/{user.username}/remove/"
+    response = api_client.delete(url, content_type="application/json")
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert not team.members.filter(user=user).exists()
+
+
+@pytest.mark.django_db
+def test_remove_team_member_remove_self(api_client, team_member):
+    """A member removes themselves successfully."""
+
+    team = team_member.team
+    api_client.force_authenticate(team_member.user)
+
+    url = f"/api/cyberstorm/team/{team.name}/member/{team_member.user.username}/remove/"
+    response = api_client.delete(url)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert not team.members.filter(user=team_member.user).exists()
+
+
+@pytest.mark.django_db
+def test_remove_team_member_user_cannot_manage_members(api_client, team_owner, user):
+    """Non-owner user tries to remove another member."""
+
+    team = team_owner.team
+    team.add_member(user=user, role="member")
+    api_client.force_authenticate(user)
+
+    url = f"/api/cyberstorm/team/{team.name}/member/{team_owner.user.username}/remove/"
+    response = api_client.delete(url)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert team.members.filter(user=team_owner.user).exists()
+
+
+@pytest.mark.django_db
+def test_remove_team_member_cannot_remove_last_owner(api_client, team_owner):
+    """Owner tries to remove themselves when they are the last owner."""
+
+    team = team_owner.team
+    api_client.force_authenticate(team_owner.user)
+
+    url = f"/api/cyberstorm/team/{team.name}/member/{team_owner.user.username}/remove/"
+    response = api_client.delete(url)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert team.members.filter(user=team_owner.user).exists()
+
+
+@pytest.mark.django_db
+def test_remove_team_member_from_another_team(api_client, team_owner, user):
+    """An owner tries to remove a member from another team."""
+
+    another_team = Team.objects.create(name="AnotherTeam")
+    another_team.add_member(user=user, role="member")
+    api_client.force_authenticate(team_owner.user)
+
+    url = f"/api/cyberstorm/team/{another_team.name}/member/{user.username}/remove/"
+    response = api_client.delete(url)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert another_team.members.filter(user=user).exists()
+
+
+@pytest.mark.django_db
+def test_remove_team_member_nonexistent_team(api_client, team_owner, team_member):
+    """Removing a member from a team that does not exist."""
+
+    api_client.force_authenticate(team_owner.user)
+
+    url = (
+        f"/api/cyberstorm/team/doesnotexist/member/{team_member.user.username}/remove/"
+    )
+    response = api_client.delete(url)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_remove_team_member_nonexistent_member(api_client, team_owner):
+    """Removing a member who does not exist in the team."""
+
+    team = team_owner.team
+    api_client.force_authenticate(team_owner.user)
+
+    url = f"/api/cyberstorm/team/{team.name}/member/notarealuser/remove/"
+    response = api_client.delete(url)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND

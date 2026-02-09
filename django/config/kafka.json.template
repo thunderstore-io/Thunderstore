@@ -1,0 +1,15 @@
+{
+    "bootstrap.servers": "",
+    "security.protocol": "SASL_SSL",
+    "sasl.mechanism": "SCRAM-SHA-256",
+    "sasl.username": "",
+    "sasl.password": "",
+    "ssl.ca.pem": "",
+    "client.id": "thunderstore-analytics",
+    "socket.nagle.disable": true,
+    "acks": "1",
+    "linger.ms": 100,
+    "batch.num.messages": 500,
+    "retry.backoff.ms": 1000,
+    "delivery.timeout.ms": 120000
+}

@@ -7,19 +7,16 @@ from django.shortcuts import redirect
 from django.urls import reverse
 
 from thunderstore.cache.storage import CACHE_STORAGE
+from thunderstore.core.utils import extend_update_fields_if_present
 
 
 class TimestampMixin(models.Model):
     datetime_created = models.DateTimeField(auto_now_add=True)
     datetime_updated = models.DateTimeField(auto_now=True)
 
-    def save(self, *args, **kwargs):
-        update_fields = kwargs.pop("update_fields", [])
-        if update_fields:
-            kwargs["update_fields"] = tuple(
-                set(list(update_fields) + ["datetime_updated"])
-            )
-        super().save(*args, **kwargs)
+    def save(self, **kwargs):
+        kwargs = extend_update_fields_if_present(kwargs, "datetime_updated")
+        super().save(**kwargs)
 
     class Meta:
         abstract = True

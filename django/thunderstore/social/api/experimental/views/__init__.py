@@ -1,5 +1,9 @@
 from .complete_login import CompleteLoginApiView
-from .current_user import CurrentUserExperimentalApiView
+from .current_user import (
+    CurrentUserExperimentalApiView,
+    CurrentUserRatedPackagesExperimentalApiView,
+    CurrentUserTeamPermissionsExperimentalApiView,
+)
 from .delete_session import DeleteSessionApiView
 from .overwolf import OverwolfLoginApiView
 from .validate_session import ValidateSessionApiView
@@ -7,6 +11,8 @@ from .validate_session import ValidateSessionApiView
 __all__ = [
     "CompleteLoginApiView",
     "CurrentUserExperimentalApiView",
+    "CurrentUserRatedPackagesExperimentalApiView",
+    "CurrentUserTeamPermissionsExperimentalApiView",
     "DeleteSessionApiView",
     "OverwolfLoginApiView",
     "ValidateSessionApiView",

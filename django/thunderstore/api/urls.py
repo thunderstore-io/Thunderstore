@@ -5,26 +5,38 @@ from thunderstore.api.cyberstorm.views import (
     CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
+    CreateServiceAccountAPIView,
+    DeleteServiceAccountAPIView,
+    DeleteUserAPIView,
     DeprecatePackageAPIView,
     DisbandTeamAPIView,
+    DisconnectUserLinkedAccountAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
     PackageListingByNamespaceListAPIView,
+    PackageListingStatusAPIView,
     PackagePermissionsAPIView,
+    PackageVersionAPIView,
     PackageVersionChangelogAPIView,
+    PackageVersionDependenciesListAPIView,
     PackageVersionListAPIView,
     PackageVersionReadmeAPIView,
     RatePackageAPIView,
     RejectPackageListingAPIView,
+    ReportPackageListingAPIView,
     TeamAPIView,
     TeamCreateAPIView,
     TeamMemberAddAPIView,
     TeamMemberListAPIView,
+    TeamMemberRemoveAPIView,
     TeamServiceAccountListAPIView,
+    UnlistPackageListingAPIView,
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
+    UpdateTeamMemberAPIView,
 )
+from thunderstore.plugins.registry import plugin_registry
 
 cyberstorm_urls = [
     path(
@@ -58,6 +70,16 @@ cyberstorm_urls = [
         name="cyberstorm.listing",
     ),
     path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/v/<str:version_number>/",
+        PackageListingAPIView.as_view(),
+        name="cyberstorm.listing",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/status/",
+        PackageListingStatusAPIView.as_view(),
+        name="cyberstorm.listing.status",
+    ),
+    path(
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/dependants/",
         PackageListingByDependencyListAPIView.as_view(),
         name="cyberstorm.listing.by-dependency-list",
@@ -73,9 +95,19 @@ cyberstorm_urls = [
         name="cyberstorm.listing.approve",
     ),
     path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/report/",
+        ReportPackageListingAPIView.as_view(),
+        name="cyberstorm.listing.report",
+    ),
+    path(
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/reject/",
         RejectPackageListingAPIView.as_view(),
         name="cyberstorm.listing.reject",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/unlist/",
+        UnlistPackageListingAPIView.as_view(),
+        name="cyberstorm.listing.unlist",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/latest/changelog/",
@@ -88,6 +120,11 @@ cyberstorm_urls = [
         name="cyberstorm.package.latest.readme",
     ),
     path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/",
+        PackageVersionAPIView.as_view(),
+        name="cyberstorm.package.version",
+    ),
+    path(
         "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/changelog/",
         PackageVersionChangelogAPIView.as_view(),
         name="cyberstorm.package.version.changelog",
@@ -96,6 +133,11 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/readme/",
         PackageVersionReadmeAPIView.as_view(),
         name="cyberstorm.package.version.readme",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/dependencies/",
+        PackageVersionDependenciesListAPIView.as_view(),
+        name="cyberstorm.package.version.dependencies-list",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/versions/",
@@ -148,8 +190,40 @@ cyberstorm_urls = [
         name="cyberstorm.team.member.add",
     ),
     path(
+        "team/<str:team_name>/member/<str:username>/remove/",
+        TeamMemberRemoveAPIView.as_view(),
+        name="cyberstorm.team.member.remove",
+    ),
+    path(
         "team/<str:team_id>/service-account/",
         TeamServiceAccountListAPIView.as_view(),
         name="cyberstorm.team.service-account",
     ),
+    path(
+        "team/<str:team_name>/service-account/create/",
+        CreateServiceAccountAPIView.as_view(),
+        name="cyberstorm.team.service-account.create",
+    ),
+    path(
+        "service-account/<uuid:uuid>/delete/",
+        DeleteServiceAccountAPIView.as_view(),
+        name="cyberstorm.service-account.delete",
+    ),
+    path(
+        "user/delete/",
+        DeleteUserAPIView.as_view(),
+        name="cyberstorm.user.delete",
+    ),
+    path(
+        "user/linked-account/<str:provider>/disconnect/",
+        DisconnectUserLinkedAccountAPIView.as_view(),
+        name="cyberstorm.user.linked-account.disconnect",
+    ),
+    path(
+        "team/<str:team_name>/member/<str:team_member>/update/",
+        UpdateTeamMemberAPIView.as_view(),
+        name="cyberstorm.team.member.update",
+    ),
 ]
+
+cyberstorm_urls += plugin_registry.get_cyberstorm_api_urls()

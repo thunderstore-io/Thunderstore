@@ -8,7 +8,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
     CyberstormPackageListingSectionSerializer,
 )
-from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.api.utils import PublicCacheMixin, conditional_swagger_auto_schema
 from thunderstore.community.models import Community
 
 
@@ -17,7 +17,7 @@ class CommunityFiltersAPIViewSerializer(serializers.Serializer):
     sections = CyberstormPackageListingSectionSerializer(many=True)
 
 
-class CommunityFiltersAPIView(APIView):
+class CommunityFiltersAPIView(PublicCacheMixin, APIView):
     """
     Return info about PackageCategories and PackageListingSections so
     they can be used as filters.
@@ -39,4 +39,5 @@ class CommunityFiltersAPIView(APIView):
             ),
         }
 
-        return Response(self.serializer_class(filters).data)
+        response = Response(self.serializer_class(filters).data)
+        return response

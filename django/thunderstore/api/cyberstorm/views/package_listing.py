@@ -12,18 +12,34 @@ from django.db.models import (
     Sum,
     Value,
 )
-from rest_framework import serializers
+from django.http import Http404
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import serializers, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import RetrieveAPIView, get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
-    CyberstormTeamMemberSerializer,
+    CyberstormPackageTeamSerializer,
+    EmptyStringAsNoneField,
+    PackageListingStatusResponseSerializer,
 )
-from thunderstore.api.utils import CyberstormAutoSchemaMixin
-from thunderstore.community.models.community import Community
+from thunderstore.api.cyberstorm.views.package_listing_actions import (
+    get_package_listing,
+)
+from thunderstore.api.utils import (
+    CyberstormAutoSchemaMixin,
+    PublicCacheMixin,
+    conditional_swagger_auto_schema,
+)
 from thunderstore.community.models.package_listing import PackageListing
+from thunderstore.core.types import UserType
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
+from thunderstore.repository.views.package.detail import PermissionsChecker
 
 
 class DependencySerializer(serializers.Serializer):
@@ -64,32 +80,6 @@ class DependencySerializer(serializers.Serializer):
         return obj.version_is_unavailable
 
 
-class TeamSerializer(serializers.Serializer):
-    """
-    Minimal information to present the team on package detail view.
-    """
-
-    name = serializers.CharField()
-    members = CyberstormTeamMemberSerializer(many=True, source="public_members")
-
-
-class EmptyStringAsNoneField(serializers.Field):
-    """
-    Serialize empty string to None and deserialize vice versa.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.allow_null = True
-        self.allow_blank = True
-
-    def to_representation(self, value):
-        return None if value == "" else value
-
-    def to_internal_value(self, data):
-        return "" if data is None else data
-
-
 class ResponseSerializer(serializers.Serializer):
     """
     Data shown on package detail view.
@@ -100,17 +90,17 @@ class ResponseSerializer(serializers.Serializer):
     categories = CyberstormPackageCategorySerializer(many=True)
     community_identifier = serializers.CharField(source="community.identifier")
     community_name = serializers.CharField(source="community.name")
-    datetime_created = serializers.DateTimeField(source="package.latest.date_created")
+    datetime_created = serializers.DateTimeField(source="version.date_created")
     dependant_count = serializers.IntegerField(min_value=0)
     dependencies = DependencySerializer(many=True)
     dependency_count = serializers.IntegerField(min_value=0)
-    description = serializers.CharField(source="package.latest.description")
+    description = serializers.CharField(source="version.description")
     download_count = serializers.IntegerField(min_value=0)
-    download_url = serializers.CharField(source="package.latest.full_download_url")
-    full_version_name = serializers.CharField(source="package.latest.full_version_name")
+    download_url = serializers.CharField(source="version.full_download_url")
+    full_version_name = serializers.CharField(source="version.full_version_name")
     has_changelog = serializers.BooleanField()
-    icon_url = serializers.CharField(source="package.latest.icon.url")
-    install_url = serializers.CharField(source="package.latest.install_url")
+    icon_url = serializers.CharField(source="version.icon.url")
+    install_url = serializers.CharField(source="version.install_url")
     is_deprecated = serializers.BooleanField(source="package.is_deprecated")
     is_nsfw = serializers.BooleanField(source="has_nsfw_content")
     is_pinned = serializers.BooleanField(source="package.is_pinned")
@@ -118,13 +108,13 @@ class ResponseSerializer(serializers.Serializer):
     latest_version_number = serializers.CharField(
         source="package.latest.version_number",
     )
-    version_count = serializers.IntegerField()
     name = serializers.CharField(source="package.name")
     namespace = serializers.CharField(source="package.namespace.name")
     rating_count = serializers.IntegerField(min_value=0)
-    size = serializers.IntegerField(min_value=0, source="package.latest.file_size")
-    team = TeamSerializer(source="package.owner")
-    website_url = EmptyStringAsNoneField(source="package.latest.website_url")
+    size = serializers.IntegerField(min_value=0, source="version.file_size")
+    team = CyberstormPackageTeamSerializer(source="package.owner")
+    version_count = serializers.IntegerField()
+    website_url = EmptyStringAsNoneField(source="version.website_url")
 
 
 class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
@@ -135,6 +125,8 @@ class PackageListingAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
             community_id=self.kwargs["community_id"],
             namespace_id=self.kwargs["namespace_id"],
             package_name=self.kwargs["package_name"],
+            version=self.kwargs.get("version_number"),
+            user=self.request.user,
         )
 
 
@@ -148,18 +140,20 @@ class CustomListing(PackageListing):
     download_count: int
     has_changelog: bool
     rating_count: int
+    version: PackageVersion
 
 
 def get_custom_package_listing(
     community_id: str,
     namespace_id: str,
     package_name: str,
+    version: Optional[str] = None,
+    user: UserType = None,
 ) -> CustomListing:
     listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
 
     qs = (
         PackageListing.objects.active()
-        .filter_by_community_approval_rule()
         .select_related(
             "community",
             "package__latest",
@@ -181,15 +175,19 @@ def get_custom_package_listing(
                     ratings=Count("package__package_ratings"),
                 ).values("ratings"),
             ),
-            has_changelog=ExpressionWrapper(
-                Q(package__latest__changelog__isnull=False),
-                output_field=BooleanField(),
-            ),
             version_count=Count(
                 "package__versions", filter=Q(package__versions__is_active=True)
             ),
         )
     )
+
+    if version is None:
+        qs = qs.annotate(
+            has_changelog=ExpressionWrapper(
+                Q(package__latest__changelog__isnull=False),
+                output_field=BooleanField(),
+            )
+        )
 
     listing = get_object_or_404(
         qs,
@@ -198,8 +196,21 @@ def get_custom_package_listing(
         package__name=package_name,
     )
 
+    if not listing.can_be_viewed_by_user(user):
+        raise Http404()
+
+    if version:
+        listing.version = get_object_or_404(
+            listing.package.versions.active(),
+            version_number=version,
+        )
+
+        listing.has_changelog = listing.version.changelog is not None
+    else:
+        listing.version = listing.package.latest
+
     dependencies = (
-        listing.package.latest.dependencies.listed_in(community_id)
+        listing.version.dependencies.listed_in(community_id)
         .annotate(community_identifier=Value(community_id, CharField()))
         .select_related("package", "package__namespace")
         .order_by("package__namespace__name", "package__name")
@@ -218,3 +229,47 @@ def get_custom_package_listing(
     listing.dependant_count = get_package_dependants(listing.package.pk).count()
 
     return listing
+
+
+class PackageListingStatusAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PackageListingStatusResponseSerializer
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.package_listing.status",
+        responses={200: serializer_class},
+        tags=["cyberstorm"],
+    )
+    def get(
+        self, request, namespace_id: str, package_name: str, community_id: str
+    ) -> Response:
+        package_listing = get_package_listing(
+            namespace_id=namespace_id,
+            package_name=package_name,
+            community_id=community_id,
+        )
+        checker = PermissionsChecker(package_listing, request.user)
+
+        if not (checker.can_manage or checker.can_moderate):
+            error_msg = "You do not have permission to view review information."
+            raise PermissionDenied(error_msg)
+
+        response_data = {
+            "review_status": None,
+            "rejection_reason": None,
+            "internal_notes": None,
+            "listing_admin_url": None,
+        }
+
+        if checker.can_manage:
+            response_data["review_status"] = package_listing.review_status
+            response_data["rejection_reason"] = package_listing.rejection_reason
+
+        if checker.can_view_listing_admin_page:
+            response_data["listing_admin_url"] = package_listing.get_admin_url()
+
+        if checker.can_moderate:
+            response_data["internal_notes"] = package_listing.notes
+
+        serializer = self.serializer_class(response_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

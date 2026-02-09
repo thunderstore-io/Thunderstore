@@ -25,9 +25,10 @@ from thunderstore.repository.api.experimental.views.wiki import (
     PackageWikiApiView,
     PackageWikiListAPIView,
 )
-from thunderstore.social.api.experimental.views import CurrentUserExperimentalApiView
-from thunderstore.social.api.experimental.views.current_user import (
+from thunderstore.social.api.experimental.views import (
+    CurrentUserExperimentalApiView,
     CurrentUserRatedPackagesExperimentalApiView,
+    CurrentUserTeamPermissionsExperimentalApiView,
 )
 
 urls = [
@@ -38,6 +39,11 @@ urls = [
         "current-user/rated-packages/",
         CurrentUserRatedPackagesExperimentalApiView.as_view(),
         name="current-user.rated-packages",
+    ),
+    path(
+        "current-user/permissions/team/<str:team_name>/",
+        CurrentUserTeamPermissionsExperimentalApiView.as_view(),
+        name="current-user.permissions.team",
     ),
     path("package-index/", PackageIndexApiView.as_view(), name="package-index"),
     path("package/", PackageListApiView.as_view(), name="package-list"),

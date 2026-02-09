@@ -9,22 +9,29 @@ from rest_framework.views import APIView
 
 from thunderstore.account.models.service_account import ServiceAccount
 from thunderstore.api.cyberstorm.serializers import (
+    CyberstormCreateServiceAccountSerializer,
     CyberstormCreateTeamSerializer,
     CyberstormServiceAccountSerializer,
     CyberstormTeamAddMemberRequestSerializer,
     CyberstormTeamAddMemberResponseSerializer,
     CyberstormTeamMemberSerializer,
+    CyberstormTeamMemberUpdateSerializer,
     CyberstormTeamSerializer,
     CyberstormTeamUpdateSerializer,
 )
 from thunderstore.api.cyberstorm.services.team import (
+    create_service_account,
     create_team,
+    delete_service_account,
     disband_team,
+    remove_team_member,
     update_team,
+    update_team_member,
 )
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
+    PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
 from thunderstore.repository.forms import AddTeamMemberForm
@@ -46,7 +53,7 @@ class TeamPermissionsMixin:
             raise PermissionDenied("You do not have permission to access this team.")
 
 
-class TeamAPIView(CyberstormAutoSchemaMixin, RetrieveAPIView):
+class TeamAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     serializer_class = CyberstormTeamSerializer
     queryset = Team.objects.exclude(is_active=False)
     lookup_field = "name"
@@ -69,8 +76,10 @@ class TeamCreateAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = CyberstormCreateTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         team_name = serializer.validated_data["name"]
-        team = create_team(user=request.user, team_name=team_name)
+        team = create_team(agent=request.user, team_name=team_name)
+
         return_data = CyberstormTeamSerializer(team).data
         return Response(return_data, status=status.HTTP_201_CREATED)
 
@@ -118,6 +127,28 @@ class TeamMemberAddAPIView(APIView):
             raise ValidationError(form.errors)
 
 
+class TeamMemberRemoveAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=None,
+        responses={204: ""},
+        operation_id="cyberstorm.team.member.remove",
+        tags=["cyberstorm"],
+    )
+    def delete(self, request, team_name, username):
+        team = get_object_or_404(Team, name=team_name)
+        member = get_object_or_404(
+            TeamMember.objects.real_users().select_related("user"),
+            team=team,
+            user__username=username,
+        )
+
+        remove_team_member(agent=request.user, member=member)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class TeamServiceAccountListAPIView(CyberstormAutoSchemaMixin, TeamRestrictedAPIView):
     serializer_class = CyberstormServiceAccountSerializer
     filter_backends = [StrictOrderingFilter]
@@ -138,8 +169,53 @@ class DisbandTeamAPIView(APIView):
         responses={status.HTTP_204_NO_CONTENT: ""},
     )
     def delete(self, request, *args, **kwargs):
-        team_name = kwargs["team_name"]
-        disband_team(user=request.user, team_name=team_name)
+        team = get_object_or_404(Team, name=kwargs["team_name"])
+        disband_team(agent=request.user, team=team)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CreateServiceAccountAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=CyberstormCreateServiceAccountSerializer,
+        operation_id="cyberstorm.team.service-account.create",
+        tags=["cyberstorm"],
+        responses={status.HTTP_201_CREATED: CyberstormCreateServiceAccountSerializer},
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = CyberstormCreateServiceAccountSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team = get_object_or_404(Team, name=kwargs["team_name"])
+
+        service_account, token = create_service_account(
+            agent=request.user,
+            team=team,
+            nickname=serializer.validated_data["nickname"],
+        )
+
+        response_data = {
+            "nickname": service_account.nickname,
+            "team_name": service_account.owner.name,
+            "api_token": token,
+        }
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class DeleteServiceAccountAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        request_body=None,
+        operation_id="cyberstorm.service-account.delete",
+        tags=["cyberstorm"],
+        responses={status.HTTP_204_NO_CONTENT: ""},
+    )
+    def delete(self, request, *args, **kwargs):
+        service_account = get_object_or_404(ServiceAccount, uuid=kwargs["uuid"])
+        delete_service_account(agent=request.user, service_account=service_account)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -168,3 +244,34 @@ class UpdateTeamAPIView(APIView):
 
         return_data = self.serializer_class(instance=updated_team).data
         return Response(return_data, status=status.HTTP_200_OK)
+
+
+class UpdateTeamMemberAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CyberstormTeamMemberUpdateSerializer
+    http_method_names = ["patch"]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.member.update",
+        tags=["cyberstorm"],
+        request_body=CyberstormTeamMemberUpdateSerializer,
+        responses={status.HTTP_200_OK: serializer_class},
+    )
+    def patch(self, request, *args, **kwargs):
+        team_member = get_object_or_404(
+            TeamMember.objects.real_users(),
+            team__name=self.kwargs["team_name"],
+            user__username=self.kwargs["team_member"],
+        )
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        team_member = update_team_member(
+            agent=request.user,
+            team_member=team_member,
+            role=serializer.validated_data["role"],
+        )
+
+        serializer = self.serializer_class(instance=team_member)
+        return Response(serializer.data, status=status.HTTP_200_OK)

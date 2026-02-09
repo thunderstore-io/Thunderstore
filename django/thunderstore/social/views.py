@@ -1,14 +1,34 @@
 from django import forms
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 
+from thunderstore.api.cyberstorm.services.user import (
+    delete_user_account,
+    delete_user_social_auth,
+)
 from thunderstore.core.mixins import RequireAuthenticationMixin
+from thunderstore.core.types import UserType
 from thunderstore.frontend.views import SettingsViewMixin
 from thunderstore.repository.models import TeamMember
 
 
 class LinkedAccountDisconnectForm(forms.Form):
     provider = forms.CharField()
+
+    @transaction.atomic
+    def disconnect_account(self, provider: str, user: UserType):
+        social_auth = user.social_auth.filter(provider=provider).first()
+        if not social_auth:
+            raise Http404("Social auth not found")
+
+        try:
+            delete_user_social_auth(social_auth=social_auth)
+        except ValidationError as e:
+            self.add_error(None, e)
+            raise ValidationError(self.errors)
 
 
 class LinkedAccountsView(SettingsViewMixin, RequireAuthenticationMixin, FormView):
@@ -26,14 +46,11 @@ class LinkedAccountsView(SettingsViewMixin, RequireAuthenticationMixin, FormView
     def can_disconnect(self):
         return self.request.user.social_auth.count() > 1
 
-    def disconnect_account(self, provider):
-        if not self.can_disconnect:
-            return
-        social_auth = self.request.user.social_auth.filter(provider=provider).first()
-        social_auth.delete()
-
     def form_valid(self, form):
-        self.disconnect_account(form.cleaned_data["provider"])
+        try:
+            form.disconnect_account(form.cleaned_data["provider"], self.request.user)
+        except ValidationError:
+            return self.form_invalid(form)
         return super().form_valid(form)
 
 
@@ -49,6 +66,10 @@ class DeleteAccountForm(forms.Form):
         if data != self.user.username:
             raise forms.ValidationError("Invalid verification")
         return data
+
+    @transaction.atomic
+    def delete_user(self):
+        delete_user_account(target_user=self.user)
 
 
 class DeleteAccountView(SettingsViewMixin, RequireAuthenticationMixin, FormView):
@@ -73,5 +94,5 @@ class DeleteAccountView(SettingsViewMixin, RequireAuthenticationMixin, FormView)
         return kwargs
 
     def form_valid(self, form):
-        self.request.user.delete()
+        form.delete_user()
         return super().form_valid(form)

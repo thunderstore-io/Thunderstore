@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -9,6 +8,7 @@ from thunderstore.api.cyberstorm.services.package import (
     deprecate_package,
     undeprecate_package,
 )
+from thunderstore.api.utils import conditional_swagger_auto_schema
 from thunderstore.repository.models import Package
 
 
@@ -23,7 +23,7 @@ class SimpleSuccessResponseSerializer(serializers.Serializer):
 class DeprecatePackageAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
+    @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package.deprecate",
         request_body=DeprecatePackageSerializer,
         tags=["cyberstorm"],

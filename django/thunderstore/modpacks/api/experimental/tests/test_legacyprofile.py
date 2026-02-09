@@ -1,14 +1,17 @@
 import io
 import json
+from unittest.mock import patch
 
 import pytest
 import requests
 from django.core.files import File
+from django.db import connection
 from django.urls import reverse
 from rest_framework.test import APIClient
 
 from thunderstore.modpacks.models import LegacyProfile
 from thunderstore.modpacks.models.legacyprofile import LEGACYPROFILE_STORAGE_CAP
+from thunderstore.ts_analytics.kafka import KafkaTopic
 
 
 @pytest.mark.django_db
@@ -107,3 +110,41 @@ def test_experimental_api_legacyprofile_retrieve(api_client: APIClient) -> None:
     response = requests.get(response["Location"])
     assert response.status_code == 200
     assert response.content == test_content
+
+
+@pytest.mark.django_db(transaction=True)
+def test_experimental_api_legacyprofile_create_sends_kafka_event(
+    api_client: APIClient,
+) -> None:
+    with patch(
+        "thunderstore.modpacks.api.experimental.views.legacyprofile.send_kafka_message"
+    ) as mock_send_kafka_message:
+        assert LegacyProfile.objects.count() == 0
+        test_content = b"test profile data"
+
+        response = api_client.post(
+            reverse("api:experimental:legacyprofile.create"),
+            data=test_content,
+            content_type="application/octet-stream",
+        )
+
+        assert response.status_code == 200
+
+        while connection.run_on_commit:
+            sids, func = connection.run_on_commit.pop(0)
+            func()
+
+        result = response.json()
+        profile_key = result["key"]
+
+        mock_send_kafka_message.delay.assert_called_once()
+        call_args = mock_send_kafka_message.delay.call_args
+
+        assert call_args.kwargs["topic"] == KafkaTopic.A_LEGACY_PROFILE_EXPORT_V1
+
+        payload_string = call_args.kwargs["payload_string"]
+        payload = json.loads(payload_string)
+
+        assert payload["id"] == profile_key
+        assert "timestamp" in payload
+        assert payload["file_size_bytes"] == len(test_content)

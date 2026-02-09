@@ -4,9 +4,11 @@ from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 from django.db import connection
+from django.http import Http404
 from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
+from conftest import TestUserTypes
 from thunderstore.api.cyberstorm.views.package_listing import (
     DependencySerializer,
     get_custom_package_listing,
@@ -23,6 +25,57 @@ from thunderstore.repository.factories import (
     PackageVersionFactory,
     TeamMemberFactory,
 )
+
+
+def get_listing_url(package_listing) -> str:
+    base_url = "/api/cyberstorm/listing"
+
+    community_id = package_listing.community.identifier
+    namespace_id = package_listing.package.namespace.name
+    package_name = package_listing.package.name
+
+    return f"{base_url}/{community_id}/{namespace_id}/{package_name}/status/"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_get_custom_package_listing__rejected_package_visibility_user_types(
+    user_type,
+) -> None:
+    listing = PackageListingFactory(review_status="rejected")
+
+    community_id = listing.community.identifier
+    namespace = listing.package.namespace.name
+    package_name = listing.package.name
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    expected_visibility = {
+        TestUserTypes.no_user: False,
+        TestUserTypes.unauthenticated: False,
+        TestUserTypes.regular_user: False,
+        TestUserTypes.deactivated_user: False,
+        TestUserTypes.service_account: False,
+        TestUserTypes.site_admin: True,
+        TestUserTypes.superuser: True,
+    }
+
+    is_visible = expected_visibility[user_type]
+
+    if is_visible:
+        listing = get_custom_package_listing(
+            community_id,
+            namespace,
+            package_name,
+            user=user,
+        )
+    else:
+        with pytest.raises(Http404):
+            listing = get_custom_package_listing(
+                community_id,
+                namespace,
+                package_name,
+                user=user,
+            )
 
 
 @pytest.mark.django_db
@@ -102,6 +155,53 @@ def test_get_custom_package_listing__annotates_has_changelog(
 
 
 @pytest.mark.django_db
+def test_get_custom_package_listing__when_version_provided__uses_that_version() -> None:
+    listing = PackageListingFactory(
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "description": "Initial upload",
+            "changelog": None,
+        }
+    )
+    expected = PackageVersionFactory(
+        package=listing.package,
+        version_number="1.2.0",
+        description="We want this package version",
+        changelog="We want this changelog",
+    )
+    PackageVersionFactory(
+        package=listing.package,
+        version_number="1.2.3",
+        description="Latest upload",
+        changelog=None,
+    )
+
+    actual = get_custom_package_listing(
+        listing.community.identifier,
+        listing.package.namespace.name,
+        listing.package.name,
+        version="1.2.0",
+    )
+
+    assert actual.version.id == expected.id
+    assert actual.version.version_number == "1.2.0"
+    assert actual.has_changelog is True
+
+
+@pytest.mark.django_db
+def test_get_custom_package_listing__when_version_provided_but_missing__raises_404() -> None:
+    listing = PackageListingFactory()
+
+    with pytest.raises(Http404):
+        get_custom_package_listing(
+            listing.community.identifier,
+            listing.package.namespace.name,
+            listing.package.name,
+            version="6.6.6",
+        )
+
+
+@pytest.mark.django_db
 def test_get_custom_package_listing__augments_listing_with_dependant_count() -> None:
     listing = PackageListingFactory()
     dependant_count = 5
@@ -139,7 +239,9 @@ def test_get_custom_package_listing__augments_listing_with_dependency_count() ->
 
 
 @pytest.mark.django_db
-def test_get_custom_package_listing__augments_listing_with_dependencies_from_same_community() -> None:
+def test_get_custom_package_listing__augments_listing_with_dependencies_from_same_community() -> (
+    None
+):
     dependant = PackageListingFactory()
     dependency1 = PackageListingFactory(community=dependant.community)
     dependency2 = PackageListingFactory()
@@ -165,7 +267,9 @@ def test_get_custom_package_listing__augments_listing_with_dependencies_from_sam
 
 
 @pytest.mark.django_db
-def test_get_custom_package_listing__when_many_dependencies__returns_only_four() -> None:
+def test_get_custom_package_listing__when_many_dependencies__returns_only_four() -> (
+    None
+):
     listing = PackageListingFactory()
     dependency_count = 6
     dependencies = PackageListingFactory.create_batch(
@@ -244,6 +348,68 @@ def test_package_listing_view__returns_info(api_client: APIClient) -> None:
 
 
 @pytest.mark.django_db
+def test_package_listing_view__when_version_provided__uses_that_version(
+    api_client: APIClient,
+) -> None:
+    community = CommunityFactory()
+    listing = PackageListingFactory(
+        community=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "description": "Initial upload",
+            "changelog": None,
+        },
+    )
+    expected = PackageVersionFactory(
+        package=listing.package,
+        version_number="1.0.1",
+        description="Expected version",
+        changelog="Expected changelog",
+    )
+    latest = PackageVersionFactory(
+        package=listing.package,
+        version_number="1.0.2",
+        description="Latest upload",
+        changelog=None,
+    )
+
+    url = (
+        f"/api/cyberstorm/listing/{community.identifier}/{listing.package.namespace}/{listing.package.name}/"
+        f"v/{expected.version_number}/"
+    )
+    response = api_client.get(url)
+    actual = response.json()
+
+    assert response.status_code == 200
+    assert actual["description"] == expected.description
+    assert actual["latest_version_number"] == latest.version_number
+    assert actual["has_changelog"] is True
+
+
+@pytest.mark.django_db
+def test_package_listing_view__when_incorrect_version_provided__returns_404(
+    api_client: APIClient,
+) -> None:
+    community = CommunityFactory()
+    listing = PackageListingFactory(
+        community=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "description": "Initial upload",
+            "changelog": None,
+        },
+    )
+
+    url = (
+        f"/api/cyberstorm/listing/{community.identifier}/{listing.package.namespace}/{listing.package.name}/"
+        f"v/0.0.0/"
+    )
+    response = api_client.get(url)
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_package_listing_view__serializes_url_correctly(api_client: APIClient) -> None:
     l = PackageListingFactory(
         package_version_kwargs={
@@ -295,7 +461,9 @@ def test_dependency_serializer__reads_is_active_from_correct_field(
 
 
 @pytest.mark.django_db
-def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_description() -> None:
+def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_description() -> (
+    None
+):
     dependency = PackageVersionFactory()
     dependency.community_identifier = "greendale"
     dependency.version_is_unavailable = False
@@ -419,4 +587,122 @@ def test_package_listing_query_count(
         response = api_client.get(url)
 
     assert response.status_code == 200
-    assert len(ctx.captured_queries) < 20
+    assert len(ctx.captured_queries) < 23
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+def test_get_package_listing_status(
+    active_package_listing, api_client, user_type
+) -> None:
+    base_url = "/api/cyberstorm/listing"
+    community_id = active_package_listing.community.identifier
+    namespace_id = active_package_listing.package.namespace.name
+    package_name = active_package_listing.package.name
+    url = f"{base_url}/{community_id}/{namespace_id}/{package_name}/status/"
+
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    is_fake_user = user_type in TestUserTypes.fake_users()
+    is_unauthenticated = user_type == TestUserTypes.unauthenticated
+
+    if not is_fake_user and not is_unauthenticated:
+        api_client.force_authenticate(user=user)
+
+    response = api_client.get(url)
+
+    expected_status_code = {
+        TestUserTypes.no_user: 401,
+        TestUserTypes.unauthenticated: 401,
+        TestUserTypes.regular_user: 403,
+        TestUserTypes.deactivated_user: 403,
+        TestUserTypes.service_account: 403,
+        TestUserTypes.site_admin: 200,
+        TestUserTypes.superuser: 200,
+    }
+
+    assert response.status_code == expected_status_code[user_type]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+@patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_manage",
+    new_callable=PropertyMock,
+)
+def test_package_listing_status_can_manage_permission(
+    mock_can_manage, return_val, api_client, active_package_listing
+):
+    active_package_listing.rejection_reason = "Inappropriate content"
+    active_package_listing.review_status = "rejected"
+    active_package_listing.save()
+
+    mock_can_manage.return_value = return_val
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
+    api_client.force_authenticate(user=user)
+
+    url = get_listing_url(active_package_listing)
+    response = api_client.get(url)
+
+    data = response.json()
+
+    if return_val:
+        assert data["review_status"] == "rejected"
+        assert data["rejection_reason"] == "Inappropriate content"
+    else:
+        assert data["review_status"] is None
+        assert data["rejection_reason"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+@patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_view_listing_admin_page",
+    new_callable=PropertyMock,
+)
+def test_package_listing_status_can_view_listing_admin_page_permission(
+    mock_can_view_listing_admin_page, return_val, api_client, active_package_listing
+):
+    mock_can_view_listing_admin_page.return_value = return_val
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
+    api_client.force_authenticate(user=user)
+
+    url = get_listing_url(active_package_listing)
+    response = api_client.get(url)
+
+    data = response.json()
+
+    if return_val:
+        assert data["listing_admin_url"] == active_package_listing.get_admin_url()
+    else:
+        assert data["listing_admin_url"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", [True, False])
+@patch(
+    "thunderstore.repository.views.package.detail.PermissionsChecker.can_moderate",
+    new_callable=PropertyMock,
+)
+def test_package_listing_status_can_moderate_permission(
+    mock_can_moderate, return_val, api_client, active_package_listing
+):
+    mock_can_moderate.return_value = return_val
+
+    active_package_listing.notes = "This package contains inappropriate content."
+    active_package_listing.save()
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.superuser)
+    api_client.force_authenticate(user=user)
+
+    url = get_listing_url(active_package_listing)
+    response = api_client.get(url)
+
+    data = response.json()
+
+    if return_val:
+        assert data["internal_notes"] == "This package contains inappropriate content."
+    else:
+        assert data["internal_notes"] is None

@@ -10,7 +10,7 @@ x-django-service: &django-service
       BUILD_INSTALL_EXTRAS: ${BUILD_INSTALL_EXTRAS}
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
-    CELERY_QUEUES: "celery,background.cache,background.task,background.long_running,log.downloads"
+    CELERY_QUEUES: "celery,background.cache,background.task,background.long_running,log.downloads,analytics"
     DATABASE_URL: "psql://django:django@dbpool/django"
     REDIS_URL: "redis://redis:6379/0"
     REDIS_URL_LEGACY: "redis://redis:6379/1"
@@ -49,6 +49,7 @@ x-django-service: &django-service
     SOURCE_VIEW_ENABLE_HIGHLIGHTING: "True"
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW: "True"
     USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS: "True"
+    GUNICORN_CMD_ARGS: "--bind=0.0.0.0:8000"
   env_file:
     - .env
   depends_on:
@@ -119,10 +120,18 @@ services:
       - ./django:/app
       - ./python-packages:/python-packages
       - built-static:/app/static_built:ro
-    ports:
-      - "127.0.0.1:80:8000"
     depends_on:
       - builder
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ./nginx/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - django
 
   django-worker:
     <<: [*django-service, *django-volumes]
