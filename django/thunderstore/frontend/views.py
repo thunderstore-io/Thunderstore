@@ -3,6 +3,7 @@ from typing import Any, Dict
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.http import FileResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render
@@ -57,6 +58,9 @@ class SettingsViewMixin:
         return context
 
 
+ALLOWED_DIMENSIONS = (64, 128, 256, 360, 480)
+
+
 class ThumbnailServeView(View):
     def get(self, request, *args, **kwargs):
         asset_path = self.kwargs.get("path")
@@ -66,6 +70,11 @@ class ThumbnailServeView(View):
             height = int(request.GET.get("height", 0))
         except (ValueError, TypeError):
             width, height = 0, 0
+
+        # This is a check to prevent potential malicious enumeration of
+        # thumbnail sizes to flood the storage / server.
+        if width not in ALLOWED_DIMENSIONS or height not in ALLOWED_DIMENSIONS:
+            raise PermissionDenied()
 
         max_age = 300  # 5 minutes
 
