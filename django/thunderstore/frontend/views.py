@@ -57,37 +57,6 @@ class SettingsViewMixin:
         return context
 
 
-class ThumbnailRedirectView(RedirectView):
-    def get_redirect_url(self, *args, **kwargs) -> str:
-        asset_path = self.kwargs.get("path")
-        url = ""
-
-        try:
-            width = int(self.request.GET.get("width", 0))
-            height = int(self.request.GET.get("height", 0))
-        except (ValueError, TypeError):
-            width, height = 0, 0
-
-        if asset_path and width > 0 and height > 0:
-            thumbnail = get_or_create_thumbnail(asset_path, width, height)
-            url = thumbnail.url if thumbnail else ""
-
-        return url
-
-    def get(self, request, *args, **kwargs):
-        max_age = 86400  # 24 hours
-
-        url = self.get_redirect_url(*args, **kwargs)
-        if url:
-            response = HttpResponseRedirect(url)
-        else:
-            response = HttpResponseNotFound("Thumbnail not found")
-            max_age = 300  # 5 minutes
-
-        patch_cache_control(response, max_age=max_age, public=True)  # 5 minutes
-        return response
-
-
 class ThumbnailServeView(View):
     def get(self, request, *args, **kwargs):
         asset_path = self.kwargs.get("path")
