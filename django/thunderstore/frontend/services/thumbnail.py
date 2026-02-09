@@ -26,8 +26,7 @@ def get_or_create_thumbnail(
         thumbnail_name = thumbnailer.get_thumbnail_name(thumbnail_options)
         if thumbnailer.source_storage.exists(thumbnail_name):
             url = thumbnailer.source_storage.url(thumbnail_name)
-            storage_path = thumbnailer.name
-            return Thumbnail(storage_path=storage_path, url=url)
+            return Thumbnail(storage_path=thumbnail_name, url=url)
         else:
             thumbnail = thumbnailer.get_thumbnail(thumbnail_options, generate=True)
             return Thumbnail(storage_path=thumbnail.name, url=thumbnail.url)
