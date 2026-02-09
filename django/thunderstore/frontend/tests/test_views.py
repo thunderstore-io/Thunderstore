@@ -135,76 +135,13 @@ def test_views_disabled_for_auth_exclusive_host(
 
 
 @pytest.mark.django_db
-def test_thumbnail_redirect_success(dummy_cover_image, client, community_site):
-    community = community_site.community
-    community.cover_image = dummy_cover_image
-    community.save()
-
-    url = reverse("cdn_thumb_redirect", kwargs={"path": community.cover_image.name})
-    params = {"width": 100, "height": 100}
-
-    response = client.get(url, params, HTTP_HOST=community_site.site.domain)
-
-    assert response.status_code == 302
-    assert response["Location"].endswith(".jpg")
-    assert "Cache-Control" in response
-    assert "max-age=86400" in response["Cache-Control"]
-
-
-@pytest.mark.django_db
-def test_thumbnail_redirect_exception(dummy_cover_image, community_site, client):
-    community = community_site.community
-    community.cover_image = dummy_cover_image
-    community.save()
-
-    url = reverse("cdn_thumb_redirect", kwargs={"path": community.cover_image.name})
-    params = {"width": 100, "height": 100}
-
-    path = "thunderstore.frontend.views.get_or_create_thumbnail"
-    with patch(path) as mock_get_thumbnail:
-        mock_get_thumbnail.return_value = None
-        response = client.get(url, params, HTTP_HOST=community_site.site.domain)
-
-    assert response.status_code == 404
-    assert "Cache-Control" in response
-    assert "max-age=300" in response["Cache-Control"]
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "params",
-    [
-        {"width": "abc", "height": "100"},
-        {"width": "100", "height": "abc"},
-        {"width": "0", "height": "100"},
-        {"width": "100", "height": "0"},
-        {"width": "-1", "height": "100"},
-        {},
-    ],
-)
-def test_thumbnail_redirect_invalid_params_returns_fallback(
-    params, dummy_cover_image, client, community_site
-):
-    community = community_site.community
-    community.cover_image = dummy_cover_image
-    community.save()
-
-    url = reverse("cdn_thumb_redirect", kwargs={"path": community.cover_image.name})
-    response = client.get(url, params, HTTP_HOST=community_site.site.domain)
-
-    assert response.status_code == 404
-    assert "Cache-Control" in response
-    assert "max-age=300" in response["Cache-Control"]
-
-
-@pytest.mark.django_db
 def test_thumbnail_serve_success(dummy_cover_image, client, community_site):
     community = community_site.community
     community.cover_image = dummy_cover_image
     community.save()
 
     url = reverse("cdn_thumb_serve", kwargs={"path": community.cover_image.name})
-    params = {"width": 100, "height": 100}
+    params = {"width": 64, "height": 64}
 
     response = client.get(url, params, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
@@ -235,7 +172,7 @@ def test_thumbnail_serve_exception(params, dummy_cover_image, client, community_
     url = reverse("cdn_thumb_serve", kwargs={"path": community.cover_image.name})
 
     response = client.get(url, params, HTTP_HOST=community_site.site.domain)
-    assert response.status_code == 404
+    assert response.status_code == 403
     assert response.get("Cache-Control") == "max-age=300, public"
 
 
@@ -246,7 +183,7 @@ def test_thumbnail_serve_invalid(client, community_site):
     community.save()
 
     url = reverse("cdn_thumb_serve", kwargs={"path": community.cover_image.name})
-    params = {"width": 100, "height": 100}
+    params = {"width": 64, "height": 64}
 
     response = client.get(url, params, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 404

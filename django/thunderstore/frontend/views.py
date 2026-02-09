@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import RedirectView, TemplateView, View
 
+from thunderstore.core.utils import capture_exception
 from thunderstore.frontend.services.thumbnail import get_or_create_thumbnail
 from thunderstore.plugins.registry import plugin_registry
 
@@ -78,8 +79,8 @@ class ThumbnailServeView(View):
 
         max_age = 300  # 5 minutes
 
-        if not asset_path or width <= 0 or height <= 0:
-            response = HttpResponseNotFound("Invalid request parameters.")
+        if not asset_path:
+            response = HttpResponseNotFound("Thumbnail not found.")
         else:
             thumbnail = get_or_create_thumbnail(asset_path, width, height)
             thumbnail_path = thumbnail.storage_path if thumbnail else None
@@ -90,7 +91,8 @@ class ThumbnailServeView(View):
                     file = default_storage.open(thumbnail_path, "rb")
                     response = FileResponse(file, content_type=mime_type)
                     max_age = 86400  # 24h
-                except FileNotFoundError:
+                except FileNotFoundError as e:
+                    capture_exception(e)
                     response = HttpResponseNotFound("Thumbnail not found.")
             else:
                 response = HttpResponseNotFound("Invalid request.")

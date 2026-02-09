@@ -4,6 +4,8 @@ from typing import Optional
 from django.conf import settings
 from easy_thumbnails.files import get_thumbnailer
 
+from thunderstore.core.utils import capture_exception
+
 
 @dataclass
 class Thumbnail:
@@ -30,5 +32,6 @@ def get_or_create_thumbnail(
         else:
             thumbnail = thumbnailer.get_thumbnail(thumbnail_options, generate=True)
             return Thumbnail(storage_path=thumbnail.name, url=thumbnail.url)
-    except Exception:
+    except Exception as e:
+        capture_exception(e)
         return None
