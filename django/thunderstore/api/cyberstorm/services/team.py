@@ -1,3 +1,6 @@
+import dataclasses
+from typing import Any, Generator, List, Optional, Sequence
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -9,11 +12,74 @@ from thunderstore.repository.models.namespace import Namespace
 from thunderstore.repository.models.team import TeamMemberRole
 
 
+@dataclasses.dataclass
+class CheckResult:
+    check_pass: bool
+    errors: Optional[List[Exception]]
+
+
+class OpCheck:
+    """OperationCheck"""
+
+    def run_check(self, _: UserType) -> CheckResult:
+        return CheckResult(
+            check_pass=False, errors=[NotImplementedError("Check not implemented")]
+        )
+
+
+class TeamOpCheck(OpCheck):
+    team: Team
+
+    def __init__(self, team: Team):
+        self.team = team
+
+
+class TeamAccessCheck(TeamOpCheck):
+    def run_check(self, user: UserType) -> CheckResult:
+        try:
+            self.team.ensure_user_can_access(user)
+            return CheckResult(check_pass=True, errors=None)
+        except Exception as e:
+            return CheckResult(check_pass=False, errors=[e])
+
+
+class TeamDisbandCheck(TeamOpCheck):
+    def run_check(self, user: UserType) -> CheckResult:
+        try:
+            self.team.ensure_user_can_disband(user)
+            return CheckResult(check_pass=True, errors=None)
+        except Exception as e:
+            return CheckResult(check_pass=False, errors=[e])
+
+
+def _run_checks(
+    agent: UserType, checks: Sequence[OpCheck]
+) -> Generator[CheckResult, Any, None]:
+    return (check.run_check(agent) for check in checks)
+
+
+def run_checks(agent: UserType, checks: Sequence[OpCheck]) -> CheckResult:
+    results = _run_checks(agent, checks)
+    errors = []
+    check_pass = True
+    for entry in results:
+        if entry.errors:
+            errors += entry.errors
+        if not entry.check_pass:
+            check_pass = False
+    return CheckResult(check_pass=check_pass, errors=errors)
+
+
 @transaction.atomic
 def disband_team(agent: UserType, team: Team) -> None:
-    team.ensure_user_can_access(agent)
-    team.ensure_user_can_disband(agent)
-    team.delete()
+    checks = [
+        TeamAccessCheck(team),
+        TeamDisbandCheck(team),
+    ]
+    if (check_result := run_checks(agent, checks)).check_pass:
+        team.delete()
+    else:
+        raise check_result.errors
 
 
 @transaction.atomic
