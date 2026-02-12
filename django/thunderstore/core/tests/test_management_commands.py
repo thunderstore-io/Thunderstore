@@ -1,5 +1,9 @@
+import io
+
 import pytest
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import Count
@@ -233,3 +237,126 @@ def test_create_test_data_reuse_icon(reuse: bool) -> None:
 
     assert len(icon_paths) == 2
     assert (icon_paths[0] == icon_paths[1]) == reuse
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=False)
+def test_setup_dev_env_requires_debug() -> None:
+    with pytest.raises(
+        CommandError, match="setup_dev_env can only run when DEBUG=True"
+    ):
+        call_command("setup_dev_env")
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_setup_dev_env_populates_sites_binds_community_and_creates_admin(
+    mocker,
+) -> None:
+    recorded_calls = []
+
+    def fake_call_command(*args, **kwargs):
+        recorded_calls.append((args, kwargs))
+        return None
+
+    mocker.patch(
+        "thunderstore.core.management.commands.setup_dev_env.call_command",
+        side_effect=fake_call_command,
+    )
+
+    # Seed some existing state that should be updated/removed
+    Site.objects.update_or_create(domain="*", defaults={"name": "Wildcard"})
+    Site.objects.update_or_create(domain="example.com", defaults={"name": "Example"})
+    Site.objects.update_or_create(
+        domain="thunderstore.localhost", defaults={"name": "Old Thunderstore"}
+    )
+    Site.objects.update_or_create(
+        domain="auth.thunderstore.localhost", defaults={"name": "Old Thunderstore Auth"}
+    )
+
+    other_community = Community.objects.create(identifier="other", name="Other")
+    other_site = Site.objects.create(
+        domain="other.thunderstore.localhost", name="Other"
+    )
+    CommunitySite.objects.create(site=other_site, community=other_community)
+
+    assert get_user_model().objects.filter(username="admin").exists() is False
+
+    call_command("setup_dev_env")
+
+    # Verify command orchestration calls
+    assert ("migrate",) in [c[0] for c in recorded_calls]
+    assert ("create_test_data", "--clear", "--reuse-icon") in [
+        c[0] for c in recorded_calls
+    ]
+
+    # Verify sites were upserted and extras removed
+    assert set(Site.objects.values_list("domain", flat=True)) == {
+        "thunderstore.localhost",
+        "auth.thunderstore.localhost",
+    }
+    assert Site.objects.get(domain="thunderstore.localhost").name == "Thunderstore"
+    assert (
+        Site.objects.get(domain="auth.thunderstore.localhost").name
+        == "Thunderstore Auth"
+    )
+
+    # Verify community binding
+    community = Community.objects.get(identifier="riskofrain2")
+    localhost_site = Site.objects.get(domain="thunderstore.localhost")
+    assert CommunitySite.objects.count() == 1
+    assert CommunitySite.objects.filter(
+        site=localhost_site, community=community
+    ).exists()
+
+    # Verify admin user created
+    admin_user = get_user_model().objects.get(username="admin")
+    assert admin_user.is_superuser is True
+    assert admin_user.is_staff is True
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_setup_dev_env_skip_test_data_skips_create_test_data(mocker) -> None:
+    recorded_calls = []
+
+    def fake_call_command(*args, **kwargs):
+        recorded_calls.append((args, kwargs))
+        return None
+
+    mocker.patch(
+        "thunderstore.core.management.commands.setup_dev_env.call_command",
+        side_effect=fake_call_command,
+    )
+
+    call_command("setup_dev_env", "--skip-test-data")
+
+    called_commands = [c[0][0] for c in recorded_calls]
+    assert "migrate" in called_commands
+    assert "create_test_data" not in called_commands
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_setup_dev_env_admin_already_exists_does_not_create_superuser(mocker) -> None:
+    User = get_user_model()
+    User.objects.create_user("admin", "admin@example.com", "password")
+
+    recorded_calls = []
+
+    def fake_call_command(*args, **kwargs):
+        recorded_calls.append((args, kwargs))
+        return None
+
+    mocker.patch(
+        "thunderstore.core.management.commands.setup_dev_env.call_command",
+        side_effect=fake_call_command,
+    )
+
+    create_superuser_mock = mocker.patch.object(User.objects, "create_superuser")
+    stdout = io.StringIO()
+
+    call_command("setup_dev_env", stdout=stdout)
+
+    create_superuser_mock.assert_not_called()
+    assert "Superuser 'admin' already exists." in stdout.getvalue()
