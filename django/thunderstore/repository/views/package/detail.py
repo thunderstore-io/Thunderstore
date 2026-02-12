@@ -7,7 +7,6 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.core.types import UserType
-from thunderstore.core.utils import check_validity
 from thunderstore.repository.views.mixins import PackageListingDetailView
 from thunderstore.repository.views.package._utils import (
     can_view_listing_admin,
@@ -38,9 +37,7 @@ class PermissionsChecker:
 
     @cached_property
     def can_manage_categories(self) -> bool:
-        return check_validity(
-            lambda: self.listing.ensure_update_categories_permission(self.user)
-        )
+        return self.listing.can_update_categories_permission(self.user)
 
     @cached_property
     def can_deprecate(self) -> bool:
