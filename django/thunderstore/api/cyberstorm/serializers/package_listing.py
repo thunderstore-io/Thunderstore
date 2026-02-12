@@ -42,3 +42,4 @@ class PackageListingStatusResponseSerializer(serializers.Serializer):
     rejection_reason = serializers.CharField(required=False, allow_null=True)
     internal_notes = serializers.CharField(required=False, allow_null=True)
     listing_admin_url = serializers.CharField(required=False, allow_null=True)
+    package_admin_url = serializers.CharField(required=False, allow_null=True)
