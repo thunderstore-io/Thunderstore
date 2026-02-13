@@ -70,7 +70,7 @@ def test_disconnect_account_cannot_disconnect(
 
     assert response.status_code == 200
     assert user_with_social_auths.social_auth.filter(provider="github").exists()
-    assert response.context["form"].errors == {
+    assert response.context["form"].error == {
         "__all__": ["Cannot disconnect last linked auth method"]
     }
 
@@ -113,7 +113,7 @@ def test_delete_account_invalid_verification(
     )
 
     assert response.status_code == 200
-    assert response.context["form"].errors == {"verification": ["Invalid verification"]}
+    assert response.context["form"].error == {"verification": ["Invalid verification"]}
     assert user.__class__.objects.filter(pk=user.pk).exists()
 
 
