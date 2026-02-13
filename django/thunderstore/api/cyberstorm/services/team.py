@@ -37,7 +37,7 @@ class TeamOpCheck(OpCheck):
     team: Team
 
 
-class CheckTeamAccessPermission(TeamOpCheck):
+class PermissionTeamAccess(TeamOpCheck):
     def run_check(self, agent: UserType) -> CheckResult:
         try:
             self.team.ensure_user_can_access(agent)
@@ -46,7 +46,7 @@ class CheckTeamAccessPermission(TeamOpCheck):
             return CheckResult(success=False, error=e)
 
 
-class CheckTeamDisbandPermission(TeamOpCheck):
+class PermissionTeamDisband(TeamOpCheck):
     def run_check(self, agent: UserType) -> CheckResult:
         try:
             self.team.ensure_user_can_disband(agent)
@@ -55,7 +55,7 @@ class CheckTeamDisbandPermission(TeamOpCheck):
             return CheckResult(success=False, error=e)
 
 
-class CheckTeamEditPermission(TeamOpCheck):
+class PermissionTeamEdit(TeamOpCheck):
     def run_check(self, agent: UserType) -> CheckResult:
         try:
             self.team.ensure_user_can_edit_info(agent)
@@ -64,7 +64,7 @@ class CheckTeamEditPermission(TeamOpCheck):
             return CheckResult(success=False, error=e)
 
 
-class CheckTeamMemberManagePermission(TeamOpCheck):
+class PermissionTeamManageMembers(TeamOpCheck):
     def run_check(self, agent: UserType) -> CheckResult:
         try:
             self.team.ensure_user_can_manage_members(agent)
@@ -79,9 +79,7 @@ class CheckAgentCanRemoveTeamMember(OpCheck):
 
     def run_check(self, agent: UserType) -> CheckResult:
         if agent != self.member.user:
-            return CheckTeamMemberManagePermission(team=self.member.team).run_check(
-                agent
-            )
+            return PermissionTeamManageMembers(team=self.member.team).run_check(agent)
         else:
             return CheckResult(success=True)
 
@@ -170,11 +168,18 @@ class CheckTeamServiceAccountDeletePermission(TeamOpCheck):
 
 @dataclasses.dataclass
 class CheckTeamMemberRoleCanChange(OpCheck):
-    member = TeamMember
+    member: TeamMember
     target_role: str
 
     def run_check(self, agent: UserType) -> CheckResult:
-        pass
+        try:
+            self.member.team.ensure_member_role_can_be_changed(
+                member=self.member,
+                new_role=self.target_role,
+            )
+            return CheckResult(success=True)
+        except ValidationError as e:
+            return CheckResult(success=False, error=e)
 
 
 def run_checks(agent: UserType, checks: Sequence[Union[OpCheck, None]]) -> CheckResult:
@@ -188,8 +193,8 @@ def run_checks(agent: UserType, checks: Sequence[Union[OpCheck, None]]) -> Check
 @transaction.atomic
 def disband_team(agent: UserType, team: Team) -> None:
     checks = [
-        CheckTeamAccessPermission(team=team),
-        CheckTeamDisbandPermission(team=team),
+        PermissionTeamAccess(team=team),
+        PermissionTeamDisband(team=team),
     ]
     if (check_result := run_checks(agent, checks)).success:
         team.delete()
@@ -216,8 +221,8 @@ def create_team(agent: UserType, team_name: str) -> Team:
 @transaction.atomic
 def update_team(agent: UserType, team: Team, donation_link: str) -> Team:
     checks = [
-        CheckTeamAccessPermission(team=team),
-        CheckTeamEditPermission(team=team),
+        PermissionTeamAccess(team=team),
+        PermissionTeamEdit(team=team),
     ]
     if (result := run_checks(agent, checks)).success:
         team.donation_link = donation_link
@@ -242,7 +247,7 @@ def remove_team_member(agent: UserType, member: TeamMember) -> None:
 @transaction.atomic
 def create_service_account(agent: UserType, team: Team, nickname: str):
     checks = [
-        CheckTeamAccessPermission(team=team),
+        PermissionTeamAccess(team=team),
         CheckTeamServiceAccountCreationPermission(team=team),
     ]
     if (result := run_checks(agent, checks)).success:
@@ -260,7 +265,7 @@ def create_service_account(agent: UserType, team: Team, nickname: str):
 def delete_service_account(agent: UserType, service_account: ServiceAccount):
     team = service_account.owner
     checks = [
-        CheckTeamAccessPermission(team=team),
+        PermissionTeamAccess(team=team),
         CheckTeamServiceAccountDeletePermission(team=team),
     ]
     if (result := run_checks(agent, checks)).success:
@@ -277,11 +282,15 @@ def update_team_member(
 ) -> TeamMember:
     team = team_member.team
 
-    team.ensure_user_can_access(agent)
-    team.ensure_user_can_manage_members(agent)
-    team.ensure_member_role_can_be_changed(team_member, role)
+    checks = [
+        PermissionTeamAccess(team=team),
+        PermissionTeamManageMembers(team=team),
+        CheckTeamMemberRoleCanChange(member=team_member, target_role=role),
+    ]
 
-    team_member.role = role
-    team_member.save()
-
-    return team_member
+    if (result := run_checks(agent, checks)).success:
+        team_member.role = role
+        team_member.save()
+        return team_member
+    else:
+        raise result.as_exception()
