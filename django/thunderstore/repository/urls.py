@@ -32,6 +32,8 @@ from thunderstore.repository.views.wiki import (
     PackageWikiPageEditView,
 )
 
+from thunderstore.repository.views.package.list import PackageListByUserView
+
 legacy_package_urls = (
     [
         path("", PackageListView.as_view(), name="packages.list"),
@@ -42,6 +44,11 @@ legacy_package_urls = (
             name="packages.create.old",
         ),
         path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
+        path(
+            "u/<str:user>/",
+            PackageListByUserView.as_view(),
+            name="packages.list_by_user",
+        ),
         path(
             "download/<str:owner>/<str:name>/<str:version>/",
             PackageDownloadView.as_view(),
@@ -93,7 +100,7 @@ legacy_package_urls = (
             "<str:owner>/",
             PackageListByOwnerView.as_view(),
             name="packages.list_by_owner",
-        ),
+        )
     ]
     + plugin_registry.get_legacy_package_urls()
     + [
@@ -111,6 +118,11 @@ package_urls = [
     path("create/", PackageCreateView.as_view(), name="packages.create"),
     path("create/old/", PackageCreateOldView.as_view(), name="packages.create.old"),
     path("create/docs/", PackageDocsView.as_view(), name="packages.create.docs"),
+    path(
+        "u/<str:user>/",
+        PackageListByUserView.as_view(),
+        name="packages.list_by_user",
+    ),
     path(
         "p/<str:owner>/<str:name>/",
         PackageDetailView.as_view(),

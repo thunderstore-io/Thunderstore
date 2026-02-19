@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import ListView
+from django.contrib.auth import get_user_model
 
 from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.cache.pagination import CachedPaginator
@@ -22,6 +23,8 @@ from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Team, get_package_dependants
 from thunderstore.repository.views.package._utils import get_moderatable_communities
+
+User = get_user_model()
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
@@ -384,6 +387,38 @@ class PackageListByOwnerView(PackageListSearchView):
     def get_cache_vary(self):
         return f"authorer-{self.owner.name}"
 
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class PackageListByUserView(PackageListSearchView):
+    def dispatch(self, request, *args, **kwargs):
+        self.user = User.objects.filter(username=kwargs.get('user')).first()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_breadcrumbs(self):
+        breadcrumbs = super().get_breadcrumbs()
+        return breadcrumbs + [
+            {
+                "url": reverse_lazy(
+                    **get_community_url_reverse_args(
+                        community=self.community,
+                        viewname="packages.list_by_user",
+                        kwargs=self.kwargs,
+                    )
+                ),
+                "name": self.user.username,
+            },
+        ]
+
+    def get_base_queryset(self):
+        return self.model.objects.active().filter(
+            package__owner__members__user=self.user
+        ).distinct()
+
+    def get_page_title(self):
+        return f"Mods uploaded by {self.user.username}"
+
+    def get_cache_vary(self):
+        return f"author-user-{self.user.username}"
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class PackageListByDependencyView(PackageListSearchView):
