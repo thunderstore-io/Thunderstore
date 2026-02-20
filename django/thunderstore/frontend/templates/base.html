@@ -88,7 +88,11 @@
                 {% dynamic_html "nav_bar_right_nav" %}
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="{% community_url 'packages.list_by_owner' owner=team %}" class="nav-link text-dark">{{ request.user.username }}</a>
+                        {% if team %}
+                            <a title="View packages uploaded by your first team" href="{% community_url 'packages.list_by_owner' owner=team %}" class="nav-link text-dark">{{ request.user.username }}</a>
+                        {% else %}
+                            <a title="Open team settings" href="{% url "settings.teams" %}" class="nav-link text-dark">{{ request.user.username }}</a>
+                        {% endif %}
                     </li>
                     <li class="nav-item">
                         <a href="{% url "settings.linked-accounts" %}" class="nav-link">Settings</a>
