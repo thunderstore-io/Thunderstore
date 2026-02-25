@@ -79,6 +79,14 @@ def test_team_create_namespace_creation() -> None:
 
 
 @pytest.mark.django_db
+def test_team_delete_namespace_deletion() -> None:
+    team = Team.create(name="Test_Team")
+    assert Namespace.objects.filter(team=team).exists()
+    team.delete()
+    assert not Namespace.objects.filter(team=team).exists()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     ("username", "expected_name"),
     (
