@@ -36,6 +36,9 @@ from thunderstore.api.cyberstorm.views import (
     UpdateTeamAPIView,
     UpdateTeamMemberAPIView,
 )
+from thunderstore.api.cyberstorm.views.user.packages import (
+    UserRejectedPackageListingsListAPIView,
+)
 from thunderstore.plugins.registry import plugin_registry
 
 cyberstorm_urls = [
@@ -218,6 +221,11 @@ cyberstorm_urls = [
         "user/linked-account/<str:provider>/disconnect/",
         DisconnectUserLinkedAccountAPIView.as_view(),
         name="cyberstorm.user.linked-account.disconnect",
+    ),
+    path(
+        "user/rejected-package-listings/",
+        UserRejectedPackageListingsListAPIView.as_view(),
+        name="cyberstorm.user.rejected-package-listings",
     ),
     path(
         "team/<str:team_name>/member/<str:team_member>/update/",
