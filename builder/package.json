@@ -39,7 +39,7 @@
         "gulp-clean-css": "^4.2.0",
         "gulp-concat": "^2.6.1",
         "gulp-order": "^1.2.0",
-        "gulp-sass": "^4.0.2",
+        "gulp-sass": "^5.1.0",
         "gulp-uglify": "^3.0.2",
         "merge-stream": "^2.0.0",
         "tsify": "^5.0.2",
