@@ -4,11 +4,13 @@ from conftest import TestUserTypes
 from thunderstore.api.cyberstorm.services.package_listing import (
     approve_package_listing,
     reject_package_listing,
+    report_package_listing,
     unlist_package_listing,
     update_categories,
 )
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.core.exceptions import PermissionValidationError
+from thunderstore.ts_reports.models import PackageReport
 
 
 @pytest.mark.django_db
@@ -172,3 +174,57 @@ def test_unlist_package_listing(active_package_listing, user_role, can_unlist):
         with pytest.raises(PermissionValidationError):
             unlist_package_listing(agent=agent, listing=active_package_listing)
         assert active_package_listing.package.is_active is True
+
+
+@pytest.mark.django_db
+def test_report_package_listing_success(user, active_package_listing):
+    report_package_listing(
+        agent=user,
+        reason="Inappropriate content",
+        package=active_package_listing.package,
+        package_listing=active_package_listing,
+        package_version=active_package_listing.package.latest,
+        description="This package contains inappropriate content.",
+    )
+
+    assert (
+        PackageReport.objects.filter(
+            submitted_by=user,
+            package_listing=active_package_listing,
+            is_automated=False,
+            is_active=True,
+        ).count()
+        == 1
+    )
+
+
+@pytest.mark.django_db
+def test_report_package_listing_report_limit(user, active_package_listing):
+    report_package_listing(
+        agent=user,
+        reason="Inappropriate content",
+        package=active_package_listing.package,
+        package_listing=active_package_listing,
+        package_version=active_package_listing.package.latest,
+        description="This package contains inappropriate content.",
+    )
+
+    with pytest.raises(PermissionValidationError):
+        report_package_listing(
+            agent=user,
+            reason="Spam",
+            package=active_package_listing.package,
+            package_listing=active_package_listing,
+            package_version=active_package_listing.package.latest,
+            description="This package is spam.",
+        )
+
+    assert (
+        PackageReport.objects.filter(
+            submitted_by=user,
+            package_listing=active_package_listing,
+            is_automated=False,
+            is_active=True,
+        ).count()
+        == 1
+    )
