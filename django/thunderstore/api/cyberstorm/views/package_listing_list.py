@@ -467,10 +467,12 @@ def filter_by_query(
     parts = [x for x in query.split(" ") if x]
 
     for part in parts:
+        part_query = Q()
         for field in search_fields:
-            icontains_query &= ~Q(**{f"{field}__icontains": part})
+            part_query |= Q(**{f"{field}__icontains": part})
+        icontains_query &= part_query
 
-    return queryset.exclude(icontains_query).distinct()
+    return queryset.filter(icontains_query).distinct()
 
 
 def filter_by_review_status(
