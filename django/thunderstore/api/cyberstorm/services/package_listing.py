@@ -12,7 +12,9 @@ from thunderstore.ts_reports.models import PackageReport
 def update_categories(
     agent: UserType, categories: list, listing: PackageListing
 ) -> None:
-    listing.ensure_update_categories_permission(agent)
+    validation_result = listing.validate_update_categories_permissions(agent)
+    validation_result.raise_if_invalid()
+
     listing.update_categories(agent=agent, categories=categories)
 
     get_package_listing_or_404.clear_cache_with_args(
