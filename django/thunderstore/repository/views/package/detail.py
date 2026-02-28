@@ -152,11 +152,11 @@ class PackageDetailView(PackageListingDetailView):
             "canUpdateCategories": self.permissions_checker.can_manage_categories,
             "csrfToken": self.csrf_token,
             "currentCategories": [
-                format_category(x) for x in package_listing.categories.all()
+                format_category(x) for x in package_listing.categories.visible()
             ],
             "availableCategories": [
                 format_category(x)
-                for x in package_listing.community.package_categories.all()
+                for x in package_listing.community.package_categories.visible()
             ],
             "packageListingId": package_listing.pk,
         }

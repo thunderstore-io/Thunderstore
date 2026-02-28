@@ -11,6 +11,7 @@ class SchemaThunderstoreSection(BaseModel):
 
 class SchemaThunderstoreCategory(BaseModel):
     label: str
+    hidden: bool = False
 
 
 class SchemaCommunity(BaseModel):

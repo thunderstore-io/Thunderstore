@@ -110,7 +110,8 @@ class PackageDetailApiView(APIView):
                 "bg_image_src": listing.community.background_image_url,
                 "cover_image_src": listing.community.cover_image_url,
                 "categories": [
-                    PackageCategorySerializer(c).data for c in listing.categories.all()
+                    PackageCategorySerializer(c).data
+                    for c in listing.categories.visible()
                 ],
                 "community_name": listing.community.name,
                 "community_identifier": listing.community.identifier,

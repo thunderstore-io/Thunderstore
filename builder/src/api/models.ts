@@ -88,6 +88,7 @@ export interface CurrentUserInfo {
 export interface PackageCategory {
     name: string;
     slug: string;
+    hidden: boolean;
 }
 
 export interface PackageAvailableCommunity {

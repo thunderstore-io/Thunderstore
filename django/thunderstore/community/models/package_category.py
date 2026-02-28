@@ -1,11 +1,19 @@
 from django.db import models
-from django.db.models import Manager
 
 from thunderstore.core.mixins import TimestampMixin
 
 
+class PackageCategoryQuerySet(models.QuerySet):
+    def visible(self):
+        return self.filter(hidden=False)
+
+
+class PackageCategoryManager(models.Manager.from_queryset(PackageCategoryQuerySet)):
+    pass
+
+
 class PackageCategory(TimestampMixin, models.Model):
-    objects: "Manager[PackageCategory]"
+    objects = PackageCategoryManager()
     community = models.ForeignKey(
         "community.Community",
         related_name="package_categories",
@@ -13,6 +21,7 @@ class PackageCategory(TimestampMixin, models.Model):
     )
     name = models.CharField(max_length=512)
     slug = models.SlugField()
+    hidden = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.community.name} -> {self.name}"
