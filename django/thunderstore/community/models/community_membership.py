@@ -13,6 +13,13 @@ class CommunityMemberRole(ChoiceEnum):
     member = "member"
 
 
+MODERATION_ROLES = {
+    CommunityMemberRole.moderator,
+    CommunityMemberRole.janitor,
+    CommunityMemberRole.owner,
+}
+
+
 class CommunityMembership(TimestampMixin, models.Model):
     objects: "Manager[CommunityMembership]"
 
@@ -44,3 +51,15 @@ class CommunityMembership(TimestampMixin, models.Model):
         ]
         verbose_name = "community member"
         verbose_name_plural = "community members"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from thunderstore.account.models import UserMeta
+
+        UserMeta.create_or_update(user=self.user)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        from thunderstore.account.models import UserMeta
+
+        UserMeta.create_or_update(user=self.user)
