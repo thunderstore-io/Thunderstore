@@ -5,6 +5,7 @@ from ..models.package_category import PackageCategory
 
 @admin.register(PackageCategory)
 class PackageCategoryAdmin(admin.ModelAdmin):
+    raw_id_fields = ("community",)
     list_filter = ("community",)
     list_display = (
         "id",
