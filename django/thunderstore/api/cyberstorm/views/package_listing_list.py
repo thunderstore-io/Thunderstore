@@ -452,10 +452,7 @@ def filter_by_query(
     query: Optional[str],
     queryset: QuerySet[PackageListing],
 ) -> QuerySet[PackageListing]:
-    """
-    Filter packages by free text search.
-    """
-    if not query:
+    if not query or not query.strip():
         return queryset
 
     search_fields = (
@@ -463,14 +460,19 @@ def filter_by_query(
         "package__owner__name",
         "package__latest__description",
     )
-    icontains_query = Q()
-    parts = [x for x in query.split(" ") if x]
+
+    parts = [p for p in query.split() if p]
+
+    query_q = Q()
 
     for part in parts:
+        part_q = Q()
         for field in search_fields:
-            icontains_query &= ~Q(**{f"{field}__icontains": part})
+            part_q |= Q(**{f"{field}__icontains": part})
 
-    return queryset.exclude(icontains_query).distinct()
+        query_q &= part_q
+
+    return queryset.filter(query_q).distinct()
 
 
 def filter_by_review_status(
