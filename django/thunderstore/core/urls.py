@@ -31,12 +31,20 @@ handler500 = "thunderstore.frontend.views.handle500"
 
 AUTH_ROOT = "auth/"
 
+
+class CustomLogoutView(LogoutView):
+    next_page = "/"
+    success_url_allowed_hosts = set(settings.LOGOUT_ALLOWED_REDIRECT_HOSTS)
+
+
 urlpatterns = [
     path("", PackageListView.as_view(), name="index"),
     path("ads.txt", ads_txt_view, name="ads.txt"),
     path("robots.txt", robots_txt_view, name="robots.txt"),
     path(AUTH_ROOT, include("social_django.urls", namespace="social")),
-    path("logout/", LogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"),
+    path(
+        "logout/", CustomLogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"
+    ),
     path("package/", include((legacy_package_urls, "old_urls"), namespace="old_urls")),
     path("c/", include((community_urls, "communities"), namespace="communities")),
     path("communities/", CommunityListView.as_view(), name="communities"),
