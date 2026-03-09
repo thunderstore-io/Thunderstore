@@ -33,6 +33,10 @@ class PermissionsChecker:
         )
 
     @cached_property
+    def can_manage_wiki(self) -> bool:
+        return self.listing.package.can_user_manage_wiki(self.user)
+
+    @cached_property
     def can_manage_deprecation(self) -> bool:
         return self.listing.package.can_user_manage_deprecation(self.user)
 
@@ -71,6 +75,7 @@ class PermissionsChecker:
     def get_permissions(self) -> dict:
         return {
             "can_manage": self.can_manage,
+            "can_manage_wiki": self.can_manage_wiki,
             "can_manage_deprecation": self.can_manage_deprecation,
             "can_manage_categories": self.can_manage_categories,
             "can_deprecate": self.can_deprecate,

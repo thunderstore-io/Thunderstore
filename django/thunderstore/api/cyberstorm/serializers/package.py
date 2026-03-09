@@ -18,6 +18,7 @@ class PackageInfoSerializer(serializers.Serializer):
 
 class PermissionsSerializer(serializers.Serializer):
     can_manage = serializers.BooleanField()
+    can_manage_wiki = serializers.BooleanField()
     can_manage_deprecation = serializers.BooleanField()
     can_manage_categories = serializers.BooleanField()
     can_deprecate = serializers.BooleanField()
