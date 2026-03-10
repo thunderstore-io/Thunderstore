@@ -139,10 +139,14 @@ services:
   django-worker:
     <<: [*django-service, *django-volumes]
     command: celeryworker
+    depends_on:
+      - django
 
   django-beat:
     <<: [*django-service, *django-volumes]
     command: celerybeat
+    depends_on:
+      - django
 
   builder:
     build:
