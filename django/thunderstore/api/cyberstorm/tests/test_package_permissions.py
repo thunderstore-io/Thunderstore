@@ -16,6 +16,8 @@ PERMISSIONS_CHECKER_TEST_PARAMETERS = [
     # See the PermissionsChecker class in the repository/views/package/detail.py file
     ("can_manage", True),
     ("can_manage", False),
+    ("can_manage_wiki", True),
+    ("can_manage_wiki", False),
     ("can_manage_deprecation", True),
     ("can_manage_deprecation", False),
     ("can_manage_categories", True),

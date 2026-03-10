@@ -34,6 +34,18 @@ def test_can_manage(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("return_val", (True, False))
+@patch("thunderstore.repository.models.package.Package.can_user_manage_wiki")
+def test_can_manage_wiki(
+    mock_can_user_manage_wiki,
+    return_val,
+    permissions_checker,
+):
+    mock_can_user_manage_wiki.return_value = return_val
+    assert permissions_checker.can_manage_wiki == return_val
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("return_val", (True, False))
 @patch("thunderstore.repository.models.package.Package.can_user_manage_deprecation")
 def test_can_manage_deprecation(
     mock_can_user_manage_deprecation,
@@ -142,6 +154,7 @@ def test_get_permissions(permissions_checker):
     permissions = permissions_checker.get_permissions()
     expected_permissions = {
         "can_manage": permissions_checker.can_manage,
+        "can_manage_wiki": permissions_checker.can_manage_wiki,
         "can_manage_deprecation": permissions_checker.can_manage_deprecation,
         "can_manage_categories": permissions_checker.can_manage_categories,
         "can_deprecate": permissions_checker.can_deprecate,
