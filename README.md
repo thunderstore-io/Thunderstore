@@ -20,10 +20,16 @@ If you want to create additional superuser accounts, use the `createsuperuser` D
 
 ### Development
 
-Run
+To start the dev env in detached mode and update the test data:
 
 ```
 docker compose up -d && docker compose exec django python manage.py setup_dev_env
+```
+
+To follow the log output of the dev env:
+
+```
+docker compose logs -f
 ```
 
 If you want to develop new UI too Git clone https://github.com/thunderstore-io/thunderstore-ui and run
