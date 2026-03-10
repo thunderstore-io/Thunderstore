@@ -165,3 +165,7 @@ volumes:
   built-static:
   nginx-conf:
     name: thunderstore_nginx_conf
+
+networks:
+  default:
+    name: thunderstore_default
