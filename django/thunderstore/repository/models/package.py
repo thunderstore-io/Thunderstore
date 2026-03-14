@@ -241,12 +241,12 @@ class Package(VisibilityMixin, AdminLinkMixin):
         return get_package_dependants_list(self.pk)
 
     def readme(self):
-        if self.latest.readme_override:
+        if self.latest.readme_override is not None:
             return self.latest.readme_override
         return self.latest.readme
 
     def changelog(self):
-        if self.latest.changelog_override:
+        if self.latest.changelog_override is not None:
             return self.latest.changelog_override
         return self.latest.changelog
 
