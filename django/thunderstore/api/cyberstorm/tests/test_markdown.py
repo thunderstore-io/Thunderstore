@@ -72,6 +72,22 @@ def test_readme_api_view__prerenders_markup(api_client: APIClient) -> None:
 
 
 @pytest.mark.django_db
+def test_readme_api_view__uses_override_when_present(api_client: APIClient) -> None:
+    v = PackageVersionFactory(
+        readme="Original",
+        readme_override="Override",
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/readme/",
+    )
+    actual = response.json()
+
+    # Simple markdown paragraph
+    assert actual["html"] == "<p>Override</p>\n"
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     ("markdown", "markup"),
     (
@@ -92,6 +108,23 @@ def test_changelog_api_view__prerenders_markup(
     actual = response.json()
 
     assert actual["html"] == markup
+
+
+@pytest.mark.django_db
+def test_changelog_api_view__uses_override_when_present(
+    api_client: APIClient,
+) -> None:
+    v = PackageVersionFactory(
+        changelog="Original changelog",
+        changelog_override="Override changelog",
+    )
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/changelog/",
+    )
+    actual = response.json()
+
+    assert actual["html"] == "<p>Override changelog</p>\n"
 
 
 @pytest.mark.django_db

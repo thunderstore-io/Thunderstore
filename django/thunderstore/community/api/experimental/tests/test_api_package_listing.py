@@ -6,6 +6,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.test import APIClient
 
 from conftest import TestUserTypes
+from thunderstore.cache.enums import CacheBustCondition
 from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.models import TeamMember
 
@@ -73,3 +74,45 @@ def test_api_experimental_package_listing_update(
     ]
     assert active_package_listing.categories.count() == 1
     assert package_category in active_package_listing.categories.all()
+
+
+@pytest.mark.django_db
+def test_api_experimental_package_listing_update_overrides_readme_and_changelog(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    team_owner: TeamMember,
+    mocker,
+):
+    assert team_owner.team == active_package_listing.package.owner
+    api_client.force_authenticate(user=team_owner.user)
+
+    mocked_invalidate = mocker.patch(
+        "thunderstore.community.api.experimental.views.listing.invalidate_cache_on_commit_async"
+    )
+
+    readme_markdown = "Override readme"
+    changelog_markdown = "Override changelog"
+
+    response = api_client.post(
+        f"/api/experimental/package-listing/{active_package_listing.pk}/update/",
+        data=json.dumps(
+            {
+                "categories": [],
+                "readme": readme_markdown,
+                "changelog": changelog_markdown,
+            }
+        ),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+
+    latest = active_package_listing.package.latest
+    latest.refresh_from_db()
+
+    assert latest.readme_override == readme_markdown
+    assert latest.changelog_override == changelog_markdown
+
+    # Once for readme, once for changelog
+    mocked_invalidate.assert_called_with(CacheBustCondition.any_package_updated)
+    assert mocked_invalidate.call_count == 2
