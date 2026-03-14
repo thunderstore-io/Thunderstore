@@ -31,7 +31,7 @@ class PackageVersionReadmeAPIView(
             version_number=self.kwargs.get("version_number"),
         )
 
-        if package_version.readme_override:
+        if package_version.readme_override is not None:
             return {"html": render_markdown(package_version.readme_override)}
         return {"html": render_markdown(package_version.readme)}
 
@@ -59,7 +59,7 @@ class PackageVersionChangelogAPIView(
         if package_version.changelog is None:
             raise Http404
 
-        if package_version.changelog_override:
+        if package_version.changelog_override is not None:
             return {"html": render_markdown(package_version.changelog_override)}
         return {"html": render_markdown(package_version.changelog)}
 
