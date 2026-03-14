@@ -140,3 +140,18 @@ def test_changelog_api_view__when_package_has_no_changelog__returns_404(
 
     assert response.status_code == 404
     assert actual["detail"] == "Not found."
+
+
+@pytest.mark.django_db
+def test_changelog_api_view__when_package_has_override_but_no_changelog(
+    api_client: APIClient,
+) -> None:
+    v = PackageVersionFactory(changelog=None, changelog_override="Override changelog")
+
+    response = api_client.get(
+        f"/api/cyberstorm/package/{v.package.namespace}/{v.package.name}/latest/changelog/",
+    )
+    actual = response.json()
+
+    assert response.status_code == 200
+    assert actual["html"] == "<p>Override changelog</p>\n"

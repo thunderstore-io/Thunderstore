@@ -56,7 +56,7 @@ class PackageVersionChangelogAPIView(
             version_number=self.kwargs.get("version_number"),
         )
 
-        if package_version.changelog is None:
+        if package_version.changelog is None and package_version.changelog_override is None:
             raise Http404
 
         if package_version.changelog_override is not None:
