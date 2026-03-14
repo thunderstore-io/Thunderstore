@@ -75,6 +75,8 @@ class ExperimentalApiImpl extends ThunderstoreApi {
         packageListingId: string;
         data: {
             categories: string[];
+            readme?: string;
+            changelog?: string;
         };
     }) => {
         const response = await this.post(
