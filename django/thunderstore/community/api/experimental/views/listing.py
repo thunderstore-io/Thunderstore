@@ -3,6 +3,8 @@ from rest_framework import serializers, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from thunderstore.cache.tasks import invalidate_cache_on_commit_async
+from thunderstore.cache.enums import CacheBustCondition
 
 from thunderstore.api.cyberstorm.services.package_listing import (
     approve_package_listing,
@@ -44,6 +46,18 @@ class PackageListingUpdateApiView(GenericAPIView):
             categories=request_serializer.validated_data["categories"],
             listing=listing,
         )
+
+        if "readme" in request_serializer.validated_data:
+            readme = request_serializer.validated_data["readme"]
+            listing.package.latest.readme_override = readme
+            listing.package.latest.save()
+            invalidate_cache_on_commit_async(CacheBustCondition.any_package_updated)
+
+        if "changelog" in request_serializer.validated_data:
+            changelog = request_serializer.validated_data["changelog"]
+            listing.package.latest.changelog_override = changelog
+            listing.package.latest.save()
+            invalidate_cache_on_commit_async(CacheBustCondition.any_package_updated)
 
         serializer = self.serializer_class(instance=listing)
         return Response(serializer.data, status=status.HTTP_200_OK)
