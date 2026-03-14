@@ -1,6 +1,11 @@
 import React, { CSSProperties } from "react";
+import { useWatch } from "react-hook-form";
 import { useManagementContext } from "./Context";
-import { PackageListingUpdateForm, usePackageListingUpdateForm } from "./hooks";
+import {
+    PackageListingUpdateForm,
+    PackageListingUpdateFormValues,
+    usePackageListingUpdateForm,
+} from "./hooks";
 import { PackageStatus } from "./PackageStatus";
 import { CategoriesSelect } from "./CategoriesSelect";
 import { DeprecationForm } from "./Deprecation";
@@ -31,6 +36,24 @@ interface BodyProps {
 
 const Body: React.FC<BodyProps> = (props) => {
     const context = useManagementContext().props;
+    const readme = useWatch<PackageListingUpdateFormValues, "readme">({
+        control: props.form.control,
+        name: "readme",
+    });
+    const changelog = useWatch<PackageListingUpdateFormValues, "changelog">({
+        control: props.form.control,
+        name: "changelog",
+    });
+
+    const handleFile = async (e: React.ChangeEvent<HTMLInputElement>, field: "readme" | "changelog") => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        const content = await file.text();
+        props.form.setValue(field, { fileName: file.name, content: content });
+    };
 
     return (
         <div className="modal-body">
@@ -49,6 +72,30 @@ const Body: React.FC<BodyProps> = (props) => {
                         <CategoriesSelect form={props.form} />
                     </div>
                 )}
+                <div className="mt-3">
+                    <h6>Update Readme</h6>
+                    <label className="btn btn-primary btn-lg btn-block">
+                        <input
+                            type="file"
+                            accept=".md"
+                            style={{ display: "none" }}
+                            onChange={(e) => handleFile(e, "readme")}
+                        />
+                        {readme?.fileName ?? "Choose File"}
+                    </label>
+                </div>
+                <div className="mt-3">
+                    <h6>Update Changelog</h6>
+                    <label className="btn btn-primary btn-lg btn-block">
+                        <input
+                            type="file"
+                            accept=".md"
+                            style={{ display: "none" }}
+                            onChange={(e) => handleFile(e, "changelog")}
+                        />
+                        {changelog?.fileName ?? "Choose File"}
+                    </label>
+                </div>
             </form>
             {props.form.error && (
                 <div className={"alert alert-danger mt-2 mb-0"}>

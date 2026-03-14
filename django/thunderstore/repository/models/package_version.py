@@ -136,7 +136,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         blank=True,
     )
     readme = models.TextField()
+    readme_override = models.TextField(blank=True, null=True)
     changelog = models.TextField(blank=True, null=True)
+    changelog_override = models.TextField(blank=True, null=True)
 
     review_status = models.TextField(
         default=PackageVersionReviewStatus.unreviewed,
