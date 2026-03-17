@@ -85,6 +85,36 @@ def test_create_service_account_fails_because_nickname_too_long(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "nickname",
+    [
+        "Invalid Name",  # space
+        "Name-With-Dash",
+        "Name.With.Dot",
+        "Name🙂WithEmoji",
+        "名字",  # non-ASCII
+    ],
+)
+def test_create_service_account_fails_because_nickname_has_invalid_characters(
+    api_client: APIClient,
+    team_owner: TeamMember,
+    nickname: str,
+):
+    api_client.force_authenticate(team_owner.user)
+    url = get_create_service_account_url(team_owner.team.name)
+    data = json.dumps({"nickname": nickname})
+
+    response = api_client.post(url, data, content_type="application/json")
+
+    expected_response = {
+        "nickname": ["Service account name can only contain a-z A-Z 0-9 _ characters"]
+    }
+
+    assert response.status_code == 400
+    assert response.json() == expected_response
+
+
+@pytest.mark.django_db
 def test_create_service_account_fail_because_user_is_not_team_member(
     api_client: APIClient,
     team: Team,

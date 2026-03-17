@@ -65,3 +65,14 @@ class PackageReferenceComponentValidator(RegexValidator):
             regex=PACKAGE_REFERENCE_COMPONENT_REGEX,
             message=f"{component_name} can only contain a-z A-Z 0-9 _ characters and must not start or end with _",
         )
+
+
+@deconstructible
+class ServiceAccountNicknameValidator(RegexValidator):
+    """Validates a service account nickname."""
+
+    def __init__(self):
+        super().__init__(
+            regex=r"^[A-Za-z0-9_]+$",
+            message="Service account name can only contain a-z A-Z 0-9 _ characters",
+        )

@@ -5,7 +5,10 @@ from rest_framework import serializers
 
 from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import TeamMemberRole
-from thunderstore.repository.validators import PackageReferenceComponentValidator
+from thunderstore.repository.validators import (
+    PackageReferenceComponentValidator,
+    ServiceAccountNicknameValidator,
+)
 from thunderstore.social.utils import get_user_avatar_url
 
 
@@ -64,7 +67,9 @@ class CyberstormTeamUpdateSerializer(serializers.Serializer):
 
 
 class CyberstormCreateServiceAccountSerializer(serializers.Serializer):
-    nickname = serializers.CharField(max_length=32)
+    nickname = serializers.CharField(
+        max_length=32, validators=[ServiceAccountNicknameValidator()]
+    )
     team_name = serializers.CharField(read_only=True)
     api_token = serializers.CharField(read_only=True)
 

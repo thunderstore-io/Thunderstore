@@ -189,17 +189,17 @@ def test_service_account_edit_nickname(service_account):
     assert member.role == TeamMemberRole.owner
     form = EditServiceAccountForm(
         member.user,
-        data={"service_account": service_account, "nickname": "New nickname"},
+        data={"service_account": service_account, "nickname": "NewNickname"},
     )
     assert form.is_valid()
 
     service_account = form.save()
-    assert service_account.user.first_name == "New nickname"
-    assert service_account.nickname == "New nickname"
+    assert service_account.user.first_name == "NewNickname"
+    assert service_account.nickname == "NewNickname"
 
     service_account = ServiceAccount.objects.get(pk=service_account.pk)
-    assert service_account.user.first_name == "New nickname"
-    assert service_account.nickname == "New nickname"
+    assert service_account.user.first_name == "NewNickname"
+    assert service_account.nickname == "NewNickname"
 
 
 @pytest.mark.django_db
@@ -224,7 +224,7 @@ def test_service_account_edit_not_member(service_account):
     assert service_account.owner.members.filter(user=user).exists() is False
     form = EditServiceAccountForm(
         user,
-        data={"service_account": service_account, "nickname": "New nickname"},
+        data={"service_account": service_account, "nickname": "NewNickname"},
     )
     assert form.is_valid() is False
     assert len(form.errors["service_account"]) == 1
@@ -244,7 +244,7 @@ def test_service_account_edit_not_owner(service_account):
     )
     form = EditServiceAccountForm(
         user,
-        data={"service_account": service_account, "nickname": "New nickname"},
+        data={"service_account": service_account, "nickname": "NewNickname"},
     )
     assert form.is_valid() is False
     assert len(form.errors["service_account"]) == 1

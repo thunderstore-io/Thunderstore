@@ -9,10 +9,14 @@ from thunderstore.api.cyberstorm.services.team import (
 )
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Team
+from thunderstore.repository.validators import ServiceAccountNicknameValidator
 
 
 class CreateServiceAccountForm(forms.Form):
-    nickname = forms.CharField(max_length=32)
+    nickname = forms.CharField(
+        max_length=32,
+        validators=[ServiceAccountNicknameValidator()],
+    )
 
     def __init__(self, user: UserType, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -68,7 +72,10 @@ class DeleteServiceAccountForm(forms.Form):
 
 
 class EditServiceAccountForm(forms.Form):
-    nickname = forms.CharField(max_length=32)
+    nickname = forms.CharField(
+        max_length=32,
+        validators=[ServiceAccountNicknameValidator()],
+    )
 
     def __init__(self, user: UserType, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
