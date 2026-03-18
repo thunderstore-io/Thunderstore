@@ -229,6 +229,7 @@ class UpdateTeamAPIView(APIView):
         tags=["cyberstorm"],
         request_body=CyberstormTeamUpdateSerializer,
         responses={status.HTTP_200_OK: serializer_class},
+        deprecated=True,
     )
     def patch(self, request, team_name, *args, **kwargs):
         team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_name)
@@ -244,6 +245,46 @@ class UpdateTeamAPIView(APIView):
 
         return_data = self.serializer_class(instance=updated_team).data
         return Response(return_data, status=status.HTTP_200_OK)
+
+
+class TeamSettingsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "patch"]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.settings.get",
+        tags=["cyberstorm"],
+        responses={status.HTTP_200_OK: CyberstormTeamSerializer},
+    )
+    def get(self, request, team_id, *args, **kwargs):
+        team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_id)
+
+        team.ensure_user_can_access(request.user)
+        team.ensure_user_can_edit_info(request.user)
+
+        data = CyberstormTeamSerializer(instance=team).data
+        return Response(data, status=status.HTTP_200_OK)
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.team.settings.update",
+        tags=["cyberstorm"],
+        request_body=CyberstormTeamUpdateSerializer,
+        responses={status.HTTP_200_OK: CyberstormTeamSerializer},
+    )
+    def patch(self, request, team_id, *args, **kwargs):
+        team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_id)
+
+        serializer = CyberstormTeamUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        updated_team = update_team(
+            agent=request.user,
+            team=team,
+            donation_link=serializer.validated_data["donation_link"],
+        )
+
+        data = CyberstormTeamSerializer(instance=updated_team).data
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class UpdateTeamMemberAPIView(APIView):
