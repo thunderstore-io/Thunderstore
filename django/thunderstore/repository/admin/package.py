@@ -7,6 +7,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.utils.safestring import mark_safe
 
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.admin.actions import activate, deactivate
 from thunderstore.repository.models import Package, PackageVersion
 
@@ -65,6 +66,21 @@ class PackageVersionInline(admin.StackedInline):
     file_tree_link.short_description = "File Tree"
 
 
+class PackageListingInline(admin.TabularInline):
+    model = PackageListing
+    extra = 1
+    fields = ("community",)
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return True
+
+
 @transaction.atomic
 def deprecate_package(modeladmin, request, queryset: QuerySet[Package]):
     for package in queryset:
@@ -89,6 +105,7 @@ undeprecate_package.short_description = "Undeprecate"
 class PackageAdmin(admin.ModelAdmin):
     inlines = [
         PackageVersionInline,
+        PackageListingInline,
     ]
     actions = (
         deprecate_package,
