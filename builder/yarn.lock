@@ -5104,9 +5104,9 @@ tsconfig@^5.0.3:
     strip-json-comments "^2.0.0"
 
 tsify@^5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/tsify/-/tsify-5.0.2.tgz#ba3c9f8de239e89ba3aab6b83d65b569ef8b68c3"
-  integrity sha512-Pdo3ZO8CAgbQgNcFRBmfbgsPP+4TsD0itbSF5YgTnxKBXfg6WkQ79e4/bqBaq/7cEYa7vIOM1pHxnux8rJJnzg==
+  version "5.0.4"
+  resolved "https://registry.yarnpkg.com/tsify/-/tsify-5.0.4.tgz#22163648d04c0c90bdb15704fb14947df2328547"
+  integrity sha512-XAZtQ5OMPsJFclkZ9xMZWkSNyMhMxEPsz3D2zu79yoKorH9j/DT4xCloJeXk5+cDhosEibu4bseMVjyPOAyLJA==
   dependencies:
     convert-source-map "^1.1.0"
     fs.realpath "^1.0.0"
