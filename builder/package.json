@@ -35,7 +35,7 @@
         "@types/react-select": "^4.0.17",
         "@types/zip.js": "^2.0.29",
         "browserify": "^17.0.0",
-        "gulp": "^4.0.2",
+        "gulp": "^5.0.1",
         "gulp-clean-css": "^4.2.0",
         "gulp-concat": "^2.6.1",
         "gulp-order": "^1.2.0",
