@@ -176,7 +176,7 @@ cyberstorm_urls = [
         name="cyberstorm.team.update",
     ),
     path(
-        "team/<str:team_id>/settings/",
+        "team/<str:team_name>/settings/",
         TeamSettingsAPIView.as_view(),
         name="cyberstorm.team.settings",
     ),

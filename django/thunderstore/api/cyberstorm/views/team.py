@@ -256,8 +256,8 @@ class TeamSettingsAPIView(APIView):
         tags=["cyberstorm"],
         responses={status.HTTP_200_OK: CyberstormTeamSerializer},
     )
-    def get(self, request, team_id, *args, **kwargs):
-        team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_id)
+    def get(self, request, team_name, *args, **kwargs):
+        team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_name)
 
         team.ensure_user_can_access(request.user)
         team.ensure_user_can_edit_info(request.user)
@@ -271,8 +271,8 @@ class TeamSettingsAPIView(APIView):
         request_body=CyberstormTeamUpdateSerializer,
         responses={status.HTTP_200_OK: CyberstormTeamSerializer},
     )
-    def patch(self, request, team_id, *args, **kwargs):
-        team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_id)
+    def patch(self, request, team_name, *args, **kwargs):
+        team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_name)
 
         serializer = CyberstormTeamUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
