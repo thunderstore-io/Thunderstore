@@ -16,10 +16,12 @@ ENDPOINTS = {
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/changelog/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/readme/",
+        # "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/",
         "/api/cyberstorm/team/{team_id}/",
         "/api/cyberstorm/team/{team_id}/member/",
         "/api/cyberstorm/team/{team_id}/service-account/",
+        "/api/cyberstorm/team/{team_id}/settings/",
     ],
     "POST": {
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/approve/": {
@@ -52,7 +54,10 @@ ENDPOINTS = {
     },
     "PATCH": {
         "/api/cyberstorm/team/{team_name}/update/": {
-            "donation_link": "https://example.com/donate"
+            "donation_link": "https://test.url"
+        },
+        "/api/cyberstorm/team/{team_name}/settings/": {
+            "donation_link": "https://test.url"
         },
         "/api/cyberstorm/team/{team_name}/member/{team_member}/update/": {
             "role": "owner",

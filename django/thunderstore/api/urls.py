@@ -31,6 +31,7 @@ from thunderstore.api.cyberstorm.views import (
     TeamMemberListAPIView,
     TeamMemberRemoveAPIView,
     TeamServiceAccountListAPIView,
+    TeamSettingsAPIView,
     UnlistPackageListingAPIView,
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
@@ -173,6 +174,11 @@ cyberstorm_urls = [
         "team/<str:team_name>/update/",
         UpdateTeamAPIView.as_view(),
         name="cyberstorm.team.update",
+    ),
+    path(
+        "team/<str:team_name>/settings/",
+        TeamSettingsAPIView.as_view(),
+        name="cyberstorm.team.settings",
     ),
     path(
         "team/<str:team_name>/disband/",
