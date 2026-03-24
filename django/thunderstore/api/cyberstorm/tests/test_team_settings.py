@@ -15,7 +15,7 @@ def test_team_settings_get_succeeds(
     team: Team,
 ):
     TeamMemberFactory(team=team, user=user, role="owner")
-    team.donation_link = "https://example.com"
+    team.donation_link = "https://test.url"
     team.save()
     api_client.force_authenticate(user)
 
@@ -27,7 +27,7 @@ def test_team_settings_get_succeeds(
     assert response.json() == {
         "identifier": team.pk,
         "name": team.name,
-        "donation_link": "https://example.com",
+        "donation_link": "https://test.url",
     }
 
 
@@ -130,7 +130,7 @@ def test_team_settings_update_succeeds(
     TeamMemberFactory(team=team, user=user, role="owner")
     api_client.force_authenticate(user)
 
-    new_donation_link = "https://example.com"
+    new_donation_link = "https://test.url"
 
     response = api_client.patch(
         f"/api/cyberstorm/team/{team.name}/settings/",
@@ -150,7 +150,7 @@ def test_team_settings_update_succeeds_unset_donation_link(
     team: Team,
 ):
     TeamMemberFactory(team=team, user=user, role="owner")
-    team.donation_link = "https://example.com"
+    team.donation_link = "https://test.url"
     team.save()
     api_client.force_authenticate(user)
 
@@ -170,7 +170,7 @@ def test_team_settings_update_fails_user_not_authenticated(
     api_client: APIClient,
     team: Team,
 ):
-    new_donation_link = "https://example.com"
+    new_donation_link = "https://test.url"
 
     response = api_client.patch(
         f"/api/cyberstorm/team/{team.name}/settings/",
@@ -194,7 +194,7 @@ def test_team_settings_update_fails_validation(
     TeamMemberFactory(team=team, user=user, role="owner")
     api_client.force_authenticate(user)
 
-    new_bad_donation_link = "example.com"
+    new_bad_donation_link = "http://test.url"
 
     response = api_client.patch(
         f"/api/cyberstorm/team/{team.name}/settings/",
@@ -217,7 +217,7 @@ def test_team_settings_update_fails_user_not_owner(
     TeamMemberFactory(team=team, user=user, role="member")
     api_client.force_authenticate(user)
 
-    new_donation_link = "https://example.com"
+    new_donation_link = "https://test.url"
 
     response = api_client.patch(
         f"/api/cyberstorm/team/{team.name}/settings/",
@@ -239,7 +239,7 @@ def test_team_settings_update_fails_team_does_not_exist(
 ):
     api_client.force_authenticate(user)
 
-    new_donation_link = "https://example.com"
+    new_donation_link = "https://test.url"
 
     response = api_client.patch(
         "/api/cyberstorm/team/FakeTeam/settings/",
@@ -261,7 +261,7 @@ def test_team_settings_update_fails_user_not_team_member(
 ):
     api_client.force_authenticate(user)
 
-    new_donation_link = "https://example.com"
+    new_donation_link = "https://test.url"
 
     response = api_client.patch(
         f"/api/cyberstorm/team/{team.name}/settings/",

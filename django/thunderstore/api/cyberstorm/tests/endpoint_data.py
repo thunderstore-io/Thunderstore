@@ -54,10 +54,10 @@ ENDPOINTS = {
     },
     "PATCH": {
         "/api/cyberstorm/team/{team_name}/update/": {
-            "donation_link": "https://example.com/donate"
+            "donation_link": "https://test.url"
         },
         "/api/cyberstorm/team/{team_name}/settings/": {
-            "donation_link": "https://example.com/donate"
+            "donation_link": "https://test.url"
         },
         "/api/cyberstorm/team/{team_name}/member/{team_member}/update/": {
             "role": "owner",
