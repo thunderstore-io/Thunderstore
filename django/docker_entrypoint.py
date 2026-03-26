@@ -86,16 +86,7 @@ GUNICORN_MAX_REQUESTS_JITTER = register_variable(
 )
 GUNICORN_PIDFILE = register_variable(str, "GUNICORN_PIDFILE", "/var/run/gunicorn.pid")
 
-# uWSGI configuration variables
-UWSGI_WORKER_COUNT = register_variable(int, "UWSGI_WORKER_COUNT", 3)
-UWSGI_THREADS_PER_WORKER = register_variable(int, "UWSGI_THREADS_PER_WORKER", 2)
-UWSGI_WORKER_CONNECTIONS = register_variable(int, "UWSGI_WORKER_CONNECTIONS", 1000)
-UWSGI_WORKER_TIMEOUT = register_variable(int, "UWSGI_WORKER_TIMEOUT", 30)
-UWSGI_MAX_REQUESTS = register_variable(int, "UWSGI_MAX_REQUESTS", 10000)
-UWSGI_MAX_REQUESTS_JITTER = register_variable(int, "UWSGI_MAX_REQUESTS_JITTER", 1000)
-UWSGI_SOCKET_TIMEOUT = register_variable(int, "UWSGI_SOCKET_TIMEOUT", 4)
 UWSGI_PIDFILE = register_variable(str, "UWSGI_PIDFILE", "/var/run/uwsgi.pid")
-UWSGI_STATS_SOCKET = register_variable(str, "UWSGI_STATS_SOCKET", "/tmp/uwsgi-stats.sock")
 UWSGI_AUTORELOAD = register_variable(int, "UWSGI_AUTORELOAD", 0)
 
 CELERY_PIDFILE = register_variable(str, "CELERY_PIDFILE", "/var/run/celery.pid")
