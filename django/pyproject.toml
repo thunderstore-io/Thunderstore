@@ -13,6 +13,7 @@ Pillow = "^8.3"
 psycopg2-binary = "^2.8"
 easy-thumbnails = "^2.7"  # This has a monkeypatch and might be a difficult upgrade
 gunicorn = { version = "^20.0", extras = ["gevent"] }
+uwsgi = "2.0.30"
 social-auth-app-django = "^5.0"
 social-auth-core = "^4.1"
 whitenoise = "^5.0"

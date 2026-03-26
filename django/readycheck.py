@@ -30,6 +30,11 @@ def check_status() -> int:
         if pidfile is None:
             return 1
         return check_pidfile(pidfile)
+    elif runmode == "uwsgi":
+        pidfile = environment.get("UWSGI_PIDFILE", None)
+        if pidfile is None:
+            return 1
+        return check_pidfile(pidfile)
     elif runmode == "celeryworker" or runmode == "celerybeat":
         pidfile = environment.get("CELERY_PIDFILE", None)
         if pidfile is None:
