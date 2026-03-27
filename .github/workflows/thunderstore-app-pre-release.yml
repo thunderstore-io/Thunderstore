@@ -1,0 +1,16 @@
+name: Thunderstore App - Pre-release
+on:
+  release:
+    types: [prereleased]
+jobs:
+  trigger-release-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Pre-release Workflow
+        env:
+          GH_TOKEN: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+        run: |
+          gh workflow run build-thunderstore-app-pre-release.yml \
+          --repo ${{ vars.INFRA_REPO }} \
+          --ref master \
+          -f tag_name='${{ github.event.release.tag_name }}'
