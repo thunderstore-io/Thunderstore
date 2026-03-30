@@ -147,14 +147,14 @@ def run_gunicorn() -> None:
 
 def run_uwsgi() -> None:
     print("Launching uWSGI production server")
-    
-    # Set autoreload based on AUTORELOAD variable
+
     if AUTORELOAD:
         UWSGI_AUTORELOAD.value = 1
-    
+
     command = [
         "uwsgi",
-        "--ini", "uwsgi.ini",
+        "--ini",
+        "uwsgi.ini",
     ]
     run_command(command)
 
