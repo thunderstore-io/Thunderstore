@@ -1,3 +1,5 @@
+from distutils.version import StrictVersion
+
 from rest_framework.fields import Field
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
@@ -64,15 +66,22 @@ class PackageListingSerializer(ModelSerializer):
     date_created = RelatedObjectField(relation_name="package")
     date_updated = RelatedObjectField(relation_name="package")
     uuid4 = RelatedObjectField(relation_name="package")
-    rating_score = RelatedObjectField(relation_name="package")
+    rating_score = SerializerMethodField()
     is_pinned = RelatedObjectField(relation_name="package")
     is_deprecated = RelatedObjectField(relation_name="package")
     categories = SerializerMethodField()
     versions = SerializerMethodField()
 
     def get_versions(self, instance):
-        versions = instance.package.available_versions
+        versions = sorted(
+            [v for v in instance.package.versions.all() if v.is_active],
+            key=lambda v: StrictVersion(v.version_number),
+            reverse=True,
+        )
         return PackageVersionSerializer(versions, many=True, context=self.context).data
+
+    def get_rating_score(self, instance):
+        return instance.rating_score
 
     def get_owner(self, instance):
         return instance.package.owner.name

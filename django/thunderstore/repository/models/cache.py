@@ -2,10 +2,14 @@ import gzip
 import io
 import json
 from datetime import timedelta
+from distutils.version import StrictVersion
 from typing import Any, Iterable, List, Optional
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.models import Count, Prefetch
+from django.urls import reverse
 from django.utils import timezone
 
 from thunderstore.community.models import Community, PackageListing
@@ -249,45 +253,73 @@ def get_package_listing_ids(community: Community) -> Iterable[List[int]]:
 
 def get_package_listing_chunk(
     listing_ids: List[int],
-) -> models.QuerySet["PackageListing"]:
-    # Keep the ordering as it was when the whole id list was read.
-    ordering = models.Case(
-        *[models.When(id=id, then=pos) for pos, id in enumerate(listing_ids)]
-    )
-    listing_ref = PackageListing.objects.filter(pk=models.OuterRef("pk"))
+) -> List[PackageListing]:
+    from thunderstore.repository.models import PackageVersion
 
-    return (
+    versions_prefetch = Prefetch(
+        "package__versions",
+        queryset=PackageVersion.objects.filter(is_active=True)
+        .select_related("package", "package__owner")
+        .prefetch_related(
+            "dependencies",
+            "dependencies__package",
+            "dependencies__package__owner",
+        ),
+    )
+
+    listings = (
         PackageListing.objects.filter(id__in=listing_ids)
         .select_related("community", "package", "package__owner")
-        .prefetch_related("categories", "community__sites", "package__versions")
-        .annotate(
-            _rating_score=models.Subquery(
-                listing_ref.annotate(
-                    ratings=models.Count("package__package_ratings"),
-                ).values("ratings"),
-            ),
+        .prefetch_related(
+            "categories",
+            "community__sites__site",
+            versions_prefetch,
         )
-        .order_by(ordering)
+        .annotate(_rating_score=Count("package__package_ratings"))
     )
+
+    order_map = {lid: pos for pos, lid in enumerate(listing_ids)}
+    return sorted(listings, key=lambda l: order_map[l.id])
+
+
+def _get_sorted_active_versions(package):
+    versions = list(package.versions.all())
+    versions.sort(key=lambda v: StrictVersion(v.version_number), reverse=True)
+    return versions
+
+
+def _version_download_url(version) -> str:
+    path = reverse(
+        "old_urls:packages.download",
+        kwargs={
+            "owner": version.package.owner.name,
+            "name": version.package.name,
+            "version": version.version_number,
+        },
+    )
+    return f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{path}"
 
 
 def listing_to_json(listing: PackageListing) -> bytes:
+    package = listing.package
+    owner = package.owner
+    versions = _get_sorted_active_versions(package)
+
     return json.dumps(
         {
-            "name": listing.package.name,
-            "full_name": listing.package.full_package_name,
-            "owner": listing.package.owner.name,
+            "name": package.name,
+            "full_name": package.full_package_name,
+            "owner": owner.name,
             "package_url": listing.get_full_url(),
-            "donation_link": listing.package.owner.donation_link,
-            "date_created": listing.package.date_created.isoformat(),
-            "date_updated": listing.package.date_updated.isoformat(),
-            "uuid4": str(listing.package.uuid4),
+            "donation_link": owner.donation_link,
+            "date_created": package.date_created.isoformat(),
+            "date_updated": package.date_updated.isoformat(),
+            "uuid4": str(package.uuid4),
             "rating_score": listing.rating_score,
-            "is_pinned": listing.package.is_pinned,
-            "is_deprecated": listing.package.is_deprecated,
+            "is_pinned": package.is_pinned,
+            "is_deprecated": package.is_deprecated,
             "has_nsfw_content": listing.has_nsfw_content,
             "categories": [c.name for c in listing.categories.all()],
-            # TODO: this generates awfully lot of database hits
             "versions": [
                 {
                     "name": version.name,
@@ -298,16 +330,15 @@ def listing_to_json(listing: PackageListing) -> bytes:
                     "dependencies": [
                         d.full_version_name for d in version.dependencies.all()
                     ],
-                    "download_url": version.full_download_url,
+                    "download_url": _version_download_url(version),
                     "downloads": version.downloads,
                     "date_created": version.date_created.isoformat(),
                     "website_url": version.website_url,
-                    # TODO: what is this needed for, inactive ones have been filtered out anyway?
                     "is_active": version.is_active,
                     "uuid4": str(version.uuid4),
                     "file_size": version.file_size,
                 }
-                for version in listing.package.available_versions
+                for version in versions
             ],
         },
     ).encode()
