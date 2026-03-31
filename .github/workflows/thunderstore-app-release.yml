@@ -8,9 +8,9 @@ jobs:
     steps:
       - name: Trigger Release Workflow
         env:
-          GH_TOKEN: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ secrets.THUNDERSTORE_BOT_PAT }}
         run: |
           gh workflow run build-thunderstore-app-release.yml \
-          --repo ${{ vars.INFRA_REPO }} \
+          --repo Riskidev/Infra-v2 \
           --ref master \
           -f tag_name='${{ github.event.release.tag_name }}'
