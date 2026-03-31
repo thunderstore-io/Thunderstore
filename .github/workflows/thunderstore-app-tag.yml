@@ -1,0 +1,18 @@
+name: Thunderstore App - Tag
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+jobs:
+  trigger-release-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Release Workflow
+        env:
+          GH_TOKEN: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+        run: |
+          gh workflow run build-thunderstore-app-tag.yml \
+          --repo ${{ vars.INFRA_REPO }} \
+          --ref master \
+          -f tag_name='${{ github.ref_name }}'
