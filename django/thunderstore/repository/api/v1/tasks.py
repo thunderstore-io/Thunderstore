@@ -1,4 +1,4 @@
-from thunderstore.community.models import Community, CommunitySite
+from thunderstore.community.models import Community
 from thunderstore.core.utils import capture_exception
 from thunderstore.repository.api.v1.viewsets import serialize_package_list_for_community
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
@@ -9,17 +9,7 @@ def update_api_v1_caches() -> None:
 
 
 def update_api_v1_indexes() -> None:
-    for site in CommunitySite.objects.iterator():
-        try:
-            APIV1PackageCache.update_for_community(
-                community=site.community,
-                content=serialize_package_list_for_community(
-                    community=site.community,
-                ),
-            )
-        except Exception as e:  # pragma: no cover
-            capture_exception(e)
-    for community in Community.objects.filter(sites=None).iterator():
+    for community in Community.objects.iterator():
         try:
             APIV1PackageCache.update_for_community(
                 community=community,

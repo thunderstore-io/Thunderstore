@@ -20,7 +20,6 @@ from thunderstore.core.types import HttpRequestType
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
 from thunderstore.repository.cache import (
     get_package_listing_queryset,
-    order_package_listing_queryset,
 )
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package
@@ -32,18 +31,20 @@ SERIALIZER_BATCH_SIZE = 200
 
 
 def serialize_package_list_for_community(community: Community) -> bytes:
-    listing_ids = get_package_listing_queryset(
+    base_queryset = get_package_listing_queryset(
         community_identifier=community.identifier
-    ).values_list("id", flat=True)
+    )
+    listing_ids = base_queryset.values_list(
+        "id",
+        flat=True,
+    )
     batch_size = SERIALIZER_BATCH_SIZE
     renderer = JSONRenderer()
     result = BytesIO()
 
     result.write(b"[")
     for index, ids in enumerate(batch(batch_size, listing_ids)):
-        queryset = order_package_listing_queryset(
-            PackageListing.objects.filter(id__in=ids)
-        )
+        queryset = base_queryset.filter(id__in=ids)
         serializer = PACKAGE_SERIALIZER(
             queryset,
             many=True,
