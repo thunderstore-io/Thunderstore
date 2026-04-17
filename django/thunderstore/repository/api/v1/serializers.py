@@ -1,3 +1,5 @@
+from distutils.version import StrictVersion
+
 from rest_framework.fields import Field
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
@@ -64,14 +66,28 @@ class PackageListingSerializer(ModelSerializer):
     date_created = RelatedObjectField(relation_name="package")
     date_updated = RelatedObjectField(relation_name="package")
     uuid4 = RelatedObjectField(relation_name="package")
-    rating_score = RelatedObjectField(relation_name="package")
+    rating_score = SerializerMethodField()
     is_pinned = RelatedObjectField(relation_name="package")
     is_deprecated = RelatedObjectField(relation_name="package")
     categories = SerializerMethodField()
     versions = SerializerMethodField()
 
     def get_versions(self, instance):
-        versions = instance.package.available_versions
+        prefetched_versions = getattr(
+            instance.package,
+            "_prefetched_objects_cache",
+            {},
+        ).get("versions")
+
+        if prefetched_versions is None:
+            versions = instance.package.available_versions
+        else:
+            versions = sorted(
+                (version for version in prefetched_versions if version.is_active),
+                key=lambda version: StrictVersion(version.version_number),
+                reverse=True,
+            )
+
         return PackageVersionSerializer(versions, many=True, context=self.context).data
 
     def get_owner(self, instance):
@@ -86,8 +102,14 @@ class PackageListingSerializer(ModelSerializer):
     def get_donation_link(self, instance):
         return instance.package.owner.donation_link
 
+    def get_rating_score(self, instance):
+        rating_score = getattr(instance, "_rating_score", None)
+        if rating_score is not None:
+            return rating_score
+        return instance.package.rating_score
+
     def get_categories(self, instance):
-        return set(instance.categories.all().values_list("name", flat=True))
+        return {category.name for category in instance.categories.all()}
 
     def to_representation(self, instance):
         result = super().to_representation(instance)

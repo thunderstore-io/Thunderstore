@@ -215,6 +215,37 @@ def test_api_v1_chunked_package_cache__drops_stale_caches() -> None:
 
 
 @pytest.mark.django_db
+def test_update_api_v1_caches__deduplicates_communities_with_multiple_sites(
+    monkeypatch,
+) -> None:
+    community = CommunityFactory()
+    CommunitySiteFactory(community=community)
+    CommunitySiteFactory(community=community)
+    CommunityFactory()
+
+    updated_communities = []
+
+    monkeypatch.setattr(
+        "thunderstore.repository.api.v1.tasks.serialize_package_list_for_community",
+        lambda community: b"[]",
+    )
+    monkeypatch.setattr(
+        "thunderstore.repository.api.v1.tasks.APIV1PackageCache.update_for_community",
+        lambda community, content: updated_communities.append(community.pk),
+    )
+    monkeypatch.setattr(
+        "thunderstore.repository.api.v1.tasks.APIV1PackageCache.drop_stale_cache",
+        lambda: None,
+    )
+
+    update_api_v1_caches()
+
+    assert sorted(updated_communities) == sorted(
+        Community.objects.values_list("pk", flat=True)
+    )
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("count", (0, 1, 2, 3, 5, 8, 13))
 def test_get_package_listing_chunk__retains_received_ordering(count: int) -> None:
     assert not PackageListing.objects.exists()

@@ -1,4 +1,4 @@
-from django.db.models import QuerySet
+from django.db.models import Count, Prefetch, QuerySet
 
 from thunderstore.community.models import PackageListing, Q
 
@@ -6,13 +6,27 @@ from thunderstore.community.models import PackageListing, Q
 def prefetch_package_listing_queryset(
     queryset: QuerySet[PackageListing],
 ) -> QuerySet[PackageListing]:
+    from thunderstore.repository.models import PackageVersion
+
     return queryset.select_related(
+        "community",
         "package",
         "package__owner",
         "package__latest",
+    ).annotate(
+        _rating_score=Count("package__package_ratings"),
     ).prefetch_related(
-        "package__versions",
-        "package__versions__dependencies",
+        "categories",
+        "community__sites",
+        Prefetch(
+            "package__versions",
+            queryset=PackageVersion.objects.select_related(
+                "package",
+                "package__owner",
+            ).prefetch_related(
+                "dependencies__package__owner",
+            ),
+        ),
     )
 
 
