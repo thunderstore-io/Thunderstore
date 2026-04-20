@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional, Set, Tuple
 
 from django.core.exceptions import PermissionDenied
@@ -25,6 +26,54 @@ from thunderstore.repository.views.package._utils import get_moderatable_communi
 
 # Should be divisible by 4 and 3
 MODS_PER_PAGE = 24
+
+# Validators for every query-string key we allow to survive into paginated
+# links. Any value rejected here is dropped from the rendered href, which
+# prevents reflected-value cache poisoning of the mod-list template fragment.
+_SLUG_RE = re.compile(r"\A[a-z0-9][a-z0-9_\-]{0,63}\Z")
+_ORDERING_CHOICES = {"last-updated", "newest", "most-downloaded", "top-rated"}
+_MAX_SEARCH_LEN = 200
+_MAX_PAGE_NUMBER = 10_000
+
+
+def _clean_int(value: str) -> Optional[str]:
+    return str(int(value))
+
+
+def _clean_bool(value: str) -> Optional[str]:
+    return "1" if value in ("1", "true", "True", "on") else None
+
+
+def _clean_slug(value: str) -> Optional[str]:
+    return value if _SLUG_RE.fullmatch(value or "") else None
+
+
+def _clean_search_query(value: str) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = "".join(ch for ch in value if ch >= " " and ch != "\x7f")[:_MAX_SEARCH_LEN]
+    return cleaned or None
+
+
+def _clean_page(value: str) -> Optional[str]:
+    number = int(value)
+    return str(number) if 1 <= number <= _MAX_PAGE_NUMBER else None
+
+
+def _clean_ordering(value: str) -> Optional[str]:
+    return value if value in _ORDERING_CHOICES else None
+
+
+PACKAGE_LIST_PARAM_VALIDATORS = {
+    "q": _clean_search_query,
+    "ordering": _clean_ordering,
+    "deprecated": _clean_bool,
+    "nsfw": _clean_bool,
+    "included_categories": _clean_int,
+    "excluded_categories": _clean_int,
+    "section": _clean_slug,
+    "page": _clean_page,
+}
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -335,6 +384,7 @@ class PackageListSearchView(CommunityMixin, ListView):
             "section",
             "page",
         }
+        context["allowed_params_validators"] = PACKAGE_LIST_PARAM_VALIDATORS
         breadcrumbs = self.get_breadcrumbs()
         if len(breadcrumbs) > 1:
             context["breadcrumbs"] = breadcrumbs
