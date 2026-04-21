@@ -32,8 +32,8 @@ MODS_PER_PAGE = 24
 # prevents reflected-value cache poisoning of the mod-list template fragment.
 _SLUG_RE = re.compile(r"\A[a-z0-9][a-z0-9_\-]{0,63}\Z")
 _ORDERING_CHOICES = {"last-updated", "newest", "most-downloaded", "top-rated"}
-_MAX_SEARCH_LEN = 200
-_MAX_PAGE_NUMBER = 10_000
+_MAX_SEARCH_LEN = 256
+_MAX_PAGE_NUMBER = 10000
 
 
 def _clean_int(value: str) -> Optional[str]:
@@ -51,7 +51,9 @@ def _clean_slug(value: str) -> Optional[str]:
 def _clean_search_query(value: str) -> Optional[str]:
     if value is None:
         return None
-    cleaned = "".join(ch for ch in value if ch >= " " and ch != "\x7f")[:_MAX_SEARCH_LEN]
+    cleaned = "".join(ch for ch in value if ch >= " " and ch != "\x7f")[
+        :_MAX_SEARCH_LEN
+    ]
     return cleaned or None
 
 

@@ -1,18 +1,11 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, List, Optional, Set
 
-from django.http import QueryDict
 from django.template import Library, Node, TemplateSyntaxError
 from django.utils.http import urlencode
 
 register = Library()
 
 
-# Default safety net applied to any query-string value for which the caller
-# did not register a per-key validator. It is intentionally permissive so it
-# does not silently break existing pagination for non-ASCII search text, but
-# it still drops control characters and excessively long values, which is
-# enough to prevent the "template fragment cache poisoning via reflected
-# query value" class of bug.
 _MAX_DEFAULT_VALUE_LEN = 256
 
 
@@ -40,37 +33,33 @@ class QurlNode(Node):
 
     def render(self, context):
         request = context["request"]
+        params = {}
         allowed_params = context[self.allowed_params_key]
-        validators: Dict[str, Callable[[str], Optional[str]]] = context.get(
-            f"{self.allowed_params_key}_validators", {}
-        )
 
-        # Build the output QueryDict from scratch. Only keys explicitly in the
-        # allow-list, whose values pass either a caller-provided validator or
-        # the conservative default, survive into the rendered href. This is
-        # what stops reflected-value cache poisoning: no unvalidated input
-        # from request.GET can be baked into a cached pagination link.
-        params = QueryDict(mutable=True)
-        for key in allowed_params:
-            if key in self.removals or key == self.param_key:
-                continue
-            raw_values = request.GET.getlist(key)
-            validator = validators.get(key, _default_clean)
-            clean: List[str] = []
-            for raw in raw_values:
-                try:
-                    cleaned = validator(raw)
-                except (ValueError, TypeError):
-                    continue
-                if cleaned is None:
-                    continue
-                clean.append(str(cleaned))
-            if clean:
-                params.setlist(key, clean)
+        mapping_order = [
+            ("q", "current_search"),
+            ("ordering", "active_ordering"),
+            ("section", "active_section"),
+            ("included_categories", "included_categories"),
+            ("excluded_categories", "excluded_categories"),
+            ("nsfw", "nsfw_included"),
+            ("deprecated", "deprecated_included"),
+        ]
 
-        resolved = self.param_val.resolve(context)
-        if resolved is not None:
-            params.setlist(self.param_key, [resolved])
+        for param_name, context_key in mapping_order:
+            if param_name in allowed_params:
+                val = context.get(context_key)
+                if val:
+                    if isinstance(val, (list, set)):
+                        params[param_name] = sorted(list(val))
+                    else:
+                        params[param_name] = "on" if val is True else val
+
+        if self.param_key in allowed_params:
+            params[self.param_key] = self.param_val.resolve(context)
+
+        for entry in self.removals:
+            params.pop(entry, None)
 
         return f"{request.path}?{urlencode(params, True)}"
 
