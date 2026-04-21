@@ -36,3 +36,42 @@ def test_package_review_list_view(
     response = client.get(url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
     assert active_package_listing.get_full_url().encode("utf-8") in response.content
+
+
+@pytest.mark.django_db
+def test_package_list_cache_vary_sanitization(community_site: CommunitySite):
+    """
+    Ensures that get_full_cache_vary strips poison payloads and
+    normalizes parameter order.
+    """
+    from django.test import RequestFactory
+
+    from thunderstore.repository.views.package.list import PackageListSearchView
+
+    rf = RequestFactory()
+    # A URL with unsorted params and cache poison (+payload)
+    url = "/c/test/?deprecated=on+poison&q=search&page=1"
+    request = rf.get(url)
+    request.community = community_site.community
+
+    view = PackageListSearchView()
+    view.request = request
+    view.kwargs = {}
+    view.community = community_site.community
+
+    cache_vary = view.get_full_cache_vary()
+
+    assert "deprecated:on" in cache_vary
+    assert "poison" not in cache_vary
+
+    assert f"community:{community_site.community.identifier}" in cache_vary
+
+    expected_order = (
+        f"community:{community_site.community.identifier}."
+        "type:."
+        "deprecated:on."
+        "ordering:last-updated."
+        "page:1."
+        "q:search"
+    )
+    assert cache_vary == expected_order

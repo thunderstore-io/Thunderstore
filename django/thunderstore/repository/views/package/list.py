@@ -53,17 +53,30 @@ class PackageListSearchView(CommunityMixin, ListView):
     def get_categories(self):
         return PackageCategory.objects.exclude(~Q(community=self.community))
 
+    def get_clean_params(self):
+        allowed = {
+            "q": self.get_search_query(),
+            "ordering": self.get_active_ordering(),
+            "deprecated": "on" if self.get_is_deprecated_included() else "",
+            "nsfw": "on" if self.get_is_nsfw_included() else "",
+            "included_categories": self.get_included_categories(),
+            "excluded_categories": self.get_excluded_categories(),
+            "section": self.active_section_slug,
+            "page": self.request.GET.get("page", "1"),
+        }
+        return {k: v for k, v in allowed.items() if v not in [None, "", []]}
+
     def get_full_cache_vary(self):
-        cache_vary = self.get_cache_vary()
-        cache_vary += f".{self.get_community_cache_vary()}"
-        cache_vary += f".{self.get_search_query()}"
-        cache_vary += f".{self.get_active_ordering()}"
-        cache_vary += f".{self.get_included_categories()}"
-        cache_vary += f".{self.get_excluded_categories()}"
-        cache_vary += f".{self.get_is_deprecated_included()}"
-        cache_vary += f".{self.get_is_nsfw_included()}"
-        cache_vary += f".{self.active_section_slug}"
-        return cache_vary
+        clean = self.get_clean_params()
+        cache_parts = [
+            f"community:{self.get_community_cache_vary()}",
+            f"type:{self.get_cache_vary()}",
+        ]
+
+        for k in sorted(clean.keys()):
+            cache_parts.append(f"{k}:{clean[k]}")
+
+        return ".".join(cache_parts)
 
     def get_ordering_choices(self):
         return (
