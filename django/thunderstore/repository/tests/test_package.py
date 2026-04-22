@@ -30,6 +30,7 @@ from thunderstore.repository.models import (
     PackageWiki,
     TeamMember,
     TeamMemberRole,
+    get_package_dependants,
 )
 from thunderstore.wiki.factories import WikiPageFactory
 
@@ -65,6 +66,65 @@ def test_package_get_full_url(
     expected_host = site_host if site else primary_host
     expected_url = f"{settings.PROTOCOL}{expected_host}/package/{active_package.namespace.name}/{active_package.name}/"
     assert active_package.get_full_url(site=site) == expected_url
+
+
+@pytest.mark.django_db
+def test_package_queryset_active() -> None:
+    # Setup: Create a base package with an active version (so it naturally is "active")
+    package = PackageFactory(is_active=True)
+    active_version = PackageVersionFactory(package=package, is_active=True)
+
+    # 1. Base success state: active package + active version = active
+    assert Package.objects.active().filter(pk=package.pk).exists()
+
+    # 2. Package goes inactive: should be excluded regardless of versions
+    package.is_active = False
+    package.save()
+    assert not Package.objects.active().filter(pk=package.pk).exists()
+
+    # 3. Restore package to active, but deactivate versions
+    package.is_active = True
+    package.save()
+    active_version.is_active = False
+    active_version.save()
+
+    # Needs at least 1 active version
+    assert not Package.objects.active().filter(pk=package.pk).exists()
+
+    # 4. Add a new active version to restore it back
+    PackageVersionFactory(package=package, version_number="1.0.1", is_active=True)
+    assert Package.objects.active().filter(pk=package.pk).exists()
+
+
+@pytest.mark.django_db
+def test_get_package_dependants() -> None:
+    # Target package (the one being depended ON)
+    target_package = PackageFactory(is_active=True)
+    target_version = PackageVersionFactory(package=target_package, is_active=True)
+
+    # 1. Dependant Package: Has a version that explicitly depends on target_version
+    dependant_pkg = PackageFactory(is_active=True)
+    dependant_version = PackageVersionFactory(package=dependant_pkg, is_active=True)
+    dependant_version.dependencies.add(target_version)
+
+    # 2. Unrelated Package: No dependency
+    unrelated_pkg = PackageFactory(is_active=True)
+    PackageVersionFactory(package=unrelated_pkg, is_active=True)
+
+    deps_qs = get_package_dependants(target_package.pk)
+
+    # Dependant package should be included, unrelated should not
+    assert deps_qs.filter(pk=dependant_pkg.pk).exists()
+    assert not deps_qs.filter(pk=unrelated_pkg.pk).exists()
+
+    # 3. If dependant package becomes inactive, it drops from results
+    dependant_pkg.is_active = False
+    dependant_pkg.save()
+    assert (
+        not get_package_dependants(target_package.pk)
+        .filter(pk=dependant_pkg.pk)
+        .exists()
+    )
 
 
 @pytest.mark.django_db

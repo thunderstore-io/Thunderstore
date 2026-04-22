@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List, Optional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Q, signals
+from django.db.models import Exists, OuterRef, Q, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -33,8 +33,14 @@ if TYPE_CHECKING:
 
 class PackageListingQueryset(VisibilityFlagsQuerySet):
     def active(self):
-        return self.exclude(package__is_active=False).exclude(
-            ~Q(package__versions__is_active=True)
+        from thunderstore.repository.models import PackageVersion
+
+        has_active_versions = PackageVersion.objects.filter(
+            package_id=OuterRef("package_id"),
+            is_active=True,
+        )
+        return self.exclude(package__is_active=False).filter(
+            Exists(has_active_versions)
         )
 
     def approved(self):

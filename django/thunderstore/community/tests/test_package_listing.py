@@ -437,6 +437,37 @@ def test_package_listing_has_mod_manager_support(mod_manager_support: bool) -> N
     assert package_listing.has_mod_manager_support == mod_manager_support
 
 
+@pytest.mark.django_db
+def test_package_listing_queryset_active(
+    active_package_listing: PackageListing,
+) -> None:
+    # Initially the active_package_listing should be in the active queryset
+    assert PackageListing.objects.active().filter(pk=active_package_listing.pk).exists()
+
+    # If the package is not active, it should be excluded
+    package = active_package_listing.package
+    package.is_active = False
+    package.save()
+    assert (
+        not PackageListing.objects.active()
+        .filter(pk=active_package_listing.pk)
+        .exists()
+    )
+
+    # Revert package.is_active
+    package.is_active = True
+    package.save()
+    assert PackageListing.objects.active().filter(pk=active_package_listing.pk).exists()
+
+    # If the package has no active versions, it should be excluded
+    package.versions.update(is_active=False)
+    assert (
+        not PackageListing.objects.active()
+        .filter(pk=active_package_listing.pk)
+        .exists()
+    )
+
+
 # TODO: Re-enable once visibility system fixed
 # @pytest.mark.django_db
 # def test_package_listing_visibility_inherits_package_is_active(

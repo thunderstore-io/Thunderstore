@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
-from django.db.models import Case, Q, Sum, When, signals
+from django.db.models import Case, Exists, OuterRef, Sum, When, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -30,15 +30,23 @@ if TYPE_CHECKING:
 
 class PackageQueryset(VisibilityFlagsQuerySet):
     def active(self):
-        return self.exclude(is_active=False).exclude(~Q(versions__is_active=True))
+        from thunderstore.repository.models import PackageVersion
+
+        has_active_versions = PackageVersion.objects.filter(
+            package=OuterRef("pk"),
+            is_active=True,
+        )
+        return self.exclude(is_active=False).filter(Exists(has_active_versions))
 
 
 def get_package_dependants(package_pk: int):
-    return Package.objects.exclude(
-        ~Q(
-            versions__dependencies__package=package_pk,
-        )
-    ).active()
+    from thunderstore.repository.models import PackageVersion
+
+    has_dependency = PackageVersion.objects.filter(
+        dependants__package=OuterRef("pk"),
+        package_id=package_pk,
+    )
+    return Package.objects.filter(Exists(has_dependency)).active()
 
 
 @cache_function_result(CacheBustCondition.any_package_updated)
