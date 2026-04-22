@@ -3,13 +3,11 @@ import io
 import json
 from datetime import timedelta
 from distutils.version import StrictVersion
-from typing import Any, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional
 
-from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Count, Prefetch
-from django.urls import reverse
 from django.utils import timezone
 
 from thunderstore.community.models import Community, PackageListing
@@ -20,6 +18,9 @@ from thunderstore.repository.cache import (
 )
 from thunderstore.storage.models import DataBlob, DataBlobGroup
 from thunderstore.utils.batch import batch
+
+if TYPE_CHECKING:
+    from thunderstore.repository.models import Package, PackageVersion
 
 
 class APIExperimentalPackageIndexCache(S3FileMixin):
@@ -282,22 +283,12 @@ def get_package_listing_chunk(
     return sorted(listings, key=lambda l: order_map[l.id])
 
 
-def _get_sorted_active_versions(package):
-    versions = list(package.versions.all())
+def _get_sorted_active_versions(
+    package: "Package",
+) -> List["PackageVersion"]:
+    versions = [v for v in package.versions.all() if v.is_active]
     versions.sort(key=lambda v: StrictVersion(v.version_number), reverse=True)
     return versions
-
-
-def _version_download_url(version) -> str:
-    path = reverse(
-        "old_urls:packages.download",
-        kwargs={
-            "owner": version.package.owner.name,
-            "name": version.package.name,
-            "version": version.version_number,
-        },
-    )
-    return f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{path}"
 
 
 def listing_to_json(listing: PackageListing) -> bytes:
@@ -330,7 +321,7 @@ def listing_to_json(listing: PackageListing) -> bytes:
                     "dependencies": [
                         d.full_version_name for d in version.dependencies.all()
                     ],
-                    "download_url": _version_download_url(version),
+                    "download_url": version.full_download_url,
                     "downloads": version.downloads,
                     "date_created": version.date_created.isoformat(),
                     "website_url": version.website_url,

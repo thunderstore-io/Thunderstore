@@ -1,8 +1,8 @@
 import json
 from io import BytesIO
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, QuerySet
 from django.http import HttpResponse
 from django.utils.cache import get_conditional_response
 from django.utils.http import http_date
@@ -32,7 +32,9 @@ PACKAGE_SERIALIZER = PackageListingSerializer
 SERIALIZER_BATCH_SIZE = 200
 
 
-def _get_prefetched_listing_queryset(ids):
+def _get_prefetched_listing_queryset(
+    ids: Iterable[int],
+) -> QuerySet[PackageListing]:
     versions_prefetch = Prefetch(
         "package__versions",
         queryset=PackageVersion.objects.filter(is_active=True)

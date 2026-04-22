@@ -13,12 +13,17 @@ from thunderstore.community.factories import (
     SiteFactory,
 )
 from thunderstore.community.models import Community, CommunitySite, PackageListing
+from thunderstore.repository.api.v1.viewsets import _get_prefetched_listing_queryset
 from thunderstore.repository.api.v1.tasks import (
     update_api_v1_caches,
     update_api_v1_chunked_package_caches,
 )
+from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
-from thunderstore.repository.models.cache import get_package_listing_chunk
+from thunderstore.repository.models.cache import (
+    get_package_listing_chunk,
+    _get_sorted_active_versions,
+)
 
 
 @pytest.mark.django_db
@@ -227,3 +232,41 @@ def test_get_package_listing_chunk__retains_received_ordering(count: int) -> Non
 
     for i, listing in enumerate(listings):
         assert listing.id == ordering[i]
+
+
+@pytest.mark.django_db
+def test_get_sorted_active_versions__filters_inactive_and_sorts_descending() -> None:
+    listing = PackageListingFactory()
+    package = listing.package
+    package.versions.all().delete()
+
+    PackageVersionFactory(package=package, version_number="1.0.0", is_active=True)
+    PackageVersionFactory(package=package, version_number="2.0.0", is_active=False)
+    PackageVersionFactory(package=package, version_number="0.5.0", is_active=True)
+    PackageVersionFactory(package=package, version_number="1.5.0", is_active=True)
+
+    versions = _get_sorted_active_versions(package)
+
+    assert [v.version_number for v in versions] == ["1.5.0", "1.0.0", "0.5.0"]
+
+
+@pytest.mark.django_db
+def test_get_prefetched_listing_queryset__prefetches_versions_and_dependencies() -> None:
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    listing = PackageListingFactory()
+    dependency = PackageVersionFactory()
+    version = listing.package.versions.get()
+    version.dependencies.add(dependency)
+
+    prefetched_listing = list(_get_prefetched_listing_queryset([listing.id]))[0]
+
+    with CaptureQueriesContext(connection) as ctx:
+        versions = list(prefetched_listing.package.versions.all())
+        dependencies = list(versions[0].dependencies.all())
+        dependency_owner = dependencies[0].package.owner.name
+
+    assert len(ctx.captured_queries) == 0
+    assert versions[0].is_active is True
+    assert dependency_owner == dependency.package.owner.name
