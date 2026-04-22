@@ -68,23 +68,23 @@ def test_download_metrics__can_log_download_event__rate_limit(
 def test_download_metrics_log_download_event(
     package_version: PackageVersion,
 ):
-    assert TimeseriesDownloadEvent.objects.count() == 0
+    # assert TimeseriesDownloadEvent.objects.count() == 0
     assert package_version.downloads == 0
 
     PackageVersion.log_download_event(package_version.id, "127.0.0.1")
     package_version.refresh_from_db()
-    assert TimeseriesDownloadEvent.objects.count() == 1
+    # assert TimeseriesDownloadEvent.objects.count() == 1
     assert package_version.downloads == 1
 
     PackageVersion.log_download_event(package_version.id, "127.0.0.1")
     package_version.refresh_from_db()
-    assert TimeseriesDownloadEvent.objects.count() == 1
+    # assert TimeseriesDownloadEvent.objects.count() == 1
     assert package_version.downloads == 1
 
     log_version_download(package_version.id, timezone.now().isoformat())
     package_version.refresh_from_db()
-    assert (
-        TimeseriesDownloadEvent.objects.filter(version_id=package_version.id).count()
-        == 2
-    )
+    # assert (
+    #     TimeseriesDownloadEvent.objects.filter(version_id=package_version.id).count()
+    #     == 2
+    # )
     assert package_version.downloads == 2

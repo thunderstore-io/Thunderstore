@@ -1,3 +1,5 @@
+import random
+import time
 from datetime import datetime
 
 from celery import shared_task
@@ -27,11 +29,13 @@ class AnalyticsEventPackageDownload(BaseModel):
 )
 def log_version_download(version_id: int, timestamp: str):
     timestamp_dt = datetime.fromisoformat(timestamp)
+    generated_id = (int(time.time() * 1000) << 20) | random.getrandbits(20)
     with transaction.atomic():
-        event = PackageVersionDownloadEvent.objects.create(
-            version_id=version_id,
-            timestamp=timestamp_dt,
-        )
+        ### Download events are now stored in our analytics database
+        # event = PackageVersionDownloadEvent.objects.create(
+        #     version_id=version_id,
+        #     timestamp=timestamp_dt,
+        # )
         PackageVersion.objects.filter(id=version_id).update(
             downloads=F("downloads") + 1
         )
@@ -42,7 +46,7 @@ def log_version_download(version_id: int, timestamp: str):
             lambda: send_kafka_message(
                 topic=KafkaTopic.A_PACKAGE_DOWNLOAD_V1,
                 payload_string=AnalyticsEventPackageDownload(
-                    id=event.id,
+                    id=generated_id,
                     version_id=version_id,
                     timestamp=timestamp_dt,
                 ).json(),
