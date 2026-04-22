@@ -13,16 +13,16 @@ from thunderstore.community.factories import (
     SiteFactory,
 )
 from thunderstore.community.models import Community, CommunitySite, PackageListing
-from thunderstore.repository.api.v1.viewsets import _get_prefetched_listing_queryset
 from thunderstore.repository.api.v1.tasks import (
     update_api_v1_caches,
     update_api_v1_chunked_package_caches,
 )
+from thunderstore.repository.api.v1.viewsets import _get_prefetched_listing_queryset
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
 from thunderstore.repository.models.cache import (
-    get_package_listing_chunk,
     _get_sorted_active_versions,
+    get_package_listing_chunk,
 )
 
 
