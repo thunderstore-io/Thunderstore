@@ -1,7 +1,8 @@
 import json
 from io import BytesIO
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 
+from django.db.models import Count, Prefetch, QuerySet
 from django.http import HttpResponse
 from django.utils.cache import get_conditional_response
 from django.utils.http import http_date
@@ -23,12 +24,37 @@ from thunderstore.repository.cache import (
     order_package_listing_queryset,
 )
 from thunderstore.repository.mixins import CommunityMixin
-from thunderstore.repository.models import Package
+from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.repository.models.cache import APIV1PackageCache
 from thunderstore.utils.batch import batch
 
 PACKAGE_SERIALIZER = PackageListingSerializer
 SERIALIZER_BATCH_SIZE = 200
+
+
+def _get_prefetched_listing_queryset(
+    ids: Iterable[int],
+) -> QuerySet[PackageListing]:
+    versions_prefetch = Prefetch(
+        "package__versions",
+        queryset=PackageVersion.objects.filter(is_active=True)
+        .select_related("package", "package__owner")
+        .prefetch_related(
+            "dependencies",
+            "dependencies__package",
+            "dependencies__package__owner",
+        ),
+    )
+    return (
+        order_package_listing_queryset(PackageListing.objects.filter(id__in=ids))
+        .select_related("community", "package", "package__owner")
+        .prefetch_related(
+            "categories",
+            "community__sites__site",
+            versions_prefetch,
+        )
+        .annotate(_rating_score=Count("package__package_ratings"))
+    )
 
 
 def serialize_package_list_for_community(community: Community) -> bytes:
@@ -41,9 +67,7 @@ def serialize_package_list_for_community(community: Community) -> bytes:
 
     result.write(b"[")
     for index, ids in enumerate(batch(batch_size, listing_ids)):
-        queryset = order_package_listing_queryset(
-            PackageListing.objects.filter(id__in=ids)
-        )
+        queryset = _get_prefetched_listing_queryset(ids)
         serializer = PACKAGE_SERIALIZER(
             queryset,
             many=True,
