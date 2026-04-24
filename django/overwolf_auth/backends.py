@@ -46,11 +46,11 @@ class OverwolfOAuth2(BaseOAuth2):
     # SCOPE_SEPARATOR = " "
 
     # Overwrite values from BaseOAuth2
-    REDIRECT_STATE = False  # Disable state validation
+    REDIRECT_STATE = False
     # REFRESH_TOKEN_METHOD = "POST"
     # REFRESH_TOKEN_URL = None
     # RESPONSE_TYPE = "code"
-    STATE_PARAMETER = False  # Disable state validation
+    STATE_PARAMETER = True
 
     def extra_data(
         self,
