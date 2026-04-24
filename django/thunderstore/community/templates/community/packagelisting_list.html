@@ -8,7 +8,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-{% cache_until "any_package_updated" "mod-list" 300 page_obj.number cache_vary %}
+{% cache_until "any_package_updated" "mod-list" 300 cache_vary %}
 
 {% if breadcrumbs %}
 <nav class="mt-3" aria-label="breadcrumb">
@@ -32,7 +32,7 @@
 <div class="m-0 mb-2 p-0 w-100">
     <div class="btn-group d-flex" role="group" aria-label="Result ordering">
         {% for entry in sections %}
-            <a href="{% qurl allowed_params section entry.0 page %}" class="btn btn-primary {% if active_section == entry.0 %}active{% endif %}">
+            <a href="{% qurl 'section' entry.0 'page' %}" class="btn btn-primary {% if active_section == entry.0 %}active{% endif %}">
                 {{ entry.1 }}
             </a>
         {% endfor %}
@@ -43,7 +43,7 @@
 <div class="m-0 mb-2 p-0 w-100">
     <div class="btn-group d-flex" role="group" aria-label="Result ordering">
         {% for entry in ordering_modes %}
-            <a href="{% qurl allowed_params ordering entry.0 page %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
+            <a href="{% qurl 'ordering' entry.0 'page' %}" class="btn btn-secondary {% if active_ordering == entry.0 %}active{% endif %}">
                 {{ entry.1 }}
             </a>
         {% endfor %}
