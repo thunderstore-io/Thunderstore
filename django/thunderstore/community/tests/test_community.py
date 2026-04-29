@@ -82,6 +82,15 @@ def test_community_image_url_with_image(dummy_image):
 
 
 @pytest.mark.django_db
+def test_community_icon_url_prefers_link_over_image(dummy_image):
+    external_url = "https://example.com/comm_icon.png"
+    community = CommunityFactory(
+        community_icon=dummy_image, community_icon_link=external_url
+    )
+    assert community.community_icon_url == external_url
+
+
+@pytest.mark.django_db
 def test_background_image_url_when_community_has_no_image():
     community = CommunityFactory()
     url = community.background_image_url
@@ -94,6 +103,15 @@ def test_background_image_url_when_community_has_image(dummy_image):
     url = community.background_image_url
     assert isinstance(url, str)
     assert len(url) > 0
+
+
+@pytest.mark.django_db
+def test_background_image_url_prefers_link_over_image(dummy_image):
+    external_url = "https://example.com/bg.png"
+    community = CommunityFactory(
+        background_image=dummy_image, background_image_link=external_url
+    )
+    assert community.background_image_url == external_url
 
 
 @pytest.mark.django_db
@@ -112,6 +130,15 @@ def test_hero_image_url_when_community_has_image(dummy_hero_image):
 
 
 @pytest.mark.django_db
+def test_hero_image_url_prefers_link_over_image(dummy_hero_image):
+    external_url = "https://example.com/hero.png"
+    community = CommunityFactory(
+        hero_image=dummy_hero_image, hero_image_link=external_url
+    )
+    assert community.hero_image_url == external_url
+
+
+@pytest.mark.django_db
 def test_cover_image_url_when_community_has_no_image():
     community = CommunityFactory()
     url = community.cover_image_url
@@ -127,6 +154,13 @@ def test_cover_image_url_when_community_has_image(dummy_image):
 
 
 @pytest.mark.django_db
+def test_cover_image_url_prefers_link_over_image(dummy_image):
+    external_url = "https://example.com/cover.png"
+    community = CommunityFactory(cover_image=dummy_image, cover_image_link=external_url)
+    assert community.cover_image_url == external_url
+
+
+@pytest.mark.django_db
 def test_icon_url_when_community_has_no_image():
     community = CommunityFactory()
     url = community.icon_url
@@ -139,6 +173,13 @@ def test_icon_url_when_community_has_image(dummy_image):
     url = community.icon_url
     assert isinstance(url, str)
     assert len(url) > 0
+
+
+@pytest.mark.django_db
+def test_icon_url_prefers_link_over_image(dummy_image):
+    external_url = "https://example.com/external_icon.png"
+    community = CommunityFactory(icon=dummy_image, icon_link=external_url)
+    assert community.icon_url == external_url
 
 
 @pytest.mark.django_db
