@@ -53,6 +53,12 @@ class Community(TimestampMixin, models.Model):
     short_description = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)
 
+    icon_link = models.URLField(max_length=1024, blank=True, null=True)
+    community_icon_link = models.URLField(max_length=1024, blank=True, null=True)
+    cover_image_link = models.URLField(max_length=1024, blank=True, null=True)
+    background_image_link = models.URLField(max_length=1024, blank=True, null=True)
+    hero_image_link = models.URLField(max_length=1024, blank=True, null=True)
+
     icon = models.ImageField(
         upload_to=get_community_filepath,
         width_field="icon_width",
@@ -198,37 +204,47 @@ class Community(TimestampMixin, models.Model):
     @cached_property
     def background_image_url(self) -> Optional[str]:
         """
-        Return URL to the community's background image if one exists.
+        Return the external link if provided; otherwise, return the uploaded file URL.
         """
-        return None if not bool(self.background_image) else self.background_image.url
+        if self.background_image_link:
+            return self.background_image_link
+        return self.background_image.url if self.background_image else None
 
     @cached_property
     def hero_image_url(self) -> Optional[str]:
         """
-        Return URL to the community's hero image if one exists.
+        Return the external link if provided; otherwise, return the uploaded file URL.
         """
-        return None if not bool(self.hero_image) else self.hero_image.url
+        if self.hero_image_link:
+            return self.hero_image_link
+        return self.hero_image.url if self.hero_image else None
 
     @cached_property
     def cover_image_url(self) -> Optional[str]:
         """
-        Return URL to the community's cover image if one exists.
+        Return the external link if provided; otherwise, return the uploaded file URL.
         """
-        return None if not bool(self.cover_image) else self.cover_image.url
+        if self.cover_image_link:
+            return self.cover_image_link
+        return self.cover_image.url if self.cover_image else None
 
     @cached_property
     def community_icon_url(self) -> Optional[str]:
         """
-        Return URL to the community's icon image if one exists.
+        Return the external link if provided; otherwise, return the uploaded file URL.
         """
-        return None if not bool(self.community_icon) else self.community_icon.url
+        if self.community_icon_link:
+            return self.community_icon_link
+        return self.community_icon.url if self.community_icon else None
 
     @cached_property
     def icon_url(self) -> Optional[str]:
         """
-        Return URL to the community's icon image if one exists.
+        Return the external link if provided; otherwise, return the uploaded file URL.
         """
-        return None if not bool(self.icon) else self.icon.url
+        if self.icon_link:
+            return self.icon_link
+        return self.icon.url if self.icon else None
 
     def ensure_user_can_moderate_packages(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
