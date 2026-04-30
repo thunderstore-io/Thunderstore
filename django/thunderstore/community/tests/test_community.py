@@ -142,6 +142,27 @@ def test_icon_url_when_community_has_image(dummy_image):
 
 
 @pytest.mark.django_db
+def test_image_url_logic_priority_path_and_host(settings, dummy_image):
+    settings.COMMUNITY_IMAGE_HOST = "https://gcdn.thunderstore.io/"
+    community = CommunityFactory(icon_path="/icons/test.png", icon=dummy_image)
+    assert community.icon_url == "https://gcdn.thunderstore.io/icons/test.png"
+
+
+@pytest.mark.django_db
+def test_image_url_logic_priority_no_path(settings, dummy_image):
+    settings.COMMUNITY_IMAGE_HOST = "https://gcdn.thunderstore.io/"
+    community_no_path = CommunityFactory(icon_path=None, icon=dummy_image)
+    assert community_no_path.icon_url == community_no_path.icon.url
+
+
+@pytest.mark.django_db
+def test_image_url_logic_priority_no_host(settings, dummy_image):
+    settings.COMMUNITY_IMAGE_HOST = ""
+    community = CommunityFactory(icon_path="/icons/test.png", icon=dummy_image)
+    assert community.icon_url == community.icon.url
+
+
+@pytest.mark.django_db
 def test_community_site_get_absolute_url(community_site: CommunitySite) -> None:
     assert community_site.get_absolute_url == "/c/test/"
 
