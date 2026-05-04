@@ -1,5 +1,9 @@
 import pytest
 
+from thunderstore.community.consts import (
+    AI_GENERATED_CATEGORY_NAME,
+    AI_GENERATED_CATEGORY_SLUG,
+)
 from thunderstore.community.models import (
     Community,
     PackageCategory,
@@ -93,3 +97,61 @@ def test_import_autolisted_packages(active_package: Package):
     assert PackageListing.objects.filter(is_auto_imported=True).count() == 0
     import_schema_communities(schema)
     assert PackageListing.objects.filter(is_auto_imported=True).count() == 1
+
+
+@pytest.mark.django_db
+def test_import_attest_ai_default_off():
+    schema = Schema(
+        schemaVersion="0.0.1",
+        games=dict(),
+        communities={
+            "test": SchemaCommunity(
+                displayName="Test community",
+                categories=dict(),
+                sections=dict(),
+            ),
+        },
+        packageInstallers=dict(),
+    )
+    import_schema_communities(schema)
+    community = Community.objects.get(identifier="test")
+    assert community.require_ai_attestation is False
+    assert (
+        PackageCategory.objects.filter(
+            slug=AI_GENERATED_CATEGORY_SLUG, community=community
+        ).exists()
+        is False
+    )
+
+
+@pytest.mark.django_db
+def test_import_attest_ai_provisions_category():
+    schema = Schema(
+        schemaVersion="0.0.1",
+        games=dict(),
+        communities={
+            "test": SchemaCommunity(
+                displayName="Test community",
+                categories=dict(),
+                sections=dict(),
+                attestAi=True,
+            ),
+        },
+        packageInstallers=dict(),
+    )
+    import_schema_communities(schema)
+    community = Community.objects.get(identifier="test")
+    assert community.require_ai_attestation is True
+    category = PackageCategory.objects.get(
+        slug=AI_GENERATED_CATEGORY_SLUG, community=community
+    )
+    assert category.name == AI_GENERATED_CATEGORY_NAME
+
+    # Idempotent re-sync does not duplicate the category
+    import_schema_communities(schema)
+    assert (
+        PackageCategory.objects.filter(
+            slug=AI_GENERATED_CATEGORY_SLUG, community=community
+        ).count()
+        == 1
+    )
