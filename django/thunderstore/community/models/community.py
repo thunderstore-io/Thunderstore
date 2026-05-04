@@ -119,6 +119,10 @@ class Community(TimestampMixin, models.Model):
     # Will hide/show "Install with Mod Manager" button on package pages
     has_mod_manager_support = models.BooleanField(default=True)
 
+    # Will require uploaders to answer a yes/no AI attestation question;
+    # answering yes tags the package with the auto-provisioned ai-generated category
+    require_ai_attestation = models.BooleanField(default=False)
+
     search_keywords = ArrayField(
         models.CharField(max_length=512),
         blank=True,

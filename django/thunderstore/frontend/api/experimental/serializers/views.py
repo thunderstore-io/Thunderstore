@@ -17,6 +17,7 @@ class CommunitySerializer(serializers.ModelSerializer):
             "discord_url",
             "wiki_url",
             "require_package_listing_approval",
+            "require_ai_attestation",
         )
 
 
