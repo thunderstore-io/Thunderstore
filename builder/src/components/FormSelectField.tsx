@@ -17,7 +17,7 @@ export const FormSelectField: React.FC<FormSelectFieldProps<any, any>> = (
     props
 ) => {
     const defaultValue = useMemo(() => {
-        if (!props.default) return undefined;
+        if (!props.default) return props.isMulti ? [] : undefined;
         if (props.isMulti) {
             const list = Array.isArray(props.default)
                 ? props.default

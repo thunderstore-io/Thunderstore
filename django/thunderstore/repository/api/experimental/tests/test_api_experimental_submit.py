@@ -400,3 +400,95 @@ def test_api_experimental_submit_package_ai_attestation_no_skips_category(
     package = PackageReference(team.name, "name", "1.0.0").package
     listing = PackageListing.objects.get(community=community, package=package)
     assert listing.categories.count() == 0
+
+
+@pytest.mark.django_db
+def test_api_experimental_submit_package_ai_attestation_no_strips_manual_chip(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+    community: Community,
+    manifest_v1_package_upload_id: str,
+):
+    community.require_ai_attestation = True
+    community.save()
+    PackageCategoryFactory(
+        community=community,
+        slug=AI_GENERATED_CATEGORY_SLUG,
+        name="AI Generated",
+    )
+    TeamMember.objects.create(
+        user=user,
+        team=team,
+        role=TeamMemberRole.owner,
+    )
+
+    api_client.force_authenticate(user=user)
+    response = api_client.post(
+        reverse("api:experimental:submission.submit"),
+        json.dumps(
+            {
+                "upload_uuid": manifest_v1_package_upload_id,
+                "author_name": team.name,
+                "community_categories": {
+                    community.identifier: [AI_GENERATED_CATEGORY_SLUG],
+                },
+                "communities": [community.identifier],
+                "has_nsfw_content": False,
+                "is_ai_generated": False,
+            }
+        ),
+        content_type="application/json",
+    )
+    print(response.content)
+    assert response.status_code == 200
+
+    package = PackageReference(team.name, "name", "1.0.0").package
+    listing = PackageListing.objects.get(community=community, package=package)
+    assert listing.categories.count() == 0
+
+
+@pytest.mark.django_db
+def test_api_experimental_submit_package_ai_generated_tag_on_opt_out_community(
+    api_client: APIClient,
+    user: UserType,
+    team: Team,
+    community: Community,
+    manifest_v1_package_upload_id: str,
+):
+    assert community.require_ai_attestation is False
+    PackageCategoryFactory(
+        community=community,
+        slug=AI_GENERATED_CATEGORY_SLUG,
+        name="AI Generated",
+    )
+    TeamMember.objects.create(
+        user=user,
+        team=team,
+        role=TeamMemberRole.owner,
+    )
+
+    api_client.force_authenticate(user=user)
+    response = api_client.post(
+        reverse("api:experimental:submission.submit"),
+        json.dumps(
+            {
+                "upload_uuid": manifest_v1_package_upload_id,
+                "author_name": team.name,
+                "community_categories": {
+                    community.identifier: [AI_GENERATED_CATEGORY_SLUG],
+                },
+                "communities": [community.identifier],
+                "has_nsfw_content": False,
+            }
+        ),
+        content_type="application/json",
+    )
+    print(response.content)
+    assert response.status_code == 200
+
+    package = PackageReference(team.name, "name", "1.0.0").package
+    listing = PackageListing.objects.get(community=community, package=package)
+    assert set(listing.categories.values_list("slug", flat=True)) == {
+        AI_GENERATED_CATEGORY_SLUG,
+    }

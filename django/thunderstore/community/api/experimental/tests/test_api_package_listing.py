@@ -6,6 +6,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.test import APIClient
 
 from conftest import TestUserTypes
+from thunderstore.community.consts import AI_GENERATED_CATEGORY_SLUG
+from thunderstore.community.factories import PackageCategoryFactory
 from thunderstore.community.models import PackageCategory, PackageListing
 from thunderstore.repository.models import TeamMember
 
@@ -73,3 +75,36 @@ def test_api_experimental_package_listing_update(
     ]
     assert active_package_listing.categories.count() == 1
     assert package_category in active_package_listing.categories.all()
+
+
+@pytest.mark.django_db
+def test_api_experimental_package_listing_update_ai_generated_in_attesting_community(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+    team_owner: TeamMember,
+):
+    community = active_package_listing.community
+    community.require_ai_attestation = True
+    community.save()
+    ai_category = PackageCategoryFactory(
+        community=community,
+        slug=AI_GENERATED_CATEGORY_SLUG,
+        name="AI Generated",
+    )
+    api_client.force_authenticate(user=team_owner.user)
+
+    response = api_client.post(
+        f"/api/experimental/package-listing/{active_package_listing.pk}/update/",
+        data=json.dumps({"categories": [AI_GENERATED_CATEGORY_SLUG]}),
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert ai_category in active_package_listing.categories.all()
+
+    response = api_client.post(
+        f"/api/experimental/package-listing/{active_package_listing.pk}/update/",
+        data=json.dumps({"categories": []}),
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert active_package_listing.categories.count() == 0
