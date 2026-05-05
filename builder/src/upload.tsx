@@ -434,8 +434,11 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                                 <div className={"w-100 attestation-prompt"}>
                                     <p>
                                         One or more of the selected communities
-                                        requires authors to disclose whether AI
-                                        was used to create this package.
+                                        requires authors to disclose if any
+                                        significant portion of this package was
+                                        created using AI tools. Failing to do
+                                        so may result in the package being
+                                        removed from Thunderstore.
                                     </p>
                                     <div className={"attestation-options"}>
                                         <label>
