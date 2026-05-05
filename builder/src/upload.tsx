@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/browser";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useCallback, useRef, useEffect, useState } from "react";
 import {
     Community,
     ExperimentalApi,
@@ -19,6 +19,7 @@ import { FormSelectField } from "./components/FormSelectField";
 import { CommunityCategorySelector } from "./components/CommunitySelector";
 import { FormRow } from "./components/FormRow";
 import { SubmitPackage } from "./api/packageSubmit";
+import { useAiAttestationSync } from "./state/AiAttestationSync";
 import { validateZip } from "./uploadZipValidation";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
@@ -89,10 +90,11 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         setSubmissionStatus,
     ] = useState<SubmissionStatus | null>(null);
 
-    const { register, handleSubmit, control, watch } = useForm();
+    const { register, handleSubmit, control, watch, setValue } = useForm();
     const {
         control: categoriesControl,
         getValues: getCategoriesFormValues,
+        reset: resetCategoriesForm,
     } = useForm<{
         [key: string]: { label: string; value: string }[] | undefined;
     }>();
@@ -111,14 +113,19 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         | { value: string; label: string }[]
         | undefined = watch("communities", undefined);
 
-    const requireAiAttestation =
-        communities != null &&
-        selectedCommunities != null &&
-        selectedCommunities.some((sc) =>
-            communities.some(
-                (c) => c.identifier === sc.value && c.require_ai_attestation
-            )
-        );
+    const setAiAnswer = useCallback(
+        (v: "yes" | "no") => setValue("is_ai_generated", v),
+        [setValue]
+    );
+    const requireAiAttestation = useAiAttestationSync({
+        communities,
+        selectedCommunityIds: selectedCommunities?.map((c) => c.value) ?? [],
+        aiAnswer: watch("is_ai_generated") as string | undefined,
+        setAiAnswer,
+        categoriesControl,
+        getCategoryValues: getCategoriesFormValues,
+        resetCategoryValues: resetCategoriesForm,
+    });
 
     useOnBeforeUnload(!!file && submissionStatus != SubmissionStatus.COMPLETE);
 
@@ -436,9 +443,9 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                                         One or more of the selected communities
                                         requires authors to disclose if any
                                         significant portion of this package was
-                                        created using AI tools. Failing to do
-                                        so may result in the package being
-                                        removed from Thunderstore.
+                                        created using AI tools. Failing to do so
+                                        may result in the package being removed
+                                        from Thunderstore.
                                     </p>
                                     <div className={"attestation-options"}>
                                         <label>

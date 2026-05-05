@@ -242,14 +242,17 @@ class PackageSubmissionMetadataSerializer(PackageUploadMetadataSerializer):
                 },
             )
 
-        if is_ai_generated:
+        if is_ai_generated is not None:
             community_categories = dict(attrs.get("community_categories") or {})
             for community in communities:
                 if not community.require_ai_attestation:
                     continue
                 slugs = list(community_categories.get(community.identifier) or [])
-                if AI_GENERATED_CATEGORY_SLUG not in slugs:
+                has_slug = AI_GENERATED_CATEGORY_SLUG in slugs
+                if is_ai_generated and not has_slug:
                     slugs.append(AI_GENERATED_CATEGORY_SLUG)
+                elif not is_ai_generated and has_slug:
+                    slugs = [s for s in slugs if s != AI_GENERATED_CATEGORY_SLUG]
                 community_categories[community.identifier] = slugs
             attrs["community_categories"] = community_categories
 
