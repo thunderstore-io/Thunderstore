@@ -74,10 +74,9 @@ input:focus {
 }
 
 .attestation-prompt {
-    border-left: 3px solid $info;
-    background-color: rgba($info, 0.08);
+    background-color: rgba($info, 0.1);
     border-radius: 4px;
-    padding: 12px 14px;
+    padding: 12px 16px;
 
     p {
         margin-bottom: 10px;
@@ -86,7 +85,7 @@ input:focus {
     .attestation-options {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 24px;
+        gap: 8px 16px;
         align-items: center;
     }
 
@@ -106,6 +105,5 @@ input:focus {
         padding: 0;
         border: none;
         box-shadow: none;
-        cursor: pointer;
     }
 }
