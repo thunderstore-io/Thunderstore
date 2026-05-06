@@ -1,6 +1,10 @@
 [run]
 branch = True
 data_file = coverage.coverage
+# relative_files: stable thunderstore/... paths in coverage.xml across Docker vs host.
+# Cobertura may still use <source>/app</source>; run patch_coverage_xml_for_gutters.py
+# after `coverage xml` (or chain it in the same docker compose exec) for Coverage Gutters.
+relative_files = True
 omit =
     *migrations/*
     *settings*

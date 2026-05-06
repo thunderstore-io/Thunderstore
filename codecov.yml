@@ -1,0 +1,3 @@
+# https://docs.codecov.com/docs/codecov-yaml
+ignore:
+  - django/patch_coverage_xml_for_gutters.py
