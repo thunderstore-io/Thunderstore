@@ -54,6 +54,7 @@ class Community(TimestampMixin, models.Model):
     short_description = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)
 
+    # These require COMMUNITY_IMAGE_HOST to be set in the .env to function
     icon_path = models.CharField(max_length=512, blank=True, null=True)
     community_icon_path = models.CharField(max_length=512, blank=True, null=True)
     cover_image_path = models.CharField(max_length=512, blank=True, null=True)
