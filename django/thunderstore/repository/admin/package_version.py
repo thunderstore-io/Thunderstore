@@ -50,7 +50,6 @@ class PackageVersionAdmin(admin.ModelAdmin):
     list_select_related = (
         "package",
         "package__owner",
-        "package__namespace",
     )
     list_filter = ("is_active", "date_created")
     list_display = (
@@ -64,8 +63,8 @@ class PackageVersionAdmin(admin.ModelAdmin):
         "has_file_tree",
     )
     search_fields = (
+        "package__name",
         "package__owner__name",
-        "package__namespace__name",
         "version_number",
     )
     date_hierarchy = "date_created"
