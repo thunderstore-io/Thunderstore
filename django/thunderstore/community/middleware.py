@@ -50,12 +50,16 @@ class CommunitySiteMiddleware:
         request.site = None
         request.community = None
         request_host = request.META["HTTP_HOST"]
+        old_exclusive_host = getattr(settings, "OLD_EXCLUSIVE_HOST", None)
         if (
             settings.AUTH_EXCLUSIVE_HOST
             and request_host == settings.AUTH_EXCLUSIVE_HOST
         ):
             if not request.path.startswith(self.auth_path):
                 return self.get_404(request)
+        elif old_exclusive_host and request_host == old_exclusive_host:
+            # Allow all paths on the old exclusive host without enforcing community context
+            pass
         elif not request.path.startswith(self.admin_path):
             try:
                 add_community_context_to_request(request)
