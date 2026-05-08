@@ -31,9 +31,9 @@
         <script src="{% static 'js/all.js' %}"></script>
     </head>
     <body>
-        {% if community.background_image %}
+        {% if community.background_image_url %}
             <div class="background">
-                <div class="image" style="background: url({{ community.background_image.url }});"></div>
+                <div class="image" style="background: url({{ community.background_image_url }});"></div>
                 <div class="tint"></div>
             </div>
         {% endif %}

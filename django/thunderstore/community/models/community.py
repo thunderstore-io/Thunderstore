@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING, Optional
 
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -52,6 +53,13 @@ class Community(TimestampMixin, models.Model):
     slogan = models.CharField(max_length=512, blank=True, null=True)
     short_description = models.CharField(max_length=512, blank=True, null=True)
     description = models.CharField(max_length=512, blank=True, null=True)
+
+    # These require COMMUNITY_IMAGE_HOST to be set in the .env to function
+    icon_path = models.CharField(max_length=512, blank=True, null=True)
+    community_icon_path = models.CharField(max_length=512, blank=True, null=True)
+    cover_image_path = models.CharField(max_length=512, blank=True, null=True)
+    background_image_path = models.CharField(max_length=512, blank=True, null=True)
+    hero_image_path = models.CharField(max_length=512, blank=True, null=True)
 
     icon = models.ImageField(
         upload_to=get_community_filepath,
@@ -195,40 +203,40 @@ class Community(TimestampMixin, models.Model):
             self.__membership_cache[user.pk] = self.members.filter(user=user).first()
         return self.__membership_cache[user.pk]
 
+    def _get_effective_url(
+        self, path_field: Optional[str], image_field: models.ImageField
+    ) -> Optional[str]:
+        """
+        If we have a COMMUNITY_IMAGE_HOST and image path, use it, otherwise fallback to legacy image fields
+        """
+        host = getattr(settings, "COMMUNITY_IMAGE_HOST", None)
+
+        if host and path_field:
+            return f"{host.rstrip('/')}/{path_field.lstrip('/')}"
+
+        return image_field.url if image_field else None
+
     @cached_property
     def background_image_url(self) -> Optional[str]:
-        """
-        Return URL to the community's background image if one exists.
-        """
-        return None if not bool(self.background_image) else self.background_image.url
+        return self._get_effective_url(
+            self.background_image_path, self.background_image
+        )
 
     @cached_property
     def hero_image_url(self) -> Optional[str]:
-        """
-        Return URL to the community's hero image if one exists.
-        """
-        return None if not bool(self.hero_image) else self.hero_image.url
+        return self._get_effective_url(self.hero_image_path, self.hero_image)
 
     @cached_property
     def cover_image_url(self) -> Optional[str]:
-        """
-        Return URL to the community's cover image if one exists.
-        """
-        return None if not bool(self.cover_image) else self.cover_image.url
+        return self._get_effective_url(self.cover_image_path, self.cover_image)
 
     @cached_property
     def community_icon_url(self) -> Optional[str]:
-        """
-        Return URL to the community's icon image if one exists.
-        """
-        return None if not bool(self.community_icon) else self.community_icon.url
+        return self._get_effective_url(self.community_icon_path, self.community_icon)
 
     @cached_property
     def icon_url(self) -> Optional[str]:
-        """
-        Return URL to the community's icon image if one exists.
-        """
-        return None if not bool(self.icon) else self.icon.url
+        return self._get_effective_url(self.icon_path, self.icon)
 
     def ensure_user_can_moderate_packages(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
