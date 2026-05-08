@@ -538,7 +538,6 @@ CACHALOT_UNCACHABLE_TABLES = frozenset(
         "django_session",
         "metrics_packageversiondownloadevent",
         "repository_packageversion",
-        "repository_packageversiondownloadevent",
         "repository_packagerating",
         "modpacks_legacyprofile",
     )

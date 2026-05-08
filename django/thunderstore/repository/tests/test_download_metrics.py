@@ -10,9 +10,6 @@ from thunderstore.metrics.models import (
     PackageVersionDownloadEvent as TimeseriesDownloadEvent,
 )
 from thunderstore.repository.models import PackageVersion
-from thunderstore.repository.models import (
-    PackageVersionDownloadEvent as LegacyDownloadEvent,
-)
 from thunderstore.repository.tasks.downloads import log_version_download
 
 
