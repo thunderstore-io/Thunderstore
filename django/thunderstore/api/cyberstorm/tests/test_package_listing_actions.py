@@ -271,3 +271,24 @@ def test_unlist_package_listing(
         data={},
         expected_status_code_map=expected_status_code_map,
     )
+
+
+@pytest.mark.django_db
+def test_report_package_listing_limit(
+    api_client: APIClient, active_package_listing: PackageListing
+):
+    """Test that users cannot report the same package listing multiple times."""
+
+    user = TestUserTypes.get_user_by_type(TestUserTypes.regular_user)
+    api_client.force_authenticate(user=user)
+    url = get_report_url(active_package_listing)
+
+    data = json.dumps({"reason": "Spam"})
+    response = api_client.post(url, data=data, content_type="application/json")
+    assert response.status_code == 200
+
+    response = api_client.post(url, data=data, content_type="application/json")
+    error_msg = "You have already reported this package listing"
+
+    assert response.status_code == 403
+    assert response.json() == {"non_field_errors": [error_msg]}
