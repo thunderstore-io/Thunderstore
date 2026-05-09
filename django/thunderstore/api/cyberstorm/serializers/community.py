@@ -32,6 +32,7 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     total_package_count = serializers.SerializerMethodField()
     has_mod_manager_support = serializers.BooleanField()
     is_listed = serializers.BooleanField()
+    require_ai_attestation = serializers.BooleanField()
 
     def get_total_download_count(self, obj) -> int:
         return obj.aggregated.download_count

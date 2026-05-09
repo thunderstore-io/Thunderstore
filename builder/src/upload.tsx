@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/browser";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useCallback, useRef, useEffect, useState } from "react";
 import {
     Community,
     ExperimentalApi,
@@ -19,6 +19,7 @@ import { FormSelectField } from "./components/FormSelectField";
 import { CommunityCategorySelector } from "./components/CommunitySelector";
 import { FormRow } from "./components/FormRow";
 import { SubmitPackage } from "./api/packageSubmit";
+import { useAiAttestationSync } from "./state/AiAttestationSync";
 import { validateZip } from "./uploadZipValidation";
 
 function getUploadProgressBarcolor(uploadStatus: FileUploadStatus | undefined) {
@@ -48,6 +49,7 @@ export class FormErrors {
     communitiesError: string | null = null;
     categoriesError: string | null = null;
     nsfwError: string | null = null;
+    aiAttestationError: string | null = null;
     generalErrors: string[] = [];
     fileErrors: string[] = [];
 
@@ -57,6 +59,7 @@ export class FormErrors {
             this.communitiesError == null &&
             this.categoriesError == null &&
             this.nsfwError == null &&
+            this.aiAttestationError == null &&
             this.generalErrors.length == 0
         );
     }
@@ -87,10 +90,11 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         setSubmissionStatus,
     ] = useState<SubmissionStatus | null>(null);
 
-    const { register, handleSubmit, control, watch } = useForm();
+    const { register, handleSubmit, control, watch, setValue } = useForm();
     const {
         control: categoriesControl,
         getValues: getCategoriesFormValues,
+        reset: resetCategoriesForm,
     } = useForm<{
         [key: string]: { label: string; value: string }[] | undefined;
     }>();
@@ -108,6 +112,20 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
     const selectedCommunities:
         | { value: string; label: string }[]
         | undefined = watch("communities", undefined);
+
+    const setAiAnswer = useCallback(
+        (v: "yes" | "no") => setValue("is_ai_generated", v),
+        [setValue]
+    );
+    const requireAiAttestation = useAiAttestationSync({
+        communities,
+        selectedCommunityIds: selectedCommunities?.map((c) => c.value) ?? [],
+        aiAnswer: watch("is_ai_generated") as string | undefined,
+        setAiAnswer,
+        categoriesControl,
+        getCategoryValues: getCategoriesFormValues,
+        resetCategoryValues: resetCategoriesForm,
+    });
 
     useOnBeforeUnload(!!file && submissionStatus != SubmissionStatus.COMPLETE);
 
@@ -171,12 +189,19 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         const uploadCategories = transformSelectedCategories();
         const uploadNsfw = !!data.has_nsfw_content;
 
+        const aiAnswer = data.is_ai_generated;
+        const isAiGenerated =
+            aiAnswer === "yes" ? true : aiAnswer === "no" ? false : null;
+
         if (uploadTeam == null) {
             errors.teamError = "Selecting a team is required";
         }
         if (uploadCommunities.length <= 0) {
             errors.communitiesError =
                 "Selecting at least a single community is required";
+        }
+        if (requireAiAttestation && isAiGenerated === null) {
+            errors.aiAttestationError = "Please disclose whether AI was used";
         }
 
         if (errors.hasErrors) {
@@ -197,6 +222,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                         community_categories: uploadCategories,
                         communities: uploadCommunities,
                         has_nsfw_content: uploadNsfw,
+                        is_ai_generated: isAiGenerated,
                     },
                     useAsyncFlow: props.useAsyncFlow,
                 });
@@ -229,6 +255,10 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                         if (error.has_nsfw_content) {
                             errors.nsfwError =
                                 error.has_nsfw_content[0] || null;
+                        }
+                        if (error.is_ai_generated) {
+                            errors.aiAttestationError =
+                                error.is_ai_generated[0] || null;
                         }
                         if (error.detail) {
                             errors.generalErrors.push(error.detail);
@@ -405,6 +435,44 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                                 {...register("has_nsfw_content")}
                             />
                         </FormRow>
+
+                        {requireAiAttestation && (
+                            <div className={"field-wrapper"}>
+                                <div className={"w-100 attestation-prompt"}>
+                                    <p>
+                                        One or more of the selected communities
+                                        requires authors to disclose if any
+                                        significant portion of this package was
+                                        created using AI tools. Failing to do so
+                                        may result in the package being removed
+                                        from Thunderstore.
+                                    </p>
+                                    <div className={"attestation-options"}>
+                                        <label>
+                                            <input
+                                                type={"radio"}
+                                                value={"yes"}
+                                                {...register("is_ai_generated")}
+                                            />
+                                            <span>Yes, AI was used</span>
+                                        </label>
+                                        <label>
+                                            <input
+                                                type={"radio"}
+                                                value={"no"}
+                                                {...register("is_ai_generated")}
+                                            />
+                                            <span>No, AI was not used</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                {formErrors.aiAttestationError && (
+                                    <div className={"text-danger field-errors"}>
+                                        {formErrors.aiAttestationError}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <button
