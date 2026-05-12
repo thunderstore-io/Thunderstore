@@ -809,6 +809,32 @@ def test_listing_by_dependency_view__returns_only_dependants_of_requested_packag
 
 
 @pytest.mark.django_db
+def test_listing_by_dependency_view__ignores_packages_when_only_older_version_depends_on_target(
+    api_client: APIClient,
+    community: Community,
+) -> None:
+    target_listing = PackageListingFactory(community_=community)
+    target_dependency_id = target_listing.package.latest.id
+
+    dependant_listing = PackageListingFactory(community_=community)
+    dependant_listing.package.latest.dependencies.set([target_dependency_id])
+
+    newer_version = PackageVersionFactory(
+        package=dependant_listing.package,
+        version_number="1.0.1",
+    )
+    dependant_listing.package.latest = newer_version
+    dependant_listing.package.save(update_fields=("latest",))
+
+    response = api_client.get(
+        f"/api/cyberstorm/listing/{community.identifier}/{target_listing.package.namespace.name}/{target_listing.package.name}/dependants/",
+    )
+    result = response.json()
+
+    assert result["count"] == 0
+
+
+@pytest.mark.django_db
 def test_listing_by_dependency_view__returns_only_packages_listed_in_community(
     api_client: APIClient,
     community: Community,
