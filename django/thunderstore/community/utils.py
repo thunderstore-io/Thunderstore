@@ -14,6 +14,10 @@ def get_community_for_request(request):
     return Community.objects.create(identifier="riskofrain2", name="Risk of Rain 2")
 
 
+def get_default_community() -> Optional[Community]:
+    return Community.objects.filter(identifier="riskofrain2").first()
+
+
 def get_community_site_for_request(request):
     site = get_current_site(request)
     return CommunitySite.objects.select_related("site", "community").get(site=site)
