@@ -8,6 +8,15 @@ from thunderstore.community.middleware import CommunitySiteMiddleware
 from thunderstore.community.models import Community
 
 
+def make_get_response(content: bytes = b"OK", status: int = 200):
+    def get_response(req):
+        from django.http import HttpResponse
+
+        return HttpResponse(content, status=status)
+
+    return get_response
+
+
 @pytest.mark.parametrize("protocol", ("http://", "https://"))
 @pytest.mark.parametrize(
     "primary_domain, status, content",
@@ -42,14 +51,16 @@ def test_community_site_middleware_get_404(
         ("/", True),
         ("/any/path/", True),
         ("/c/some_community/", True),
-        ("/admin/", False),
+        ("/djangoadmin/", False),
     ),
 )
 def test_community_site_middleware_old_exclusive_host(
     settings: Any, path: str, expect_community: bool
 ) -> None:
     # Ensure the community exists so get_default_community finds it
-    Community.objects.get_or_create(identifier="riskofrain2", defaults={"name": "Risk of Rain 2"})
+    Community.objects.get_or_create(
+        identifier="riskofrain2", defaults={"name": "Risk of Rain 2"}
+    )
 
     settings.OLD_EXCLUSIVE_HOST = "old.thunderstore.localhost"
     settings.AUTH_EXCLUSIVE_HOST = "auth.thunderstore.localhost"
@@ -92,3 +103,85 @@ def test_community_site_middleware_old_exclusive_host_missing_community(
 
     assert response.status_code == 404
     assert b"Community not found" in response.content
+
+
+def test_community_site_middleware_auth_exclusive_host_allows_auth_paths(
+    settings: Any,
+) -> None:
+    settings.AUTH_EXCLUSIVE_HOST = "auth.thunderstore.localhost"
+    settings.OLD_EXCLUSIVE_HOST = None
+    settings.PRIMARY_HOST = "thunderstore.localhost"
+
+    request = RequestFactory().get(
+        "/auth/login/", HTTP_HOST="auth.thunderstore.localhost"
+    )
+    middleware = CommunitySiteMiddleware(make_get_response())
+    response = middleware(request)
+
+    assert response.status_code == 200
+    assert request.community is None
+    assert request.site is None
+
+
+def test_community_site_middleware_auth_exclusive_host_blocks_non_auth_paths(
+    settings: Any,
+) -> None:
+    settings.AUTH_EXCLUSIVE_HOST = "auth.thunderstore.localhost"
+    settings.OLD_EXCLUSIVE_HOST = None
+    settings.PRIMARY_HOST = None
+
+    request = RequestFactory().get("/", HTTP_HOST="auth.thunderstore.localhost")
+    middleware = CommunitySiteMiddleware(make_get_response())
+    response = middleware(request)
+
+    assert response.status_code == 404
+
+
+def test_community_site_middleware_admin_path_skips_community_context(
+    settings: Any,
+) -> None:
+    settings.AUTH_EXCLUSIVE_HOST = None
+    settings.OLD_EXCLUSIVE_HOST = None
+
+    request = RequestFactory().get("/djangoadmin/", HTTP_HOST="testsite.test")
+    middleware = CommunitySiteMiddleware(make_get_response())
+    response = middleware(request)
+
+    assert response.status_code == 200
+    assert request.community is None
+    assert request.site is None
+
+
+@pytest.mark.django_db
+def test_community_site_middleware_unknown_host_returns_404(
+    settings: Any,
+) -> None:
+    settings.AUTH_EXCLUSIVE_HOST = None
+    settings.OLD_EXCLUSIVE_HOST = None
+    settings.PRIMARY_HOST = None
+    settings.ALLOWED_HOSTS = ["unknown.thunderstore.localhost"]
+
+    request = RequestFactory().get("/", HTTP_HOST="unknown.thunderstore.localhost")
+    middleware = CommunitySiteMiddleware(make_get_response())
+    response = middleware(request)
+
+    assert response.status_code == 404
+    assert b"Community not found" in response.content
+
+
+@pytest.mark.django_db
+def test_community_site_middleware_unknown_host_redirects_to_primary(
+    settings: Any,
+) -> None:
+    settings.AUTH_EXCLUSIVE_HOST = None
+    settings.OLD_EXCLUSIVE_HOST = None
+    settings.PRIMARY_HOST = "thunderstore.io"
+    settings.PROTOCOL = "https://"
+    settings.ALLOWED_HOSTS = ["unknown.thunderstore.localhost"]
+
+    request = RequestFactory().get("/", HTTP_HOST="unknown.thunderstore.localhost")
+    middleware = CommunitySiteMiddleware(make_get_response())
+    response = middleware(request)
+
+    assert response.status_code == 302
+    assert response["Location"] == "https://thunderstore.io/"
