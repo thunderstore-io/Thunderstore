@@ -6,9 +6,13 @@ from thunderstore.community.models import Community, CommunitySite
 from thunderstore.repository.models import Package
 
 
+def get_default_community() -> Optional[Community]:
+    return Community.objects.filter(identifier="riskofrain2").first()
+
+
 # TODO: Remove and rely on request.community when request is actually available
 def get_community_for_request(request):
-    community = Community.objects.filter(identifier="riskofrain2").first()
+    community = get_default_community()
     if community:
         return community
     return Community.objects.create(identifier="riskofrain2", name="Risk of Rain 2")

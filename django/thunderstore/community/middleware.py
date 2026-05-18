@@ -6,7 +6,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
-from thunderstore.community.utils import get_community_site_for_request
+from thunderstore.community.utils import (
+    get_community_site_for_request,
+    get_default_community,
+)
 from thunderstore.core.urls import AUTH_ROOT
 
 if TYPE_CHECKING:
@@ -58,8 +61,12 @@ class CommunitySiteMiddleware:
             if not request.path.startswith(self.auth_path):
                 return self.get_404(request)
         elif old_exclusive_host and request_host == old_exclusive_host:
-            # Allow all paths on the old exclusive host without enforcing community context
-            pass
+            # Bypass the normal domain check and supply a default community context
+            if not request.path.startswith(self.admin_path):
+                community = get_default_community()
+                if community is None:
+                    return self.get_404(request)
+                request.community = community
         elif not request.path.startswith(self.admin_path):
             try:
                 add_community_context_to_request(request)
