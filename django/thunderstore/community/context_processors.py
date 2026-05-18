@@ -21,7 +21,7 @@ def get_community_context(community: Optional[Community]):
             "site_wiki_url": community.wiki_url or "",
         }
         if community.icon:
-            url = community.icon.url
+            url = community.icon_url
             if not (url.startswith("http://") or url.startswith("https://")):
                 url = f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{url}"
             result.update(
