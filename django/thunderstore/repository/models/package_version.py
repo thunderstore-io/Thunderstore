@@ -7,11 +7,12 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models, transaction
-from django.db.models import Manager, Q, QuerySet, Sum, signals
+from django.db.models import Case, Manager, Q, QuerySet, Sum, When, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
+from thunderstore.community.models.community import Community
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
@@ -123,6 +124,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         max_length=1024,
     )
     description = models.CharField(max_length=256)
+    game_versions = models.ManyToManyField(
+        "community.GameVersion",
+        related_name="package_versions",
+        blank=True,
+    )
     dependencies = models.ManyToManyField(
         "self",
         related_name="dependants",
@@ -275,6 +281,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     def install_url(self):
         path = f"{self.package.owner.name}/{self.package.name}/{self.version_number}"
         return f"ror2mm://v1/install/{settings.PRIMARY_HOST}/{path}/"
+
+    def available_game_versions(self, community: Community):
+        return self.game_versions.filter(is_active=True, community=community).order_by(
+            "-release_group__order", "-order"
+        )
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
