@@ -13,6 +13,21 @@ class SchemaThunderstoreCategory(BaseModel):
     label: str
 
 
+class SchemaThunderstoreGameVersion(BaseModel):
+    version: str
+    release_name: Optional[str] = Field(alias="releaseName", default=None)
+    order: Optional[int] = None
+    is_active: Optional[bool] = Field(alias="isActive", default=True)
+
+
+class SchemaThunderstoreReleaseGroup(BaseModel):
+    slug: str
+    display_name: str = Field(alias="displayName")
+    release_name: Optional[str] = Field(alias="releaseName", default=None)
+    order: Optional[int] = None
+    versions: Optional[List[SchemaThunderstoreGameVersion]]
+
+
 class SchemaCommunity(BaseModel):
     display_name: str = Field(alias="displayName")
     categories: Dict[str, SchemaThunderstoreCategory]
@@ -21,6 +36,9 @@ class SchemaCommunity(BaseModel):
     discord_url: Optional[str] = Field(alias="discordUrl")
     wiki_url: Optional[str] = Field(alias="wikiUrl")
     autolist_package_ids: Optional[List[str]] = Field(alias="autolistPackageIds")
+    game_versions: Optional[List[SchemaThunderstoreReleaseGroup]] = Field(
+        alias="gameVersions"
+    )
 
 
 class SchemaGameMeta(BaseModel):
