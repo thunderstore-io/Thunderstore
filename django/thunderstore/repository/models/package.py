@@ -54,6 +54,11 @@ def get_package_dependants_list(package_pk: int):
     return list(get_package_dependants(package_pk))
 
 
+@cache_function_result(CacheBustCondition.any_package_updated)
+def get_package_dependants_count(package_pk: int) -> int:
+    return get_package_dependants(package_pk).count()
+
+
 class Package(VisibilityMixin, AdminLinkMixin):
     objects = PackageQueryset.as_manager()
     wiki: Optional["PackageWiki"]
