@@ -18,6 +18,12 @@ class ReleaseGroup(TimestampMixin, models.Model):
         else:
             return f"{self.community.name} -> {self.display_name}"
 
+    @property
+    def display_name_with_release(self) -> str:
+        if self.release_name:
+            return f"{self.display_name} - {self.release_name}"
+        return self.display_name
+
     class Meta:
         constraints = [
             models.UniqueConstraint(

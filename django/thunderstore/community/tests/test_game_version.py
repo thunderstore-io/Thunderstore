@@ -30,6 +30,22 @@ def test_release_group_str(community: Community) -> None:
 
 
 @pytest.mark.django_db
+def test_release_group_display_name_with_release(community: Community) -> None:
+    group_1 = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x"
+    )
+    assert group_1.display_name_with_release == "1.0.x"
+
+    group_2 = ReleaseGroup.objects.create(
+        community=community,
+        slug="2.0",
+        display_name="2.0.x",
+        release_name="Test Release",
+    )
+    assert group_2.display_name_with_release == "2.0.x - Test Release"
+
+
+@pytest.mark.django_db
 def test_game_version_unique_constraint(community):
     group = ReleaseGroup.objects.create(
         community=community, slug="1.0", display_name="1.0.x"
