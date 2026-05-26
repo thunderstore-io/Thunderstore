@@ -73,32 +73,3 @@ completion.
 
 This is especially common if a task requires a model to be imported, but the
 model also wants to import the task (because code in the model calls the task).
-
-#### Example from the codebase
-
-```python
-# This example doesn't work due to a circular dependency between the code
-# modules, but it will work if the dependency is one-directional
-
-from ts_scanners.tasks.scan import scan_decompilation
-
-@shared_task(
-    queue=CeleryQueues.BackgroundTask,
-    name="ts_scanners.tasks.decompile.decompile_file",
-)
-def decompile_file(decompilation_id: str) -> str:
-    scan_decompilation(decompilation_id)
-```
-
-```python
-# This example works even if there is a circular dependency between code modules
-
-@shared_task(
-    queue=CeleryQueues.BackgroundTask,
-    name="ts_scanners.tasks.decompile.decompile_file",
-)
-def decompile_file(decompilation_id: str) -> str:
-    from ts_scanners.tasks.scan import scan_decompilation
-
-    scan_decompilation(decompilation_id)
-```
