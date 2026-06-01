@@ -47,6 +47,13 @@ def import_community(identifier: str, schema: SchemaCommunity):
     community.name = schema.display_name
     community.discord_url = schema.discord_url
     community.wiki_url = schema.wiki_url
+    if schema.listed is not None:
+        community.is_listed = schema.listed
+    if schema.meta is not None:
+        community.community_icon_path = schema.meta.icon
+        community.cover_image_path = schema.meta.cover
+        community.background_image_path = schema.meta.background
+        community.hero_image_path = schema.meta.hero
     community.save()
 
     if schema.autolist_package_ids:

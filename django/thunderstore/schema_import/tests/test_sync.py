@@ -11,6 +11,7 @@ from thunderstore.schema_import.schema import (
     Schema,
     SchemaCommunity,
     SchemaPackageInstaller,
+    SchemaThunderstoreCommunityMeta,
 )
 from thunderstore.schema_import.sync import (
     get_slogan_from_display_name,
@@ -93,3 +94,90 @@ def test_import_autolisted_packages(active_package: Package):
     assert PackageListing.objects.filter(is_auto_imported=True).count() == 0
     import_schema_communities(schema)
     assert PackageListing.objects.filter(is_auto_imported=True).count() == 1
+
+
+def _single_community_schema(*, listed=None, **meta):
+    return Schema(
+        schemaVersion="0.3.0",
+        games=dict(),
+        packageInstallers=dict(),
+        communities={
+            "test": SchemaCommunity(
+                displayName="Test",
+                categories=dict(),
+                sections=dict(),
+                listed=listed,
+                meta=SchemaThunderstoreCommunityMeta(**meta) if meta else None,
+            ),
+        },
+    )
+
+
+@pytest.mark.django_db
+def test_import_community_populates_assets_and_listed():
+    # Raw dict so the lowercase compiled-schema keys are exercised (no aliases).
+    schema = Schema.parse_obj(
+        {
+            "schemaVersion": "0.3.0",
+            "games": {},
+            "packageInstallers": {},
+            "communities": {
+                "test": {
+                    "displayName": "Test",
+                    "listed": True,
+                    "meta": {
+                        "icon": "test/test-icon-192x192.webp",
+                        "cover": "test/test-cover-360x480.webp",
+                        "background": "test/test-bg-1920x1080.webp",
+                        "hero": "test/test-bg-1920x620.webp",
+                    },
+                    "categories": {},
+                    "sections": {},
+                },
+            },
+        }
+    )
+    import_schema_communities(schema)
+
+    community = Community.objects.get(identifier="test")
+    assert community.is_listed is True
+    assert community.community_icon_path == "test/test-icon-192x192.webp"
+    assert community.cover_image_path == "test/test-cover-360x480.webp"
+    assert community.background_image_path == "test/test-bg-1920x1080.webp"
+    assert community.hero_image_path == "test/test-bg-1920x620.webp"
+
+
+@pytest.mark.django_db
+def test_import_community_is_authoritative():
+    Community.objects.create(
+        identifier="test",
+        name="Test",
+        is_listed=True,
+        block_auto_updates=False,
+        cover_image_path="manual/old.webp",
+    )
+    import_schema_communities(
+        _single_community_schema(listed=False, cover="test/new.webp")
+    )
+
+    community = Community.objects.get(identifier="test")
+    assert community.is_listed is False
+    assert community.cover_image_path == "test/new.webp"
+
+
+@pytest.mark.django_db
+def test_import_community_skips_blocked_communities():
+    Community.objects.create(
+        identifier="test",
+        name="Test",
+        is_listed=True,
+        block_auto_updates=True,
+        cover_image_path="manual/old.webp",
+    )
+    import_schema_communities(
+        _single_community_schema(listed=False, cover="test/new.webp")
+    )
+
+    community = Community.objects.get(identifier="test")
+    assert community.is_listed is True
+    assert community.cover_image_path == "manual/old.webp"
