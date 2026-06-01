@@ -660,3 +660,85 @@ def test_package_listing_is_unavailable(
 
         listing = PackageListingFactory()
         assert listing.is_unavailable == expected
+
+
+@pytest.mark.django_db
+def test_package_listing_reject_or_approve_requires_permissions():
+    listing = PackageListingFactory()
+    user = UserFactory()
+
+    with pytest.raises(PermissionError):
+        listing.reject(
+            agent=user, rejection_reason="Invalid submission", is_system=False
+        )
+
+    with pytest.raises(PermissionError):
+        listing.approve(agent=user, is_system=False)
+
+    user.is_superuser = True
+
+    listing.reject(agent=user, rejection_reason="Invalid submission", is_system=False)
+
+    assert listing.review_status == PackageListingReviewStatus.rejected
+
+    listing.approve(agent=user, is_system=False)
+
+    assert listing.review_status == PackageListingReviewStatus.approved
+
+
+@pytest.mark.django_db
+def test_package_listing_reject_or_approve_is_system_overrides_permissions():
+    listing = PackageListingFactory()
+
+    with pytest.raises(PermissionError):
+        listing.reject(
+            agent=None, rejection_reason="Invalid submission", is_system=False
+        )
+
+    with pytest.raises(PermissionError):
+        listing.approve(agent=None, is_system=False)
+
+    listing.reject(agent=None, rejection_reason="Invalid submission", is_system=True)
+
+    assert listing.review_status == PackageListingReviewStatus.rejected
+
+    listing.approve(agent=None, is_system=True)
+
+    assert listing.review_status == PackageListingReviewStatus.approved
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("should_fire", [True, False])
+def test_package_listing_reject_audit_control(mocker, should_fire):
+    listing = PackageListingFactory()
+    mock_fire_audit = mocker.patch(
+        "thunderstore.community.models.package_listing.fire_audit_event"
+    )
+
+    listing.reject(
+        agent=None,
+        rejection_reason="Invalid submission",
+        is_system=True,
+        should_fire_audit_event=should_fire,
+    )
+
+    assert mock_fire_audit.called is should_fire
+
+
+@pytest.mark.django_db
+def test_package_listing_reject_skips_notes_if_none():
+    listing = PackageListingFactory()
+
+    original_notes = "Original notes"
+    listing.notes = original_notes
+    listing.save()
+
+    listing.reject(
+        agent=None,
+        rejection_reason="Invalid submission",
+        is_system=True,
+        internal_notes=None,
+    )
+
+    listing.refresh_from_db()
+    assert listing.notes == original_notes

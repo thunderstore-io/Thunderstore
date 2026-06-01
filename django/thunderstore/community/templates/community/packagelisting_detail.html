@@ -76,22 +76,18 @@ window.ts.PackageManagementPanel(
 {% endcache %}
 
 {% if show_review_status and object.is_rejected %}
-<div class="card text-white bg-danger mt-2">
-    <div class="card-body">
-        <h4 class="card-title">
-            Package rejected
-        </h4>
-        <p class="card-text">
-            This package has been rejected by site or community moderators.
-            If you think this is a mistake, please reach out to the moderators in
-            <a href="https://discord.thunderstore.io/">our Discord server</a>
-        </p>
-        {% if object.rejection_reason %}
-        <p class="card-text">
-            Reason: {{ object.rejection_reason }}
-        </p>
-        {% endif %}
-    </div>
+<div class="alert alert-danger">
+    <h4 class="card-title">
+        Package rejected
+    </h4>
+    <p class="card-text">
+        This package has been rejected by site or community moderators.
+        If you think this is a mistake, please reach out to the moderators in
+        <a href="https://discord.thunderstore.io/">our Discord server</a>
+    </p>
+    {% if object.rejection_reason %}
+    <pre class="card-text">Reason: {{ object.rejection_reason }}</pre>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -109,14 +105,12 @@ window.ts.PackageManagementPanel(
 {% endif %}
 
 {% if show_internal_notes and object.notes %}
-    <div class="card text-white bg-info mt-2">
-        <div class="card-body">
-            <h4 class="card-title">
-                Internal notes
-            </h4>
-            <p class="card-text">{{ object.notes }}</p>
-        </div>
-    </div>
+<div class="alert alert-info">
+    <h4 class="card-title">
+        Internal notes
+    </h4>
+    <pre class="card-text">{{ object.notes }}</pre>
+</div>
 {% endif %}
 
 <div class="card bg-light mt-2">

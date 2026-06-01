@@ -217,26 +217,27 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         rejection_reason: str,
         is_system: bool = False,
         internal_notes: Optional[str] = None,
+        should_fire_audit_event=True,
     ):
         if is_system or self.can_user_manage_approval_status(agent):
+            fields_to_update = ["rejection_reason", "review_status"]
+
             self.rejection_reason = rejection_reason
             self.review_status = PackageListingReviewStatus.rejected
-            self.notes = internal_notes or self.notes
-            self.save(
-                update_fields=(
-                    "rejection_reason",
-                    "review_status",
-                    "notes",
+            if internal_notes is not None and internal_notes != self.notes:
+                self.notes = internal_notes
+                fields_to_update.append("notes")
+
+            self.save(update_fields=fields_to_update)
+            if should_fire_audit_event:
+                message = "\n\n".join(filter(bool, (rejection_reason, internal_notes)))
+                fire_audit_event(
+                    self.build_audit_event(
+                        action=AuditAction.REJECTED,
+                        user_id=agent.pk if agent else None,
+                        message=message,
+                    )
                 )
-            )
-            message = "\n\n".join(filter(bool, (rejection_reason, internal_notes)))
-            fire_audit_event(
-                self.build_audit_event(
-                    action=AuditAction.REJECTED,
-                    user_id=agent.pk if agent else None,
-                    message=message,
-                )
-            )
         else:
             raise PermissionError()
 
