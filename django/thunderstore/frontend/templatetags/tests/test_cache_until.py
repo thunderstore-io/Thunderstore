@@ -18,38 +18,44 @@ def render_cache_until(expiry: Optional[int]) -> None:
 
 
 @patch("thunderstore.frontend.templatetags.cache_until.cache_get_or_set")
-def test_debug_cache_ttl_overrides_expiry(mock_cache: MagicMock, settings) -> None:
+def test_debug_template_cache_ttl_overrides_expiry(
+    mock_cache: MagicMock, settings
+) -> None:
     settings.DEBUG = True
-    settings.DEBUG_CACHE_TTL = 10
+    settings.DEBUG_TEMPLATE_CACHE_TTL = 10
     render_cache_until(300)
     _, kwargs = mock_cache.call_args
     assert kwargs["expiry"] == 10
 
 
 @patch("thunderstore.frontend.templatetags.cache_until.cache_get_or_set")
-def test_debug_cache_ttl_overrides_null_expiry(mock_cache: MagicMock, settings) -> None:
+def test_debug_template_cache_ttl_overrides_null_expiry(
+    mock_cache: MagicMock, settings
+) -> None:
     settings.DEBUG = True
-    settings.DEBUG_CACHE_TTL = 10
+    settings.DEBUG_TEMPLATE_CACHE_TTL = 10
     render_cache_until(None)
     _, kwargs = mock_cache.call_args
     assert kwargs["expiry"] == 10
 
 
 @patch("thunderstore.frontend.templatetags.cache_until.cache_get_or_set")
-def test_debug_cache_ttl_none_leaves_expiry(mock_cache: MagicMock, settings) -> None:
+def test_debug_template_cache_ttl_none_leaves_expiry(
+    mock_cache: MagicMock, settings
+) -> None:
     settings.DEBUG = True
-    settings.DEBUG_CACHE_TTL = None
+    settings.DEBUG_TEMPLATE_CACHE_TTL = None
     render_cache_until(300)
     _, kwargs = mock_cache.call_args
     assert kwargs["expiry"] == 300
 
 
 @patch("thunderstore.frontend.templatetags.cache_until.cache_get_or_set")
-def test_debug_cache_ttl_no_effect_outside_debug(
+def test_debug_template_cache_ttl_no_effect_outside_debug(
     mock_cache: MagicMock, settings
 ) -> None:
     settings.DEBUG = False
-    settings.DEBUG_CACHE_TTL = 10
+    settings.DEBUG_TEMPLATE_CACHE_TTL = 10
     render_cache_until(300)
     _, kwargs = mock_cache.call_args
     assert kwargs["expiry"] == 300

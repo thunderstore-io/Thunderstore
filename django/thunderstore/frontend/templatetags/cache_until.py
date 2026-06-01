@@ -41,8 +41,8 @@ class CacheNode(Node):
                     f'"cache_until" tag got a non-integer expiry value: {expire_time}'
                 )
 
-        if settings.DEBUG and settings.DEBUG_CACHE_TTL is not None:
-            expire_time = settings.DEBUG_CACHE_TTL
+        if settings.DEBUG and settings.DEBUG_TEMPLATE_CACHE_TTL is not None:
+            expire_time = settings.DEBUG_TEMPLATE_CACHE_TTL
 
         vary_on = [var.resolve(context) for var in self.vary_on]
 

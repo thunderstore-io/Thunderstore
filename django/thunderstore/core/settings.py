@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 env = environ.Env(
     DEBUG=(bool, False),
-    DEBUG_CACHE_TTL=(int, None),
+    DEBUG_TEMPLATE_CACHE_TTL=(int, None),
     DEBUG_SIMULATED_LAG=(int, 0),
     DEBUG_TOOLBAR_ENABLED=(bool, False),
     DEBUG_TOOLBAR_SUPERUSER_ONLY=(bool, True),
@@ -179,7 +179,7 @@ if not os.path.exists(checkout_dir("manage.py")):
 
 
 DEBUG = env.bool("DEBUG")
-DEBUG_CACHE_TTL = env.int("DEBUG_CACHE_TTL")
+DEBUG_TEMPLATE_CACHE_TTL = env.int("DEBUG_TEMPLATE_CACHE_TTL")
 DEBUG_SIMULATED_LAG = env.int("DEBUG_SIMULATED_LAG")
 
 # Only used when creating certain test fixtures
