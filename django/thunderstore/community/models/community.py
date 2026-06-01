@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Manager, QuerySet
+from django.db.models import Manager, QuerySet, Sum
 from django.urls import reverse
 from django.utils.functional import cached_property
 
@@ -374,7 +374,13 @@ class CommunityAggregatedFields(TimestampMixin, models.Model):
         listings = listings.filter_with_single_community()
 
         community.aggregated_fields.package_count = listings.count()
-        community.aggregated_fields.download_count = sum(
-            listing.total_downloads for listing in listings
+
+        from thunderstore.repository.models import PackageVersion
+
+        community.aggregated_fields.download_count = (
+            PackageVersion.objects.filter(
+                package_id__in=listings.values("package_id")
+            ).aggregate(total=Sum("downloads"))["total"]
+            or 0
         )
         community.aggregated_fields.save()
