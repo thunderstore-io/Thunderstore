@@ -205,8 +205,6 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
             "package__namespace",
         ).prefetch_related(
             "categories",
-            "package__versions",
-            "package__package_ratings",
         )
 
     def _get_validated_query_params(self) -> OrderedDict:
