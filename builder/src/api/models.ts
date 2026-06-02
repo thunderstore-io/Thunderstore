@@ -38,6 +38,7 @@ export interface Community {
     discord_url: string;
     wiki_url: string;
     require_package_listing_approval: boolean;
+    require_ai_attestation: boolean;
 }
 
 export interface PaginatedResult<T> {
@@ -102,6 +103,7 @@ export interface PackageSubmissionData {
     communities: string[];
     has_nsfw_content: boolean;
     upload_uuid: string;
+    is_ai_generated: boolean | null;
 }
 
 export interface SubmissionError {
@@ -110,6 +112,7 @@ export interface SubmissionError {
     categories?: string[];
     communities?: string[];
     has_nsfw_content?: string[];
+    is_ai_generated?: string[];
     detail?: string;
     file?: string[];
     team?: string[];

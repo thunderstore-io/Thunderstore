@@ -17,7 +17,7 @@ export const FormSelectField: React.FC<FormSelectFieldProps<any, any>> = (
     props
 ) => {
     const defaultValue = useMemo(() => {
-        if (!props.default) return undefined;
+        if (!props.default) return props.isMulti ? [] : undefined;
         if (props.isMulti) {
             const list = Array.isArray(props.default)
                 ? props.default
@@ -35,7 +35,14 @@ export const FormSelectField: React.FC<FormSelectFieldProps<any, any>> = (
                     name={props.name}
                     control={props.control}
                     defaultValue={defaultValue}
-                    rules={{ required: props.required }}
+                    rules={{
+                        validate: (value) =>
+                            !props.required ||
+                            (props.isMulti
+                                ? Array.isArray(value) && value.length > 0
+                                : value !== undefined && value !== null) ||
+                            "This field is required",
+                    }}
                     render={({ field }) => (
                         <Select
                             {...field}
