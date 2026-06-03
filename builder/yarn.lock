@@ -294,9 +294,16 @@
   integrity sha512-EaCxbanVeyxDRTQBkdLb3Bvl/HK7PBK6UJjsSixB0iHKoWxE5uu2Q/DgtpOhPIojN0Zl1whvOd7PoHs2P0s5eA==
 
 "@types/zip.js@^2.0.29":
-  version "2.0.29"
-  resolved "https://registry.yarnpkg.com/@types/zip.js/-/zip.js-2.0.29.tgz#a0a2df63662a360d669fa1bf22b88c4d0d25c132"
-  integrity sha512-cFrPPas4GPQpyBXSJnZ5xUi+0mwMYTYqnBC0MFXEu4qcvJ1UGmMv8sDgLtT94nqYCTmSoWdgX5LI0QdjxushzQ==
+  version "2.6.81"
+  resolved "https://registry.yarnpkg.com/@types/zip.js/-/zip.js-2.6.81.tgz#a76ba39381b9c22bbc9ca3e3bf797baa2589d1ca"
+  integrity sha512-kP1KMW63rmals5x1rSZUgcLUAqRXNvVfxguBJrrVzvRRUye9q9Y/9XfrDQFFp0IxQNBcw3arw8svpCTo9bZLJw==
+  dependencies:
+    "@zip.js/zip.js" "*"
+
+"@zip.js/zip.js@*":
+  version "2.8.26"
+  resolved "https://registry.yarnpkg.com/@zip.js/zip.js/-/zip.js-2.8.26.tgz#826a819f673e8284d0de785551ac37e9972ee794"
+  integrity sha512-RQ4h9F6DOiHxpdocUDrOl6xBM+yOtz+LkUol47AVWcfebGBDpZ7w7Xvz9PS24JgXvLGiXXzSAfdCdVy1tPlaFA==
 
 JSONStream@^1.0.3:
   version "1.3.5"
