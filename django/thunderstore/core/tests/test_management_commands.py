@@ -293,21 +293,41 @@ def test_setup_dev_env_populates_sites_binds_community_and_creates_admin(
     # Verify sites were upserted and extras removed
     assert set(Site.objects.values_list("domain", flat=True)) == {
         "thunderstore.localhost",
+        "old.thunderstore.localhost",
         "auth.thunderstore.localhost",
     }
     assert Site.objects.get(domain="thunderstore.localhost").name == "Thunderstore"
+    assert (
+        Site.objects.get(domain="old.thunderstore.localhost").name
+        == "Thunderstore (legacy)"
+    )
     assert (
         Site.objects.get(domain="auth.thunderstore.localhost").name
         == "Thunderstore Auth"
     )
 
-    # Verify community binding
+    # Verify community binding: the community is served on both the primary and
+    # the legacy host, while the auth host is intentionally not a community site.
     community = Community.objects.get(identifier="riskofrain2")
-    localhost_site = Site.objects.get(domain="thunderstore.localhost")
-    assert CommunitySite.objects.count() == 1
-    assert CommunitySite.objects.filter(
-        site=localhost_site, community=community
+    assert CommunitySite.objects.count() == 2
+    assert set(
+        CommunitySite.objects.filter(community=community).values_list(
+            "site__domain", flat=True
+        )
+    ) == {"thunderstore.localhost", "old.thunderstore.localhost"}
+    assert not CommunitySite.objects.filter(
+        site__domain="auth.thunderstore.localhost"
     ).exists()
+
+    # Re-running must be idempotent: the command clears and rebuilds the site and
+    # community-site mappings each run, so a second run yields the same state.
+    call_command("setup_dev_env")
+    assert CommunitySite.objects.count() == 2
+    assert set(Site.objects.values_list("domain", flat=True)) == {
+        "thunderstore.localhost",
+        "old.thunderstore.localhost",
+        "auth.thunderstore.localhost",
+    }
 
     # Verify admin user created
     admin_user = get_user_model().objects.get(username="admin")

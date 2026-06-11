@@ -7,9 +7,21 @@ from django.core.management import BaseCommand, CommandError, call_command
 
 from thunderstore.community.models import Community, CommunitySite
 
+# Domains the local stack answers on. `thunderstore.localhost` is the primary
+# host (served by the cyberstorm-remix app via nginx) and `old.thunderstore.localhost`
+# mirrors the legacy Django-rendered site, matching the production split where the
+# old site lives under an `old.` subdomain.
 SITE_DEFINITIONS: List[Tuple[str, str]] = [
     ("thunderstore.localhost", "Thunderstore"),
+    ("old.thunderstore.localhost", "Thunderstore (legacy)"),
     ("auth.thunderstore.localhost", "Thunderstore Auth"),
+]
+
+# Hosts that should resolve to a community when hit through the legacy
+# host-based community routing.
+COMMUNITY_SITE_DOMAINS: List[str] = [
+    "thunderstore.localhost",
+    "old.thunderstore.localhost",
 ]
 
 
@@ -50,9 +62,11 @@ class Command(BaseCommand):
         Site.objects.exclude(domain__in=[s[0] for s in SITE_DEFINITIONS]).delete()
         CommunitySite.objects.all().delete()
 
-        # Bind localhost to the community
-        localhost = Site.objects.get(domain="thunderstore.localhost")
-        CommunitySite.objects.create(site=localhost, community=community)
+        # Bind the relevant hosts to the community so legacy host-based routing
+        # resolves on both the primary and the legacy domain.
+        for domain in COMMUNITY_SITE_DOMAINS:
+            site = Site.objects.get(domain=domain)
+            CommunitySite.objects.create(site=site, community=community)
 
         User = get_user_model()
         if not User.objects.filter(username="admin").exists():
