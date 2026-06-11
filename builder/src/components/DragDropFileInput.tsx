@@ -13,7 +13,6 @@ interface DragDropFileInputProps {
 }
 
 export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
-    const fileInput = props.fileInputRef.current;
     const [fileDropStyle, setFileDropStyle] = useState<CSSProperties>({});
     const [lastTarget, setLastTarget] = useState<EventTarget | null>(null);
     const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -45,7 +44,8 @@ export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
     };
     const fileChange = () => {
         if (!props.readonly) {
-            const files = fileInput?.files;
+            const inp = props.fileInputRef.current;
+            const files = inp?.files;
             if (props.onChange && files) {
                 props.onChange(files);
             }
@@ -54,8 +54,9 @@ export const DragDropFileInput: React.FC<DragDropFileInputProps> = (props) => {
     };
     const onDrop = (e: React.DragEvent) => {
         if (!props.readonly) {
-            if (fileInput) {
-                fileInput.files = e.dataTransfer.files;
+            const inp = props.fileInputRef.current;
+            if (inp) {
+                inp.files = e.dataTransfer.files;
             }
             if (props.onChange) {
                 props.onChange(e.dataTransfer.files);
