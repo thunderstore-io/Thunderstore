@@ -43,6 +43,12 @@ urlpatterns = [
     path("robots.txt", robots_txt_view, name="robots.txt"),
     path(AUTH_ROOT, include("social_django.urls", namespace="social")),
     path(
+        "auth/logout/",
+        CustomLogoutView.as_view(),
+        kwargs={"next_page": "/"},
+        name="auth-logout",
+    ),
+    path(
         "logout/", CustomLogoutView.as_view(), kwargs={"next_page": "/"}, name="logout"
     ),
     path("package/", include((legacy_package_urls, "old_urls"), namespace="old_urls")),
