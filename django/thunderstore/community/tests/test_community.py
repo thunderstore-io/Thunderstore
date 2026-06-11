@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.db.models import Prefetch
 
 from conftest import TestUserTypes
 from thunderstore.community.consts import PackageListingReviewStatus
@@ -204,6 +205,73 @@ def test_community_full_url(
     else:
         expected = f"/c/{community.identifier}/"
     assert community.full_url == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("has_site", (False, True))
+def test_community_get_absolute_url(
+    community: Community,
+    has_site: bool,
+) -> None:
+    # get_absolute_url is always the host-relative path, regardless of whether
+    # the community has a main_site, so in-site navigation stays on the host
+    # that served the page (e.g. the legacy old. site).
+    if has_site:
+        CommunitySiteFactory(community=community)
+    assert community.get_absolute_url() == f"/c/{community.identifier}/"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("primary_created_first", (True, False))
+def test_community_main_site_prefers_primary_host(
+    community: Community,
+    primary_created_first: bool,
+    settings,
+) -> None:
+    # main_site must deterministically resolve to the PRIMARY_HOST site even when
+    # the community is also bound to the legacy `old.` mirror host, so absolute
+    # URLs built from it (the v1 API package_url, full_url, …) never drift to old.
+    settings.PRIMARY_HOST = "primary.example.localhost"
+    domains = ["primary.example.localhost", "legacy.example.localhost"]
+    if not primary_created_first:
+        domains.reverse()
+    for domain in domains:
+        CommunitySiteFactory(community=community, site__domain=domain)
+
+    # Reload so main_site (a cached_property) is computed against the new sites.
+    community = Community.objects.get(pk=community.pk)
+
+    assert community.main_site.site.domain == "primary.example.localhost"
+    assert "primary.example.localhost" in community.full_url
+    assert "legacy.example.localhost" not in community.full_url
+
+
+@pytest.mark.django_db
+def test_community_main_site_does_not_n_plus_one(
+    community: Community,
+    django_assert_num_queries,
+    settings,
+) -> None:
+    settings.PRIMARY_HOST = "primary.example.localhost"
+    for domain in (
+        "legacy.example.localhost",
+        "other.example.localhost",
+        "primary.example.localhost",
+    ):
+        CommunitySiteFactory(community=community, site__domain=domain)
+
+    # Not prefetched: a single select_related query must resolve every site and
+    # its domain — the per-site comparison must not add a query per row.
+    fresh = Community.objects.get(pk=community.pk)
+    with django_assert_num_queries(1):
+        assert fresh.main_site.site.domain == "primary.example.localhost"
+
+    # Prefetched the way CommunityMixin loads it: main_site must hit no queries.
+    prefetched = Community.objects.prefetch_related(
+        Prefetch("sites", queryset=CommunitySite.objects.select_related("site"))
+    ).get(pk=community.pk)
+    with django_assert_num_queries(0):
+        assert prefetched.main_site.site.domain == "primary.example.localhost"
 
 
 @pytest.mark.django_db

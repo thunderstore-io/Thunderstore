@@ -284,22 +284,41 @@ class Community(TimestampMixin, models.Model):
 
     @cached_property
     def main_site(self) -> Optional["CommunitySite"]:
-        try:
-            return self.sites.all()[0]
-        except IndexError:
+        # Prefer the site on PRIMARY_HOST (the canonical main domain) so absolute
+        # URLs built from main_site (the v1 API `package_url`, full_url, …) don't
+        # drift to a secondary host like the legacy `old.` mirror. Reuse the
+        # prefetched `sites` when available (CommunityMixin prefetches them with
+        # select_related("site")); otherwise issue a single select_related query
+        # so the domain comparison below doesn't trigger an N+1 on
+        # community_site.site.
+        if "sites" in getattr(self, "_prefetched_objects_cache", {}):
+            sites = list(self.sites.all())
+        else:
+            sites = list(self.sites.select_related("site"))
+        if not sites:
             return None
+        for community_site in sites:
+            if community_site.site.domain == settings.PRIMARY_HOST:
+                return community_site
+        return sites[0]
+
+    def get_absolute_url(self) -> str:
+        # Host-relative URL for in-site navigation, so links rendered on the
+        # legacy site stay on the host that served the page instead of jumping
+        # to the community's main_site (the new app) host.
+        return reverse(
+            "communities:community:packages.list",
+            kwargs={
+                "community_identifier": self.identifier,
+            },
+        )
 
     @property
     def full_url(self):
         return (
             self.main_site.full_url
             if Community.should_use_old_urls(self)
-            else reverse(
-                "communities:community:packages.list",
-                kwargs={
-                    "community_identifier": self.identifier,
-                },
-            )
+            else self.get_absolute_url()
         )
 
     @property
