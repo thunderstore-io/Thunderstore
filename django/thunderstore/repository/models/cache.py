@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional
 
 from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models import Count, Prefetch
+from django.db.models import Count, OuterRef, Prefetch, Subquery
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from thunderstore.community.models import Community, PackageListing
@@ -255,7 +256,15 @@ def get_package_listing_ids(community: Community) -> Iterable[List[int]]:
 def get_package_listing_chunk(
     listing_ids: List[int],
 ) -> List[PackageListing]:
-    from thunderstore.repository.models import PackageVersion
+    from thunderstore.repository.models import PackageRating, PackageVersion
+
+    # Use an isolated subquery for ratings to prevent massive joins
+    ratings_subquery = Subquery(
+        PackageRating.objects.filter(package_id=OuterRef("package_id"))
+        .values("package_id")
+        .annotate(count=Count("id"))
+        .values("count")
+    )
 
     versions_prefetch = Prefetch(
         "package__versions",
@@ -276,7 +285,7 @@ def get_package_listing_chunk(
             "community__sites__site",
             versions_prefetch,
         )
-        .annotate(_rating_score=Count("package__package_ratings"))
+        .annotate(_rating_score=Coalesce(ratings_subquery, 0))
     )
 
     order_map = {lid: pos for pos, lid in enumerate(listing_ids)}
