@@ -8,6 +8,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from django.db.models import Case, Exists, OuterRef, Sum, When, signals
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -226,7 +227,9 @@ class Package(VisibilityMixin, AdminLinkMixin):
 
     @cached_property
     def dependencies(self):
-        return self.latest.dependencies.all()
+        return self.latest.dependencies.select_related(
+            "package", "package__namespace", "package__owner"
+        ).order_by(Lower("package__namespace__name"), Lower("package__name"))
 
     @cached_property
     def sorted_dependencies(self):
