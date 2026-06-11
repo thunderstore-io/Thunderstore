@@ -85,7 +85,10 @@ class PackageVersionChangelogApiView(PackageVersionDetailMixin):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer({"markdown": instance.changelog})
+        if instance.changelog_override is not None:
+            serializer = self.get_serializer({"markdown": instance.changelog_override})
+        else:
+            serializer = self.get_serializer({"markdown": instance.changelog})
         return Response(serializer.data)
 
 
@@ -105,5 +108,8 @@ class PackageVersionReadmeApiView(PackageVersionDetailMixin):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer({"markdown": instance.readme})
+        if instance.readme_override is not None:
+            serializer = self.get_serializer({"markdown": instance.readme_override})
+        else:
+            serializer = self.get_serializer({"markdown": instance.readme})
         return Response(serializer.data)
