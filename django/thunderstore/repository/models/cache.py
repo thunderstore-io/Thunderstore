@@ -246,9 +246,13 @@ def get_package_listing_ids(community: Community) -> Iterable[List[int]]:
     Iterate over the PackageListing in chunks to limit the amount of
     data Django keeps in memory concurrently.
     """
-    listing_ids = order_package_listing_queryset(
-        get_package_listing_base_queryset(community.identifier)
-    ).values_list("id", flat=True)
+    listing_ids = (
+        order_package_listing_queryset(
+            get_package_listing_base_queryset(community.identifier)
+        )
+        .values_list("id", flat=True)
+        .iterator(chunk_size=1000)
+    )
 
     yield from batch(1000, listing_ids)
 
