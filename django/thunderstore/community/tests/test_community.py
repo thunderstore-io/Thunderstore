@@ -242,8 +242,37 @@ def test_community_main_site_prefers_primary_host(
     community = Community.objects.get(pk=community.pk)
 
     assert community.main_site.site.domain == "primary.example.localhost"
-    assert "primary.example.localhost" in community.full_url
-    assert "legacy.example.localhost" not in community.full_url
+    # full_url resolves to the main_site's absolute URL; assert it exactly
+    # (rather than a substring membership check, which CodeQL flags as
+    # incomplete URL sanitization) so the host is pinned and the legacy mirror
+    # is excluded by construction.
+    assert community.full_url == f"{settings.PROTOCOL}primary.example.localhost/"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("reverse_creation_order", (False, True))
+def test_community_main_site_fallback_is_deterministic(
+    community: Community,
+    reverse_creation_order: bool,
+    settings,
+) -> None:
+    # When no site matches PRIMARY_HOST, main_site must still resolve to a
+    # stable row (the lowest pk) instead of whatever order the DB happens to
+    # return, so absolute URLs built from it don't flap between hosts.
+    settings.PRIMARY_HOST = "primary.example.localhost"
+    domains = ["a.example.localhost", "b.example.localhost"]
+    if reverse_creation_order:
+        domains.reverse()
+    created = [
+        CommunitySiteFactory(community=community, site__domain=domain)
+        for domain in domains
+    ]
+    lowest_pk_site = min(created, key=lambda community_site: community_site.pk)
+
+    # Reload so main_site (a cached_property) is computed fresh against the DB.
+    community = Community.objects.get(pk=community.pk)
+
+    assert community.main_site.pk == lowest_pk_site.pk
 
 
 @pytest.mark.django_db
