@@ -40,13 +40,9 @@ class PackageQueryset(VisibilityFlagsQuerySet):
 
 
 def get_package_dependants(package_pk: int):
-    from thunderstore.repository.models import PackageVersion
-
-    has_dependency = PackageVersion.objects.filter(
-        dependants__package=OuterRef("pk"),
-        package_id=package_pk,
-    )
-    return Package.objects.filter(Exists(has_dependency)).active()
+    return Package.objects.filter(
+        latest__dependencies__package_id=package_pk,
+    ).active()
 
 
 @cache_function_result(CacheBustCondition.any_package_updated)
