@@ -297,6 +297,11 @@ class Community(TimestampMixin, models.Model):
             sites = list(self.sites.select_related("site"))
         if not sites:
             return None
+        # CommunitySite has no Meta.ordering, so sort the already-materialized
+        # list by pk (no extra query, and it works for the prefetched case too)
+        # to keep the fallback below deterministic instead of dependent on DB
+        # row order when no site matches PRIMARY_HOST.
+        sites.sort(key=lambda community_site: community_site.pk)
         for community_site in sites:
             if community_site.site.domain == settings.PRIMARY_HOST:
                 return community_site
@@ -306,6 +311,16 @@ class Community(TimestampMixin, models.Model):
         # Host-relative URL for in-site navigation, so links rendered on the
         # legacy site stay on the host that served the page instead of jumping
         # to the community's main_site (the new app) host.
+        #
+        # Unlike PackageListing.get_absolute_url(), this deliberately does NOT go
+        # through get_community_url_reverse_args() and always uses the explicit
+        # `/c/<id>/` scheme. Community links are cross-community (community tiles,
+        # the popular-communities nav), so the target usually isn't the community
+        # implied by the current host. The implicit `old_urls:` scheme carries no
+        # community identifier (old_urls:packages.list -> /package/), so routing
+        # through the helper would resolve every link to the serving host's own
+        # community. The explicit route is registered on every host, so it also
+        # resolves on the legacy site.
         return reverse(
             "communities:community:packages.list",
             kwargs={
