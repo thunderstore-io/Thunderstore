@@ -1,7 +1,10 @@
+{% load game_version_tags %}
+
 <table class="table mb-0">
     <tr>
         <th>Upload date</th>
         <th>Version number</th>
+        <th>Game versions</th>
         <th>Downloads</th>
         <th>Actions</th>
     </tr>
@@ -9,6 +12,13 @@
         <tr>
             <td>{{ version.date_created|date:"Y-n-j" }}</td>
             <td>{{ version.version_number }}</td>
+            <td>
+                <ul class="list-unstyled mb-0">
+                    {% for game_version in version|available_game_versions:community %}
+                        <li>{{ game_version.display_name }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
             <td>{{ version.downloads }}</td>
             <td class="d-flex gap-1">
                 <a href="{{ version.full_download_url }}" type="button" class="btn btn-primary">Download</a>

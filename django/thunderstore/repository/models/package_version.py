@@ -1,17 +1,21 @@
 import re
 import uuid
-from typing import TYPE_CHECKING, Iterator, Optional
+from dataclasses import dataclass
+from itertools import groupby
+from typing import TYPE_CHECKING, Iterator, List, Literal, Optional
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
 from django.db import models, transaction
-from django.db.models import Manager, Q, QuerySet, Sum, signals
+from django.db.models import Exists, Manager, OuterRef, Q, QuerySet, Sum, signals
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 
+from thunderstore.community.models.community import Community
+from thunderstore.community.models.game_version import GameVersion
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
@@ -36,6 +40,12 @@ if TYPE_CHECKING:
         PackageInstaller,
         PackageInstallerDeclaration,
     )
+
+
+@dataclass(frozen=True)
+class GameVersionEntry:
+    display_name: str
+    type: Literal["group", "version"]
 
 
 def get_version_zip_filepath(instance, filename):
@@ -123,6 +133,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         max_length=1024,
     )
     description = models.CharField(max_length=256)
+    game_versions = models.ManyToManyField(
+        "community.GameVersion",
+        related_name="package_versions",
+        blank=True,
+    )
     dependencies = models.ManyToManyField(
         "self",
         related_name="dependants",
@@ -275,6 +290,46 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     def install_url(self):
         path = f"{self.package.owner.name}/{self.package.name}/{self.version_number}"
         return f"ror2mm://v1/install/{settings.PRIMARY_HOST}/{path}/"
+
+    def available_game_versions(self, community: Community) -> List[GameVersionEntry]:
+        pkg_group_ids = self.game_versions.filter(
+            is_active=True, community=community
+        ).values("release_group_id")
+
+        all_active_versions = list(
+            GameVersion.objects.filter(
+                community=community, is_active=True, release_group_id__in=pkg_group_ids
+            )
+            .select_related("release_group")
+            .annotate(in_package=Exists(self.game_versions.filter(pk=OuterRef("pk"))))
+            .order_by("-release_group__order", "-order")
+        )
+
+        result: List[GameVersionEntry] = []
+        for _, group_iter in groupby(
+            all_active_versions, key=lambda gv: gv.release_group_id
+        ):
+            group_versions = list(group_iter)
+            release_group = group_versions[0].release_group
+            pkg_versions = [gv for gv in group_versions if gv.in_package]
+
+            if len(pkg_versions) == len(group_versions):
+                result.append(
+                    GameVersionEntry(
+                        display_name=release_group.display_name_with_release,
+                        type="group",
+                    )
+                )
+            else:
+                for gv in pkg_versions:
+                    result.append(
+                        GameVersionEntry(
+                            display_name=gv.display_name,
+                            type="version",
+                        )
+                    )
+
+        return result
 
     @staticmethod
     def post_save(sender, instance, created, **kwargs):
