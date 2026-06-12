@@ -259,3 +259,32 @@ def test_api_v1_community_package_listing_index__depending_on_cache__returns_302
     response = api_client.get(url)
 
     assert response.status_code == (302 if has_cache else 503)
+
+
+@pytest.mark.django_db
+def test_api_v1_community_package_listing_index_conditional_response(
+    api_client: APIClient,
+    community_site: CommunitySite,
+) -> None:
+    APIV1ChunkedPackageCache.update_for_community(community_site.community)
+    cache = APIV1ChunkedPackageCache.get_latest_for_community(community_site.community)
+
+    url = f"/c/{community_site.community.identifier}/api/v1/package-listing-index/"
+
+    response = api_client.get(url, {"cdn": "test_cdn"})
+    assert response.status_code == 302
+    last_modified = response["Last-Modified"]
+    assert last_modified == http_date(int(cache.created_at.timestamp()))
+    assert response["Cache-Control"] == "public, max-age=0, s-maxage=300"
+
+    response_304 = api_client.get(
+        url,
+        HTTP_IF_MODIFIED_SINCE=last_modified,
+    )
+    assert response_304.status_code == 304
+    assert response_304["Last-Modified"] == last_modified
+    assert response_304["Cache-Control"] == "public, max-age=0, s-maxage=300"
+
+    older_time = http_date(int(cache.created_at.timestamp()) - 100)
+    response_older = api_client.get(url, HTTP_IF_MODIFIED_SINCE=older_time)
+    assert response_older.status_code == 302

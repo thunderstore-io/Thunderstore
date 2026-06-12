@@ -36,11 +36,11 @@ class PackageListingIndex(APIView):
         last_modified = int(cache.created_at.timestamp())
         response = get_conditional_response(request, last_modified=last_modified)
 
-        if response:
-            return response
+        if response is None:
+            url = request.build_absolute_uri(cache.index.data_url)
+            url = replace_cdn(url, request.query_params.get("cdn"))
+            response = redirect(url)
 
-        url = request.build_absolute_uri(cache.index.data_url)
-        url = replace_cdn(url, request.query_params.get("cdn"))
-        response = redirect(url)
         response["Last-Modified"] = http_date(last_modified)
+        response["Cache-Control"] = "public, max-age=0, s-maxage=300"
         return response
