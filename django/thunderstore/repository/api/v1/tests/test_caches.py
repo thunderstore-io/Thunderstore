@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import (
     CommunityFactory,
     CommunitySiteFactory,
@@ -18,11 +19,15 @@ from thunderstore.repository.api.v1.tasks import (
     update_api_v1_chunked_package_caches,
 )
 from thunderstore.repository.api.v1.viewsets import _get_prefetched_listing_queryset
-from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.factories import (
+    PackageRatingFactory,
+    PackageVersionFactory,
+)
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
 from thunderstore.repository.models.cache import (
     _get_sorted_active_versions,
     get_package_listing_chunk,
+    get_package_listing_ids,
 )
 
 
@@ -232,6 +237,70 @@ def test_get_package_listing_chunk__retains_received_ordering(count: int) -> Non
 
     for i, listing in enumerate(listings):
         assert listing.id == ordering[i]
+
+
+@pytest.mark.django_db
+def test_get_package_listing_chunk__rating_score_zero_when_no_ratings() -> None:
+    listing = PackageListingFactory()
+
+    result = get_package_listing_chunk([listing.id])
+
+    assert len(result) == 1
+    assert result[0]._rating_score == 0
+
+
+@pytest.mark.django_db
+def test_get_package_listing_chunk__annotates_rating_score() -> None:
+    listing = PackageListingFactory()
+    PackageRatingFactory(package=listing.package)
+    PackageRatingFactory(package=listing.package)
+
+    result = get_package_listing_chunk([listing.id])
+
+    assert len(result) == 1
+    assert result[0]._rating_score == 2
+
+
+@pytest.mark.django_db
+def test_get_package_listing_chunk__excludes_inactive_versions() -> None:
+    listing = PackageListingFactory()
+    package = listing.package
+    package.versions.all().delete()
+
+    PackageVersionFactory(package=package, version_number="1.0.0", is_active=True)
+    PackageVersionFactory(package=package, version_number="2.0.0", is_active=False)
+
+    result = get_package_listing_chunk([listing.id])
+
+    versions = list(result[0].package.versions.all())
+    assert len(versions) == 1
+    assert versions[0].version_number == "1.0.0"
+
+
+@pytest.mark.django_db
+def test_get_package_listing_ids__returns_ids_for_community() -> None:
+    community_a = CommunityFactory()
+    community_b = CommunityFactory()
+    listing_a = PackageListingFactory(community_=community_a)
+    PackageListingFactory(community_=community_b)
+
+    result = list(get_package_listing_ids(community_a))
+    ids = [id_ for chunk in result for id_ in chunk]
+
+    assert ids == [listing_a.id]
+
+
+@pytest.mark.django_db
+def test_get_package_listing_ids__does_not_return_ids_for_rejected_packages() -> None:
+    community = CommunityFactory()
+    PackageListingFactory(
+        community_=community, review_status=PackageListingReviewStatus.rejected
+    )
+
+    result = list(get_package_listing_ids(community))
+    ids = [id_ for chunk in result for id_ in chunk]
+
+    assert ids == []
 
 
 @pytest.mark.django_db
