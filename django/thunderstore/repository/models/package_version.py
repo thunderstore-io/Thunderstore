@@ -272,6 +272,13 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         return f"{settings.PROTOCOL}{settings.PRIMARY_HOST}{self._download_url}"
 
     @property
+    def relative_download_url(self) -> str:
+        # Host-relative download path so legacy-site templates keep the user on
+        # the host that served the page. full_download_url hard-codes
+        # PRIMARY_HOST and must stay absolute for API / mod-manager consumers.
+        return self._download_url
+
+    @property
     def install_url(self):
         path = f"{self.package.owner.name}/{self.package.name}/{self.version_number}"
         return f"ror2mm://v1/install/{settings.PRIMARY_HOST}/{path}/"

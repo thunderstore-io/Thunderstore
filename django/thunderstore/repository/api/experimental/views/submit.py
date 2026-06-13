@@ -8,6 +8,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.core.utils import make_full_url
 from thunderstore.repository.api.experimental.serializers import (
     PackageSubmissionMetadataSerializer,
     PackageSubmissionResult,
@@ -63,7 +64,10 @@ class SubmitPackageApiView(APIView):
                 {
                     "community": listing.community,
                     "categories": listing.categories.all(),
-                    "url": listing.get_full_url(),
+                    # Build the URL against the requesting host so the legacy
+                    # upload page links stay on the host that served it,
+                    # instead of the listing's main_site (new app) host.
+                    "url": make_full_url(request, listing.get_absolute_url()),
                 }
             )
 

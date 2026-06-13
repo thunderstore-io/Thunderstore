@@ -40,7 +40,7 @@ def test_package_review_list_view(
 
     response = client.get(url, HTTP_HOST=community_site.site.domain)
     assert response.status_code == 200
-    assert active_package_listing.get_full_url().encode("utf-8") in response.content
+    assert active_package_listing.get_absolute_url().encode("utf-8") in response.content
 
 
 @pytest.mark.django_db
@@ -62,16 +62,16 @@ def test_package_list_search_logic(
     )
 
     resp = client.get(f"{url}?q= ", HTTP_HOST=host)
-    assert listing.get_full_url().encode("utf-8") in resp.content
+    assert listing.get_absolute_url().encode("utf-8") in resp.content
 
     resp = client.get(f"{url}?q=fish", HTTP_HOST=host)
-    assert listing.get_full_url().encode("utf-8") in resp.content
+    assert listing.get_absolute_url().encode("utf-8") in resp.content
 
     resp = client.get(f"{url}?q=fish birds", HTTP_HOST=host)
-    assert listing.get_full_url().encode("utf-8") in resp.content
+    assert listing.get_absolute_url().encode("utf-8") in resp.content
 
     resp = client.get(f"{url}?q=fish cats", HTTP_HOST=host)
-    assert listing.get_full_url().encode("utf-8") not in resp.content
+    assert listing.get_absolute_url().encode("utf-8") not in resp.content
 
 
 @pytest.mark.django_db
@@ -137,14 +137,14 @@ def test_package_list_category_filtering(
     )
     assert resp.status_code == 200
     # Package has one of the included categories, search uses OR logic for categories
-    assert active_package_listing.get_full_url().encode("utf-8") in resp.content
+    assert active_package_listing.get_absolute_url().encode("utf-8") in resp.content
 
     resp = client.get(
         f"{url}?excluded_categories={cat1.pk}", HTTP_HOST=community_site.site.domain
     )
     assert resp.status_code == 200
     # Package has one of the excluded categories, search uses OR logic for categories
-    assert active_package_listing.get_full_url().encode("utf-8") not in resp.content
+    assert active_package_listing.get_absolute_url().encode("utf-8") not in resp.content
 
 
 @pytest.mark.django_db

@@ -77,7 +77,10 @@ class PackageCreateOldView(CommunityMixin, CreateView):
             community__in=form.cleaned_data.get("communities"),
         ).first()
         # TODO: Remove reliance on instance.get_absolute_url()
+        # Use the host-relative URL so the redirect stays on the host that
+        # served the upload form (e.g. the legacy old. site) instead of
+        # jumping to the listing's main_site (the new app) host.
         redirect_url = (
-            listing.get_full_url() if listing else instance.get_absolute_url()
+            listing.get_absolute_url() if listing else instance.get_absolute_url()
         )
         return redirect(redirect_url)
