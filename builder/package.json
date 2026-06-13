@@ -5,7 +5,7 @@
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.15.2",
         "@sentry/react": "^6.11.0",
-        "@sentry/types": "^6.11.0",
+        "@sentry/types": "^10.53.1",
         "bootstrap": "^4.3.1",
         "crypto-js": "^4.0.0",
         "github-markdown-css": "^4.0.0",
