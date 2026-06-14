@@ -31,6 +31,7 @@ from thunderstore.api.cyberstorm.services.team import (
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
+    NeverCacheMixin,
     PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
@@ -174,7 +175,9 @@ class DisbandTeamAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CreateServiceAccountAPIView(APIView):
+class CreateServiceAccountAPIView(NeverCacheMixin, APIView):
+    # Response includes a freshly minted service-account API token, so it must
+    # never be stored by any cache (TS QA caching notes).
     permission_classes = [IsAuthenticated]
 
     @conditional_swagger_auto_schema(

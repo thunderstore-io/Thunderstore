@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.api.utils import NeverCacheMixin
 from thunderstore.frontend.api.experimental.serializers.markdown import (
     RenderMarkdownParamsSerializer,
     RenderMarkdownResponseSerializer,
@@ -10,7 +11,7 @@ from thunderstore.frontend.api.experimental.serializers.markdown import (
 from thunderstore.markdown.templatetags.markdownify import render_markdown
 
 
-class RenderMarkdownApiView(APIView):
+class RenderMarkdownApiView(NeverCacheMixin, APIView):
     serializer_class = RenderMarkdownResponseSerializer
     permission_classes = []
 

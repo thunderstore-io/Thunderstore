@@ -3,6 +3,7 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.api.utils import NeverCacheMixin
 from thunderstore.repository.api.experimental.serializers.validators import (
     IconValidatorParamsSerializer,
     ManifestV1ValidatorParamsSerializer,
@@ -15,7 +16,7 @@ from thunderstore.repository.validation.manifest import validate_manifest
 from thunderstore.repository.validation.markdown import validate_markdown
 
 
-class ReadmeValidatorApiView(APIView):
+class ReadmeValidatorApiView(NeverCacheMixin, APIView):
     """
     Validates a package readme.
     """
@@ -44,7 +45,7 @@ class ReadmeValidatorApiView(APIView):
         )
 
 
-class ManifestV1ValidatorApiView(APIView):
+class ManifestV1ValidatorApiView(NeverCacheMixin, APIView):
     """
     Validates a package manifest.
     """
@@ -78,7 +79,7 @@ class ManifestV1ValidatorApiView(APIView):
         )
 
 
-class IconValidatorApiView(APIView):
+class IconValidatorApiView(NeverCacheMixin, APIView):
     """
     Validates a package icon.
     """
