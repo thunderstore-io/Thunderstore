@@ -90,6 +90,27 @@ def test_package_version_full_download_url(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "primary_host",
+    ("primary.example.org", "secondary.example.org"),
+)
+def test_package_version_relative_download_url(
+    active_package_listing: PackageListing,
+    primary_host: str,
+    settings: Any,
+) -> None:
+    # The relative download URL is host-agnostic: it never embeds PRIMARY_HOST,
+    # so a download link rendered on the legacy site stays on the serving host.
+    settings.PRIMARY_HOST = primary_host
+    package = active_package_listing.package
+    namespace = package.namespace.name
+    version = package.latest
+    expected = f"/package/download/{namespace}/{package.name}/{version.version_number}/"
+    assert version.relative_download_url == expected
+    assert primary_host not in version.relative_download_url
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("format_spec", PackageFormats.values + [None, "invalid"])
 def test_package_version_format_spec_constraint(
     package_version: PackageVersion,

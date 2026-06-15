@@ -54,7 +54,7 @@
                                 <h6 class="title">Popular communities</h6>
                                 <div class="grid" role="list">
                                     {% for community in selectable_communities|slice:":8"|dictsort:"name" %}
-                                        <a class="grid-item" href="{{ community.full_url }}" role="listitem">{{ community.name }}</a>
+                                        <a class="grid-item" href="{{ community.get_absolute_url }}" role="listitem">{{ community.name }}</a>
                                     {% endfor %}
                                 </div>
                             </div>

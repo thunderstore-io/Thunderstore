@@ -55,4 +55,4 @@ def test_community_list_view(client, community_site):
     assert response.status_code == 200
     data = response.content.decode()
     assert community_site.community.name in data
-    assert community_site.community.full_url in data
+    assert community_site.community.get_absolute_url() in data
