@@ -319,7 +319,6 @@ def test_package_listing_view__returns_info(api_client: APIClient) -> None:
     assert actual["categories"][0]["id"] == str(category.id)
     assert actual["community_identifier"] == community.identifier
     assert actual["community_name"] == community.name
-    assert actual["datetime_created"] == _date_to_z(latest.date_created)
     assert actual["dependant_count"] == 1
     assert len(actual["dependencies"]) == 1
     assert actual["dependencies"][0]["community_identifier"] == community.identifier
@@ -335,16 +334,17 @@ def test_package_listing_view__returns_info(api_client: APIClient) -> None:
     assert actual["is_deprecated"] == listing.package.is_deprecated
     assert actual["is_nsfw"] == listing.has_nsfw_content
     assert actual["is_pinned"] == listing.package.is_pinned
-    assert actual["last_updated"] == _date_to_z(listing.package.date_updated)
     assert actual["latest_version_number"] == latest.version_number
     assert actual["name"] == listing.package.name
     assert actual["namespace"] == listing.package.namespace.name
+    assert actual["package_created"] == _date_to_z(listing.package.date_created)
     assert actual["rating_count"] == 8
     assert actual["size"] == latest.file_size
     assert actual["team"]["name"] == listing.package.owner.name
     assert len(actual["team"]["members"]) == 0
     assert actual["website_url"] == latest.website_url
     assert actual["version_count"] == 1
+    assert actual["version_created"] == _date_to_z(latest.date_created)
 
 
 @pytest.mark.django_db
