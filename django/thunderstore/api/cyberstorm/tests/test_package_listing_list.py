@@ -163,7 +163,7 @@ def test_base_view__when_including_category__filters_out_not_matched(
     PackageListingFactory(community_=community, categories=[])
     included = PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"included_categories": [str(cat.id)]})
+    request = APIRequestFactory().get("/", {"included_categories": [cat.slug]})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
@@ -182,7 +182,7 @@ def test_base_view__when_excluding_category__filters_out_matched(
     included = PackageListingFactory(community_=community, categories=[])
     PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"excluded_categories": [str(cat.id)]})
+    request = APIRequestFactory().get("/", {"excluded_categories": [cat.slug]})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
@@ -212,7 +212,7 @@ def test_base_view__when_requesting_section__filters_based_on_categories(
     PackageListingFactory(community_=community, categories=[excluded])
     PackageListingFactory(community_=community, categories=[irrelevant])
 
-    request = APIRequestFactory().get("/", {"section": section.uuid})
+    request = APIRequestFactory().get("/", {"section": section.slug})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
@@ -229,7 +229,7 @@ def test_base_view__when_requesting_nonexisting_section__does_nothing() -> None:
 
     request = APIRequestFactory().get(
         "/",
-        {"section": "decade00-0000-4000-a000-000000000000"},
+        {"section": "nonexistent-section-slug"},
     )
     response = BasePackageListAPIView().dispatch(
         request,
@@ -539,7 +539,7 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
         "/",
         data={
             "deprecated": True,
-            "included_categories": [str(cat.id)],
+            "included_categories": [cat.slug],
             "ordering": "most-downloaded",
             "page": 2,
             "q": "test",
@@ -551,10 +551,10 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
     )
 
     assert response.data["previous"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=1&q=test",
+        f"?deprecated=True&included_categories={cat.slug}&nsfw=False&ordering=most-downloaded&page=1&q=test",
     )
     assert response.data["next"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=3&q=test",
+        f"?deprecated=True&included_categories={cat.slug}&nsfw=False&ordering=most-downloaded&page=3&q=test",
     )
 
 

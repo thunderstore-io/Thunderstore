@@ -51,7 +51,9 @@ class PackageListRequestSerializer(serializers.Serializer):
     )
     page = serializers.IntegerField(default=1, min_value=1)
     q = serializers.CharField(required=False, help_text="Free text search")
-    section = serializers.UUIDField(required=False)
+    section = serializers.CharField(
+        required=False, help_text="PackageListingSection slug"
+    )
 
 
 class PackageListResponseSerializer(serializers.Serializer):
@@ -151,7 +153,7 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
         qs = filter_nsfw(params["nsfw"], qs)
         qs = filter_in_categories(params["included_categories"], qs)
         qs = filter_not_in_categories(params["excluded_categories"], qs)
-        qs = filter_by_section(params.get("section"), qs)
+        qs = filter_by_section(params.get("section"), qs, community)
         qs = filter_by_query(params.get("q"), qs)
 
         return qs.order_by(
@@ -390,59 +392,67 @@ def filter_nsfw(
 
 
 def filter_in_categories(
-    category_ids: List[str],
+    category_slugs: List[str],
     queryset: QuerySet[PackageListing],
 ) -> QuerySet[PackageListing]:
     """
     Include only packages belonging to specific categories.
 
-    Multiple categories are OR-joined, i.e. if category_ids contain A
+    Multiple categories are OR-joined, i.e. if category_slugs contain A
     and B, packages belonging to either will be returned.
     """
-    if not category_ids:
+    if not category_slugs:
         return queryset
 
-    return queryset.exclude(~Q(categories__id__in=category_ids))
+    return queryset.exclude(~Q(categories__slug__in=category_slugs))
 
 
 def filter_not_in_categories(
-    category_ids: List[str],
+    category_slugs: List[str],
     queryset: QuerySet[PackageListing],
 ) -> QuerySet[PackageListing]:
     """
     Exclude packages belonging to specific categories.
 
-    Multiple categories are OR-joined, i.e. if category_ids contain A
+    Multiple categories are OR-joined, i.e. if category_slugs contain A
     and B, packages belonging to either will be rejected.
     """
-    if not category_ids:
+    if not category_slugs:
         return queryset
 
-    return queryset.exclude(categories__id__in=category_ids)
+    return queryset.exclude(categories__slug__in=category_slugs)
 
 
 def filter_by_section(
-    section_uuid: Optional[str],
+    section_slug: Optional[str],
     queryset: QuerySet[PackageListing],
+    community: Optional[Community] = None,
 ) -> QuerySet[PackageListing]:
     """
     PackageListingSections can be used as shortcut for multiple
     category filters.
+
+    Section slugs are unique per community, so the lookup is scoped to the
+    given community to avoid cross-community slug collisions.
     """
-    if not section_uuid:
+    if not section_slug:
         return queryset
 
+    section_qs = PackageListingSection.objects.prefetch_related(
+        "require_categories",
+        "exclude_categories",
+    )
+    if community is not None:
+        section_qs = section_qs.filter(community=community)
+
     try:
-        section = PackageListingSection.objects.prefetch_related(
-            "require_categories",
-            "exclude_categories",
-        ).get(uuid=section_uuid)
+        section = section_qs.get(slug=section_slug)
     except PackageListingSection.DoesNotExist:
         required = []
         excluded = []
     else:
-        required = section.require_categories.values_list("pk", flat=True)
-        excluded = section.exclude_categories.values_list("pk", flat=True)
+        required = section.require_categories.values_list("slug", flat=True)
+        excluded = section.exclude_categories.values_list("slug", flat=True)
 
     queryset = filter_in_categories(required, queryset)
     return filter_not_in_categories(excluded, queryset)
