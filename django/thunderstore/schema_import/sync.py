@@ -2,6 +2,10 @@ import requests
 from django.conf import settings
 from django.db import transaction
 
+from thunderstore.community.consts import (
+    AI_GENERATED_CATEGORY_NAME,
+    AI_GENERATED_CATEGORY_SLUG,
+)
 from thunderstore.community.models import (
     Community,
     PackageCategory,
@@ -47,6 +51,7 @@ def import_community(identifier: str, schema: SchemaCommunity):
     community.name = schema.display_name
     community.discord_url = schema.discord_url
     community.wiki_url = schema.wiki_url
+    community.require_ai_attestation = schema.attest_ai
     community.save()
 
     if schema.autolist_package_ids:
@@ -70,6 +75,13 @@ def import_community(identifier: str, schema: SchemaCommunity):
             category = PackageCategory(slug=k, community=community)
         category.name = v.label
         category.save()
+
+    if schema.attest_ai:
+        PackageCategory.objects.get_or_create(
+            slug=AI_GENERATED_CATEGORY_SLUG,
+            community=community,
+            defaults={"name": AI_GENERATED_CATEGORY_NAME},
+        )
 
     for index, (k, v) in enumerate(schema.sections.items()):
         if not (

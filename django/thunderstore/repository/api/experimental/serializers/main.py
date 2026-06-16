@@ -2,6 +2,7 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField, empty
 
+from thunderstore.community.consts import AI_GENERATED_CATEGORY_SLUG
 from thunderstore.community.models import Community, PackageCategory, PackageListing
 from thunderstore.core.utils import make_full_url
 from thunderstore.frontend.api.experimental.serializers.views import (
@@ -223,6 +224,39 @@ class PackageSubmissionMetadataSerializer(PackageUploadMetadataSerializer):
         ),
         required=False,
     )
+    is_ai_generated = serializers.BooleanField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        communities = attrs.get("communities") or []
+        is_ai_generated = attrs.get("is_ai_generated")
+        attestation_required = any(c.require_ai_attestation for c in communities)
+
+        if attestation_required and is_ai_generated is None:
+            raise serializers.ValidationError(
+                {
+                    "is_ai_generated": [
+                        "One or more selected communities requires "
+                        "authors to disclose whether AI was used",
+                    ],
+                },
+            )
+
+        if is_ai_generated is not None:
+            community_categories = dict(attrs.get("community_categories") or {})
+            for community in communities:
+                if not community.require_ai_attestation:
+                    continue
+                slugs = list(community_categories.get(community.identifier) or [])
+                has_slug = AI_GENERATED_CATEGORY_SLUG in slugs
+                if is_ai_generated and not has_slug:
+                    slugs.append(AI_GENERATED_CATEGORY_SLUG)
+                elif not is_ai_generated and has_slug:
+                    slugs = [s for s in slugs if s != AI_GENERATED_CATEGORY_SLUG]
+                community_categories[community.identifier] = slugs
+            attrs["community_categories"] = community_categories
+
+        return attrs
 
 
 class AvailableCommunitySerializer(serializers.Serializer):
