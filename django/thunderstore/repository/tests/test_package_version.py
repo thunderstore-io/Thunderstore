@@ -5,7 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError
 
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
-from thunderstore.community.models import CommunityMemberRole, CommunityMembership
+from thunderstore.community.models import Community, GameVersion, ReleaseGroup
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.factories import UserFactory
 from thunderstore.permissions.models.tests._utils import (
@@ -14,7 +14,7 @@ from thunderstore.permissions.models.tests._utils import (
 )
 from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import PackageFactory, PackageVersionFactory
-from thunderstore.repository.models import PackageVersion, TeamMember, TeamMemberRole
+from thunderstore.repository.models import GameVersionEntry, PackageVersion
 from thunderstore.repository.package_formats import PackageFormats
 from thunderstore.webhooks.audit import AuditAction, AuditTarget
 
@@ -66,6 +66,250 @@ def test_package_version_get_page_url(
         owner_url
         == f"/c/test/p/Test_Team/{active_package_listing.package.name}/v/{active_package_listing.package.latest.version_number}/"
     )
+
+
+@pytest.mark.django_db
+def test_available_game_versions_empty_by_default(
+    package_version: PackageVersion,
+    community: Community,
+) -> None:
+    assert package_version.available_game_versions(community) == []
+
+
+@pytest.mark.django_db
+def test_available_game_versions_all_inactive(
+    package_version: PackageVersion, community: Community
+) -> None:
+    release_group = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x"
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.0",
+        is_active=False,
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.1",
+        is_active=False,
+    )
+    assert package_version.available_game_versions(community) == []
+
+
+@pytest.mark.django_db
+def test_available_game_versions_inactive_versions_excluded(
+    package_version: PackageVersion, community: Community
+) -> None:
+    release_group = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x"
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.0",
+        is_active=True,
+    )
+    package_version.game_versions.create(
+        release_group=release_group,
+        community=community,
+        version="1.0.1",
+        is_active=False,
+    )
+    GameVersion.objects.create(
+        release_group=release_group,
+        community=community,
+        version="1.0.2",
+        is_active=True,
+    )
+    result = package_version.available_game_versions(community)
+    assert result == [
+        GameVersionEntry(display_name="1.0.0", type="version"),
+    ]
+
+
+@pytest.mark.django_db
+def test_available_game_versions_ordering_by_release_group(
+    package_version: PackageVersion, community: Community
+) -> None:
+    release_group1 = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x", order=1
+    )
+    release_group2 = ReleaseGroup.objects.create(
+        community=community, slug="2.0", display_name="2.0.x", order=2
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group1,
+        version="1.0.0",
+        is_active=True,
+        order=1,
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group1,
+        version="1.0.1",
+        is_active=True,
+        order=2,
+    )
+    GameVersion.objects.create(
+        community=community,
+        release_group=release_group1,
+        version="1.0.2",
+        is_active=True,
+        order=3,
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group2,
+        version="2.0.0",
+        is_active=True,
+    )
+    GameVersion.objects.create(
+        community=community,
+        release_group=release_group2,
+        version="2.0.1",
+        is_active=True,
+    )
+    result = package_version.available_game_versions(community)
+    assert result == [
+        GameVersionEntry(display_name="2.0.0", type="version"),
+        GameVersionEntry(display_name="1.0.1", type="version"),
+        GameVersionEntry(display_name="1.0.0", type="version"),
+    ]
+
+
+@pytest.mark.django_db
+def test_available_game_versions_excludes_other_community(
+    package_version: PackageVersion, community: Community
+) -> None:
+    release_group = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x"
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.0",
+        is_active=True,
+    )
+    other_community = CommunityFactory()
+    package_version.game_versions.create(
+        community=other_community,
+        release_group=release_group,
+        version="1.0.1",
+        is_active=True,
+    )
+    GameVersion.objects.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.2",
+        is_active=True,
+    )
+    result = package_version.available_game_versions(community)
+    assert result == [
+        GameVersionEntry(display_name="1.0.0", type="version"),
+    ]
+
+
+@pytest.mark.django_db
+def test_available_game_versions_full_group_collapses_to_group(
+    package_version: PackageVersion, community: Community
+) -> None:
+    release_group = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x"
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.0",
+        is_active=True,
+        order=1,
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.2",
+        is_active=True,
+        order=3,
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.1",
+        is_active=True,
+        order=2,
+    )
+    result = package_version.available_game_versions(community)
+    assert result == [
+        GameVersionEntry(display_name="1.0.x", type="group"),
+    ]
+
+
+@pytest.mark.django_db
+def test_available_game_versions_partial_group_shows_versions(
+    package_version: PackageVersion, community: Community
+) -> None:
+    release_group = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x"
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.0",
+        is_active=True,
+    )
+    GameVersion.objects.create(
+        community=community,
+        release_group=release_group,
+        version="1.0.1",
+        is_active=True,
+    )
+    result = package_version.available_game_versions(community)
+    assert result == [
+        GameVersionEntry(display_name="1.0.0", type="version"),
+    ]
+
+
+@pytest.mark.django_db
+def test_available_game_versions_mixed_groups(
+    package_version: PackageVersion, community: Community
+) -> None:
+    release_group1 = ReleaseGroup.objects.create(
+        community=community, slug="1.0", display_name="1.0.x", order=1
+    )
+    release_group2 = ReleaseGroup.objects.create(
+        community=community, slug="2.0", display_name="2.0.x", order=2
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group1,
+        version="1.0.0",
+        is_active=True,
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group1,
+        version="1.0.1",
+        is_active=True,
+    )
+    package_version.game_versions.create(
+        community=community,
+        release_group=release_group2,
+        version="2.0.0",
+        is_active=True,
+    )
+    GameVersion.objects.create(
+        community=community,
+        release_group=release_group2,
+        version="2.0.1",
+        is_active=True,
+    )
+    result = package_version.available_game_versions(community)
+    assert result == [
+        GameVersionEntry(display_name="2.0.0", type="version"),
+        GameVersionEntry(display_name="1.0.x", type="group"),
+    ]
 
 
 @pytest.mark.django_db

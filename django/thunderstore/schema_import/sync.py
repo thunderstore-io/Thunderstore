@@ -4,9 +4,11 @@ from django.db import transaction
 
 from thunderstore.community.models import (
     Community,
+    GameVersion,
     PackageCategory,
     PackageListing,
     PackageListingSection,
+    ReleaseGroup,
 )
 from thunderstore.core.utils import ExceptionLogger
 from thunderstore.repository.models import PackageInstaller
@@ -94,6 +96,46 @@ def import_community(identifier: str, schema: SchemaCommunity):
                 community=community,
             )
         )
+
+    release_group_order_counter = len(schema.game_versions or []) - 1
+    for release_group in schema.game_versions or []:
+        if not (
+            group := ReleaseGroup.objects.filter(
+                community=community, slug=release_group.slug
+            ).first()
+        ):
+            group = ReleaseGroup(community=community, slug=release_group.slug)
+        group.display_name = release_group.display_name
+        group.release_name = release_group.release_name
+        group.order = (
+            release_group.order
+            if release_group.order is not None
+            else release_group_order_counter
+        )
+        release_group_order_counter -= 1
+        group.save()
+
+        version_order_counter = 0
+        for version in release_group.versions or []:
+            if not (
+                game_version := GameVersion.objects.filter(
+                    community=community,
+                    release_group=group,
+                    version=version.version,
+                ).first()
+            ):
+                game_version = GameVersion(
+                    community=community,
+                    release_group=group,
+                    version=version.version,
+                )
+            game_version.release_name = version.release_name
+            game_version.order = (
+                version.order if version.order is not None else version_order_counter
+            )
+            version_order_counter += 1
+            game_version.is_active = version.is_active
+            game_version.save()
 
 
 def import_schema_communities(schema: Schema):

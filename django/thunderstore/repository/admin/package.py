@@ -18,6 +18,7 @@ class PackageVersionInline(admin.StackedInline):
         "version_link",
         "date_created",
         "description",
+        "game_versions",
         "downloads",
         "file",
         "file_size",
