@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 
 from conftest import TestUserTypes, UserType
 from thunderstore.community.models import PackageCategory, PackageListing
+from thunderstore.ts_reports.models import PackageReport
 
 PACKAGE_LISTING_ACTIONS = ["update", "approve", "reject", "report", "unlist"]
 
@@ -243,6 +244,48 @@ def test_report_package_listing_required_fields(
 
     assert response.status_code == 400
     assert response.json() == {"reason": ["This field is required."]}
+
+
+@pytest.mark.django_db
+def test_report_package_listing_records_version(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+):
+    user = TestUserTypes.get_user_by_type(TestUserTypes.site_admin)
+    api_client.force_authenticate(user=user)
+    version = active_package_listing.package.latest
+
+    url = get_report_url(active_package_listing)
+    response = api_client.post(
+        url,
+        data=json.dumps({"reason": "Spam", "version": version.version_number}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200, response.json()
+    report = PackageReport.objects.filter(
+        package=active_package_listing.package
+    ).first()
+    assert report is not None
+    assert report.package_version == version
+
+
+@pytest.mark.django_db
+def test_report_package_listing_rejects_unknown_version(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+):
+    user = TestUserTypes.get_user_by_type(TestUserTypes.site_admin)
+    api_client.force_authenticate(user=user)
+
+    url = get_report_url(active_package_listing)
+    response = api_client.post(
+        url,
+        data=json.dumps({"reason": "Spam", "version": "9.9.9-does-not-exist"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db

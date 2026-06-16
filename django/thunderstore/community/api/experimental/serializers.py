@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.relations import PrimaryKeyRelatedField
 
 from thunderstore.community.models import PackageCategory
 from thunderstore.repository.api.experimental.serializers import (
@@ -34,10 +33,15 @@ class PackageListingUpdateResponseSerializer(serializers.Serializer):
 
 
 class PackageListingReportRequestSerializer(serializers.Serializer):
-    version = PrimaryKeyRelatedField(
+    # The reported version is identified by its SemVer version_number (what the
+    # Cyberstorm API exposes), not a DB primary key. version_number is only
+    # unique per package, so the lookup is scoped to the reported package passed
+    # in via serializer context.
+    version = serializers.SlugRelatedField(
+        slug_field="version_number",
         required=False,
         allow_null=True,
-        queryset=PackageVersion.objects.all(),
+        queryset=PackageVersion.objects.none(),
     )
     reason = serializers.ChoiceField(
         required=True,
@@ -51,3 +55,9 @@ class PackageListingReportRequestSerializer(serializers.Serializer):
         allow_null=True,
         max_length=REPORT_DESCRIPTION_MAX_LENGTH,
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        package = self.context.get("package")
+        if package is not None:
+            self.fields["version"].queryset = package.versions.all()

@@ -146,7 +146,10 @@ class ReportPackageListingAPIView(APIView):
             community_id=kwargs["community_id"],
         )
 
-        request_serializer = PackageListingReportRequestSerializer(data=request.data)
+        request_serializer = PackageListingReportRequestSerializer(
+            data=request.data,
+            context={"package": listing.package},
+        )
         request_serializer.is_valid(raise_exception=True)
 
         report_package_listing(
