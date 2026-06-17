@@ -269,7 +269,7 @@ def get_package_listing_chunk(
         .annotate(count=Count("id"))
         .values("count")
     )
-    
+
     dependencies_prefetch = Prefetch(
         "dependencies",
         queryset=PackageVersion.objects.annotate(
