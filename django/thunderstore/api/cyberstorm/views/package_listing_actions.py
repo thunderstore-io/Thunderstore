@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers.package_listing import (
+    CyberstormPackageListingReportRequestSerializer,
     PackageListingApproveSerializer,
     PackageListingCategoriesSerializer,
     PackageListingRejectSerializer,
@@ -18,9 +19,6 @@ from thunderstore.api.cyberstorm.services.package_listing import (
     update_categories,
 )
 from thunderstore.api.utils import conditional_swagger_auto_schema
-from thunderstore.community.api.experimental.serializers import (
-    PackageListingReportRequestSerializer,
-)
 from thunderstore.repository.models import PackageListing
 
 
@@ -136,7 +134,7 @@ class ReportPackageListingAPIView(APIView):
     @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package_listing.report",
         tags=["cyberstorm"],
-        request_body=PackageListingReportRequestSerializer,
+        request_body=CyberstormPackageListingReportRequestSerializer,
         responses={200: "Success"},
     )
     def post(self, request, *args, **kwargs) -> Response:
@@ -146,7 +144,10 @@ class ReportPackageListingAPIView(APIView):
             community_id=kwargs["community_id"],
         )
 
-        request_serializer = PackageListingReportRequestSerializer(data=request.data)
+        request_serializer = CyberstormPackageListingReportRequestSerializer(
+            data=request.data,
+            context={"package": listing.package},
+        )
         request_serializer.is_valid(raise_exception=True)
 
         report_package_listing(
@@ -154,7 +155,7 @@ class ReportPackageListingAPIView(APIView):
             reason=request_serializer.validated_data.get("reason"),
             package=listing.package,
             package_listing=listing,
-            package_version=request_serializer.validated_data.get("version"),
+            package_version=request_serializer.validated_data.get("version_number"),
             description=request_serializer.validated_data.get("description"),
         )
 
