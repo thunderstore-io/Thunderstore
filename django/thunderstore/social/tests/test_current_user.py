@@ -9,6 +9,11 @@ from social_django.models import UserSocialAuth  # type: ignore
 
 from thunderstore.account.factories import ServiceAccountFactory
 from thunderstore.account.models.user_flag import UserFlag, UserFlagMembership
+from thunderstore.community.models import (
+    Community,
+    CommunityMemberRole,
+    CommunityMembership,
+)
 from thunderstore.core.types import UserType
 from thunderstore.repository.factories import TeamMemberFactory
 from thunderstore.repository.models.team import TeamMemberRole
@@ -263,6 +268,27 @@ def test_current_user_is_staff_experimental_api(
     _run_current_user_is_staff_test(
         api_client, user, is_authorized, is_staff, expected_status, False
     )
+
+
+@pytest.mark.django_db
+def test_current_user_is_moderator_experimental_api(
+    api_client: APIClient,
+    user: UserType,
+    community: Community,
+):
+    api_client.force_authenticate(user=user)
+
+    # A plain user moderates nothing.
+    response = request_user_info(api_client)
+    assert response.status_code == 200
+    assert response.json()["is_moderator"] is False
+
+    # Becoming a community moderator flips the flag (no staff/superuser needed).
+    CommunityMembership.objects.create(
+        user=user, community=community, role=CommunityMemberRole.moderator
+    )
+    response = request_user_info(api_client)
+    assert response.json()["is_moderator"] is True
 
 
 @pytest.mark.django_db
