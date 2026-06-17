@@ -163,7 +163,7 @@ def test_base_view__when_including_category__filters_out_not_matched(
     PackageListingFactory(community_=community, categories=[])
     included = PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"included_categories": [str(cat.id)]})
+    request = APIRequestFactory().get("/", {"included_categories": [cat.slug]})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
@@ -182,7 +182,7 @@ def test_base_view__when_excluding_category__filters_out_matched(
     included = PackageListingFactory(community_=community, categories=[])
     PackageListingFactory(community_=community, categories=[cat])
 
-    request = APIRequestFactory().get("/", {"excluded_categories": [str(cat.id)]})
+    request = APIRequestFactory().get("/", {"excluded_categories": [cat.slug]})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
@@ -212,10 +212,86 @@ def test_base_view__when_requesting_section__filters_based_on_categories(
     PackageListingFactory(community_=community, categories=[excluded])
     PackageListingFactory(community_=community, categories=[irrelevant])
 
-    request = APIRequestFactory().get("/", {"section": section.uuid})
+    request = APIRequestFactory().get("/", {"section": section.slug})
     response = BasePackageListAPIView().dispatch(
         request,
         community_id=community.identifier,
+    )
+
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["name"] == expected.package.name
+
+
+@mock_base_package_list_api_view
+@pytest.mark.django_db
+def test_base_view__filters_by_category_id_for_backwards_compat(
+    community: Community,
+) -> None:
+    # Backwards compatibility: the API still accepts numeric category ids while
+    # clients migrate to slugs.
+    cat = PackageCategory.objects.create(name="c", slug="c", community=community)
+    PackageListingFactory(community_=community, categories=[])
+    included = PackageListingFactory(community_=community, categories=[cat])
+
+    request = APIRequestFactory().get("/", {"included_categories": [str(cat.id)]})
+    response = BasePackageListAPIView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
+
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["name"] == included.package.name
+
+
+@mock_base_package_list_api_view
+@pytest.mark.django_db
+def test_base_view__filters_by_section_uuid_for_backwards_compat(
+    community: Community,
+) -> None:
+    # Backwards compatibility: the API still accepts a section UUID.
+    required = PackageCategory.objects.create(name="r", slug="r", community=community)
+    section = PackageListingSection.objects.create(
+        name="Modpacks", slug="modpacks", community=community
+    )
+    section.require_categories.set([required])
+    expected = PackageListingFactory(community_=community, categories=[required])
+    PackageListingFactory(community_=community, categories=[])
+
+    request = APIRequestFactory().get("/", {"section": str(section.uuid)})
+    response = BasePackageListAPIView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
+
+    assert response.data["count"] == 1
+    assert response.data["results"][0]["name"] == expected.package.name
+
+
+@mock_base_package_list_api_view
+@pytest.mark.django_db
+def test_base_view__section_slug_lookup_is_scoped_to_community() -> None:
+    # Two communities share the same section slug; the filter must use the
+    # section for the requested community only.
+    community_a = CommunityFactory()
+    community_b = CommunityFactory()
+    cat_a = PackageCategory.objects.create(name="a", slug="cat", community=community_a)
+    cat_b = PackageCategory.objects.create(name="b", slug="cat", community=community_b)
+    section_a = PackageListingSection.objects.create(
+        name="Modpacks", slug="modpacks", community=community_a
+    )
+    section_a.require_categories.set([cat_a])
+    section_b = PackageListingSection.objects.create(
+        name="Modpacks", slug="modpacks", community=community_b
+    )
+    section_b.require_categories.set([cat_b])
+
+    expected = PackageListingFactory(community_=community_a, categories=[cat_a])
+    PackageListingFactory(community_=community_a, categories=[])
+
+    request = APIRequestFactory().get("/", {"section": "modpacks"})
+    response = BasePackageListAPIView().dispatch(
+        request,
+        community_id=community_a.identifier,
     )
 
     assert response.data["count"] == 1
@@ -229,7 +305,7 @@ def test_base_view__when_requesting_nonexisting_section__does_nothing() -> None:
 
     request = APIRequestFactory().get(
         "/",
-        {"section": "decade00-0000-4000-a000-000000000000"},
+        {"section": "nonexistent-section-slug"},
     )
     response = BasePackageListAPIView().dispatch(
         request,
@@ -539,7 +615,7 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
         "/",
         data={
             "deprecated": True,
-            "included_categories": [str(cat.id)],
+            "included_categories": [cat.slug],
             "ordering": "most-downloaded",
             "page": 2,
             "q": "test",
@@ -551,10 +627,10 @@ def test_base_view__when_multiple_pages_of_results__page_urls_retain_paramaters(
     )
 
     assert response.data["previous"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=1&q=test",
+        f"?deprecated=True&included_categories={cat.slug}&nsfw=False&ordering=most-downloaded&page=1&q=test",
     )
     assert response.data["next"].endswith(
-        f"?deprecated=True&included_categories={cat.id}&nsfw=False&ordering=most-downloaded&page=3&q=test",
+        f"?deprecated=True&included_categories={cat.slug}&nsfw=False&ordering=most-downloaded&page=3&q=test",
     )
 
 

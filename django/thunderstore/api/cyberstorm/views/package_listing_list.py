@@ -3,6 +3,7 @@ from typing import List, Optional, OrderedDict, Tuple
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.paginator import Page
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
 from django.urls import reverse
@@ -51,7 +52,10 @@ class PackageListRequestSerializer(serializers.Serializer):
     )
     page = serializers.IntegerField(default=1, min_value=1)
     q = serializers.CharField(required=False, help_text="Free text search")
-    section = serializers.UUIDField(required=False)
+    section = serializers.CharField(
+        required=False,
+        help_text="PackageListingSection slug (a section UUID is also accepted)",
+    )
 
 
 class PackageListResponseSerializer(serializers.Serializer):
@@ -151,7 +155,7 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
         qs = filter_nsfw(params["nsfw"], qs)
         qs = filter_in_categories(params["included_categories"], qs)
         qs = filter_not_in_categories(params["excluded_categories"], qs)
-        qs = filter_by_section(params.get("section"), qs)
+        qs = filter_by_section(params.get("section"), qs, community)
         qs = filter_by_query(params.get("q"), qs)
 
         return qs.order_by(
@@ -389,60 +393,95 @@ def filter_nsfw(
     return queryset.exclude(has_nsfw_content=True)
 
 
+def _categories_match_q(category_keys: List[str]) -> Q:
+    """
+    Match categories by slug, and — for backwards compatibility during the
+    slug migration — by numeric id too. Remove the id fallback in the follow-up
+    PR once the frontend no longer sends category ids.
+    """
+    numeric_ids = [key for key in category_keys if str(key).isdigit()]
+    query = Q(categories__slug__in=category_keys)
+    if numeric_ids:
+        query |= Q(categories__id__in=numeric_ids)
+    return query
+
+
 def filter_in_categories(
-    category_ids: List[str],
+    category_keys: List[str],
     queryset: QuerySet[PackageListing],
 ) -> QuerySet[PackageListing]:
     """
     Include only packages belonging to specific categories.
 
-    Multiple categories are OR-joined, i.e. if category_ids contain A
+    Multiple categories are OR-joined, i.e. if category_keys contain A
     and B, packages belonging to either will be returned.
     """
-    if not category_ids:
+    if not category_keys:
         return queryset
 
-    return queryset.exclude(~Q(categories__id__in=category_ids))
+    return queryset.exclude(~_categories_match_q(category_keys))
 
 
 def filter_not_in_categories(
-    category_ids: List[str],
+    category_keys: List[str],
     queryset: QuerySet[PackageListing],
 ) -> QuerySet[PackageListing]:
     """
     Exclude packages belonging to specific categories.
 
-    Multiple categories are OR-joined, i.e. if category_ids contain A
+    Multiple categories are OR-joined, i.e. if category_keys contain A
     and B, packages belonging to either will be rejected.
     """
-    if not category_ids:
+    if not category_keys:
         return queryset
 
-    return queryset.exclude(categories__id__in=category_ids)
+    return queryset.exclude(_categories_match_q(category_keys))
+
+
+def _resolve_section(
+    section_key: str, community: Optional[Community]
+) -> Optional[PackageListingSection]:
+    """
+    Resolve a section by slug (scoped to the community, since slugs are only
+    unique per community), falling back to the section UUID for backwards
+    compatibility during the slug migration. Remove the UUID fallback in the
+    follow-up PR once the frontend no longer sends section UUIDs.
+    """
+    section_qs = PackageListingSection.objects.prefetch_related(
+        "require_categories",
+        "exclude_categories",
+    )
+    scoped_qs = section_qs.filter(community=community) if community else section_qs
+    try:
+        return scoped_qs.get(slug=section_key)
+    except PackageListingSection.DoesNotExist:
+        pass
+    try:
+        # uuid is globally unique, so it does not need community scoping.
+        return section_qs.get(uuid=section_key)
+    except (PackageListingSection.DoesNotExist, DjangoValidationError, ValueError):
+        return None
 
 
 def filter_by_section(
-    section_uuid: Optional[str],
+    section_key: Optional[str],
     queryset: QuerySet[PackageListing],
+    community: Optional[Community] = None,
 ) -> QuerySet[PackageListing]:
     """
     PackageListingSections can be used as shortcut for multiple
-    category filters.
+    category filters. Accepts a section slug (preferred) or, for backwards
+    compatibility, a section UUID.
     """
-    if not section_uuid:
+    if not section_key:
         return queryset
 
-    try:
-        section = PackageListingSection.objects.prefetch_related(
-            "require_categories",
-            "exclude_categories",
-        ).get(uuid=section_uuid)
-    except PackageListingSection.DoesNotExist:
-        required = []
-        excluded = []
-    else:
-        required = section.require_categories.values_list("pk", flat=True)
-        excluded = section.exclude_categories.values_list("pk", flat=True)
+    section = _resolve_section(section_key, community)
+    if section is None:
+        return queryset
+
+    required = section.require_categories.values_list("slug", flat=True)
+    excluded = section.exclude_categories.values_list("slug", flat=True)
 
     queryset = filter_in_categories(required, queryset)
     return filter_not_in_categories(excluded, queryset)
