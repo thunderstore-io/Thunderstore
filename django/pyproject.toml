@@ -49,7 +49,7 @@ ts-scanners = { path = "../python-packages/ts-scanners", develop = true }
 ts-moderation = { path = "../python-packages/ts-moderation", develop = true }
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2"
+pytest = "^7.4"
 pytest-cov = "^2.8"
 pytest-django = "^4.1"
 factory_boy = "^3.2"
