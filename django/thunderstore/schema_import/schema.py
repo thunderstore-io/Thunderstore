@@ -13,6 +13,13 @@ class SchemaThunderstoreCategory(BaseModel):
     label: str
 
 
+class SchemaThunderstoreCommunityMeta(BaseModel):
+    icon: Optional[str]
+    cover: Optional[str]
+    background: Optional[str]
+    hero: Optional[str]
+
+
 class SchemaCommunity(BaseModel):
     display_name: str = Field(alias="displayName")
     categories: Dict[str, SchemaThunderstoreCategory]
@@ -21,6 +28,8 @@ class SchemaCommunity(BaseModel):
     discord_url: Optional[str] = Field(alias="discordUrl")
     wiki_url: Optional[str] = Field(alias="wikiUrl")
     autolist_package_ids: Optional[List[str]] = Field(alias="autolistPackageIds")
+    listed: Optional[bool]
+    meta: Optional[SchemaThunderstoreCommunityMeta]
 
 
 class SchemaGameMeta(BaseModel):
