@@ -90,7 +90,6 @@ class ResponseSerializer(serializers.Serializer):
     categories = CyberstormPackageCategorySerializer(many=True)
     community_identifier = serializers.CharField(source="community.identifier")
     community_name = serializers.CharField(source="community.name")
-    datetime_created = serializers.DateTimeField(source="version.date_created")
     dependant_count = serializers.IntegerField(min_value=0)
     dependencies = DependencySerializer(many=True)
     dependency_count = serializers.IntegerField(min_value=0)
@@ -104,16 +103,17 @@ class ResponseSerializer(serializers.Serializer):
     is_deprecated = serializers.BooleanField(source="package.is_deprecated")
     is_nsfw = serializers.BooleanField(source="has_nsfw_content")
     is_pinned = serializers.BooleanField(source="package.is_pinned")
-    last_updated = serializers.DateTimeField(source="package.date_updated")
     latest_version_number = serializers.CharField(
         source="package.latest.version_number",
     )
     name = serializers.CharField(source="package.name")
     namespace = serializers.CharField(source="package.namespace.name")
+    package_created = serializers.DateTimeField(source="package.date_created")
     rating_count = serializers.IntegerField(min_value=0)
     size = serializers.IntegerField(min_value=0, source="version.file_size")
     team = CyberstormPackageTeamSerializer(source="package.owner")
     version_count = serializers.IntegerField()
+    version_created = serializers.DateTimeField(source="version.date_created")
     website_url = EmptyStringAsNoneField(source="version.website_url")
 
 
