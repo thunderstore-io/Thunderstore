@@ -7,6 +7,7 @@ from jsonschema import RefResolver, ValidationError, validate
 from rest_framework.test import APIClient
 from social_django.models import UserSocialAuth
 
+from thunderstore.community.models import ModeratorNote
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.models import PackageListing, TeamMemberRole
 
@@ -15,6 +16,18 @@ def get_parameter_values(
     package_listing: PackageListing, username: Optional[str] = None
 ) -> dict:
     service_account = package_listing.package.owner.service_accounts.first()
+
+    note = package_listing.moderator_notes.first() or ModeratorNote.objects.create(
+        package_listing=package_listing,
+        content="Example moderator note",
+    )
+    # Give the community detail endpoint a note too, so its schema-validated
+    # response exercises the populated (non-null) moderator_note shape.
+    if not package_listing.community.moderator_notes.exists():
+        ModeratorNote.objects.create(
+            community=package_listing.community,
+            content="Example community moderator note",
+        )
 
     parameters = {
         "community_id": package_listing.community.identifier,
@@ -25,6 +38,7 @@ def get_parameter_values(
         "team_name": package_listing.package.owner.name,
         "uuid": service_account.uuid if service_account else "",
         "provider": "discord",
+        "note_id": note.id,
     }
 
     if username:

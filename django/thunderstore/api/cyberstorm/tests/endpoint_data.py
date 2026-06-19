@@ -3,6 +3,7 @@ ENDPOINTS = {
         "/api/cyberstorm/community/",
         "/api/cyberstorm/community/{community_id}/",
         "/api/cyberstorm/community/{community_id}/filters/",
+        "/api/cyberstorm/community/{community_id}/permissions/",
         "/api/cyberstorm/listing/{community_id}/",
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/",
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/",
@@ -24,6 +25,15 @@ ENDPOINTS = {
         "/api/cyberstorm/team/{team_id}/settings/",
     ],
     "POST": {
+        "/api/cyberstorm/community/{community_id}/notes/": {
+            "content": "This is an example moderator note"
+        },
+        "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/notes/": {
+            "content": "This is an example moderator note"
+        },
+        "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/v/{version_number}/notes/": {
+            "content": "This is an example moderator note"
+        },
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/approve/": {
             "internal_notes": "This is an example internal note"
         },
@@ -53,6 +63,9 @@ ENDPOINTS = {
         },
     },
     "PATCH": {
+        "/api/cyberstorm/moderator-note/{note_id}/": {
+            "content": "This is an updated moderator note"
+        },
         "/api/cyberstorm/team/{team_name}/update/": {
             "donation_link": "https://test.url"
         },
@@ -64,6 +77,7 @@ ENDPOINTS = {
         },
     },
     "DELETE": [
+        "/api/cyberstorm/moderator-note/{note_id}/",
         "/api/cyberstorm/team/{team_name}/disband/",
         "/api/cyberstorm/team/{team_name}/member/{username}/remove/",
         "/api/cyberstorm/service-account/{uuid}/delete/",

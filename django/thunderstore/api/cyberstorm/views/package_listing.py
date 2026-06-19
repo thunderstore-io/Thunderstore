@@ -6,6 +6,7 @@ from django.db.models import (
     Count,
     ExpressionWrapper,
     OuterRef,
+    Prefetch,
     Q,
     QuerySet,
     Subquery,
@@ -25,6 +26,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
     CyberstormPackageTeamSerializer,
     EmptyStringAsNoneField,
+    ModeratorNoteSerializer,
     PackageListingStatusResponseSerializer,
 )
 from thunderstore.api.cyberstorm.views.package_listing_actions import (
@@ -35,6 +37,7 @@ from thunderstore.api.utils import (
     PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
+from thunderstore.community.models import ModeratorNote
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.types import UserType
 from thunderstore.repository.models.package import get_package_dependants
@@ -106,6 +109,9 @@ class ResponseSerializer(serializers.Serializer):
     latest_version_number = serializers.CharField(
         source="package.latest.version_number",
     )
+    moderator_notes = ModeratorNoteSerializer(
+        source="display_moderator_notes", many=True
+    )
     name = serializers.CharField(source="package.name")
     namespace = serializers.CharField(source="package.namespace.name")
     package_created = serializers.DateTimeField(source="package.date_created")
@@ -163,6 +169,12 @@ def get_custom_package_listing(
         .prefetch_related(
             "categories",
             "package__owner__members",
+            Prefetch(
+                "moderator_notes",
+                queryset=ModeratorNote.objects.filter(is_active=True).select_related(
+                    "package_version"
+                ),
+            ),
         )
         .annotate(
             download_count=Subquery(
@@ -227,6 +239,18 @@ def get_custom_package_listing(
 
     listing.dependency_count = dependencies.count()
     listing.dependant_count = get_package_dependants(listing.package.pk).count()
+
+    # The public notes to show on this page: every active listing-wide note,
+    # plus the active notes for the version being viewed (the latest version on
+    # the default page). So a version note rides the listing page until a newer
+    # version is uploaded, at which point it drops off. Resolved in Python from
+    # the prefetched active-only set (no extra queries), newest first.
+    active_notes = listing.moderator_notes.all()
+    listing.display_moderator_notes = [
+        n
+        for n in active_notes
+        if n.package_version_id is None or n.package_version_id == listing.version.pk
+    ]
 
     return listing
 

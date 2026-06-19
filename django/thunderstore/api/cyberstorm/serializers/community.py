@@ -1,5 +1,9 @@
 from rest_framework import serializers
 
+from thunderstore.api.cyberstorm.serializers.moderator_note import (
+    ModeratorNoteSerializer,
+)
+
 
 class CyberstormCommunitySerializer(serializers.Serializer):
     name = serializers.CharField()
@@ -38,6 +42,28 @@ class CyberstormCommunitySerializer(serializers.Serializer):
 
     def get_total_package_count(self, obj) -> int:
         return obj.aggregated.package_count
+
+
+class CyberstormCommunityDetailSerializer(CyberstormCommunitySerializer):
+    """
+    Community detail payload. Adds the community's active moderator notes,
+    surfaced only on the single-community detail view (never the community list,
+    to avoid an N+1 across every community).
+    """
+
+    moderator_notes = ModeratorNoteSerializer(
+        source="display_moderator_notes", many=True
+    )
+
+
+class CommunityModeratorPermissionsSerializer(serializers.Serializer):
+    can_moderate = serializers.BooleanField()
+
+
+class CommunityPermissionsSerializer(serializers.Serializer):
+    """The requesting user's community-level permissions (e.g. moderation)."""
+
+    permissions = CommunityModeratorPermissionsSerializer()
 
 
 class CyberstormPackageCategorySerializer(serializers.Serializer):

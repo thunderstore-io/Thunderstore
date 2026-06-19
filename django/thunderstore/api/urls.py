@@ -5,12 +5,16 @@ from thunderstore.api.cyberstorm.views import (
     CommunityAPIView,
     CommunityFiltersAPIView,
     CommunityListAPIView,
+    CommunityModeratorNoteAPIView,
+    CommunityPermissionsAPIView,
     CreateServiceAccountAPIView,
     DeleteServiceAccountAPIView,
     DeleteUserAPIView,
     DeprecatePackageAPIView,
     DisbandTeamAPIView,
     DisconnectUserLinkedAccountAPIView,
+    ListingModeratorNoteAPIView,
+    ModeratorNoteDetailAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -36,6 +40,7 @@ from thunderstore.api.cyberstorm.views import (
     UpdatePackageListingCategoriesAPIView,
     UpdateTeamAPIView,
     UpdateTeamMemberAPIView,
+    VersionModeratorNoteAPIView,
 )
 from thunderstore.plugins.registry import plugin_registry
 
@@ -54,6 +59,16 @@ cyberstorm_urls = [
         "community/<str:community_id>/filters/",
         CommunityFiltersAPIView.as_view(),
         name="cyberstorm.community.filters",
+    ),
+    path(
+        "community/<str:community_id>/notes/",
+        CommunityModeratorNoteAPIView.as_view(),
+        name="cyberstorm.community.moderator_note",
+    ),
+    path(
+        "community/<str:community_id>/permissions/",
+        CommunityPermissionsAPIView.as_view(),
+        name="cyberstorm.community.permissions",
     ),
     path(
         "listing/<str:community_id>/",
@@ -109,6 +124,21 @@ cyberstorm_urls = [
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/unlist/",
         UnlistPackageListingAPIView.as_view(),
         name="cyberstorm.listing.unlist",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/notes/",
+        ListingModeratorNoteAPIView.as_view(),
+        name="cyberstorm.listing.moderator_note",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/v/<str:version_number>/notes/",
+        VersionModeratorNoteAPIView.as_view(),
+        name="cyberstorm.version.moderator_note",
+    ),
+    path(
+        "moderator-note/<int:note_id>/",
+        ModeratorNoteDetailAPIView.as_view(),
+        name="cyberstorm.moderator_note.detail",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/latest/changelog/",

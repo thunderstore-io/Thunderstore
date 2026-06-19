@@ -1,7 +1,13 @@
-from .community import CommunityAPIView
+from .community import CommunityAPIView, CommunityPermissionsAPIView
 from .community_filters import CommunityFiltersAPIView
 from .community_list import CommunityListAPIView
 from .markdown import PackageVersionChangelogAPIView, PackageVersionReadmeAPIView
+from .moderator_note import (
+    CommunityModeratorNoteAPIView,
+    ListingModeratorNoteAPIView,
+    ModeratorNoteDetailAPIView,
+    VersionModeratorNoteAPIView,
+)
 from .package_deprecate import DeprecatePackageAPIView
 from .package_listing import PackageListingAPIView, PackageListingStatusAPIView
 from .package_listing_actions import (
@@ -41,9 +47,14 @@ from .user import DeleteUserAPIView, DisconnectUserLinkedAccountAPIView
 
 __all__ = [
     "CommunityAPIView",
+    "CommunityPermissionsAPIView",
     "CommunityFiltersAPIView",
     "CommunityListAPIView",
+    "CommunityModeratorNoteAPIView",
+    "ListingModeratorNoteAPIView",
+    "VersionModeratorNoteAPIView",
     "CreateServiceAccountAPIView",
+    "ModeratorNoteDetailAPIView",
     "DeleteServiceAccountAPIView",
     "DeleteUserAPIView",
     "DisconnectUserLinkedAccountAPIView",

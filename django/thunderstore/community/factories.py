@@ -4,7 +4,13 @@ from factory.django import DjangoModelFactory
 
 from thunderstore.repository.factories import PackageVersionFactory
 
-from .models import Community, CommunitySite, PackageCategory, PackageListing
+from .models import (
+    Community,
+    CommunitySite,
+    ModeratorNote,
+    PackageCategory,
+    PackageListing,
+)
 
 
 class SiteFactory(DjangoModelFactory):
@@ -100,3 +106,10 @@ class PackageListingFactory(DjangoModelFactory):
         """
         if create and extracted:
             self.categories.set(extracted)
+
+
+class ModeratorNoteFactory(DjangoModelFactory):
+    class Meta:
+        model = ModeratorNote
+
+    content = factory.Sequence(lambda n: f"Test moderator note {n}")
