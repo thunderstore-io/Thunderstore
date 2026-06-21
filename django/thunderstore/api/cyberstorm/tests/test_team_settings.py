@@ -103,22 +103,26 @@ def test_team_settings_get_fails_user_not_team_member(
 
 
 @pytest.mark.django_db
-def test_team_settings_get_fails_user_not_owner(
+def test_team_settings_get_succeeds_for_member(
     api_client: APIClient,
     user: UserType,
     team: Team,
 ):
     TeamMemberFactory(team=team, user=user, role="member")
+    team.donation_link = "https://example.com"
+    team.save()
     api_client.force_authenticate(user)
 
     response = api_client.get(
         f"/api/cyberstorm/team/{team.name}/settings/",
     )
 
-    expected_response = {"non_field_errors": ["Must be an owner to edit team info"]}
-
-    assert response.status_code == 403
-    assert response.json() == expected_response
+    assert response.status_code == 200
+    assert response.json() == {
+        "identifier": team.pk,
+        "name": team.name,
+        "donation_link": "https://example.com",
+    }
 
 
 @pytest.mark.django_db
