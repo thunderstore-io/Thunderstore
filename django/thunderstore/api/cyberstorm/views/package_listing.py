@@ -37,7 +37,7 @@ from thunderstore.api.utils import (
 )
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.types import UserType
-from thunderstore.repository.models.package import get_package_dependants
+from thunderstore.repository.models.package import get_package_dependants_count
 from thunderstore.repository.models.package_version import PackageVersion
 from thunderstore.repository.views.package.detail import PermissionsChecker
 
@@ -226,7 +226,7 @@ def get_custom_package_listing(
         )
 
     listing.dependency_count = dependencies.count()
-    listing.dependant_count = get_package_dependants(listing.package.pk).count()
+    listing.dependant_count = get_package_dependants_count(listing.package.pk)
 
     return listing
 
