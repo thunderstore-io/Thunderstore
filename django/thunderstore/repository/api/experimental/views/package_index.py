@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import List
+from typing import Dict, List, Tuple
 
 from django.conf import settings
 from django.db.models import F
@@ -38,20 +38,46 @@ class PackageIndexEntry(serializers.Serializer):
     dependencies = serializers.SerializerMethodField()
 
     def get_dependencies(self, instance: PackageVersion) -> List[str]:
-        return [x.full_version_name for x in instance.dependencies.all()]
+        name_map = self.context["dependency_names"]
+        adjacency = self.context["dependency_ids"]
+        return [name_map[to_id] for to_id in adjacency.get(instance.id, [])]
+
+
+def _build_dependency_maps() -> Tuple[Dict[int, str], Dict[int, List[int]]]:
+    names = {
+        version_id: f"{owner}-{name}-{version}"
+        for version_id, owner, name, version in PackageVersion.objects.values_list(
+            "id",
+            "package__owner__name",
+            "package__name",
+            "version_number",
+        )
+    }
+    adjacency: Dict[int, List[int]] = {}
+    # Deterministic order keeps the published index stable. The M2M has none.
+    edges = PackageVersion.dependencies.through.objects.order_by(
+        "to_packageversion_id"
+    ).values_list("from_packageversion_id", "to_packageversion_id")
+    for from_id, to_id in edges.iterator():
+        adjacency.setdefault(from_id, []).append(to_id)
+    return names, adjacency
 
 
 def serialize_package_index() -> bytes:
-    versions: PackageVersionQuerySet = (
-        PackageVersion.objects.active()
-        .annotate(namespace=F("package__namespace"))
-        .prefetch_related("dependencies", "dependencies__package")
+    versions: PackageVersionQuerySet = PackageVersion.objects.active().annotate(
+        namespace=F("package__namespace")
     )
+    dependency_names, dependency_ids = _build_dependency_maps()
+    context = {
+        "dependency_names": dependency_names,
+        "dependency_ids": dependency_ids,
+    }
     renderer = JSONRenderer()
     result = BytesIO()
 
     for entry in versions.chunked_enumerate():
-        result.write(renderer.render(PackageIndexEntry(instance=entry).data))
+        data = PackageIndexEntry(instance=entry, context=context).data
+        result.write(renderer.render(data))
         result.write(b"\n")
 
     return result.getvalue()
