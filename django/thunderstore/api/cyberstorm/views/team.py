@@ -260,7 +260,6 @@ class TeamSettingsAPIView(APIView):
         team = get_object_or_404(Team.objects.exclude(is_active=False), name=team_name)
 
         team.ensure_user_can_access(request.user)
-        team.ensure_user_can_edit_info(request.user)
 
         data = CyberstormTeamSerializer(instance=team).data
         return Response(data, status=status.HTTP_200_OK)
