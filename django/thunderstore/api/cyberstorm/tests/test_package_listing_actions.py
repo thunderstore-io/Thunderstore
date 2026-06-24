@@ -6,7 +6,9 @@ import pytest
 from rest_framework.test import APIClient
 
 from conftest import TestUserTypes, UserType
+from thunderstore.community.factories import PackageListingFactory
 from thunderstore.community.models import PackageCategory, PackageListing
+from thunderstore.ts_reports.models import PackageReport
 
 PACKAGE_LISTING_ACTIONS = ["update", "approve", "reject", "report", "unlist"]
 
@@ -243,6 +245,103 @@ def test_report_package_listing_required_fields(
 
     assert response.status_code == 400
     assert response.json() == {"reason": ["This field is required."]}
+
+
+@pytest.mark.django_db
+def test_report_package_listing_records_version(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+):
+    user = TestUserTypes.get_user_by_type(TestUserTypes.site_admin)
+    api_client.force_authenticate(user=user)
+    version = active_package_listing.package.latest
+
+    url = get_report_url(active_package_listing)
+    response = api_client.post(
+        url,
+        data=json.dumps({"reason": "Spam", "version_number": version.version_number}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200, response.json()
+    report = PackageReport.objects.get(
+        package=active_package_listing.package,
+        package_version=version,
+    )
+    assert report.package_version == version
+
+
+@pytest.mark.django_db
+def test_report_package_listing_rejects_unknown_version(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+):
+    user = TestUserTypes.get_user_by_type(TestUserTypes.site_admin)
+    api_client.force_authenticate(user=user)
+
+    url = get_report_url(active_package_listing)
+    response = api_client.post(
+        url,
+        data=json.dumps({"reason": "Spam", "version_number": "9.9.9-does-not-exist"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_report_package_listing_ignores_legacy_version_field(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+):
+    # Backwards/forwards compatibility: a client built against the old contract
+    # (the `version` PK field) gets its `version` ignored rather than erroring,
+    # mirroring how an old backend ignores the new `version_number` field. The
+    # report still succeeds, just without a recorded version.
+    user = TestUserTypes.get_user_by_type(TestUserTypes.site_admin)
+    api_client.force_authenticate(user=user)
+    version = active_package_listing.package.latest
+
+    url = get_report_url(active_package_listing)
+    response = api_client.post(
+        url,
+        data=json.dumps({"reason": "Spam", "version": version.pk}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200, response.json()
+    report = PackageReport.objects.get(package=active_package_listing.package)
+    assert report.package_version is None
+
+
+@pytest.mark.django_db
+def test_report_package_listing_version_lookup_is_scoped_to_package(
+    api_client: APIClient,
+    active_package_listing: PackageListing,
+):
+    # Another package shares the same version_number (both default to 1.0.0);
+    # the reported version must resolve to the reported package's version,
+    # never the other package's.
+    user = TestUserTypes.get_user_by_type(TestUserTypes.site_admin)
+    api_client.force_authenticate(user=user)
+    version = active_package_listing.package.latest
+
+    other_listing = PackageListingFactory(community_=active_package_listing.community)
+    assert other_listing.package.latest.version_number == version.version_number
+
+    url = get_report_url(active_package_listing)
+    response = api_client.post(
+        url,
+        data=json.dumps({"reason": "Spam", "version_number": version.version_number}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200, response.json()
+    report = PackageReport.objects.get(
+        package=active_package_listing.package,
+        package_version=version,
+    )
+    assert report.package_version.package == active_package_listing.package
 
 
 @pytest.mark.django_db
