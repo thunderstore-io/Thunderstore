@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "module": "commonjs",
         "allowJs": true,
         "checkJs": false,
@@ -9,7 +9,6 @@
         "declarationMap": true,
         "sourceMap": true,
         "removeComments": true,
-        "downlevelIteration": true,
         "useDefineForClassFields": true,
         "experimentalDecorators": true,
 
