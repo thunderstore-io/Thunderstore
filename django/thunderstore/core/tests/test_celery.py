@@ -30,6 +30,7 @@ KNOWN_CELERY_IDS = (
     "celery.backend_cleanup",
     "thunderstore.community.tasks.update_community_aggregated_fields",
     "thunderstore.core.tasks.celery_post",
+    "thunderstore.core.tasks.celery_cleanup_sessions",
     "thunderstore.cache.tasks.invalidate_cache",
     "thunderstore.repository.tasks.update_api_caches",
     "thunderstore.usermedia.tasks.celery_cleanup_expired_uploads",
