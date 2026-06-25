@@ -12,6 +12,11 @@ from thunderstore.markdown.allowed_tags import (
 
 register = template.Library()
 md = MarkdownIt("gfm-like")
+# Disable fuzzy linkification: without this, linkify turns any bare word ending
+# in a valid TLD into a link (e.g. "README.md" -> http://readme.md, "setup.sh"),
+# sending users to unintended/dangerous sites. Explicit URLs (http://, https://)
+# and emails are still autolinked.
+md.linkify.set({"fuzzy_link": False})
 
 
 def render_markdown(value: str):
