@@ -1,4 +1,10 @@
+from drf_yasg.utils import swagger_serializer_method
 from rest_framework import serializers
+
+
+class CyberstormCommunityNotificationSerializer(serializers.Serializer):
+    type = serializers.CharField()  # noqa: A003
+    content = serializers.CharField()
 
 
 class CyberstormCommunitySerializer(serializers.Serializer):
@@ -32,12 +38,24 @@ class CyberstormCommunitySerializer(serializers.Serializer):
     total_package_count = serializers.SerializerMethodField()
     has_mod_manager_support = serializers.BooleanField()
     is_listed = serializers.BooleanField()
+    notifications = serializers.SerializerMethodField()
 
     def get_total_download_count(self, obj) -> int:
         return obj.aggregated.download_count
 
     def get_total_package_count(self, obj) -> int:
         return obj.aggregated.package_count
+
+    @swagger_serializer_method(
+        serializer_or_field=CyberstormCommunityNotificationSerializer(many=True)
+    )
+    def get_notifications(self, obj):
+        notification = getattr(obj, "notification", None)
+        if notification is None:
+            return []
+        return CyberstormCommunityNotificationSerializer(
+            notification.notifications, many=True
+        ).data
 
 
 class CyberstormPackageCategorySerializer(serializers.Serializer):

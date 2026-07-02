@@ -11,7 +11,7 @@ class CommunityAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIV
     permission_classes = []
 
     # Unlisted communities are included, as direct links to them should work.
-    queryset = Community.objects.all()
+    queryset = Community.objects.select_related("notification")
     serializer_class = CyberstormCommunitySerializer
 
     def get(self, *args, **kwargs):
