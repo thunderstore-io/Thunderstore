@@ -5,7 +5,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.management import BaseCommand, CommandError, call_command
 
-from thunderstore.community.models import Community, CommunitySite
+from thunderstore.community.models import (
+    Community,
+    CommunityNotification,
+    CommunitySite,
+)
 
 # Domains the local stack answers on. `thunderstore.localhost` is the primary
 # host (served by the cyberstorm-remix app via nginx) and `old.thunderstore.localhost`
@@ -50,6 +54,41 @@ class Command(BaseCommand):
         community, _ = Community.objects.get_or_create(
             identifier="riskofrain2",
             defaults={"name": "Risk of Rain 2"},
+        )
+
+        # Demo community notifications, shown at the top of the community's
+        # package list on the frontend (thunderstore.localhost is bound to this
+        # community below). Covers all severities plus an internal (SPA) and an
+        # external link.
+        self.stdout.write("Adding demo community notifications...")
+        CommunityNotification.objects.update_or_create(
+            community=community,
+            defaults={
+                "notifications": [
+                    {
+                        "type": "critical",
+                        "content": (
+                            "Scheduled maintenance is ongoing. See the "
+                            "[status page](https://status.thunderstore.io) for "
+                            "updates."
+                        ),
+                    },
+                    {
+                        "type": "warning",
+                        "content": (
+                            "Some packages are being re-indexed and may be "
+                            "temporarily missing from the list."
+                        ),
+                    },
+                    {
+                        "type": "info",
+                        "content": (
+                            "New to modding? Browse [all communities]"
+                            "(/communities/) to discover more games."
+                        ),
+                    },
+                ]
+            },
         )
 
         for domain, name in SITE_DEFINITIONS:
