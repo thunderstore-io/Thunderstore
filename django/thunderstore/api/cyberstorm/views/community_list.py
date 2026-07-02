@@ -41,9 +41,9 @@ class CommunityListAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, ListAPIV
         query_params.is_valid(raise_exception=True)
 
         if query_params.validated_data["include_unlisted"]:
-            return Community.objects.all()
+            return Community.objects.select_related("notification")
         else:
-            return Community.objects.listed()
+            return Community.objects.listed().select_related("notification")
 
     @conditional_swagger_auto_schema(
         tags=["cyberstorm"],
