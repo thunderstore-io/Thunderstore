@@ -234,6 +234,11 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
         for listing in package_page:
             package = listing.package
             latest = package.latest
+            if latest is None:
+                # Stale denormalized data: active() guarantees an active version
+                # EXISTS, but not that the cached latest FK is set. Skip the
+                # listing (it can't be displayed) instead of 500ing the page.
+                continue
             # Link the already-loaded package onto its latest version so the
             # install/download URL properties resolve the owner/name without
             # re-querying (package + package__owner are select_related above).
