@@ -1,7 +1,6 @@
 import gzip
 import json
 from datetime import timedelta
-from random import shuffle
 from typing import Any
 
 import pytest
@@ -24,11 +23,7 @@ from thunderstore.repository.factories import (
     PackageVersionFactory,
 )
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
-from thunderstore.repository.models.cache import (
-    _get_sorted_active_versions,
-    get_package_listing_chunk,
-    get_package_listing_ids,
-)
+from thunderstore.repository.models.cache import get_package_listing_ids
 
 
 @pytest.mark.django_db
@@ -225,56 +220,59 @@ def test_api_v1_chunked_package_cache__drops_stale_caches() -> None:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("count", (0, 1, 2, 3, 5, 8, 13))
-def test_get_package_listing_chunk__retains_received_ordering(count: int) -> None:
-    assert not PackageListing.objects.exists()
-    for _ in range(count):
-        PackageListingFactory()
-
-    ordering = list(PackageListing.objects.all().values_list("id", flat=True))
-    shuffle(ordering)
-    listings = get_package_listing_chunk(ordering)
-
-    for i, listing in enumerate(listings):
-        assert listing.id == ordering[i]
-
-
-@pytest.mark.django_db
-def test_get_package_listing_chunk__rating_score_zero_when_no_ratings() -> None:
-    listing = PackageListingFactory()
-
-    result = get_package_listing_chunk([listing.id])
-
-    assert len(result) == 1
-    assert result[0]._rating_score == 0
-
-
-@pytest.mark.django_db
-def test_get_package_listing_chunk__annotates_rating_score() -> None:
-    listing = PackageListingFactory()
-    PackageRatingFactory(package=listing.package)
-    PackageRatingFactory(package=listing.package)
-
-    result = get_package_listing_chunk([listing.id])
-
-    assert len(result) == 1
-    assert result[0]._rating_score == 2
-
-
-@pytest.mark.django_db
-def test_get_package_listing_chunk__excludes_inactive_versions() -> None:
-    listing = PackageListingFactory()
+def test_api_v1_chunked_package_cache__json_shape_order_and_values(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(community_=community)
     package = listing.package
     package.versions.all().delete()
-
     PackageVersionFactory(package=package, version_number="1.0.0", is_active=True)
     PackageVersionFactory(package=package, version_number="2.0.0", is_active=False)
+    v15 = PackageVersionFactory(package=package, version_number="1.5.0", is_active=True)
+    PackageRatingFactory(package=package)
+    PackageRatingFactory(package=package)
+    dep = PackageVersionFactory()
+    v15.dependencies.add(dep)
 
-    result = get_package_listing_chunk([listing.id])
+    update_api_v1_chunked_package_caches()
+    cache = APIV1ChunkedPackageCache.get_latest_for_community(community)
+    chunk = json.loads(gzip.decompress(cache.chunks.entries.first().blob.data.read()))
 
-    versions = list(result[0].package.versions.all())
-    assert len(versions) == 1
-    assert versions[0].version_number == "1.0.0"
+    obj = chunk[0]
+    assert list(obj.keys()) == [
+        "name",
+        "full_name",
+        "owner",
+        "package_url",
+        "donation_link",
+        "date_created",
+        "date_updated",
+        "uuid4",
+        "rating_score",
+        "is_pinned",
+        "is_deprecated",
+        "has_nsfw_content",
+        "categories",
+        "versions",
+    ]
+    assert list(obj["versions"][0].keys()) == [
+        "name",
+        "full_name",
+        "description",
+        "icon",
+        "version_number",
+        "dependencies",
+        "download_url",
+        "downloads",
+        "date_created",
+        "website_url",
+        "is_active",
+        "uuid4",
+        "file_size",
+    ]
+    assert [v["version_number"] for v in obj["versions"]] == ["1.5.0", "1.0.0"]
+    assert obj["rating_score"] == 2
+    assert obj["versions"][0]["dependencies"] == [dep.full_version_name]
 
 
 @pytest.mark.django_db
@@ -301,22 +299,6 @@ def test_get_package_listing_ids__does_not_return_ids_for_rejected_packages() ->
     ids = [id_ for chunk in result for id_ in chunk]
 
     assert ids == []
-
-
-@pytest.mark.django_db
-def test_get_sorted_active_versions__filters_inactive_and_sorts_descending() -> None:
-    listing = PackageListingFactory()
-    package = listing.package
-    package.versions.all().delete()
-
-    PackageVersionFactory(package=package, version_number="1.0.0", is_active=True)
-    PackageVersionFactory(package=package, version_number="2.0.0", is_active=False)
-    PackageVersionFactory(package=package, version_number="0.5.0", is_active=True)
-    PackageVersionFactory(package=package, version_number="1.5.0", is_active=True)
-
-    versions = _get_sorted_active_versions(package)
-
-    assert [v.version_number for v in versions] == ["1.5.0", "1.0.0", "0.5.0"]
 
 
 @pytest.mark.django_db

@@ -274,7 +274,7 @@ def test_api_v1_chunked_package_cache__when_community_has_one_package__creates_p
 # Serialized size of a minimal listing returned by PackageListingFactory.
 # Has some padding since the exact size varies a bit based on how many
 # packages the test creates and thus how long the package names are.
-TEST_PACKAGE_BYTES = 1000
+TEST_PACKAGE_BYTES = 1200
 
 
 @pytest.mark.django_db
