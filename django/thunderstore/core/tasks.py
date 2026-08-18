@@ -29,7 +29,10 @@ def celery_post(
     }
 
 
-@shared_task(queue=CeleryQueues.BackgroundTask)
+@shared_task(
+    queue=CeleryQueues.BackgroundTask,
+    name="thunderstore.core.tasks.celery_cleanup_sessions",
+)
 def celery_cleanup_sessions():
     deleted = cleanup_expired_sessions()
     logger.info(f"Celery Session cleanup job complete. Total deleted: {deleted}")

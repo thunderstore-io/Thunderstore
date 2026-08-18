@@ -86,6 +86,35 @@ def test_cleanup_logs_summary(mocker):
 
 
 @pytest.mark.django_db
+def test_cleanup_does_not_delete_sessions_renewed_after_select(mocker):
+    now = timezone.now()
+    _create_session(now - timedelta(days=1))
+    renewed = _create_session(now - timedelta(days=1))
+
+    original_filter = Session.objects.filter
+
+    def filter_with_concurrent_renewal(*args, **kwargs):
+        if "session_key__in" in kwargs:
+            # Simulate a concurrent request renewing the session between
+            # the select and the delete
+            original_filter(session_key=renewed.session_key).update(
+                expire_date=timezone.now() + timedelta(days=1),
+            )
+        return original_filter(*args, **kwargs)
+
+    mocker.patch.object(
+        Session.objects,
+        "filter",
+        side_effect=filter_with_concurrent_renewal,
+    )
+
+    deleted = cleanup_expired_sessions(batch_size=10, sleep_time=0)
+
+    assert deleted == 1
+    assert Session.objects.get(session_key=renewed.session_key)
+
+
+@pytest.mark.django_db
 def test_cleanup_with_empty_table():
     deleted = cleanup_expired_sessions(batch_size=10, sleep_time=0)
 

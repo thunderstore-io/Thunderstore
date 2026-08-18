@@ -40,8 +40,10 @@ def cleanup_expired_sessions(
         if not expired_session_keys:
             break
 
+        # Re-check expire_date so sessions renewed after the select aren't deleted
         deleted, _ = Session.objects.filter(
-            session_key__in=expired_session_keys
+            session_key__in=expired_session_keys,
+            expire_date__lt=now,
         ).delete()
 
         total_deleted += deleted
