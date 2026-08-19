@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0064_add_namespaces_for_existing_teams'),
+        ('repository', '0065_delete_packageversiondownloadevent'),
     ]
 
     operations = [
