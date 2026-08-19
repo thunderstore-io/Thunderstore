@@ -21,6 +21,7 @@ def get_parameter_values(
         "namespace_id": package_listing.package.owner.get_namespace().name,
         "package_name": package_listing.package.name,
         "version_number": package_listing.package.latest.version_number,
+        "document": "readme",
         "team_id": package_listing.package.owner.name,
         "team_name": package_listing.package.owner.name,
         "uuid": service_account.uuid if service_account else "",
@@ -61,6 +62,7 @@ def setup_superuser_with_package(package_listing, package_category=None):
 
     package_listing.package.latest.changelog = "# This is an example changelog"
     package_listing.package.latest.readme = "# This is an example readme"
+    package_listing.package.latest.readme_override = "# This is an example override"
     package_listing.package.latest.save()
 
     return user
@@ -180,6 +182,10 @@ def validate_response_against_schema(
         return errors
 
     if response.status_code == 204:
+        return []
+
+    # Responses other than json have no schema.
+    if not response.get("Content-Type", "").startswith("application/json"):
         return []
 
     res_schema = get_response_schema(schema, path, method)
