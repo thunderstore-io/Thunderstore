@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repository', '0064_add_namespaces_for_existing_teams'),
+        ("repository", "0065_delete_packageversiondownloadevent"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='packageversion',
-            name='changelog_override',
+            model_name="packageversion",
+            name="changelog_override",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='packageversion',
-            name='readme_override',
+            model_name="packageversion",
+            name="readme_override",
             field=models.TextField(blank=True, null=True),
         ),
     ]
