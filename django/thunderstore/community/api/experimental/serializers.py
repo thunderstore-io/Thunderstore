@@ -20,16 +20,6 @@ class PackageListingUpdateRequestSerializer(serializers.Serializer):
         ),
         allow_empty=True,
     )
-    readme = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        allow_null=True,
-    )
-    changelog = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        allow_null=True,
-    )
 
 
 class PackageCategoryExperimentalSerializer(serializers.Serializer):
