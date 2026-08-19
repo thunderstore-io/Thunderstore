@@ -87,6 +87,7 @@ def test_changelog_override_makes_changelog_visible(team_member_client, version)
     response = team_member_client.get(changelog_url)
     assert response.status_code == 200
     assert response.json()["html"] == "<h1>Log</h1>\n"
+    assert response.json()["is_edited"] is True
 
 
 @pytest.mark.django_db
