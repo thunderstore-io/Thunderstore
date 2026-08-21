@@ -36,7 +36,7 @@ django-celery-results = "^2.5"
 django-celery-beat = "^2.5"
 ulid2 = "^0.2.0"
 django-cachalot = "^2.9"
-django-cors-headers = "^3.14"
+django-cors-headers = ">=3.14,<5.0"
 boto3 = "^1.17.47"
 bleach = "^3.3.0"
 markdown-it-py = {version = "2.1.0", extras = ["linkify"]}
