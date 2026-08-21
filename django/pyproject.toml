@@ -9,7 +9,7 @@ python = "^3.12"
 Django = "^4.2"
 django-environ = "^0.4"
 arrow = "^0.17"
-Pillow = "^10.3"
+Pillow = ">=10.3,<13.0"
 psycopg2-binary = "^2.9.9"
 easy-thumbnails = "^2.9"  # This has a monkeypatch and might be a difficult upgrade
 gunicorn = { version = "^20.0", extras = ["gevent"] }
