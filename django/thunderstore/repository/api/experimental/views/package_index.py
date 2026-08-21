@@ -2,7 +2,8 @@ from io import BytesIO
 from typing import List
 
 from django.conf import settings
-from django.db.models import F
+from django.db.models import F, OuterRef, Subquery, Value
+from django.db.models.functions import Concat, Lower
 from django.shortcuts import redirect
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers
@@ -38,15 +39,39 @@ class PackageIndexEntry(serializers.Serializer):
     dependencies = serializers.SerializerMethodField()
 
     def get_dependencies(self, instance: PackageVersion) -> List[str]:
-        return [x.full_version_name for x in instance.dependencies.all()]
+        return instance._dependency_names
+
+
+def get_package_index_queryset() -> PackageVersionQuerySet:
+    dependency_names = (
+        PackageVersion.objects.filter(dependants=OuterRef("pk"))
+        .annotate(
+            _full_name=Concat(
+                "package__namespace__name",
+                Value("-"),
+                "package__name",
+                Value("-"),
+                "version_number",
+            ),
+        )
+        .order_by(
+            Lower("package__namespace__name"),
+            Lower("package__name"),
+            "version_number",
+            "pk",
+        )
+        # Upload validation caps dependencies per version at 1000
+        # (ManifestV1Serializer.dependencies)
+        .values("_full_name")[:1000]
+    )
+    return PackageVersion.objects.active().annotate(
+        namespace=F("package__namespace"),
+        _dependency_names=Subquery(dependency_names, template="ARRAY(%(subquery)s)"),
+    )
 
 
 def serialize_package_index() -> bytes:
-    versions: PackageVersionQuerySet = (
-        PackageVersion.objects.active()
-        .annotate(namespace=F("package__namespace"))
-        .prefetch_related("dependencies", "dependencies__package")
-    )
+    versions: PackageVersionQuerySet = get_package_index_queryset()
     renderer = JSONRenderer()
     result = BytesIO()
 
