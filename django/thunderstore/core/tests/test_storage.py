@@ -4,7 +4,7 @@ from django.core.files.storage import default_storage
 from django.test import override_settings
 from PIL import Image  # type: ignore
 
-from thunderstore.core.storage import MirroredS3Storage, get_storage_class_or_stub
+from thunderstore.core.storage import get_storage_class_or_stub
 from thunderstore.repository.factories import PackageVersionFactory
 from thunderstore.repository.models.package_version import get_version_png_filepath
 
