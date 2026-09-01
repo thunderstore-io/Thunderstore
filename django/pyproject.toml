@@ -22,7 +22,7 @@ whitenoise = "^6.2"
 django-storages = { version = "^1.14", extras = ["boto3"] }
 # Held at 3.14: DRF 3.15 changes client-visible behavior (404 detail
 # messages, schema generation) and deserves its own upgrade commit.
-djangorestframework = "~3.14"
+djangorestframework = ">=3.14,<3.18"
 drf-yasg = "^1.21"
 django-ipware = "^3.0"
 sentry_sdk = {extras = ["celery"], version = "^1.31.0"}
