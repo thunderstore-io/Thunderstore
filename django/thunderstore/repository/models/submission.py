@@ -52,21 +52,40 @@ class AsyncPackageSubmission(TimestampMixin):
     )
 
     @transaction.atomic
-    def schedule_if_appropriate(self):
+    def schedule_if_appropriate(self) -> bool:
         """
         Schedules processing of this submission if it's in a valid state for
         that to happen. Criteria is:
         - No prior task has been scheduled OR enough time has passed
         - The submission is in the PENDING state
+
+        The processing task locks this row for the whole processing
+        transaction, so a locked row is skipped instead of waited on.
+
+        Returns True if the poll was recorded, False if the row was locked.
         """
         from ..tasks.submission import process_submission_task
 
-        self.datetime_polled = timezone.now()
-        if self.status == PackageSubmissionStatus.PENDING and has_expired(
-            self.datetime_scheduled, timezone.now(), self.TASK_TTL
+        locked = (
+            AsyncPackageSubmission.objects.select_for_update(skip_locked=True)
+            .filter(pk=self.pk)
+            .first()
+        )
+        if locked is None:
+            return False
+
+        now = timezone.now()
+        changes = {"datetime_polled": now, "datetime_updated": now}
+        if locked.status == PackageSubmissionStatus.PENDING and has_expired(
+            locked.datetime_scheduled, now, self.TASK_TTL
         ):
             transaction.on_commit(
                 lambda: process_submission_task.delay(submission_id=self.pk)
             )
-            self.datetime_scheduled = timezone.now()
-        self.save(update_fields=("datetime_scheduled", "datetime_polled"))
+            changes["datetime_scheduled"] = now
+
+        # Write only what changed; the rest of the instance stays as loaded.
+        AsyncPackageSubmission.objects.filter(pk=self.pk).update(**changes)
+        for field, value in changes.items():
+            setattr(self, field, value)
+        return True
