@@ -149,8 +149,7 @@ class Team(models.Model):
 
     @property
     def public_members(self) -> "Manager[TeamMember]":
-        # TODO: Filter & return team members that are publicly visible
-        return self.members.none()
+        return self.members.real_users()
 
     @property
     def real_user_count(self):
