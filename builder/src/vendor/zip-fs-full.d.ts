@@ -61,12 +61,7 @@ export interface Entry {
     comment: string;
     crc32: number;
 
-    getData(
-        writer: zip.Writer,
-        onend: (result: any) => void,
-        onprogress?: (progress: number, total: number) => void,
-        checkCrc32?: boolean
-    ): void;
+    getData(writer: Writer): Promise<any>;
 }
 
 export class Writer {
