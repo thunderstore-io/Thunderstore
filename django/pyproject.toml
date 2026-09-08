@@ -71,7 +71,7 @@ isort = "^5.7.0"
 jsonschema = "<4.0.0"
 pre-commit = "^2.9.3"
 mypy = "^1.10"
-django-stubs = "^4.2"
+django-stubs = "^6.1"
 djangorestframework-stubs = "^3.14"
 watchdog = {extras = ["watchmedo"], version = "^4.0"}
 mypy-boto3-s3 = "^1.17.47"
