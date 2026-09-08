@@ -136,7 +136,25 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         blank=True,
     )
     readme = models.TextField()
+    readme_override = models.TextField(blank=True, null=True)
+    readme_override_edited_at = models.DateTimeField(blank=True, null=True)
+    readme_override_edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="readme_overrides",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     changelog = models.TextField(blank=True, null=True)
+    changelog_override = models.TextField(blank=True, null=True)
+    changelog_override_edited_at = models.DateTimeField(blank=True, null=True)
+    changelog_override_edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="changelog_overrides",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
 
     review_status = models.TextField(
         default=PackageVersionReviewStatus.unreviewed,
@@ -221,6 +239,30 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         if self.package.is_removed:
             return True
         return not self.is_active
+
+    @property
+    def resolved_readme(self) -> str:
+        if self.readme_override is not None:
+            return self.readme_override
+        return self.readme
+
+    @property
+    def resolved_changelog(self) -> Optional[str]:
+        if self.changelog_override is not None:
+            return self.changelog_override
+        return self.changelog
+
+    @property
+    def is_readme_edited(self) -> bool:
+        return self.readme_override is not None
+
+    @property
+    def is_changelog_edited(self) -> bool:
+        return self.changelog_override is not None
+
+    @property
+    def is_edited(self) -> bool:
+        return self.is_readme_edited or self.is_changelog_edited
 
     @cached_property
     def display_name(self):
