@@ -14,7 +14,7 @@ psycopg2-binary = "^2.9.9"
 easy-thumbnails = "^2.9"  # This has a monkeypatch and might be a difficult upgrade
 gunicorn = { version = "^20.0", extras = ["gevent"] }
 gevent = "^24.2"
-uwsgi = { version = "2.0.30", markers = "sys_platform != 'win32'" }
+uwsgi = { version = "2.0.31", markers = "sys_platform != 'win32'" }
 # uWSGI is Unix only. Cannot install on Windows.
 social-auth-app-django = "^5.4"
 social-auth-core = "^4.4"
