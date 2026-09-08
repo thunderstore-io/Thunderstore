@@ -9,7 +9,7 @@ from thunderstore.core.mixins import AdminLinkMixin, SafeDeleteMixin
 
 
 def get_object_file_path(_, filename: str) -> str:
-    return f"blob-storage/sha256/{filename}"
+    return f"blob-storage/sha256/{filename}.sha256.blob"
 
 
 class DataBlob(SafeDeleteMixin, AdminLinkMixin):
