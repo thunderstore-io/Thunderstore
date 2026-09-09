@@ -1,3 +1,5 @@
+import random
+
 from django.db.models import Q, signals
 
 from thunderstore.core.management.commands.content.base import (
@@ -5,6 +7,7 @@ from thunderstore.core.management.commands.content.base import (
     ContentPopulatorContext,
     dummy_package_icon,
 )
+from thunderstore.core.management.commands.content.package import DEPRECATED_PROBABILITY
 from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.storage.models import DataBlob, DataBlobGroup
 from thunderstore.utils.iterators import print_progress
@@ -170,6 +173,13 @@ class PackageVersionPopulator(ContentPopulator):
             # actually make use of the sender param at all (and can be None)
             package.handle_created_version(None)
             package.handle_updated_version(None)
+
+            # handle_created_version() resets is_deprecated, so apply the
+            # deprecation "tag" here (after versions exist) to make the
+            # deprecated badge show up on a portion of the test data.
+            if random.random() < DEPRECATED_PROBABILITY:
+                package.is_deprecated = True
+                package.save(update_fields=("is_deprecated",))
 
         # Re-enabling previously disabled signals
         signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
