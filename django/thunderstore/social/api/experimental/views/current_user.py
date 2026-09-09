@@ -14,6 +14,7 @@ from thunderstore.account.models.user_flag import UserFlag
 from thunderstore.api.cyberstorm.views.team import TeamPermissionsMixin
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import TeamMember
+from thunderstore.repository.views.package._utils import get_moderatable_communities
 from thunderstore.social.utils import get_connection_avatar_url
 
 
@@ -112,6 +113,7 @@ class UserProfile(TypedDict):
     teams: List[str]
     teams_full: List[UserTeam]
     is_staff: Optional[bool]
+    is_moderator: Optional[bool]
 
 
 class UserProfileSerializer(serializers.Serializer):
@@ -125,6 +127,9 @@ class UserProfileSerializer(serializers.Serializer):
     )  # This is in active use by the Django frontend react components at least
     teams_full = UserTeamSerializer(many=True)
     is_staff = serializers.BooleanField()
+    # True when the user can moderate at least one community (community
+    # owner/moderator, or a global moderator). Gates the moderation UI.
+    is_moderator = serializers.BooleanField()
 
 
 def get_empty_profile() -> UserProfile:
@@ -137,6 +142,7 @@ def get_empty_profile() -> UserProfile:
         "teams": [],
         "teams_full": [],
         "is_staff": False,
+        "is_moderator": False,
     }
 
 
@@ -167,6 +173,7 @@ def get_user_profile(user: UserType) -> UserProfile:
     capabilities = {"package.rate"}
     teams = get_teams(user)
     is_staff = user.is_staff
+    is_moderator = bool(get_moderatable_communities(user))
 
     return UserProfileSerializer(
         {
@@ -178,6 +185,7 @@ def get_user_profile(user: UserType) -> UserProfile:
             "teams": [x.name for x in teams],
             "teams_full": teams,
             "is_staff": is_staff,
+            "is_moderator": is_moderator,
         }
     ).data
 

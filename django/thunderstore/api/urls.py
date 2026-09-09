@@ -12,6 +12,7 @@ from thunderstore.api.cyberstorm.views import (
     DeprecatePackageAPIView,
     DisbandTeamAPIView,
     DisconnectUserLinkedAccountAPIView,
+    ModerationReviewPackagesAPIView,
     PackageListingAPIView,
     PackageListingByCommunityListAPIView,
     PackageListingByDependencyListAPIView,
@@ -100,6 +101,11 @@ cyberstorm_urls = [
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/approve/",
         ApprovePackageListingAPIView.as_view(),
         name="cyberstorm.listing.approve",
+    ),
+    path(
+        "moderation/review/packages/",
+        ModerationReviewPackagesAPIView.as_view(),
+        name="cyberstorm.moderation.review.packages",
     ),
     path(
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/report/",

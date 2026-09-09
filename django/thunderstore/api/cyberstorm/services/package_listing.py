@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.db import transaction
 
 from thunderstore.core.exceptions import PermissionValidationError
@@ -50,6 +52,31 @@ def approve_package_listing(
     listing.approve(agent=agent, internal_notes=notes)
     listing.clear_review_request()
 
+    get_package_listing_or_404.clear_cache_with_args(
+        namespace=listing.package.namespace.name,
+        name=listing.package.name,
+        community=listing.community,
+    )
+
+
+@transaction.atomic
+def set_package_listing_unreviewed(
+    agent: UserType, listing: PackageListing, notes: Optional[str] = None
+) -> None:
+    from thunderstore.community.consts import PackageListingReviewStatus
+
+    listing.community.ensure_user_can_moderate_packages(agent)
+
+    update_fields = ["review_status"]
+    listing.review_status = PackageListingReviewStatus.unreviewed
+    # Let the moderator jot/keep internal notes without committing to a decision.
+    if notes is not None and notes != listing.notes:
+        listing.notes = notes
+        update_fields.append("notes")
+    listing.save(update_fields=tuple(update_fields))
+
+    # Review status feeds visibility checks (PackageListingViewMixin.get_object),
+    # so the cached listing lookup must be busted like it is for approve/reject.
     get_package_listing_or_404.clear_cache_with_args(
         namespace=listing.package.namespace.name,
         name=listing.package.name,
