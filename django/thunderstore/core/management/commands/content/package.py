@@ -1,3 +1,4 @@
+import random
 from typing import Collection, Optional
 
 from django.db.models import signals
@@ -8,6 +9,13 @@ from thunderstore.core.management.commands.content.base import (
 )
 from thunderstore.repository.models import Package
 from thunderstore.utils.iterators import print_progress
+
+# Probability that a generated package is flagged with the respective "tag" so
+# the pinned/deprecated badges show up in the UI on a portion of the test data.
+# Deprecation is applied by the version populator rather than here, because
+# Package.handle_created_version() resets is_deprecated when versions are added.
+PINNED_PROBABILITY = 0.15
+DEPRECATED_PROBABILITY = 0.15
 
 
 class PackagePopulator(ContentPopulator):
@@ -36,6 +44,7 @@ class PackagePopulator(ContentPopulator):
                     owner=team,
                     name=f"{self.name_prefix}{i + offset}",
                     namespace=team.get_namespace(),
+                    is_pinned=random.random() < PINNED_PROBABILITY,
                 )
                 for i in range(remainder)
             ]
