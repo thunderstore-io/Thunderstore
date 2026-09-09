@@ -141,6 +141,7 @@ def test_create_test_data_create_data(
         )
         for t in created_teams:
             assert t.owned_packages.all().count() == package_count
+            assert t.members.real_users().count() == 3
         assert (
             Package.objects.annotate(c=Count("latest__dependencies"))
             .filter(c__exact=0)
