@@ -38,7 +38,9 @@ class TeamPopulator(ContentPopulator):
             self._ensure_team_members(team)
 
     def _ensure_team_members(self, team: Team) -> None:
-        if team.members.exists():
+        # Ignore service-account-only membership so we still seed an owner
+        # and real users for teams that only have service accounts.
+        if team.members.real_users().exists():
             return
 
         User = get_user_model()
