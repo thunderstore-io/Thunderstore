@@ -1,4 +1,6 @@
 from django.http import Http404, HttpResponse
+from drf_yasg import openapi
+from drf_yasg.inspectors import SwaggerAutoSchema
 from rest_framework import serializers, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -111,11 +113,22 @@ class PackageVersionMarkdownAPIView(APIView):
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 
+class MarkdownDownloadSchema(SwaggerAutoSchema):
+    def get_produces(self):
+        return ["text/markdown"]
+
+
 class PackageVersionMarkdownDownloadAPIView(PublicCacheMixin, APIView):
     """
     Download the raw markdown of an override.
     """
 
+    swagger_schema = MarkdownDownloadSchema
+
+    @conditional_swagger_auto_schema(
+        responses={status.HTTP_200_OK: openapi.Schema(type=openapi.TYPE_STRING)},
+        tags=["cyberstorm"],
+    )
     def get(
         self,
         request,

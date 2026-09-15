@@ -184,14 +184,23 @@ def validate_response_against_schema(
     if response.status_code == 204:
         return []
 
-    # Responses other than json have no schema.
-    if not response.get("Content-Type", "").startswith("application/json"):
-        return []
+    operation = schema.get("paths", {}).get(path, {}).get(method.lower(), {})
+    produces = operation.get("produces", schema.get("produces", []))
+    content_type = response.get("Content-Type", "").split(";", 1)[0]
+    if content_type not in produces:
+        return [
+            f"Unexpected content type {content_type!r} for {path}: expected {produces}"
+        ]
 
     res_schema = get_response_schema(schema, path, method)
 
     try:
-        response_data = response.json()
+        if content_type == "application/json":
+            response_data = response.json()
+        elif content_type.startswith("text/"):
+            response_data = response.content.decode(response.charset)
+        else:
+            return [f"Unsupported response content type {content_type!r} for {path}"]
         validate(instance=response_data, schema=res_schema, resolver=resolver)
     except ValidationError as e:
         error_message = f"Validation error for [{method.upper()}], {path}: {e.message}"
