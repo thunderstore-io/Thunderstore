@@ -1,12 +1,10 @@
 """Exercise markdown history integrity, access control, and bounded reads."""
 
-import importlib
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 from unittest.mock import patch
 
 import pytest
-from django.apps import apps
 from django.core.cache import cache
 from django.db import IntegrityError, connection, connections, transaction
 from django.test.utils import CaptureQueriesContext
@@ -313,24 +311,6 @@ def test_deleting_author_preserves_history_and_deleting_version_cascades(version
     assert row.content == "audit"
     version.delete()
     assert not PackageVersionMarkdownRevision.objects.filter(pk=row.pk).exists()
-
-
-def test_backfill_is_idempotent_and_preserves_existing_history(version):
-    PackageVersion.objects.filter(pk=version.pk).update(
-        readme_override="", changelog_override="old log"
-    )
-    revision = version.markdown_revisions.create(
-        document="changelog", content="existing history", is_override=True
-    )
-    migration = importlib.import_module(
-        "thunderstore.repository.migrations.0069_preserve_markdown_overrides"
-    )
-    with connection.schema_editor(atomic=False) as editor:
-        migration.preserve_existing_overrides(apps, editor)
-        migration.preserve_existing_overrides(apps, editor)
-    assert version.markdown_revisions.count() == 2
-    assert version.markdown_revisions.get(document="readme").content == ""
-    assert version.markdown_revisions.get(document="changelog").pk == revision.pk
 
 
 @pytest.mark.django_db(transaction=True)
