@@ -6,7 +6,10 @@ from rest_framework.test import APIClient
 
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.factories import PackageVersionFactory, TeamMemberFactory
-from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.models import (
+    PackageVersion,
+    PackageVersionMarkdownRevision,
+)
 
 
 def markdown_url(version: PackageVersion) -> str:
@@ -152,3 +155,27 @@ def test_download_serves_only_override_content(team_member_client, version):
 
     bogus_url = f"{markdown_url(version)}bogus/download/"
     assert team_member_client.get(bogus_url).status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("deactivate_package", [True, False])
+@pytest.mark.parametrize("document", ["readme", "changelog"])
+def test_inactive_markdown_is_not_accessible(
+    team_member_client, version, deactivate_package, document
+):
+    response = post_markdown(team_member_client, version, {document: "# Edit"})
+    assert response.status_code == 200
+    revisions = PackageVersionMarkdownRevision.objects.filter(version=version)
+    revision_count = revisions.count()
+    target = version.package if deactivate_package else version
+    target.is_active = False
+    target.save(update_fields=["is_active"])
+
+    response = team_member_client.get(f"{markdown_url(version)}{document}/download/")
+    assert response.status_code == 404
+    response = post_markdown(team_member_client, version, {document: "# Hidden edit"})
+    assert response.status_code == 404
+
+    version.refresh_from_db()
+    assert getattr(version, f"{document}_override") == "# Edit"
+    assert revisions.count() == revision_count

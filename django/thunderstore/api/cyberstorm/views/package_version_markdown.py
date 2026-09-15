@@ -57,6 +57,7 @@ def get_active_version(
         PackageVersion.objects.active().select_related("package", "package__owner"),
         package__namespace__name=namespace_id,
         package__name=package_name,
+        package__is_active=True,
         version_number=version_number,
     )
 
