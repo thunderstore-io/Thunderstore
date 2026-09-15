@@ -5,9 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.api.cyberstorm.views.package_version_markdown_history import (
-    MarkdownRevisionSerializer,
-)
+from thunderstore.moderation.markdown_history import MarkdownRevisionSerializer
 from thunderstore.moderation.permissions import IsSecurityModerator
 from thunderstore.repository.models import PackageVersionMarkdownRevision
 

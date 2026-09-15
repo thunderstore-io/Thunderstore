@@ -20,6 +20,11 @@ from thunderstore.api.cyberstorm.tests.test_package_version_markdown import (
     team_member_client,
     version,
 )
+from thunderstore.api.cyberstorm.tests.utils import (
+    get_resolver,
+    get_schema,
+    validate_response_against_schema,
+)
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models import CommunityMembership
 from thunderstore.core.factories import UserFactory
@@ -34,13 +39,28 @@ pytestmark = pytest.mark.django_db
 
 
 def history_url(version, document="readme"):
-    return f"{markdown_url(version)}{document}/history/"
+    return (
+        f"/moderation/api/package/{version.package.namespace}/{version.package.name}"
+        f"/v/{version.version_number}/markdown/{document}/history/"
+    )
 
 
 @pytest.fixture
 def admin_client(api_client):
     api_client.force_authenticate(UserFactory(is_staff=True))
     return api_client
+
+
+def test_history_response_schema(admin_client, version):
+    schema = get_schema(admin_client)
+    response = admin_client.get(history_url(version))
+    path = "/moderation/api/package/{namespace_id}/{package_name}/v/{version_number}/markdown/{document}/history/"
+    assert (
+        validate_response_against_schema(
+            response, path, "get", schema, get_resolver(schema)
+        )
+        == []
+    )
 
 
 @pytest.mark.parametrize(

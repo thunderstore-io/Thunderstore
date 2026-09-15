@@ -11,7 +11,6 @@ from django.test.utils import CaptureQueriesContext
 from thunderstore.api.cyberstorm.services.package_version import (
     update_markdown_overrides,
 )
-from thunderstore.api.cyberstorm.tests.test_package_markdown_history import history_url
 from thunderstore.api.cyberstorm.tests.utils import (
     get_resolver,
     get_schema,
@@ -20,6 +19,7 @@ from thunderstore.api.cyberstorm.tests.utils import (
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models import CommunityMembership
 from thunderstore.core.factories import UserFactory
+from thunderstore.moderation.tests.test_markdown_history import history_url
 from thunderstore.repository.factories import PackageVersionFactory, TeamMemberFactory
 from thunderstore.repository.models import PackageVersionMarkdownRevision
 

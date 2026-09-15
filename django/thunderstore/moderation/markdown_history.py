@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.utils.cache import patch_cache_control
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import CursorPagination
@@ -7,10 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.api.cyberstorm.services.package_version import (
-    ensure_user_can_view_markdown_history,
-)
-from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.moderation.permissions import ensure_user_can_view_markdown_history
 from thunderstore.repository.models import (
     PackageVersion,
     PackageVersionMarkdownRevision,
@@ -57,10 +55,10 @@ class PackageVersionMarkdownHistoryAPIView(APIView):
         patch_cache_control(response, private=True, no_store=True)
         return response
 
-    @conditional_swagger_auto_schema(
-        operation_id="cyberstorm.package.version.markdown.history",
+    @swagger_auto_schema(
+        operation_id="moderation.package.version.markdown.history",
         responses={status.HTTP_200_OK: MarkdownHistoryResponseSerializer},
-        tags=["cyberstorm"],
+        tags=["moderation"],
     )
     def get(
         self,
