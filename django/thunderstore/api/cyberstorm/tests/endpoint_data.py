@@ -17,6 +17,7 @@ ENDPOINTS = {
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/changelog/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/markdown/{document}/download/",
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/markdown/{document}/history/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/readme/",
         # "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/",

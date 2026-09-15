@@ -27,12 +27,14 @@ class UpdateMarkdownOverridesSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
         allow_null=True,
+        trim_whitespace=False,
         max_length=MAX_MARKDOWN_SIZE,
     )
     changelog = serializers.CharField(
         required=False,
         allow_blank=True,
         allow_null=True,
+        trim_whitespace=False,
         max_length=MAX_MARKDOWN_SIZE,
     )
 
