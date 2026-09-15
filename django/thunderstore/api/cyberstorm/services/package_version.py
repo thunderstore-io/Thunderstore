@@ -1,11 +1,12 @@
 from typing import Dict, Optional
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
+from thunderstore.moderation.permissions import is_security_moderator
 from thunderstore.permissions.utils import validate_user
 from thunderstore.repository.models import (
     PackageVersion,
@@ -17,7 +18,7 @@ def ensure_user_can_view_markdown_history(
     agent: UserType, version: PackageVersion
 ) -> None:
     agent = validate_user(agent)
-    if agent.is_staff or agent.is_superuser:
+    if agent.is_staff or is_security_moderator(agent):
         return
 
     for listing in version.package.community_listings.select_related("community"):
@@ -76,6 +77,12 @@ def update_markdown_overrides(
 
     if updates:
         PackageVersion.objects.filter(pk=version.pk).update(**updates)
+        # Keep revision IDs in commit order across packages so polling cannot
+        # skip an earlier ID from a transaction that finishes later.
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT pg_advisory_xact_lock(hashtext('markdown_revision_feed'))"
+            )
         PackageVersionMarkdownRevision.objects.bulk_create(revisions)
 
     version.refresh_from_db()
