@@ -4,7 +4,7 @@
     "description": "",
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.15.2",
-        "@sentry/react": "^6.11.0",
+        "@sentry/react": "^10.74.0",
         "@sentry/types": "^6.11.0",
         "bootstrap": "^4.3.1",
         "crypto-js": "^4.0.0",
