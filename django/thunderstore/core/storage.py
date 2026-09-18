@@ -1,6 +1,7 @@
 from typing import IO, Any, Dict, Optional, TypedDict
 
 from django.conf import settings
+from django.core.files import File
 from django.utils.deconstruct import deconstructible
 from storages.backends.s3boto3 import S3Boto3Storage  # type: ignore
 
@@ -42,15 +43,14 @@ class MirroredS3Storage(S3Boto3Storage):
     ) -> str:
         """
         Upload file to main S3 storage and all mirrors.
-
-        Calling .save() closes the file, so use temporary copies for
-        mirrors and call the main bucket with the actual file last.
         """
-        for storage_mirror in self.mirrors:
-            with TemporarySpooledCopy(content) as tmp_content:
-                storage_mirror.save(name, tmp_content, max_length)
+        with TemporarySpooledCopy(content) as tmp_content:
+            final_name = super().save(name, content, max_length)
 
-        return super().save(name, content, max_length)
+            for storage_mirror in self.mirrors:
+                storage_mirror._save(final_name, File(tmp_content, final_name))
+
+        return final_name
 
     def delete(self, name: str) -> None:
         """
