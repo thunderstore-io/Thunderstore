@@ -17,6 +17,7 @@ class CyberstormPackageVersionSerializer(serializers.Serializer):
     download_count = serializers.IntegerField(min_value=0, source="downloads")
     download_url = serializers.CharField(source="full_download_url")
     install_url = serializers.CharField()
+    is_edited = serializers.BooleanField()
 
 
 class PackageVersionListAPIView(
