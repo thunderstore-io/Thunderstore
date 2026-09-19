@@ -341,7 +341,14 @@ def test_package_listing_view__returns_info(api_client: APIClient) -> None:
     assert actual["rating_count"] == 8
     assert actual["size"] == latest.file_size
     assert actual["team"]["name"] == listing.package.owner.name
-    assert len(actual["team"]["members"]) == 0
+    assert len(actual["team"]["members"]) == 2
+    member_usernames = {member["username"] for member in actual["team"]["members"]}
+    assert owner.user.username in member_usernames
+    assert member.user.username in member_usernames
+    assert {member["role"] for member in actual["team"]["members"]} == {
+        "owner",
+        "member",
+    }
     assert actual["website_url"] == latest.website_url
     assert actual["version_count"] == 1
     assert actual["version_created"] == _date_to_z(latest.date_created)
