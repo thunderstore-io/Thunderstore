@@ -78,7 +78,7 @@ mypy-boto3-s3 = "^1.17.47"
 freezegun = "^1.5.5"
 pydantic = "^1.10.13"
 pytest-xdist = "^3.6"
-pytest-split = "^0.8.0"
+pytest-split = "^0.11.0"
 
 [tool.black]
 # No explicit target-version: black 22.3.0 predates the py312 identifier.
