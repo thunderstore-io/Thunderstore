@@ -59,6 +59,14 @@ class CyberstormPackagePreviewSerializer(serializers.Serializer):
     rating_count = serializers.IntegerField(min_value=0)
     size = serializers.IntegerField(min_value=0)
     datetime_created = serializers.DateTimeField()
+    # Latest version number + its install/download URLs. Additive: the new
+    # frontend treats them as optional (it deploys first), and older frontends
+    # ignore unknown fields.
+    latest_version_number = serializers.CharField(
+        max_length=PackageVersion._meta.get_field("version_number").max_length,
+    )
+    install_url = serializers.CharField()
+    download_url = serializers.CharField()
 
 
 class CyberstormPackageDependencySerializer(serializers.Serializer):

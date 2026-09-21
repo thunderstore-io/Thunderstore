@@ -241,13 +241,23 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
 
         for listing in package_page:
             package = listing.package
+            latest = package.latest
+            if latest is None:
+                # Stale denormalized data: active() guarantees an active version
+                # EXISTS, but not that the cached latest FK is set. Skip the
+                # listing (it can't be displayed) instead of 500ing the page.
+                continue
+            # Link the already-loaded package onto its latest version so the
+            # install/download URL properties resolve the owner/name without
+            # re-querying (package + package__owner are select_related above).
+            latest.package = package
             packages.append(
                 {
                     "categories": listing.categories.all(),
                     "community_identifier": community_id,
-                    "description": package.latest.description,
+                    "description": latest.description,
                     "download_count": listing.download_count,
-                    "icon_url": package.latest.icon.url,
+                    "icon_url": latest.icon.url,
                     "is_deprecated": package.is_deprecated,
                     "is_nsfw": listing.has_nsfw_content,
                     "is_pinned": package.is_pinned,
@@ -255,8 +265,11 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
                     "namespace": package.namespace.name,
                     "name": package.name,
                     "rating_count": listing.rating_count,
-                    "size": package.latest.file_size,
+                    "size": latest.file_size,
                     "datetime_created": listing.datetime_created,
+                    "latest_version_number": latest.version_number,
+                    "install_url": latest.install_url,
+                    "download_url": latest.full_download_url,
                 },
             )
 

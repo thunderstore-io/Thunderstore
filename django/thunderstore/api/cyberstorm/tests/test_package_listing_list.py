@@ -59,6 +59,9 @@ def test_base_view__return_data_structure() -> None:
         "rating_count",
         "size",
         "datetime_created",
+        "latest_version_number",
+        "install_url",
+        "download_url",
     ]
 
     assert response.status_code == 200
