@@ -71,6 +71,7 @@ enum SubmissionStatus {
 
 interface SubmissionFormProps {
     onSubmissionComplete?: (result: PackageSubmissionResult) => void;
+    onContentChange?: (readme: string | null, changelog: string | null) => void;
     currentCommunity: Community;
     useAsyncFlow: boolean;
 }
@@ -125,6 +126,7 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
         setFileUpload(null);
         setSubmissionStatus(null);
         setFormErrors(new FormErrors());
+        props.onContentChange?.(null, null);
     };
 
     const upload = async (file: File | null) => {
@@ -149,6 +151,8 @@ const SubmissionForm: React.FC<SubmissionFormProps> = observer((props) => {
                         );
                         setSubmissionStatus(SubmissionStatus.ERROR);
                     }
+                } else {
+                    props.onContentChange?.(result.readme, result.changelog);
                 }
             });
         }
@@ -566,6 +570,39 @@ export const UploadPage: React.FC<UploadPageProps> = (props) => {
         setSubmissionResult(result);
     };
 
+    const [readmePreview, setReadmePreview] = useState<string>("");
+    const [changelogPreview, setChangelogPreview] = useState<string>("");
+
+    const onContentChange = (
+        readme: string | null,
+        changelog: string | null
+    ) => {
+        if (readme) {
+            ExperimentalApi.renderMarkdown({ data: { markdown: readme } })
+                .then((result) => {
+                    setReadmePreview(result.html);
+                })
+                .catch((e) => {
+                    Sentry.captureException(e);
+                    setReadmePreview("Failed to render Readme Preview");
+                });
+        } else {
+            setReadmePreview("");
+        }
+        if (changelog) {
+            ExperimentalApi.renderMarkdown({ data: { markdown: changelog } })
+                .then((result) => {
+                    setChangelogPreview(result.html);
+                })
+                .catch((e) => {
+                    Sentry.captureException(e);
+                    setChangelogPreview("Failed to render Changelog Preview");
+                });
+        } else {
+            setChangelogPreview("");
+        }
+    };
+
     return (
         <div style={{ marginBottom: "96px" }}>
             {/* Bottom margin will affect how select option dropdowns render */}
@@ -577,9 +614,28 @@ export const UploadPage: React.FC<UploadPageProps> = (props) => {
                         currentCommunity={props.currentCommunity}
                         useAsyncFlow={!!props.useAsyncFlow}
                         onSubmissionComplete={onSubmissionComplete}
+                        onContentChange={onContentChange}
                     />
                 </div>
             </div>
+            {readmePreview && (
+                <div className={"card bg-light mb-2"}>
+                    <div className={"card-header"}>Readme Preview</div>
+                    <div
+                        className={"card-body markdown-body"}
+                        dangerouslySetInnerHTML={{ __html: readmePreview }}
+                    />
+                </div>
+            )}
+            {changelogPreview && (
+                <div className={"card bg-light mb-2"}>
+                    <div className={"card-header"}>Changelog Preview</div>
+                    <div
+                        className={"card-body markdown-body"}
+                        dangerouslySetInnerHTML={{ __html: changelogPreview }}
+                    />
+                </div>
+            )}
             {submissionResult ? (
                 <div
                     className="card bg-light mb-3"
