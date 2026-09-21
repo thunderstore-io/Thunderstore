@@ -21,8 +21,14 @@ from thunderstore.core.management.commands.content.dependencies import (
     DependencyPopulator,
 )
 from thunderstore.core.management.commands.content.package import PackagePopulator
+from thunderstore.core.management.commands.content.package_categories import (
+    CategoryPopulator,
+)
 from thunderstore.core.management.commands.content.package_listing import (
     ListingPopulator,
+)
+from thunderstore.core.management.commands.content.package_sections import (
+    SectionPopulator,
 )
 from thunderstore.core.management.commands.content.package_version import (
     PackageVersionPopulator,
@@ -42,6 +48,8 @@ CONTENT_POPULATORS: Dict[str, Type[ContentPopulator]] = OrderedDict[
     [
         ("community", CommunityPopulator),
         ("community_site", CommunitySitePopulator),
+        ("category", CategoryPopulator),
+        ("section", SectionPopulator),
         ("team", TeamPopulator),
         ("package", PackagePopulator),
         ("version", PackageVersionPopulator),
