@@ -59,7 +59,7 @@ ts-moderation = { path = "../python-packages/ts-moderation", develop = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4"
-pytest-cov = "^4.1"
+pytest-cov = "^7.1"
 pytest-django = "^4.8"
 factory_boy = "^3.2"
 Faker = "^6.0"
