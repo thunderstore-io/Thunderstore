@@ -22,6 +22,12 @@ class CommunityFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"TestCommunity{n}")
     identifier = factory.Sequence(lambda n: f"test-community-{n}")
 
+    @classmethod
+    def create_batch(cls, size=1, **kwargs):
+        return [
+            cls(**{**kwargs, "identifier": f"test-community-{i}"}) for i in range(size)
+        ]
+
 
 class PackageCategoryFactory(DjangoModelFactory):
     class Meta:
