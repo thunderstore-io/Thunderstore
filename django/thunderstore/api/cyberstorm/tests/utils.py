@@ -285,3 +285,10 @@ def post_markdown(api_client: APIClient, version: PackageVersion, data: dict):
         data=json.dumps(data),
         content_type="application/json",
     )
+
+
+def history_url(version: PackageVersion, document: str = "readme") -> str:
+    return (
+        f"/moderation/api/package/{version.package.namespace}/{version.package.name}"
+        f"/v/{version.version_number}/markdown/{document}/history/"
+    )
