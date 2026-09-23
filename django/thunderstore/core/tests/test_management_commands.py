@@ -11,6 +11,7 @@ from django.test import override_settings
 
 from django_contracts.models import LegalContract, LegalContractVersion
 from thunderstore.community.models import Community, CommunitySite, PackageListing
+from thunderstore.core.management.commands.content.community import CommunityPopulator
 from thunderstore.core.management.commands.create_test_data import CONTENT_POPULATORS
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, PackageVersion, Team
@@ -222,6 +223,27 @@ def test_create_test_data_reconciles_gapped_community_identifiers(
     assert Community.objects.filter(pk=seeded_extra.pk).exists()
     assert Community.objects.filter(pk=factory_extra.pk).exists()
     assert Community.objects.filter(pk=community.pk).exists()
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_test_data_ignores_noncanonical_community_suffixes() -> None:
+    populator = CommunityPopulator()
+    assert populator.identifier_suffix("test-community-2") == 2
+    assert populator.identifier_suffix("test-community-02") is None
+    assert populator.identifier_suffix("test-community-²") is None
+
+    odd = Community.objects.create(name="Odd", identifier="test-community-²")
+    call_command(
+        "create_test_data",
+        "--only",
+        "community",
+        "--community-count",
+        1,
+    )
+
+    assert Community.objects.filter(pk=odd.pk).exists()
+    assert Community.objects.filter(identifier="test-community-1").exists()
 
 
 @pytest.mark.django_db

@@ -17,9 +17,13 @@ class CommunityPopulator(ContentPopulator):
         if not identifier.startswith(self.identifier_prefix):
             return None
         raw = identifier[len(self.identifier_prefix) :]
-        if not raw.isdigit() or str(int(raw)) != raw:
+        try:
+            suffix = int(raw)
+        except ValueError:
             return None
-        return int(raw)
+        if str(suffix) != raw:
+            return None
+        return suffix
 
     def expected_identifiers(self, count: int) -> List[str]:
         return [f"{self.identifier_prefix}{suffix}" for suffix in range(1, count + 1)]
