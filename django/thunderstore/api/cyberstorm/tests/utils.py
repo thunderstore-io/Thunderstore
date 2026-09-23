@@ -1,3 +1,4 @@
+import json
 import re
 from typing import Optional
 
@@ -8,7 +9,11 @@ from rest_framework.test import APIClient
 from social_django.models import UserSocialAuth
 
 from thunderstore.core.factories import UserFactory
-from thunderstore.repository.models import PackageListing, TeamMemberRole
+from thunderstore.repository.models import (
+    PackageListing,
+    PackageVersion,
+    TeamMemberRole,
+)
 
 
 def get_parameter_values(
@@ -250,3 +255,18 @@ def validate_max_queries(
         )
 
     return response
+
+
+def markdown_url(version: PackageVersion) -> str:
+    return (
+        f"/api/cyberstorm/package/{version.package.namespace}"
+        f"/{version.package.name}/v/{version.version_number}/markdown/"
+    )
+
+
+def post_markdown(api_client: APIClient, version: PackageVersion, data: dict):
+    return api_client.post(
+        markdown_url(version),
+        data=json.dumps(data),
+        content_type="application/json",
+    )

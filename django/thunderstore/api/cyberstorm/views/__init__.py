@@ -24,6 +24,10 @@ from .package_version_list import (
     PackageVersionDependenciesListAPIView,
     PackageVersionListAPIView,
 )
+from .package_version_markdown import (
+    PackageVersionMarkdownAPIView,
+    PackageVersionMarkdownDownloadAPIView,
+)
 from .team import (
     CreateServiceAccountAPIView,
     DeleteServiceAccountAPIView,
@@ -61,6 +65,8 @@ __all__ = [
     "PackageVersionChangelogAPIView",
     "PackageVersionDependenciesListAPIView",
     "PackageVersionListAPIView",
+    "PackageVersionMarkdownAPIView",
+    "PackageVersionMarkdownDownloadAPIView",
     "PackageVersionReadmeAPIView",
     "TeamAPIView",
     "TeamCreateAPIView",
