@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from thunderstore.core.management.commands.content.base import ContentPopulatorContext
+from thunderstore.core.management.commands.content.package import desired_deprecated
 from thunderstore.core.management.commands.content.package_version import (
     PackageVersionPopulator,
 )
@@ -54,6 +55,27 @@ def test_package_version_populator_populate_respects_existing_version_count() ->
         )
     )
     assert versions == ["0.0.0", "1.0.0"]
+
+
+@pytest.mark.django_db
+def test_package_version_populator_deprecation_follows_package_identity() -> None:
+    package = PackageFactory()
+    expected = desired_deprecated(package)
+    package.is_deprecated = not expected
+    package.save(update_fields=("is_deprecated",))
+    PackageVersionFactory(package=package, name=package.name, version_number="0.0.0")
+
+    context = ContentPopulatorContext(packages=[package], version_count=1)
+    PackageVersionPopulator().populate(context)
+    PackageVersionPopulator().populate(context)
+
+    package.refresh_from_db()
+    assert package.is_deprecated is expected
+
+    context.version_count = 2
+    PackageVersionPopulator().populate(context)
+    package.refresh_from_db()
+    assert package.is_deprecated is expected
 
 
 @pytest.mark.django_db
