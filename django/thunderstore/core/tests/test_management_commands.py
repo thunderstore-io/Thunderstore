@@ -8,9 +8,15 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import Count
 from django.test import override_settings
+from django.utils.text import slugify
 
 from django_contracts.models import LegalContract, LegalContractVersion
 from thunderstore.community.models import Community, CommunitySite, PackageListing
+from thunderstore.core.management.commands.content.category import CATEGORY_NAMES
+from thunderstore.core.management.commands.content.package import desired_deprecated
+from thunderstore.core.management.commands.content.package_listing import (
+    desired_listing_categories,
+)
 from thunderstore.core.management.commands.create_test_data import CONTENT_POPULATORS
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, PackageVersion, Team
@@ -24,7 +30,11 @@ def test_create_test_data_debug_check(debug: bool) -> None:
     def test_debug():
         try:
             call_command("create_test_data")
-            assert Package.objects.filter(name__icontains="Test_Package").count() == 10
+            created_packages = Package.objects.filter(name__icontains="Test_Package")
+            assert created_packages.count() == 10
+            for package in created_packages:
+                assert package.is_deprecated is desired_deprecated(package)
+            assert created_packages.filter(is_deprecated=True).exists()
             assert Team.objects.filter(name__icontains="Test_Team").count() == 10
             assert (
                 PackageVersion.objects.filter(name__icontains="Test_Package").count()
@@ -122,6 +132,31 @@ def test_create_test_data_create_data(
         )
         assert created_communities.count() == community_count
         assert created_community_sites.count() == community_count
+        expected_category_names = sorted(CATEGORY_NAMES)
+        expected_category_slugs = sorted(slugify(name) for name in CATEGORY_NAMES)
+        for created_community in created_communities:
+            categories = list(created_community.package_categories.all())
+            assert (
+                sorted(category.name for category in categories)
+                == expected_category_names
+            )
+            assert (
+                sorted(category.slug for category in categories)
+                == expected_category_slugs
+            )
+            listings = PackageListing.objects.filter(
+                community=created_community,
+                package__in=created_packages,
+            )
+            for listing in listings:
+                expected_categories = desired_listing_categories(
+                    listing.package,
+                    created_community,
+                    categories,
+                )
+                assert set(listing.categories.values_list("pk", flat=True)) == {
+                    category.pk for category in expected_categories
+                }
         assert created_contracts.count() == legal_contract_count
         assert (
             created_contract_versions.count()
