@@ -123,7 +123,7 @@ class PackageDetailApiView(APIView):
                 "image_src": latest.icon.url if bool(latest.icon) else None,
                 "install_url": latest.install_url,
                 "last_updated": listing.package.date_updated,
-                "markdown": latest.readme,
+                "markdown": latest.resolved_readme,
                 "namespace": listing.package.namespace.name,
                 "package_name": listing.package.name,
                 "rating_score": listing.package_total_rating,

@@ -11,6 +11,8 @@ from thunderstore.repository.models import Package, PackageVersion
 
 class CyberstormMarkdownResponseSerializer(serializers.Serializer):
     html = serializers.CharField()
+    is_edited = serializers.BooleanField(default=False)
+    edited_at = serializers.DateTimeField(allow_null=True, default=None)
 
 
 class PackageVersionReadmeAPIView(
@@ -31,9 +33,11 @@ class PackageVersionReadmeAPIView(
             version_number=self.kwargs.get("version_number"),
         )
 
-        if package_version.readme_override is not None:
-            return {"html": render_markdown(package_version.readme_override)}
-        return {"html": render_markdown(package_version.readme)}
+        return {
+            "html": render_markdown(package_version.resolved_readme),
+            "is_edited": package_version.is_readme_edited,
+            "edited_at": package_version.readme_override_edited_at,
+        }
 
 
 class PackageVersionChangelogAPIView(
@@ -56,12 +60,15 @@ class PackageVersionChangelogAPIView(
             version_number=self.kwargs.get("version_number"),
         )
 
-        if package_version.changelog is None and package_version.changelog_override is None:
+        changelog = package_version.resolved_changelog
+        if changelog is None:
             raise Http404
 
-        if package_version.changelog_override is not None:
-            return {"html": render_markdown(package_version.changelog_override)}
-        return {"html": render_markdown(package_version.changelog)}
+        return {
+            "html": render_markdown(changelog),
+            "is_edited": package_version.is_changelog_edited,
+            "edited_at": package_version.changelog_override_edited_at,
+        }
 
 
 def get_package_version(
