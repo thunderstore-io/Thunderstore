@@ -12,8 +12,17 @@ from django.test import override_settings
 from django_contracts.models import LegalContract, LegalContractVersion
 from thunderstore.community.models import Community, CommunitySite, PackageListing
 from thunderstore.core.management.commands.create_test_data import CONTENT_POPULATORS
-from thunderstore.repository.factories import NamespaceFactory
-from thunderstore.repository.models import Package, PackageVersion, Team
+from thunderstore.repository.factories import (
+    AsyncPackageSubmissionFactory,
+    NamespaceFactory,
+)
+from thunderstore.repository.models import (
+    AsyncPackageSubmission,
+    Package,
+    PackageVersion,
+    Team,
+)
+from thunderstore.repository.models.team import TeamMemberRole
 from thunderstore.wiki.models import WikiPage
 
 
@@ -71,6 +80,64 @@ def test_create_test_data_clear() -> None:
     assert teams.filter(name__icontains="Test_Team").count() == 10
     assert packages.filter(name__icontains="Test_Package").count() == 10
     assert pvs.filter(name__icontains="Test_Package").count() == 30
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_test_data_clear_deletes_orphaned_team_member_users() -> None:
+    User = get_user_model()
+    orphan_usernames = [
+        "Test_TeamMember_999_owner",
+        "Test_TeamMember_999_member_0",
+        "Test_TeamMember_999_member_1",
+    ]
+    orphans = [
+        User.objects.create_user(username, f"{username}@example.com", "password")
+        for username in orphan_usernames
+    ]
+    kept = User.objects.create_user("admin", "admin@example.com", "password")
+    orphan_submission = AsyncPackageSubmissionFactory(owner=orphans[0])
+    kept_submission = AsyncPackageSubmissionFactory(owner=kept)
+
+    call_command(
+        "create_test_data",
+        "--clear",
+        "--only",
+        "team",
+        "--team-count",
+        1,
+    )
+
+    assert not User.objects.filter(pk__in=[user.pk for user in orphans]).exists()
+    assert not AsyncPackageSubmission.objects.filter(pk=orphan_submission.pk).exists()
+    assert AsyncPackageSubmission.objects.filter(pk=kept_submission.pk).exists()
+    assert User.objects.filter(pk=kept.pk).exists()
+    assert User.objects.filter(username__startswith="Test_TeamMember_").count() == 3
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_test_data_fills_partial_team_membership() -> None:
+    User = get_user_model()
+    team = Team.create(name="Test_Team_1")
+    owner_username = f"Test_TeamMember_{team.pk}_owner"
+    owner = User.objects.create_user(
+        owner_username, f"{owner_username}@example.com", "password"
+    )
+    team.add_member(owner, role=TeamMemberRole.owner)
+
+    call_command("create_test_data", "--only", "team", "--team-count", 1)
+    call_command("create_test_data", "--only", "team", "--team-count", 1)
+
+    memberships = {
+        membership.user.username: membership.role
+        for membership in team.members.real_users().select_related("user")
+    }
+    assert memberships == {
+        owner_username: TeamMemberRole.owner,
+        f"Test_TeamMember_{team.pk}_member_0": TeamMemberRole.member,
+        f"Test_TeamMember_{team.pk}_member_1": TeamMemberRole.member,
+    }
 
 
 @pytest.mark.django_db
@@ -141,6 +208,7 @@ def test_create_test_data_create_data(
         )
         for t in created_teams:
             assert t.owned_packages.all().count() == package_count
+            assert t.members.real_users().count() == 3
         assert (
             Package.objects.annotate(c=Count("latest__dependencies"))
             .filter(c__exact=0)
