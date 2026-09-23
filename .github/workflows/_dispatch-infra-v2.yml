@@ -1,0 +1,53 @@
+name: Dispatch Infra-v2
+
+on:
+  workflow_call:
+    inputs:
+      workflow_file:
+        description: Infra-v2 workflow file to dispatch
+        required: true
+        type: string
+      tag_name:
+        description: Thunderstore tag passed to the Infra-v2 workflow
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dispatch:
+    name: Dispatch ${{ inputs.workflow_file }}
+    runs-on: ubuntu-latest
+    environment: Thunderstore
+    steps:
+      - name: Authenticate with Pulumi Cloud
+        uses: pulumi/auth-actions@v2
+        with:
+          organization: Riskidev
+          requested-token-type: urn:pulumi:token-type:access_token:team
+          scope: team:thunderstore
+
+      - name: Load ESC token
+        uses: pulumi/esc-action@v3
+        with:
+          environment: Riskidev/thunderstore-io/Thunderstore
+          export-environment-variables: INFRA_V2_ACTIONS_PAT_RW
+
+      - name: Trigger Infra-v2 workflow
+        env:
+          WORKFLOW_FILE: ${{ inputs.workflow_file }}
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${INFRA_V2_ACTIONS_PAT_RW:-}" ]]; then
+            echo "ESC did not inject INFRA_V2_ACTIONS_PAT_RW." >&2
+            echo "Confirm Riskidev/thunderstore-io/Thunderstore has that key under values.environmentVariables." >&2
+            exit 1
+          fi
+          echo "::add-mask::${INFRA_V2_ACTIONS_PAT_RW}"
+          GH_TOKEN="${INFRA_V2_ACTIONS_PAT_RW}" gh workflow run "${WORKFLOW_FILE}" \
+            --repo Riskidev/Infra-v2 \
+            --ref master \
+            -f tag_name="${TAG_NAME}"
