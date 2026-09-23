@@ -291,3 +291,10 @@ def update_markdown(
 
 def delete_markdown(api_client: APIClient, version: PackageVersion, document: str):
     return api_client.delete(f"{markdown_url(version)}{document}/delete/")
+
+
+def history_url(version: PackageVersion, document: str = "readme") -> str:
+    return (
+        f"/moderation/api/package/{version.package.namespace}/{version.package.name}"
+        f"/v/{version.version_number}/markdown/{document}/history/"
+    )
