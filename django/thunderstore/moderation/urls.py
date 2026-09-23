@@ -1,6 +1,9 @@
 from django.urls import path
 
-from thunderstore.moderation.views import PackageVersionMarkdownHistoryAPIView
+from thunderstore.moderation.views import (
+    MarkdownChangesAPIView,
+    PackageVersionMarkdownHistoryAPIView,
+)
 from thunderstore.plugins.registry import plugin_registry
 from thunderstore.repository.views.package.list import PackageReviewListView
 
@@ -9,6 +12,11 @@ moderation_urls = [
         "api/package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/markdown/<str:document>/history/",
         PackageVersionMarkdownHistoryAPIView.as_view(),
         name="moderation.package.version.markdown.history",
+    ),
+    path(
+        "api/markdown/changes/",
+        MarkdownChangesAPIView.as_view(),
+        name="moderation.markdown.changes",
     ),
     path(
         "review-queue/packages/",

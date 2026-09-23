@@ -1,3 +1,5 @@
+from rest_framework.permissions import BasePermission
+
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
 from thunderstore.permissions.utils import validate_user
@@ -6,6 +8,11 @@ from thunderstore.repository.models import PackageVersion
 
 def can_view_markdown_revisions(user) -> bool:
     return user.has_perm("repository.view_packageversionmarkdownrevision")
+
+
+class CanViewMarkdownRevisions(BasePermission):
+    def has_permission(self, request, view):
+        return can_view_markdown_revisions(request.user)
 
 
 def ensure_user_can_view_markdown_history(
