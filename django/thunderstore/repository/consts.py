@@ -1,4 +1,7 @@
 import re
+from dataclasses import dataclass
+
+from django.db import models
 
 from thunderstore.core.utils import ChoiceEnum
 
@@ -15,3 +18,35 @@ class PackageVersionReviewStatus(ChoiceEnum):
     unreviewed = "unreviewed"
     approved = "approved"
     rejected = "rejected"
+
+
+class MarkdownDocument(models.TextChoices):
+    README = "readme", "README"
+    CHANGELOG = "changelog", "CHANGELOG"
+
+
+@dataclass(frozen=True)
+class MarkdownFields:
+    original: str
+    override: str
+    edited_at: str
+    edited_by: str
+    filename: str
+
+
+MARKDOWN_FIELDS = {
+    MarkdownDocument.README: MarkdownFields(
+        original="readme",
+        override="readme_override",
+        edited_at="readme_override_edited_at",
+        edited_by="readme_override_edited_by",
+        filename="README.md",
+    ),
+    MarkdownDocument.CHANGELOG: MarkdownFields(
+        original="changelog",
+        override="changelog_override",
+        edited_at="changelog_override_edited_at",
+        edited_by="changelog_override_edited_by",
+        filename="CHANGELOG.md",
+    ),
+}
