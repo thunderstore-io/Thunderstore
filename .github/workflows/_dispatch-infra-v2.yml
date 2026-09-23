@@ -27,7 +27,7 @@ jobs:
         with:
           organization: Riskidev
           requested-token-type: urn:pulumi:token-type:access_token:team
-          scope: team:thunderstore
+          scope: team:Thunderstore
 
       - name: Load ESC token
         uses: pulumi/esc-action@v3
