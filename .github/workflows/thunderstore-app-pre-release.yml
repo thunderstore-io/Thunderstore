@@ -1,19 +1,16 @@
 name: Thunderstore App - Pre-release
-
 on:
   release:
     types: [prereleased]
-
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
   trigger-release-workflow:
-    uses: ./.github/workflows/_dispatch-infra-v2.yml
-    with:
-      workflow_file: build-thunderstore-app-pre-release.yml
-      tag_name: ${{ github.event.release.tag_name }}
-    permissions:
-      contents: read
-      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Pre-release Workflow
+        env:
+          GH_TOKEN: ${{ secrets.THUNDERSTORE_BOT_PAT }}
+        run: |
+          gh workflow run build-thunderstore-app-pre-release.yml \
+          --repo Riskidev/Infra-v2 \
+          --ref master \
+          -f tag_name='${{ github.event.release.tag_name }}'
