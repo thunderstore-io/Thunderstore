@@ -5,6 +5,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
+from thunderstore.account.models import ServiceAccount
 from thunderstore.repository.factories import PackageVersionFactory, TeamMemberFactory
 from thunderstore.repository.models.package_version import PackageVersion
 
@@ -38,8 +39,13 @@ def test_package_version_view__returns_info(api_client: APIClient) -> None:
     # Set a dependency that is not direct
     pv2.dependencies.set([pv4])
 
-    TeamMemberFactory(team=pv1.package.owner, role="owner")
-    TeamMemberFactory(team=pv1.package.owner, role="member")
+    owner = TeamMemberFactory(team=pv1.package.owner, role="owner")
+    member = TeamMemberFactory(team=pv1.package.owner, role="member")
+    service_account, _token = ServiceAccount.create(
+        owner=pv1.package.owner,
+        nickname="Bot",
+        creator=owner.user,
+    )
 
     url = _get_version_url(pv1)
     response = api_client.get(url)
@@ -57,7 +63,16 @@ def test_package_version_view__returns_info(api_client: APIClient) -> None:
     assert data["namespace"] == pv1.package.namespace.name
     assert data["size"] == pv1.file_size
     assert data["team"]["name"] == pv1.package.owner.name
-    assert "members" in data["team"]
+    returned_members = {
+        (entry["username"], entry["role"]) for entry in data["team"]["members"]
+    }
+    assert returned_members == {
+        (owner.user.username, "owner"),
+        (member.user.username, "member"),
+    }
+    assert service_account.user.username not in {
+        username for username, _role in returned_members
+    }
     assert data["website_url"] == "https://thunderstore.io/"
 
 

@@ -14,6 +14,7 @@ from thunderstore.api.utils import (
     conditional_swagger_auto_schema,
 )
 from thunderstore.repository.models.package_version import PackageVersion
+from thunderstore.repository.models.team import public_members_prefetch
 
 
 class PackageVersionAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, APIView):
@@ -36,7 +37,7 @@ class PackageVersionAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, APIView
                 "package__namespace",
             )
             .prefetch_related(
-                "package__owner__members",
+                public_members_prefetch("package__owner__members"),
             )
             .annotate(
                 dependency_count=Count(

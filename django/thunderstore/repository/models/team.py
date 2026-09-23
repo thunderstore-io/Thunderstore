@@ -1,10 +1,10 @@
-from typing import Optional
+from typing import List, Optional, Union
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.db import models, transaction
-from django.db.models import Manager, Q, QuerySet
+from django.db.models import Manager, Prefetch, Q, QuerySet
 from django.urls import reverse
 
 from thunderstore.core.enums import OptionalBoolChoice
@@ -79,6 +79,18 @@ class TeamMember(models.Model):
         return f"{self.user.username} membership to {self.team.name}"
 
 
+PREFETCHED_PUBLIC_MEMBERS = "prefetched_public_members"
+
+
+def public_members_prefetch(lookup: str) -> Prefetch:
+    queryset = (
+        TeamMember.objects.real_users()
+        .select_related("user")
+        .prefetch_related("user__social_auth")
+    )
+    return Prefetch(lookup, queryset=queryset, to_attr=PREFETCHED_PUBLIC_MEMBERS)
+
+
 def strip_unsupported_characters(val: str) -> str:
     whitelist = "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789_"
     result = "".join([x for x in val if x in whitelist])
@@ -148,9 +160,15 @@ class Team(models.Model):
         super().save(*args, **kwargs)
 
     @property
-    def public_members(self) -> "Manager[TeamMember]":
-        # TODO: Filter & return team members that are publicly visible
-        return self.members.none()
+    def public_members(self) -> "Union[QuerySet[TeamMember], List[TeamMember]]":
+        prefetched = getattr(self, PREFETCHED_PUBLIC_MEMBERS, None)
+        if prefetched is not None:
+            return prefetched
+        return (
+            self.members.real_users()
+            .select_related("user")
+            .prefetch_related("user__social_auth")
+        )
 
     @property
     def real_user_count(self):

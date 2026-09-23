@@ -20,6 +20,7 @@ from thunderstore.repository.models import (
     TeamMemberRole,
     strip_unsupported_characters,
 )
+from thunderstore.repository.models.team import public_members_prefetch
 
 
 @pytest.mark.parametrize(
@@ -203,6 +204,24 @@ def test_team_member_manager_real_users(service_account, team_member) -> None:
     result = TeamMember.objects.real_users()
     assert team_member in result
     assert service_account.owner_membership not in result
+
+
+@pytest.mark.django_db
+def test_public_members_uses_prefetched_real_users(
+    django_assert_num_queries, service_account
+) -> None:
+    team = Team.objects.prefetch_related(public_members_prefetch("members")).get(
+        pk=service_account.owner_id
+    )
+
+    with django_assert_num_queries(0):
+        members = list(team.public_members)
+        for member in members:
+            member.user.username
+            list(member.user.social_auth.all())
+
+    assert service_account.owner_membership not in members
+    assert members
 
 
 @pytest.mark.django_db

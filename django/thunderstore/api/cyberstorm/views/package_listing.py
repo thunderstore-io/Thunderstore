@@ -39,6 +39,7 @@ from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.types import UserType
 from thunderstore.repository.models.package import get_package_dependants
 from thunderstore.repository.models.package_version import PackageVersion
+from thunderstore.repository.models.team import public_members_prefetch
 from thunderstore.repository.views.package.detail import PermissionsChecker
 
 
@@ -162,7 +163,7 @@ def get_custom_package_listing(
         )
         .prefetch_related(
             "categories",
-            "package__owner__members",
+            public_members_prefetch("package__owner__members"),
         )
         .annotate(
             download_count=Subquery(
