@@ -466,6 +466,19 @@ def api_client(community_site) -> APIClient:
     return APIClient(HTTP_HOST=community_site.site.domain)
 
 
+@pytest.fixture()
+def version(db) -> PackageVersion:
+    return PackageVersionFactory(readme="Original readme", changelog=None)
+
+
+@pytest.fixture()
+def team_member_client(version, api_client) -> APIClient:
+    user = UserFactory()
+    TeamMemberFactory(team=version.package.owner, user=user, role="owner")
+    api_client.force_authenticate(user=user)
+    return api_client
+
+
 @pytest.fixture(scope="session")
 def package_icon_bytes() -> bytes:
     icon_raw = io.BytesIO()
