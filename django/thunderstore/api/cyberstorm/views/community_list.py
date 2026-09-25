@@ -14,7 +14,7 @@ from thunderstore.community.models import Community
 
 
 class CommunityPaginator(PageNumberPagination):
-    page_size = 300
+    page_size = 500
 
 
 class CommunityListAPIQueryParams(serializers.Serializer):
