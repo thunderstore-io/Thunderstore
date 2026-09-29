@@ -4,15 +4,17 @@ on:
   push:
     tags:
       - "*.*.*"
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   trigger-release-workflow:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Release Workflow
-        env:
-          GH_TOKEN: ${{ secrets.THUNDERSTORE_BOT_PAT }}
-        run: |
-          gh workflow run build-thunderstore-app-tag.yml \
-          --repo Riskidev/Infra-v2 \
-          --ref master \
-          -f tag_name='${{ github.ref_name }}'
+    uses: ./.github/workflows/_dispatch-infra-v2.yml
+    with:
+      workflow_file: build-thunderstore-app-tag.yml
+      tag_name: ${{ github.ref_name }}
+    permissions:
+      contents: read
+      id-token: write
