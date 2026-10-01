@@ -1,7 +1,7 @@
 from rest_framework.generics import RetrieveAPIView
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
-from thunderstore.api.utils import CyberstormAutoSchemaMixin, PublicCacheMixin
+from thunderstore.api.utils import CyberstormAutoSchemaMixin, PublicCacheMixin, conditional_swagger_auto_schema
 from thunderstore.community.models import Community
 
 
@@ -14,6 +14,9 @@ class CommunityAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIV
     queryset = Community.objects.all()
     serializer_class = CyberstormCommunitySerializer
 
+    @conditional_swagger_auto_schema(
+        tags=["cyberstorm"],
+    )
     def get(self, *args, **kwargs):
         response = super().get(*args, **kwargs)
         return response
