@@ -5,6 +5,7 @@ from thunderstore.core.management.commands.content.base import (
     ContentPopulatorContext,
     dummy_package_icon,
 )
+from thunderstore.core.management.commands.content.package import desired_deprecated
 from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.storage.models import DataBlob, DataBlobGroup
 from thunderstore.utils.iterators import print_progress
@@ -146,7 +147,9 @@ class PackageVersionPopulator(ContentPopulator):
             enumerate(context.packages), len(context.packages)
         ):
             vercount = package.versions.count()
+            created_versions = False
             for vernum in range(context.version_count - vercount):
+                created_versions = True
                 pv = PackageVersion(
                     package=package,
                     name=package.name,
@@ -167,8 +170,16 @@ class PackageVersionPopulator(ContentPopulator):
                 uploaded_icon = pv.icon.name
 
             # Manually calling would-be signals once per package, as it doesn't
-            # actually make use of the sender param at all (and can be None)
-            package.handle_created_version(None)
+            # actually make use of the sender param at all (and can be None).
+            # handle_created_version() clears is_deprecated, so reapply the
+            # stable deprecation tag afterwards. The tag depends only on the
+            # package identity, so a rerun restores the same value.
+            if created_versions:
+                package.handle_created_version(None)
+            is_deprecated = desired_deprecated(package)
+            if package.is_deprecated != is_deprecated:
+                package.is_deprecated = is_deprecated
+                package.save(update_fields=("is_deprecated",))
             package.handle_updated_version(None)
 
         # Re-enabling previously disabled signals

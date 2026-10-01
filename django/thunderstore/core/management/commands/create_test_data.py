@@ -7,6 +7,7 @@ from thunderstore.core.management.commands.content.base import (
     ContentPopulator,
     ContentPopulatorContext,
 )
+from thunderstore.core.management.commands.content.category import CategoryPopulator
 from thunderstore.core.management.commands.content.community import CommunityPopulator
 from thunderstore.core.management.commands.content.community_site import (
     CommunitySitePopulator,
@@ -42,6 +43,7 @@ CONTENT_POPULATORS: Dict[str, Type[ContentPopulator]] = OrderedDict[
     [
         ("community", CommunityPopulator),
         ("community_site", CommunitySitePopulator),
+        ("category", CategoryPopulator),
         ("team", TeamPopulator),
         ("package", PackagePopulator),
         ("version", PackageVersionPopulator),
