@@ -11,6 +11,7 @@ from django.test import override_settings
 
 from django_contracts.models import LegalContract, LegalContractVersion
 from thunderstore.community.models import Community, CommunitySite, PackageListing
+from thunderstore.core.management.commands.content.community import CommunityPopulator
 from thunderstore.core.management.commands.create_test_data import CONTENT_POPULATORS
 from thunderstore.repository.factories import NamespaceFactory
 from thunderstore.repository.models import Package, PackageVersion, Team
@@ -121,6 +122,9 @@ def test_create_test_data_create_data(
             created_wiki_pages.count() == package_count * team_count * wiki_page_count
         )
         assert created_communities.count() == community_count
+        assert set(created_communities.values_list("identifier", flat=True)) == {
+            f"test-community-{i}" for i in range(1, community_count + 1)
+        }
         assert created_community_sites.count() == community_count
         assert created_contracts.count() == legal_contract_count
         assert (
@@ -180,6 +184,85 @@ def test_create_test_data_create_data(
     # in the same data distribution.
     call_command(*args)
     assert_counts()
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_test_data_reconciles_gapped_community_identifiers(
+    community: Community,
+) -> None:
+    Community.objects.create(name="Test Community 1", identifier="test-community-1")
+    Community.objects.create(name="Test Community 3", identifier="test-community-3")
+    seeded_extra = Community.objects.create(
+        name="Test Community 99", identifier="test-community-99"
+    )
+    factory_extra = Community.objects.create(
+        name="TestCommunity0", identifier="test-community-0"
+    )
+    occupied = Community.objects.create(
+        name="TestCommunity2", identifier="test-community-2"
+    )
+
+    call_command(
+        "create_test_data",
+        "--only",
+        "community",
+        "--community-count",
+        4,
+    )
+
+    assert set(
+        Community.objects.filter(identifier__startswith="test-community-").values_list(
+            "identifier", flat=True
+        )
+    ) == {f"test-community-{i}" for i in (0, 1, 2, 3, 4, 99)}
+    assert Community.objects.get(identifier="test-community-4").name == (
+        "Test Community 4"
+    )
+    assert Community.objects.get(pk=occupied.pk).name == "TestCommunity2"
+    assert Community.objects.filter(pk=seeded_extra.pk).exists()
+    assert Community.objects.filter(pk=factory_extra.pk).exists()
+    assert Community.objects.filter(pk=community.pk).exists()
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_test_data_ignores_noncanonical_community_suffixes() -> None:
+    populator = CommunityPopulator()
+    assert populator.identifier_suffix("test-community-2") == 2
+    assert populator.identifier_suffix("test-community-02") is None
+    assert populator.identifier_suffix("test-community-²") is None
+
+    odd = Community.objects.create(name="Odd", identifier="test-community-²")
+    call_command(
+        "create_test_data",
+        "--only",
+        "community",
+        "--community-count",
+        1,
+    )
+
+    assert Community.objects.filter(pk=odd.pk).exists()
+    assert Community.objects.filter(identifier="test-community-1").exists()
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_test_data_only_uses_existing_prefixed_communities() -> None:
+    legacy = Community.objects.create(
+        name="Test Community 15", identifier="test-community-15"
+    )
+
+    call_command(
+        "create_test_data",
+        "--only",
+        "community_site",
+        "--community-count",
+        1,
+    )
+
+    assert CommunitySite.objects.filter(community=legacy).exists()
+    assert not Community.objects.filter(identifier="test-community-1").exists()
 
 
 @override_settings(DEBUG=True)
