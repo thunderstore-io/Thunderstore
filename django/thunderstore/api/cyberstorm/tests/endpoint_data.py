@@ -16,6 +16,7 @@ ENDPOINTS = {
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/changelog/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/markdown/{document}/download/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/readme/",
         # "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/",
@@ -40,6 +41,9 @@ ENDPOINTS = {
         },
         "/api/cyberstorm/package/{namespace_id}/{package_name}/deprecate/": {
             "deprecate": True
+        },
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/markdown/": {
+            "readme": "# Test"
         },
         "/api/cyberstorm/package/{namespace_id}/{package_name}/rate/": {
             "target_state": "rated"

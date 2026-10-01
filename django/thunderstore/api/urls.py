@@ -22,6 +22,8 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionChangelogAPIView,
     PackageVersionDependenciesListAPIView,
     PackageVersionListAPIView,
+    PackageVersionMarkdownAPIView,
+    PackageVersionMarkdownDownloadAPIView,
     PackageVersionReadmeAPIView,
     RatePackageAPIView,
     RejectPackageListingAPIView,
@@ -140,6 +142,16 @@ cyberstorm_urls = [
         "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/readme/",
         PackageVersionReadmeAPIView.as_view(),
         name="cyberstorm.package.version.readme",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/markdown/",
+        PackageVersionMarkdownAPIView.as_view(),
+        name="cyberstorm.package.version.markdown",
+    ),
+    path(
+        "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/markdown/<str:document>/download/",
+        PackageVersionMarkdownDownloadAPIView.as_view(),
+        name="cyberstorm.package.version.markdown.download",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/v/<str:version_number>/dependencies/",
