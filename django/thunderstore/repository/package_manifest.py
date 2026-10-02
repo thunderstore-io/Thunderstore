@@ -20,6 +20,8 @@ from thunderstore.repository.utils import (
     package_exists_in_any_case,
 )
 
+MAX_PACKAGE_DEPENDENCIES = 1000
+
 
 class PackageInstallerSerializer(serializers.Serializer):
     identifier = ModelChoiceField(
@@ -67,7 +69,7 @@ class ManifestV1Serializer(serializers.Serializer):
     )
     dependencies = serializers.ListField(
         child=DependencyField(),
-        max_length=1000,
+        max_length=MAX_PACKAGE_DEPENDENCIES,
         allow_empty=True,
     )
     installers = serializers.ListField(

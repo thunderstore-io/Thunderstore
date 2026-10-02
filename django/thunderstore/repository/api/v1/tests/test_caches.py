@@ -20,8 +20,10 @@ from thunderstore.repository.api.v1.tasks import (
 )
 from thunderstore.repository.api.v1.viewsets import _get_prefetched_listing_queryset
 from thunderstore.repository.factories import (
+    PackageFactory,
     PackageRatingFactory,
     PackageVersionFactory,
+    TeamFactory,
 )
 from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
 from thunderstore.repository.models.cache import (
@@ -278,6 +280,44 @@ def test_get_package_listing_chunk__excludes_inactive_versions() -> None:
 
 
 @pytest.mark.django_db
+def test_get_package_listing_chunk__dependency_names_ordered() -> None:
+    listing = PackageListingFactory()
+    package = listing.package
+    package.versions.all().delete()
+    version = PackageVersionFactory(package=package)
+
+    teams = {}
+    for namespace, name in (
+        ("Zeta", "Mod"),
+        ("alpha", "zed"),
+        ("Beta", "mod"),
+        ("alpha", "Bee"),
+    ):
+        if namespace not in teams:
+            teams[namespace] = TeamFactory(name=namespace)
+        dependency = PackageVersionFactory(
+            package=PackageFactory(
+                owner=teams[namespace],
+                namespace=teams[namespace].get_namespace(),
+                name=name,
+            ),
+            name=name,
+            version_number="1.0.0",
+        )
+        version.dependencies.add(dependency)
+
+    result = get_package_listing_chunk([listing.id])
+
+    versions = list(result[0].package.versions.all())
+    assert versions[0]._dependency_names == [
+        "alpha-Bee-1.0.0",
+        "alpha-zed-1.0.0",
+        "Beta-mod-1.0.0",
+        "Zeta-Mod-1.0.0",
+    ]
+
+
+@pytest.mark.django_db
 def test_get_package_listing_ids__returns_ids_for_community() -> None:
     community_a = CommunityFactory()
     community_b = CommunityFactory()
@@ -320,7 +360,9 @@ def test_get_sorted_active_versions__filters_inactive_and_sorts_descending() -> 
 
 
 @pytest.mark.django_db
-def test_get_prefetched_listing_queryset__prefetches_versions_and_dependencies() -> None:
+def test_get_prefetched_listing_queryset__prefetches_versions_and_dependencies() -> (
+    None
+):
     from django.db import connection
     from django.test.utils import CaptureQueriesContext
 
