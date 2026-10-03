@@ -1,17 +1,24 @@
 import { FormErrors } from "./upload";
-import { BlobReader, ZipReader } from "./vendor/zip-fs-full";
+import { BlobReader, TextWriter, ZipReader } from "./vendor/zip-fs-full";
 
 export async function validateZip(
     file: File
-): Promise<{ errors: FormErrors; blockUpload: boolean }> {
+): Promise<{
+    errors: FormErrors;
+    blockUpload: boolean;
+    readme: string | null;
+    changelog: string | null;
+}> {
     let errors = new FormErrors();
 
     let blockUpload = false;
+    let readme: string | null = null;
+    let changelog: string | null = null;
 
     if (!file.name.toLowerCase().endsWith(".zip")) {
         errors.fileErrors.push("The file you selected is not a .zip!");
         blockUpload = true;
-        return { errors, blockUpload };
+        return { errors, blockUpload, readme, changelog };
     }
 
     if (file.name.toLowerCase().includes("test")) {
@@ -85,9 +92,18 @@ export async function validateZip(
                 hasReadMe = true;
                 if (entry.filename == "README.md") {
                     rootReadMe = true;
+                    const textWriter = new TextWriter("utf-8");
+                    readme = (await entry.getData(textWriter)) as string;
                 } else if (entry.filename.toLowerCase() == "readme.md") {
                     wrongCase = true;
                     rootReadMe = true;
+                }
+            }
+
+            if (entry.filename.toLowerCase().endsWith("changelog.md")) {
+                if (entry.filename == "CHANGELOG.md") {
+                    const textWriter = new TextWriter("utf-8");
+                    changelog = (await entry.getData(textWriter)) as string;
                 }
             }
 
@@ -199,5 +215,5 @@ export async function validateZip(
         errors.fileErrors.push("Your .zip file could not be read.");
     }
 
-    return { errors, blockUpload };
+    return { errors, blockUpload, readme, changelog };
 }
