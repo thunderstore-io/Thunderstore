@@ -1,4 +1,4 @@
-from django.db.models import Count, QuerySet, Sum
+from django.db.models import QuerySet
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
@@ -29,12 +29,6 @@ def get_package_queryset() -> "QuerySet[Package]":
             "community_listings",
             "community_listings__categories",
             "community_listings__community",
-        )
-        .annotate(
-            _total_downloads=Sum("versions__downloads"),
-        )
-        .annotate(
-            _rating_score=Count("package_ratings"),
         )
     )
 
