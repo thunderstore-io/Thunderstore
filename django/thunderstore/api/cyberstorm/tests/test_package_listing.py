@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Optional
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
+from cachalot.api import cachalot_disabled
 from django.db import connection
 from django.http import Http404
 from django.test.utils import CaptureQueriesContext
@@ -13,18 +14,20 @@ from thunderstore.api.cyberstorm.views.package_listing import (
     DependencySerializer,
     get_custom_package_listing,
 )
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import (
     Community,
     CommunityFactory,
     PackageCategoryFactory,
     PackageListingFactory,
 )
+from thunderstore.community.models import PackageListing
 from thunderstore.repository.factories import (
-    NamespaceFactory,
     PackageRatingFactory,
     PackageVersionFactory,
     TeamMemberFactory,
 )
+from thunderstore.repository.models import PackageVersion
 
 
 def get_listing_url(package_listing) -> str:
@@ -453,7 +456,8 @@ def test_dependency_serializer__reads_is_active_from_correct_field(
     dependant.dependencies.set([dependency])
 
     dependency.community_identifier = "greendale"
-    dependency.version_is_unavailable = False
+    dependency.package_has_active_versions = version_is_active
+    dependency.listing_is_available = True
 
     actual = DependencySerializer(dependency).data
 
@@ -466,7 +470,8 @@ def test_dependency_serializer__when_dependency_is_not_active__censors_icon_and_
 ):
     dependency = PackageVersionFactory()
     dependency.community_identifier = "greendale"
-    dependency.version_is_unavailable = False
+    dependency.package_has_active_versions = True
+    dependency.listing_is_available = True
 
     actual = DependencySerializer(dependency).data
 
@@ -485,109 +490,144 @@ def _date_to_z(value: datetime) -> str:
     return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize("return_val", [True, False])
-def test_package_listing_is_removed(
-    return_val: bool,
-    api_client: APIClient,
+def _get_listing_detail_url(listing: PackageListing, use_version_route: bool) -> str:
+    url = (
+        f"/api/cyberstorm/listing/{listing.community.identifier}/"
+        f"{listing.package.namespace.name}/{listing.package.name}/"
+    )
+    if use_version_route:
+        url += f"v/{listing.package.latest.version_number}/"
+    return url
+
+
+def _create_dependency(
     community: Community,
-) -> None:
-    package = "Mod"
-    target_ns = NamespaceFactory()
-
-    target_dependency = PackageListingFactory(
-        community_=community,
-        package_kwargs={"name": package, "namespace": target_ns},
+    version_is_active: bool = True,
+    has_other_active_version: bool = False,
+    package_is_active: bool = True,
+    review_status: str = PackageListingReviewStatus.approved,
+) -> PackageVersion:
+    version = PackageVersionFactory(is_active=version_is_active)
+    if has_other_active_version:
+        PackageVersionFactory(package=version.package, version_number="2.0.0")
+    version.package.is_active = package_is_active
+    version.package.save(update_fields=("is_active",))
+    PackageListingFactory(
+        community=community,
+        package_=version.package,
+        review_status=review_status,
     )
-
-    target_package = PackageListingFactory(community_=community)
-    target_package.package.latest.dependencies.set(
-        [target_dependency.package.latest.id],
-    )
-
-    community_id = target_package.community.identifier
-    namespace = target_package.package.namespace.name
-    package_name = target_package.package.name
-
-    url = f"/api/cyberstorm/listing/{community_id}/{namespace}/{package_name}/"
-
-    path = "thunderstore.repository.models.package_version.PackageVersion.is_removed"
-    with patch(path, new_callable=PropertyMock) as is_removed_property:
-        is_removed_property.return_value = return_val
-        response = api_client.get(url)
-        response_dependencies = response.json()["dependencies"][0]
-
-    assert "is_removed" in response_dependencies
-    assert response_dependencies["is_removed"] == return_val
+    return version
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("return_val", [True, False])
-@patch("thunderstore.repository.models.package_version.PackageVersion.is_unavailable")
-def test_package_listing_is_unavailable(
-    is_unavailable_func: Mock,
-    return_val: bool,
+@pytest.mark.parametrize("use_version_route", (False, True))
+@pytest.mark.parametrize(
+    (
+        "dependency_kwargs",
+        "require_approval",
+        "expected_is_removed",
+        "expected_is_unavailable",
+    ),
+    (
+        pytest.param({}, False, False, False, id="available"),
+        pytest.param(
+            {"version_is_active": False, "has_other_active_version": True},
+            False,
+            True,
+            True,
+            id="version_inactive",
+        ),
+        pytest.param(
+            {"package_is_active": False},
+            False,
+            True,
+            True,
+            id="package_inactive",
+        ),
+        pytest.param(
+            {"version_is_active": False},
+            False,
+            True,
+            True,
+            id="no_active_versions",
+        ),
+        pytest.param(
+            {"review_status": PackageListingReviewStatus.rejected},
+            False,
+            False,
+            True,
+            id="listing_rejected",
+        ),
+        pytest.param(
+            {"review_status": PackageListingReviewStatus.unreviewed},
+            True,
+            False,
+            True,
+            id="listing_unreviewed_approval_required",
+        ),
+        pytest.param(
+            {"review_status": PackageListingReviewStatus.unreviewed},
+            False,
+            False,
+            False,
+            id="listing_unreviewed_approval_not_required",
+        ),
+    ),
+)
+def test_package_listing_view__dependency_availability(
     api_client: APIClient,
-    community: Community,
+    use_version_route: bool,
+    dependency_kwargs: dict,
+    require_approval: bool,
+    expected_is_removed: bool,
+    expected_is_unavailable: bool,
 ) -> None:
-    is_unavailable_func.return_value = return_val
-
-    package = "Mod"
-    target_ns = NamespaceFactory()
-
-    target_dependency = PackageListingFactory(
-        community_=community,
-        package_kwargs={"name": package, "namespace": target_ns},
+    community = CommunityFactory(require_package_listing_approval=require_approval)
+    dependency = _create_dependency(community, **dependency_kwargs)
+    listing = PackageListingFactory(
+        community=community,
+        review_status=PackageListingReviewStatus.approved,
     )
+    listing.package.latest.dependencies.set([dependency])
 
-    target_package = PackageListingFactory(community_=community)
-    target_package.package.latest.dependencies.set(
-        [target_dependency.package.latest.id],
-    )
-
-    community_id = target_package.community.identifier
-    namespace = target_package.package.namespace.name
-    package_name = target_package.package.name
-
-    url = f"/api/cyberstorm/listing/{community_id}/{namespace}/{package_name}/"
-    response = api_client.get(url)
-    response_dependencies = response.json()["dependencies"][0]
-
-    assert "is_unavailable" in response_dependencies
-    assert response_dependencies["is_unavailable"] == return_val
-
-
-@pytest.mark.django_db
-def test_package_listing_query_count(
-    api_client: APIClient, community: Community
-) -> None:
-    package = "Mod"
-    target_ns = NamespaceFactory()
-
-    target_dependencies = [
-        PackageListingFactory(
-            community_=community,
-            package_kwargs={"name": f"{package}_{i}", "namespace": target_ns},
-        )
-        for i in range(10)
-    ]
-
-    target_package = PackageListingFactory(community_=community)
-    target_package.package.latest.dependencies.set(
-        [dep.package.latest.id for dep in target_dependencies],
-    )
-
-    community_id = target_package.community.identifier
-    namespace = target_package.package.namespace.name
-    package_name = target_package.package.name
-
-    url = f"/api/cyberstorm/listing/{community_id}/{namespace}/{package_name}/"
-
-    with CaptureQueriesContext(connection) as ctx:
-        response = api_client.get(url)
+    response = api_client.get(_get_listing_detail_url(listing, use_version_route))
 
     assert response.status_code == 200
-    assert len(ctx.captured_queries) < 23
+    [actual] = response.json()["dependencies"]
+    assert actual["is_removed"] == expected_is_removed
+    assert actual["is_unavailable"] == expected_is_unavailable
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("use_version_route", (False, True))
+def test_package_listing_view__query_count_does_not_depend_on_dependencies(
+    api_client: APIClient,
+    use_version_route: bool,
+) -> None:
+    community = CommunityFactory()
+
+    def get_query_count(dependency_count: int) -> int:
+        listing = PackageListingFactory(community=community)
+        listing.package.latest.dependencies.set(
+            _create_dependency(community) for _ in range(dependency_count)
+        )
+        url = _get_listing_detail_url(listing, use_version_route)
+
+        # cachalot would serve repeated identical queries from Redis, which
+        # hides them from the count.
+        with cachalot_disabled(), CaptureQueriesContext(connection) as ctx:
+            response = api_client.get(url)
+
+        assert response.status_code == 200
+        assert len(response.json()["dependencies"]) == dependency_count
+        return len(ctx.captured_queries)
+
+    # The first request also caches the request's Site (get_current_site() in
+    # CommunitySiteMiddleware), which costs one extra query.
+    get_query_count(0)
+
+    assert get_query_count(0) == get_query_count(4)
 
 
 @pytest.mark.django_db

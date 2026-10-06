@@ -4,6 +4,7 @@ from django.db.models import (
     BooleanField,
     CharField,
     Count,
+    Exists,
     ExpressionWrapper,
     OuterRef,
     Q,
@@ -23,12 +24,16 @@ from rest_framework.views import APIView
 
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormPackageCategorySerializer,
+    CyberstormPackageDependencySerializer,
     CyberstormPackageTeamSerializer,
     EmptyStringAsNoneField,
     PackageListingStatusResponseSerializer,
 )
 from thunderstore.api.cyberstorm.views.package_listing_actions import (
     get_package_listing,
+)
+from thunderstore.api.cyberstorm.views.package_listing_list import (
+    filter_by_review_status,
 )
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
@@ -42,12 +47,15 @@ from thunderstore.repository.models.package_version import PackageVersion
 from thunderstore.repository.views.package.detail import PermissionsChecker
 
 
-class DependencySerializer(serializers.Serializer):
+class DependencySerializer(CyberstormPackageDependencySerializer):
     """
     Dependencies of a given PackageVersion, listed in a given Community.
 
-    community_identifier is not present by default and needs to be
-    annotated to the object.
+    community_identifier, package_has_active_versions and
+    listing_is_available are not present by default and need to be
+    annotated to the object, see get_custom_package_listing(). Reading
+    them instead of PackageVersion.is_removed/is_unavailable() avoids
+    queries per dependency.
 
     Description and icon is not shown to clients if the dependency is
     deactivated, since the fields may contain the very reason for the
@@ -55,29 +63,11 @@ class DependencySerializer(serializers.Serializer):
     """
 
     community_identifier = serializers.CharField()
-    description = serializers.SerializerMethodField()
-    icon_url = serializers.SerializerMethodField()
-    is_active = serializers.BooleanField(source="is_effectively_active")
-    name = serializers.CharField()
-    namespace = serializers.CharField(source="package.namespace.name")
-    version_number = serializers.CharField()
-    is_removed = serializers.BooleanField()
     is_unavailable = serializers.SerializerMethodField()
 
-    def get_description(self, obj: PackageVersion) -> str:
-        return (
-            obj.description
-            if obj.is_effectively_active
-            else "This package has been removed."
-        )
-
-    def get_icon_url(self, obj: PackageVersion) -> Optional[str]:
-        return obj.icon.url if obj.is_effectively_active else None
-
     def get_is_unavailable(self, obj: PackageVersion) -> bool:
-        # Annotated result of PackageVersion.is_unavailable
-        # See get_custom_package_listing()
-        return obj.version_is_unavailable
+        # Same result as PackageVersion.is_unavailable(community)
+        return self.get_is_removed(obj) or not obj.listing_is_available
 
 
 class ResponseSerializer(serializers.Serializer):
@@ -208,10 +198,32 @@ def get_custom_package_listing(
         listing.has_changelog = listing.version.changelog is not None
     else:
         listing.version = listing.package.latest
+        # Reuse the loaded package so the serializer doesn't fetch it and its
+        # owner again through version.package.
+        listing.version.package = listing.package
 
+    # The Exists() annotations replace Package.is_effectively_active and
+    # Package.get_package_listing(), which would query once per dependency.
     dependencies = (
         listing.version.dependencies.listed_in(community_id)
-        .annotate(community_identifier=Value(community_id, CharField()))
+        .annotate(
+            community_identifier=Value(community_id, CharField()),
+            package_has_active_versions=Exists(
+                PackageVersion.objects.filter(
+                    package_id=OuterRef("package_id"),
+                    is_active=True,
+                )
+            ),
+            listing_is_available=Exists(
+                filter_by_review_status(
+                    listing.community.require_package_listing_approval,
+                    PackageListing.objects.filter(
+                        package_id=OuterRef("package_id"),
+                        community_id=listing.community_id,
+                    ),
+                )
+            ),
+        )
         .select_related("package", "package__namespace")
         .order_by("package__namespace__name", "package__name")
     )
@@ -219,12 +231,6 @@ def get_custom_package_listing(
     # Using .count() and slicing on dependencies does two database
     # queries but prevents loading the whole result set into memory.
     listing.dependencies = dependencies[:4]
-
-    for dependency in listing.dependencies:
-        dependency.version_is_unavailable = dependency.is_unavailable(
-            community=listing.community,
-        )
-
     listing.dependency_count = dependencies.count()
     listing.dependant_count = get_package_dependants(listing.package.pk).count()
 
