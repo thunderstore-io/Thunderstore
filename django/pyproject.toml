@@ -18,7 +18,7 @@ uwsgi = { version = "2.0.30", markers = "sys_platform != 'win32'" }
 # uWSGI is Unix only. Cannot install on Windows.
 social-auth-app-django = "^5.4"
 social-auth-core = "^4.4"
-whitenoise = "^6.2"
+whitenoise = "^6.12"
 django-storages = { version = "^1.14", extras = ["boto3"] }
 # Held at 3.14: DRF 3.15 changes client-visible behavior (404 detail
 # messages, schema generation) and deserves its own upgrade commit.
