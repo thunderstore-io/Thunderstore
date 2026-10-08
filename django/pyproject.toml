@@ -61,7 +61,7 @@ ts-moderation = { path = "../python-packages/ts-moderation", develop = true }
 pytest = "^7.4"
 pytest-cov = "^4.1"
 pytest-django = "^4.8"
-factory_boy = "^3.2"
+factory_boy = "^3.3"
 Faker = "^6.0"
 pytest-mock = "^3.5"
 django-debug-toolbar = "^4.0"
