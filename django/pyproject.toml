@@ -23,7 +23,9 @@ django-storages = { version = "^1.14", extras = ["boto3"] }
 # Held at 3.14: DRF 3.15 changes client-visible behavior (404 detail
 # messages, schema generation) and deserves its own upgrade commit.
 djangorestframework = "~3.14"
-drf-yasg = "^1.21"
+# 1.21.17 excluded: its redoc-old/redoc.min.js references a source map
+# missing from the wheel, which fails collectstatic with manifest storage.
+drf-yasg = "^1.21,!=1.21.17"
 django-ipware = "^3.0"
 sentry_sdk = {extras = ["celery"], version = "^1.31.0"}
 django-redis = "^5.2"

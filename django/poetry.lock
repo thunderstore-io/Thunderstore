@@ -1114,19 +1114,19 @@ markdown = ["types-Markdown (>=0.1.5)"]
 
 [[package]]
 name = "drf-yasg"
-version = "1.21.10"
+version = "1.21.15"
 description = "Automated generation of real Swagger/OpenAPI 2.0 schemas from Django Rest Framework code."
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.9"
 files = [
-    {file = "drf-yasg-1.21.10.tar.gz", hash = "sha256:f86d50faee3c31fcec4545985a871f832366c7fb5b77b62c48089d56ecf4f8d4"},
-    {file = "drf_yasg-1.21.10-py3-none-any.whl", hash = "sha256:4d832e108dfe38e365101c36123576b498487d33bf27d57d6a37efb4cc773438"},
+    {file = "drf_yasg-1.21.15-py3-none-any.whl", hash = "sha256:7c7a7ab9feb0e13cdd6e25147d99adb0500a68bd96509ffd8f8cf7efd4bdc77e"},
+    {file = "drf_yasg-1.21.15.tar.gz", hash = "sha256:ef86838c4ef10dcd3ac1ebf2be601cbe02978b999671caa43667f7c9db961468"},
 ]
 
 [package.dependencies]
-django = ">=2.2.16"
-djangorestframework = ">=3.10.3"
+django = ">=4.0"
+djangorestframework = ">=3.13"
 inflection = ">=0.3.1"
 packaging = ">=21.0"
 pytz = ">=2021.1"
@@ -3160,4 +3160,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ca5441cd91b493d789a1df0d486746975f0a23d11cb9bf944c296e3efe8cfb87"
+content-hash = "6f32bc09c527c459d09dbd0adcbf68ba66e8a03a2058cae750b6337c4b83745a"
