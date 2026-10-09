@@ -8,8 +8,15 @@ updates:
     ignore:
       # Django is upgraded manually in its own ticket; no updates are proposed.
       - dependency-name: "django"
+      # Patch-level version updates are not proposed.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
   - package-ecosystem: "npm"
     directory: "/builder/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 2
+    ignore:
+      # Patch-level version updates are not proposed.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
