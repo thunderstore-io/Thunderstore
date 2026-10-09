@@ -25,7 +25,7 @@ django-storages = { version = "^1.14", extras = ["boto3"] }
 djangorestframework = "~3.14"
 drf-yasg = "^1.21"
 django-ipware = "^3.0"
-sentry_sdk = {extras = ["celery"], version = "^1.31.0"}
+sentry_sdk = {extras = ["celery"], version = ">=1.31,<3.0"}
 django-redis = "^5.2"
 # django-redis declares no upper bound on redis-py; keep the client on
 # the widely-deployed 5.x line rather than whatever resolves newest.
