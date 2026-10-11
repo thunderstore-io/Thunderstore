@@ -37,7 +37,8 @@ def test_delete_discards_override_and_leaves_others_untouched(
     update_markdown(team_member_client, version, "changelog", {"content": "# Log"})
     response = delete_markdown(team_member_client, version, "readme")
 
-    assert response.status_code == 204
+    assert response.status_code == 200
+    assert response.json() == {"markdown": "Original readme"}
 
     version.refresh_from_db()
     assert version.readme_override is None

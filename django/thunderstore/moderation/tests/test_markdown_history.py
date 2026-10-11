@@ -77,14 +77,14 @@ def test_invalid_payload_writes_nothing(team_member_client, version, payload):
 
 
 def test_repeated_save_and_reset_do_not_amplify_history(team_member_client, version):
-    assert delete_markdown(team_member_client, version, "readme").status_code == 204
+    assert delete_markdown(team_member_client, version, "readme").status_code == 200
     for _ in range(2):
         response = update_markdown(
             team_member_client, version, "readme", {"content": "changed"}
         )
         assert response.status_code == 200
     for _ in range(2):
-        assert delete_markdown(team_member_client, version, "readme").status_code == 204
+        assert delete_markdown(team_member_client, version, "readme").status_code == 200
     assert list(version.markdown_revisions.values_list("content", "is_override")) == [
         (version.readme, False),
         ("changed", True),
@@ -287,7 +287,7 @@ def test_package_and_version_reads_stay_separate_across_new_upload(
     cache.clear()
     assert team_member_client.get(listing_url).json()["has_changelog"] is True
 
-    assert delete_markdown(team_member_client, new, "changelog").status_code == 204
+    assert delete_markdown(team_member_client, new, "changelog").status_code == 200
     cache.clear()
     assert team_member_client.get(listing_url).json()["has_changelog"] is False
 

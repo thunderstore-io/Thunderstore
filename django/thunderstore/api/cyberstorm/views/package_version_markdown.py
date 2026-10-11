@@ -38,6 +38,10 @@ class MarkdownOverrideStateSerializer(serializers.Serializer):
     edited_at = serializers.DateTimeField(allow_null=True)
 
 
+class MarkdownOriginalSerializer(serializers.Serializer):
+    markdown = serializers.CharField(allow_null=True)
+
+
 def get_active_version(
     namespace_id: str, package_name: str, version_number: str
 ) -> PackageVersion:
@@ -102,7 +106,7 @@ class PackageVersionMarkdownDeleteAPIView(APIView):
 
     @conditional_swagger_auto_schema(
         operation_id="cyberstorm.package.version.markdown.delete",
-        responses={status.HTTP_204_NO_CONTENT: ""},
+        responses={status.HTTP_200_OK: MarkdownOriginalSerializer},
         tags=["cyberstorm"],
     )
     def delete(
@@ -115,12 +119,15 @@ class PackageVersionMarkdownDeleteAPIView(APIView):
     ) -> Response:
         document = get_markdown_document(document)
         version = get_active_version(namespace_id, package_name, version_number)
-        delete_markdown_override(
+        version = delete_markdown_override(
             agent=request.user,
             version=version,
             document=document,
         )
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = MarkdownOriginalSerializer(
+            {"markdown": getattr(version, MARKDOWN_FIELDS[document].original)}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class MarkdownDownloadSchema(SwaggerAutoSchema):
