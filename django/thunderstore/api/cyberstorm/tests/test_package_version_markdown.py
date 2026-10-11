@@ -129,6 +129,7 @@ def test_download_serves_only_override_content(team_member_client, version):
 
     response = team_member_client.get(url)
     assert response.status_code == 200
+    assert "max-age=0" in response["Cache-Control"]
     assert response["Content-Type"] == "text/markdown; charset=utf-8"
     assert 'filename="README.md"' in response["Content-Disposition"]
     assert response.content.decode() == "# Downloadable"

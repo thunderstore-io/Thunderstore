@@ -133,6 +133,9 @@ class PackageVersionMarkdownDownloadAPIView(PublicCacheMixin, APIView):
     Download the raw markdown of an override.
     """
 
+    # The editor reads this right after a save or discard.
+    cache_max_age = 0
+
     swagger_schema = MarkdownDownloadSchema
 
     @conditional_swagger_auto_schema(
