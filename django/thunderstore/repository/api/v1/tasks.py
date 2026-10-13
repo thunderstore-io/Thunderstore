@@ -32,11 +32,9 @@ def update_api_v1_indexes() -> None:
     APIV1PackageCache.drop_stale_cache()
 
 
-def update_api_v1_chunked_package_caches() -> None:
-    for community in Community.objects.iterator():
-        try:
-            APIV1ChunkedPackageCache.update_for_community(community)
-        except Exception as e:  # pragma: no cover
-            capture_exception(e)
-
+def update_api_v1_chunked_package_cache_for_community(community: Community) -> None:
+    try:
+        APIV1ChunkedPackageCache.update_for_community(community)
+    except Exception as e:  # pragma: no cover
+        capture_exception(e)
     APIV1ChunkedPackageCache.drop_stale_cache()
