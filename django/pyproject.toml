@@ -13,17 +13,19 @@ Pillow = "^10.3"
 psycopg2-binary = "^2.9.9"
 easy-thumbnails = "^2.9"  # This has a monkeypatch and might be a difficult upgrade
 gunicorn = { version = "^20.0", extras = ["gevent"] }
-gevent = "^24.2"
+gevent = "^26.9"
 uwsgi = { version = "2.0.30", markers = "sys_platform != 'win32'" }
 # uWSGI is Unix only. Cannot install on Windows.
 social-auth-app-django = "^5.4"
 social-auth-core = "^4.4"
-whitenoise = "^6.2"
+whitenoise = "^6.12"
 django-storages = { version = "^1.14", extras = ["boto3"] }
 # Held at 3.14: DRF 3.15 changes client-visible behavior (404 detail
 # messages, schema generation) and deserves its own upgrade commit.
 djangorestframework = "~3.14"
-drf-yasg = "^1.21"
+# 1.21.17 excluded: its redoc-old/redoc.min.js references a source map
+# missing from the wheel, which fails collectstatic with manifest storage.
+drf-yasg = "^1.21,!=1.21.17"
 django-ipware = "^3.0"
 sentry_sdk = {extras = ["celery"], version = "^1.31.0"}
 django-redis = "^5.2"
@@ -38,7 +40,7 @@ ulid2 = "^0.2.0"
 django-cachalot = "^2.9"
 django-cors-headers = "^3.14"
 boto3 = "^1.17.47"
-bleach = "^3.3.0"
+bleach = "^6.4"
 markdown-it-py = {version = "2.1.0", extras = ["linkify"]}
 abyss = {git = "https://github.com/akx/abyss.git", rev = "4352e557f25a303f718ec1bf82ea0ca545ebc077"}
 lxml = "^4.9.4"
@@ -61,9 +63,9 @@ ts-moderation = { path = "../python-packages/ts-moderation", develop = true }
 pytest = "^7.4"
 pytest-cov = "^4.1"
 pytest-django = "^4.8"
-factory_boy = "^3.2"
-Faker = "^6.0"
-pytest-mock = "^3.5"
+factory_boy = "^3.3"
+Faker = "^40.0"
+pytest-mock = "^3.16"
 django-debug-toolbar = "^4.0"
 pytest-env = "^0.6.2"
 black = "~22.3.0"  # kept in sync with .pre-commit-config.yaml
