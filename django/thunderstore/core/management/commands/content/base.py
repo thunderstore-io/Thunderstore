@@ -1,16 +1,17 @@
 import functools
 import io
 import os
+import random
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Collection, List, Type
+from typing import Collection, Dict, List, Type
 
 from django.core.files.base import File
 from django.db.models import Model
 from PIL import Image
 
 from django_contracts.models import LegalContract
-from thunderstore.community.models import Community
+from thunderstore.community.models import Community, PackageCategory
 from thunderstore.repository.models import Package, PackageWiki, Team
 
 
@@ -21,6 +22,8 @@ class ContentPopulatorContext:
     communities: Collection[Community] = field(default_factory=list)
     contracts: Collection[LegalContract] = field(default_factory=list)
     package_wikis: Collection[PackageWiki] = field(default_factory=list)
+    # Maps a community's PK to the list of PackageCategories in that community
+    categories: Dict[int, List[PackageCategory]] = field(default_factory=dict)
 
     community_count: int = 0
     dependency_count: int = 0
@@ -31,6 +34,16 @@ class ContentPopulatorContext:
     contract_version_count: int = 0
     wiki_page_count: int = 0
     reuse_icon: bool = False
+
+
+def seeded_random(*parts: object) -> random.Random:
+    """Return a RNG whose sequence depends only on the given identity parts."""
+    return random.Random("|".join(str(part) for part in parts))
+
+
+def package_identity(package: Package) -> str:
+    namespace_name = package.namespace.name if package.namespace_id else ""
+    return f"{namespace_name}/{package.name}"
 
 
 class ContentPopulator(ABC):
