@@ -261,6 +261,7 @@ def get_package_listing_chunk(
     listing_ids: List[int],
 ) -> List[PackageListing]:
     from thunderstore.repository.models import PackageRating, PackageVersion
+    from thunderstore.repository.package_manifest import MAX_PACKAGE_DEPENDENCIES
 
     # Use an isolated subquery for ratings to prevent massive joins
     ratings_subquery = Subquery(
@@ -283,8 +284,7 @@ def get_package_listing_chunk(
             ),
         )
         .order_by(Lower("package__namespace__name"), Lower("package__name"))
-        # without having a limit, Django will not include the order_by in the subquery. Uses a max of 1000 like ManifestV1Serializer
-        .values("_full_name")[:1000]
+        .values("_full_name")[:MAX_PACKAGE_DEPENDENCIES]
     )
 
     versions_prefetch = Prefetch(

@@ -11,7 +11,11 @@ from thunderstore.repository.api.experimental.views.package_index import (
     get_package_index_queryset,
     update_api_experimental_package_index,
 )
-from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.factories import (
+    PackageFactory,
+    PackageVersionFactory,
+    TeamFactory,
+)
 from thunderstore.repository.models import PackageVersion
 
 
@@ -50,6 +54,45 @@ def test_api_experimental_package_index(api_client: APIClient):
             packages[:-1],
             key=lambda v: (v.package.namespace.name.lower(), v.package.name.lower()),
         )
+    ]
+
+
+@pytest.mark.django_db
+def test_get_package_index_queryset__dependency_names_ordered():
+    version = PackageVersionFactory()
+
+    teams = {}
+    packages = {}
+    for namespace, name, version_number in (
+        ("Zeta", "Mod", "1.0.0"),
+        ("alpha", "zed", "1.0.0"),
+        ("alpha", "Bee", "2.0.0"),
+        ("Beta", "mod", "1.0.0"),
+        ("alpha", "Bee", "1.0.0"),
+    ):
+        if namespace not in teams:
+            teams[namespace] = TeamFactory(name=namespace)
+        if (namespace, name) not in packages:
+            packages[(namespace, name)] = PackageFactory(
+                owner=teams[namespace],
+                namespace=teams[namespace].get_namespace(),
+                name=name,
+            )
+        dependency = PackageVersionFactory(
+            package=packages[(namespace, name)],
+            name=name,
+            version_number=version_number,
+        )
+        version.dependencies.add(dependency)
+
+    entry = get_package_index_queryset().get(pk=version.pk)
+
+    assert entry._dependency_names == [
+        "alpha-Bee-1.0.0",
+        "alpha-Bee-2.0.0",
+        "alpha-zed-1.0.0",
+        "Beta-mod-1.0.0",
+        "Zeta-Mod-1.0.0",
     ]
 
 

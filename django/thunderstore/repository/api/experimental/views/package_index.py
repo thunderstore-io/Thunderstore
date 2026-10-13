@@ -17,6 +17,7 @@ from thunderstore.repository.models import (
     PackageVersion,
     PackageVersionQuerySet,
 )
+from thunderstore.repository.package_manifest import MAX_PACKAGE_DEPENDENCIES
 
 
 class ServiceUnavailable(APIException):
@@ -60,9 +61,7 @@ def get_package_index_queryset() -> PackageVersionQuerySet:
             "version_number",
             "pk",
         )
-        # Upload validation caps dependencies per version at 1000
-        # (ManifestV1Serializer.dependencies)
-        .values("_full_name")[:1000]
+        .values("_full_name")[:MAX_PACKAGE_DEPENDENCIES]
     )
     return PackageVersion.objects.active().annotate(
         namespace=F("package__namespace"),
