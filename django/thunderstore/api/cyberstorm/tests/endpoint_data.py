@@ -16,6 +16,7 @@ ENDPOINTS = {
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/changelog/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/dependencies/",
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/markdown/{document}/download/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/readme/",
         # "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/",
@@ -54,6 +55,9 @@ ENDPOINTS = {
         },
     },
     "PATCH": {
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/markdown/{document}/update/": {
+            "content": "# Test"
+        },
         "/api/cyberstorm/team/{team_name}/update/": {
             "donation_link": "https://test.url"
         },
@@ -65,6 +69,7 @@ ENDPOINTS = {
         },
     },
     "DELETE": [
+        "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/markdown/{document}/delete/",
         "/api/cyberstorm/team/{team_name}/disband/",
         "/api/cyberstorm/team/{team_name}/member/{username}/remove/",
         "/api/cyberstorm/service-account/{uuid}/delete/",

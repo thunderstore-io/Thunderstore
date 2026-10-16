@@ -48,6 +48,29 @@ def test_package_get_page_url(
 
 
 @pytest.mark.django_db
+def test_package_readme_uses_override_when_present() -> None:
+    version = PackageVersionFactory(readme="Base", readme_override="Override")
+    package = version.package
+    package.latest = version
+    package.save(update_fields=("latest",))
+
+    assert package.readme() == "Override"
+
+
+@pytest.mark.django_db
+def test_package_changelog_uses_override_when_present() -> None:
+    version = PackageVersionFactory(
+        changelog="Base changelog",
+        changelog_override="Override changelog",
+    )
+    package = version.package
+    package.latest = version
+    package.save(update_fields=("latest",))
+
+    assert package.changelog() == "Override changelog"
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "site_host", ("thunderstore.dev", "test.thunderstore.dev", None)
 )

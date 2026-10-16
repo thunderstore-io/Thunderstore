@@ -85,7 +85,13 @@ class PackageVersionChangelogApiView(PackageVersionDetailMixin):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer({"markdown": instance.changelog})
+        serializer = self.get_serializer(
+            {
+                "markdown": instance.resolved_changelog,
+                "is_edited": instance.is_changelog_edited,
+                "edited_at": instance.changelog_override_edited_at,
+            }
+        )
         return Response(serializer.data)
 
 
@@ -105,5 +111,11 @@ class PackageVersionReadmeApiView(PackageVersionDetailMixin):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer({"markdown": instance.readme})
+        serializer = self.get_serializer(
+            {
+                "markdown": instance.resolved_readme,
+                "is_edited": instance.is_readme_edited,
+                "edited_at": instance.readme_override_edited_at,
+            }
+        )
         return Response(serializer.data)
