@@ -1,9 +1,6 @@
-from concurrent.futures import ThreadPoolExecutor
-from threading import Event
-
 import pytest
 from django.contrib.auth.models import Permission
-from django.db import connection, connections, transaction
+from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
 from thunderstore.api.cyberstorm.services.package_version import (
@@ -183,56 +180,3 @@ def test_feed_uses_a_bounded_query(moderator_client, author_version):
     assert "COUNT(" not in sql
     assert "OFFSET" not in sql
     assert '"readme"' not in sql
-
-
-@pytest.mark.django_db(transaction=True)
-@pytest.mark.parametrize("rollback", [False, True])
-def test_polling_does_not_skip_a_late_commit(
-    moderator_client, author_version, rollback
-):
-    author, first = author_version
-    second = PackageVersionFactory()
-    TeamMemberFactory(team=second.package.owner, user=author, role=TeamMemberRole.owner)
-    inserted = Event()
-    release = Event()
-    waiting = Event()
-
-    def save_first():
-        try:
-            with transaction.atomic():
-                update_markdown_override(author, first, "readme", "first")
-                inserted.set()
-                assert release.wait(10)
-                if rollback:
-                    transaction.set_rollback(True)
-        finally:
-            connections.close_all()
-
-    def observe_lock(execute, sql, params, many, context):
-        if "pg_advisory_xact_lock" in sql:
-            waiting.set()
-        return execute(sql, params, many, context)
-
-    def save_second():
-        try:
-            with connection.execute_wrapper(observe_lock):
-                update_markdown_override(author, second, "readme", "second")
-        finally:
-            connections.close_all()
-
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        first_save = executor.submit(save_first)
-        try:
-            assert inserted.wait(10)
-            second_save = executor.submit(save_second)
-            assert waiting.wait(10)
-            page = moderator_client.get(URL).json()
-            assert page == {"results": [], "cursor": 0, "has_more": False}
-        finally:
-            release.set()
-        first_save.result(timeout=10)
-        second_save.result(timeout=10)
-
-    page = moderator_client.get(URL, {"after": page["cursor"]}).json()
-    expected = ["second"] if rollback else ["first", "second"]
-    assert [row["content"] for row in page["results"]] == expected

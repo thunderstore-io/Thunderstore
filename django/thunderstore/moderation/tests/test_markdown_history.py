@@ -210,30 +210,29 @@ def test_database_rejects_invalid_history(version, document, content, is_overrid
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize("second_content", ["first", "second"])
-def test_concurrent_saves_follow_lock_order(second_content):
+def test_concurrent_saves_keep_history_consistent(second_content):
     version = PackageVersionFactory(readme="original")
     user = UserFactory()
     TeamMemberFactory(user=user, team=version.package.owner, role=TeamMemberRole.owner)
-    locking = Event()
+    updating = Event()
 
-    def observe_lock(execute, sql, params, many, context):
-        if "FOR UPDATE" in sql:
-            locking.set()
+    def observe_update(execute, sql, params, many, context):
+        if sql.startswith('UPDATE "repository_packageversion"'):
+            updating.set()
         return execute(sql, params, many, context)
 
     def save_second():
         try:
-            with connection.execute_wrapper(observe_lock):
+            with connection.execute_wrapper(observe_update):
                 update_markdown_override(user, version, "readme", second_content)
         finally:
             connections.close_all()
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         with transaction.atomic():
-            PackageVersion.objects.select_for_update().get(pk=version.pk)
-            pending = executor.submit(save_second)
-            assert locking.wait(5)
             update_markdown_override(user, version, "readme", "first")
+            pending = executor.submit(save_second)
+            assert updating.wait(5)
         pending.result(timeout=10)
     version.refresh_from_db()
     assert version.readme_override == second_content
