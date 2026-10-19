@@ -8,7 +8,7 @@ authors = ["Mythic <mythicmaniac@gmail.com>"]
 python = "^3.12"
 Django = "^4.2"
 django-environ = "^0.4"
-arrow = "^0.17"
+arrow = ">=0.17,<1.5"
 Pillow = "^10.3"
 psycopg2-binary = "^2.9.9"
 easy-thumbnails = "^2.9"  # This has a monkeypatch and might be a difficult upgrade
