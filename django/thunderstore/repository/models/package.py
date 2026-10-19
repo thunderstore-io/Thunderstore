@@ -251,10 +251,10 @@ class Package(VisibilityMixin, AdminLinkMixin):
         return get_package_dependants_list(self.pk)
 
     def readme(self):
-        return self.latest.readme
+        return self.latest.resolved_readme
 
     def changelog(self):
-        return self.latest.changelog
+        return self.latest.resolved_changelog
 
     def get_absolute_url(self) -> str:
         return reverse(

@@ -174,7 +174,8 @@ def get_custom_package_listing(
     if version is None:
         qs = qs.annotate(
             has_changelog=ExpressionWrapper(
-                Q(package__latest__changelog__isnull=False),
+                Q(package__latest__changelog__isnull=False)
+                | Q(package__latest__changelog_override__isnull=False),
                 output_field=BooleanField(),
             )
         )
@@ -195,7 +196,7 @@ def get_custom_package_listing(
             version_number=version,
         )
 
-        listing.has_changelog = listing.version.changelog is not None
+        listing.has_changelog = listing.version.resolved_changelog is not None
     else:
         listing.version = listing.package.latest
         # Reuse the loaded package so the serializer doesn't fetch it and its
