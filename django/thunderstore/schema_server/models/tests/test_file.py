@@ -1,6 +1,8 @@
+import concurrent.futures
 import time
 from datetime import timedelta
 from hashlib import sha256
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.utils import timezone
@@ -92,3 +94,39 @@ def test_schema_server_file_get_or_create_deduplication():
     file_b = SchemaFile.get_or_create(test_data_b)
     assert file_a != file_b
     assert SchemaFile.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_get_or_create_schema_file_cache_lock_acquired_and_released():
+    test_data = b"Hello world!"
+
+    mock_lock = MagicMock()
+    mock_lock.__enter__.return_value = True
+    mock_lock.__exit__.return_value = None
+
+    with patch("django_redis.cache.RedisCache.lock", return_value=mock_lock):
+        file = SchemaFile.get_or_create(test_data)
+
+    assert file is not None
+    mock_lock.__enter__.assert_called_once()
+    mock_lock.__exit__.assert_called_once()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_get_or_create_schema_file_parallel():
+    test_data = b"Hello world!"
+
+    def call_get_or_create():
+        return SchemaFile.get_or_create(test_data)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures = [executor.submit(call_get_or_create) for _ in range(3)]
+        results = [f.result() for f in futures]
+
+    pks = {file.pk for file in results}
+    assert len(pks) == 1
+
+    assert (
+        SchemaFile.objects.filter(checksum_sha256=results[0].checksum_sha256).count()
+        == 1
+    )
