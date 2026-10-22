@@ -124,7 +124,6 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: thunderstore
       AWS_SECRET_ACCESS_KEY: thunderstore
-      AWS_DEFAULT_REGION: us-east-1
       AWS_ENDPOINT_URL: "http://minio:9000"
     volumes:
       - ./docker/s3-init.sh:/s3-init.sh:ro

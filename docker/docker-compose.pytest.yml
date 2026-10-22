@@ -30,10 +30,16 @@ x-django-service: &django-service
     CACHE_S3_STORAGE_BUCKET_NAME: "thunderstore"
     CACHE_S3_LOCATION: "development/cache"
   depends_on:
-    - db
-    - redis
-    - rabbitmq
-    - minio
+    db:
+      condition: service_started
+    redis:
+      condition: service_started
+    rabbitmq:
+      condition: service_started
+    minio:
+      condition: service_started
+    minio-init:
+      condition: service_completed_successfully
 
 services:
   db:
@@ -64,11 +70,23 @@ services:
       RABBITMQ_DEFAULT_VHOST: django
 
   minio:
-    image: thunderstore/minio:latest
+    image: rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
     environment:
-      MINIO_ROOT_USER: thunderstore
-      MINIO_ROOT_PASSWORD: thunderstore
-    command: server /data
+      RUSTFS_ACCESS_KEY: thunderstore
+      RUSTFS_SECRET_KEY: thunderstore
+      RUSTFS_ADDRESS: ":9000"
+
+  minio-init:
+    image: amazon/aws-cli:2.38.4@sha256:de807aa682dd3f45d6de5f431b93762691c53f1134b318936dda39f99e321244
+    entrypoint: ["/bin/sh", "/s3-init.sh"]
+    environment:
+      AWS_ACCESS_KEY_ID: thunderstore
+      AWS_SECRET_ACCESS_KEY: thunderstore
+      AWS_ENDPOINT_URL: "http://minio:9000"
+    volumes:
+      - ./s3-init.sh:/s3-init.sh:ro
+    depends_on:
+      - minio
 
   django:
     <<: *django-service
