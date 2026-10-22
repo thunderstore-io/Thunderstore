@@ -49,7 +49,6 @@ x-django-service: &django-service
     SOURCE_VIEW_ENABLE_HIGHLIGHTING: "True"
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW: "True"
     USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS: "True"
-    GUNICORN_CMD_ARGS: "--bind=0.0.0.0:8000"
   env_file:
     - .env
   depends_on:
@@ -137,7 +136,7 @@ services:
 
   django:
     <<: *django-service
-    command: gunicorn
+    command: uwsgi
     volumes:
       - django-data:/app/var
       - ./django:/app
