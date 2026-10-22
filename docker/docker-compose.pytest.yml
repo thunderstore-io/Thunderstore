@@ -59,7 +59,7 @@ services:
       - ../pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
 
   redis:
-    image: redis:6.2.1-alpine@sha256:daa795ebec4c206cc7f76e19c4bb26a98dfca671d7b5bedcb38862de078bdaa2
+    image: valkey/valkey:8.1.10-alpine@sha256:081c2f5cb575efc901aa80ff9cdbd1ec6a301682fd35e1ebb4b0990a4a4a8507
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru
 
   rabbitmq:
