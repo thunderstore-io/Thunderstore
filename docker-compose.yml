@@ -2,12 +2,6 @@ version: "3.8"
 
 x-django-service: &django-service
   image: thunderstore/thunderstore:latest
-  pull_policy: build
-  build:
-    context: .
-    dockerfile: ./Dockerfile
-    args:
-      BUILD_INSTALL_EXTRAS: ${BUILD_INSTALL_EXTRAS}
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
     CELERY_QUEUES: "celery,background.cache,background.task,background.long_running,log.downloads,analytics"
@@ -139,6 +133,12 @@ services:
 
   django:
     <<: *django-service
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        BUILD_INSTALL_EXTRAS: ${BUILD_INSTALL_EXTRAS}
     command: uwsgi
     volumes:
       - django-data:/app/var
@@ -170,12 +170,14 @@ services:
 
   django-worker:
     <<: [*django-service, *django-volumes]
+    pull_policy: never
     command: celeryworker
     depends_on:
       - django
 
   django-beat:
     <<: [*django-service, *django-volumes]
+    pull_policy: never
     command: celerybeat
     depends_on:
       - django
