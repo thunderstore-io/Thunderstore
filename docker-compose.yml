@@ -70,20 +70,21 @@ x-django-volumes: &django-volumes
 
 services:
   db:
-    image: postgres:13.12-alpine
+    image: postgres:17.11-alpine@sha256:1bcc18d81671b02906296aad470ec9778a6b71016ce953092024b680bad007b0
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - postgres17-data:/var/lib/postgresql/data
       - "./db-mount:/db-mount"
 
   dbpool:
-    image: edoburu/pgbouncer:1.15.0@sha256:2f47bf272fa9fdf25c100d11f1972b23af61a351a136d3721bfa6bdb52630426
+    image: edoburu/pgbouncer:v1.26.1-p0@sha256:488422e38cff912895d0d65d8963fcd306e6ac589a724398b6eb8e294e94d624
     environment:
       DATABASE_URL: "postgres://django:django@db/django"
       POOL_MODE: "transaction"
+      AUTH_TYPE: "scram-sha-256"
     volumes:
       - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
     logging:
@@ -188,7 +189,7 @@ services:
       - ./builder/gulpfile.js:/home/node/app/gulpfile.js:ro
 
 volumes:
-  db-data:
+  postgres17-data:
   django-data:
   rustfs-data:
   built-static:

@@ -156,6 +156,34 @@ console at <http://thunderstore.localhost:9001/rustfs/console/>, both with
 `thunderstore` / `thunderstore` credentials. The `minio-init` service creates the
 `thunderstore` and `test` buckets on start-up.
 
+### Upgrading the local database from Postgres 13
+
+The local database runs Postgres 17, which cannot read Postgres 13 data. It
+uses a new volume (`postgres17-data`) and leaves the old `db-data` volume
+untouched, so after upgrading `docker compose up -d` starts with an empty
+database. Either seed it again with `setup_dev_env` (see
+[Getting started](#getting-started)), or move your old data over before
+starting the rest of the stack:
+
+```bash
+# Dump the old database with a temporary Postgres 13 container
+docker run -d --name pg13-export -e POSTGRES_PASSWORD=django \
+    -v thunderstore_db-data:/var/lib/postgresql/data postgres:13.12-alpine
+until docker exec pg13-export pg_isready -q -h 127.0.0.1 -U django; do sleep 1; done
+docker exec pg13-export pg_dump -U django -Fc django > ~/thunderstore-pg13.dump
+docker rm -f pg13-export
+
+# Restore it into the new database
+docker compose up -d db
+until docker compose exec db pg_isready -q -h 127.0.0.1 -U django; do sleep 1; done
+docker compose exec -T db pg_restore -U django -d django --no-owner < ~/thunderstore-pg13.dump
+docker compose up -d
+```
+
+The `thunderstore_` volume prefix comes from the checkout's directory name;
+`docker volume ls` shows yours. Once everything works, remove the old volume
+with `docker volume rm thunderstore_db-data`.
+
 ### REST API
 
 Swagger documentation is served at `/api/docs/`. The primary endpoint is
