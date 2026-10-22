@@ -207,11 +207,6 @@ the full set of supported variables.
 -   `REPOSITORY_MAX_PACKAGE_SIZE_MB`: Maximum single package size.
 -   `REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB`: Maximum total file size used by packages.
 
-### Gunicorn
-
--   `GUNICORN_WORKER_COUNT`: Number of workers to spawn.
--   `GUNICORN_LOG_LEVEL`: Logging level.
-
 ### Django sessions
 
 -   `SESSION_COOKIE_DOMAIN`: If set, shares sessions across a domain and its
