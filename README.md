@@ -148,11 +148,13 @@ On Windows, prefix interactive commands like this one with `winpty`.
 docker compose exec django python manage.py create_test_data
 ```
 
-### File storage (MinIO)
+### File storage (RustFS)
 
-Local development uses [MinIO](https://github.com/minio/minio) for S3-compatible
-file storage, available at <http://thunderstore.localhost:9000/> with
-`thunderstore` / `thunderstore` credentials.
+Local development uses [RustFS](https://github.com/rustfs/rustfs) for S3-compatible
+file storage. The S3 API is at <http://thunderstore.localhost:9000/> and the web
+console at <http://thunderstore.localhost:9001/rustfs/console/>, both with
+`thunderstore` / `thunderstore` credentials. The `minio-init` service creates the
+`thunderstore` and `test` buckets on start-up.
 
 ### REST API
 
