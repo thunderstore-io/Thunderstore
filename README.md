@@ -159,7 +159,7 @@ console at <http://thunderstore.localhost:9001/rustfs/console/>, both with
 ### Upgrading the local database from Postgres 13
 
 The local database runs Postgres 17, which cannot read Postgres 13 data. It
-uses a new volume (`postgres17-data`) and leaves the old `db-data` volume
+uses a new volume (`postgres-data`) and leaves the old `db-data` volume
 untouched, so after upgrading `docker compose up -d` starts with an empty
 database. Either seed it again with `setup_dev_env` (see
 [Getting started](#getting-started)), or move your old data over before

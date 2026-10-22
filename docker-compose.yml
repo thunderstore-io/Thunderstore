@@ -76,7 +76,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - postgres17-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
       - "./db-mount:/db-mount"
 
   dbpool:
@@ -95,12 +95,14 @@ services:
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru --maxmemory-clients 10%
 
   rabbitmq:
-    image: rabbitmq:3.8.14-alpine@sha256:11d8cd02ac340e99de628053f76bb1182ce3df3b41d3e8f399377276ba489409
+    image: rabbitmq:4.2.4-alpine@sha256:83522278ca69414e4895b3ea3c0f943c63ad316c063f9cda9c32fd42fe800f47
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: django
       RABBITMQ_DEFAULT_PASS: django
       RABBITMQ_DEFAULT_VHOST: django
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     logging:
       driver: none
 
@@ -189,9 +191,10 @@ services:
       - ./builder/gulpfile.js:/home/node/app/gulpfile.js:ro
 
 volumes:
-  postgres17-data:
+  postgres-data:
   django-data:
   rustfs-data:
+  rabbitmq-data:
   built-static:
 
 networks:
