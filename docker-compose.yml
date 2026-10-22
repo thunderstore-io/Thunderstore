@@ -62,7 +62,12 @@ x-django-volumes: &django-volumes
     - django-data:/app/var:ro
     - ./django:/app:ro
     - ./python-packages:/python-packages:ro
-    - built-static:/app/static_built:ro
+    - type: volume
+      source: built-static
+      target: /app/static_built
+      read_only: true
+      volume:
+        nocopy: true
 
 services:
   db:
@@ -137,7 +142,12 @@ services:
       - django-data:/app/var
       - ./django:/app
       - ./python-packages:/python-packages
-      - built-static:/app/static_built:ro
+      - type: volume
+        source: built-static
+        target: /app/static_built
+        read_only: true
+        volume:
+          nocopy: true
     depends_on:
       - builder
 
