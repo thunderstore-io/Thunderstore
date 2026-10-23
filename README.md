@@ -81,50 +81,28 @@ Django does not publish a host port of its own; it is reached only through nginx
 
 ## Running the frontend
 
-The frontend
-([thunderstore-ui](https://github.com/thunderstore-io/thunderstore-ui)) runs
-**natively** on the host in development — it is faster than running it in a
-container, and nginx reaches it at `host.docker.internal:3000`. Clone it next to
-this repository and start it:
+The main site comes from
+[thunderstore-ui](https://github.com/thunderstore-io/thunderstore-ui), which
+runs on the host rather than in Docker. Set up its prerequisites (Node, pnpm and
+Font Awesome registry access, see its README), then start it:
 
 ```bash
 git clone https://github.com/thunderstore-io/thunderstore-ui
 cd thunderstore-ui
-yarn install
-yarn dev
+pnpm install
+pnpm dev
 ```
 
-`yarn dev` runs the Remix dev server on `:3000` together with the build watchers
-for the `@thunderstore/cyberstorm`, `@thunderstore/cyberstorm-theme`, and
-`@thunderstore/ts-uploader` packages, so edits to the app **and** those packages
-hot-reload. With the backend running, the app is served at
-<http://thunderstore.localhost> (and directly on <http://localhost:3000>). See
-`apps/cyberstorm-remix/README.md` in the thunderstore-ui repo for more detail.
+With the backend running, the site is at <http://thunderstore.localhost>.
 
-> **Windows:** `*.localhost` hostnames do not resolve automatically. Add these
-> entries to `C:\Windows\System32\drivers\etc\hosts`:
+> **Windows:** add these entries to `C:\Windows\System32\drivers\etc\hosts`
+> (WSL copies them on its next start):
 >
 > ```text
 > 127.0.0.1 thunderstore.localhost
 > 127.0.0.1 old.thunderstore.localhost
 > 127.0.0.1 auth.thunderstore.localhost
 > ```
->
-> **WSL2:** if you run `yarn dev` inside WSL2 while Docker Desktop runs the
-> backend, nginx's `host.docker.internal` reaches the **Windows** host — not
-> the WSL2 VM — so the main site shows the "Frontend dev server not running"
-> hint page. Forward the port to WSL2 in an elevated PowerShell (get the WSL2
-> IP with `wsl hostname -I`; it changes between reboots):
->
-> ```powershell
-> netsh interface portproxy add v4tov4 listenport=3000 listenaddress=0.0.0.0 connectport=3000 connectaddress=<WSL2-IP>
-> ```
->
-> Remove it later with
-> `netsh interface portproxy delete v4tov4 listenport=3000 listenaddress=0.0.0.0`.
-> Alternatively, WSL2's
-> [mirrored networking mode](https://learn.microsoft.com/en-us/windows/wsl/networking#mirrored-mode-networking)
-> exposes WSL2 ports on the Windows host directly, no proxy needed.
 
 ## Everyday tasks
 
@@ -156,33 +134,38 @@ console at <http://thunderstore.localhost:9001/rustfs/console/>, both with
 `thunderstore` / `thunderstore` credentials. The `minio-init` service creates the
 `thunderstore` and `test` buckets on start-up.
 
-### Upgrading the local database from Postgres 13
+### Moving data from the old setup
 
-The local database runs Postgres 17, which cannot read Postgres 13 data. It
-uses a new volume (`postgres-data`) and leaves the old `db-data` volume
-untouched, so after upgrading `docker compose up -d` starts with an empty
-database. Either seed it again with `setup_dev_env` (see
-[Getting started](#getting-started)), or move your old data over before
-starting the rest of the stack:
+Only needed if you want to keep data from the old setup. Otherwise skip this
+section and run `setup_dev_env` (see [Getting started](#getting-started)).
+
+The local database moved from Postgres 13 to 17 and file storage from MinIO to
+RustFS. Both use new volumes and start empty; the old volumes are kept. To copy
+your old data over:
 
 ```bash
-# Dump the old database with a temporary Postgres 13 container
-docker run -d --name pg13-export -e POSTGRES_PASSWORD=django \
-    -v thunderstore_db-data:/var/lib/postgresql/data postgres:13.12-alpine
-until docker exec pg13-export pg_isready -q -h 127.0.0.1 -U django; do sleep 1; done
-docker exec pg13-export pg_dump -U django -Fc django > ~/thunderstore-pg13.dump
-docker rm -f pg13-export
+docker compose down
 
-# Restore it into the new database
+# Start the new database empty
+docker volume rm -f thunderstore_postgres-data
 docker compose up -d db
-until docker compose exec db pg_isready -q -h 127.0.0.1 -U django; do sleep 1; done
-docker compose exec -T db pg_restore -U django -d django --no-owner < ~/thunderstore-pg13.dump
+until docker compose exec db pg_isready -q -h 127.0.0.1; do sleep 1; done
+
+# Copy the database with a temporary Postgres 13 container
+docker run --rm -u postgres -v thunderstore_db-data:/var/lib/postgresql/data postgres:13.12-alpine \
+    sh -c 'pg_ctl start -w -l /tmp/pg.log >/dev/null && pg_dump -U django -Fc django' \
+    | docker compose exec -T db pg_restore -U django -d django
+
+# Copy the files into RustFS
+docker compose run --rm -v thunderstore_minio-data:/old:ro --entrypoint sh minio-init \
+    -c '/s3-init.sh && aws s3 sync /old/thunderstore s3://thunderstore --cache-control max-age=2592000'
+
 docker compose up -d
 ```
 
-The `thunderstore_` volume prefix comes from the checkout's directory name;
-`docker volume ls` shows yours. Once everything works, remove the old volume
-with `docker volume rm thunderstore_db-data`.
+The `thunderstore_` prefix comes from the checkout's directory name;
+`docker volume ls` shows yours. If you no longer need the old setup, you can
+remove its volumes with `docker volume rm thunderstore_db-data thunderstore_minio-data`.
 
 ### REST API
 
@@ -197,7 +180,7 @@ Swagger documentation is served at `/api/docs/`. The primary endpoint is
 docker compose exec django pytest
 
 # Recreate the test database (e.g. after model changes)
-docker compose exec django pytest --create-db --migrations
+docker compose exec django pytest --create-db
 ```
 
 CI fails a pull request if it lowers test coverage. To check coverage locally
