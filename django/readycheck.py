@@ -25,12 +25,7 @@ def check_status() -> int:
         return 1
 
     runmode = environment.get("RUN_MODE", None)
-    if runmode == "gunicorn":
-        pidfile = environment.get("GUNICORN_PIDFILE", None)
-        if pidfile is None:
-            return 1
-        return check_pidfile(pidfile)
-    elif runmode == "uwsgi":
+    if runmode == "uwsgi":
         pidfile = environment.get("UWSGI_PIDFILE", None)
         if pidfile is None:
             return 1

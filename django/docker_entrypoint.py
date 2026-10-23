@@ -81,22 +81,9 @@ def to_bool(val) -> bool:
 SERVER_PORT = register_variable(int, "PORT", 8000)
 SERVER_HOST = register_variable(str, "HOST", "0.0.0.0")
 
-RUN_MODE = register_variable(str, "RUN_MODE", "gunicorn")
+RUN_MODE = register_variable(str, "RUN_MODE", "uwsgi")
 RUN_MIGRATIONS = register_variable(to_bool, "RUN_MIGRATIONS", True)
 AUTORELOAD = register_variable(str, "AUTORELOAD", False)
-
-GUNICORN_WORKER_CLASS = register_variable(str, "GUNICORN_WORKER_CLASS", "gevent")
-GUNICORN_WORKER_COUNT = register_variable(int, "GUNICORN_WORKER_COUNT", 3)
-GUNICORN_WORKER_TIMEOUT = register_variable(int, "GUNICORN_WORKER_TIMEOUT", 30)
-GUNICORN_WORKER_CONNECTIONS = register_variable(
-    int, "GUNICORN_WORKER_CONNECTIONS", 1000
-)
-GUNICORN_LOG_LEVEL = register_variable(str, "GUNICORN_LOG_LEVEL", "info")
-GUNICORN_MAX_REQUESTS = register_variable(int, "GUNICORN_MAX_REQUESTS", 10000)
-GUNICORN_MAX_REQUESTS_JITTER = register_variable(
-    int, "GUNICORN_MAX_REQUESTS_JITTER", 1000
-)
-GUNICORN_PIDFILE = register_variable(str, "GUNICORN_PIDFILE", "/var/run/gunicorn.pid")
 
 UWSGI_PIDFILE = register_variable(str, "UWSGI_PIDFILE", "/var/run/uwsgi.pid")
 UWSGI_AUTORELOAD = register_variable(int, "UWSGI_AUTORELOAD", 0)
@@ -125,35 +112,6 @@ def run_django() -> None:
     command = ["python", "manage.py", "runserver", f"{SERVER_HOST}:{SERVER_PORT}"]
     if not AUTORELOAD:
         command += ["--noreload"]
-    run_command(command)
-
-
-def run_gunicorn() -> None:
-    print("Launching gunicorn production server")
-    command = [
-        "gunicorn",
-        "thunderstore.core.wsgi:application",
-        "--log-level",
-        GUNICORN_LOG_LEVEL,
-        "--max-requests",
-        GUNICORN_MAX_REQUESTS,
-        "--max-requests-jitter",
-        GUNICORN_MAX_REQUESTS_JITTER,
-        "--worker-connections",
-        GUNICORN_WORKER_CONNECTIONS,
-        "-w",
-        GUNICORN_WORKER_COUNT,
-        "-t",
-        GUNICORN_WORKER_TIMEOUT,
-        "-k",
-        GUNICORN_WORKER_CLASS,
-        "-b",
-        f"{SERVER_HOST}:{SERVER_PORT}",
-        "--pid",
-        GUNICORN_PIDFILE,
-    ]
-    if AUTORELOAD:
-        command += ["--reload"]
     run_command(command)
 
 
@@ -228,8 +186,6 @@ def run_server(mode: str) -> None:
 
     if mode == "django":
         run_django()
-    elif mode == "gunicorn":
-        run_gunicorn()
     elif mode == "uwsgi":
         run_uwsgi()
     elif mode == "celeryworker":
@@ -252,7 +208,7 @@ def dump_env() -> None:
 
 
 mode = (" ".join(sys.argv[1:])).strip()
-if mode in {"django", "gunicorn", "uwsgi", "celeryworker", "celerybeat"}:
+if mode in {"django", "uwsgi", "celeryworker", "celerybeat"}:
     RUN_MODE.value = mode
     dump_env()
     run_server(mode)

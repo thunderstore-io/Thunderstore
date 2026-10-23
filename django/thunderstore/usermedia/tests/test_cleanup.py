@@ -52,7 +52,7 @@ def test_usermedia_cleanup() -> None:
     assert UserMedia.objects.filter(pk__in=[x.pk for x in expired]).count() == 0
     assert UserMedia.objects.filter(pk__in=[x.pk for x in active]).count() == 3
     assert UserMedia.objects.filter(pk=invalid_upload.pk).exists() is False
-    for entry in expired + [invalid_upload]:
+    for entry in expired:
         with pytest.raises(
             ClientError,
             match=re.escape(

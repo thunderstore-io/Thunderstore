@@ -148,11 +148,50 @@ On Windows, prefix interactive commands like this one with `winpty`.
 docker compose exec django python manage.py create_test_data
 ```
 
-### File storage (MinIO)
+### File storage (RustFS)
 
-Local development uses [MinIO](https://github.com/minio/minio) for S3-compatible
-file storage, available at <http://thunderstore.localhost:9000/> with
-`thunderstore` / `thunderstore` credentials.
+Local development uses [RustFS](https://github.com/rustfs/rustfs) for S3-compatible
+file storage. The S3 API is at <http://thunderstore.localhost:9000/> and the web
+console at <http://thunderstore.localhost:9001/rustfs/console/>, both with
+`thunderstore` / `thunderstore` credentials. The `minio-init` service creates the
+`thunderstore` and `test` buckets on start-up.
+
+### Upgrading the local database from Postgres 13
+
+The local database runs Postgres 17, which cannot read Postgres 13 data. It
+uses a new volume (`postgres-data`) and leaves the old `db-data` volume
+untouched, so after upgrading `docker compose up -d` starts with an empty
+database. File storage moved from MinIO to RustFS at the same time and also
+starts empty (`rustfs-data`); files in the old `minio-data` volume are not
+carried over.
+
+The simplest option is to seed the database and storage again with
+`setup_dev_env` (see [Getting started](#getting-started)). If you need your
+old database, move it over before starting the rest of the stack. Package
+downloads, icons and user media that the restored rows refer to will be
+missing, because those files stay in the old MinIO volume.
+
+```bash
+# Stop the running stack; its volumes are kept
+docker compose down
+
+# Dump the old database with a temporary Postgres 13 container
+docker run -d --name pg13-export -e POSTGRES_PASSWORD=django \
+    -v thunderstore_db-data:/var/lib/postgresql/data postgres:13.12-alpine
+until docker exec pg13-export pg_isready -q -h 127.0.0.1 -U django; do sleep 1; done
+docker exec pg13-export pg_dump -U django -Fc django > ~/thunderstore-pg13.dump
+docker rm -f pg13-export
+
+# Restore it into the new database
+docker compose up -d db
+until docker compose exec db pg_isready -q -h 127.0.0.1 -U django; do sleep 1; done
+docker compose exec -T db pg_restore -U django -d django --no-owner < ~/thunderstore-pg13.dump
+docker compose up -d
+```
+
+The `thunderstore_` volume prefix comes from the checkout's directory name;
+`docker volume ls` shows yours. Once everything works, remove the old volumes
+with `docker volume rm thunderstore_db-data thunderstore_minio-data`.
 
 ### REST API
 
@@ -204,11 +243,6 @@ the full set of supported variables.
 -   `PROTOCOL`: Protocol used to build URLs — `https://` or `http://`.
 -   `REPOSITORY_MAX_PACKAGE_SIZE_MB`: Maximum single package size.
 -   `REPOSITORY_MAX_PACKAGE_TOTAL_SIZE_GB`: Maximum total file size used by packages.
-
-### Gunicorn
-
--   `GUNICORN_WORKER_COUNT`: Number of workers to spawn.
--   `GUNICORN_LOG_LEVEL`: Logging level.
 
 ### Django sessions
 
