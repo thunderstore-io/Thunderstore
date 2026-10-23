@@ -13,6 +13,8 @@ omit =
     */urls.py
     */wsgi.py
     */manage.py
+    */docker_entrypoint.py
+    */readycheck.py
     */admin.py
     thunderstore/debug/*
     */python-packages/*
