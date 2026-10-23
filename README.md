@@ -161,11 +161,20 @@ console at <http://thunderstore.localhost:9001/rustfs/console/>, both with
 The local database runs Postgres 17, which cannot read Postgres 13 data. It
 uses a new volume (`postgres-data`) and leaves the old `db-data` volume
 untouched, so after upgrading `docker compose up -d` starts with an empty
-database. Either seed it again with `setup_dev_env` (see
-[Getting started](#getting-started)), or move your old data over before
-starting the rest of the stack:
+database. File storage moved from MinIO to RustFS at the same time and also
+starts empty (`rustfs-data`); files in the old `minio-data` volume are not
+carried over.
+
+The simplest option is to seed the database and storage again with
+`setup_dev_env` (see [Getting started](#getting-started)). If you need your
+old database, move it over before starting the rest of the stack. Package
+downloads, icons and user media that the restored rows refer to will be
+missing, because those files stay in the old MinIO volume.
 
 ```bash
+# Stop the running stack; its volumes are kept
+docker compose down
+
 # Dump the old database with a temporary Postgres 13 container
 docker run -d --name pg13-export -e POSTGRES_PASSWORD=django \
     -v thunderstore_db-data:/var/lib/postgresql/data postgres:13.12-alpine
@@ -181,8 +190,8 @@ docker compose up -d
 ```
 
 The `thunderstore_` volume prefix comes from the checkout's directory name;
-`docker volume ls` shows yours. Once everything works, remove the old volume
-with `docker volume rm thunderstore_db-data`.
+`docker volume ls` shows yours. Once everything works, remove the old volumes
+with `docker volume rm thunderstore_db-data thunderstore_minio-data`.
 
 ### REST API
 
