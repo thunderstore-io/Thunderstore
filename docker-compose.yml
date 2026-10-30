@@ -2,12 +2,6 @@ version: "3.8"
 
 x-django-service: &django-service
   image: thunderstore/thunderstore:latest
-  pull_policy: build
-  build:
-    context: .
-    dockerfile: ./Dockerfile
-    args:
-      BUILD_INSTALL_EXTRAS: ${BUILD_INSTALL_EXTRAS}
   environment:
     CELERY_BROKER_URL: "pyamqp://django:django@rabbitmq/django"
     CELERY_QUEUES: "celery,background.cache,background.task,background.long_running,log.downloads,analytics"
@@ -49,7 +43,6 @@ x-django-service: &django-service
     SOURCE_VIEW_ENABLE_HIGHLIGHTING: "True"
     USE_ASYNC_PACKAGE_SUBMISSION_FLOW: "True"
     USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS: "True"
-    GUNICORN_CMD_ARGS: "--bind=0.0.0.0:8000"
   env_file:
     - .env
   depends_on:
@@ -62,69 +55,106 @@ x-django-volumes: &django-volumes
     - django-data:/app/var:ro
     - ./django:/app:ro
     - ./python-packages:/python-packages:ro
-    - built-static:/app/static_built:ro
+    - type: volume
+      source: built-static
+      target: /app/static_built
+      read_only: true
+      volume:
+        nocopy: true
 
 services:
   db:
-    image: postgres:13.12-alpine
+    image: postgres:17.11-alpine@sha256:1bcc18d81671b02906296aad470ec9778a6b71016ce953092024b680bad007b0
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
       - "./db-mount:/db-mount"
 
   dbpool:
-    image: edoburu/pgbouncer:1.15.0@sha256:2f47bf272fa9fdf25c100d11f1972b23af61a351a136d3721bfa6bdb52630426
+    image: edoburu/pgbouncer:v1.26.1-p0@sha256:488422e38cff912895d0d65d8963fcd306e6ac589a724398b6eb8e294e94d624
     environment:
       DATABASE_URL: "postgres://django:django@db/django"
       POOL_MODE: "transaction"
+      AUTH_TYPE: "scram-sha-256"
     volumes:
       - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
     logging:
       driver: none
 
   redis:
-    image: redis:7.0-rc2-alpine3.15
+    image: valkey/valkey:8.1.10-alpine@sha256:081c2f5cb575efc901aa80ff9cdbd1ec6a301682fd35e1ebb4b0990a4a4a8507
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru --maxmemory-clients 10%
 
   rabbitmq:
-    image: rabbitmq:3.8.14-alpine@sha256:11d8cd02ac340e99de628053f76bb1182ce3df3b41d3e8f399377276ba489409
+    image: rabbitmq:4.2.4-alpine@sha256:83522278ca69414e4895b3ea3c0f943c63ad316c063f9cda9c32fd42fe800f47
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: django
       RABBITMQ_DEFAULT_PASS: django
       RABBITMQ_DEFAULT_VHOST: django
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     logging:
       driver: none
 
+  # S3-compatible storage. RustFS replaces MinIO, whose public images and
+  # downloads are gone; the service keeps the `minio` name so the endpoint
+  # URLs stay the same.
   minio:
-    build:
-      context: .
-      dockerfile: minio/Dockerfile
+    image: rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
     ports:
       - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
     environment:
-      MINIO_ROOT_USER: thunderstore
-      MINIO_ROOT_PASSWORD: thunderstore
-    command: server /data
+      RUSTFS_ACCESS_KEY: thunderstore
+      RUSTFS_SECRET_KEY: thunderstore
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_CORS_ALLOWED_ORIGINS: "*"
+
+  # Creates the buckets on every start; exits once they are ready.
+  minio-init:
+    image: amazon/aws-cli:2.38.4@sha256:de807aa682dd3f45d6de5f431b93762691c53f1134b318936dda39f99e321244
+    entrypoint: ["/bin/sh", "/s3-init.sh"]
+    environment:
+      AWS_ACCESS_KEY_ID: thunderstore
+      AWS_SECRET_ACCESS_KEY: thunderstore
+      AWS_ENDPOINT_URL: "http://minio:9000"
+    volumes:
+      - ./docker/s3-init.sh:/s3-init.sh:ro
+    depends_on:
+      - minio
 
   django:
     <<: *django-service
-    command: gunicorn
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        BUILD_INSTALL_EXTRAS: ${BUILD_INSTALL_EXTRAS}
+    command: uwsgi
     volumes:
       - django-data:/app/var
       - ./django:/app
       - ./python-packages:/python-packages
-      - built-static:/app/static_built:ro
+      - type: volume
+        source: built-static
+        target: /app/static_built
+        read_only: true
+        volume:
+          nocopy: true
     depends_on:
       - builder
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.31.6-alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
     container_name: nginx
     ports:
       - "127.0.0.1:80:80"
@@ -140,12 +170,14 @@ services:
 
   django-worker:
     <<: [*django-service, *django-volumes]
+    pull_policy: never
     command: celeryworker
     depends_on:
       - django
 
   django-beat:
     <<: [*django-service, *django-volumes]
+    pull_policy: never
     command: celerybeat
     depends_on:
       - django
@@ -161,9 +193,10 @@ services:
       - ./builder/gulpfile.js:/home/node/app/gulpfile.js:ro
 
 volumes:
-  db-data:
+  postgres-data:
   django-data:
-  minio-data:
+  rustfs-data:
+  rabbitmq-data:
   built-static:
 
 networks:

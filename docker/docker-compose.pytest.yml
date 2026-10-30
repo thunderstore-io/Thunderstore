@@ -30,33 +30,40 @@ x-django-service: &django-service
     CACHE_S3_STORAGE_BUCKET_NAME: "thunderstore"
     CACHE_S3_LOCATION: "development/cache"
   depends_on:
-    - db
-    - redis
-    - rabbitmq
-    - minio
+    db:
+      condition: service_started
+    redis:
+      condition: service_started
+    rabbitmq:
+      condition: service_started
+    minio:
+      condition: service_started
+    minio-init:
+      condition: service_completed_successfully
 
 services:
   db:
-    image: postgres:13.12-alpine
+    image: postgres:17.11-alpine@sha256:1bcc18d81671b02906296aad470ec9778a6b71016ce953092024b680bad007b0
     environment:
       POSTGRES_PASSWORD: django
       POSTGRES_USER: django
       POSTGRES_DB: django
 
   dbpool:
-    image: edoburu/pgbouncer:1.15.0@sha256:2f47bf272fa9fdf25c100d11f1972b23af61a351a136d3721bfa6bdb52630426
+    image: edoburu/pgbouncer:v1.26.1-p0@sha256:488422e38cff912895d0d65d8963fcd306e6ac589a724398b6eb8e294e94d624
     environment:
       DATABASE_URL: "postgres://django:django@db/django"
       POOL_MODE: "transaction"
+      AUTH_TYPE: "scram-sha-256"
     volumes:
       - ../pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
 
   redis:
-    image: redis:6.2.1-alpine@sha256:daa795ebec4c206cc7f76e19c4bb26a98dfca671d7b5bedcb38862de078bdaa2
+    image: valkey/valkey:8.1.10-alpine@sha256:081c2f5cb575efc901aa80ff9cdbd1ec6a301682fd35e1ebb4b0990a4a4a8507
     command: --maxmemory 200mb --maxmemory-policy allkeys-lru
 
   rabbitmq:
-    image: rabbitmq:3.8.14-alpine@sha256:11d8cd02ac340e99de628053f76bb1182ce3df3b41d3e8f399377276ba489409
+    image: rabbitmq:4.2.4-alpine@sha256:83522278ca69414e4895b3ea3c0f943c63ad316c063f9cda9c32fd42fe800f47
     hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: django
@@ -64,11 +71,23 @@ services:
       RABBITMQ_DEFAULT_VHOST: django
 
   minio:
-    image: thunderstore/minio:latest
+    image: rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
     environment:
-      MINIO_ROOT_USER: thunderstore
-      MINIO_ROOT_PASSWORD: thunderstore
-    command: server /data
+      RUSTFS_ACCESS_KEY: thunderstore
+      RUSTFS_SECRET_KEY: thunderstore
+      RUSTFS_ADDRESS: ":9000"
+
+  minio-init:
+    image: amazon/aws-cli:2.38.4@sha256:de807aa682dd3f45d6de5f431b93762691c53f1134b318936dda39f99e321244
+    entrypoint: ["/bin/sh", "/s3-init.sh"]
+    environment:
+      AWS_ACCESS_KEY_ID: thunderstore
+      AWS_SECRET_ACCESS_KEY: thunderstore
+      AWS_ENDPOINT_URL: "http://minio:9000"
+    volumes:
+      - ./s3-init.sh:/s3-init.sh:ro
+    depends_on:
+      - minio
 
   django:
     <<: *django-service
