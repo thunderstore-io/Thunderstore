@@ -1,15 +1,17 @@
 import gzip
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from random import shuffle
-from typing import Any
+from typing import Any, Callable, Dict
 
 import pytest
+from django.db.models import F
 
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import (
     CommunityFactory,
     CommunitySiteFactory,
+    PackageCategoryFactory,
     PackageListingFactory,
     SiteFactory,
 )
@@ -25,11 +27,17 @@ from thunderstore.repository.factories import (
     PackageVersionFactory,
     TeamFactory,
 )
-from thunderstore.repository.models import APIV1ChunkedPackageCache, APIV1PackageCache
+from thunderstore.repository.models import (
+    APIV1ChunkedPackageCache,
+    APIV1PackageCache,
+    Package,
+    PackageVersion,
+)
 from thunderstore.repository.models.cache import (
-    _get_sorted_active_versions,
-    get_package_listing_chunk,
+    _spliced_url,
+    get_listing_json_queryset,
     get_package_listing_ids,
+    serialize_listing_chunk,
 )
 
 
@@ -228,60 +236,176 @@ def test_api_v1_chunked_package_cache__drops_stale_caches() -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("count", (0, 1, 2, 3, 5, 8, 13))
-def test_get_package_listing_chunk__retains_received_ordering(count: int) -> None:
+def test_serialize_listing_chunk__retains_received_ordering(
+    community: Community, count: int
+) -> None:
     assert not PackageListing.objects.exists()
     for _ in range(count):
-        PackageListingFactory()
+        PackageListingFactory(community_=community)
 
     ordering = list(PackageListing.objects.all().values_list("id", flat=True))
     shuffle(ordering)
-    listings = get_package_listing_chunk(ordering)
+    uuids = dict(PackageListing.objects.values_list("id", "package__uuid4"))
+    listings = serialize_listing_chunk(get_listing_json_queryset(community), ordering)
 
-    for i, listing in enumerate(listings):
-        assert listing.id == ordering[i]
-
-
-@pytest.mark.django_db
-def test_get_package_listing_chunk__rating_score_zero_when_no_ratings() -> None:
-    listing = PackageListingFactory()
-
-    result = get_package_listing_chunk([listing.id])
-
-    assert len(result) == 1
-    assert result[0]._rating_score == 0
+    assert [json.loads(l)["uuid4"] for l in listings] == [
+        str(uuids[i]) for i in ordering
+    ]
 
 
-@pytest.mark.django_db
-def test_get_package_listing_chunk__annotates_rating_score() -> None:
-    listing = PackageListingFactory()
-    PackageRatingFactory(package=listing.package)
-    PackageRatingFactory(package=listing.package)
-
-    result = get_package_listing_chunk([listing.id])
-
-    assert len(result) == 1
-    assert result[0]._rating_score == 2
+def _serialize_listing(community: Community, listing: PackageListing) -> Dict[str, Any]:
+    (listing_json,) = serialize_listing_chunk(
+        get_listing_json_queryset(community), [listing.id]
+    )
+    return json.loads(listing_json)
 
 
 @pytest.mark.django_db
-def test_get_package_listing_chunk__excludes_inactive_versions() -> None:
-    listing = PackageListingFactory()
+def test_serialize_listing_chunk__key_order(community: Community) -> None:
+    listing = PackageListingFactory(community_=community)
+
+    obj = _serialize_listing(community, listing)
+
+    assert list(obj.keys()) == [
+        "name",
+        "full_name",
+        "owner",
+        "package_url",
+        "donation_link",
+        "date_created",
+        "date_updated",
+        "uuid4",
+        "rating_score",
+        "is_pinned",
+        "is_deprecated",
+        "has_nsfw_content",
+        "categories",
+        "versions",
+    ]
+    assert list(obj["versions"][0].keys()) == [
+        "name",
+        "full_name",
+        "description",
+        "icon",
+        "version_number",
+        "dependencies",
+        "download_url",
+        "downloads",
+        "date_created",
+        "website_url",
+        "is_active",
+        "uuid4",
+        "file_size",
+    ]
+
+
+@pytest.mark.django_db
+def test_serialize_listing_chunk__active_versions_in_numeric_order(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(community_=community)
     package = listing.package
     package.versions.all().delete()
+    for version_number in ("1.9.0", "10.0.0", "1.10.0", "1.2.0"):
+        PackageVersionFactory(package=package, version_number=version_number)
+    PackageVersionFactory(package=package, version_number="11.0.0", is_active=False)
 
-    PackageVersionFactory(package=package, version_number="1.0.0", is_active=True)
-    PackageVersionFactory(package=package, version_number="2.0.0", is_active=False)
+    obj = _serialize_listing(community, listing)
 
-    result = get_package_listing_chunk([listing.id])
-
-    versions = list(result[0].package.versions.all())
-    assert len(versions) == 1
-    assert versions[0].version_number == "1.0.0"
+    assert [v["version_number"] for v in obj["versions"]] == [
+        "10.0.0",
+        "1.10.0",
+        "1.9.0",
+        "1.2.0",
+    ]
 
 
 @pytest.mark.django_db
-def test_get_package_listing_chunk__dependency_names_ordered() -> None:
-    listing = PackageListingFactory()
+@pytest.mark.parametrize("rating_count", (0, 2))
+def test_serialize_listing_chunk__rating_score(
+    community: Community, rating_count: int
+) -> None:
+    listing = PackageListingFactory(community_=community)
+    for _ in range(rating_count):
+        PackageRatingFactory(package=listing.package)
+
+    assert _serialize_listing(community, listing)["rating_score"] == rating_count
+
+
+@pytest.mark.django_db
+def test_serialize_listing_chunk__categories_in_order_added(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(community_=community)
+    zeta, alpha, mid = (
+        PackageCategoryFactory(community=community, name=name)
+        for name in ("Zeta", "Alpha", "Mid")
+    )
+    for category in (mid, zeta, alpha):
+        listing.categories.add(category)
+
+    obj = _serialize_listing(community, listing)
+
+    assert obj["categories"] == ["Mid", "Zeta", "Alpha"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("microsecond", (0, 120000))
+def test_serialize_listing_chunk__dates_match_isoformat(
+    community: Community, microsecond: int
+) -> None:
+    listing = PackageListingFactory(community_=community)
+    moment = datetime(2024, 5, 6, 7, 8, 9, microsecond, tzinfo=timezone.utc)
+    Package.objects.filter(pk=listing.package.pk).update(
+        date_created=moment, date_updated=moment
+    )
+    PackageVersion.objects.filter(package=listing.package).update(date_created=moment)
+
+    obj = _serialize_listing(community, listing)
+
+    assert obj["date_created"] == moment.isoformat()
+    assert obj["date_updated"] == moment.isoformat()
+    assert obj["versions"][0]["date_created"] == moment.isoformat()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("create_site", (False, True))
+def test_serialize_listing_chunk__urls_match_models(
+    community: Community, create_site: bool
+) -> None:
+    if create_site:
+        CommunitySiteFactory(site=SiteFactory(), community=community)
+    listing = PackageListingFactory(community_=community)
+
+    obj = _serialize_listing(community, listing)
+
+    listing = PackageListing.objects.get(pk=listing.pk)
+    version = listing.package.versions.get()
+    assert obj["package_url"] == listing.get_full_url()
+    assert obj["versions"][0]["download_url"] == version.full_download_url
+    assert obj["versions"][0]["icon"] == version.icon.url
+
+
+@pytest.mark.parametrize(
+    "build_url",
+    (
+        lambda name: "https://example.org/static/",
+        lambda name: f"https://example.org/{name}/?X-Amz-Signature=abc",
+    ),
+    ids=("part_not_embedded", "signed"),
+)
+def test_spliced_url__rejects_urls_it_cannot_splice(
+    build_url: Callable[[str], str]
+) -> None:
+    with pytest.raises(ValueError):
+        _spliced_url(build_url, name=F("package__name"))
+
+
+@pytest.mark.django_db
+def test_serialize_listing_chunk__dependency_names_ordered(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(community_=community)
     package = listing.package
     package.versions.all().delete()
     version = PackageVersionFactory(package=package)
@@ -306,10 +430,8 @@ def test_get_package_listing_chunk__dependency_names_ordered() -> None:
         )
         version.dependencies.add(dependency)
 
-    result = get_package_listing_chunk([listing.id])
-
-    versions = list(result[0].package.versions.all())
-    assert versions[0]._dependency_names == [
+    versions = _serialize_listing(community, listing)["versions"]
+    assert versions[0]["dependencies"] == [
         "alpha-Bee-1.0.0",
         "alpha-zed-1.0.0",
         "Beta-mod-1.0.0",
@@ -341,22 +463,6 @@ def test_get_package_listing_ids__does_not_return_ids_for_rejected_packages() ->
     ids = [id_ for chunk in result for id_ in chunk]
 
     assert ids == []
-
-
-@pytest.mark.django_db
-def test_get_sorted_active_versions__filters_inactive_and_sorts_descending() -> None:
-    listing = PackageListingFactory()
-    package = listing.package
-    package.versions.all().delete()
-
-    PackageVersionFactory(package=package, version_number="1.0.0", is_active=True)
-    PackageVersionFactory(package=package, version_number="2.0.0", is_active=False)
-    PackageVersionFactory(package=package, version_number="0.5.0", is_active=True)
-    PackageVersionFactory(package=package, version_number="1.5.0", is_active=True)
-
-    versions = _get_sorted_active_versions(package)
-
-    assert [v.version_number for v in versions] == ["1.5.0", "1.0.0", "0.5.0"]
 
 
 @pytest.mark.django_db

@@ -1,13 +1,28 @@
 import gzip
 import io
 import json
+import re
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional
+from itertools import chain
+from typing import Any, Callable, Iterable, List, Optional
 
+from django.contrib.postgres.expressions import ArraySubquery
+from django.contrib.postgres.fields import ArrayField
 from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models import Count, OuterRef, Prefetch, Subquery, Value
-from django.db.models.functions import Coalesce, Concat, Lower
+from django.db.models import (
+    Count,
+    DecimalField,
+    F,
+    Func,
+    JSONField,
+    OuterRef,
+    QuerySet,
+    Subquery,
+    TextField,
+    Value,
+)
+from django.db.models.functions import Cast, Coalesce, Concat, Lower
 from django.utils import timezone
 
 from thunderstore.community.models import Community, PackageListing
@@ -16,12 +31,8 @@ from thunderstore.repository.cache import (
     get_package_listing_base_queryset,
     order_package_listing_queryset,
 )
-from thunderstore.repository.version import Version
 from thunderstore.storage.models import DataBlob, DataBlobGroup
 from thunderstore.utils.batch import batch
-
-if TYPE_CHECKING:
-    from thunderstore.repository.models import Package, PackageVersion
 
 
 class APIExperimentalPackageIndexCache(S3FileMixin):
@@ -184,10 +195,10 @@ class APIV1ChunkedPackageCache(SafeDeleteMixin):
                 content_encoding="gzip",
             )
 
-        for listing_ids in get_package_listing_ids(community):
-            for listing in get_package_listing_chunk(listing_ids):
-                listing_bytes = listing_to_json(listing)
+        listings_json = get_listing_json_queryset(community)
 
+        for listing_ids in get_package_listing_ids(community):
+            for listing_bytes in serialize_listing_chunk(listings_json, listing_ids):
                 # Always add the first listing regardless of the size limit.
                 if not chunk_content:
                     chunk_content.extend(listing_bytes)
@@ -257,11 +268,88 @@ def get_package_listing_ids(community: Community) -> Iterable[List[int]]:
     yield from batch(1000, listing_ids)
 
 
-def get_package_listing_chunk(
-    listing_ids: List[int],
-) -> List[PackageListing]:
-    from thunderstore.repository.models import PackageRating, PackageVersion
+class JSONBuildObject(Func):
+    """
+    Build a JSON object that keeps its keys in the order they're given.
+    Django's JSONObject can't be used here because jsonb_build_object sorts the keys.
+    """
+
+    function = "JSON_BUILD_OBJECT"
+    output_field = JSONField()
+
+    def __init__(self, **fields: Any) -> None:
+        super().__init__(
+            *chain.from_iterable(
+                (Cast(Value(key), TextField()), value) for key, value in fields.items()
+            )
+        )
+
+
+class IsoFormat(Func):
+    """
+    Format a timestamp the same way datetime.isoformat() does in UTC.
+    isoformat() drops the fraction when it's zero, so we strip it here too.
+    """
+
+    template = (
+        "replace(to_char((%(expressions)s) AT TIME ZONE 'UTC', "
+        "'YYYY-MM-DD\"T\"HH24:MI:SS.US+00:00'), '.000000+', '+')"
+    )
+    output_field = TextField()
+
+
+class VersionSortKey(Func):
+    """
+    Sort X.Y.Z version numbers numerically, eg. 1.10.0 comes after 1.9.0.
+    Parts are cast to numeric because they can be larger than int.
+    Anything other than digits and dots will fail the query. The version
+    validators don't allow that anyway.
+    """
+
+    template = "string_to_array(%(expressions)s, '.')::numeric[]"
+    output_field = ArrayField(DecimalField())
+
+
+def _spliced_url(build_url: Callable[..., str], **parts: Any) -> Concat:
+    """
+    Build a URL in SQL from the model's own URL code instead of duplicating it here.
+    build_url is called with a placeholder for each part. Each placeholder in the
+    result is then swapped for that part's column.
+
+    This only works for unsigned URLs where the parts don't need percent-encoding.
+    Validated names and versions never do.
+    """
+    placeholders = {f"__{name}__": expression for name, expression in parts.items()}
+    url = build_url(**{name: f"__{name}__" for name in parts})
+    if "?" in url or any(placeholder not in url for placeholder in placeholders):
+        raise ValueError(
+            f"Expected each of {list(placeholders)} and no query in {url!r}"
+        )
+    tokens = re.split(f"({'|'.join(map(re.escape, placeholders))})", url)
+    return Concat(
+        *(placeholders[t] if t in placeholders else Value(t) for t in tokens if t)
+    )
+
+
+def get_listing_json_queryset(community: Community) -> QuerySet:
+    """
+    Build the JSON for each of the community's listings in Postgres, as (id, json) rows.
+    The fields below are in the same order as the keys in the output.
+    """
+    from thunderstore.repository.models import (
+        Package,
+        PackageRating,
+        PackageVersion,
+        Team,
+    )
     from thunderstore.repository.package_manifest import MAX_PACKAGE_DEPENDENCIES
+
+    def package(owner: str, name: str) -> Package:
+        return Package(owner=Team(name=owner), name=name)
+
+    # full_package_name goes through "package" so it works on listings and versions.
+    full_package_name = Concat("package__owner__name", Value("-"), "package__name")
+    full_version_name = Concat(full_package_name, Value("-"), "version_number")
 
     # Use an isolated subquery for ratings to prevent massive joins
     ratings_subquery = Subquery(
@@ -271,94 +359,93 @@ def get_package_listing_chunk(
         .values("count")
     )
 
-    # collect dependency names via a subquery, instead of aggregating them in Python
     dependency_names = (
         PackageVersion.objects.filter(dependants=OuterRef("pk"))
-        .annotate(
-            _full_name=Concat(
-                "package__owner__name",
-                Value("-"),
-                "package__name",
-                Value("-"),
-                "version_number",
-            ),
-        )
+        .annotate(_full_name=full_version_name)
         .order_by(Lower("package__namespace__name"), Lower("package__name"))
         .values("_full_name")[:MAX_PACKAGE_DEPENDENCIES]
     )
 
-    versions_prefetch = Prefetch(
-        "package__versions",
-        queryset=PackageVersion.objects.filter(is_active=True)
-        .select_related("package", "package__owner")
-        .annotate(
-            _dependency_names=Subquery(dependency_names, template="ARRAY(%(subquery)s)")
-        ),
-    )
-
-    listings = (
-        PackageListing.objects.filter(id__in=listing_ids)
-        .select_related("community", "package", "package__owner")
-        .prefetch_related(
-            "categories",
-            "community__sites__site",
-            versions_prefetch,
+    versions = (
+        PackageVersion.objects.filter(package=OuterRef("package"), is_active=True)
+        .order_by(VersionSortKey("version_number").desc())
+        .values(
+            json=JSONBuildObject(
+                name=F("name"),
+                full_name=full_version_name,
+                description=F("description"),
+                icon=_spliced_url(
+                    lambda icon: PackageVersion(icon=icon).icon.url,
+                    icon=F("icon"),
+                ),
+                version_number=F("version_number"),
+                dependencies=ArraySubquery(dependency_names),
+                download_url=_spliced_url(
+                    lambda owner, name, version: PackageVersion(
+                        package=package(owner, name), version_number=version
+                    ).full_download_url,
+                    owner=F("package__owner__name"),
+                    name=F("package__name"),
+                    version=F("version_number"),
+                ),
+                downloads=F("downloads"),
+                date_created=IsoFormat("date_created"),
+                website_url=F("website_url"),
+                is_active=F("is_active"),
+                uuid4=F("uuid4"),
+                file_size=F("file_size"),
+            )
         )
-        .annotate(_rating_score=Coalesce(ratings_subquery, 0))
     )
 
-    order_map = {lid: pos for pos, lid in enumerate(listing_ids)}
-    return sorted(listings, key=lambda l: order_map[l.id])
+    # Order by the through table's pk to keep categories in the order they were added.
+    categories = (
+        PackageListing.categories.through.objects.filter(packagelisting=OuterRef("pk"))
+        .order_by("pk")
+        .values("packagecategory__name")
+    )
+
+    listing = JSONBuildObject(
+        name=F("package__name"),
+        full_name=full_package_name,
+        owner=F("package__owner__name"),
+        package_url=_spliced_url(
+            lambda owner, name: PackageListing(
+                community=community, package=package(owner, name)
+            ).get_full_url(),
+            owner=F("package__owner__name"),
+            name=F("package__name"),
+        ),
+        donation_link=F("package__owner__donation_link"),
+        date_created=IsoFormat("package__date_created"),
+        date_updated=IsoFormat("package__date_updated"),
+        uuid4=F("package__uuid4"),
+        rating_score=Coalesce(ratings_subquery, 0),
+        is_pinned=F("package__is_pinned"),
+        is_deprecated=F("package__is_deprecated"),
+        has_nsfw_content=F("has_nsfw_content"),
+        categories=ArraySubquery(categories),
+        versions=ArraySubquery(versions),
+    )
+
+    return (
+        PackageListing.objects.filter(community=community)
+        .annotate(json=Cast(listing, TextField()))
+        .values_list("id", "json")
+    )
 
 
-def _get_sorted_active_versions(
-    package: "Package",
-) -> List["PackageVersion"]:
-    versions = [v for v in package.versions.all() if v.is_active]
-    versions.sort(key=lambda v: Version(v.version_number), reverse=True)
-    return versions
-
-
-def listing_to_json(listing: PackageListing) -> bytes:
-    package = listing.package
-    owner = package.owner
-    versions = _get_sorted_active_versions(package)
-
-    return json.dumps(
-        {
-            "name": package.name,
-            "full_name": package.full_package_name,
-            "owner": owner.name,
-            "package_url": listing.get_full_url(),
-            "donation_link": owner.donation_link,
-            "date_created": package.date_created.isoformat(),
-            "date_updated": package.date_updated.isoformat(),
-            "uuid4": str(package.uuid4),
-            "rating_score": listing.rating_score,
-            "is_pinned": package.is_pinned,
-            "is_deprecated": package.is_deprecated,
-            "has_nsfw_content": listing.has_nsfw_content,
-            "categories": [c.name for c in listing.categories.all()],
-            "versions": [
-                {
-                    "name": version.name,
-                    "full_name": version.full_version_name,
-                    "description": version.description,
-                    "icon": version.icon.url,
-                    "version_number": version.version_number,
-                    "dependencies": version._dependency_names,
-                    "download_url": version.full_download_url,
-                    "downloads": version.downloads,
-                    "date_created": version.date_created.isoformat(),
-                    "website_url": version.website_url,
-                    "is_active": version.is_active,
-                    "uuid4": str(version.uuid4),
-                    "file_size": version.file_size,
-                }
-                for version in versions
-            ],
-        },
-    ).encode()
+def serialize_listing_chunk(
+    listings_json: QuerySet, listing_ids: List[int]
+) -> Iterable[bytes]:
+    """
+    Yield each listing's JSON in the same order as listing_ids.
+    Ids that no longer exist are skipped.
+    """
+    json_by_id = dict(listings_json.filter(id__in=listing_ids))
+    for listing_id in listing_ids:
+        if listing_id in json_by_id:
+            yield json_by_id[listing_id].encode()
 
 
 def get_index_blob(group: DataBlobGroup) -> DataBlob:
