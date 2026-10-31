@@ -164,34 +164,54 @@ export class FileUpload {
                 return calculateMD5(blob);
             }
         });
-        const completionInfo = await this.cancelGuard(() => {
-            const { request, response } = fetchWithProgress(
-                partInfo.url,
-                {
-                    method: "PUT",
-                    headers: new Headers({
-                        "Content-MD5": md5,
-                    }),
-                    body: blob,
-                },
-                (event) => {
-                    this.setProgress(
-                        partInfo.part_number,
-                        event.loaded / event.total
-                    );
+
+        let completionInfo: Response;
+        try {
+            completionInfo = await this.cancelGuard(() => {
+                const { request, response } = fetchWithProgress(
+                    partInfo.url,
+                    {
+                        method: "PUT",
+                        headers: new Headers({
+                            "Content-MD5": md5,
+                        }),
+                        body: blob,
+                    },
+                    (event) => {
+                        this.setProgress(
+                            partInfo.part_number,
+                            event.loaded / event.total
+                        );
+                    }
+                );
+                if (!this._ongoingRequests) {
+                    this._ongoingRequests = new Set();
                 }
-            );
-            if (!this._ongoingRequests) {
-                this._ongoingRequests = new Set();
-            }
-            this._ongoingRequests.add(request);
-            return response.then((resp) => {
-                if (this._ongoingRequests) {
-                    this._ongoingRequests.delete(request);
-                }
-                return resp;
+                this._ongoingRequests.add(request);
+                return response.then((resp) => {
+                    if (this._ongoingRequests) {
+                        this._ongoingRequests.delete(request);
+                    }
+                    return resp;
+                });
             });
-        });
+        } catch (e: any) {
+            if (this.uploadStatus != FileUploadStatus.ERRORED) {
+                this.uploadErrors.push(
+                    "A browser plugin or anti-virus software may be blocking connection to the server."
+                );
+            }
+            this.setUploadStatus(FileUploadStatus.ERRORED);
+            const shortUrl = partInfo.url.substring(
+                0,
+                partInfo.url.lastIndexOf("/") + 1
+            );
+            throw new Error(
+                `Network error uploading part ${
+                    partInfo.part_number
+                } to ${shortUrl}: ${e?.message || e}`
+            );
+        }
 
         if (!completionInfo.ok) {
             this.setUploadStatus(FileUploadStatus.ERRORED);
