@@ -10,6 +10,8 @@ from thunderstore.repository.factories import PackageVersionFactory
 @pytest.mark.django_db
 def test_community__without_aggregated_fields_relation__returns_empty_values():
     community = CommunityFactory()
+    community.aggregated_fields.delete()
+    community.refresh_from_db()
 
     assert community.aggregated_fields is None
     assert community.aggregated.download_count == 0
@@ -47,7 +49,7 @@ def test_community_aggregated_fields__create_missing__creates_objects_if_needed(
 
     assert CommunityAggregatedFields.objects.count() == 1
 
-    CommunityFactory()
+    CommunityFactory().aggregated_fields.delete()
 
     assert CommunityAggregatedFields.objects.count() == 1
 
@@ -240,6 +242,7 @@ def test_community_aggregated_fields__celery_tasks__handles_mixed_situations():
     c3_l1 = PackageListingFactory(
         package_version_kwargs={"downloads": 3},
     )
+    c3_l1.community.aggregated_fields.delete()
 
     assert Community.objects.count() == 3
     assert CommunityAggregatedFields.objects.count() == 2

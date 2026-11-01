@@ -147,6 +147,12 @@ class Community(TimestampMixin, models.Model):
             in_db = type(self).objects.get(pk=self.pk)
             if in_db.identifier != self.identifier:
                 raise ValidationError("Field 'identifier' is read only")
+
+        # Create an empty aggregated field to avoid wonky sorts caused by the
+        # value otherwise being set to NULL.
+        if not self.pk and self.aggregated_fields_id is None:
+            self.aggregated_fields = CommunityAggregatedFields.objects.create()
+
         if not self.icon:
             self.icon_width = 0
             self.icon_height = 0
