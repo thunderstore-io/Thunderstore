@@ -300,6 +300,63 @@ def test_serialize_listing_chunk__key_order(community: Community) -> None:
 
 
 @pytest.mark.django_db
+def test_serialize_listing_chunk__values_match_model_properties(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(
+        community_=community,
+        has_nsfw_content=True,
+        package_kwargs={"is_pinned": True},
+        package_version_kwargs={"website_url": "https://example.org", "downloads": 3},
+    )
+    owner = listing.package.owner
+    owner.donation_link = "https://example.org/donate"
+    owner.save()
+    category = PackageCategoryFactory(community=community)
+    listing.categories.add(category)
+    PackageRatingFactory(package=listing.package)
+    dependency = PackageVersionFactory()
+    listing.package.versions.get().dependencies.add(dependency)
+
+    obj = _serialize_listing(community, listing)
+
+    package = Package.objects.get(pk=listing.package_id)
+    version = package.versions.get()
+    assert obj == {
+        "name": package.name,
+        "full_name": package.full_package_name,
+        "owner": package.owner.name,
+        "package_url": listing.get_full_url(),
+        "donation_link": package.owner.donation_link,
+        "date_created": package.date_created.isoformat(),
+        "date_updated": package.date_updated.isoformat(),
+        "uuid4": str(package.uuid4),
+        "rating_score": package.rating_score,
+        "is_pinned": package.is_pinned,
+        "is_deprecated": package.is_deprecated,
+        "has_nsfw_content": listing.has_nsfw_content,
+        "categories": [category.name],
+        "versions": [
+            {
+                "name": version.name,
+                "full_name": version.full_version_name,
+                "description": version.description,
+                "icon": version.icon.url,
+                "version_number": version.version_number,
+                "dependencies": [dependency.full_version_name],
+                "download_url": version.full_download_url,
+                "downloads": version.downloads,
+                "date_created": version.date_created.isoformat(),
+                "website_url": version.website_url,
+                "is_active": version.is_active,
+                "uuid4": str(version.uuid4),
+                "file_size": version.file_size,
+            }
+        ],
+    }
+
+
+@pytest.mark.django_db
 def test_serialize_listing_chunk__active_versions_in_numeric_order(
     community: Community,
 ) -> None:
