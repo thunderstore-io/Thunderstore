@@ -1,4 +1,5 @@
-from django.db.models import Q, QuerySet
+from django.db.models import Aggregate, Count, OuterRef, Q, QuerySet, Subquery, Sum
+from django.db.models.functions import Coalesce
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
@@ -14,6 +15,7 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormServiceAccountSerializer,
     CyberstormTeamAddMemberRequestSerializer,
     CyberstormTeamAddMemberResponseSerializer,
+    CyberstormTeamCommunitySerializer,
     CyberstormTeamMemberSerializer,
     CyberstormTeamMemberUpdateSerializer,
     CyberstormTeamSerializer,
@@ -34,6 +36,7 @@ from thunderstore.api.utils import (
     PublicCacheMixin,
     conditional_swagger_auto_schema,
 )
+from thunderstore.community.models import Community, PackageListing
 from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
 
@@ -58,6 +61,71 @@ class TeamAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, RetrieveAPIView):
     queryset = Team.objects.exclude(is_active=False)
     lookup_field = "name"
     lookup_url_kwarg = "team_id"
+
+
+class TeamCommunityListAPIView(
+    PublicCacheMixin, CyberstormAutoSchemaMixin, ListAPIView
+):
+    """
+    List the communities the team has publicly visible packages in, with
+    the number of such packages in each and their total downloads and
+    ratings, ordered by community name
+    """
+
+    serializer_class = CyberstormTeamCommunitySerializer
+    pagination_class = None
+
+    def get_queryset(self) -> QuerySet[Community]:
+        """
+        Return the communities annotated with the team's visible package
+        count, download count and rating count
+
+        :return: Communities with at least one visible package of the team
+        """
+        teams = Team.objects.exclude(is_active=False)
+        team = get_object_or_404(teams, name=self.kwargs["team_id"])
+
+        listings = (
+            PackageListing.objects.active()
+            .filter_by_community_approval_rule()
+            .filter(package__owner=team)
+        )
+
+        # Each total is a separate subquery so the versions join used for
+        # downloads doesn't multiply the ratings count, or vice versa
+        return (
+            Community.objects.annotate(
+                package_count=self._per_community(listings, Count("pk")),
+                download_count=self._per_community(
+                    listings, Sum("package__versions__downloads")
+                ),
+                rating_count=self._per_community(
+                    listings, Count("package__package_ratings")
+                ),
+            )
+            .filter(package_count__gt=0)
+            .order_by("name")
+        )
+
+    @staticmethod
+    def _per_community(
+        listings: QuerySet[PackageListing], aggregate: Aggregate
+    ) -> Coalesce:
+        """
+        Build a subquery aggregating the listings of the outer community
+
+        :param listings: The listings to aggregate over
+        :param aggregate: The aggregate to compute for each community
+        :return: The aggregate value, or 0 when the community has no listings
+        """
+        subquery = (
+            listings.filter(community=OuterRef("pk"))
+            .order_by()
+            .values("community")
+            .annotate(total=aggregate)
+            .values("total")
+        )
+        return Coalesce(Subquery(subquery), 0)
 
 
 class TeamRestrictedAPIView(TeamPermissionsMixin, ListAPIView):
