@@ -1,8 +1,10 @@
+from datetime import timedelta
 from typing import Generator
 
 import celery
 import pytest
 from django.test import override_settings
+from django.utils import timezone
 
 from thunderstore.core.tasks import celery_post
 
@@ -121,6 +123,46 @@ def test_celery_result_extended_is_enabled():
     from thunderstore.core.celery import app
 
     assert app.conf.result_extended is True
+
+
+def test_celery_result_expires_is_one_week():
+    from thunderstore.core.celery import app
+
+    assert app.conf.result_expires == timedelta(days=7)
+
+
+@pytest.mark.django_db
+def test_celery_backend_cleanup_deletes_only_expired_results(celery_app):
+    from django_celery_results.models import TaskResult
+
+    now = timezone.now()
+    TaskResult.objects.create(task_id="within-retention")
+    TaskResult.objects.create(task_id="past-retention")
+    TaskResult.objects.filter(task_id="within-retention").update(
+        date_done=now - timedelta(days=6)
+    )
+    TaskResult.objects.filter(task_id="past-retention").update(
+        date_done=now - timedelta(days=8)
+    )
+
+    celery_app.tasks["celery.backend_cleanup"]()
+
+    remaining = set(TaskResult.objects.values_list("task_id", flat=True))
+    assert remaining == {"within-retention"}
+
+
+@pytest.mark.django_db
+def test_celery_beat_schedules_backend_cleanup(celery_app, mocker):
+    from django_celery_beat.models import PeriodicTask
+    from django_celery_beat.schedulers import DatabaseScheduler
+
+    # Scheduler sync would otherwise close the test transaction's connection
+    mocker.patch("django_celery_beat.schedulers.close_old_connections")
+    DatabaseScheduler(app=celery_app)
+
+    assert PeriodicTask.objects.filter(
+        task="celery.backend_cleanup", enabled=True
+    ).exists()
 
 
 @pytest.mark.django_db
