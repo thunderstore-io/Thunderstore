@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 from thunderstore.api.cyberstorm.serializers import CyberstormCommunitySerializer
 from thunderstore.api.ordering import StrictOrderingFilter
@@ -14,7 +15,22 @@ from thunderstore.community.models import Community
 
 
 class CommunityPaginator(PageNumberPagination):
-    page_size = 500
+    def paginate_queryset(self, queryset, request, view=None):
+        return list(queryset)
+
+    def get_paginated_response(self, data):
+        # We return all communities on a single page to remove the
+        # need to hardcode a community limit per page (used to be 500).
+        # A bit of a hack, since we're spoofing the shape of the paginated
+        # output data, but it's easier to do it like this.
+        return Response(
+            {
+                "count": len(data),
+                "next": None,
+                "previous": None,
+                "results": data,
+            }
+        )
 
 
 class CommunityListAPIQueryParams(serializers.Serializer):
