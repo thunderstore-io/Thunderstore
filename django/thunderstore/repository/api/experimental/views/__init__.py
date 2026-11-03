@@ -1,3 +1,4 @@
+from .csat import CsatStatusApiView, CsatSubmitApiView
 from .package import PackageDetailApiView, PackageListApiView
 from .package_version import (
     PackageVersionChangelogApiView,
@@ -7,6 +8,8 @@ from .package_version import (
 from .upload import UploadPackageApiView
 
 __all__ = [
+    "CsatStatusApiView",
+    "CsatSubmitApiView",
     "PackageListApiView",
     "PackageDetailApiView",
     "PackageVersionChangelogApiView",
