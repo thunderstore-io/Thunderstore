@@ -154,6 +154,8 @@ env = environ.Env(
     MIRROR_MODPACK_STORAGE=(bool, True),
     MIRROR_SCHEMA_STORAGE=(bool, True),
     MIRROR_BLOB_STORAGE=(bool, True),
+    CSAT_SURVEY_ENABLED=(bool, False),
+    CSAT_SURVEY_ELIGIBLE_CHANCE=(float, 1.0),
 )
 
 ALWAYS_RAISE_EXCEPTIONS = env.bool("ALWAYS_RAISE_EXCEPTIONS")
@@ -899,5 +901,11 @@ USE_TIME_SERIES_PACKAGE_DOWNLOAD_METRICS = env.bool(
 
 # Seconds to wait between logging download events
 DOWNLOAD_METRICS_TTL_SECONDS = env.int("DOWNLOAD_METRICS_TTL_SECONDS")
+
+# CSAT survey consts.
+# Context: The CSAT survey is/was a TSMM survey run to gather user feedback
+CSAT_SURVEY_ENABLED = env.bool("CSAT_SURVEY_ENABLED")
+# What dictates the chance of the CSAT questionnare being shown in the client app.
+CSAT_SURVEY_ELIGIBLE_CHANCE = env.float("CSAT_SURVEY_ELIGIBLE_CHANCE")
 
 globals().update(plugin_registry.get_django_settings(globals()))

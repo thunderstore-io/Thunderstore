@@ -1,6 +1,8 @@
 from django.urls import path
 
 from thunderstore.repository.api.experimental.views import (
+    CsatStatusApiView,
+    CsatSubmitApiView,
     PackageDetailApiView,
     PackageListApiView,
     PackageVersionChangelogApiView,
@@ -32,6 +34,8 @@ from thunderstore.social.api.experimental.views import (
 )
 
 urls = [
+    path("csat/status/", CsatStatusApiView.as_view(), name="csat.status"),
+    path("csat/submit/", CsatSubmitApiView.as_view(), name="csat.submit"),
     path(
         "current-user/", CurrentUserExperimentalApiView.as_view(), name="current-user"
     ),
