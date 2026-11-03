@@ -2,6 +2,9 @@ from typing import Dict, List, Union
 from unittest.mock import patch
 
 import pytest
+from cachalot.api import cachalot_disabled
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -112,34 +115,37 @@ def test_api_cyberstorm_community_list_are_ordered_by_identifier_by_default(
 
 @pytest.mark.django_db
 @patch.object(CommunityPaginator, "page_size", 10)
-def test_api_cyberstorm_community_list_pagination(
+@pytest.mark.parametrize("query", ["", "page=1", "page=2", "page=100", "page=abc"])
+def test_api_cyberstorm_community_list_returns_all_communities(
     api_client: APIClient,
+    query: str,
 ) -> None:
-
     for _ in range(25):
         CommunityFactory()
 
     total_count = Community.objects.count()
-    assert 30 >= total_count > 20
 
-    data = __query_api(api_client)
+    data = __query_api(api_client, query)
 
-    assert data["previous"] is None
-    assert data["next"].endswith("page=2")
     assert data["count"] == total_count
-    assert len(data["results"]) == 10
-
-    data = __query_api(api_client, "page=2")
-    assert data["next"].endswith("page=3")
-    assert data["previous"] == data["next"].replace("?page=3", "")
-    assert data["count"] == total_count
-    assert len(data["results"]) == 10
-
-    data = __query_api(api_client, "page=3")
-    assert data["previous"].endswith("page=2")
+    assert len(data["results"]) == total_count
     assert data["next"] is None
-    assert data["count"] == total_count
-    assert len(data["results"]) == total_count - 20
+    assert data["previous"] is None
+
+
+@pytest.mark.django_db
+def test_api_cyberstorm_community_list_query_count_is_constant(
+    api_client: APIClient,
+) -> None:
+    __query_api(api_client)
+    with cachalot_disabled(), CaptureQueriesContext(connection) as few:
+        __query_api(api_client)
+
+    CommunityFactory.create_batch(30)
+    with cachalot_disabled(), CaptureQueriesContext(connection) as many:
+        __query_api(api_client)
+
+    assert len(many) == len(few)
 
 
 def __assert_communities(
