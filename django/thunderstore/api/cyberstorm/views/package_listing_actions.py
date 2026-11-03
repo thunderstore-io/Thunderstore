@@ -11,15 +11,15 @@ from thunderstore.api.cyberstorm.serializers.package_listing import (
     PackageListingRejectSerializer,
     PackageListingUpdateSerializer,
 )
-from thunderstore.api.cyberstorm.services.package_listing import (
+from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.community.services.package_listing import (
     approve_package_listing,
     reject_package_listing,
-    report_package_listing,
-    unlist_package_listing,
     update_categories,
 )
-from thunderstore.api.utils import conditional_swagger_auto_schema
 from thunderstore.repository.models import PackageListing
+from thunderstore.repository.services.package import unlist_package_listing
+from thunderstore.ts_reports.services.package_report import report_package_listing
 
 
 def get_package_listing(

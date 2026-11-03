@@ -8,6 +8,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from thunderstore.account.models.service_account import ServiceAccount
+from thunderstore.account.services.service_account import (
+    create_service_account,
+    delete_service_account,
+)
 from thunderstore.api.cyberstorm.serializers import (
     CyberstormCreateServiceAccountSerializer,
     CyberstormCreateTeamSerializer,
@@ -19,15 +23,6 @@ from thunderstore.api.cyberstorm.serializers import (
     CyberstormTeamSerializer,
     CyberstormTeamUpdateSerializer,
 )
-from thunderstore.api.cyberstorm.services.team import (
-    create_service_account,
-    create_team,
-    delete_service_account,
-    disband_team,
-    remove_team_member,
-    update_team,
-    update_team_member,
-)
 from thunderstore.api.ordering import StrictOrderingFilter
 from thunderstore.api.utils import (
     CyberstormAutoSchemaMixin,
@@ -36,6 +31,13 @@ from thunderstore.api.utils import (
 )
 from thunderstore.repository.forms import AddTeamMemberForm
 from thunderstore.repository.models.team import Team, TeamMember
+from thunderstore.repository.services.team import (
+    create_team,
+    disband_team,
+    remove_team_member,
+    update_team,
+    update_team_member,
+)
 
 
 class TeamPermissionsMixin:

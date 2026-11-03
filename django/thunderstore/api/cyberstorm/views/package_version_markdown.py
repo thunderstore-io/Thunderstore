@@ -8,13 +8,13 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from thunderstore.api.cyberstorm.services.package_version import (
-    delete_markdown_override,
-    update_markdown_override,
-)
 from thunderstore.api.utils import PublicCacheMixin, conditional_swagger_auto_schema
 from thunderstore.repository.consts import MARKDOWN_FIELDS, MarkdownDocument
 from thunderstore.repository.models import PackageVersion
+from thunderstore.repository.services.package_version import (
+    delete_markdown_override,
+    update_markdown_override,
+)
 from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
 
 

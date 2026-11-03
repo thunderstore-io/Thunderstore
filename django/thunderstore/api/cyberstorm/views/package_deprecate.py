@@ -4,12 +4,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from thunderstore.api.cyberstorm.services.package import (
+from thunderstore.api.utils import conditional_swagger_auto_schema
+from thunderstore.repository.models import Package
+from thunderstore.repository.services.package import (
     deprecate_package,
     undeprecate_package,
 )
-from thunderstore.api.utils import conditional_swagger_auto_schema
-from thunderstore.repository.models import Package
 
 
 class DeprecatePackageSerializer(serializers.Serializer):

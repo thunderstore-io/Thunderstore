@@ -1,11 +1,8 @@
 from django.db import transaction
 
-from thunderstore.core.exceptions import PermissionValidationError
+from thunderstore.community.models import PackageListing
 from thunderstore.core.types import UserType
-from thunderstore.permissions.utils import validate_user
-from thunderstore.repository.models import Package, PackageListing, PackageVersion
 from thunderstore.repository.views.package._utils import get_package_listing_or_404
-from thunderstore.ts_reports.models import PackageReport
 
 
 @transaction.atomic
@@ -55,34 +52,3 @@ def approve_package_listing(
         name=listing.package.name,
         community=listing.community,
     )
-
-
-@transaction.atomic
-def report_package_listing(
-    agent: UserType,
-    reason: str,
-    package: Package,
-    package_listing: PackageListing,
-    package_version: PackageVersion,
-    description: str,
-) -> None:
-    user = validate_user(agent)
-
-    PackageReport.handle_user_report(
-        reason=reason,
-        submitted_by=user,
-        package=package,
-        package_listing=package_listing,
-        package_version=package_version,
-        description=description,
-    )
-
-
-@transaction.atomic
-def unlist_package_listing(agent: UserType, listing: PackageListing) -> None:
-
-    user = validate_user(agent)
-    if not user.is_superuser:
-        raise PermissionValidationError("Only superusers can unlist packages")
-
-    listing.package.deactivate()

@@ -15,7 +15,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from thunderstore.api.cyberstorm.services.package import rate_package
 from thunderstore.community.models import Community, PackageListing
 from thunderstore.core.types import HttpRequestType
 from thunderstore.repository.api.v1.serializers import PackageListingSerializer
@@ -26,6 +25,7 @@ from thunderstore.repository.cache import (
 from thunderstore.repository.mixins import CommunityMixin
 from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.repository.models.cache import APIV1PackageCache
+from thunderstore.repository.services.package import rate_package
 from thunderstore.utils.batch import batch
 
 PACKAGE_SERIALIZER = PackageListingSerializer

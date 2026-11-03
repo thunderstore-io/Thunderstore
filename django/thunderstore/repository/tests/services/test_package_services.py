@@ -3,13 +3,14 @@ from django.core.exceptions import ValidationError
 from rest_framework.exceptions import PermissionDenied
 
 from conftest import TestUserTypes
-from thunderstore.api.cyberstorm.services.package import (
+from thunderstore.core.exceptions import PermissionValidationError
+from thunderstore.repository.models import TeamMember, TeamMemberRole
+from thunderstore.repository.services.package import (
     deprecate_package,
     rate_package,
     undeprecate_package,
+    unlist_package_listing,
 )
-from thunderstore.core.exceptions import PermissionValidationError
-from thunderstore.repository.models import TeamMember, TeamMemberRole
 
 
 @pytest.mark.django_db
@@ -123,3 +124,29 @@ def test_rate_package_invalid_target_state(active_package, user):
     error_msg = "Invalid target_state"
     with pytest.raises(ValidationError, match=error_msg):
         rate_package(user, active_package, "invalid_state")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_role, can_unlist",
+    [
+        (TestUserTypes.no_user, False),
+        (TestUserTypes.unauthenticated, False),
+        (TestUserTypes.regular_user, False),
+        (TestUserTypes.deactivated_user, False),
+        (TestUserTypes.service_account, False),
+        (TestUserTypes.site_admin, False),
+        (TestUserTypes.superuser, True),
+    ],
+)
+def test_unlist_package_listing(active_package_listing, user_role, can_unlist):
+    agent = TestUserTypes.get_user_by_type(user_role)
+
+    if can_unlist:
+        unlist_package_listing(agent=agent, listing=active_package_listing)
+        active_package_listing.refresh_from_db()
+        assert active_package_listing.package.is_active is False
+    else:
+        with pytest.raises(PermissionValidationError):
+            unlist_package_listing(agent=agent, listing=active_package_listing)
+        assert active_package_listing.package.is_active is True
