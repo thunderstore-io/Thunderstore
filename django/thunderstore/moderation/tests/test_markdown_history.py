@@ -7,9 +7,6 @@ from django.core.cache import cache
 from django.db import IntegrityError, connection, connections, transaction
 from django.test.utils import CaptureQueriesContext
 
-from thunderstore.api.cyberstorm.services.package_version import (
-    update_markdown_override,
-)
 from thunderstore.api.cyberstorm.tests.utils import (
     delete_markdown,
     history_url,
@@ -25,6 +22,7 @@ from thunderstore.repository.models import (
     PackageVersionMarkdownRevision,
     TeamMemberRole,
 )
+from thunderstore.repository.services.package_version import update_markdown_override
 from thunderstore.repository.validation.markdown import MAX_MARKDOWN_SIZE
 
 pytestmark = pytest.mark.django_db

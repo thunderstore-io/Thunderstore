@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from thunderstore.api.cyberstorm.services.user import (
+from thunderstore.account.services.user import (
     delete_user_account,
     delete_user_social_auth,
 )

@@ -2,8 +2,10 @@ from typing import Literal, Tuple, Union
 
 from django.db import transaction
 
+from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
-from thunderstore.repository.models import Package, PackageRating
+from thunderstore.permissions.utils import validate_user
+from thunderstore.repository.models import Package, PackageListing, PackageRating
 
 
 @transaction.atomic
@@ -35,3 +37,13 @@ def rate_package(
 
     package = Package.objects.get(id=package.id)
     return package.rating_score, result_state
+
+
+@transaction.atomic
+def unlist_package_listing(agent: UserType, listing: PackageListing) -> None:
+
+    user = validate_user(agent)
+    if not user.is_superuser:
+        raise PermissionValidationError("Only superusers can unlist packages")
+
+    listing.package.deactivate()

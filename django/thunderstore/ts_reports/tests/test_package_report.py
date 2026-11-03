@@ -4,7 +4,6 @@ import pytest
 from django.core.exceptions import ValidationError
 from rest_framework.test import APIClient
 
-from thunderstore.api.cyberstorm.services.package_listing import report_package_listing
 from thunderstore.community.api.experimental.serializers import (
     PackageListingReportRequestSerializer,
 )
@@ -16,6 +15,7 @@ from thunderstore.repository.factories import PackageFactory, PackageVersionFact
 from thunderstore.ts_reports.admin import PackageReportAdmin
 from thunderstore.ts_reports.admin.package_report import set_active, set_inactive
 from thunderstore.ts_reports.models import PackageReport
+from thunderstore.ts_reports.services.package_report import report_package_listing
 
 
 @pytest.mark.django_db

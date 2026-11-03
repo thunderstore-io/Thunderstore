@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from thunderstore.account.models import ServiceAccount
-from thunderstore.api.cyberstorm.services.team import (
+from thunderstore.account.services.service_account import (
     create_service_account,
     delete_service_account,
 )

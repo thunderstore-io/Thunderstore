@@ -5,15 +5,15 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 
-from thunderstore.api.cyberstorm.services.team import (
+from thunderstore.core.types import UserType
+from thunderstore.repository.models import Team, TeamMember, TeamMemberRole
+from thunderstore.repository.services.team import (
     create_team,
     disband_team,
     remove_team_member,
     update_team,
     update_team_member,
 )
-from thunderstore.core.types import UserType
-from thunderstore.repository.models import Team, TeamMember, TeamMemberRole
 from thunderstore.repository.validators import PackageReferenceComponentValidator
 
 User = get_user_model()

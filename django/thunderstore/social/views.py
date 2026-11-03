@@ -5,7 +5,7 @@ from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic.edit import FormView
 
-from thunderstore.api.cyberstorm.services.user import (
+from thunderstore.account.services.user import (
     delete_user_account,
     delete_user_social_auth,
 )

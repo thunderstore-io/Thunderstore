@@ -4,18 +4,18 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from thunderstore.api.cyberstorm.services.package_listing import (
-    approve_package_listing,
-    reject_package_listing,
-    report_package_listing,
-    update_categories,
-)
 from thunderstore.community.api.experimental.serializers import (
     PackageListingReportRequestSerializer,
     PackageListingUpdateRequestSerializer,
     PackageListingUpdateResponseSerializer,
 )
 from thunderstore.community.models import PackageListing
+from thunderstore.community.services.package_listing import (
+    approve_package_listing,
+    reject_package_listing,
+    update_categories,
+)
+from thunderstore.ts_reports.services.package_report import report_package_listing
 
 
 class PackageListingUpdateApiView(GenericAPIView):

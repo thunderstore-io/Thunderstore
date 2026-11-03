@@ -3,10 +3,6 @@ from django.contrib.auth.models import Permission
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
-from thunderstore.api.cyberstorm.services.package_version import (
-    delete_markdown_override,
-    update_markdown_override,
-)
 from thunderstore.api.cyberstorm.tests.utils import history_url
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models import CommunityMemberRole, CommunityMembership
@@ -15,6 +11,10 @@ from thunderstore.repository.factories import PackageVersionFactory, TeamMemberF
 from thunderstore.repository.models import (
     PackageVersionMarkdownRevision,
     TeamMemberRole,
+)
+from thunderstore.repository.services.package_version import (
+    delete_markdown_override,
+    update_markdown_override,
 )
 
 pytestmark = pytest.mark.django_db
