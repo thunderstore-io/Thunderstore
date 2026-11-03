@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import warnings
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -411,6 +412,7 @@ class CeleryQueues:
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_RESULT_EXTENDED = True
+CELERY_RESULT_EXPIRES = timedelta(days=7)
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER")
 CELERY_TASK_CREATE_MISSING_QUEUES = env("CELERY_TASK_CREATE_MISSING_QUEUES")
