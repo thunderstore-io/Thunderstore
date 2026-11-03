@@ -21,6 +21,7 @@ ENDPOINTS = {
         # "/api/cyberstorm/package/{namespace_id}/{package_name}/v/{version_number}/source/",
         "/api/cyberstorm/package/{namespace_id}/{package_name}/versions/",
         "/api/cyberstorm/team/{team_id}/",
+        "/api/cyberstorm/team/{team_id}/communities/",
         "/api/cyberstorm/team/{team_id}/member/",
         "/api/cyberstorm/team/{team_id}/service-account/",
         "/api/cyberstorm/team/{team_id}/settings/",
