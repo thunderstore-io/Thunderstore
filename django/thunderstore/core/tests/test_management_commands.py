@@ -95,6 +95,9 @@ def test_create_test_data_create_data(
     wiki_page_count: int,
 ) -> None:
     assert settings.DEBUG is True
+    Community.objects.get_or_create(
+        identifier="riskofrain2", defaults={"name": "Risk of Rain 2"}
+    )
 
     def assert_counts():
         created_teams = Team.objects.filter(name__icontains="Test_Team_")
@@ -135,10 +138,10 @@ def test_create_test_data_create_data(
             PackageVersion.dependencies.through.objects.count()
             == (team_count * package_count - dependency_count) * dependency_count
         )
-        assert (
-            PackageListing.objects.filter(package__in=created_packages).count()
-            == team_count * package_count * community_count
-        )
+        # Packages are also listed in the default community
+        assert PackageListing.objects.filter(
+            package__in=created_packages
+        ).count() == team_count * package_count * (community_count + 1)
         for t in created_teams:
             assert t.owned_packages.all().count() == package_count
         assert (
