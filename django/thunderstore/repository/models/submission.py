@@ -23,7 +23,7 @@ class AsyncPackageSubmission(TimestampMixin):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="async_package_submissions",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
     )
     file = models.ForeignKey(
         UserMedia,
