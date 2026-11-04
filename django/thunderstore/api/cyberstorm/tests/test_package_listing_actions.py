@@ -108,7 +108,7 @@ def test_action_endpoints_404(
 
     response = api_client.post(url, data={}, content_type="application/json")
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No PackageListing matches the given query."}
 
 
 @pytest.mark.django_db

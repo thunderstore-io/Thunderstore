@@ -78,7 +78,7 @@ def test_team_settings_get_fails_team_does_not_exist(
         "/api/cyberstorm/team/FakeTeam/settings/",
     )
 
-    expected_response = {"detail": "Not found."}
+    expected_response = {"detail": "No Team matches the given query."}
 
     assert response.status_code == 404
     assert response.json() == expected_response
@@ -251,7 +251,7 @@ def test_team_settings_update_fails_team_does_not_exist(
         content_type="application/json",
     )
 
-    expected_response = {"detail": "Not found."}
+    expected_response = {"detail": "No Team matches the given query."}
 
     assert response.status_code == 404
     assert response.json() == expected_response

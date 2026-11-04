@@ -98,7 +98,7 @@ def test_update_team_member_fail_user_not_in_team(
     response_json = response.json()
 
     assert response.status_code == 404
-    assert response_json["detail"] == "Not found."
+    assert response_json["detail"] == "No TeamMember matches the given query."
     assert TeamMember.objects.get(pk=member_in_another_team.pk).role == "owner"
 
 
@@ -114,7 +114,7 @@ def test_update_team_member_fails_team_does_not_exist(
     response_json = response.json()
 
     assert response.status_code == 404
-    assert response_json["detail"] == "Not found."
+    assert response_json["detail"] == "No TeamMember matches the given query."
 
 
 @pytest.mark.django_db

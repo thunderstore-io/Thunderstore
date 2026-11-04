@@ -74,7 +74,7 @@ def test_deprecate_package_404(
 
     response = api_client.post(url, data=data, content_type="application/json")
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No Package matches the given query."}
 
 
 @pytest.mark.django_db

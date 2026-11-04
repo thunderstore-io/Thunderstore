@@ -62,7 +62,7 @@ def test_disconnect_user_non_existent_linked_account(
     url = get_disconnect_user_linked_account_url("non-existent")
     response = api_client.delete(url, content_type="application/json")
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No linked account found"}
 
 
 @pytest.mark.django_db
@@ -71,7 +71,7 @@ def test_disconnect_user_with_no_social_auth(user: UserType, api_client: APIClie
     url = get_disconnect_user_linked_account_url("non-existent")
     response = api_client.delete(url, content_type="application/json")
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No linked account found"}
 
 
 @pytest.mark.django_db
