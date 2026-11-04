@@ -57,7 +57,7 @@ def test_rate_package_404(api_client: APIClient, user: UserType) -> None:
     )
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No Package matches the given query."}
 
 
 @pytest.mark.django_db
