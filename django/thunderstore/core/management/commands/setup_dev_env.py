@@ -75,4 +75,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("Superuser 'admin' already exists.")
 
+        self.stdout.write("Publishing mod manager dev schema...")
+        call_command("publish_dev_schema")
+
         self.stdout.write(self.style.SUCCESS("Local development environment ready."))

@@ -38,7 +38,8 @@ You need [Docker](https://docs.docker.com/get-docker/) with Docker Compose.
     ```
 
 3. **Seed the database.** This runs migrations, populates test data, creates the
-   site mappings, and creates a default `admin` / `admin` superuser:
+   site mappings, publishes the mod manager game list, builds its package
+   index, and creates a default `admin` / `admin` superuser:
 
     ```bash
     docker compose exec django python manage.py setup_dev_env
@@ -117,6 +118,19 @@ docker compose exec django python manage.py createsuperuser
 ```
 
 On Windows, prefix interactive commands like this one with `winpty`.
+
+### Mod manager data
+
+`setup_dev_env` publishes the game list and package index the mod manager
+reads. Later edits stay on those copies until you publish again. The package
+index also rebuilds hourly.
+
+After a community or package change, publish again, then refresh the mod
+manager:
+
+```bash
+docker compose exec django python manage.py publish_dev_schema
+```
 
 ### Test data
 
