@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
 from thunderstore.community.models import Community
-from thunderstore.repository.api.v1.tasks import update_api_v1_chunked_package_caches
+from thunderstore.repository.models import APIV1ChunkedPackageCache
 from thunderstore.schema_server.models import SchemaChannel
 
 CHANNEL = "dev"
@@ -86,14 +86,10 @@ class Command(BaseCommand):
 
         User = get_user_model()
         user = (
-            User.objects.filter(is_superuser=True, is_active=True)
-            .order_by("id")
-            .first()
+            User.objects.filter(is_active=True).order_by("-is_superuser", "id").first()
         )
         if user is None:
-            raise CommandError(
-                "No active superuser exists to own the dev schema channel"
-            )
+            raise CommandError("No active user exists to own the dev schema channel")
 
         channel, _ = SchemaChannel.objects.get_or_create(identifier=CHANNEL)
         channel.authorized_users.add(user)
@@ -106,6 +102,9 @@ class Command(BaseCommand):
         )
 
         # A community is missing from the mod manager until this index exists.
+        # Rebuild directly so a failure stops the command instead of being swallowed.
         self.stdout.write("Building package list caches...")
-        update_api_v1_chunked_package_caches()
+        for community in Community.objects.iterator():
+            APIV1ChunkedPackageCache.update_for_community(community)
+        APIV1ChunkedPackageCache.drop_stale_cache()
         self.stdout.write(self.style.SUCCESS("Package list caches updated."))
