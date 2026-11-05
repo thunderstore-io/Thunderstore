@@ -30,8 +30,14 @@ def submission_without(field: str) -> Dict[str, Any]:
     return {k: v for k, v in VALID_SUBMISSION.items() if k != field}
 
 
-def get_status(client: APIClient) -> Response:
-    return client.get(reverse("api:experimental:csat.status"))
+def get_status(
+    client: APIClient,
+    install_id: str = VALID_SUBMISSION["install_id"],
+) -> Response:
+    return client.get(
+        reverse("api:experimental:csat.status"),
+        data={"install_id": install_id},
+    )
 
 
 def submit(client: APIClient, data: Dict[str, Any]) -> Response:
@@ -52,6 +58,19 @@ def csat_enabled(settings) -> None:
 def mock_send_kafka_message():
     with patch(f"{VIEWS_MODULE}.send_kafka_message") as mock:
         yield mock
+
+
+@pytest.mark.django_db
+def test_experimental_api_csat_status_requires_install_id(
+    api_client: APIClient,
+) -> None:
+    missing = api_client.get(reverse("api:experimental:csat.status"))
+    assert missing.status_code == 400
+    assert "install_id" in missing.json()
+
+    invalid = get_status(api_client, install_id="not-a-uuid")
+    assert invalid.status_code == 400
+    assert "install_id" in invalid.json()
 
 
 @pytest.mark.django_db
