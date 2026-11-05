@@ -55,7 +55,9 @@ class PackageVersionPopulator(ContentPopulator):
         storage = PackageVersion._meta.get_field("file").storage
         if not storage.exists(_SEED_PACKAGE_ZIP):
             storage.save(_SEED_PACKAGE_ZIP, ContentFile(dummy_package_zip()))
-        updated = PackageVersion.objects.filter(file="").update(file=_SEED_PACKAGE_ZIP)
+        updated = PackageVersion.objects.filter(file="").update(
+            file=_SEED_PACKAGE_ZIP, file_size=storage.size(_SEED_PACKAGE_ZIP)
+        )
         if updated:
             print(f"Attached a download archive to {updated} package versions.")
 
