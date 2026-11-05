@@ -6,7 +6,6 @@ from django.contrib.sites.models import Site
 from django.core.management import BaseCommand, CommandError, call_command
 
 from thunderstore.community.models import Community, CommunitySite
-from thunderstore.repository.api.v1.tasks import update_api_v1_chunked_package_caches
 
 # Domains the local stack answers on. `thunderstore.localhost` is the primary
 # host (served by the cyberstorm-remix app via nginx) and `old.thunderstore.localhost`
@@ -78,9 +77,5 @@ class Command(BaseCommand):
 
         self.stdout.write("Publishing mod manager dev schema...")
         call_command("publish_dev_schema")
-
-        # The mod manager reads this index, which otherwise rebuilds hourly.
-        self.stdout.write("Building package list caches...")
-        update_api_v1_chunked_package_caches()
 
         self.stdout.write(self.style.SUCCESS("Local development environment ready."))

@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
 from thunderstore.community.models import Community
+from thunderstore.repository.api.v1.tasks import update_api_v1_chunked_package_caches
 from thunderstore.schema_server.models import SchemaChannel
 
 CHANNEL = "dev"
@@ -103,3 +104,8 @@ class Command(BaseCommand):
                 f"Published {len(games)} communities to schema channel '{CHANNEL}'."
             )
         )
+
+        # A community is missing from the mod manager until this index exists.
+        self.stdout.write("Building package list caches...")
+        update_api_v1_chunked_package_caches()
+        self.stdout.write(self.style.SUCCESS("Package list caches updated."))
