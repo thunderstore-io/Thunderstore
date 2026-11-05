@@ -33,7 +33,8 @@ def _game(community: Community) -> dict:
                 "distributions": [{"platform": "other"}],
                 "settingsIdentifier": identifier,
                 "packageIndex": (
-                    f"https://thunderstore.io/c/{identifier}/api/v1/package-listing-index/"
+                    f"{settings.PROTOCOL}{settings.PRIMARY_HOST}"
+                    f"/c/{identifier}/api/v1/package-listing-index/"
                 ),
                 "steamFolderName": identifier,
                 "exeNames": [f"{identifier}.exe"],
