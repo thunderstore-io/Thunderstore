@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from thunderstore.repository.api.experimental.serializers import (
     AnalyticsEventCsatSurveyResponse,
+    CsatStatusQuerySerializer,
     CsatSubmitRequestSerializer,
 )
 from thunderstore.ts_analytics.kafka import KafkaTopic
@@ -30,6 +31,10 @@ class CsatStatusApiView(APIView):
 
     @swagger_auto_schema(auto_schema=None)
     def get(self, request, *args, **kwargs):
+        serializer = CsatStatusQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        # install_id identifies the install for a later check. It is not stored.
+
         if not settings.CSAT_SURVEY_ENABLED:
             return Response({"enabled": False})
 
