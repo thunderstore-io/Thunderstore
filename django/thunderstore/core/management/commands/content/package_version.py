@@ -1,3 +1,9 @@
+import base64
+import io
+import json
+from zipfile import ZIP_DEFLATED, ZipFile
+
+from django.core.files.base import ContentFile
 from django.db.models import Q, signals
 
 from thunderstore.core.management.commands.content.base import (
@@ -18,7 +24,41 @@ except ModuleNotFoundError as exc:
     DecompilationStatus = None
 
 
+# 1x1 PNG. Shared by every seeded package archive.
+_DUMMY_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
+_SEED_PACKAGE_ZIP = "repository/packages/dev-seed.zip"
+
+
+def dummy_package_zip() -> bytes:
+    manifest = json.dumps(
+        {
+            "name": "Test_Package",
+            "version_number": "0.0.0",
+            "website_url": "",
+            "description": "Local development package",
+            "dependencies": [],
+        }
+    ).encode("utf-8")
+    zip_raw = io.BytesIO()
+    with ZipFile(zip_raw, "w", ZIP_DEFLATED) as zip_file:
+        zip_file.writestr("manifest.json", manifest)
+        zip_file.writestr("README.md", b"# Local development package\n")
+        zip_file.writestr("icon.png", _DUMMY_PNG)
+    return zip_raw.getvalue()
+
+
 class PackageVersionPopulator(ContentPopulator):
+    def _attach_missing_package_files(self) -> None:
+        """Give seeded versions a real archive so package downloads succeed."""
+        storage = PackageVersion._meta.get_field("file").storage
+        if not storage.exists(_SEED_PACKAGE_ZIP):
+            storage.save(_SEED_PACKAGE_ZIP, ContentFile(dummy_package_zip()))
+        updated = PackageVersion.objects.filter(file="").update(file=_SEED_PACKAGE_ZIP)
+        if updated:
+            print(f"Attached a download archive to {updated} package versions.")
+
     def _clear_file_tree_seed_artifacts(self, group: DataBlobGroup) -> None:
         """Remove seeded entries and scanner rows so the group can be repopulated."""
         assert Decompilation is not None
@@ -170,6 +210,8 @@ class PackageVersionPopulator(ContentPopulator):
             # actually make use of the sender param at all (and can be None)
             package.handle_created_version(None)
             package.handle_updated_version(None)
+
+        self._attach_missing_package_files()
 
         # Re-enabling previously disabled signals
         signals.post_save.connect(PackageVersion.post_save, sender=PackageVersion)
