@@ -1,5 +1,3 @@
-import random
-import time
 from datetime import datetime
 
 from celery import shared_task
@@ -10,7 +8,7 @@ from pydantic import BaseModel
 from thunderstore.core.settings import CeleryQueues
 from thunderstore.metrics.models import PackageVersionDownloadEvent
 from thunderstore.repository.models import PackageVersion
-from thunderstore.ts_analytics.kafka import KafkaTopic
+from thunderstore.ts_analytics.kafka import KafkaTopic, generate_event_id
 from thunderstore.ts_analytics.tasks import send_kafka_message
 
 TASK_LOG_VERSION_DOWNLOAD = "thunderstore.repository.tasks.log_version_download"
@@ -29,7 +27,7 @@ class AnalyticsEventPackageDownload(BaseModel):
 )
 def log_version_download(version_id: int, timestamp: str):
     timestamp_dt = datetime.fromisoformat(timestamp)
-    generated_id = (int(time.time() * 1000) << 20) | random.getrandbits(20)
+    generated_id = generate_event_id()
     with transaction.atomic():
         ### Download events are now stored in our analytics database
         # event = PackageVersionDownloadEvent.objects.create(
