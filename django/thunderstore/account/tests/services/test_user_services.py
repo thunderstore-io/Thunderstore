@@ -7,6 +7,8 @@ from thunderstore.account.services.user import (
 )
 from thunderstore.core.exceptions import PermissionValidationError
 from thunderstore.core.types import UserType
+from thunderstore.repository.factories import AsyncPackageSubmissionFactory
+from thunderstore.repository.models import AsyncPackageSubmission
 
 User = get_user_model()
 
@@ -16,6 +18,14 @@ def test_delete_user_account_success(user: UserType):
     assert User.objects.filter(username=user.username).exists()
     delete_user_account(target_user=user)
     assert not User.objects.filter(username=user.username).exists()
+
+
+@pytest.mark.django_db
+def test_delete_user_account_with_package_submission(user: UserType):
+    submission = AsyncPackageSubmissionFactory(owner=user)
+    delete_user_account(target_user=user)
+    assert not User.objects.filter(pk=user.pk).exists()
+    assert not AsyncPackageSubmission.objects.filter(pk=submission.pk).exists()
 
 
 @pytest.mark.django_db
