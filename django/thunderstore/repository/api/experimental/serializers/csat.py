@@ -9,6 +9,11 @@ class CsatStatusQuerySerializer(serializers.Serializer):
     install_id = serializers.UUIDField()
 
 
+class CsatStatusResponseSerializer(serializers.Serializer):
+    enabled = serializers.BooleanField()
+    eligible = serializers.BooleanField()
+
+
 class CsatSubmitRequestSerializer(serializers.Serializer):
     score = serializers.IntegerField(min_value=1, max_value=5)
     comment = serializers.CharField(

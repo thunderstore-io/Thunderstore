@@ -63,6 +63,7 @@ def mock_send_kafka_message():
 @pytest.mark.django_db
 def test_experimental_api_csat_status_requires_install_id(
     api_client: APIClient,
+    csat_enabled,
 ) -> None:
     missing = api_client.get(reverse("api:experimental:csat.status"))
     assert missing.status_code == 400
@@ -79,9 +80,19 @@ def test_experimental_api_csat_status_disabled(
     settings,
 ) -> None:
     settings.CSAT_SURVEY_ENABLED = False
+    disabled = {"enabled": False, "eligible": False}
+
     response = get_status(api_client)
     assert response.status_code == 200
-    assert response.json() == {"enabled": False}
+    assert response.json() == disabled
+
+    missing = api_client.get(reverse("api:experimental:csat.status"))
+    assert missing.status_code == 200
+    assert missing.json() == disabled
+
+    invalid = get_status(api_client, install_id="not-a-uuid")
+    assert invalid.status_code == 200
+    assert invalid.json() == disabled
 
 
 @pytest.mark.django_db
