@@ -12,6 +12,8 @@ from rest_framework.views import APIView
 
 from thunderstore.repository.api.experimental.serializers import (
     AnalyticsEventCsatSurveyResponse,
+    CsatStatusQuerySerializer,
+    CsatStatusResponseSerializer,
     CsatSubmitRequestSerializer,
 )
 from thunderstore.ts_analytics.kafka import KafkaTopic
@@ -31,13 +33,25 @@ class CsatStatusApiView(APIView):
     @swagger_auto_schema(auto_schema=None)
     def get(self, request, *args, **kwargs):
         if not settings.CSAT_SURVEY_ENABLED:
-            return Response({"enabled": False})
+            return Response(
+                CsatStatusResponseSerializer(
+                    instance={"enabled": False, "eligible": False}
+                ).data
+            )
+
+        serializer = CsatStatusQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        # The id is validated and then ignored. This view does not use the value.
 
         # CSAT surveys are only shown after (a) client conditions are correct
         # and (b) after some random dice roll. This is mainly just to control
         # the volume of submissions and is meant to be tuneable.
         eligible = random() < settings.CSAT_SURVEY_ELIGIBLE_CHANCE
-        return Response({"enabled": True, "eligible": eligible})
+        return Response(
+            CsatStatusResponseSerializer(
+                instance={"enabled": True, "eligible": eligible}
+            ).data
+        )
 
 
 class CsatSubmitApiView(APIView):

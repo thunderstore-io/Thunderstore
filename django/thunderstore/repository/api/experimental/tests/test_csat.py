@@ -30,8 +30,14 @@ def submission_without(field: str) -> Dict[str, Any]:
     return {k: v for k, v in VALID_SUBMISSION.items() if k != field}
 
 
-def get_status(client: APIClient) -> Response:
-    return client.get(reverse("api:experimental:csat.status"))
+def get_status(
+    client: APIClient,
+    install_id: str = VALID_SUBMISSION["install_id"],
+) -> Response:
+    return client.get(
+        reverse("api:experimental:csat.status"),
+        data={"install_id": install_id},
+    )
 
 
 def submit(client: APIClient, data: Dict[str, Any]) -> Response:
@@ -55,14 +61,38 @@ def mock_send_kafka_message():
 
 
 @pytest.mark.django_db
+def test_experimental_api_csat_status_requires_install_id(
+    api_client: APIClient,
+    csat_enabled,
+) -> None:
+    missing = api_client.get(reverse("api:experimental:csat.status"))
+    assert missing.status_code == 400
+    assert "install_id" in missing.json()
+
+    invalid = get_status(api_client, install_id="not-a-uuid")
+    assert invalid.status_code == 400
+    assert "install_id" in invalid.json()
+
+
+@pytest.mark.django_db
 def test_experimental_api_csat_status_disabled(
     api_client: APIClient,
     settings,
 ) -> None:
     settings.CSAT_SURVEY_ENABLED = False
+    disabled = {"enabled": False, "eligible": False}
+
     response = get_status(api_client)
     assert response.status_code == 200
-    assert response.json() == {"enabled": False}
+    assert response.json() == disabled
+
+    missing = api_client.get(reverse("api:experimental:csat.status"))
+    assert missing.status_code == 200
+    assert missing.json() == disabled
+
+    invalid = get_status(api_client, install_id="not-a-uuid")
+    assert invalid.status_code == 200
+    assert invalid.json() == disabled
 
 
 @pytest.mark.django_db
