@@ -1,12 +1,7 @@
 from datetime import datetime
-from uuid import UUID
 
 from pydantic import BaseModel
 from rest_framework import serializers
-
-
-class CsatStatusQuerySerializer(serializers.Serializer):
-    install_id = serializers.UUIDField()
 
 
 class CsatStatusResponseSerializer(serializers.Serializer):
@@ -22,7 +17,6 @@ class CsatSubmitRequestSerializer(serializers.Serializer):
         allow_blank=True,
         allow_null=True,
     )
-    install_id = serializers.UUIDField()
     app_version = serializers.CharField(max_length=64)
 
 
@@ -31,5 +25,4 @@ class AnalyticsEventCsatSurveyResponse(BaseModel):
     timestamp: datetime
     score: int
     comment: str
-    install_id: UUID
     app_version: str
