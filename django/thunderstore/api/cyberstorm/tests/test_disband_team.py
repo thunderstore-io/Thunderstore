@@ -35,7 +35,7 @@ def test_disband_team_fail_because_team_doesnt_exist(
     api_client.force_authenticate(user)
     response = make_request(api_client, "nonexistent")
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No Team matches the given query."}
 
 
 @pytest.mark.django_db

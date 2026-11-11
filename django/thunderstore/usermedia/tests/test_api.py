@@ -186,7 +186,7 @@ def test_api_experimental_usermedia_finish_upload_expired(
     )
     print(response.content)
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No UserMedia matches the given query."}
 
 
 @pytest.mark.django_db
@@ -353,7 +353,7 @@ def test_api_experimental_usermedia_abort_upload_expired(
     )
     print(response.content)
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No UserMedia matches the given query."}
 
 
 @pytest.mark.django_db

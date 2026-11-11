@@ -269,7 +269,7 @@ def test_team_member_add_api_view__when_adding_a_member__fails_because_team_does
     )
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Not found."
+    assert response.json()["detail"] == "No Team matches the given query."
 
 
 @pytest.mark.django_db
@@ -453,7 +453,7 @@ def test_team_update_fail_team_does_not_exist(
         content_type="application/json",
     )
 
-    expected_response = {"detail": "Not found."}
+    expected_response = {"detail": "No Team matches the given query."}
 
     assert response.status_code == 404
     assert response.json() == expected_response

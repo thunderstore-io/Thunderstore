@@ -20,7 +20,7 @@ def test_package_version_list_api_view__returns_error_for_inactive_package(
     )
     actual = response.json()
 
-    assert actual["detail"] == "Not found."
+    assert actual["detail"] == "No Package matches the given query."
 
 
 @pytest.mark.django_db
@@ -34,7 +34,7 @@ def test_package_version_list_api_view__does_not_return_inactive_versions(
     )
     actual = response.json()
 
-    assert actual["detail"] == "Not found."
+    assert actual["detail"] == "No Package matches the given query."
 
 
 @pytest.mark.django_db

@@ -29,4 +29,4 @@ def test_api_experimental_categories_list_not_found(
         HTTP_ACCEPT="application/json",
     )
     assert response.status_code == 404
-    assert response.json() == {"detail": "Not found."}
+    assert response.json() == {"detail": "No Community matches the given query."}
