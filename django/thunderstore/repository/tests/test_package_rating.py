@@ -11,7 +11,7 @@ from thunderstore.repository.models import Package
 from thunderstore.repository.models.package_rating import PackageRating
 from thunderstore.ts_analytics.kafka import KafkaTopic
 
-SEND_KAFKA_MESSAGE = "thunderstore.repository.models.package_rating.send_kafka_message"
+SEND_KAFKA_MESSAGE = "thunderstore.repository.tasks.likes.send_kafka_message"
 
 
 @pytest.fixture
@@ -65,8 +65,8 @@ def test_package_rating__like_sends_one_kafka_event(
         PackageRating.rate_package(user, package, "rated")
         PackageRating.rate_package(user, package, "rated")
 
-    mock_send_kafka_message.delay.assert_called_once()
-    kwargs = mock_send_kafka_message.delay.call_args.kwargs
+    mock_send_kafka_message.assert_called_once()
+    kwargs = mock_send_kafka_message.call_args.kwargs
     payload = json.loads(kwargs["payload_string"])
     assert kwargs["topic"] == KafkaTopic.A_PACKAGE_LIKE_V1
     assert payload["package_id"] == package.pk
@@ -86,8 +86,8 @@ def test_package_rating__unlike_sends_one_kafka_event(
         PackageRating.rate_package(user, package, "unrated")
         PackageRating.rate_package(user, package, "unrated")
 
-    mock_send_kafka_message.delay.assert_called_once()
-    kwargs = mock_send_kafka_message.delay.call_args.kwargs
+    mock_send_kafka_message.assert_called_once()
+    kwargs = mock_send_kafka_message.call_args.kwargs
     payload = json.loads(kwargs["payload_string"])
     assert kwargs["topic"] == KafkaTopic.A_PACKAGE_LIKE_V1
     assert payload["package_id"] == package.pk
