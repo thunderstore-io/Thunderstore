@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-from django.db.models.signals import post_save
+from django.db.models.signals import m2m_changed, post_save
 
 
 class AnalyticsAppConfig(AppConfig):
@@ -11,6 +11,7 @@ class AnalyticsAppConfig(AppConfig):
         from thunderstore.repository.models import Package, PackageVersion
         from thunderstore.ts_analytics.signals import (
             community_post_save,
+            package_listing_categories_m2m_changed,
             package_listing_post_save,
             package_post_save,
             package_version_post_save,
@@ -30,6 +31,11 @@ class AnalyticsAppConfig(AppConfig):
             receiver=package_listing_post_save,
             sender=PackageListing,
             dispatch_uid="analytics_package_listing_post_save",
+        )
+        m2m_changed.connect(
+            receiver=package_listing_categories_m2m_changed,
+            sender=PackageListing.categories.through,
+            dispatch_uid="analytics_package_listing_categories_m2m_changed",
         )
         post_save.connect(
             receiver=community_post_save,
