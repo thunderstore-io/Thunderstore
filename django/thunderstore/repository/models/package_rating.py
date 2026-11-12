@@ -43,14 +43,24 @@ class PackageRating(models.Model):
         package: "Package",
         target_state: Union[Literal["rated"], Literal["unrated"]],
     ) -> Union[Literal["rated"], Literal["unrated"]]:
+        from thunderstore.repository.tasks.likes import enqueue_package_like_event
+
         if target_state not in ("rated", "unrated"):
             raise ValidationError("Invalid target_state")
 
         ensure_can_rate_package(agent, package)
 
         if target_state == "rated":
-            PackageRating.objects.get_or_create(rater=agent, package=package)
+            _, created = PackageRating.objects.get_or_create(
+                rater=agent, package=package
+            )
+            if created:
+                enqueue_package_like_event(package.pk, "like")
             return "rated"
         else:
-            PackageRating.objects.filter(rater=agent, package=package).delete()
+            deleted, _ = PackageRating.objects.filter(
+                rater=agent, package=package
+            ).delete()
+            if deleted:
+                enqueue_package_like_event(package.pk, "unlike")
             return "unrated"

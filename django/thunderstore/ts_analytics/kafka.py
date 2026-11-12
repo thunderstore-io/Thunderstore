@@ -1,3 +1,5 @@
+import random
+import time
 from enum import Enum
 from typing import Any, Dict, Optional, Union
 
@@ -19,6 +21,7 @@ class KafkaTopic(str, Enum):
     A_PACKAGE_DOWNLOAD_V1 = "analytics.package_download.v1"
     A_LEGACY_PROFILE_EXPORT_V1 = "analytics.legacy_profile_export.v1"
     A_CSAT_SURVEY_RESPONSE_V1 = "analytics.csat_survey_response.v1"
+    A_PACKAGE_LIKE_V1 = "analytics.package_like.v1"
 
     # 'model' prefixed events are generally events that are explicitly bound to
     # models. Use Django's db table naming convention.
@@ -26,6 +29,11 @@ class KafkaTopic(str, Enum):
     M_PACKAGE_VERSION_UPDATE_V1 = "model.package_version.update.v1"
     M_PACKAGE_LISTING_UPDATE_V1 = "model.package_listing.update.v1"
     M_COMMUNITY_UPDATE_V1 = "model.community.update.v1"
+
+
+def generate_event_id() -> int:
+    """Generate a time-ordered ID that fits in a ClickHouse UInt64 column."""
+    return (int(time.time() * 1000) << 20) | random.getrandbits(20)
 
 
 def build_full_topic_name(*, topic_prefix: Optional[str], topic_name: str) -> str:

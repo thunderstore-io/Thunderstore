@@ -1,3 +1,6 @@
+import json
+from unittest.mock import patch
+
 import pytest
 from django.core.exceptions import ValidationError
 from rest_framework.exceptions import PermissionDenied
@@ -6,6 +9,15 @@ from thunderstore.account.models import ServiceAccount
 from thunderstore.core.types import UserType
 from thunderstore.repository.models import Package
 from thunderstore.repository.models.package_rating import PackageRating
+from thunderstore.ts_analytics.kafka import KafkaTopic
+
+SEND_KAFKA_MESSAGE = "thunderstore.repository.tasks.likes.send_kafka_message"
+
+
+@pytest.fixture
+def mock_send_kafka_message():
+    with patch(SEND_KAFKA_MESSAGE) as mock:
+        yield mock
 
 
 @pytest.mark.django_db
@@ -40,6 +52,46 @@ def test_package_rating__success(user: UserType, package: Package) -> None:
     assert len(PackageRating.objects.filter(rater=user, package=package)) == 0
     assert result_state == "unrated"
     assert package.rating_score == 0
+
+
+@pytest.mark.django_db
+def test_package_rating__like_sends_one_kafka_event(
+    user: UserType,
+    package: Package,
+    mock_send_kafka_message,
+    django_capture_on_commit_callbacks,
+) -> None:
+    with django_capture_on_commit_callbacks(execute=True):
+        PackageRating.rate_package(user, package, "rated")
+        PackageRating.rate_package(user, package, "rated")
+
+    mock_send_kafka_message.assert_called_once()
+    kwargs = mock_send_kafka_message.call_args.kwargs
+    payload = json.loads(kwargs["payload_string"])
+    assert kwargs["topic"] == KafkaTopic.A_PACKAGE_LIKE_V1
+    assert payload["package_id"] == package.pk
+    assert payload["action"] == "like"
+
+
+@pytest.mark.django_db
+def test_package_rating__unlike_sends_one_kafka_event(
+    user: UserType,
+    package: Package,
+    mock_send_kafka_message,
+    django_capture_on_commit_callbacks,
+) -> None:
+    PackageRating.objects.create(rater=user, package=package)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        PackageRating.rate_package(user, package, "unrated")
+        PackageRating.rate_package(user, package, "unrated")
+
+    mock_send_kafka_message.assert_called_once()
+    kwargs = mock_send_kafka_message.call_args.kwargs
+    payload = json.loads(kwargs["payload_string"])
+    assert kwargs["topic"] == KafkaTopic.A_PACKAGE_LIKE_V1
+    assert payload["package_id"] == package.pk
+    assert payload["action"] == "unlike"
 
 
 @pytest.mark.django_db
