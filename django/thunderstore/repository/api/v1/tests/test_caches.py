@@ -615,3 +615,44 @@ def test_package_listing_index__rejecting_and_approving_version_toggles_package(
     assert _get_indexed_versions(community) == {
         listing.package.full_package_name: ["1.0.0"],
     }
+
+
+def _get_legacy_versions(community: Community) -> Dict[str, List[str]]:
+    """
+    Build the legacy (non-chunked) package list cache and return the
+    community's entries as {package full name: [version numbers]}.
+    """
+    update_api_v1_caches()
+    cache = APIV1PackageCache.get_latest_for_community(community.identifier)
+    with gzip.GzipFile(fileobj=cache.data, mode="r") as f:
+        listings = json.loads(f.read())
+    return {
+        listing["full_name"]: [v["version_number"] for v in listing["versions"]]
+        for listing in listings
+    }
+
+
+@pytest.mark.django_db
+def test_legacy_package_list__only_rejected_versions_are_excluded(
+    community: Community,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved, community)
+    create_version(listing.package, "1.0.5", PackageVersionReviewStatus.rejected)
+    create_version(listing.package, "1.1.0", PackageVersionReviewStatus.unreviewed)
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+
+    assert _get_legacy_versions(community) == {
+        listing.package.full_package_name: ["1.1.0", "1.0.0"],
+    }
+
+
+@pytest.mark.django_db
+def test_legacy_package_list__package_with_only_rejected_versions_is_excluded(
+    community: Community,
+) -> None:
+    visible = create_listing("1.0.0", PackageVersionReviewStatus.approved, community)
+    create_listing("1.0.0", PackageVersionReviewStatus.rejected, community)
+
+    assert _get_legacy_versions(community) == {
+        visible.package.full_package_name: ["1.0.0"],
+    }
