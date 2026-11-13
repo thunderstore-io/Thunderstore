@@ -31,6 +31,7 @@ from thunderstore.repository.cache import (
     get_package_listing_base_queryset,
     order_package_listing_queryset,
 )
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.storage.models import DataBlob, DataBlobGroup
 from thunderstore.utils.batch import batch
 
@@ -368,6 +369,7 @@ def get_listing_json_queryset(community: Community) -> QuerySet:
 
     versions = (
         PackageVersion.objects.filter(package=OuterRef("package"), is_active=True)
+        .exclude(review_status=PackageVersionReviewStatus.rejected)
         .order_by(VersionSortKey("version_number").desc())
         .values(
             json=JSONBuildObject(
