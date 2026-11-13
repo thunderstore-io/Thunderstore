@@ -2,7 +2,7 @@ import gzip
 import json
 from datetime import datetime, timedelta, timezone
 from random import shuffle
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List
 
 import pytest
 from django.db.models import F
@@ -21,6 +21,7 @@ from thunderstore.repository.api.v1.tasks import (
     update_api_v1_chunked_package_caches,
 )
 from thunderstore.repository.api.v1.viewsets import _get_prefetched_listing_queryset
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageRatingFactory,
@@ -39,6 +40,7 @@ from thunderstore.repository.models.cache import (
     get_package_listing_ids,
     serialize_listing_chunk,
 )
+from thunderstore.repository.tests.utils import create_listing, create_version
 
 
 @pytest.mark.django_db
@@ -544,3 +546,72 @@ def test_get_prefetched_listing_queryset__prefetches_versions_and_dependencies()
     assert len(ctx.captured_queries) == 0
     assert versions[0].is_active is True
     assert dependency_owner == dependency.package.owner.name
+
+
+def _get_indexed_versions(community: Community) -> Dict[str, List[str]]:
+    """
+    Build the community's chunked package listing index and return it as
+    {package full name: [version numbers]}.
+    """
+    APIV1ChunkedPackageCache.update_for_community(community)
+    cache = APIV1ChunkedPackageCache.get_latest_for_community(community)
+    return {
+        listing["full_name"]: [v["version_number"] for v in listing["versions"]]
+        for entry in cache.chunks.entries.all()
+        for listing in APIV1ChunkedPackageCache.get_blob_content(entry.blob)
+    }
+
+
+@pytest.mark.django_db
+def test_package_listing_index__only_rejected_versions_are_excluded(
+    community: Community,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved, community)
+    create_version(listing.package, "1.0.5", PackageVersionReviewStatus.rejected)
+    create_version(listing.package, "1.1.0", PackageVersionReviewStatus.unreviewed)
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+
+    assert _get_indexed_versions(community) == {
+        listing.package.full_package_name: ["1.1.0", "1.0.0"],
+    }
+
+
+@pytest.mark.django_db
+def test_package_listing_index__package_with_only_rejected_versions_is_excluded(
+    community: Community,
+) -> None:
+    visible = create_listing("1.0.0", PackageVersionReviewStatus.approved, community)
+    hidden = create_listing("1.0.0", PackageVersionReviewStatus.rejected, community)
+    create_version(hidden.package, "2.0.0", PackageVersionReviewStatus.rejected)
+
+    assert _get_indexed_versions(community) == {
+        visible.package.full_package_name: ["1.0.0"],
+    }
+
+
+@pytest.mark.django_db
+def test_package_listing_index__package_with_only_inactive_or_rejected_versions_is_excluded(
+    community: Community,
+) -> None:
+    listing = create_listing(
+        "1.0.0", PackageVersionReviewStatus.approved, community, is_active=False
+    )
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+
+    assert _get_indexed_versions(community) == {}
+
+
+@pytest.mark.django_db
+def test_package_listing_index__rejecting_and_approving_version_toggles_package(
+    community: Community,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved, community)
+    version = listing.package.versions.get()
+
+    version.reject(agent=None, is_system=True)
+    assert _get_indexed_versions(community) == {}
+
+    version.approve(agent=None, is_system=True)
+    assert _get_indexed_versions(community) == {
+        listing.package.full_package_name: ["1.0.0"],
+    }
