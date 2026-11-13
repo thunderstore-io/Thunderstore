@@ -691,3 +691,67 @@ def test_package_listing_index__rejecting_last_visible_version_hides_package(
     version.approve(agent=None, is_system=True)
     assert _listed_ids(community) == [listing.id]
     assert list(_get_indexed_listings(community)) == [listing.package.full_package_name]
+
+
+def _get_legacy_listings(community: Community) -> Dict[str, Dict[str, Any]]:
+    """
+    Build the legacy (non-chunked) package list cache and return its
+    listings for the community, keyed by full package name.
+    """
+    update_api_v1_caches()
+    cache = APIV1PackageCache.get_latest_for_community(community.identifier)
+    assert cache is not None
+    with gzip.GzipFile(fileobj=cache.data, mode="r") as f:
+        listings = json.loads(f.read())
+    return {listing["full_name"]: listing for listing in listings}
+
+
+@pytest.mark.django_db
+def test_legacy_package_list__rejected_versions_are_excluded_from_versions(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(
+        community_=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "review_status": PackageVersionReviewStatus.approved,
+        },
+    )
+    package = listing.package
+    PackageVersionFactory(
+        package=package,
+        version_number="1.1.0",
+        review_status=PackageVersionReviewStatus.unreviewed,
+    )
+    PackageVersionFactory(
+        package=package,
+        version_number="1.0.5",
+        review_status=PackageVersionReviewStatus.rejected,
+    )
+    PackageVersionFactory(
+        package=package,
+        version_number="2.0.0",
+        review_status=PackageVersionReviewStatus.rejected,
+    )
+
+    listings = _get_legacy_listings(community)
+
+    assert list(listings) == [package.full_package_name]
+    assert [
+        v["version_number"] for v in listings[package.full_package_name]["versions"]
+    ] == ["1.1.0", "1.0.0"]
+
+
+@pytest.mark.django_db
+def test_legacy_package_list__package_with_only_rejected_versions_is_excluded(
+    community: Community,
+) -> None:
+    visible = PackageListingFactory(community_=community)
+    PackageListingFactory(
+        community_=community,
+        package_version_kwargs={
+            "review_status": PackageVersionReviewStatus.rejected,
+        },
+    )
+
+    assert list(_get_legacy_listings(community)) == [visible.package.full_package_name]

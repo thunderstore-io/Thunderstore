@@ -2,6 +2,7 @@ from rest_framework.fields import Field
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from thunderstore.community.models import PackageListing
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import PackageVersion
 from thunderstore.repository.version import Version
 
@@ -73,7 +74,12 @@ class PackageListingSerializer(ModelSerializer):
 
     def get_versions(self, instance):
         versions = sorted(
-            [v for v in instance.package.versions.all() if v.is_active],
+            [
+                v
+                for v in instance.package.versions.all()
+                if v.is_active
+                and v.review_status != PackageVersionReviewStatus.rejected
+            ],
             key=lambda v: Version(v.version_number),
             reverse=True,
         )
