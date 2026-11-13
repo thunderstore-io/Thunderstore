@@ -34,7 +34,10 @@ class ReadmeValidatorApiView(APIView):
         serializer = self.params_serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        validate_markdown(serializer.validated_data["readme_data"])
+        validate_markdown(
+            filename="README.md",
+            readme_data=serializer.validated_data["readme_data"],
+        )
 
         return Response(
             self.response_serializer_class(
