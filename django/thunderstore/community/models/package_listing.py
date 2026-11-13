@@ -106,6 +106,33 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
     has_nsfw_content = models.BooleanField(default=False)
     is_auto_imported = models.BooleanField(default=False)
 
+    # AI disclosure fields. These provide authors the opportunity to describe
+    # how they have used AI during the creation of their package.
+    uses_ai = models.BooleanField(
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name="Uses AI",
+    )
+    is_ai_generated = models.BooleanField(
+        default=False,
+        verbose_name="AI-Generated",
+    )
+    is_ai_assisted = models.BooleanField(
+        default=False,
+        verbose_name="AI-Assisted",
+    )
+    has_ai_generated_art = models.BooleanField(
+        default=False,
+        verbose_name="AI-Generated art",
+    )
+    has_ai_generated_text = models.BooleanField(
+        default=False,
+        verbose_name="AI-Generated text",
+    )
+    # Moderator toggle to disable the user's ability to assign their own disclosure values.
+    is_ai_disclosure_locked = models.BooleanField(default=False)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
