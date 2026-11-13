@@ -19,6 +19,7 @@ from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.permissions.mixins import VisibilityMixin
 from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.webhooks.audit import (
     AuditAction,
     AuditEvent,
@@ -51,6 +52,15 @@ class PackageListingQueryset(VisibilityFlagsQuerySet):
             Q(community__require_package_listing_approval=True)
             & ~Q(review_status=PackageListingReviewStatus.approved),
         )
+
+    def filter_with_non_rejected_versions(self):
+        from thunderstore.repository.models import PackageVersion
+
+        has_non_rejected_versions = PackageVersion.objects.filter(
+            package_id=OuterRef("package_id"),
+            is_active=True,
+        ).exclude(review_status=PackageVersionReviewStatus.rejected)
+        return self.filter(Exists(has_non_rejected_versions))
 
     def filter_with_single_community(self):
         """

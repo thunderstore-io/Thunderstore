@@ -21,6 +21,7 @@ from thunderstore.repository.api.v1.tasks import (
     update_api_v1_chunked_package_caches,
 )
 from thunderstore.repository.api.v1.viewsets import _get_prefetched_listing_queryset
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageRatingFactory,
@@ -544,3 +545,149 @@ def test_get_prefetched_listing_queryset__prefetches_versions_and_dependencies()
     assert len(ctx.captured_queries) == 0
     assert versions[0].is_active is True
     assert dependency_owner == dependency.package.owner.name
+
+
+def _get_indexed_listings(community: Community) -> Dict[str, Dict[str, Any]]:
+    """
+    Build the community's chunked package listing index and return the
+    listings found in its chunks, keyed by full package name.
+    """
+    APIV1ChunkedPackageCache.update_for_community(community)
+    cache = APIV1ChunkedPackageCache.get_latest_for_community(community)
+    assert cache is not None
+    listings = [
+        listing
+        for entry in cache.chunks.entries.all()
+        for listing in APIV1ChunkedPackageCache.get_blob_content(entry.blob)
+    ]
+    return {listing["full_name"]: listing for listing in listings}
+
+
+def _listed_ids(community: Community) -> list:
+    return [id_ for chunk in get_package_listing_ids(community) for id_ in chunk]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "review_status",
+    (PackageVersionReviewStatus.unreviewed, PackageVersionReviewStatus.approved),
+)
+def test_package_listing_index__non_rejected_versions_are_included(
+    community: Community,
+    review_status: PackageVersionReviewStatus,
+) -> None:
+    listing = PackageListingFactory(
+        community_=community,
+        package_version_kwargs={"review_status": review_status},
+    )
+    version = listing.package.versions.get()
+
+    assert _listed_ids(community) == [listing.id]
+    indexed = _get_indexed_listings(community)
+    assert list(indexed) == [listing.package.full_package_name]
+    assert [
+        v["full_name"] for v in indexed[listing.package.full_package_name]["versions"]
+    ] == [version.full_version_name]
+
+
+@pytest.mark.django_db
+def test_package_listing_index__rejected_versions_are_excluded_from_versions(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(
+        community_=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "review_status": PackageVersionReviewStatus.approved,
+        },
+    )
+    package = listing.package
+    PackageVersionFactory(
+        package=package,
+        version_number="1.1.0",
+        review_status=PackageVersionReviewStatus.unreviewed,
+    )
+    # Rejected versions both newer and between the visible ones.
+    PackageVersionFactory(
+        package=package,
+        version_number="1.0.5",
+        review_status=PackageVersionReviewStatus.rejected,
+    )
+    PackageVersionFactory(
+        package=package,
+        version_number="2.0.0",
+        review_status=PackageVersionReviewStatus.rejected,
+    )
+
+    indexed = _get_indexed_listings(community)
+
+    assert list(indexed) == [package.full_package_name]
+    assert [
+        v["version_number"] for v in indexed[package.full_package_name]["versions"]
+    ] == ["1.1.0", "1.0.0"]
+
+
+@pytest.mark.django_db
+def test_package_listing_index__package_with_only_rejected_versions_is_excluded(
+    community: Community,
+) -> None:
+    visible = PackageListingFactory(community_=community)
+    hidden = PackageListingFactory(
+        community_=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "review_status": PackageVersionReviewStatus.rejected,
+        },
+    )
+    PackageVersionFactory(
+        package=hidden.package,
+        version_number="2.0.0",
+        review_status=PackageVersionReviewStatus.rejected,
+    )
+
+    assert _listed_ids(community) == [visible.id]
+    assert list(_get_indexed_listings(community)) == [visible.package.full_package_name]
+
+
+@pytest.mark.django_db
+def test_package_listing_index__package_whose_non_rejected_versions_are_inactive_is_excluded(
+    community: Community,
+) -> None:
+    """
+    The only active version is rejected and the only non-rejected version is
+    inactive, so the package has no version that may be shown.
+    """
+    listing = PackageListingFactory(
+        community_=community,
+        package_version_kwargs={
+            "version_number": "1.0.0",
+            "review_status": PackageVersionReviewStatus.approved,
+            "is_active": False,
+        },
+    )
+    PackageVersionFactory(
+        package=listing.package,
+        version_number="2.0.0",
+        review_status=PackageVersionReviewStatus.rejected,
+        is_active=True,
+    )
+
+    assert _listed_ids(community) == []
+    assert _get_indexed_listings(community) == {}
+
+
+@pytest.mark.django_db
+def test_package_listing_index__rejecting_last_visible_version_hides_package(
+    community: Community,
+) -> None:
+    listing = PackageListingFactory(community_=community)
+    version = listing.package.versions.get()
+    assert _listed_ids(community) == [listing.id]
+
+    version.reject(agent=None, is_system=True)
+    assert _listed_ids(community) == []
+    assert _get_indexed_listings(community) == {}
+
+    version.approve(agent=None, is_system=True)
+    assert _listed_ids(community) == [listing.id]
+    assert list(_get_indexed_listings(community)) == [listing.package.full_package_name]
