@@ -1,3 +1,4 @@
+from typing import Optional
 from unittest.mock import PropertyMock, patch
 
 import pytest
@@ -13,6 +14,7 @@ from thunderstore.community.factories import (
     PackageVersionFactory,
 )
 from thunderstore.community.models import (
+    AIDisclosure,
     Community,
     CommunityAggregatedFields,
     CommunityMemberRole,
@@ -742,3 +744,235 @@ def test_package_listing_reject_skips_notes_if_none():
 
     listing.refresh_from_db()
     assert listing.notes == original_notes
+
+
+@pytest.mark.parametrize(
+    "type_field",
+    (
+        "is_ai_generated",
+        "is_ai_assisted",
+        "has_ai_generated_art",
+        "has_ai_generated_text",
+    ),
+)
+@pytest.mark.parametrize(
+    ("uses_ai", "has_type", "expected_error"),
+    (
+        (None, False, None),
+        (False, False, None),
+        (True, True, None),
+        (True, False, "At least one type of AI usage must be selected"),
+        (None, True, "Types of AI usage can only be selected when AI was used"),
+        (False, True, "Types of AI usage can only be selected when AI was used"),
+    ),
+)
+def test_ai_disclosure_validate(
+    type_field: str,
+    uses_ai: Optional[bool],
+    has_type: bool,
+    expected_error: Optional[str],
+) -> None:
+    disclosure = AIDisclosure(uses_ai=uses_ai, **{type_field: has_type})
+    if expected_error:
+        with pytest.raises(ValidationError, match=expected_error):
+            disclosure.validate()
+    else:
+        disclosure.validate()
+
+
+@pytest.mark.django_db
+def test_package_listing_ai_disclosure_defaults(
+    active_package_listing: PackageListing,
+) -> None:
+    assert active_package_listing.ai_disclosure == AIDisclosure()
+    assert active_package_listing.ai_disclosure.uses_ai is None
+    assert active_package_listing.is_ai_disclosure_locked is False
+
+
+@pytest.mark.django_db
+def test_package_listing_ai_disclosure_roundtrip(
+    active_package_listing: PackageListing,
+) -> None:
+    disclosure = AIDisclosure(
+        uses_ai=True,
+        is_ai_assisted=True,
+        has_ai_generated_art=True,
+    )
+    active_package_listing.ai_disclosure = disclosure
+    active_package_listing.save()
+
+    listing = PackageListing.objects.get(pk=active_package_listing.pk)
+    assert listing.ai_disclosure == disclosure
+    assert listing.uses_ai is True
+    assert listing.is_ai_generated is False
+    assert listing.is_ai_assisted is True
+    assert listing.has_ai_generated_art is True
+    assert listing.has_ai_generated_text is False
+
+
+@pytest.mark.django_db
+def test_package_listing_save_validates_ai_disclosure(
+    active_package_listing: PackageListing,
+) -> None:
+    active_package_listing.is_ai_generated = True
+    with pytest.raises(ValidationError, match="Types of AI usage can only be"):
+        active_package_listing.save()
+
+    active_package_listing.uses_ai = True
+    active_package_listing.save()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("is_locked", (False, True))
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
+def test_package_listing_ensure_update_ai_disclosure_permission(
+    active_package_listing: PackageListing,
+    is_locked: bool,
+    user_type: str,
+    community_role: str,
+    team_role: str,
+):
+    listing = active_package_listing
+    listing.is_ai_disclosure_locked = is_locked
+    listing.save()
+    user = TestUserTypes.get_user_by_type(user_type)
+
+    if community_role is not None and user_type not in TestUserTypes.fake_users():
+        CommunityMembership.objects.create(
+            user=user,
+            community=listing.community,
+            role=community_role,
+        )
+    if team_role is not None and user_type not in TestUserTypes.fake_users():
+        TeamMember.objects.create(
+            user=user,
+            team=listing.package.owner,
+            role=team_role,
+        )
+
+    result = listing.check_update_ai_disclosure_permission(user)
+    errors = []
+    try:
+        listing.ensure_update_ai_disclosure_permission(user)
+    except ValidationError as e:
+        errors = e.messages
+
+    is_moderator = community_role in (
+        CommunityMemberRole.owner,
+        CommunityMemberRole.moderator,
+    )
+    if is_moderator:
+        regular_user_error = None
+    elif team_role is None:
+        regular_user_error = "Must have listing management permission"
+    elif is_locked:
+        regular_user_error = "AI disclosure has been locked by a moderator"
+    else:
+        regular_user_error = None
+
+    error_map = {
+        TestUserTypes.no_user: "Must be authenticated",
+        TestUserTypes.unauthenticated: "Must be authenticated",
+        TestUserTypes.regular_user: regular_user_error,
+        TestUserTypes.deactivated_user: "User has been deactivated",
+        TestUserTypes.service_account: "Service accounts are unable to perform this action",
+        TestUserTypes.site_admin: None,
+        TestUserTypes.superuser: None,
+    }
+    expected_error = error_map[user_type]
+
+    if expected_error:
+        assert result is False
+        assert errors == [expected_error]
+    else:
+        assert result is True
+        assert not errors
+
+
+@pytest.mark.django_db
+def test_package_listing_update_ai_disclosure(
+    active_package_listing: PackageListing,
+    team_owner: TeamMember,
+) -> None:
+    disclosure = AIDisclosure(uses_ai=True, has_ai_generated_text=True)
+    active_package_listing.update_ai_disclosure(
+        agent=team_owner.user,
+        disclosure=disclosure,
+    )
+    listing = PackageListing.objects.get(pk=active_package_listing.pk)
+    assert listing.ai_disclosure == disclosure
+
+    no_ai = AIDisclosure(uses_ai=False)
+    active_package_listing.update_ai_disclosure(agent=team_owner.user, disclosure=no_ai)
+    listing = PackageListing.objects.get(pk=active_package_listing.pk)
+    assert listing.ai_disclosure == no_ai
+
+
+@pytest.mark.django_db
+def test_package_listing_update_ai_disclosure_rejects_invalid(
+    active_package_listing: PackageListing,
+    team_owner: TeamMember,
+) -> None:
+    with pytest.raises(ValidationError, match="At least one type of AI usage"):
+        active_package_listing.update_ai_disclosure(
+            agent=team_owner.user,
+            disclosure=AIDisclosure(uses_ai=True),
+        )
+    listing = PackageListing.objects.get(pk=active_package_listing.pk)
+    assert listing.ai_disclosure == AIDisclosure()
+
+
+@pytest.mark.django_db
+def test_package_listing_update_ai_disclosure_respects_lock(
+    active_package_listing: PackageListing,
+    team_owner: TeamMember,
+) -> None:
+    moderator = UserFactory()
+    CommunityMembership.objects.create(
+        user=moderator,
+        community=active_package_listing.community,
+        role=CommunityMemberRole.moderator,
+    )
+    moderated = AIDisclosure(uses_ai=True, is_ai_generated=True)
+    active_package_listing.update_ai_disclosure(agent=moderator, disclosure=moderated)
+    active_package_listing.set_ai_disclosure_lock(agent=moderator, is_locked=True)
+
+    with pytest.raises(
+        ValidationError,
+        match="AI disclosure has been locked by a moderator",
+    ):
+        active_package_listing.update_ai_disclosure(
+            agent=team_owner.user,
+            disclosure=AIDisclosure(uses_ai=False),
+        )
+    listing = PackageListing.objects.get(pk=active_package_listing.pk)
+    assert listing.ai_disclosure == moderated
+    assert listing.is_ai_disclosure_locked is True
+
+    active_package_listing.set_ai_disclosure_lock(agent=moderator, is_locked=False)
+    active_package_listing.update_ai_disclosure(
+        agent=team_owner.user,
+        disclosure=AIDisclosure(uses_ai=False),
+    )
+    listing = PackageListing.objects.get(pk=active_package_listing.pk)
+    assert listing.ai_disclosure == AIDisclosure(uses_ai=False)
+    assert listing.is_ai_disclosure_locked is False
+
+
+@pytest.mark.django_db
+def test_package_listing_set_ai_disclosure_lock_requires_moderator(
+    active_package_listing: PackageListing,
+    team_owner: TeamMember,
+) -> None:
+    with pytest.raises(
+        ValidationError,
+        match="Must be a moderator or higher to manage packages",
+    ):
+        active_package_listing.set_ai_disclosure_lock(
+            agent=team_owner.user,
+            is_locked=True,
+        )
+    listing = PackageListing.objects.get(pk=active_package_listing.pk)
+    assert listing.is_ai_disclosure_locked is False
