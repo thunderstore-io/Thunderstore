@@ -1,3 +1,4 @@
+from dataclasses import asdict, dataclass, fields
 from typing import TYPE_CHECKING, List, Optional
 
 from django.conf import settings
@@ -60,6 +61,30 @@ class PackageListingQueryset(VisibilityFlagsQuerySet):
         return self.annotate(
             community_count=models.Count("package__community_listings", distinct=True)
         ).exclude(~Q(community_count=1))
+
+
+@dataclass(frozen=True)
+class AIDisclosure:
+    # For API compat we include a "None" uses_ai state which denotes no disclosure (TCLI et al.)
+    # TODO: Remove this and make disclosure mandatory.
+    uses_ai: Optional[bool] = None
+    is_ai_generated: bool = False
+    is_ai_assisted: bool = False
+    has_ai_generated_art: bool = False
+    has_ai_generated_text: bool = False
+
+    def validate(self) -> None:
+        has_types = any(
+            value for name, value in asdict(self).items() if name != "uses_ai"
+        )
+        if self.uses_ai and not has_types:
+            raise ValidationError(
+                "At least one type of AI usage must be selected when AI was used"
+            )
+        if has_types and not self.uses_ai:
+            raise ValidationError(
+                "Types of AI usage can only be selected when AI was used"
+            )
 
 
 # TODO: Add a db constraint that ensures a package listing and it's categories
@@ -141,6 +166,7 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         ]
 
     def validate(self):
+        self.ai_disclosure.validate()
         if self.pk:
             if PackageListing.objects.get(pk=self.pk).community != self.community:
                 raise ValidationError("PackageListing.community is read only")
@@ -364,6 +390,29 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         self.categories.set(categories)
 
     @property
+    def ai_disclosure(self) -> AIDisclosure:
+        return AIDisclosure(
+            **{field.name: getattr(self, field.name) for field in fields(AIDisclosure)}
+        )
+
+    @ai_disclosure.setter
+    def ai_disclosure(self, disclosure: AIDisclosure) -> None:
+        for name, value in asdict(disclosure).items():
+            setattr(self, name, value)
+
+    @transaction.atomic
+    def update_ai_disclosure(self, agent: UserType, disclosure: AIDisclosure) -> None:
+        self.ensure_update_ai_disclosure_permission(agent)
+        self.ai_disclosure = disclosure
+        self.save(update_fields=[field.name for field in fields(AIDisclosure)])
+
+    @transaction.atomic
+    def set_ai_disclosure_lock(self, agent: UserType, is_locked: bool) -> None:
+        self.community.ensure_user_can_moderate_packages(agent)
+        self.is_ai_disclosure_locked = is_locked
+        self.save(update_fields=("is_ai_disclosure_locked",))
+
+    @property
     def is_unavailable(self):
         return self.is_rejected or self.is_waiting_for_approval
 
@@ -392,6 +441,20 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
 
     def check_update_categories_permission(self, user: Optional[UserType]) -> bool:
         return check_validity(lambda: self.ensure_update_categories_permission(user))
+
+    def ensure_update_ai_disclosure_permission(self, user: Optional[UserType]) -> None:
+        user = validate_user(user)
+        if self.can_be_moderated_by_user(user):
+            return
+        if not self.package.owner.can_user_manage_packages(user):
+            raise PermissionValidationError("Must have listing management permission")
+        if self.is_ai_disclosure_locked:
+            raise PermissionValidationError(
+                "AI disclosure has been locked by a moderator"
+            )
+
+    def check_update_ai_disclosure_permission(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_update_ai_disclosure_permission(user))
 
     def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
         return self.can_be_moderated_by_user(user)
