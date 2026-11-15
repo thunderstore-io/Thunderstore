@@ -21,7 +21,10 @@ from thunderstore.core.utils import check_validity
 from thunderstore.permissions.mixins import VisibilityMixin
 from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
-from thunderstore.repository.consts import PACKAGE_NAME_REGEX
+from thunderstore.repository.consts import (
+    PACKAGE_NAME_REGEX,
+    PackageVersionReviewStatus,
+)
 from thunderstore.repository.version import Version
 
 if TYPE_CHECKING:
@@ -37,6 +40,15 @@ class PackageQueryset(VisibilityFlagsQuerySet):
             is_active=True,
         )
         return self.exclude(is_active=False).filter(Exists(has_active_versions))
+
+    def with_non_rejected_versions(self):
+        from thunderstore.repository.models import PackageVersion
+
+        has_non_rejected_versions = PackageVersion.objects.filter(
+            package=OuterRef("pk"),
+            is_active=True,
+        ).exclude(review_status=PackageVersionReviewStatus.rejected)
+        return self.exclude(is_active=False).filter(Exists(has_non_rejected_versions))
 
 
 def get_package_dependants(package_pk: int):

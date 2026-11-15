@@ -37,6 +37,7 @@ class PackageVersionDetailMixin(ManualCacheCommunityMixin, RetrieveAPIView):
     def get_queryset(self):
         return (
             PackageVersion.objects.active()
+            .exclude_rejected()
             .select_related(
                 "package",
                 "package__owner",

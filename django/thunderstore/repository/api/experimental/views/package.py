@@ -16,6 +16,7 @@ from thunderstore.repository.package_reference import PackageReference
 def get_package_queryset() -> "QuerySet[Package]":
     return (
         Package.objects.active()
+        .with_non_rejected_versions()
         .select_related(
             "owner",
             "latest",
