@@ -198,8 +198,10 @@ class Package(VisibilityMixin, AdminLinkMixin):
     @cached_property
     def available_versions(self):
         # TODO: Caching
-        versions = self.versions.filter(is_active=True).values_list(
-            "pk", "version_number"
+        versions = (
+            self.versions.filter(is_active=True)
+            .exclude(review_status=PackageVersionReviewStatus.rejected)
+            .values_list("pk", "version_number")
         )
         ordered = sorted(versions, key=lambda version: Version(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
