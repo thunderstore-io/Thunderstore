@@ -88,6 +88,7 @@ class CommunityPackageListApiView(APIView):
 
         return (
             Package.objects.active()
+            .with_non_rejected_versions()
             .filter(
                 community_listings__community__pk=community.pk,
                 community_listings__review_status__in=review_statuses,

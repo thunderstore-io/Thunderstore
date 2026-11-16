@@ -24,7 +24,7 @@ class PackageMetricsApiView(APIView):
     )
     def get(self, request: Request, namespace: str, name: str):
         obj = get_object_or_404(
-            Package.objects.active(),
+            Package.objects.active().with_non_rejected_versions(),
             namespace__name=namespace,
             name=name,
         )
@@ -45,7 +45,7 @@ class PackageVersionMetricsApiView(APIView):
     )
     def get(self, request: Request, namespace: str, name: str, version: str):
         obj = get_object_or_404(
-            PackageVersion.objects.active(),
+            PackageVersion.objects.active().exclude_rejected(),
             package__is_active=True,
             package__namespace__name=namespace,
             name=name,

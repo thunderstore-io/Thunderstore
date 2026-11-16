@@ -59,6 +59,7 @@ class PackageDetailApiView(APIView):
         """
         return (
             PackageListing.objects.active()
+            .filter_with_non_rejected_versions()
             .select_related(
                 "package",
                 "package__latest",
