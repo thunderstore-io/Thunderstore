@@ -9,8 +9,10 @@ from rest_framework.test import APIClient
 from thunderstore.repository.api.experimental.views.package_index import (
     PackageIndexEntry,
     get_package_index_queryset,
+    serialize_package_index,
     update_api_experimental_package_index,
 )
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import (
     PackageFactory,
     PackageVersionFactory,
@@ -105,3 +107,33 @@ def test_update_api_experimental_package_index_query_count():
     with CaptureQueriesContext(connection) as context:
         update_api_experimental_package_index()
     assert len(context) < 8
+
+
+@pytest.mark.django_db
+def test_serialize_package_index__rejected_versions_are_excluded():
+    approved = PackageVersionFactory(
+        version_number="1.0.0",
+        review_status=PackageVersionReviewStatus.approved,
+    )
+    package = approved.package
+    unreviewed = PackageVersionFactory(
+        package=package,
+        name=package.name,
+        version_number="1.1.0",
+        review_status=PackageVersionReviewStatus.unreviewed,
+    )
+    PackageVersionFactory(
+        package=package,
+        name=package.name,
+        version_number="2.0.0",
+        review_status=PackageVersionReviewStatus.rejected,
+    )
+    # A package whose only version is rejected must not appear at all.
+    PackageVersionFactory(review_status=PackageVersionReviewStatus.rejected)
+
+    entries = [json.loads(x) for x in serialize_package_index().splitlines() if x]
+
+    assert sorted((e["name"], e["version_number"]) for e in entries) == [
+        (package.name, approved.version_number),
+        (package.name, unreviewed.version_number),
+    ]
