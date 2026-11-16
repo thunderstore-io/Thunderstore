@@ -12,6 +12,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
 from sentry_sdk import capture_exception
 
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import (
     APIExperimentalPackageIndexCache,
     PackageVersion,
@@ -63,9 +64,15 @@ def get_package_index_queryset() -> PackageVersionQuerySet:
         )
         .values("_full_name")[:MAX_PACKAGE_DEPENDENCIES]
     )
-    return PackageVersion.objects.active().annotate(
-        namespace=F("package__namespace"),
-        _dependency_names=Subquery(dependency_names, template="ARRAY(%(subquery)s)"),
+    return (
+        PackageVersion.objects.active()
+        .exclude(review_status=PackageVersionReviewStatus.rejected)
+        .annotate(
+            namespace=F("package__namespace"),
+            _dependency_names=Subquery(
+                dependency_names, template="ARRAY(%(subquery)s)"
+            ),
+        )
     )
 
 

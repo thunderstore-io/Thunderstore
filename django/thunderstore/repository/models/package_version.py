@@ -50,6 +50,11 @@ class PackageVersionQuerySet(VisibilityQuerySet):
     def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
         return self.exclude(is_active=False)
 
+    def exclude_rejected(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
+        return self.exclude(is_active=False).exclude(
+            review_status=PackageVersionReviewStatus.rejected
+        )
+
     def chunked_enumerate(self, chunk_size=1000) -> Iterator["PackageVersion"]:
         """
         Enumerate over all the results without fetching everything at once.

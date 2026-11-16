@@ -405,7 +405,9 @@ class CommunityAggregatedFields(TimestampMixin, models.Model):
         Assumes the CommunityAggregatedFields objects has been created
         previously, e.g. by calling .create_missing()
         """
-        listings = community.package_listings.active()
+        listings = (
+            community.package_listings.active().filter_with_non_rejected_versions()
+        )
 
         if community.require_package_listing_approval:
             listings = listings.approved()
