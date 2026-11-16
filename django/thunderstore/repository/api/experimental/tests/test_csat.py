@@ -17,7 +17,6 @@ VIEWS_MODULE = "thunderstore.repository.api.experimental.views.csat"
 VALID_SUBMISSION = {
     "score": 4,
     "comment": "Profiles are great, updates are slow. I see it in my sleep.",
-    "install_id": "3f2c9a8e-6d41-4c2b-9f0e-1a7b5c3d2e10",
     "app_version": "1.126.0",
 }
 
@@ -30,14 +29,8 @@ def submission_without(field: str) -> Dict[str, Any]:
     return {k: v for k, v in VALID_SUBMISSION.items() if k != field}
 
 
-def get_status(
-    client: APIClient,
-    install_id: str = VALID_SUBMISSION["install_id"],
-) -> Response:
-    return client.get(
-        reverse("api:experimental:csat.status"),
-        data={"install_id": install_id},
-    )
+def get_status(client: APIClient) -> Response:
+    return client.get(reverse("api:experimental:csat.status"))
 
 
 def submit(client: APIClient, data: Dict[str, Any]) -> Response:
@@ -61,38 +54,14 @@ def mock_send_kafka_message():
 
 
 @pytest.mark.django_db
-def test_experimental_api_csat_status_requires_install_id(
-    api_client: APIClient,
-    csat_enabled,
-) -> None:
-    missing = api_client.get(reverse("api:experimental:csat.status"))
-    assert missing.status_code == 400
-    assert "install_id" in missing.json()
-
-    invalid = get_status(api_client, install_id="not-a-uuid")
-    assert invalid.status_code == 400
-    assert "install_id" in invalid.json()
-
-
-@pytest.mark.django_db
 def test_experimental_api_csat_status_disabled(
     api_client: APIClient,
     settings,
 ) -> None:
     settings.CSAT_SURVEY_ENABLED = False
-    disabled = {"enabled": False, "eligible": False}
-
     response = get_status(api_client)
     assert response.status_code == 200
-    assert response.json() == disabled
-
-    missing = api_client.get(reverse("api:experimental:csat.status"))
-    assert missing.status_code == 200
-    assert missing.json() == disabled
-
-    invalid = get_status(api_client, install_id="not-a-uuid")
-    assert invalid.status_code == 200
-    assert invalid.json() == disabled
+    assert response.json() == {"enabled": False, "eligible": False}
 
 
 @pytest.mark.django_db
@@ -175,14 +144,12 @@ def test_experimental_api_csat_submit_sends_kafka_event(
         "timestamp",
         "score",
         "comment",
-        "install_id",
         "app_version",
     }
     uuid.UUID(payload["id"])
     assert before <= datetime.fromisoformat(payload["timestamp"]) <= after
     assert payload["score"] == VALID_SUBMISSION["score"]
     assert payload["comment"] == VALID_SUBMISSION["comment"]
-    assert payload["install_id"] == VALID_SUBMISSION["install_id"]
     assert payload["app_version"] == VALID_SUBMISSION["app_version"]
 
 
@@ -235,10 +202,15 @@ def test_experimental_api_csat_submit_ignores_unknown_fields(
     csat_enabled,
     mock_send_kafka_message,
 ) -> None:
-    response = submit(api_client, submission(platform="windows"))
+    response = submit(
+        api_client,
+        submission(platform="windows", install_id=str(uuid.uuid4())),
+    )
     assert response.status_code == 200
     payload_string = mock_send_kafka_message.delay.call_args.kwargs["payload_string"]
-    assert "platform" not in json.loads(payload_string)
+    payload = json.loads(payload_string)
+    assert "platform" not in payload
+    assert "install_id" not in payload
 
 
 @pytest.mark.django_db
@@ -250,13 +222,6 @@ def test_experimental_api_csat_submit_ignores_unknown_fields(
         pytest.param(submission(score="great"), "score", id="score-not-integer"),
         pytest.param(submission_without("score"), "score", id="score-missing"),
         pytest.param(submission(comment="a" * 5001), "comment", id="comment-too-long"),
-        pytest.param(
-            submission(install_id="not-a-uuid"), "install_id", id="install-id-invalid"
-        ),
-        pytest.param(submission(install_id=None), "install_id", id="install-id-null"),
-        pytest.param(
-            submission_without("install_id"), "install_id", id="install-id-missing"
-        ),
         pytest.param(
             submission(app_version="1" * 65),
             "app_version",

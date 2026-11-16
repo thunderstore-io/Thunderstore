@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 
 from thunderstore.repository.api.experimental.serializers import (
     AnalyticsEventCsatSurveyResponse,
-    CsatStatusQuerySerializer,
     CsatStatusResponseSerializer,
     CsatSubmitRequestSerializer,
 )
@@ -38,10 +37,6 @@ class CsatStatusApiView(APIView):
                     instance={"enabled": False, "eligible": False}
                 ).data
             )
-
-        serializer = CsatStatusQuerySerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-        # The id is validated and then ignored. This view does not use the value.
 
         # CSAT surveys are only shown after (a) client conditions are correct
         # and (b) after some random dice roll. This is mainly just to control
@@ -76,7 +71,6 @@ class CsatSubmitApiView(APIView):
             timestamp=timezone.now(),
             score=data["score"],
             comment=data.get("comment") or "",
-            install_id=data["install_id"],
             app_version=data["app_version"],
         )
         send_kafka_message.delay(
