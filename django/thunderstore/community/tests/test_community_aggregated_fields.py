@@ -4,7 +4,9 @@ from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import CommunityFactory, PackageListingFactory
 from thunderstore.community.models import Community, CommunityAggregatedFields
 from thunderstore.community.tasks import update_community_aggregated_fields
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import PackageVersionFactory
+from thunderstore.repository.tests.utils import create_listing
 
 
 @pytest.mark.django_db
@@ -211,6 +213,20 @@ def test_community_aggregated_fields__update_for_community__skips_unapproved_pac
     CommunityAggregatedFields.update_for_community(community)
 
     assert community.aggregated.package_count == 2
+
+
+@pytest.mark.django_db
+def test_community_aggregated_fields__update_for_community__skips_packages_with_only_rejected_versions():
+    community = CommunityFactory(
+        aggregated_fields=CommunityAggregatedFields.objects.create(),
+    )
+    create_listing("1.0.0", PackageVersionReviewStatus.approved, community, downloads=3)
+    create_listing("1.0.0", PackageVersionReviewStatus.rejected, community, downloads=5)
+
+    CommunityAggregatedFields.update_for_community(community)
+
+    assert community.aggregated.package_count == 1
+    assert community.aggregated.download_count == 3
 
 
 @pytest.mark.django_db

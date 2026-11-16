@@ -7,10 +7,12 @@ from rest_framework.test import APIClient
 from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.factories import PackageListingFactory
 from thunderstore.community.models import PackageListing
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,
 )
+from thunderstore.repository.tests.utils import create_listing, create_version
 
 
 @pytest.mark.django_db
@@ -208,6 +210,25 @@ def test_inactive_versions_are_excluded(api_client: APIClient) -> None:
     assert len(data["versions"]) == 2
     assert data["versions"][0]["version_number"] == active.version_number
     assert data["versions"][1]["version_number"] == original.version_number
+
+
+@pytest.mark.django_db
+def test_package_with_only_rejected_versions_returns_404(api_client: APIClient) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    response = api_client.get(__url_for_listing(listing))
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_rejected_versions_are_excluded(api_client: APIClient) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    create_version(listing.package, "1.1.0", PackageVersionReviewStatus.unreviewed)
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+
+    data = __query_api(api_client, listing)
+
+    assert [v["version_number"] for v in data["versions"]] == ["1.1.0", "1.0.0"]
+    assert data["dependency_string"].endswith("-1.1.0")
 
 
 def __query_api(client: APIClient, listing: PackageListing) -> Dict:
