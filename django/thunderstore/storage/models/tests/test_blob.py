@@ -1,3 +1,6 @@
+from io import BytesIO
+from tempfile import TemporaryFile
+
 import pytest
 
 from thunderstore.storage.models.blob import DataBlob
@@ -12,6 +15,27 @@ def test_storage_models_blob_create():
     assert blob.checksum_sha256 == checksum
     assert blob.data_size == len(content)
     assert str(blob) == checksum
+
+
+@pytest.mark.django_db
+def test_storage_models_blob_create_from_file():
+    content = b"123"
+    checksum = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+    with TemporaryFile() as file:
+        file.write(content)
+        blob = DataBlob.get_or_create(file)
+    assert blob.data.read() == content
+    assert blob.checksum_sha256 == checksum
+    assert blob.data_size == len(content)
+
+
+@pytest.mark.django_db
+def test_storage_models_blob_deduplicate_between_bytes_and_file():
+    content = b"123"
+    blob = DataBlob.get_or_create(content)
+    blob2 = DataBlob.get_or_create(BytesIO(content))
+    assert DataBlob.objects.count() == 1
+    assert blob == blob2
 
 
 @pytest.mark.django_db
