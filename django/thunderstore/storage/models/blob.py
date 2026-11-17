@@ -1,7 +1,8 @@
 from hashlib import sha256
+from typing import IO, Union
 
 from django.conf import settings
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 from django.core.files.storage import get_storage_class
 from django.db import models
 
@@ -45,20 +46,24 @@ class DataBlob(SafeDeleteMixin, AdminLinkMixin):
         return self.data.url
 
     @classmethod
-    def get_or_create(cls, content: bytes) -> "DataBlob":
-        # TODO: Add support for streamable input
+    def get_or_create(cls, content: Union[bytes, IO[bytes]]) -> "DataBlob":
+        file = File(content) if hasattr(content, "read") else ContentFile(content)
+
         hash = sha256()
-        hash.update(content)
+        size = 0
+        for chunk in file.chunks():
+            hash.update(chunk)
+            size += len(chunk)
         checksum = hash.hexdigest()
 
         if existing := cls.objects.filter(checksum_sha256=checksum).first():
             return existing
 
-        file = ContentFile(content, name=f"{checksum}.sha256.blob")
+        file.name = f"{checksum}.sha256.blob"
         return cls.objects.create(
             data=file,
             checksum_sha256=checksum,
-            data_size=len(content),
+            data_size=size,
         )
 
     def on_safe_delete(self):

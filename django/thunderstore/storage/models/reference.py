@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import IO, TYPE_CHECKING, Optional, Union
 
 from django.db import models
 
@@ -68,21 +68,19 @@ class DataBlobReference(TimestampMixin, AdminLinkMixin):
         return self.blob.data.read()
 
     @data.setter
-    def data(self, data: bytes):
-        # TODO: Add support for streamable input
+    def data(self, data: Union[bytes, IO[bytes]]):
         self.blob = DataBlob.get_or_create(data)
 
     @classmethod
     def create(
         cls,
-        data: bytes,
+        data: Union[bytes, IO[bytes]],
         *,
         group: Optional["DataBlobGroup"] = None,
         name: Optional[str] = None,
         content_type: Optional[str] = None,
         content_encoding: Optional[str] = None,
     ) -> "DataBlobReference":
-        # TODO: Add support for streamable input
         blob = DataBlob.get_or_create(data)
         return cls.objects.create(
             blob=blob,

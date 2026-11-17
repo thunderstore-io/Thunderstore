@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import IO, Optional, Union
 
 from django.db import models
 
@@ -25,7 +25,7 @@ class DataBlobGroup(TimestampMixin, AdminLinkMixin):
 
     def add_entry(
         self,
-        data: bytes,
+        data: Union[bytes, IO[bytes]],
         name: str,
         *,
         content_type: Optional[str] = None,

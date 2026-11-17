@@ -16,6 +16,21 @@ def test_content_is_copied():
     assert tmp_content == original_content
 
 
+def test_content_is_copied_in_chunks():
+    class ChunkedReadsOnly(BytesIO):
+        def read(self, size=-1):
+            assert size is not None and size > 0, "Whole file was read at once"
+            return super().read(size)
+
+    original_content = b"Lorem ipsum" * 1024
+
+    with ChunkedReadsOnly(original_content) as original:
+        with TemporarySpooledCopy(original) as tmp:
+            tmp_content = tmp.read()
+
+    assert tmp_content == original_content
+
+
 def test_original_file_is_unaffected():
     position = 123
 
