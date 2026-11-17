@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.core.paginator import Page
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, Sum
+from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from rest_framework import serializers
@@ -25,8 +26,10 @@ from thunderstore.repository.models import Namespace, Package, get_package_depen
 ORDER_ARGS = {
     "last-updated": "-package__date_updated",
     "most-downloaded": "-download_count",  # annotated field
+    "new-and-trending": Coalesce("newandtrendingscore__score", 0.0).desc(),
     "newest": "-package__date_created",
     "top-rated": "-rating_count",  # annotated field
+    "trending": Coalesce("trendingscore__score", 0.0).desc(),
 }
 
 
@@ -161,6 +164,7 @@ class BasePackageListAPIView(PublicCacheMixin, ListAPIView):
         qs = filter_not_in_categories(params["excluded_categories"], qs)
         qs = filter_by_section(params.get("section"), qs)
         qs = filter_by_query(params.get("q"), qs)
+        qs = filter_by_ordering(params["ordering"], qs)
 
         return qs.order_by(
             "-package__is_pinned",
@@ -490,3 +494,19 @@ def filter_by_review_status(
         review_status_to_reject.append(PackageListingReviewStatus.unreviewed)
 
     return queryset.exclude(review_status__in=review_status_to_reject)
+
+
+def filter_by_ordering(
+    ordering: str,
+    queryset: QuerySet[PackageListing],
+) -> QuerySet[PackageListing]:
+    """
+    New and trending lists only pinned packages and packages that have a
+    new and trending score.
+    """
+    if ordering != "new-and-trending":
+        return queryset
+
+    return queryset.filter(
+        Q(newandtrendingscore__isnull=False) | Q(package__is_pinned=True)
+    )
