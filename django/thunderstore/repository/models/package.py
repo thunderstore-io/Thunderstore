@@ -21,7 +21,10 @@ from thunderstore.core.utils import check_validity
 from thunderstore.permissions.mixins import VisibilityMixin
 from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
-from thunderstore.repository.consts import PACKAGE_NAME_REGEX
+from thunderstore.repository.consts import (
+    PACKAGE_NAME_REGEX,
+    PackageVersionReviewStatus,
+)
 from thunderstore.repository.version import Version
 
 if TYPE_CHECKING:
@@ -29,13 +32,17 @@ if TYPE_CHECKING:
 
 
 class PackageQueryset(VisibilityFlagsQuerySet):
-    def active(self):
+    def active(self, include_rejected: bool = False):
         from thunderstore.repository.models import PackageVersion
 
         has_active_versions = PackageVersion.objects.filter(
             package=OuterRef("pk"),
             is_active=True,
         )
+        if not include_rejected:
+            has_active_versions = has_active_versions.exclude(
+                review_status=PackageVersionReviewStatus.rejected
+            )
         return self.exclude(is_active=False).filter(Exists(has_active_versions))
 
 
@@ -186,9 +193,7 @@ class Package(VisibilityMixin, AdminLinkMixin):
     @cached_property
     def available_versions(self):
         # TODO: Caching
-        versions = self.versions.filter(is_active=True).values_list(
-            "pk", "version_number"
-        )
+        versions = self.versions.active().values_list("pk", "version_number")
         ordered = sorted(versions, key=lambda version: Version(version[1]))
         pk_list = [version[0] for version in reversed(ordered)]
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(pk_list)])
