@@ -122,16 +122,10 @@ def test_package_list_search_view_get_breadcrumbs(
     view.cache_owner()
     crumbs = view.get_breadcrumbs()
 
-    if has_site:
-        assert crumbs == [
-            {"url": "/package/", "name": "Packages"},
-            {"url": f"/package/{owner.name}/", "name": owner.name},
-        ]
-    else:
-        assert crumbs == [
-            {"url": f"/c/{community.identifier}/", "name": "Packages"},
-            {"url": f"/c/{community.identifier}/p/{owner}/", "name": owner.name},
-        ]
+    assert crumbs == [
+        {"url": f"/c/{community.identifier}/", "name": "Packages"},
+        {"url": f"/c/{community.identifier}/p/{owner}/", "name": owner.name},
+    ]
 
 
 @pytest.mark.django_db

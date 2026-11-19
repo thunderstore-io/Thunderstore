@@ -2,12 +2,13 @@ from typing import Optional
 
 from django.contrib.sites.shortcuts import get_current_site
 
+from thunderstore.community.consts import DEFAULT_COMMUNITY_IDENTIFIER
 from thunderstore.community.models import Community, CommunitySite
 from thunderstore.repository.models import Package
 
 
 def get_default_community() -> Optional[Community]:
-    return Community.objects.filter(identifier="riskofrain2").first()
+    return Community.objects.filter(identifier=DEFAULT_COMMUNITY_IDENTIFIER).first()
 
 
 # TODO: Remove and rely on request.community when request is actually available
@@ -15,7 +16,9 @@ def get_community_for_request(request):
     community = get_default_community()
     if community:
         return community
-    return Community.objects.create(identifier="riskofrain2", name="Risk of Rain 2")
+    return Community.objects.create(
+        identifier=DEFAULT_COMMUNITY_IDENTIFIER, name="Risk of Rain 2"
+    )
 
 
 def get_community_site_for_request(request):

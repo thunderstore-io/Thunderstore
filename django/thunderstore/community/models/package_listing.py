@@ -162,15 +162,20 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         )
 
     def get_full_url(self):
-        hostname = (
-            settings.PRIMARY_HOST
-            if (site := self.community.main_site) is None
-            else site.site.domain
-        )
+        if (site := self.community.main_site) is None:
+            hostname = settings.PRIMARY_HOST
+            path = self.get_absolute_url()
+        else:
+            # The community's own host implies the community
+            hostname = site.site.domain
+            path = reverse(
+                "old_urls:packages.detail",
+                kwargs={"owner": self.package.owner.name, "name": self.package.name},
+            )
         return "%(protocol)s%(hostname)s%(path)s" % {
             "protocol": settings.PROTOCOL,
             "hostname": hostname,
-            "path": self.get_absolute_url(),
+            "path": path,
         }
 
     def build_audit_event(

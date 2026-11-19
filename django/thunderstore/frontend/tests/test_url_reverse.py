@@ -1,8 +1,8 @@
 import pytest
 from django.urls import URLPattern, reverse
 
-from thunderstore.community.factories import CommunitySiteFactory
-from thunderstore.community.models import Community
+from thunderstore.community.consts import DEFAULT_COMMUNITY_IDENTIFIER
+from thunderstore.community.factories import CommunityFactory, CommunitySiteFactory
 from thunderstore.frontend.tests.utils import get_url_kwarg
 from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.repository.urls import package_urls
@@ -10,12 +10,22 @@ from thunderstore.repository.urls import package_urls
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("url_pattern", [x for x in package_urls if hasattr(x, "name")])
-@pytest.mark.parametrize("with_site", (False, True))
+@pytest.mark.parametrize(
+    ("identifier", "with_site", "uses_old_urls"),
+    (
+        (DEFAULT_COMMUNITY_IDENTIFIER, True, True),
+        (DEFAULT_COMMUNITY_IDENTIFIER, False, False),
+        ("test", True, False),
+        ("test", False, False),
+    ),
+)
 def test_get_community_url_reverse_args(
-    community: Community,
     url_pattern: URLPattern,
+    identifier: str,
     with_site: bool,
+    uses_old_urls: bool,
 ) -> None:
+    community = CommunityFactory(identifier=identifier)
 
     required_kwargs = {
         k: get_url_kwarg(k) for k in url_pattern.pattern.regex.groupindex.keys()
@@ -24,6 +34,8 @@ def test_get_community_url_reverse_args(
 
     if with_site:
         CommunitySiteFactory(community=community)
+
+    if uses_old_urls:
         expected_kwargs = required_kwargs
         expected_prefix = "old_urls:"
     else:
