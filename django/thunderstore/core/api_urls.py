@@ -19,6 +19,9 @@ from thunderstore.schema_server.api.experimental.urls import (
     urls as schema_server_experimental_urls,
 )
 from thunderstore.social.api.experimental.urls import urls as social_experimental_urls
+from thunderstore.ts_trending.api.experimental.urls import (
+    urls as trending_experimental_urls,
+)
 from thunderstore.usermedia.api.experimental.urls import (
     urls as usermedia_experimental_urls,
 )
@@ -52,6 +55,10 @@ api_experimental_urls = [
     path(
         "",
         include(schema_server_experimental_urls),
+    ),
+    path(
+        "",
+        include(trending_experimental_urls),
     ),
     path(
         "wiki/",

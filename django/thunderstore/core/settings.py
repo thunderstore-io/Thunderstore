@@ -295,6 +295,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.permissions",
         "thunderstore.ts_reports",
         "thunderstore.ts_analytics",
+        "thunderstore.ts_trending",
     ]
 )
 

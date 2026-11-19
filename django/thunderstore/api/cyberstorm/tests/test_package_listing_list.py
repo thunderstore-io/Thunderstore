@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 
 from thunderstore.api.cyberstorm.views.package_listing_list import (
@@ -22,6 +23,7 @@ from thunderstore.repository.factories import (
     PackageVersionFactory,
 )
 from thunderstore.repository.models import Team
+from thunderstore.ts_trending.models import NewAndTrendingScore, TrendingScore
 
 ########################
 # BasePackageListAPIView
@@ -425,6 +427,66 @@ def test_base_view__when_requested__orders_packages_by_rating_counts(
     assert response.data["results"][0]["name"] == top.package.name
     assert response.data["results"][1]["name"] == middle.package.name
     assert response.data["results"][2]["name"] == bottom.package.name
+
+
+@mock_base_package_list_api_view
+@pytest.mark.django_db
+def test_base_view__when_requested__orders_packages_by_trending_score(
+    community: Community,
+) -> None:
+    top = PackageListingFactory(community_=community)
+    unscored_old = PackageListingFactory(community_=community)
+    middle = PackageListingFactory(community_=community)
+    unscored_new = PackageListingFactory(community_=community)
+    now = timezone.now()
+    TrendingScore.objects.create(listing=top, score=3.5, datetime_computed=now)
+    TrendingScore.objects.create(listing=middle, score=1.5, datetime_computed=now)
+
+    request = APIRequestFactory().get("/", {"ordering": "trending"})
+    response = BasePackageListAPIView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
+
+    assert [x["name"] for x in response.data["results"]] == [
+        top.package.name,
+        middle.package.name,
+        unscored_new.package.name,
+        unscored_old.package.name,
+    ]
+
+
+@mock_base_package_list_api_view
+@pytest.mark.django_db
+def test_base_view__when_requested__lists_new_and_trending_and_pinned_packages(
+    community: Community,
+) -> None:
+    top = PackageListingFactory(community_=community)
+    PackageListingFactory(community_=community)
+    middle = PackageListingFactory(community_=community)
+    pinned = PackageListingFactory(
+        community_=community,
+        package_kwargs={"is_pinned": True},
+    )
+    now = timezone.now()
+    NewAndTrendingScore.objects.create(listing=top, score=3.5, datetime_computed=now)
+    NewAndTrendingScore.objects.create(
+        listing=middle,
+        score=1.5,
+        datetime_computed=now,
+    )
+
+    request = APIRequestFactory().get("/", {"ordering": "new-and-trending"})
+    response = BasePackageListAPIView().dispatch(
+        request,
+        community_id=community.identifier,
+    )
+
+    assert [x["name"] for x in response.data["results"]] == [
+        pinned.package.name,
+        top.package.name,
+        middle.package.name,
+    ]
 
 
 @mock_base_package_list_api_view
