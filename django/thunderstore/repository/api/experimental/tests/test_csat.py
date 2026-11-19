@@ -18,6 +18,7 @@ VALID_SUBMISSION = {
     "score": 4,
     "comment": "Profiles are great, updates are slow. I see it in my sleep.",
     "app_version": "1.126.0",
+    "platform": "windows",
 }
 
 
@@ -145,12 +146,14 @@ def test_experimental_api_csat_submit_sends_kafka_event(
         "score",
         "comment",
         "app_version",
+        "platform",
     }
     uuid.UUID(payload["id"])
     assert before <= datetime.fromisoformat(payload["timestamp"]) <= after
     assert payload["score"] == VALID_SUBMISSION["score"]
     assert payload["comment"] == VALID_SUBMISSION["comment"]
     assert payload["app_version"] == VALID_SUBMISSION["app_version"]
+    assert payload["platform"] == VALID_SUBMISSION["platform"]
 
 
 @pytest.mark.django_db
@@ -183,6 +186,7 @@ def test_experimental_api_csat_submit_stores_absent_comment_as_empty(
         pytest.param(submission(score=5), id="score-max"),
         pytest.param(submission(comment="a" * 5000), id="comment-max-length"),
         pytest.param(submission(app_version="1" * 64), id="app-version-max-length"),
+        pytest.param(submission(platform="w" * 64), id="platform-max-length"),
     ),
 )
 def test_experimental_api_csat_submit_accepts_boundary_values(
@@ -202,15 +206,10 @@ def test_experimental_api_csat_submit_ignores_unknown_fields(
     csat_enabled,
     mock_send_kafka_message,
 ) -> None:
-    response = submit(
-        api_client,
-        submission(platform="windows", install_id=str(uuid.uuid4())),
-    )
+    response = submit(api_client, submission(install_id=str(uuid.uuid4())))
     assert response.status_code == 200
     payload_string = mock_send_kafka_message.delay.call_args.kwargs["payload_string"]
-    payload = json.loads(payload_string)
-    assert "platform" not in payload
-    assert "install_id" not in payload
+    assert "install_id" not in json.loads(payload_string)
 
 
 @pytest.mark.django_db
@@ -232,6 +231,8 @@ def test_experimental_api_csat_submit_ignores_unknown_fields(
             "app_version",
             id="app-version-missing",
         ),
+        pytest.param(submission(platform="w" * 65), "platform", id="platform-too-long"),
+        pytest.param(submission_without("platform"), "platform", id="platform-missing"),
     ),
 )
 def test_experimental_api_csat_submit_rejects_invalid_data(

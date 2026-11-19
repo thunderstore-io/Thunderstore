@@ -18,6 +18,7 @@ class CsatSubmitRequestSerializer(serializers.Serializer):
         allow_null=True,
     )
     app_version = serializers.CharField(max_length=64)
+    platform = serializers.CharField(max_length=64)
 
 
 class AnalyticsEventCsatSurveyResponse(BaseModel):
@@ -26,3 +27,4 @@ class AnalyticsEventCsatSurveyResponse(BaseModel):
     score: int
     comment: str
     app_version: str
+    platform: str
