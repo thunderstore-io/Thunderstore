@@ -9,6 +9,18 @@ from thunderstore.ts_trending.services.score import SORT_MODELS
 SCHEMA_VERSION = 1
 
 
+class OrderResponseSerializer(serializers.Serializer):
+    """
+    Full package names per sort in descending order
+    """
+
+    def get_fields(self):
+        return {
+            sort: serializers.ListField(child=serializers.CharField())
+            for sort in SORT_MODELS
+        }
+
+
 class IngestRequestSerializer(serializers.Serializer):
     schema_version = serializers.ChoiceField(choices=[SCHEMA_VERSION])
     computed_at = serializers.DateTimeField(

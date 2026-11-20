@@ -2,8 +2,10 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Type, Union
 
 from django.db import transaction
+from django.db.models import Value
+from django.db.models.functions import Concat
 
-from thunderstore.community.models import PackageListing
+from thunderstore.community.models import Community, PackageListing
 from thunderstore.ts_trending.exceptions import EmptyScoresError, StaleScoresError
 from thunderstore.ts_trending.models import NewAndTrendingScore, TrendingScore
 
@@ -56,6 +58,35 @@ def replace_scores(computed_at: datetime, sorts: ScoresBySort) -> Dict[str, int]
         )
 
     return {sort: len(scores) for sort, scores in listing_scores.items()}
+
+
+def get_package_order(community: Community) -> Dict[str, List[str]]:
+    """
+    Get the full package names of a community's scored listings for every
+    trending sort variant in descending order.
+    """
+    listings = (
+        PackageListing.objects.active()
+        .filter_by_community_approval_rule()
+        .filter(community=community)
+    )
+
+    full_package_name = Concat(
+        "listing__package__owner__name",
+        Value("-"),
+        "listing__package__name",
+    )
+
+    order = {}
+    for sort, model in SORT_MODELS.items():
+        scores = model.objects.filter(listing__in=listings).order_by(
+            "-score",
+            "-listing__package__date_updated",
+            "-listing__package__pk",
+        )
+        order[sort] = list(scores.values_list(full_package_name, flat=True))
+
+    return order
 
 
 def _get_listing_scores(
