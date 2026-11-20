@@ -18,25 +18,25 @@ class CyberstormPackageVersionSerializer(serializers.Serializer):
     download_url = serializers.CharField(source="full_download_url")
     install_url = serializers.CharField()
     is_readme_edited = serializers.BooleanField()
+    is_rejected = serializers.BooleanField()
 
 
-class PackageVersionListAPIView(
-    PublicCacheMixin, CyberstormAutoSchemaMixin, ListAPIView
-):
+class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
     """
     Return a list of available versions of the package.
     """
 
     serializer_class = CyberstormPackageVersionSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[PackageVersion]:
         package = get_object_or_404(
-            Package.objects.active(),
+            Package.objects.active().select_related("owner"),
             namespace__name=self.kwargs["namespace_id"],
             name=self.kwargs["package_name"],
         )
 
-        return package.versions.active()
+        include_rejected = package.can_user_manage_listing(self.request.user)
+        return package.versions.active(include_rejected=include_rejected)
 
 
 class PackageVersionDependenciesListAPIView(

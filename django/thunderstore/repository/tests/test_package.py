@@ -276,6 +276,54 @@ def test_package_ensure_user_can_manage_wiki(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
+def test_package_can_user_manage_listing(
+    user_type: str, team_role: str, community_role: str
+) -> None:
+    listing = PackageListingFactory()
+    package = listing.package
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user_type not in TestUserTypes.fake_users():
+        if community_role is not None:
+            CommunityMembership.objects.create(
+                user=user,
+                community=listing.community,
+                role=community_role,
+            )
+        if team_role is not None:
+            TeamMember.objects.create(user=user, team=package.owner, role=team_role)
+
+    has_role = team_role is not None or community_role in (
+        CommunityMemberRole.moderator,
+        CommunityMemberRole.owner,
+    )
+    expected = user_type in (TestUserTypes.site_admin, TestUserTypes.superuser) or (
+        user_type == TestUserTypes.regular_user and has_role
+    )
+
+    assert package.can_user_manage_listing(user) is expected
+
+
+@pytest.mark.django_db
+def test_package_can_user_manage_listing__moderator_of_any_listed_community() -> None:
+    package = PackageListingFactory().package
+    community = CommunityFactory()
+    user = UserFactory()
+    CommunityMembership.objects.create(
+        user=user,
+        community=community,
+        role=CommunityMemberRole.moderator,
+    )
+    assert package.can_user_manage_listing(user) is False
+
+    PackageListingFactory(package_=package, community_=community)
+
+    assert package.can_user_manage_listing(user) is True
+
+
+@pytest.mark.django_db
 def test_package_has_wiki_no_wiki(package: Package) -> None:
     assert package.has_wiki is False
 

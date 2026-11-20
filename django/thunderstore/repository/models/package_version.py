@@ -285,6 +285,10 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     def is_effectively_active(self):
         return self.is_active and self.package.is_active
 
+    @property
+    def is_rejected(self) -> bool:
+        return self.review_status == PackageVersionReviewStatus.rejected
+
     @cached_property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"

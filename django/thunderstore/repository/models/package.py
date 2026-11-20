@@ -366,6 +366,21 @@ class Package(VisibilityMixin, AdminLinkMixin):
     def can_user_manage_wiki(self, user: Optional[UserType]) -> bool:
         return self.owner.can_user_manage_packages(user)
 
+    def can_user_manage_listing(self, user: Optional[UserType]) -> bool:
+        """
+        Whether the user is a member of the owning team, or a moderator of
+        any community the package is listed in. Team members pass even if
+        the package is unlisted.
+        """
+        if user is None or not user.is_authenticated:
+            return False
+        if self.owner.can_user_manage_packages(user):
+            return True
+        return any(
+            listing.can_be_moderated_by_user(user)
+            for listing in self.community_listings.select_related("community")
+        )
+
     def __str__(self):
         return self.full_package_name
 

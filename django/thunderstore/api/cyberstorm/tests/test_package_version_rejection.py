@@ -85,6 +85,22 @@ def test_listing_version__rejected_version_requires_manage_permission(
 
 
 @pytest.mark.django_db
+def test_listing_version__rejected_version_is_flagged(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("community_moderator", listing))
+
+    response = api_client.get(
+        _url(listing, "listing/{community}/{namespace}/{package}/v/2.0.0/")
+    )
+
+    assert response.status_code == 200
+    assert response.json()["version_is_rejected"] is True
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("version", ("1.0.0", "1.5.0"))
 def test_listing_version__non_rejected_versions_are_public(
     api_client: APIClient,
@@ -104,6 +120,61 @@ def test_listing_version__non_rejected_versions_are_public(
 
     assert response.status_code == 200
     assert response.json()["full_version_name"].endswith(f"-{version}")
+    assert response.json()["version_is_rejected"] is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("viewer", "can_manage"), CAN_MANAGE_LISTING)
+def test_listing__version_count_includes_rejected_versions_if_user_can_manage_listing(
+    api_client: APIClient,
+    viewer: str,
+    can_manage: bool,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer(viewer, listing))
+
+    response = api_client.get(
+        _url(listing, "listing/{community}/{namespace}/{package}/")
+    )
+
+    assert response.status_code == 200
+    assert response.json()["version_count"] == (2 if can_manage else 1)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("viewer", "can_manage"), CAN_MANAGE_LISTING)
+def test_version_list__rejected_versions_require_manage_permission(
+    api_client: APIClient,
+    viewer: str,
+    can_manage: bool,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer(viewer, listing))
+
+    response = api_client.get(_url(listing, "package/{namespace}/{package}/versions/"))
+
+    expected = {"1.0.0": False, "2.0.0": True} if can_manage else {"1.0.0": False}
+    assert response.status_code == 200
+    assert "public" not in response.get("Cache-Control", "")
+    assert {v["version_number"]: v["is_rejected"] for v in response.json()} == expected
+
+
+@pytest.mark.django_db
+def test_version_list__team_member_sees_rejected_versions_of_unlisted_package(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("team_member", listing))
+    url = _url(listing, "package/{namespace}/{package}/versions/")
+    listing.delete()
+
+    response = api_client.get(url)
+
+    assert response.status_code == 200
+    assert {v["version_number"] for v in response.json()} == {"1.0.0", "2.0.0"}
 
 
 # ---------------------------------------------------------------------------
@@ -146,20 +217,3 @@ def test_public_version_endpoints__rejected_version_is_hidden(
     response = api_client.get(_url(listing, route))
 
     assert response.status_code == expected_status
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("viewer", ("anonymous", "superuser"))
-def test_public_version_list__excludes_rejected_versions(
-    api_client: APIClient,
-    viewer: str,
-) -> None:
-    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
-    create_version(listing.package, "1.5.0", PackageVersionReviewStatus.unreviewed)
-    create_version(listing.package, "2.0.0", PackageVersionReviewStatus.rejected)
-    api_client.force_authenticate(_create_viewer(viewer, listing))
-
-    response = api_client.get(_url(listing, "package/{namespace}/{package}/versions/"))
-
-    assert response.status_code == 200
-    assert {v["version_number"] for v in response.json()} == {"1.0.0", "1.5.0"}
