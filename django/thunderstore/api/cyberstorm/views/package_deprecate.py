@@ -33,7 +33,7 @@ class DeprecatePackageAPIView(APIView):
         serializer = DeprecatePackageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         package = get_object_or_404(
-            Package.objects.active(),
+            Package.objects.active(include_rejected=True),
             namespace__name=namespace_id,
             name=package_name,
         )

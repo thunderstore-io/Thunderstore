@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 from thunderstore.api.cyberstorm.serializers import PackagePermissionsSerializer
 from thunderstore.api.utils import conditional_swagger_auto_schema
 from thunderstore.repository.models import Community, PackageListing
-from thunderstore.repository.views.package._utils import get_package_listing_or_404
 from thunderstore.repository.views.package.detail import PermissionsChecker
 
 
@@ -27,9 +26,14 @@ class PackagePermissionsAPIView(APIView):
     def get_listing(
         self, namespace_id: str, package_name: str, community: Community
     ) -> PackageListing:
-        return get_package_listing_or_404(
-            namespace=namespace_id,
-            name=package_name,
+        return get_object_or_404(
+            PackageListing.objects.active(include_rejected=True).select_related(
+                "community",
+                "package",
+                "package__owner",
+            ),
+            package__owner__name=namespace_id,
+            package__name=package_name,
             community=community,
         )
 

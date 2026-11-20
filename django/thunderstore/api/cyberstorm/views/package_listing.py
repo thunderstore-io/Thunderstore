@@ -43,6 +43,7 @@ from thunderstore.api.utils import (
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.core.types import UserType
 from thunderstore.repository.consts import PackageVersionReviewStatus
+from thunderstore.repository.models.cache import VersionSortKey
 from thunderstore.repository.models.package import get_package_dependants_count
 from thunderstore.repository.models.package_version import PackageVersion
 from thunderstore.repository.views.package.detail import PermissionsChecker
@@ -96,6 +97,7 @@ class ResponseSerializer(serializers.Serializer):
     is_pinned = serializers.BooleanField(source="package.is_pinned")
     latest_version_number = serializers.CharField(
         source="package.latest.version_number",
+        allow_null=True,
     )
     name = serializers.CharField(source="package.name")
     namespace = serializers.CharField(source="package.namespace.name")
@@ -145,7 +147,7 @@ def get_custom_package_listing(
     listing_ref = PackageListing.objects.filter(pk=OuterRef("pk"))
 
     qs = (
-        PackageListing.objects.active()
+        PackageListing.objects.active(include_rejected=True)
         .select_related(
             "community",
             "package__latest",
@@ -206,6 +208,8 @@ def get_custom_package_listing(
     include_rejected = listing.can_user_manage_listing(user)
     if include_rejected:
         listing.version_count += listing.rejected_version_count
+    elif listing.version_count == 0:
+        raise Http404()
 
     if version:
         listing.version = get_object_or_404(
@@ -216,6 +220,14 @@ def get_custom_package_listing(
         listing.has_changelog = listing.version.resolved_changelog is not None
     else:
         listing.version = listing.package.latest
+        if listing.version is None:
+            # Package.latest skips rejected versions.
+            listing.version = (
+                listing.package.versions.active(include_rejected=True)
+                .order_by(VersionSortKey("version_number").desc())
+                .first()
+            )
+            listing.has_changelog = listing.version.resolved_changelog is not None
         # Reuse the loaded package so the serializer doesn't fetch it and its
         # owner again through version.package.
         listing.version.package = listing.package

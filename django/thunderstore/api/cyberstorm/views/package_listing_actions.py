@@ -26,7 +26,7 @@ def get_package_listing(
     namespace_id: str, package_name: str, community_id: str
 ) -> PackageListing:
     return get_object_or_404(
-        PackageListing.objects.active()
+        PackageListing.objects.active(include_rejected=True)
         .select_related(
             "package",
             "package__owner",

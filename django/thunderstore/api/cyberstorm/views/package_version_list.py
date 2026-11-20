@@ -1,4 +1,5 @@
 from django.db.models import Exists, OuterRef, QuerySet
+from django.http import Http404
 from rest_framework import serializers
 from rest_framework.generics import ListAPIView, get_object_or_404
 
@@ -30,12 +31,20 @@ class PackageVersionListAPIView(CyberstormAutoSchemaMixin, ListAPIView):
 
     def get_queryset(self) -> QuerySet[PackageVersion]:
         package = get_object_or_404(
-            Package.objects.active().select_related("owner"),
+            Package.objects.active(include_rejected=True)
+            .select_related("owner")
+            .annotate(
+                has_unrejected_versions=Exists(
+                    PackageVersion.objects.active().filter(package_id=OuterRef("pk"))
+                )
+            ),
             namespace__name=self.kwargs["namespace_id"],
             name=self.kwargs["package_name"],
         )
 
         include_rejected = package.can_user_manage_listing(self.request.user)
+        if not include_rejected and not package.has_unrejected_versions:
+            raise Http404()
         return package.versions.active(include_rejected=include_rejected)
 
 

@@ -3,6 +3,7 @@ from typing import Optional
 import pytest
 from rest_framework.test import APIClient
 
+from thunderstore.community.consts import PackageListingReviewStatus
 from thunderstore.community.models import (
     CommunityMemberRole,
     CommunityMembership,
@@ -217,3 +218,152 @@ def test_public_version_endpoints__rejected_version_is_hidden(
     response = api_client.get(_url(listing, route))
 
     assert response.status_code == expected_status
+
+
+# ---------------------------------------------------------------------------
+# Packages whose every version is rejected: hidden from the public, but
+# moderators must still be able to view and act on them.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "route",
+    (
+        "listing/{community}/{namespace}/{package}/",
+        "listing/{community}/{namespace}/{package}/v/1.0.0/",
+    ),
+)
+@pytest.mark.parametrize(("viewer", "can_manage"), CAN_MANAGE_LISTING)
+def test_rejected_only_listing__detail_requires_manage_permission(
+    api_client: APIClient,
+    route: str,
+    viewer: str,
+    can_manage: bool,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer(viewer, listing))
+
+    response = api_client.get(_url(listing, route))
+
+    assert response.status_code == (200 if can_manage else 404)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "route",
+    (
+        "listing/{community}/{namespace}/{package}/",
+        "listing/{community}/{namespace}/{package}/v/1.0.0/",
+    ),
+)
+def test_rejected_only_listing__detail_shows_rejected_version(
+    api_client: APIClient,
+    route: str,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("community_moderator", listing))
+
+    response = api_client.get(_url(listing, route))
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["full_version_name"].endswith("-1.0.0")
+    assert data["version_is_rejected"] is True
+    assert data["version_count"] == 1
+    assert data["latest_version_number"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("viewer", "can_manage"), CAN_MANAGE_LISTING)
+def test_rejected_only_package__version_list_requires_manage_permission(
+    api_client: APIClient,
+    viewer: str,
+    can_manage: bool,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer(viewer, listing))
+
+    response = api_client.get(_url(listing, "package/{namespace}/{package}/versions/"))
+
+    assert response.status_code == (200 if can_manage else 404)
+
+
+@pytest.mark.django_db
+def test_rejected_only_package__version_list_shows_rejected_version(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("community_moderator", listing))
+
+    response = api_client.get(_url(listing, "package/{namespace}/{package}/versions/"))
+
+    assert response.status_code == 200
+    assert [v["version_number"] for v in response.json()] == ["1.0.0"]
+
+
+@pytest.mark.django_db
+def test_rejected_only_listing__moderator_can_reject_listing(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("community_moderator", listing))
+
+    response = api_client.post(
+        _url(listing, "listing/{community}/{namespace}/{package}/reject/"),
+        {"rejection_reason": "Malware"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    listing.refresh_from_db()
+    assert listing.review_status == PackageListingReviewStatus.rejected
+
+
+@pytest.mark.django_db
+def test_rejected_only_listing__team_owner_can_view_status(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("team_owner", listing))
+
+    response = api_client.get(
+        _url(listing, "listing/{community}/{namespace}/{package}/status/")
+    )
+
+    assert response.status_code == 200
+    assert response.json()["review_status"] == listing.review_status
+
+
+@pytest.mark.django_db
+def test_rejected_only_package__team_owner_can_deprecate(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("team_owner", listing))
+
+    response = api_client.post(
+        _url(listing, "package/{namespace}/{package}/deprecate/"),
+        {"deprecate": True},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    listing.package.refresh_from_db()
+    assert listing.package.is_deprecated is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("viewer", ("community_moderator", "team_owner"))
+def test_rejected_only_package__permissions_are_available(
+    api_client: APIClient,
+    viewer: str,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer(viewer, listing))
+
+    response = api_client.get(
+        _url(listing, "package/{community}/{namespace}/{package}/permissions/")
+    )
+
+    assert response.status_code == 200
