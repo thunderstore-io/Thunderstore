@@ -180,7 +180,7 @@ def get_custom_package_listing(
             )
         )
 
-    listing = get_object_or_404(
+    listing: PackageListing = get_object_or_404(
         qs,
         community__identifier=community_id,
         package__namespace__name=namespace_id,
@@ -191,8 +191,9 @@ def get_custom_package_listing(
         raise Http404()
 
     if version:
+        include_rejected = listing.can_user_manage_listing(user)
         listing.version = get_object_or_404(
-            listing.package.versions.active(),
+            listing.package.versions.active(include_rejected=include_rejected),
             version_number=version,
         )
 

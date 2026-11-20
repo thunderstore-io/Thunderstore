@@ -356,6 +356,9 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         if not is_allowed:
             raise PermissionValidationError("Must have listing management permission")
 
+    def can_user_manage_listing(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_manage_listing(user))
+
     def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
         user = validate_user(user)
         is_allowed = (

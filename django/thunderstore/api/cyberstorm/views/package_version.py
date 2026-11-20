@@ -30,7 +30,7 @@ class PackageVersionAPIView(PublicCacheMixin, CyberstormAutoSchemaMixin, APIView
         version_number: str,
     ) -> Response:
         instance = get_object_or_404(
-            PackageVersion.objects.filter(is_active=True)
+            PackageVersion.objects.active()
             .select_related(
                 "package",
                 "package__namespace",

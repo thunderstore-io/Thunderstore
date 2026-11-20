@@ -322,6 +322,43 @@ def test_package_listing_ensure_update_categories_permission(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("user_type", TestUserTypes.options())
+@pytest.mark.parametrize("team_role", TeamMemberRole.options() + [None])
+@pytest.mark.parametrize("community_role", CommunityMemberRole.options() + [None])
+def test_package_listing_can_user_manage_listing(
+    active_package_listing: PackageListing,
+    user_type: str,
+    team_role: str,
+    community_role: str,
+) -> None:
+    listing = active_package_listing
+    user = TestUserTypes.get_user_by_type(user_type)
+    if user_type not in TestUserTypes.fake_users():
+        if community_role is not None:
+            CommunityMembership.objects.create(
+                user=user,
+                community=listing.community,
+                role=community_role,
+            )
+        if team_role is not None:
+            TeamMember.objects.create(
+                user=user,
+                team=listing.package.owner,
+                role=team_role,
+            )
+
+    has_role = team_role is not None or community_role in (
+        CommunityMemberRole.moderator,
+        CommunityMemberRole.owner,
+    )
+    expected = user_type in (TestUserTypes.site_admin, TestUserTypes.superuser) or (
+        user_type == TestUserTypes.regular_user and has_role
+    )
+
+    assert listing.can_user_manage_listing(user) is expected
+
+
+@pytest.mark.django_db
 def test_package_listing_update_categories(
     active_package_listing: PackageListing,
     package_category: PackageCategory,
