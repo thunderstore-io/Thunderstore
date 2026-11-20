@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpRequest
 from sentry_sdk import capture_exception as capture_sentry_exception
 
@@ -64,6 +65,17 @@ def capture_exception(error=None, *args, **kwargs):
     if settings.ALWAYS_RAISE_EXCEPTIONS:
         raise error
     capture_sentry_exception(error, *args, **kwargs)
+
+
+def safe_delay(task, *args, **kwargs) -> None:
+    try:
+        task.delay(*args, **kwargs)
+    except Exception as e:
+        capture_exception(e)
+
+
+def safe_delay_on_commit(task, *args, **kwargs) -> None:
+    transaction.on_commit(lambda: safe_delay(task, *args, **kwargs))
 
 
 class ExceptionLogger:

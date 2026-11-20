@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -10,6 +11,8 @@ from thunderstore.core.utils import (
     extend_update_fields_if_present,
     make_full_url,
     replace_cdn,
+    safe_delay,
+    safe_delay_on_commit,
     sanitize_filename,
     sanitize_filepath,
     validate_filepath_prefix,
@@ -226,3 +229,28 @@ def test_extend_update_fields_if_present__accepts_tuple_and_empty_new_fields() -
     original = {"update_fields": ("x",)}
     result = extend_update_fields_if_present(original)
     assert result["update_fields"] == {"x"}
+
+
+def test_safe_delay__reports_error_instead_of_raising(settings: Any) -> None:
+    settings.ALWAYS_RAISE_EXCEPTIONS = False
+    task = MagicMock()
+    error = ConnectionError("broker unavailable")
+    task.delay.side_effect = error
+    with patch("thunderstore.core.utils.capture_sentry_exception") as mock_capture:
+        safe_delay(task, 1)
+    mock_capture.assert_called_once_with(error)
+
+
+@pytest.mark.django_db
+def test_safe_delay_on_commit__reports_error_instead_of_raising(
+    settings: Any,
+    django_capture_on_commit_callbacks,
+) -> None:
+    settings.ALWAYS_RAISE_EXCEPTIONS = False
+    task = MagicMock()
+    task.delay.side_effect = ConnectionError("broker unavailable")
+    with patch(
+        "thunderstore.core.utils.capture_sentry_exception"
+    ) as mock_capture, django_capture_on_commit_callbacks(execute=True):
+        safe_delay_on_commit(task, 1)
+    mock_capture.assert_called_once()

@@ -2,12 +2,11 @@ from datetime import datetime
 from typing import Literal
 
 from celery import shared_task
-from django.db import transaction
 from django.utils import timezone
 from pydantic import BaseModel
 
 from thunderstore.core.settings import CeleryQueues
-from thunderstore.core.utils import capture_exception
+from thunderstore.core.utils import safe_delay_on_commit
 from thunderstore.ts_analytics.kafka import KafkaTopic, generate_event_id
 from thunderstore.ts_analytics.tasks import send_kafka_message
 
@@ -41,12 +40,6 @@ def log_package_like(package_id: int, action: LikeAction, timestamp: str):
 
 
 def enqueue_package_like_event(package_id: int, action: LikeAction) -> None:
-    timestamp = timezone.now().isoformat()
-
-    def enqueue():
-        try:
-            log_package_like.delay(package_id, action, timestamp)
-        except Exception as e:
-            capture_exception(e)
-
-    transaction.on_commit(enqueue)
+    safe_delay_on_commit(
+        log_package_like, package_id, action, timezone.now().isoformat()
+    )
