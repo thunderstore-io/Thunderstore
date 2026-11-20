@@ -1,19 +1,17 @@
 from datetime import datetime
 from typing import List
 
-from django.db import transaction
 from pydantic import BaseModel
 
 from thunderstore.community.models import Community, PackageListing
+from thunderstore.core.utils import safe_delay_on_commit
 from thunderstore.repository.models import Package, PackageVersion
 from thunderstore.ts_analytics.kafka import KafkaTopic
 from thunderstore.ts_analytics.tasks import send_kafka_message
 
 
 def _send_kafka_message_on_commit(topic: str, payload: BaseModel):
-    transaction.on_commit(
-        lambda: send_kafka_message.delay(topic=topic, payload_string=payload.json())
-    )
+    safe_delay_on_commit(send_kafka_message, topic=topic, payload_string=payload.json())
 
 
 class AnalyticsEventPackageUpdate(BaseModel):

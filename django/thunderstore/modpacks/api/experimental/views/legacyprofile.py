@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 
-from django.db import transaction
 from django.shortcuts import redirect
 from django.utils import timezone
 from drf_yasg.openapi import TYPE_FILE, Schema
@@ -14,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from thunderstore.core.utils import replace_cdn
+from thunderstore.core.utils import replace_cdn, safe_delay_on_commit
 from thunderstore.modpacks.models import LegacyProfile
 from thunderstore.ts_analytics.kafka import KafkaTopic
 from thunderstore.ts_analytics.tasks import send_kafka_message
@@ -64,15 +63,14 @@ class LegacyProfileCreateApiView(APIView):
 
         key = LegacyProfile.objects.get_or_create_from_upload(content=file_obj)
 
-        transaction.on_commit(
-            lambda: send_kafka_message.delay(
-                topic=KafkaTopic.A_LEGACY_PROFILE_EXPORT_V1,
-                payload_string=AnalyticsEventLegacyProfileExport(
-                    id=str(key),
-                    timestamp=timezone.now(),
-                    file_size_bytes=file_size,
-                ).json(),
-            )
+        safe_delay_on_commit(
+            send_kafka_message,
+            topic=KafkaTopic.A_LEGACY_PROFILE_EXPORT_V1,
+            payload_string=AnalyticsEventLegacyProfileExport(
+                id=str(key),
+                timestamp=timezone.now(),
+                file_size_bytes=file_size,
+            ).json(),
         )
 
         serializer = LegacyProfileCreateResponseSerializer({"key": key})

@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 
 from thunderstore.core.mixins import AdminLinkMixin
 from thunderstore.core.types import UserType
+from thunderstore.core.utils import safe_delay
 from thunderstore.permissions.mixins import VisibilityMixin, VisibilityQuerySet
 from thunderstore.repository.consts import (
     PACKAGE_NAME_REGEX,
@@ -376,7 +377,7 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         if not PackageVersion._can_log_download_event(version_id, client_ip):
             return
 
-        log_version_download.delay(version_id, timezone.now().isoformat())
+        safe_delay(log_version_download, version_id, timezone.now().isoformat())
 
     def build_audit_event(
         self,
