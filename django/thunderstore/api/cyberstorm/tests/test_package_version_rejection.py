@@ -367,3 +367,105 @@ def test_rejected_only_package__permissions_are_available(
     )
 
     assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Reviewing a single version: only listing moderators may reject or approve.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("action", "initial_status", "expected_status"),
+    (
+        (
+            "reject",
+            PackageVersionReviewStatus.approved,
+            PackageVersionReviewStatus.rejected,
+        ),
+        (
+            "approve",
+            PackageVersionReviewStatus.rejected,
+            PackageVersionReviewStatus.approved,
+        ),
+    ),
+)
+@pytest.mark.parametrize(
+    "viewer", ("community_moderator", "community_owner", "superuser")
+)
+def test_version_review__moderators_can_change_review_status(
+    api_client: APIClient,
+    action: str,
+    initial_status: PackageVersionReviewStatus,
+    expected_status: PackageVersionReviewStatus,
+    viewer: str,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    version = create_version(listing.package, "2.0.0", initial_status)
+    api_client.force_authenticate(_create_viewer(viewer, listing))
+
+    response = api_client.post(
+        _url(
+            listing,
+            "listing/{community}/{namespace}/{package}/v/2.0.0/{action}/",
+            action=action,
+        )
+    )
+
+    assert response.status_code == 200
+    version.refresh_from_db()
+    assert version.review_status == expected_status
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("action", ("reject", "approve"))
+@pytest.mark.parametrize(
+    ("viewer", "expected_status_code"),
+    (
+        ("anonymous", 401),
+        ("regular_user", 403),
+        ("community_member", 403),
+        ("community_janitor", 403),
+        ("team_member", 403),
+        ("team_owner", 403),
+    ),
+)
+def test_version_review__other_viewers_are_denied(
+    api_client: APIClient,
+    action: str,
+    viewer: str,
+    expected_status_code: int,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    version = create_version(
+        listing.package, "2.0.0", PackageVersionReviewStatus.unreviewed
+    )
+    api_client.force_authenticate(_create_viewer(viewer, listing))
+
+    response = api_client.post(
+        _url(
+            listing,
+            "listing/{community}/{namespace}/{package}/v/2.0.0/{action}/",
+            action=action,
+        )
+    )
+
+    assert response.status_code == expected_status_code
+    version.refresh_from_db()
+    assert version.review_status == PackageVersionReviewStatus.unreviewed
+
+
+@pytest.mark.django_db
+def test_version_review__moderator_can_approve_rejected_only_listing(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected)
+    api_client.force_authenticate(_create_viewer("community_moderator", listing))
+
+    response = api_client.post(
+        _url(listing, "listing/{community}/{namespace}/{package}/v/1.0.0/approve/")
+    )
+
+    assert response.status_code == 200
+    listing.package.refresh_from_db()
+    assert listing.package.latest.version_number == "1.0.0"

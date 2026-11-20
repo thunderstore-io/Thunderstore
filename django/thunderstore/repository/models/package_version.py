@@ -32,6 +32,7 @@ from thunderstore.webhooks.audit import (
 from thunderstore.webhooks.models.release import Webhook
 
 if TYPE_CHECKING:
+    from thunderstore.community.models import PackageListing
     from thunderstore.repository.models.package_installer import (
         PackageInstaller,
         PackageInstallerDeclaration,
@@ -415,8 +416,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         agent: Optional[UserType],
         is_system: bool = False,
         message: Optional[str] = None,
+        listing: Optional["PackageListing"] = None,
     ):
-        if is_system or self.can_user_manage_approval_status(agent):
+        if is_system or self.can_user_manage_approval_status(agent, listing):
             self.review_status = PackageVersionReviewStatus.rejected
             self.save(update_fields=("review_status",))
 
@@ -436,8 +438,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         agent: Optional[UserType],
         is_system: bool = False,
         message: Optional[str] = None,
+        listing: Optional["PackageListing"] = None,
     ):
-        if is_system or self.can_user_manage_approval_status(agent):
+        if is_system or self.can_user_manage_approval_status(agent, listing):
             self.review_status = PackageVersionReviewStatus.approved
             self.save(update_fields=("review_status",))
 
@@ -451,7 +454,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         else:
             raise PermissionError()
 
-    def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
+    def can_user_manage_approval_status(
+        self,
+        user: Optional[UserType],
+        listing: Optional["PackageListing"] = None,
+    ) -> bool:
         if not user:
             return False
 
@@ -460,6 +467,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
         if user.is_superuser:
             return True
+
+        if listing is not None and listing.package_id == self.package_id:
+            return listing.can_be_moderated_by_user(user)
 
         # TODO: Replace this with get_moderated_comunnities or whatever the cached equivalent ends up being
         # from thunderstore.repository.views.package._utils import (

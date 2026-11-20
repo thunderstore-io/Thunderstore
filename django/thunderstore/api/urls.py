@@ -2,6 +2,7 @@ from django.urls import path
 
 from thunderstore.api.cyberstorm.views import (
     ApprovePackageListingAPIView,
+    ApprovePackageVersionAPIView,
     CommunityAlertListAPIView,
     CommunityAPIView,
     CommunityFiltersAPIView,
@@ -28,6 +29,7 @@ from thunderstore.api.cyberstorm.views import (
     PackageVersionReadmeAPIView,
     RatePackageAPIView,
     RejectPackageListingAPIView,
+    RejectPackageVersionAPIView,
     ReportPackageListingAPIView,
     TeamAPIView,
     TeamCreateAPIView,
@@ -118,6 +120,16 @@ cyberstorm_urls = [
         "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/unlist/",
         UnlistPackageListingAPIView.as_view(),
         name="cyberstorm.listing.unlist",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/v/<str:version_number>/reject/",
+        RejectPackageVersionAPIView.as_view(),
+        name="cyberstorm.listing.version.reject",
+    ),
+    path(
+        "listing/<str:community_id>/<str:namespace_id>/<str:package_name>/v/<str:version_number>/approve/",
+        ApprovePackageVersionAPIView.as_view(),
+        name="cyberstorm.listing.version.approve",
     ),
     path(
         "package/<str:namespace_id>/<str:package_name>/latest/changelog/",

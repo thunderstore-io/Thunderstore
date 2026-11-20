@@ -7,7 +7,9 @@ from .package_deprecate import DeprecatePackageAPIView
 from .package_listing import PackageListingAPIView, PackageListingStatusAPIView
 from .package_listing_actions import (
     ApprovePackageListingAPIView,
+    ApprovePackageVersionAPIView,
     RejectPackageListingAPIView,
+    RejectPackageVersionAPIView,
     ReportPackageListingAPIView,
     UnlistPackageListingAPIView,
     UpdatePackageListingCategoriesAPIView,
@@ -81,6 +83,8 @@ __all__ = [
     "UpdatePackageListingCategoriesAPIView",
     "RejectPackageListingAPIView",
     "ApprovePackageListingAPIView",
+    "RejectPackageVersionAPIView",
+    "ApprovePackageVersionAPIView",
     "UpdateTeamAPIView",
     "ReportPackageListingAPIView",
     "UnlistPackageListingAPIView",
