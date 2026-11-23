@@ -72,6 +72,7 @@ class CsatSubmitApiView(APIView):
             score=data["score"],
             comment=data.get("comment") or "",
             app_version=data["app_version"],
+            platform=data["platform"],
         )
         send_kafka_message.delay(
             topic=KafkaTopic.A_CSAT_SURVEY_RESPONSE_V1,
