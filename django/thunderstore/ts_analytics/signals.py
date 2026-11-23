@@ -103,6 +103,23 @@ def package_listing_post_save(sender, instance: PackageListing, created, **kwarg
     _send_kafka_message_on_commit(KafkaTopic.M_PACKAGE_LISTING_UPDATE_V1, payload)
 
 
+def package_listing_categories_m2m_changed(
+    sender, instance, action, reverse, pk_set, **kwargs
+):
+    if action not in ("post_add", "post_remove", "post_clear"):
+        return
+    if action != "post_clear" and not pk_set:
+        return
+
+    if reverse:
+        listings = PackageListing.objects.filter(pk__in=pk_set or ())
+    else:
+        listings = [instance]
+
+    for listing in listings:
+        listing.save(update_fields=("datetime_updated",))
+
+
 class AnalyticsEventCommunityUpdate(BaseModel):
     id: int
     identifier: str
