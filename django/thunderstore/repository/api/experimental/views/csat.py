@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from thunderstore.core.utils import safe_delay
 from thunderstore.repository.api.experimental.serializers import (
     AnalyticsEventCsatSurveyResponse,
     CsatStatusResponseSerializer,
@@ -74,7 +75,8 @@ class CsatSubmitApiView(APIView):
             app_version=data["app_version"],
             platform=data["platform"],
         )
-        send_kafka_message.delay(
+        safe_delay(
+            send_kafka_message,
             topic=KafkaTopic.A_CSAT_SURVEY_RESPONSE_V1,
             payload_string=payload.json(),
         )
