@@ -3,10 +3,11 @@ from typing import Generator
 
 import celery
 import pytest
+from django.contrib.sessions.models import Session
 from django.test import override_settings
 from django.utils import timezone
 
-from thunderstore.core.tasks import celery_post
+from thunderstore.core.tasks import celery_cleanup_sessions, celery_post
 
 
 def test_celery_setup(celery_app):
@@ -32,6 +33,7 @@ KNOWN_CELERY_IDS = (
     "celery.backend_cleanup",
     "thunderstore.community.tasks.update_community_aggregated_fields",
     "thunderstore.core.tasks.celery_post",
+    "thunderstore.core.tasks.celery_cleanup_sessions",
     "thunderstore.cache.tasks.invalidate_cache",
     "thunderstore.repository.tasks.update_api_caches",
     "thunderstore.usermedia.tasks.celery_cleanup_expired_uploads",
@@ -118,6 +120,26 @@ def test_celery_post(
     celery_response = celery_post.delay("http://localhost:8888")
     assert celery_response.state == "SUCCESS"
     assert isinstance(celery_response, celery.result.EagerResult)
+
+
+@pytest.mark.django_db
+def test_celery_cleanup_sessions_deletes_only_expired_sessions():
+    now = timezone.now()
+    expired = Session.objects.create(
+        session_key="expired",
+        session_data="",
+        expire_date=now - timedelta(days=1),
+    )
+    valid = Session.objects.create(
+        session_key="valid",
+        session_data="",
+        expire_date=now + timedelta(days=1),
+    )
+
+    celery_cleanup_sessions()
+
+    assert not Session.objects.filter(pk=expired.pk).exists()
+    assert Session.objects.filter(pk=valid.pk).exists()
 
 
 def test_celery_result_extended_is_enabled():

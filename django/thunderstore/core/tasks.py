@@ -2,6 +2,7 @@ from typing import Dict, Optional, Union
 
 import requests
 from celery import shared_task
+from django.core.management import call_command
 
 from thunderstore.core.settings import CeleryQueues
 
@@ -23,3 +24,11 @@ def celery_post(
         "reason": response.reason,
         "content": response.text,
     }
+
+
+@shared_task(
+    queue=CeleryQueues.BackgroundTask,
+    name="thunderstore.core.tasks.celery_cleanup_sessions",
+)
+def celery_cleanup_sessions():
+    call_command("clearsessions")
