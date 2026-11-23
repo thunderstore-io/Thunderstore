@@ -1378,24 +1378,21 @@ zookeeper = ["kazoo (>=2.8.0)"]
 
 [[package]]
 name = "linkify-it-py"
-version = "1.0.1"
+version = "2.2.0"
 description = "Links recognition library with FULL unicode support."
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.10"
 files = [
-    {file = "linkify-it-py-1.0.1.tar.gz", hash = "sha256:90b632ee516bf523c007ee96aa14ffc7efe1ca4074a80b0df366d66922d6d087"},
-    {file = "linkify_it_py-1.0.1-py3-none-any.whl", hash = "sha256:29ba044d36f0ff938730a8167b7341a7caffc3e11666f9009996af6b82b61dfc"},
+    {file = "linkify_it_py-2.2.0-py3-none-any.whl", hash = "sha256:3adc40eb5af300b2605fcfdb968c24e1d780a90f1f2221af7c15e5111e94d443"},
+    {file = "linkify_it_py-2.2.0.tar.gz", hash = "sha256:907acd2d17ac1fbb9ddb62c8957ccbd6158cac602231a15c3b0cd1e215f03cee"},
 ]
-
-[package.dependencies]
-uc-micro-py = "*"
 
 [package.extras]
 benchmark = ["pytest", "pytest-benchmark"]
-dev = ["black", "flake8", "isort", "pre-commit"]
-doc = ["myst-parser", "sphinx", "sphinx-book-theme"]
-test = ["coverage", "pytest", "pytest-cov"]
+dev = ["black", "flake8", "isort", "pre-commit", "pyproject-flake8"]
+doc = ["myst-parser", "sphinx", "sphinx_book_theme"]
+test = ["coverage", "pytest", "pytest-cov", "pytest-timeout"]
 
 [[package]]
 name = "lxml"
@@ -1508,29 +1505,29 @@ source = ["Cython (==0.29.37)"]
 
 [[package]]
 name = "markdown-it-py"
-version = "2.1.0"
+version = "4.3.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 files = [
-    {file = "markdown-it-py-2.1.0.tar.gz", hash = "sha256:cf7e59fed14b5ae17c0006eff14a2d9a00ed5f3a846148153899a0224e2c07da"},
-    {file = "markdown_it_py-2.1.0-py3-none-any.whl", hash = "sha256:93de681e5c021a432c63147656fe21790bc01231e0cd2da73626f1aa3ac0fe27"},
+    {file = "markdown_it_py-4.3.0-py3-none-any.whl", hash = "sha256:7aa1511a46c39138de78d9eba92ce47e63124d8003fc98b3a351909e04239efa"},
+    {file = "markdown_it_py-4.3.0.tar.gz", hash = "sha256:91a58fa5b72c71a40cf7177250fd767480d7a2bb3ac426ccfb76fb90305fdaaa"},
 ]
 
 [package.dependencies]
-linkify-it-py = {version = ">=1.0,<2.0", optional = true, markers = "extra == \"linkify\""}
+linkify-it-py = {version = ">=1,<3", optional = true, markers = "extra == \"linkify\""}
 mdurl = ">=0.1,<1.0"
 
 [package.extras]
-benchmarking = ["psutil", "pytest", "pytest-benchmark (>=3.2,<4.0)"]
-code-style = ["pre-commit (==2.6)"]
-compare = ["commonmark (>=0.9.1,<0.10.0)", "markdown (>=3.3.6,<3.4.0)", "mistletoe (>=0.8.1,<0.9.0)", "mistune (>=2.0.2,<2.1.0)", "panflute (>=2.1.3,<2.2.0)"]
-linkify = ["linkify-it-py (>=1.0,<2.0)"]
-plugins = ["mdit-py-plugins"]
+benchmarking = ["psutil", "pytest", "pytest-benchmark"]
+compare = ["markdown (>=3.4,<4.0)", "markdown-it-pyrs", "mistletoe (>=1.0,<2.0)", "mistune (>=3.0,<4.0)", "panflute (>=2.3,<3.0)"]
+coverage = ["coverage", "pytest-cov"]
+linkify = ["linkify-it-py (>=1,<3)"]
+plugins = ["mdit-py-plugins (>=0.5.0)"]
 profiling = ["gprof2dot"]
-rtd = ["attrs", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
-testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+rtd = ["ipykernel", "jupyter_sphinx", "mdit-py-plugins (>=0.5.0)", "myst-parser", "pyyaml", "sphinx", "sphinx-book-theme (>=1.0,<2.0)", "sphinx-copybutton", "sphinx-design"]
+testing = ["flit_core (>=3.4,<5)", "pytest", "pytest-regressions", "pytest-timeout", "requests"]
 
 [[package]]
 name = "mdurl"
@@ -2694,21 +2691,6 @@ files = [
 ]
 
 [[package]]
-name = "uc-micro-py"
-version = "1.0.1"
-description = "Micro subset of unicode data files for linkify-it-py projects."
-category = "main"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "uc-micro-py-1.0.1.tar.gz", hash = "sha256:b7cdf4ea79433043ddfe2c82210208f26f7962c0cfbe3bacb05ee879a7fdb596"},
-    {file = "uc_micro_py-1.0.1-py3-none-any.whl", hash = "sha256:316cfb8b6862a0f1d03540f0ae6e7b033ff1fa0ddbe60c12cbe0d4cec846a69f"},
-]
-
-[package.extras]
-test = ["coverage", "pytest", "pytest-cov"]
-
-[[package]]
 name = "ulid2"
 version = "0.2.0"
 description = "ULID encoding/decoding for Python"
@@ -2884,4 +2866,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "e7c8a554596bfee98052a880c05a360f73e5e56a81a091f6f0ea979d2b89ea64"
+content-hash = "e9a1a7b15b529d3847b1f4fb154f2df68cb48f2aa53a35193e215f7c2bab9297"

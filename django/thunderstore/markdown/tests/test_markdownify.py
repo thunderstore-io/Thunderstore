@@ -59,3 +59,17 @@ def test_bare_word_with_tld_is_not_linkified(markdown: str) -> None:
 )
 def test_explicit_url_is_still_linkified(url: str) -> None:
     assert f'<a href="{url}">{url}</a>' in render_markdown(url)
+
+
+@pytest.mark.parametrize(
+    "markdown",
+    (
+        "![![]()\n]([)",
+        "> ```\n>",
+        ">-\n>\n>",
+        "> a|b\n> -|-\n> c|d\n>",
+        "[](&#X22y;)",
+    ),
+)
+def test_malformed_markdown_is_rendered_without_raising(markdown: str) -> None:
+    assert isinstance(render_markdown(markdown), str)
