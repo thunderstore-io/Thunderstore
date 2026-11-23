@@ -23,7 +23,7 @@ djangorestframework = "~3.16"
 # missing from the wheel, which fails collectstatic with manifest storage.
 drf-yasg = "^1.21,!=1.21.17"
 django-ipware = "^3.0"
-sentry_sdk = {extras = ["celery"], version = "^1.31.0"}
+sentry_sdk = {extras = ["celery"], version = ">=1.31,<3.0"}
 django-redis = "^5.2"
 # django-redis declares no upper bound on redis-py; keep the client on
 # the widely-deployed 5.x line rather than whatever resolves newest.
