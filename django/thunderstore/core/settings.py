@@ -131,6 +131,7 @@ env = environ.Env(
     LEGACYPROFILE_MAX_TOTAL_SIZE_GB=(int, 1000),
     SESSION_COOKIE_DOMAIN=(str, ""),
     OAUTH_SHARED_SECRET=(str, ""),
+    TRENDING_SHARED_SECRET=(str, ""),
     OVERWOLF_CLIENT_ID=(str, ""),
     ALWAYS_RAISE_EXCEPTIONS=(bool, False),
     ECOSYSTEM_SCHEMA_URL=(
@@ -295,6 +296,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
         "thunderstore.permissions",
         "thunderstore.ts_reports",
         "thunderstore.ts_analytics",
+        "thunderstore.ts_trending",
     ]
 )
 
@@ -881,6 +883,10 @@ if PROTOCOL == "https://":
 # Token shared between Thunderstore apps to restrict access to OAuth
 # related endpoints.
 OAUTH_SHARED_SECRET = env.str("OAUTH_SHARED_SECRET")
+
+# Token shared with the query service to restrict access to the trending
+# score ingest endpoint.
+TRENDING_SHARED_SECRET = env.str("TRENDING_SHARED_SECRET")
 
 # Mod manager client id
 OVERWOLF_CLIENT_ID = env.str("OVERWOLF_CLIENT_ID")
