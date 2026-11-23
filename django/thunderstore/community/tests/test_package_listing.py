@@ -5,7 +5,10 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from conftest import TestUserTypes
-from thunderstore.community.consts import PackageListingReviewStatus
+from thunderstore.community.consts import (
+    DEFAULT_COMMUNITY_IDENTIFIER,
+    PackageListingReviewStatus,
+)
 from thunderstore.community.factories import (
     CommunityFactory,
     CommunitySiteFactory,
@@ -30,95 +33,78 @@ from thunderstore.permissions.models.tests._utils import (
 from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models import Package, TeamMember, TeamMemberRole
 
+# Only the default community links with the old URLs, and only with a site.
+URL_SCHEMES = (
+    (DEFAULT_COMMUNITY_IDENTIFIER, True, True),
+    (DEFAULT_COMMUNITY_IDENTIFIER, False, False),
+    ("test", True, False),
+    ("test", False, False),
+)
+
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("with_site", (False, True))
+@pytest.mark.parametrize(("identifier", "with_site", "uses_old_urls"), URL_SCHEMES)
 def test_package_listing_get_absolute_url(
-    active_package_listing: PackageListing,
+    identifier: str,
     with_site: bool,
+    uses_old_urls: bool,
 ) -> None:
+    community = CommunityFactory(identifier=identifier)
+    listing = PackageListingFactory(community_=community)
     if with_site:
-        CommunitySiteFactory(community=active_package_listing.community)
-        expected = "/".join(
-            [
-                "/package",
-                active_package_listing.package.owner.name,
-                active_package_listing.package.name,
-                "",
-            ],
-        )
-    else:
-        expected = "/".join(
-            [
-                "/c",
-                active_package_listing.community.identifier,
-                "p",
-                active_package_listing.package.owner.name,
-                active_package_listing.package.name,
-                "",
-            ],
-        )
+        CommunitySiteFactory(community=community)
 
-    assert active_package_listing.get_absolute_url() == expected
+    owner = listing.package.owner.name
+    name = listing.package.name
+    if uses_old_urls:
+        expected = f"/package/{owner}/{name}/"
+    else:
+        expected = f"/c/{identifier}/p/{owner}/{name}/"
+
+    assert listing.get_absolute_url() == expected
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("with_site", (False, True))
+@pytest.mark.parametrize(("identifier", "with_site", "uses_old_urls"), URL_SCHEMES)
 def test_package_listing_owner_url(
-    active_package_listing: PackageListing,
+    identifier: str,
     with_site: bool,
+    uses_old_urls: bool,
 ) -> None:
+    community = CommunityFactory(identifier=identifier)
+    listing = PackageListingFactory(community_=community)
     if with_site:
-        CommunitySiteFactory(community=active_package_listing.community)
-        expected = "/".join(
-            [
-                "/package",
-                active_package_listing.package.owner.name,
-                "",
-            ],
-        )
+        CommunitySiteFactory(community=community)
+
+    owner = listing.package.owner.name
+    if uses_old_urls:
+        expected = f"/package/{owner}/"
     else:
-        expected = "/".join(
-            [
-                "/c",
-                active_package_listing.community.identifier,
-                "p",
-                active_package_listing.package.owner.name,
-                "",
-            ],
-        )
-    assert active_package_listing.owner_url == expected
+        expected = f"/c/{identifier}/p/{owner}/"
+
+    assert listing.owner_url == expected
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("with_site", (False, True))
+@pytest.mark.parametrize(("identifier", "with_site", "uses_old_urls"), URL_SCHEMES)
 def test_package_listing_dependants_url(
-    active_package_listing: PackageListing,
+    identifier: str,
     with_site: bool,
+    uses_old_urls: bool,
 ) -> None:
+    community = CommunityFactory(identifier=identifier)
+    listing = PackageListingFactory(community_=community)
     if with_site:
-        CommunitySiteFactory(community=active_package_listing.community)
-        expected = "/".join(
-            [
-                "/package",
-                active_package_listing.package.owner.name,
-                active_package_listing.package.name,
-                "dependants/",
-            ],
-        )
-    else:
-        expected = "/".join(
-            [
-                "/c",
-                active_package_listing.community.identifier,
-                "p",
-                active_package_listing.package.owner.name,
-                active_package_listing.package.name,
-                "dependants/",
-            ],
-        )
+        CommunitySiteFactory(community=community)
 
-    assert active_package_listing.dependants_url == expected
+    owner = listing.package.owner.name
+    name = listing.package.name
+    if uses_old_urls:
+        expected = f"/package/{owner}/{name}/dependants/"
+    else:
+        expected = f"/c/{identifier}/p/{owner}/{name}/dependants/"
+
+    assert listing.dependants_url == expected
 
 
 @pytest.mark.django_db
