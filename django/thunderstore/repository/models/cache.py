@@ -367,7 +367,8 @@ def get_listing_json_queryset(community: Community) -> QuerySet:
     )
 
     versions = (
-        PackageVersion.objects.filter(package=OuterRef("package"), is_active=True)
+        PackageVersion.objects.filter(package=OuterRef("package"))
+        .active()
         .order_by(VersionSortKey("version_number").desc())
         .values(
             json=JSONBuildObject(

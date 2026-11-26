@@ -13,10 +13,12 @@ from thunderstore.community.models import CommunitySite, PackageListing
 from thunderstore.core.factories import UserFactory
 from thunderstore.repository.api.v1.tasks import update_api_v1_caches
 from thunderstore.repository.api.v1.viewsets import PACKAGE_SERIALIZER
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.models.cache import (
     APIV1ChunkedPackageCache,
     APIV1PackageCache,
 )
+from thunderstore.repository.tests.utils import create_listing, create_version
 
 
 @pytest.mark.django_db
@@ -150,6 +152,44 @@ def test_api_v1_package_detail(
     assert result["versions"][0]["download_url"].startswith(
         f"{settings.PROTOCOL}{settings.PRIMARY_HOST}"
     )
+
+
+@pytest.mark.django_db
+def test_api_v1_package_detail__rejected_versions_are_excluded(
+    api_client: APIClient,
+    community_site: CommunitySite,
+) -> None:
+    community = community_site.community
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.approved, community)
+    package = listing.package
+    create_version(package, "1.0.5", PackageVersionReviewStatus.rejected)
+    create_version(package, "1.1.0", PackageVersionReviewStatus.unreviewed)
+    create_version(package, "2.0.0", PackageVersionReviewStatus.rejected)
+
+    response = api_client.get(
+        f"/c/{community.identifier}/api/v1/package/{package.uuid4}/"
+    )
+
+    assert response.status_code == 200
+    assert [v["version_number"] for v in response.json()["versions"]] == [
+        "1.1.0",
+        "1.0.0",
+    ]
+
+
+@pytest.mark.django_db
+def test_api_v1_package_detail__package_with_only_rejected_versions_returns_404(
+    api_client: APIClient,
+    community_site: CommunitySite,
+) -> None:
+    community = community_site.community
+    listing = create_listing("1.0.0", PackageVersionReviewStatus.rejected, community)
+
+    response = api_client.get(
+        f"/c/{community.identifier}/api/v1/package/{listing.package.uuid4}/"
+    )
+
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
