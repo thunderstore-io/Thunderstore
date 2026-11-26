@@ -1,7 +1,10 @@
 import pytest
 from rest_framework.test import APIClient
 
+from thunderstore.repository.consts import PackageVersionReviewStatus
+from thunderstore.repository.factories import PackageFactory
 from thunderstore.repository.models import Package, PackageRating
+from thunderstore.repository.tests.utils import create_version
 
 
 @pytest.mark.django_db
@@ -48,3 +51,59 @@ def test_api_v1_package_version_metrics(
 
     result = response.json()
     assert result["downloads"] == 200
+
+
+@pytest.mark.django_db
+def test_api_v1_package_metrics__latest_version_skips_rejected_versions(
+    api_client: APIClient,
+) -> None:
+    package = PackageFactory()
+    create_version(package, "1.0.0", PackageVersionReviewStatus.approved)
+    create_version(package, "1.1.0", PackageVersionReviewStatus.unreviewed)
+    create_version(package, "2.0.0", PackageVersionReviewStatus.rejected)
+
+    response = api_client.get(
+        f"/api/v1/package-metrics/{package.namespace.name}/{package.name}/"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["latest_version"] == "1.1.0"
+
+
+@pytest.mark.django_db
+def test_api_v1_package_metrics__package_with_only_rejected_versions_returns_404(
+    api_client: APIClient,
+) -> None:
+    package = PackageFactory()
+    create_version(package, "1.0.0", PackageVersionReviewStatus.rejected)
+
+    response = api_client.get(
+        f"/api/v1/package-metrics/{package.namespace.name}/{package.name}/"
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("review_status", "expected_status"),
+    (
+        (PackageVersionReviewStatus.approved, 200),
+        (PackageVersionReviewStatus.unreviewed, 200),
+        (PackageVersionReviewStatus.rejected, 404),
+    ),
+)
+def test_api_v1_package_version_metrics__review_status(
+    api_client: APIClient,
+    review_status: str,
+    expected_status: int,
+) -> None:
+    package = PackageFactory()
+    create_version(package, "1.0.0", PackageVersionReviewStatus.approved)
+    create_version(package, "2.0.0", review_status)
+
+    response = api_client.get(
+        f"/api/v1/package-metrics/{package.namespace.name}/{package.name}/2.0.0/"
+    )
+
+    assert response.status_code == expected_status

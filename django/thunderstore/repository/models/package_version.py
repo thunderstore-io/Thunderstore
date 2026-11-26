@@ -48,8 +48,13 @@ def get_version_png_filepath(instance, filename):
 
 
 class PackageVersionQuerySet(VisibilityQuerySet):
-    def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
-        return self.exclude(is_active=False)
+    def active(
+        self, include_rejected: bool = False
+    ) -> "QuerySet[PackageVersion]":  # TODO: Generic type
+        qs = self.filter(is_active=True)
+        if not include_rejected:
+            qs = qs.exclude(review_status=PackageVersionReviewStatus.rejected)
+        return qs
 
     def chunked_enumerate(self, chunk_size=1000) -> Iterator["PackageVersion"]:
         """
