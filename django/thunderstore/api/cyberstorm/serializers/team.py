@@ -25,6 +25,22 @@ class CyberstormTeamSerializer(serializers.Serializer):
     )
 
 
+class CyberstormTeamCommunitySerializer(serializers.Serializer):
+    """
+    A community the team has publicly visible packages in, readable by
+    anyone
+    """
+
+    identifier = serializers.CharField()
+    name = serializers.CharField()
+    community_icon_url = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    package_count = serializers.IntegerField()
+    download_count = serializers.IntegerField()
+    rating_count = serializers.IntegerField()
+
+
 class CyberstormTeamMemberSerializer(serializers.Serializer):
     identifier = serializers.IntegerField(source="user.id")
     username = serializers.CharField(source="user.username")
