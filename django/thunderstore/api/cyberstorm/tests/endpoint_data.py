@@ -39,6 +39,8 @@ ENDPOINTS = {
         "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/update/": {
             "categories": ["test"]
         },
+        "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/v/{version_number}/approve/": {},
+        "/api/cyberstorm/listing/{community_id}/{namespace_id}/{package_name}/v/{version_number}/reject/": {},
         "/api/cyberstorm/package/{namespace_id}/{package_name}/deprecate/": {
             "deprecate": True
         },

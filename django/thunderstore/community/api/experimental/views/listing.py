@@ -19,7 +19,7 @@ from thunderstore.ts_reports.services.package_report import report_package_listi
 
 
 class PackageListingUpdateApiView(GenericAPIView):
-    queryset = PackageListing.objects.active().select_related(
+    queryset = PackageListing.objects.active(include_rejected=True).select_related(
         "community",
         "package",
     )

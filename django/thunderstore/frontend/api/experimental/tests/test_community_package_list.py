@@ -11,10 +11,12 @@ from thunderstore.community.factories import CommunitySiteFactory, PackageListin
 from thunderstore.community.models import PackageCategory, PackageListingSection
 from thunderstore.community.models.package_listing import PackageListing
 from thunderstore.frontend.api.experimental.views import CommunityPackageListApiView
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.repository.factories import (
     PackageRatingFactory,
     PackageVersionFactory,
 )
+from thunderstore.repository.tests.utils import create_listing, create_version
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -40,6 +42,37 @@ def test_only_active_packages_are_returned(api_client: APIClient) -> None:
     data = __query_api(api_client, listing1.community.identifier)
 
     assert len(data["packages"]) == 0
+
+
+@pytest.mark.django_db
+def test_packages_with_only_rejected_versions_are_not_returned(
+    api_client: APIClient,
+) -> None:
+    visible = create_listing("1.0.0", PackageVersionReviewStatus.approved)
+    create_listing("1.0.0", PackageVersionReviewStatus.rejected, visible.community)
+
+    data = __query_api(api_client, visible.community.identifier)
+
+    assert [p["package_name"] for p in data["packages"]] == [visible.package.name]
+
+
+@pytest.mark.django_db
+def test_package_details_come_from_newest_non_rejected_version(
+    api_client: APIClient,
+) -> None:
+    listing = create_listing(
+        "1.0.0", PackageVersionReviewStatus.approved, description="public"
+    )
+    create_version(
+        listing.package,
+        "2.0.0",
+        PackageVersionReviewStatus.rejected,
+        description="rejected",
+    )
+
+    data = __query_api(api_client, listing.community.identifier)
+
+    assert [p["description"] for p in data["packages"]] == ["public"]
 
 
 @pytest.mark.django_db

@@ -33,6 +33,7 @@ from thunderstore.webhooks.audit import (
 from thunderstore.webhooks.models.release import Webhook
 
 if TYPE_CHECKING:
+    from thunderstore.community.models import PackageListing
     from thunderstore.repository.models.package_installer import (
         PackageInstaller,
         PackageInstallerDeclaration,
@@ -48,8 +49,13 @@ def get_version_png_filepath(instance, filename):
 
 
 class PackageVersionQuerySet(VisibilityQuerySet):
-    def active(self) -> "QuerySet[PackageVersion]":  # TODO: Generic type
-        return self.exclude(is_active=False)
+    def active(
+        self, include_rejected: bool = False
+    ) -> "QuerySet[PackageVersion]":  # TODO: Generic type
+        qs = self.filter(is_active=True)
+        if not include_rejected:
+            qs = qs.exclude(review_status=PackageVersionReviewStatus.rejected)
+        return qs
 
     def chunked_enumerate(self, chunk_size=1000) -> Iterator["PackageVersion"]:
         """
@@ -281,6 +287,10 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
     def is_effectively_active(self):
         return self.is_active and self.package.is_active
 
+    @property
+    def is_rejected(self) -> bool:
+        return self.review_status == PackageVersionReviewStatus.rejected
+
     @cached_property
     def full_version_name(self):
         return f"{self.package.full_package_name}-{self.version_number}"
@@ -407,8 +417,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         agent: Optional[UserType],
         is_system: bool = False,
         message: Optional[str] = None,
+        listing: Optional["PackageListing"] = None,
     ):
-        if is_system or self.can_user_manage_approval_status(agent):
+        if is_system or self.can_user_manage_approval_status(agent, listing):
             self.review_status = PackageVersionReviewStatus.rejected
             self.save(update_fields=("review_status",))
 
@@ -428,8 +439,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         agent: Optional[UserType],
         is_system: bool = False,
         message: Optional[str] = None,
+        listing: Optional["PackageListing"] = None,
     ):
-        if is_system or self.can_user_manage_approval_status(agent):
+        if is_system or self.can_user_manage_approval_status(agent, listing):
             self.review_status = PackageVersionReviewStatus.approved
             self.save(update_fields=("review_status",))
 
@@ -443,7 +455,11 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
         else:
             raise PermissionError()
 
-    def can_user_manage_approval_status(self, user: Optional[UserType]) -> bool:
+    def can_user_manage_approval_status(
+        self,
+        user: Optional[UserType],
+        listing: Optional["PackageListing"] = None,
+    ) -> bool:
         if not user:
             return False
 
@@ -452,6 +468,9 @@ class PackageVersion(VisibilityMixin, AdminLinkMixin):
 
         if user.is_superuser:
             return True
+
+        if listing is not None and listing.package_id == self.package_id:
+            return listing.can_be_moderated_by_user(user)
 
         # TODO: Replace this with get_moderated_comunnities or whatever the cached equivalent ends up being
         # from thunderstore.repository.views.package._utils import (

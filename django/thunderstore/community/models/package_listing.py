@@ -19,6 +19,7 @@ from thunderstore.frontend.url_reverse import get_community_url_reverse_args
 from thunderstore.permissions.mixins import VisibilityMixin
 from thunderstore.permissions.models.visibility import VisibilityFlagsQuerySet
 from thunderstore.permissions.utils import validate_user
+from thunderstore.repository.consts import PackageVersionReviewStatus
 from thunderstore.webhooks.audit import (
     AuditAction,
     AuditEvent,
@@ -32,13 +33,17 @@ if TYPE_CHECKING:
 
 
 class PackageListingQueryset(VisibilityFlagsQuerySet):
-    def active(self):
+    def active(self, include_rejected: bool = False):
         from thunderstore.repository.models import PackageVersion
 
         has_active_versions = PackageVersion.objects.filter(
             package_id=OuterRef("package_id"),
             is_active=True,
         )
+        if not include_rejected:
+            has_active_versions = has_active_versions.exclude(
+                review_status=PackageVersionReviewStatus.rejected
+            )
         return self.exclude(package__is_active=False).filter(
             Exists(has_active_versions)
         )
@@ -355,6 +360,9 @@ class PackageListing(TimestampMixin, AdminLinkMixin, VisibilityMixin):
         ) or self.package.owner.can_user_manage_packages(user)
         if not is_allowed:
             raise PermissionValidationError("Must have listing management permission")
+
+    def can_user_manage_listing(self, user: Optional[UserType]) -> bool:
+        return check_validity(lambda: self.ensure_user_can_manage_listing(user))
 
     def ensure_update_categories_permission(self, user: Optional[UserType]) -> None:
         user = validate_user(user)

@@ -17,7 +17,7 @@ from thunderstore.community.services.package_listing import (
     reject_package_listing,
     update_categories,
 )
-from thunderstore.repository.models import PackageListing
+from thunderstore.repository.models import PackageListing, PackageVersion
 from thunderstore.repository.services.package import unlist_package_listing
 from thunderstore.ts_reports.services.package_report import report_package_listing
 
@@ -26,7 +26,7 @@ def get_package_listing(
     namespace_id: str, package_name: str, community_id: str
 ) -> PackageListing:
     return get_object_or_404(
-        PackageListing.objects.active()
+        PackageListing.objects.active(include_rejected=True)
         .select_related(
             "package",
             "package__owner",
@@ -178,4 +178,59 @@ class UnlistPackageListingAPIView(APIView):
             community_id=kwargs["community_id"],
         )
         unlist_package_listing(agent=request.user, listing=listing)
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+
+
+def get_package_listing_version(
+    namespace_id: str, package_name: str, community_id: str, version_number: str
+) -> tuple[PackageListing, PackageVersion]:
+    listing = get_package_listing(
+        namespace_id=namespace_id,
+        package_name=package_name,
+        community_id=community_id,
+    )
+    version = get_object_or_404(
+        listing.package.versions.active(include_rejected=True),
+        version_number=version_number,
+    )
+    return listing, version
+
+
+class RejectPackageVersionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.package_version.reject",
+        request_body=None,
+        responses={200: "Success"},
+        tags=["cyberstorm"],
+    )
+    def post(self, request, *args, **kwargs) -> Response:
+        listing, version = get_package_listing_version(
+            namespace_id=kwargs["namespace_id"],
+            package_name=kwargs["package_name"],
+            community_id=kwargs["community_id"],
+            version_number=kwargs["version_number"],
+        )
+        version.reject(agent=request.user, listing=listing)
+        return Response({"message": "Success"}, status=status.HTTP_200_OK)
+
+
+class ApprovePackageVersionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @conditional_swagger_auto_schema(
+        operation_id="cyberstorm.package_version.approve",
+        request_body=None,
+        responses={200: "Success"},
+        tags=["cyberstorm"],
+    )
+    def post(self, request, *args, **kwargs) -> Response:
+        listing, version = get_package_listing_version(
+            namespace_id=kwargs["namespace_id"],
+            package_name=kwargs["package_name"],
+            community_id=kwargs["community_id"],
+            version_number=kwargs["version_number"],
+        )
+        version.approve(agent=request.user, listing=listing)
         return Response({"message": "Success"}, status=status.HTTP_200_OK)
