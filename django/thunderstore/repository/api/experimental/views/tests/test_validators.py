@@ -33,7 +33,24 @@ def test_experimental_api_validate_markdown(
     )
     assert response.status_code == 200
     assert json.loads(response.content.decode()) == {"success": True}
-    mocked_validator.assert_called_with(readme)
+    mocked_validator.assert_called_with("README.md", readme)
+
+
+@pytest.mark.django_db
+def test_experimental_api_validate_markdown_without_mock(
+    api_client: APIClient, user: UserType
+) -> None:
+    readme = b"# Hello world"
+
+    api_client.force_authenticate(user=user)
+    test_data = {"readme_data": base64.b64encode(readme).decode("utf-8")}
+    response = api_client.post(
+        reverse("api:experimental:submission.validate.readme"),
+        data=json.dumps(test_data),
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert json.loads(response.content.decode()) == {"success": True}
 
 
 @pytest.mark.django_db
