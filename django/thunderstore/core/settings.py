@@ -305,6 +305,7 @@ INSTALLED_APPS = plugin_registry.get_installed_apps(
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 MIDDLEWARE = [
+    "thunderstore.core.middleware.ContentLengthMiddleware",
     "thunderstore.core.middleware.QueryCountHeaderMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "thunderstore.frontend.middleware.SocialAuthExceptionHandlerMiddleware",
